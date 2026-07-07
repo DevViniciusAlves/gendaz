@@ -69,17 +69,15 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
         ZoneId zoneId = resolverZoneId(empresa.getTimezone());
         LocalDateTime agora = ZonedDateTime.now(zoneId).toLocalDateTime();
 
-        LocalDateTime alvo1 = agora.minusMinutes(5);
-        LocalDateTime alvo1Fim = agora.minusMinutes(10);
-        LocalDate data1 = alvo1.toLocalDate();
-        LocalTime inicio1 = alvo1Fim.toLocalTime().minusMinutes(1);
-        LocalTime fim1 = alvo1.toLocalTime().plusMinutes(1);
+        // 1o envio: agendamentos cujo horaInicio está entre (agora - 10min) e (agora - 4min)
+        LocalDate data1 = agora.toLocalDate();
+        LocalTime inicio1 = agora.minusMinutes(10).toLocalTime();
+        LocalTime fim1   = agora.minusMinutes(4).toLocalTime();
 
-        LocalDateTime alvo2 = agora.minusMinutes(15);
-        LocalDateTime alvo2Fim = agora.minusMinutes(20);
-        LocalDate data2 = alvo2.toLocalDate();
-        LocalTime inicio2 = alvo2Fim.toLocalTime().minusMinutes(1);
-        LocalTime fim2 = alvo2.toLocalTime().plusMinutes(1);
+        // 2o envio (reforço): agendamentos cujo horaInicio está entre (agora - 20min) e (agora - 14min)
+        LocalDate data2 = agora.toLocalDate();
+        LocalTime inicio2 = agora.minusMinutes(20).toLocalTime();
+        LocalTime fim2   = agora.minusMinutes(14).toLocalTime();
 
         log.info("[confirmacao-pagamento-dono] timezone={} agora={} empresaId={} "
                 + "1o envio horaInicio=[{}..{}] | 2o envio horaInicio=[{}..{}]",

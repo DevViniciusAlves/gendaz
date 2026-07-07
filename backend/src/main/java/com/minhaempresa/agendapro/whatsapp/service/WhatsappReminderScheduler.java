@@ -45,8 +45,8 @@ public class WhatsappReminderScheduler {
                 ZoneId zoneId = resolverZoneId(empresa.getTimezone());
                 ZonedDateTime agoraZoned = ZonedDateTime.now(zoneId);
                 LocalDateTime agora = agoraZoned.toLocalDateTime();
-                LocalDateTime dataLimiteInferior = agora.plusMinutes(29);
-                LocalDateTime dataLimiteSuperior = agora.plusMinutes(31);
+                LocalDateTime dataLimiteInferior = agora.plusMinutes(25);
+                LocalDateTime dataLimiteSuperior = agora.plusMinutes(35);
                 LocalDate data = dataLimiteInferior.toLocalDate();
                 LocalTime inicio = dataLimiteInferior.toLocalTime();
                 LocalTime fim = dataLimiteSuperior.toLocalTime();
@@ -105,7 +105,12 @@ public class WhatsappReminderScheduler {
             return;
         }
 
-        String telefone = agendamento.getClienteTelefone();
+        String telefone = normalizarTelefone(agendamento.getClienteTelefone());
+        if (telefone == null) {
+            log.warn("[Reminder] ignorado telefone nao normalizavel agendamentoId={} telefoneOriginal={}",
+                    agendamento.getId(), agendamento.getClienteTelefone());
+            return;
+        }
         String mensagem = montarMensagem(agendamento);
         Map<String, Object> payload = new HashMap<>();
         payload.put("agendamentoId", agendamento.getId());
@@ -146,6 +151,40 @@ public class WhatsappReminderScheduler {
     private String textoOuPadrao(String valor, String padrao) {
         String texto = valor == null ? "" : valor.trim();
         return texto.isBlank() ? padrao : texto;
+    }
+
+    /**
+     * Normaliza telefone para o formato 55DDNNNNNNNNN (13 dígitos).
+     * Aceita formatos como: 5565992700672, 65992700672, (65)99270-0672, +55 65 99270-0672.
+     * Retorna null se o número não puder ser normalizado para 13 dígitos com DDI 55.
+     */
+    static String normalizarTelefone(String telefone) {
+        if (telefone == null || telefone.isBlank()) return null;
+        String digitos = telefone.replaceAll("\\D", "");
+        if (digitos.isEmpty()) return null;
+        // Já está no formato correto: 55 + DDD (2) + número (9) = 13 dígitos
+        if (digitos.length() == 13 && digitos.startsWith("55")) {
+            return digitos;
+        }
+        // DDD + 9 dígitos (11 dígitos sem DDI)
+        if (digitos.length() == 11 && !digitos.startsWith("55")) {
+            return "55" + digitos;
+        }
+        // DDD + 8 dígitos (10 dígitos sem DDI — número antigo sem o 9)
+        if (digitos.length() == 10 && !digitos.startsWith("55")) {
+            return "55" + digitos;
+        }
+        // Tem 55 mas o nacional tem 10 dígitos (sem o 9 extra)
+        if (digitos.startsWith("55") && digitos.length() == 12) {
+            String nacional = digitos.substring(2); // 10 dígitos
+            return "55" + nacional;
+        }
+        // Tem 55 e nacional tem 11 dígitos com 9 extra (ex: 5565992700672 = 13, já tratado acima)
+        // Caso raro: começa com 0 antes do DDD
+        if (digitos.startsWith("0") && digitos.length() == 12) {
+            return "55" + digitos.substring(1);
+        }
+        return null;
     }
 
     private ZoneId resolverZoneId(String timezone) {
