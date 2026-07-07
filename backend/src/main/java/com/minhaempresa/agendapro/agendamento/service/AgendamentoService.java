@@ -118,23 +118,43 @@ public class AgendamentoService {
     public List<String> horariosDisponiveis(Long empresaId, Long profissionalId, Long servicoId, LocalDate data) {
         ServicoEntity servico = servicoService.buscarEntidade(servicoId);
         ProfissionalEntity profissional = null;
+        boolean empresaSemProfissionaisReais = false;
+
         if (profissionalId == null) {
             var profissionaisAtivos = profissionalService.listarPorEmpresa(empresaId).stream()
                     .filter(item -> item.status() == com.minhaempresa.agendapro.shared.enums.StatusCadastro.ATIVO)
                     .toList();
-            if (!profissionaisAtivos.isEmpty()) {
-                profissional = profissionalService.buscarEntidade(profissionaisAtivos.get(0).id());
+            boolean todosSistema = !profissionaisAtivos.isEmpty()
+                    && profissionaisAtivos.stream().allMatch(item -> {
+                        ProfissionalEntity p = profissionalService.buscarEntidade(item.id());
+                        return p.isSistema();
+                    });
+            if (todosSistema) {
+                empresaSemProfissionaisReais = true;
+            } else if (!profissionaisAtivos.isEmpty()) {
+                profissional = profissionaisAtivos.stream()
+                        .map(item -> profissionalService.buscarEntidade(item.id()))
+                        .filter(p -> !p.isSistema())
+                        .findFirst()
+                        .orElse(null);
             }
         } else {
             profissional = profissionalService.buscarEntidade(profissionalId);
         }
+
         HorarioAtendimentoEntity horario = horarioAtendimentoService.obterHorarioEfetivo(empresaId, data);
         if (!horario.isAtivo() || horario.getHoraInicio() == null || horario.getHoraFim() == null) {
             return List.of();
         }
-        List<AgendamentoHorarioProjection> agendados = profissional != null
-                ? agendamentoRepository.findByProfissionalIdAndData(profissional.getId(), data)
-                : List.of();
+
+        List<AgendamentoHorarioProjection> agendados;
+        if (empresaSemProfissionaisReais) {
+            agendados = agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data);
+        } else if (profissional != null) {
+            agendados = agendamentoRepository.findByProfissionalIdAndData(profissional.getId(), data);
+        } else {
+            agendados = List.of();
+        }
         List<String> horarios = new ArrayList<>();
         LocalTime horaAtual = horario.getHoraInicio();
         while (horaAtual.isBefore(horario.getHoraFim())) {

@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const {
   conectarEmpresa,
@@ -274,6 +274,9 @@ setInterval(() => {
   }
 }, 60 * 60 * 1000).unref?.();
 
+setInterval(() => {
+  console.log('[keep-alive] ping ok', new Date().toISOString());
+}, 5 * 60 * 1000);
 
 app.listen(port, () => {
   console.log(`[Bot-Service] running on port ${port}`);

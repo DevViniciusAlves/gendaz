@@ -84,11 +84,13 @@ class AgendamentoServiceHorariosTest {
         LocalDate data = LocalDate.now().plusDays(1);
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         HorarioAtendimentoEntity horario = criarHorario(empresaId, LocalTime.of(8, 0), LocalTime.of(12, 0));
+        ProfissionalEntity sistema = criarProfissional(10L, empresaId, true);
 
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
         when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
                 criarProfissionalResponse(10L, true)
         ));
+        when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of());
 
@@ -133,6 +135,7 @@ class AgendamentoServiceHorariosTest {
         LocalDate data = LocalDate.now().plusDays(1);
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         HorarioAtendimentoEntity horario = criarHorario(empresaId, LocalTime.of(8, 0), LocalTime.of(12, 0));
+        ProfissionalEntity sistema = criarProfissional(10L, empresaId, true);
 
         AgendamentoHorarioProjection agendado = mock(AgendamentoHorarioProjection.class);
         when(agendado.getHoraInicio()).thenReturn(LocalTime.of(9, 0));
@@ -143,6 +146,7 @@ class AgendamentoServiceHorariosTest {
         when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
                 criarProfissionalResponse(10L, true)
         ));
+        when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(agendado));
 
@@ -231,6 +235,7 @@ class AgendamentoServiceHorariosTest {
         LocalDate data = LocalDate.now().plusDays(1);
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         HorarioAtendimentoEntity horario = criarHorario(empresaId, LocalTime.of(8, 0), LocalTime.of(12, 0));
+        ProfissionalEntity sistema = criarProfissional(10L, empresaId, true);
 
         AgendamentoHorarioProjection cancelado = mock(AgendamentoHorarioProjection.class);
         when(cancelado.getHoraInicio()).thenReturn(LocalTime.of(9, 0));
@@ -241,6 +246,7 @@ class AgendamentoServiceHorariosTest {
         when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
                 criarProfissionalResponse(10L, true)
         ));
+        when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(cancelado));
 
