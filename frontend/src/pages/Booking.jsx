@@ -26,6 +26,38 @@ function somenteLetras(valor) {
   return String(valor || '').replace(/[^\p{L}\s]/gu, '').replace(/\s{2,}/g, ' ')
 }
 
+function aplicarMascara(telefone) {
+  if (!telefone) return '';
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length === 0) return '';
+  if (digitos.length <= 2) return '+' + digitos;
+  if (digitos.length <= 4) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2) + ')';
+  if (digitos.length <= 9) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4);
+  return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4, 9) + '-' + digitos.slice(9, 13);
+}
+
+function validarTelefone(telefone) {
+  if (!telefone) return 'Telefone é obrigatório';
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length === 0) {
+    return 'Telefone é obrigatório';
+  }
+  if (digitos.length < 13) {
+    return `Incompleto: ${digitos.length}/13 dígitos. Formato: +55 (DDD) 99999-9999`;
+  }
+  if (digitos.length > 13) {
+    return 'Telefone muito longo';
+  }
+  if (!digitos.startsWith('55')) {
+    return 'Adicione o código do país +55';
+  }
+  const ddd = parseInt(digitos.substring(2, 4));
+  if (ddd < 11 || ddd > 99) {
+    return `DDD inválido. Deve ser entre 11 e 99`;
+  }
+  return '';
+}
+
 function diaSemanaParaIndice(diaSemana) {
   const mapa = {
     DOMINGO: 0,
@@ -168,8 +200,9 @@ export default function Booking() {
       setErro('Escolha um profissional para continuar.')
       return
     }
-    if (cliente.nome.trim().length < 2 || telefone.length < 10 || telefone.length > 15) {
-      setErro('Informe nome e telefone válidos.')
+    const telValidationError = validarTelefone(cliente.telefone)
+    if (cliente.nome.trim().length < 2 || telValidationError) {
+      setErro(telValidationError || 'Informe um nome válido.')
       return
     }
 
@@ -443,10 +476,13 @@ export default function Booking() {
                 <input
                   inputMode="numeric"
                   value={cliente.telefone}
-                  onChange={(event) => setCliente({ ...cliente, telefone: somenteNumeros(event.target.value) })}
-                  maxLength={15}
+                  onChange={(event) => setCliente({ ...cliente, telefone: aplicarMascara(event.target.value) })}
+                  maxLength={19}
                   required
                 />
+                <small className={validarTelefone(cliente.telefone) ? "field-hint limit-reached" : "field-hint"}>
+                  {cliente.telefone ? (validarTelefone(cliente.telefone) || '✓ Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
+                </small>
               </label>
             </div>
 
@@ -477,7 +513,9 @@ export default function Booking() {
 
             {erro && <p className="form-error field-wide">{erro}</p>}
             <div className="booking-actions field-wide">
-              <Button type="submit" disabled={salvando || semServicos}>{salvando ? 'Confirmando...' : 'Confirmar agendamento'}</Button>
+              <Button type="submit" disabled={salvando || semServicos || !cliente.nome || (validarTelefone(cliente.telefone) !== '')}>
+                {salvando ? 'Confirmando...' : 'Confirmar agendamento'}
+              </Button>
             </div>
           </form>
         )}

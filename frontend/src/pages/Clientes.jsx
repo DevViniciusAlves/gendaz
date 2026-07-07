@@ -24,6 +24,38 @@ function somenteNumeros(valor) {
   return valor.replace(/\D/g, '')
 }
 
+function aplicarMascara(telefone) {
+  if (!telefone) return '';
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length === 0) return '';
+  if (digitos.length <= 2) return '+' + digitos;
+  if (digitos.length <= 4) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2) + ')';
+  if (digitos.length <= 9) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4);
+  return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4, 9) + '-' + digitos.slice(9, 13);
+}
+
+function validarTelefone(telefone) {
+  if (!telefone) return 'Telefone é obrigatório';
+  const digitos = telefone.replace(/\D/g, '');
+  if (digitos.length === 0) {
+    return 'Telefone é obrigatório';
+  }
+  if (digitos.length < 13) {
+    return `Incompleto: ${digitos.length}/13 dígitos. Formato: +55 (DDD) 99999-9999`;
+  }
+  if (digitos.length > 13) {
+    return 'Telefone muito longo';
+  }
+  if (!digitos.startsWith('55')) {
+    return 'Adicione o código do país +55';
+  }
+  const ddd = parseInt(digitos.substring(2, 4));
+  if (ddd < 11 || ddd > 99) {
+    return `DDD inválido. Deve ser entre 11 e 99`;
+  }
+  return '';
+}
+
 export default function Clientes() {
   const [data, , { loading, reload }] = useLocalData('clientes')
   const [busca, setBusca] = useState('')
@@ -129,7 +161,7 @@ export default function Clientes() {
     setClienteEditando(cliente.id)
     setForm({
       nome: cliente.nome || '',
-      telefone: somenteNumeros(cliente.telefone || ''),
+      telefone: aplicarMascara(cliente.telefone || ''),
       email: cliente.email || '',
       observacoes: cliente.observacoes || '',
     })
@@ -183,8 +215,9 @@ export default function Clientes() {
       setErro('Nome deve ter 2 a 80 letras.')
       return
     }
-    if (telefone.length < 10 || telefone.length > 15) {
-      setErro('Telefone deve ter entre 10 e 15 números.')
+    const telValidationError = validarTelefone(form.telefone)
+    if (telValidationError) {
+      setErro(telValidationError)
       return
     }
     if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
@@ -314,11 +347,21 @@ export default function Clientes() {
       <Modal title={clienteEditando ? 'Editar cliente' : 'Cadastrar cliente'} open={modal} onClose={() => setModal(false)}>
         <form className="form-grid" onSubmit={salvar}>
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: limparNome(e.target.value) })} required />
-          <Input label="Telefone" helper="Digite apenas números, de 10 a 15 dígitos." inputMode="numeric" maxLength={15} value={form.telefone} onChange={(e) => setForm({ ...form, telefone: somenteNumeros(e.target.value) })} required />
+          <Input
+            label="Telefone"
+            helper={form.telefone ? (validarTelefone(form.telefone) || '✓ Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
+            inputMode="numeric"
+            maxLength={19}
+            value={form.telefone}
+            onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })}
+            required
+          />
           <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
-          <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
+          <Button type="submit" disabled={salvando || !form.nome || (validarTelefone(form.telefone) !== '')}>
+            {salvando ? 'Salvando...' : 'Salvar'}
+          </Button>
         </form>
       </Modal>
 

@@ -45,7 +45,7 @@ public final class AgendamentoPublicoDtos {
             @NotNull LocalDate data,
             @NotNull LocalTime horaInicio,
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String clienteNome,
-            @NotBlank @Pattern(regexp = "^\\d{10,15}$", message = "Telefone deve conter entre 10 e 15 digitos.") String clienteTelefone,
+            @NotBlank @Size(min = 10, max = 25) String clienteTelefone,
             @Email @Size(max = 120) String clienteEmail,
             @Size(max = 500) String observacao
     ) {}

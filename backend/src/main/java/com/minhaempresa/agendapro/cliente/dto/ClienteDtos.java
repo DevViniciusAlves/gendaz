@@ -13,7 +13,7 @@ public final class ClienteDtos {
 
     public record SalvarClienteRequest(
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String nome,
-            @NotBlank @Pattern(regexp = "^\\d{10,15}$", message = "Telefone deve conter entre 10 e 15 digitos.") String telefone,
+            @NotBlank @Size(min = 10, max = 25) String telefone,
             @Email @Size(max = 120) String email,
             @Size(max = 300) String observacoes,
             @NotNull Long empresaId

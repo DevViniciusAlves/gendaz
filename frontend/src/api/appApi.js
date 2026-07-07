@@ -565,7 +565,11 @@ export const appApi = {
   },
 
   finalizarAgendamento(id) {
-    return api.patch(`/agendamentos/${id}/finalizar`).then((response) => response.data)
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`).then((response) => response.data), {
+      loading: 'Finalizando agendamento... aguarde',
+      success: 'Agendamento finalizado com sucesso.',
+      error: 'Não foi possível finalizar o agendamento.',
+    })
   },
 
   cancelarAgendamento(id) {
