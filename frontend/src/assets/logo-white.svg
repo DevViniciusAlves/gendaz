@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 100" fill="none">
+  <!-- Ícone g (verde) -->
+  <circle cx="45" cy="50" r="32" stroke="#42f569" stroke-width="7" fill="none"/>
+  <line x1="13" y1="50" x2="77" y2="50" stroke="#42f569" stroke-width="7" stroke-linecap="round"/>
+
+  <!-- Texto gendaz (branco) -->
+  <text x="95" y="62" font-family="Inter,system-ui,Arial,sans-serif" font-size="48" font-weight="700" fill="#ffffff" letter-spacing="-1">gendaz</text>
+</svg>

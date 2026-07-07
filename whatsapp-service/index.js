@@ -1,0 +1,287 @@
+﻿require('dotenv').config();
+const express = require('express');
+const {
+  conectarEmpresa,
+  statusEmpresa,
+  desconectarEmpresa,
+  enviarMensagemEmpresa,
+  enviarMensagemParaProprioNumeroEmpresa,
+  limparSessaoEmpresa,
+  backendHttp,
+  restaurarSessoesPersistidas,
+} = require('./whatsapp');
+const {
+  registrarConfirmacaoPagamentoDono,
+  limparConversasExpiradas,
+} = require('./ia');
+
+const app = express();
+const port = Number(process.env.PORT || 3000);
+const backendToken = String(process.env.WHATSAPP_INTERNAL_TOKEN || process.env.BACKEND_INTERNAL_TOKEN || '').trim();
+
+app.use(express.json({ limit: '1mb' }));
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({
+    status: 'UP',
+    service: 'whatsapp-service',
+    uptimeSeconds: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+  });
+});
+
+app.use((req, res, next) => {
+  const requestPath = String(req.path || req.originalUrl || '').split('?')[0].replace(/\/+$/, '') || '/';
+  if (!backendToken || (req.method === 'GET' && requestPath === '/health')) return next();
+  const received = String(req.header('X-Internal-Token') || '').trim();
+  if (received !== backendToken) {
+    return res.status(401).json({ message: 'Serviço de WhatsApp não autorizado.' });
+  }
+  return next();
+});
+
+app.post('/connect', async (req, res) => {
+  try {
+    const phone = req.body?.phone || req.body?.phoneNumber || '';
+    const response = await conectarEmpresa(req.body?.empresaId, phone);
+    return res.status(200).json({
+      pairingCode: response.code || response.pairingCode || null,
+      status: response.status,
+      statusLabel: response.statusLabel,
+      message: response.message,
+      phoneNumber: response.phoneNumber || phone,
+      expiresAt: response.expiresAt || null,
+    });
+  } catch (error) {
+    console.warn('[Bot-Service] connect failed:', error.message);
+    const message = String(error.message || '').includes('Connection Failure')
+      ? 'Não foi possível gerar o código de pareamento. Verifique se o número informado possui WhatsApp ativo.'
+      : (error.message || 'Não foi possível conectar o WhatsApp.');
+    return res.status(400).json({ message });
+  }
+});
+
+app.get('/status', async (_req, res) => {
+  try {
+    const response = await statusEmpresa();
+    const conectado = response.status === 'CONNECTED';
+    const sessionError = response.status === 'SESSION_ERROR';
+    console.log('[Bot-Service] GET /status ->', {
+      status: response.status,
+      conectado,
+      phoneNumber: response.phoneNumber || null,
+    });
+    return res.status(200).json({
+      conectado,
+      numero: response.phoneNumber || null,
+      status: response.status,
+      statusLabel: response.statusLabel,
+      pairingCode: response.code || null,
+      code: response.code || null,
+      expiresAt: response.expiresAt || null,
+      connected: conectado,
+      numeroConectado: response.phoneNumber || null,
+      message: sessionError
+        ? 'Sessão do WhatsApp inválida. Desconecte e conecte novamente.'
+        : response.message,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível consultar o status.' });
+  }
+});
+
+app.get('/status/:empresaId', async (req, res) => {
+  try {
+    const response = await statusEmpresa(req.params.empresaId);
+    const conectado = response.status === 'CONNECTED';
+    console.log('[Bot-Service] GET /status/:empresaId ->', {
+      empresaId: req.params.empresaId,
+      status: response.status,
+      conectado,
+      phoneNumber: response.phoneNumber || null,
+    });
+    return res.status(200).json({
+      ...response,
+      conectado,
+      connected: conectado,
+      numero: response.phoneNumber || null,
+      numeroConectado: response.phoneNumber || null,
+      pairingCode: response.code || response.pairingCode || null,
+      expiresAt: response.expiresAt || null,
+    });
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível consultar o status.' });
+  }
+});
+
+app.post('/disconnect', async (_req, res) => {
+  try {
+    const response = await desconectarEmpresa();
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível desconectar o WhatsApp.' });
+  }
+});
+
+app.post('/disconnect/:empresaId', async (req, res) => {
+  try {
+    const response = await desconectarEmpresa(req.params.empresaId);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível desconectar o WhatsApp.' });
+  }
+});
+
+app.delete('/session/:empresaId', async (req, res) => {
+  try {
+    const response = await limparSessaoEmpresa(req.params.empresaId);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível limpar a sessão do WhatsApp.' });
+  }
+});
+
+app.post('/send', async (req, res) => {
+  try {
+    const phone = req.body?.phone || req.body?.to || '';
+    const message = req.body?.message || '';
+    const response = await enviarMensagemEmpresa(req.body?.empresaId, phone, message);
+    return res.status(200).json(response);
+  } catch (error) {
+    return res.status(400).json({ message: error.message || 'Não foi possível enviar a mensagem.' });
+  }
+});
+
+app.post('/api/whatsapp/enviar-lembrete', async (req, res) => {
+  console.log('[endpoint] POST /api/whatsapp/enviar-lembrete chamado', {
+    body: req.body,
+    timestamp: new Date().toISOString(),
+  });
+  try {
+    const empresaId = Number(req.body?.empresaId);
+    const agendamentoId = Number(req.body?.agendamentoId);
+    const tipo = String(req.body?.tipo || 'LEMBRETE_CLIENTE').trim().toUpperCase();
+    const telefone = String(req.body?.telefone || '').trim();
+    if (!empresaId || !agendamentoId) {
+      return res.status(400).json({ sucesso: false, erro: 'VALIDACAO', mensagem: 'empresaId e agendamentoId sao obrigatorios.' });
+    }
+    if (!telefone) {
+      return res.status(400).json({ sucesso: false, erro: 'TELEFONE_INVALIDO', mensagem: 'Telefone inválido.' });
+    }
+
+    const mensagem = String(req.body?.mensagem || '').trim();
+    if (!mensagem) {
+      return res.status(400).json({ sucesso: false, erro: 'MENSAGEM_INVALIDA', mensagem: 'Mensagem obrigatoria.' });
+    }
+
+    const envio = await enviarMensagemEmpresa(empresaId, telefone, mensagem);
+    try {
+      await backendHttp.post('/api/internal/whatsapp/marcar-lembrete-enviado', {
+        agendamentoId,
+        tipo,
+      });
+    } catch (error) {
+      console.warn('[Reminder] falha ao marcar enviado no backend:', error.message);
+      return res.status(502).json({
+        sucesso: false,
+        erro: 'FALHA_BAIXO_NIVEL',
+        mensagem: 'Mensagem enviada, mas nao foi possivel confirmar no backend.',
+      });
+    }
+
+    console.log('[Reminder] enviado com sucesso', {
+      empresaId,
+      agendamentoId,
+      tipo,
+      telefone,
+    });
+
+    return res.status(200).json({ sucesso: true, status: envio?.status || 'enviado' });
+  } catch (error) {
+    console.error('[Reminder] erro ao enviar lembrete:', error.message);
+    return res.status(500).json({ sucesso: false, erro: 'ERRO_INTERNO', mensagem: error.message || 'Falha ao enviar lembrete.' });
+  }
+});
+
+app.post('/payment-owner-reminder', async (req, res) => {
+  try {
+    const empresaId = Number(req.body?.empresaId);
+    const agendamentoId = Number(req.body?.agendamentoId);
+    const segundoLembrete = Boolean(req.body?.segundoLembrete);
+    const mensagem = String(req.body?.mensagem || '').trim();
+    if (!empresaId || !agendamentoId) {
+      return res.status(400).json({
+        success: false,
+        erro: 'VALIDACAO',
+        message: 'empresaId e agendamentoId sao obrigatorios.',
+      });
+    }
+    if (!mensagem) {
+      return res.status(400).json({
+        success: false,
+        erro: 'VALIDACAO',
+        message: 'Mensagem obrigatoria.',
+      });
+    }
+
+    console.log('[bot-pagamento-dono] lembrete recebido', {
+      empresaId,
+      agendamentoId,
+      segundoLembrete,
+    });
+
+    const response = await enviarMensagemParaProprioNumeroEmpresa(empresaId, mensagem);
+    registrarConfirmacaoPagamentoDono({
+      empresaId,
+      telefone: response.phone,
+      remoteJid: response.remoteJid,
+      agendamentoId,
+      protocolo: String(req.body?.protocolo || '').trim(),
+      clienteNome: req.body?.clienteNome || '',
+      clienteTelefone: req.body?.clienteTelefone || '',
+      servicoNome: req.body?.servicoNome || '',
+      profissionalNome: req.body?.profissionalNome || '',
+      data: req.body?.data || null,
+      horario: req.body?.horario || null,
+      segundoLembrete,
+    });
+
+    console.log('[bot-pagamento-dono] enviado para proprio numero', {
+      empresaId,
+      agendamentoId,
+      segundoLembrete,
+    });
+
+    return res.status(200).json({ success: true, status: 'enviado' });
+  } catch (error) {
+    console.warn('[Bot-Service] payment owner reminder failed:', error.message);
+    return res.status(400).json({ success: false, message: error.message || 'Não foi possível enviar a confirmação de pagamento.' });
+  }
+});
+
+app.post('/webhook/agendamento', async (_req, res) => {
+  res.status(200).json({ status: 'ok' });
+});
+
+const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+
+console.log('[cleanup] iniciado cleanup automático de conversas (TTL: 24h)');
+setInterval(() => {
+  try {
+    limparConversasExpiradas();
+  } catch (error) {
+    console.warn('[cleanup] falha ao executar limpeza automática de conversas:', error.message);
+  }
+}, 60 * 60 * 1000).unref?.();
+
+
+app.listen(port, () => {
+  console.log(`[Bot-Service] running on port ${port}`);
+  restaurarSessoesPersistidas().catch((error) => {
+    console.warn('[Bot-Service] falha ao restaurar sessoes ativas no boot:', error.message);
+  });
+});
+
+
+
+

@@ -1,0 +1,1355 @@
+/* =============================================
+   PANEL THEME - Flat Dark Design
+   Internal panel only (.app-shell scoped)
+   ============================================= */
+
+/* --- Base layout --- */
+.app-shell {
+  background: #111214 !important;
+}
+
+.app-shell,
+.app-shell * {
+  font-family: 'Poppins', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+/* --- AnimatedBackground: disable gradients/glow --- */
+.app-shell .animated-background,
+.app-shell .bg-sheen,
+.app-shell .bg-sheen-1,
+.app-shell .bg-sheen-2,
+.app-shell .bg-sheen-3,
+.app-shell .bg-grid,
+.app-shell .bg-radial,
+.app-shell .radial-1,
+.app-shell .radial-2,
+.app-shell .radial-3,
+.app-shell .bg-streak {
+  display: none !important;
+}
+
+/* --- Sidebar --- */
+.app-shell .sidebar {
+  background: #111111 !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
+  box-shadow: none !important;
+}
+
+.app-shell .sidebar::before,
+.app-shell .sidebar::after {
+  display: none !important;
+}
+
+/* --- Topbar --- */
+.app-shell .topbar,
+.app-shell .app-main .topbar {
+  background: #111214 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+.app-shell .topbar::before,
+.app-shell .topbar::after {
+  display: none !important;
+}
+
+/* --- Content area --- */
+.app-shell .content,
+.app-shell .app-main,
+.app-shell .page,
+.app-shell .page-full {
+  background: #111214 !important;
+}
+
+/* --- Metric cards / panels --- */
+.app-shell .metric-card,
+.app-shell .panel,
+.app-shell .panel-glow,
+.app-shell .dashboard-summary-card,
+.app-shell .settings-card,
+.app-shell .client-panel,
+.app-shell .table-wrap,
+.app-shell .chat-layout,
+.app-shell .conversation-list,
+.app-shell .chat-center,
+.app-shell .schedule-card,
+.app-shell .plan-card,
+.app-shell .booking-qr-card,
+.app-shell .settings-form-panel,
+.app-shell .booking-link-panel,
+.app-shell .support-ticket-item,
+.app-shell .schedule-day-card,
+.app-shell .first-steps-card,
+.app-shell .first-step,
+.app-shell .delivery-mini,
+.app-shell .whatsapp-official-card,
+.app-shell .account-card,
+.app-shell .payments-plan-panel,
+.app-shell .placeholder-panel,
+.app-shell .receita-chart-panel,
+.app-shell .report-filters {
+  background: rgba(17, 17, 17, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  border-radius: 12px !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* Remove all green glows, sweeps, and radial gradients from cards */
+.app-shell .metric-card::before,
+.app-shell .metric-card::after,
+.app-shell .panel::before,
+.app-shell .panel::after,
+.app-shell .dashboard-summary-card::before,
+.app-shell .dashboard-summary-card::after {
+  display: none !important;
+}
+
+/* --- Dropdowns --- */
+.app-shell .dropdown-panel,
+.app-shell .notification-panel,
+.app-shell .account-panel {
+  background: rgba(17, 17, 17, 0.70) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.app-shell .demo-pill,
+.app-shell .topbar-link,
+.app-shell .user-menu,
+.app-shell .icon-btn,
+.app-shell .btn-secondary,
+.app-shell .schedule-actions .btn-action-card,
+.app-shell .search-shell,
+.app-shell .filters,
+.app-shell .delivery-search,
+.app-shell .report-filters {
+  background: #111214 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* --- User menu avatar --- */
+.app-shell .user-menu > span {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* --- Inputs --- */
+.app-shell .content input,
+.app-shell .content select,
+.app-shell .content textarea,
+.app-shell .content .search-shell input {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+  color: #ffffff !important;
+}
+
+/* --- Texts --- */
+.app-shell .topbar strong,
+.app-shell .page-title h1,
+.app-shell .page-title p {
+  color: #ffffff !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .metric-card small,
+.app-shell .metric-card span:not([class]),
+.app-shell .topbar span,
+.app-shell .user-menu small {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+.app-shell .metric-card strong,
+.app-shell .dashboard-summary-card strong {
+  color: #ffffff !important;
+}
+
+/* Section labels: green */
+.app-shell .section-kicker,
+.app-shell .panel-head h2,
+.app-shell .settings-card-text,
+.app-shell .conversation-list h2,
+.app-shell .client-panel h2,
+.app-shell .plan-card h2,
+.app-shell .schedule-card span strong {
+  color: #42f569 !important;
+}
+
+/* Secondary text */
+.app-shell .content p,
+.app-shell .content .muted,
+.app-shell .ranking small {
+  color: rgba(255, 255, 255, 0.45) !important;
+}
+
+/* --- Dividers --- */
+.app-shell .settings-meta-list div,
+.app-shell .plan-summary,
+.app-shell .ranking div,
+.app-shell .mini-row,
+.app-shell .chat-header,
+.app-shell .chat-actions,
+.app-shell .message-form,
+.app-shell .schedule-day-head {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* --- Tables --- */
+.app-shell .data-table th,
+.app-shell .data-table td {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* --- Buttons --- */
+.app-shell .btn,
+.app-shell .btn-primary,
+.app-shell .btn-secondary {
+  border-radius: 10px !important;
+}
+
+/* --- Chat layout --- */
+.app-shell .chat-layout {
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+}
+
+.app-shell .conversation-list,
+.app-shell .chat-center {
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+
+/* --- Dashboard hero --- */
+.app-shell .dashboard-hero {
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* --- Planos / pricing cards inside panel --- */
+.app-shell .pricing-card {
+  background: rgba(17, 17, 17, 0.62) !important;
+  backdrop-filter: blur(18px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.10) !important;
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+/* --- Green accents: keep untouched --- */
+/* #42f569 icons, badges, buttons, highlights remain as-is */
+
+/* =============================================
+   Internal panel light/dark variables
+   Landing, login and public pages stay outside .app-shell.
+   ============================================= */
+:root {
+  --brand-green: #42f569;
+  --sidebar-bg: #07090b;
+}
+
+:root[data-theme='dark'] {
+  --panel-app-bg: #111214;
+  --panel-surface-bg: rgba(17, 17, 17, 0.62);
+  --panel-solid-bg: #111214;
+  --panel-card-bg: rgba(17, 17, 17, 0.62);
+  --panel-dropdown-bg: rgba(17, 17, 17, 0.70);
+  --panel-input-bg: rgba(255, 255, 255, 0.05);
+  --panel-text-primary: #ffffff;
+  --panel-text-secondary: rgba(255, 255, 255, 0.58);
+  --panel-text-muted: rgba(255, 255, 255, 0.45);
+  --panel-border-color: rgba(255, 255, 255, 0.10);
+  --panel-border-soft: rgba(255, 255, 255, 0.06);
+  --panel-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  --panel-control-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --panel-app-bg: #f7f8fa;
+  --panel-surface-bg: #ffffff;
+  --panel-solid-bg: #ffffff;
+  --panel-card-bg: #ffffff;
+  --panel-dropdown-bg: #ffffff;
+  --panel-input-bg: #ffffff;
+  --panel-text-primary: #111827;
+  --panel-text-secondary: #4b5563;
+  --panel-text-muted: #6b7280;
+  --panel-border-color: #e5e7eb;
+  --panel-border-soft: #eef0f4;
+  --panel-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
+  --panel-control-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
+}
+
+.app-shell .theme-toggle-menu {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--panel-text-primary);
+  text-align: left;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.app-shell .theme-toggle-menu:hover {
+  background: rgba(66, 245, 105, 0.10);
+  color: var(--brand-green);
+}
+
+:root[data-theme='light'] .app-shell {
+  background: var(--panel-app-bg) !important;
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .sidebar {
+  background: var(--sidebar-bg) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .sidebar,
+:root[data-theme='light'] .app-shell .sidebar * {
+  color: #ffffff;
+}
+
+:root[data-theme='light'] .app-shell .sidebar nav a.active,
+:root[data-theme='light'] .app-shell .sidebar nav a:hover {
+  color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar,
+:root[data-theme='light'] .app-shell .app-main .topbar,
+:root[data-theme='light'] .app-shell .content,
+:root[data-theme='light'] .app-shell .app-main,
+:root[data-theme='light'] .app-shell .page,
+:root[data-theme='light'] .app-shell .page-full {
+  background: var(--panel-app-bg) !important;
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar,
+:root[data-theme='light'] .app-shell .app-main .topbar {
+  background: var(--panel-solid-bg) !important;
+  border-bottom: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-control-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar > div:first-child,
+:root[data-theme='light'] .app-shell .topbar > div:first-child * {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar strong {
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar span,
+:root[data-theme='light'] .app-shell .topbar-link,
+:root[data-theme='light'] .app-shell .demo-pill,
+:root[data-theme='light'] .app-shell .user-menu strong,
+:root[data-theme='light'] .app-shell .user-menu small {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar .section-kicker,
+:root[data-theme='light'] .app-shell .topbar-link:hover,
+:root[data-theme='light'] .app-shell .account-panel a:hover,
+:root[data-theme='light'] .app-shell .account-panel button:hover {
+  color: var(--brand-green) !important;
+  -webkit-text-fill-color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .metric-card,
+:root[data-theme='light'] .app-shell .panel,
+:root[data-theme='light'] .app-shell .panel-glow,
+:root[data-theme='light'] .app-shell .dashboard-summary-card,
+:root[data-theme='light'] .app-shell .settings-card,
+:root[data-theme='light'] .app-shell .client-panel,
+:root[data-theme='light'] .app-shell .table-wrap,
+:root[data-theme='light'] .app-shell .chat-layout,
+:root[data-theme='light'] .app-shell .conversation-list,
+:root[data-theme='light'] .app-shell .chat-center,
+:root[data-theme='light'] .app-shell .schedule-card,
+:root[data-theme='light'] .app-shell .plan-card,
+:root[data-theme='light'] .app-shell .booking-qr-card,
+:root[data-theme='light'] .app-shell .settings-form-panel,
+:root[data-theme='light'] .app-shell .booking-link-panel,
+:root[data-theme='light'] .app-shell .support-ticket-item,
+:root[data-theme='light'] .app-shell .schedule-day-card,
+:root[data-theme='light'] .app-shell .first-steps-card,
+:root[data-theme='light'] .app-shell .first-step,
+:root[data-theme='light'] .app-shell .delivery-mini,
+:root[data-theme='light'] .app-shell .whatsapp-official-card,
+:root[data-theme='light'] .app-shell .account-card,
+:root[data-theme='light'] .app-shell .payments-plan-panel,
+:root[data-theme='light'] .app-shell .placeholder-panel,
+:root[data-theme='light'] .app-shell .receita-chart-panel,
+:root[data-theme='light'] .app-shell .report-filters,
+:root[data-theme='light'] .app-shell .dashboard-hero,
+:root[data-theme='light'] .app-shell .pricing-card {
+  background: var(--panel-card-bg) !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme='light'] .app-shell .dropdown-panel,
+:root[data-theme='light'] .app-shell .notification-panel,
+:root[data-theme='light'] .app-shell .account-panel {
+  background: var(--panel-dropdown-bg) !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme='light'] .app-shell .demo-pill,
+:root[data-theme='light'] .app-shell .topbar-link,
+:root[data-theme='light'] .app-shell .user-menu,
+:root[data-theme='light'] .app-shell .icon-btn,
+:root[data-theme='light'] .app-shell .btn-secondary,
+:root[data-theme='light'] .app-shell .schedule-actions .btn-action-card,
+:root[data-theme='light'] .app-shell .search-shell,
+:root[data-theme='light'] .app-shell .filters,
+:root[data-theme='light'] .app-shell .delivery-search,
+:root[data-theme='light'] .app-shell .report-filters {
+  background: var(--panel-solid-bg) !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  box-shadow: var(--panel-control-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .content input,
+:root[data-theme='light'] .app-shell .content select,
+:root[data-theme='light'] .app-shell .content textarea,
+:root[data-theme='light'] .app-shell .content .search-shell input,
+:root[data-theme='light'] .app-shell .agenda-search-field input {
+  background: var(--panel-input-bg) !important;
+  border-color: var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] .app-shell .content input::placeholder,
+:root[data-theme='light'] .app-shell .content textarea::placeholder,
+:root[data-theme='light'] .app-shell .content .search-shell input::placeholder,
+:root[data-theme='light'] .app-shell .agenda-search-field input::placeholder {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar strong,
+:root[data-theme='light'] .app-shell .page-title h1,
+:root[data-theme='light'] .app-shell .page-title p,
+:root[data-theme='light'] .app-shell .metric-card strong,
+:root[data-theme='light'] .app-shell .dashboard-summary-card strong,
+:root[data-theme='light'] .app-shell .panel h2,
+:root[data-theme='light'] .app-shell .panel-head h2,
+:root[data-theme='light'] .app-shell .conversation-list h2,
+:root[data-theme='light'] .app-shell .client-panel h2,
+:root[data-theme='light'] .app-shell .client-panel h3,
+:root[data-theme='light'] .app-shell .plan-card h2,
+:root[data-theme='light'] .app-shell .settings-card h2,
+:root[data-theme='light'] .app-shell .schedule-card span strong,
+:root[data-theme='light'] .app-shell .data-table td,
+:root[data-theme='light'] .app-shell .mini-row strong,
+:root[data-theme='light'] .app-shell .ranking strong {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .section-kicker,
+:root[data-theme='light'] .app-shell .plan-price,
+:root[data-theme='light'] .app-shell .plan-price-extra,
+:root[data-theme='light'] .app-shell .topbar-link:hover,
+:root[data-theme='light'] .app-shell .account-panel a:hover,
+:root[data-theme='light'] .app-shell .account-panel button:hover {
+  color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .metric-card small,
+:root[data-theme='light'] .app-shell .metric-card span:not([class]),
+:root[data-theme='light'] .app-shell .topbar span,
+:root[data-theme='light'] .app-shell .user-menu small,
+:root[data-theme='light'] .app-shell .content p,
+:root[data-theme='light'] .app-shell .content .muted,
+:root[data-theme='light'] .app-shell .ranking small,
+:root[data-theme='light'] .app-shell .content small,
+:root[data-theme='light'] .app-shell .settings-card-muted,
+:root[data-theme='light'] .app-shell .settings-meta-list span,
+:root[data-theme='light'] .app-shell .schedule-info small,
+:root[data-theme='light'] .app-shell .schedule-time small,
+:root[data-theme='light'] .app-shell .mini-row span,
+:root[data-theme='light'] .app-shell .client-panel dt,
+:root[data-theme='light'] .app-shell .client-panel span,
+:root[data-theme='light'] .app-shell .data-table th,
+:root[data-theme='light'] .app-shell .agenda-search-helper,
+:root[data-theme='light'] .app-shell .agenda-search-helper .field-hint {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .settings-meta-list div,
+:root[data-theme='light'] .app-shell .plan-summary,
+:root[data-theme='light'] .app-shell .ranking div,
+:root[data-theme='light'] .app-shell .mini-row,
+:root[data-theme='light'] .app-shell .chat-header,
+:root[data-theme='light'] .app-shell .chat-actions,
+:root[data-theme='light'] .app-shell .message-form,
+:root[data-theme='light'] .app-shell .schedule-day-head,
+:root[data-theme='light'] .app-shell .data-table th,
+:root[data-theme='light'] .app-shell .data-table td,
+:root[data-theme='light'] .app-shell .conversation-list,
+:root[data-theme='light'] .app-shell .chat-center {
+  border-color: var(--panel-border-soft) !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table thead,
+:root[data-theme='light'] .app-shell .data-table tbody tr:hover,
+:root[data-theme='light'] .app-shell .conversation-item:hover,
+:root[data-theme='light'] .app-shell .conversation-item.active {
+  background: #f3f4f6 !important;
+}
+
+:root[data-theme='light'] .app-shell .user-menu > span {
+  background: #111827 !important;
+  color: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .user-menu div strong {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+}
+
+:root[data-theme='light'] .app-shell .user-menu div small {
+  font-size: 11px !important;
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .status {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .status-dot {
+  color: currentColor !important;
+}
+
+:root[data-theme='light'] .app-shell .status-ativo,
+:root[data-theme='light'] .app-shell .status-aprovado,
+:root[data-theme='light'] .app-shell .status-pago,
+:root[data-theme='light'] .app-shell .status-confirmado,
+:root[data-theme='light'] .app-shell .status-emitida,
+:root[data-theme='light'] .app-shell .status-entregue,
+:root[data-theme='light'] .app-shell .status-aberta,
+:root[data-theme='light'] .app-shell .status-online,
+:root[data-theme='light'] .app-shell .status-finalizado {
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.22) !important;
+}
+
+:root[data-theme='light'] .app-shell .status-pendente,
+:root[data-theme='light'] .app-shell .status-pendente-pagamento,
+:root[data-theme='light'] .app-shell .status-payment-pending,
+:root[data-theme='light'] .app-shell .status-payment-approved {
+  color: #c2410c !important;
+  -webkit-text-fill-color: #c2410c !important;
+  background: rgba(251, 146, 60, 0.12) !important;
+  border-color: rgba(251, 146, 60, 0.22) !important;
+}
+
+:root[data-theme='light'] .app-shell .status-reprovada,
+:root[data-theme='light'] .app-shell .status-reprovado,
+:root[data-theme='light'] .app-shell .status-cancelado,
+:root[data-theme='light'] .app-shell .status-cancelada,
+:root[data-theme='light'] .app-shell .status-inativo,
+:root[data-theme='light'] .app-shell .status-finalizada,
+:root[data-theme='light'] .app-shell .status-offline,
+:root[data-theme='light'] .app-shell .status-payment-rejected,
+:root[data-theme='light'] .app-shell .status-payment-canceled,
+:root[data-theme='light'] .app-shell .status-payment-expired {
+  color: #b91c1c !important;
+  -webkit-text-fill-color: #b91c1c !important;
+  background: rgba(239, 68, 68, 0.10) !important;
+  border-color: rgba(239, 68, 68, 0.20) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-official-card,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel,
+:root[data-theme='light'] .app-shell .whatsapp-config-panel,
+:root[data-theme='light'] .app-shell .whatsapp-inline-feedback,
+:root[data-theme='light'] .app-shell .whatsapp-official-alert,
+:root[data-theme='light'] .app-shell .whatsapp-ai-note {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-official-card h1,
+:root[data-theme='light'] .app-shell .whatsapp-official-card > p,
+:root[data-theme='light'] .app-shell .whatsapp-official-card span,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel h2,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel p,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel strong,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel span,
+:root[data-theme='light'] .app-shell .whatsapp-status-note,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code span,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code strong,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code-value,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-status span {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-official-card .form-error,
+:root[data-theme='light'] .app-shell .whatsapp-official-card .success-text,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel .form-error,
+:root[data-theme='light'] .app-shell .whatsapp-connected-panel .success-text {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-status-pill {
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.22) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-connected-badge {
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.22) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-status-icon {
+  background: rgba(34, 197, 94, 0.12) !important;
+  color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
+:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field-hint,
+:root[data-theme='light'] .app-shell .whatsapp-speeches-grid .field span,
+:root[data-theme='light'] .app-shell .whatsapp-speeches-grid .field-hint,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code span,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-status .whatsapp-status-pill {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-tutorial,
+:root[data-theme='light'] .app-shell .whatsapp-requirements {
+  background: #f8fafc !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-tutorial strong {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-requirements,
+:root[data-theme='light'] .app-shell .whatsapp-requirements li {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code span {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-pairing-code strong {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-status-note {
+  color: var(--brand-green) !important;
+  -webkit-text-fill-color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary,
+:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost {
+  color: var(--panel-text-primary) !important;
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary:hover,
+:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost:hover {
+  background: #f9fafb !important;
+}
+
+/* WhatsApp light-theme hard reset: covers late global.css dark overrides. */
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card h1,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card > p,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card span,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card strong,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card li,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card label {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-note,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .field-hint,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .form-error,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .success-text,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements li {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill {
+  background: #f8fafc !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-connected-badge,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-icon {
+  color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code strong,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code-value {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-code-placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements {
+  background: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements strong,
+:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements li::marker {
+  color: var(--brand-green) !important;
+}
+
+/* WhatsApp chat area in light theme */
+:root[data-theme='light'] .app-shell .chat-layout,
+:root[data-theme='light'] .app-shell .conversation-list,
+:root[data-theme='light'] .app-shell .chat-center,
+:root[data-theme='light'] .app-shell .client-panel {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .conversation-list h2,
+:root[data-theme='light'] .app-shell .chat-header strong,
+:root[data-theme='light'] .app-shell .client-panel h2,
+:root[data-theme='light'] .app-shell .client-panel h3 {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .conversation-list span,
+:root[data-theme='light'] .app-shell .conversation-empty,
+:root[data-theme='light'] .app-shell .client-panel span,
+:root[data-theme='light'] .app-shell .client-panel p,
+:root[data-theme='light'] .app-shell .chat-header span,
+:root[data-theme='light'] .app-shell .chat-center span {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .conversation {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-soft) !important;
+}
+
+:root[data-theme='light'] .app-shell .conversation:hover,
+:root[data-theme='light'] .app-shell .conversation.active {
+  background: #f3f4f6 !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .conversation .conversation-name,
+:root[data-theme='light'] .app-shell .conversation strong,
+:root[data-theme='light'] .app-shell .conversation p,
+:root[data-theme='light'] .app-shell .chat-message p,
+:root[data-theme='light'] .app-shell .chat-message span {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-header,
+:root[data-theme='light'] .app-shell .chat-actions,
+:root[data-theme='light'] .app-shell .message-form {
+  background: #ffffff !important;
+  border-color: var(--panel-border-soft) !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-body {
+  background: #f8fafc !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-message {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-message.mine {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border-color: rgba(34, 197, 94, 0.20) !important;
+  color: #14532d !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-message.theirs {
+  background: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .client-panel dt {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .client-panel dd {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-actions .btn-secondary,
+:root[data-theme='light'] .app-shell .chat-actions .btn-ghost,
+:root[data-theme='light'] .app-shell .message-form .btn-secondary,
+:root[data-theme='light'] .app-shell .message-form .btn-ghost {
+  background: #ffffff !important;
+  border-color: var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .account-card {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .account-card h2,
+:root[data-theme='light'] .app-shell .account-card p,
+:root[data-theme='light'] .app-shell .account-card .account-badges,
+:root[data-theme='light'] .app-shell .account-card .account-badges .status {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .account-card .account-badges .status {
+  color: var(--panel-text-primary) !important;
+  background: #f8fafc !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .agenda-empty-state {
+  background: linear-gradient(180deg, #ffffff, #f8fafc) !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  box-shadow: var(--panel-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .agenda-empty-state strong {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .agenda-empty-state p {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-time strong,
+:root[data-theme='light'] .app-shell .schedule-info span,
+:root[data-theme='light'] .app-shell .schedule-info svg,
+:root[data-theme='light'] .app-shell .schedule-icon-box .client-initials {
+  color: #111827 !important;
+  -webkit-text-fill-color: #111827 !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-time small,
+:root[data-theme='light'] .app-shell .schedule-info small {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card .status {
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card .status-ativo,
+:root[data-theme='light'] .app-shell .schedule-card .status-aprovado,
+:root[data-theme='light'] .app-shell .schedule-card .status-pago,
+:root[data-theme='light'] .app-shell .schedule-card .status-confirmado,
+:root[data-theme='light'] .app-shell .schedule-card .status-emitida,
+:root[data-theme='light'] .app-shell .schedule-card .status-entregue,
+:root[data-theme='light'] .app-shell .schedule-card .status-aberta,
+:root[data-theme='light'] .app-shell .schedule-card .status-online,
+:root[data-theme='light'] .app-shell .schedule-card .status-finalizado {
+  color: #166534 !important;
+  -webkit-text-fill-color: #166534 !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card .status-pendente,
+:root[data-theme='light'] .app-shell .schedule-card .status-pendente-pagamento,
+:root[data-theme='light'] .app-shell .schedule-card .status-payment-pending,
+:root[data-theme='light'] .app-shell .schedule-card .status-payment-approved {
+  color: #c2410c !important;
+  -webkit-text-fill-color: #c2410c !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card .status-reprovada,
+:root[data-theme='light'] .app-shell .schedule-card .status-reprovado,
+:root[data-theme='light'] .app-shell .schedule-card .status-cancelado,
+:root[data-theme='light'] .app-shell .schedule-card .status-cancelada,
+:root[data-theme='light'] .app-shell .schedule-card .status-inativo,
+:root[data-theme='light'] .app-shell .schedule-card .status-finalizada,
+:root[data-theme='light'] .app-shell .schedule-card .status-offline,
+:root[data-theme='light'] .app-shell .schedule-card .status-payment-rejected,
+:root[data-theme='light'] .app-shell .schedule-card .status-payment-canceled,
+:root[data-theme='light'] .app-shell .schedule-card .status-payment-expired {
+  color: #b91c1c !important;
+  -webkit-text-fill-color: #b91c1c !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-icon-box.status-pendente,
+:root[data-theme='light'] .app-shell .schedule-icon-box.status-confirmado,
+:root[data-theme='light'] .app-shell .schedule-icon-box.status-finalizado,
+:root[data-theme='light'] .app-shell .schedule-icon-box.status-cancelado {
+  background: rgba(34, 197, 94, 0.12) !important;
+  border: 1px solid rgba(34, 197, 94, 0.18) !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-icon-box.status-cancelado {
+  background: rgba(239, 68, 68, 0.10) !important;
+  border-color: rgba(239, 68, 68, 0.18) !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-icon-box .client-initials {
+  font-weight: 800 !important;
+}
+
+:root[data-theme='light'] .app-shell .modal,
+:root[data-theme='light'] .app-shell .modal-content,
+:root[data-theme='light'] .app-shell .modal-panel {
+  background: var(--panel-card-bg) !important;
+  color: var(--panel-text-primary) !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+/* Light theme contrast fixes for internal operational screens only. */
+:root[data-theme='light'] .app-shell .agenda-search-label,
+:root[data-theme='light'] .app-shell .field > span,
+:root[data-theme='light'] .app-shell .field label {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .field-hint,
+:root[data-theme='light'] .app-shell .field-hint strong,
+:root[data-theme='light'] .app-shell .search-shell .field-hint,
+:root[data-theme='light'] .app-shell .filters .field-hint,
+:root[data-theme='light'] .app-shell .report-filters .field-hint {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel button,
+:root[data-theme='light'] .app-shell .dropdown-panel a,
+:root[data-theme='light'] .app-shell .dropdown-panel button,
+:root[data-theme='light'] .app-shell .dropdown-panel span {
+  color: var(--panel-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel button svg,
+:root[data-theme='light'] .app-shell .dropdown-panel a svg,
+:root[data-theme='light'] .app-shell .dropdown-panel button svg {
+  color: var(--panel-text-muted) !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel button:hover,
+:root[data-theme='light'] .app-shell .dropdown-panel a:hover,
+:root[data-theme='light'] .app-shell .dropdown-panel button:hover {
+  background: rgba(66, 245, 105, 0.10) !important;
+  color: #0f172a !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel button:disabled {
+  color: #cbd5e1 !important;
+  background: transparent !important;
+  cursor: not-allowed !important;
+}
+
+:root[data-theme='light'] .app-shell .action-menu-panel button:disabled svg {
+  color: #d1d5db !important;
+}
+
+:root[data-theme='light'] .app-shell .action-danger {
+  color: #dc2626 !important;
+}
+
+:root[data-theme='light'] .app-shell .content .schedule-actions .btn-action-card,
+:root[data-theme='light'] .app-shell .content .schedule-actions .action-menu-btn {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .schedule-actions .btn-action-card svg,
+:root[data-theme='light'] .app-shell .content .schedule-actions .action-menu-btn svg {
+  color: #64748b !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme='light'] .app-shell .content .schedule-actions .btn-action-card:hover,
+:root[data-theme='light'] .app-shell .content .schedule-actions .action-menu-btn:hover {
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.10) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .schedule-actions .btn-action-card:disabled {
+  opacity: 1 !important;
+  background: #f8fafc !important;
+  border-color: #e5e7eb !important;
+  color: #9ca3af !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] .app-shell .content .schedule-actions .btn-action-card:disabled svg {
+  color: #cbd5e1 !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-info span,
+:root[data-theme='light'] .app-shell .schedule-time strong,
+:root[data-theme='light'] .app-shell .schedule-info svg {
+  color: var(--panel-text-primary) !important;
+  stroke: currentColor !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-info small,
+:root[data-theme='light'] .app-shell .schedule-time small {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .table-wrap {
+  overflow: visible !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table thead {
+  background: #f3f4f6 !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table th {
+  color: #6b7280 !important;
+  border-bottom: 1px solid var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table td,
+:root[data-theme='light'] .app-shell .data-table td *,
+:root[data-theme='light'] .app-shell .cell-truncate {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table td small,
+:root[data-theme='light'] .app-shell .data-table td .muted {
+  color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table tbody tr {
+  background: #ffffff !important;
+  border-color: var(--panel-border-soft) !important;
+}
+
+:root[data-theme='light'] .app-shell .data-table tbody tr:hover {
+  background: #f9fafb !important;
+}
+
+:root[data-theme='light'] .app-shell .avatar {
+  background: #111827 !important;
+  color: #ffffff !important;
+  border: 1px solid #e5e7eb !important;
+}
+
+:root[data-theme='light'] .app-shell .status {
+  color: inherit;
+}
+
+/* Final light-theme text sweep: fixes white text inherited from dark overrides. */
+:root[data-theme='light'] .app-shell .content,
+:root[data-theme='light'] .app-shell .content *:not(.sidebar *):not(.status):not(.status *):not(.btn-primary):not(.btn-primary *):not(.avatar):not(.avatar *) {
+  text-shadow: none !important;
+}
+
+:root[data-theme='light'] .app-shell .content h1,
+:root[data-theme='light'] .app-shell .content h2,
+:root[data-theme='light'] .app-shell .content h3,
+:root[data-theme='light'] .app-shell .content h4,
+:root[data-theme='light'] .app-shell .content strong,
+:root[data-theme='light'] .app-shell .content b,
+:root[data-theme='light'] .app-shell .content label,
+:root[data-theme='light'] .app-shell .content .field span,
+:root[data-theme='light'] .app-shell .content .panel-head h2,
+:root[data-theme='light'] .app-shell .content .settings-card h2,
+:root[data-theme='light'] .app-shell .content .settings-card-text,
+:root[data-theme='light'] .app-shell .content .name-cell-info strong,
+:root[data-theme='light'] .app-shell .content .cell-truncate,
+:root[data-theme='light'] .app-shell .content .schedule-day-head strong,
+:root[data-theme='light'] .app-shell .content .schedule-day-toggle strong,
+:root[data-theme='light'] .app-shell .content .schedule-info span,
+:root[data-theme='light'] .app-shell .content .schedule-time strong {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content p,
+:root[data-theme='light'] .app-shell .content small,
+:root[data-theme='light'] .app-shell .content .field-hint,
+:root[data-theme='light'] .app-shell .content .field-hint strong,
+:root[data-theme='light'] .app-shell .content .settings-card-muted,
+:root[data-theme='light'] .app-shell .content .schedule-day-head small,
+:root[data-theme='light'] .app-shell .content .schedule-day-toggle small,
+:root[data-theme='light'] .app-shell .content .schedule-info small,
+:root[data-theme='light'] .app-shell .content .schedule-time small,
+:root[data-theme='light'] .app-shell .content .data-table th,
+:root[data-theme='light'] .app-shell .content .plan-subtitle,
+:root[data-theme='light'] .app-shell .content .plan-description {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .section-kicker,
+:root[data-theme='light'] .app-shell .content .plan-price,
+:root[data-theme='light'] .app-shell .content .success-text {
+  color: var(--brand-green) !important;
+  -webkit-text-fill-color: var(--brand-green) !important;
+}
+
+:root[data-theme='light'] .app-shell .tag-list span,
+:root[data-theme='light'] .app-shell .content .plan-list strong,
+:root[data-theme='light'] .app-shell .content .recommended-badge {
+  background: rgba(66, 245, 105, 0.12) !important;
+  border: 1px solid rgba(66, 245, 105, 0.24) !important;
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-day-card,
+:root[data-theme='light'] .app-shell .schedule-day-card.is-active,
+:root[data-theme='light'] .app-shell .schedule-day-card.is-inactive {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-day-toggle input[type='checkbox'] {
+  accent-color: var(--brand-green);
+}
+
+:root[data-theme='light'] .app-shell .content input,
+:root[data-theme='light'] .app-shell .content select,
+:root[data-theme='light'] .app-shell .content textarea,
+:root[data-theme='light'] .app-shell .content .filters input,
+:root[data-theme='light'] .app-shell .content .filters select,
+:root[data-theme='light'] .app-shell .content .report-filters input,
+:root[data-theme='light'] .app-shell .content .report-filters select,
+:root[data-theme='light'] .app-shell .content .admin-filters select,
+:root[data-theme='light'] .app-shell .content .table-actions select {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content select option,
+:root[data-theme='light'] .app-shell .content select optgroup {
+  background: #ffffff !important;
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content input::placeholder,
+:root[data-theme='light'] .app-shell .content textarea::placeholder {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .data-table thead,
+:root[data-theme='light'] .app-shell .content .data-table thead tr {
+  background: #f3f4f6 !important;
+}
+
+:root[data-theme='light'] .app-shell .content .data-table th {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+}
+
+:root[data-theme='light'] .app-shell .content .data-table td {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .data-table td .name-cell-info strong,
+:root[data-theme='light'] .app-shell .content .data-table td .name-cell-info span,
+:root[data-theme='light'] .app-shell .content .data-table td .cell-truncate,
+:root[data-theme='light'] .app-shell .content .data-table td a {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .data-table td .name-cell-info small,
+:root[data-theme='light'] .app-shell .content .data-table td small {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .action-menu-panel,
+:root[data-theme='light'] .app-shell .content .dropdown-panel.action-menu-panel {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .action-menu-panel button {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  font-weight: 600 !important;
+}
+
+:root[data-theme='light'] .app-shell .content .action-menu-panel button:disabled,
+:root[data-theme='light'] .app-shell .content .action-menu-panel button:disabled * {
+  color: #cbd5e1 !important;
+  -webkit-text-fill-color: #cbd5e1 !important;
+}
+
+:root[data-theme='light'] .app-shell .content .avatar {
+  background: #111827 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .content .avatar * {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Light-theme final overrides for residual dark styles */
+:root[data-theme='light'] .app-shell .user-menu,
+:root[data-theme='light'] .app-shell .content .user-menu {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: var(--panel-control-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .user-menu > span,
+:root[data-theme='light'] .app-shell .content .user-menu > span {
+  background: #111827 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+:root[data-theme='light'] .app-shell .user-menu strong,
+:root[data-theme='light'] .app-shell .user-menu small,
+:root[data-theme='light'] .app-shell .content .user-menu strong,
+:root[data-theme='light'] .app-shell .content .user-menu small {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .btn-secondary,
+:root[data-theme='light'] .app-shell .btn-ghost,
+:root[data-theme='light'] .app-shell .content .btn-secondary,
+:root[data-theme='light'] .app-shell .content .btn-ghost {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  box-shadow: var(--panel-control-shadow) !important;
+}
+
+:root[data-theme='light'] .app-shell .btn-secondary:hover,
+:root[data-theme='light'] .app-shell .btn-ghost:hover,
+:root[data-theme='light'] .app-shell .content .btn-secondary:hover,
+:root[data-theme='light'] .app-shell .content .btn-ghost:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-header,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-title-block,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-controls,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-month-field {
+  background: #ffffff !important;
+  border-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-title-block h1,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-title-block p,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-month-field span {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-month-field input,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-refresh-btn {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-refresh-btn:hover {
+  background: #f9fafb !important;
+}
+
+:root[data-theme='light'] .app-shell .financeiro-page .data-table thead,
+:root[data-theme='light'] .app-shell .financeiro-page .data-table tbody tr,
+:root[data-theme='light'] .app-shell .financeiro-page .data-table th,
+:root[data-theme='light'] .app-shell .financeiro-page .data-table td {
+  background: #ffffff !important;
+  color: var(--panel-text-primary) !important;
+}

@@ -1,0 +1,28 @@
+﻿spring:
+  datasource:
+    url: jdbc:h2:mem:agendapro;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+
+app:
+  frontend-url: http://localhost:5173
+
+payment:
+  success-url: http://localhost:5173/sistema/planos
+  cancel-url: http://localhost:5173/sistema/planos
+
+whatsapp-service:
+  url: http://localhost:3000
+
+whatsapp:
+  internal-token: local-dev-whatsapp-token

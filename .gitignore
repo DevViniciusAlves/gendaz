@@ -1,0 +1,13 @@
+.idea/
+backend/target/
+backend/.run-*.log
+backend/.local-*.log
+backend/.env
+frontend/dist/
+frontend/node_modules/
+frontend/.env
+frontend/.run-*.log
+frontend/.local-*.log
+.env
+.DS_Store
+Thumbs.db

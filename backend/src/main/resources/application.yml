@@ -1,0 +1,56 @@
+﻿spring:
+  application:
+    name: agendapro
+  profiles:
+    default: dev
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=60s
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          lob:
+            non_contextual_creation: true
+
+server:
+  port: ${PORT:8080}
+
+app:
+  frontend-url: ${FRONTEND_URL:https://gendaz.site}
+  admin-notification-email: ${ADMIN_NOTIFICATION_EMAIL:viniciushf0360@gmail.com}
+
+payment:
+  provider: ${PAYMENT_PROVIDER:local}
+  api-key: ${PAYMENT_API_KEY:}
+  mercado-pago-access-token: ${MERCADO_PAGO_ACCESS_TOKEN:${PAYMENT_API_KEY:}}
+  mercado-pago-public-key: ${MERCADO_PAGO_PUBLIC_KEY:}
+  cakto-client-id: ${CAKTO_CLIENT_ID:}
+  cakto-client-secret: ${CAKTO_CLIENT_SECRET:}
+  cakto-webhook-secret: ${CAKTO_WEBHOOK_SECRET:${PAYMENT_WEBHOOK_SECRET:local-dev-webhook-secret}}
+  cakto-product-basico-id: ${CAKTO_PRODUCT_BASICO_ID:}
+  cakto-product-pro-id: ${CAKTO_PRODUCT_PRO_ID:}
+  cakto-offer-pro-id: ${CAKTO_OFFER_PRO_ID:}
+  cakto-checkout-basico-url: ${CAKTO_CHECKOUT_BASICO_URL:}
+  cakto-checkout-pro-url: ${CAKTO_CHECKOUT_PRO_URL:}
+  webhook-secret: ${PAYMENT_WEBHOOK_SECRET:local-dev-webhook-secret}
+  success-url: ${PAYMENT_SUCCESS_URL:https://gendaz.site/sistema/planos}
+  cancel-url: ${PAYMENT_CANCEL_URL:https://gendaz.site/sistema/planos}
+
+whatsapp-service:
+  url: ${WHATSAPP_SERVICE_URL:http://localhost:3000}
+
+whatsapp:
+  internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
+
+recaptcha:
+  secret-key: ${RECAPTCHA_SECRET_KEY:}
+  site-key: ${RECAPTCHA_SITE_KEY:}
+  verify-url: https://www.google.com/recaptcha/api/siteverify
+
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from-email: ${RESEND_FROM_EMAIL:no-reply@gendaz.site}
+  from-name: ${RESEND_FROM_NAME:Gendaz}
