@@ -5,7 +5,7 @@
 
 /* --- Base layout --- */
 .app-shell {
-  background: #111214 !important;
+  background: var(--bg) !important;
 }
 
 .app-shell,
@@ -44,7 +44,7 @@
 /* --- Topbar --- */
 .app-shell .topbar,
 .app-shell .app-main .topbar {
-  background: #111214 !important;
+  background: var(--bg) !important;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
 }
@@ -59,7 +59,7 @@
 .app-shell .app-main,
 .app-shell .page,
 .app-shell .page-full {
-  background: #111214 !important;
+  background: var(--bg) !important;
 }
 
 /* --- Metric cards / panels --- */
@@ -89,7 +89,7 @@
 .app-shell .placeholder-panel,
 .app-shell .receita-chart-panel,
 .app-shell .report-filters {
-  background: rgba(17, 17, 17, 0.62) !important;
+  background: var(--surface) !important;
   backdrop-filter: blur(18px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
@@ -132,7 +132,7 @@
 .app-shell .filters,
 .app-shell .delivery-search,
 .app-shell .report-filters {
-  background: #111214 !important;
+  background: var(--bg) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
 }
@@ -180,7 +180,7 @@
 .app-shell .client-panel h2,
 .app-shell .plan-card h2,
 .app-shell .schedule-card span strong {
-  color: #42f569 !important;
+  color: var(--color-primary) !important;
 }
 
 /* Secondary text */
@@ -239,7 +239,7 @@
 
 /* --- Planos / pricing cards inside panel --- */
 .app-shell .pricing-card {
-  background: rgba(17, 17, 17, 0.62) !important;
+  background: var(--surface) !important;
   backdrop-filter: blur(18px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
   border: 1px solid rgba(255, 255, 255, 0.10) !important;
@@ -256,21 +256,21 @@
    Landing, login and public pages stay outside .app-shell.
    ============================================= */
 :root {
-  --brand-green: #42f569;
-  --sidebar-bg: #07090b;
+  --brand-green: var(--color-primary);
+  --sidebar-bg: var(--color-sidebar-bg);
 }
 
 :root[data-theme='dark'] {
-  --panel-app-bg: #111214;
-  --panel-surface-bg: rgba(17, 17, 17, 0.62);
-  --panel-solid-bg: #111214;
-  --panel-card-bg: rgba(17, 17, 17, 0.62);
-  --panel-dropdown-bg: rgba(17, 17, 17, 0.70);
+  --panel-app-bg: var(--bg);
+  --panel-surface-bg: var(--surface);
+  --panel-solid-bg: var(--bg-strong);
+  --panel-card-bg: var(--surface);
+  --panel-dropdown-bg: var(--surface);
   --panel-input-bg: rgba(255, 255, 255, 0.05);
-  --panel-text-primary: #ffffff;
-  --panel-text-secondary: rgba(255, 255, 255, 0.58);
+  --panel-text-primary: var(--text);
+  --panel-text-secondary: var(--muted);
   --panel-text-muted: rgba(255, 255, 255, 0.45);
-  --panel-border-color: rgba(255, 255, 255, 0.10);
+  --panel-border-color: var(--line);
   --panel-border-soft: rgba(255, 255, 255, 0.06);
   --panel-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
   --panel-control-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
@@ -278,16 +278,16 @@
 
 :root[data-theme='light'] {
   color-scheme: light;
-  --panel-app-bg: #f7f8fa;
-  --panel-surface-bg: #ffffff;
-  --panel-solid-bg: #ffffff;
-  --panel-card-bg: #ffffff;
-  --panel-dropdown-bg: #ffffff;
+  --panel-app-bg: var(--bg);
+  --panel-surface-bg: var(--surface);
+  --panel-solid-bg: var(--bg-strong);
+  --panel-card-bg: var(--surface);
+  --panel-dropdown-bg: var(--surface);
   --panel-input-bg: #ffffff;
-  --panel-text-primary: #111827;
-  --panel-text-secondary: #4b5563;
+  --panel-text-primary: var(--text);
+  --panel-text-secondary: var(--muted);
   --panel-text-muted: #6b7280;
-  --panel-border-color: #e5e7eb;
+  --panel-border-color: var(--line);
   --panel-border-soft: #eef0f4;
   --panel-shadow: 0 14px 36px rgba(15, 23, 42, 0.08);
   --panel-control-shadow: 0 8px 22px rgba(15, 23, 42, 0.06);
@@ -309,7 +309,7 @@
 }
 
 .app-shell .theme-toggle-menu:hover {
-  background: rgba(66, 245, 105, 0.10);
+  background: rgba(var(--primary-rgb), 0.10);
   color: var(--brand-green);
 }
 
@@ -320,18 +320,18 @@
 
 :root[data-theme='light'] .app-shell .sidebar {
   background: var(--sidebar-bg) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: #ffffff !important;
+  border-right: 1px solid var(--line) !important;
+  color: var(--text) !important;
 }
 
 :root[data-theme='light'] .app-shell .sidebar,
 :root[data-theme='light'] .app-shell .sidebar * {
-  color: #ffffff;
+  color: var(--text);
 }
 
 :root[data-theme='light'] .app-shell .sidebar nav a.active,
 :root[data-theme='light'] .app-shell .sidebar nav a:hover {
-  color: var(--brand-green) !important;
+  color: var(--color-primary) !important;
 }
 
 :root[data-theme='light'] .app-shell .topbar,
@@ -1016,7 +1016,7 @@
 :root[data-theme='light'] .app-shell .action-menu-panel button:hover,
 :root[data-theme='light'] .app-shell .dropdown-panel a:hover,
 :root[data-theme='light'] .app-shell .dropdown-panel button:hover {
-  background: rgba(66, 245, 105, 0.10) !important;
+  background: rgba(var(--primary-rgb), 0.10) !important;
   color: #0f172a !important;
 }
 
@@ -1174,8 +1174,8 @@
 :root[data-theme='light'] .app-shell .tag-list span,
 :root[data-theme='light'] .app-shell .content .plan-list strong,
 :root[data-theme='light'] .app-shell .content .recommended-badge {
-  background: rgba(66, 245, 105, 0.12) !important;
-  border: 1px solid rgba(66, 245, 105, 0.24) !important;
+  background: rgba(var(--primary-rgb), 0.12) !important;
+  border: 1px solid rgba(var(--primary-rgb), 0.24) !important;
   color: #14532d !important;
   -webkit-text-fill-color: #14532d !important;
 }
