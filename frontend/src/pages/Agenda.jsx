@@ -1,17 +1,17 @@
-import { CalendarPlus, Check, Pencil, Power, RefreshCw, Trash } from 'lucide-react'
+import { CalendarPlus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
-import ScheduleCard from '../components/ScheduleCard.jsx'
-import ActionMenu from '../components/ActionMenu.jsx'
+import AgendaCard from '../components/AgendaCard.jsx'
 import Pagination from '../components/Pagination.jsx'
 import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { todayIso } from '../services/localStore.js'
+import '../styles/agenda.css'
 
 const PROFISSIONAL_AUTOMATICO_VALUE = 'atendimento-principal'
 const AGENDA_TIMEZONE = 'America/Cuiaba'
@@ -558,63 +558,33 @@ export default function Agenda() {
         />
       </div>
 
-      <div className="schedule-grid">
-        {erroAcao && <p className="form-error field-wide">{erroAcao}</p>}
+      <div className="agenda-card-grid">
+        {erroAcao && <p className="form-error" style={{ gridColumn: '1 / -1' }}>{erroAcao}</p>}
         {!agendamentosOrdenados.length && (
-          <div className="empty-state field-wide agenda-empty-state">
+          <div className="agenda-card-empty">
             <strong>Nenhum agendamento encontrado.</strong>
             <p>Ajuste os filtros ou a busca para visualizar os compromissos desta empresa.</p>
           </div>
         )}
         {agendamentosPaginados.map((agendamento) => (
-          <ScheduleCard
+          <AgendaCard
             key={agendamento.id}
             agendamento={agendamento}
-            leadingControl={selecionando ? (
-              <input
-                type="checkbox"
-                checked={selecionados.includes(agendamento.id)}
-                onChange={() => alternarSelecionado(agendamento.id)}
-                disabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
-                aria-label={`Selecionar agendamento ${agendamento.id}`}
-              />
-            ) : null}
-          >
-            <button
-              className="btn btn-secondary btn-action-card"
-              onClick={() => finalizarAtendimento(agendamento.id)}
-              disabled={agendamento.status === 'FINALIZADO' || agendamento.status === 'CANCELADO'}
-            >
-              <Check size={14} />
-              Finalizar
-            </button>
-            <ActionMenu
-              actions={[
-                { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(agendamento) },
-                {
-                  label: agendamento.status === 'CANCELADO' ? 'Ativar' : 'Desativar',
-                  icon: Power,
-                  onClick: () => setConfirmacao({
-                    titulo: agendamento.status === 'CANCELADO' ? 'Ativar agendamento' : 'Cancelar agendamento',
-                    descricao: agendamento.status === 'CANCELADO'
-                      ? 'Deseja reativar este agendamento?'
-                      : 'Tem certeza que deseja cancelar este agendamento?',
-                    acao: () => agendamento.status === 'CANCELADO'
-                      ? confirmarAgendamento(agendamento.id)
-                      : cancelarAgendamento(agendamento.id),
-                    acaoLabel: agendamento.status === 'CANCELADO' ? 'Ativar' : 'Cancelar',
-                  }),
-                  disabled: agendamento.status === 'FINALIZADO'
-                },
-                { label: 'Excluir', icon: Trash, danger: true, onClick: () => setConfirmacao({
-                  titulo: 'Excluir agendamento',
-                  descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente e não terá como retornar.',
-                  acao: () => excluirAgendamento(agendamento.id),
-                  acaoLabel: 'Excluir',
-                }) },
-              ]}
-            />
-          </ScheduleCard>
+            onIniciar={(ag) => finalizarAtendimento(ag.id)}
+            onEditar={(ag) => abrirEdicao(ag)}
+            onCancelar={(ag) => setConfirmacao({
+              titulo: 'Cancelar agendamento',
+              descricao: 'Tem certeza que deseja cancelar este agendamento?',
+              acao: () => cancelarAgendamento(ag.id),
+              acaoLabel: 'Cancelar',
+            })}
+            onExcluir={(ag) => setConfirmacao({
+              titulo: 'Excluir agendamento',
+              descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
+              acao: () => excluirAgendamento(ag.id),
+              acaoLabel: 'Excluir',
+            })}
+          />
         ))}
       </div>
       <Pagination page={paginaAtual} totalPages={totalPaginas} totalItems={agendamentosOrdenados.length} pageSize={itensPorPagina} onPageChange={setPagina} />

@@ -18,6 +18,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 @RestController
 @RequestMapping("/api/whatsapp")
 @RequiredArgsConstructor
@@ -26,34 +33,44 @@ public class WhatsappController {
     private final AuthService authService;
     private final WhatsappIntegrationProperties properties;
 
-    @GetMapping("/status")
+    // @GetMapping("/status")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> status(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         return ResponseEntity.<WhatsappStatusResponse>ok(whatsappService.status(usuarioAutenticado));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @GetMapping("/config/{tenantId}")
+    // @GetMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> config(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
             @PathVariable Long tenantId
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         EmpresaEntity empresa = authService.buscarUsuarioAutenticado(usuarioAutenticado).getEmpresa();
         validarEmpresa(empresa, tenantId);
         return ResponseEntity.ok(whatsappService.contextoDaEmpresa(tenantId));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @PutMapping("/config/{tenantId}")
+    // @PutMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> atualizarConfig(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
             @PathVariable Long tenantId,
             @Valid @RequestBody WhatsappPreferenciasRequest body
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         EmpresaEntity empresa = authService.buscarUsuarioAutenticado(usuarioAutenticado).getEmpresa();
         validarEmpresa(empresa, tenantId);
@@ -73,68 +90,98 @@ public class WhatsappController {
         );
         whatsappService.atualizarPreferencias(requestConfig);
         return ResponseEntity.ok(whatsappService.contextoDaEmpresa(tenantId));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @PostMapping("/conectar")
+    // @PostMapping("/conectar")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappConnectResponse> iniciarConexao(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
             @Valid @RequestBody ConectarWhatsappRequest body
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         EmpresaEntity empresa = authService.buscarUsuarioAutenticado(usuarioAutenticado).getEmpresa();
         WhatsappConnectRequest bodyInterno = new WhatsappConnectRequest(empresa.getId(), body.phone());
         return ResponseEntity.<WhatsappConnectResponse>ok(whatsappService.conectar(usuarioAutenticado, bodyInterno));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @PostMapping("/desconectar")
+    // @PostMapping("/desconectar")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> desconectar(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         return ResponseEntity.<WhatsappStatusResponse>ok(whatsappService.desconectar(usuarioAutenticado));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @GetMapping("/status/{tenantId}")
+    // @GetMapping("/status/{tenantId}")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> statusPorEmpresa(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
             @PathVariable Long tenantId
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         EmpresaEntity empresa = authService.buscarUsuarioAutenticado(usuarioAutenticado).getEmpresa();
         validarEmpresa(empresa, tenantId);
         return ResponseEntity.ok(whatsappService.status(usuarioAutenticado));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @PostMapping("/desconectar/{tenantId}")
+    // @PostMapping("/desconectar/{tenantId}")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> desconectarPorEmpresa(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
             @PathVariable Long tenantId
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Long usuarioAutenticado = usuarioAutenticado(usuarioId, request);
         EmpresaEntity empresa = authService.buscarUsuarioAutenticado(usuarioAutenticado).getEmpresa();
         validarEmpresa(empresa, tenantId);
         return ResponseEntity.<WhatsappStatusResponse>ok(whatsappService.desconectar(usuarioAutenticado));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
-    @PostMapping("/status-update")
+    // @PostMapping("/status-update")  // ⚠️ DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> statusUpdate(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.WhatsappStatusUpdateRequest body
     ) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         validarTokenInterno(internalToken);
         return ResponseEntity.<WhatsappStatusResponse>ok(whatsappService.atualizarStatusEmpresa(body.empresaId(), body.status(), body.phoneNumber(), body.pairingCode()));
+        */
+        return ResponseEntity.ok(null); // Stub desativado
     }
 
+    // ⚠️ DESATIVADO
     private Long usuarioAutenticado(Long usuarioId, HttpServletRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String sessionToken = CookieHelper.lerCookie(request, "agendapro_session").orElse(null);
         return authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId();
+        */
+        return null; // Stub desativado
     }
 
+    // ⚠️ DESATIVADO
     private void validarTokenInterno(String recebido) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String esperado = properties.internalToken();
         if (esperado.isBlank()) {
             return;
@@ -142,11 +189,16 @@ public class WhatsappController {
         if (recebido == null || recebido.isBlank() || !esperado.equals(recebido.trim())) {
             throw new org.springframework.web.server.ResponseStatusException(HttpStatus.UNAUTHORIZED, "Webhook interno nao autorizado.");
         }
+        */
     }
 
+    // ⚠️ DESATIVADO
     private void validarEmpresa(EmpresaEntity empresa, Long tenantId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (empresa == null || tenantId == null || !tenantId.equals(empresa.getId())) {
             throw new org.springframework.web.server.ResponseStatusException(HttpStatus.FORBIDDEN, "Empresa nao autorizada.");
         }
+        */
     }
 }
