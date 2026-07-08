@@ -10,22 +10,31 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
+import { usePagamentosPendentes } from '../hooks/usePagamentosPendentes.js'
 import { currency } from '../services/localStore.js'
 
 export default function Pagamentos() {
   const [data, , { reload }] = useLocalData('pagamentos')
   const { usuario } = useAuth()
+  const { atualizarContagem } = usePagamentosPendentes()
   const [status, setStatus] = useState('todos')
   const [periodo, setPeriodo] = useState('')
   const [metodo, setMetodo] = useState('todos')
-  const [statusPlano, setStatusPlano] = useState('todos')
-  const [periodoPlano, setPeriodoPlano] = useState('')
-  const [planoFiltro, setPlanoFiltro] = useState('todos')
-  const [gatewayFiltro, setGatewayFiltro] = useState('todos')
-  const [pagamentosPlano, setPagamentosPlano] = useState([])
-  const [carregandoPlano, setCarregandoPlano] = useState(false)
+  /*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
+  ║  Variáveis comentadas para reutilização      ║
+  ║  futura. Descomente para ativar.             ║
+  ╚══════════════════════════════════════════════╝
+  */
+  // const [statusPlano, setStatusPlano] = useState('todos')
+  // const [periodoPlano, setPeriodoPlano] = useState('')
+  // const [planoFiltro, setPlanoFiltro] = useState('todos')
+  // const [gatewayFiltro, setGatewayFiltro] = useState('todos')
+  // const [pagamentosPlano, setPagamentosPlano] = useState([])
+  // const [carregandoPlano, setCarregandoPlano] = useState(false)
   const [recarregando, setRecarregando] = useState(false)
-  const [erroPlano, setErroPlano] = useState('')
+  // const [erroPlano, setErroPlano] = useState('')
   const [pagina, setPagina] = useState(1)
   const [selecionando, setSelecionando] = useState(false)
   const [selecionados, setSelecionados] = useState([])
@@ -33,9 +42,16 @@ export default function Pagamentos() {
   const [bulkExecutando, setBulkExecutando] = useState(false)
   const itensPorPagina = 10
 
-  useEffect(() => {
-    carregarPagamentosPlano()
-  }, [usuario?.empresaId])
+  /*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
+  ║  useEffect comentado para reutilização       ║
+  ║  futura. Descomente para ativar.             ║
+  ╚══════════════════════════════════════════════╝
+  */
+  // useEffect(() => {
+  //   carregarPagamentosPlano()
+  // }, [usuario?.empresaId])
 
   const pagamentos = useMemo(() => data.pagamentos.filter((item) => {
     const matchesStatus = status === 'todos' || item.status === status
@@ -47,14 +63,22 @@ export default function Pagamentos() {
     return matchesStatus && matchesPeriodo && matchesMetodo
   }), [data.pagamentos, metodo, periodo, status])
 
-  const pagamentosPlanoFiltrados = useMemo(() => pagamentosPlano.filter((item) => {
-    const matchesStatus = statusPlano === 'todos' || item.status === statusPlano
-    const matchesPeriodo = !periodoPlano || String(item.dataCriacao || item.dataPagamento || '').startsWith(periodoPlano)
-    const matchesPlano = planoFiltro === 'todos' || item.planoNome === planoFiltro || item.plano === planoFiltro
-    const gateway = item.gateway || item.provider || item.metodoPagamento
-    const matchesGateway = gatewayFiltro === 'todos' || gateway === gatewayFiltro
-    return matchesStatus && matchesPeriodo && matchesPlano && matchesGateway
-  }), [gatewayFiltro, pagamentosPlano, periodoPlano, planoFiltro, statusPlano])
+  /*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
+  ║  Filtro de plano comentado para reutilização ║
+  ║  futura. Descomente para ativar.             ║
+  ╚══════════════════════════════════════════════╝
+  */
+  // const pagamentosPlanoFiltrados = useMemo(() => pagamentosPlano.filter((item) => {
+  //   const matchesStatus = statusPlano === 'todos' || item.status === statusPlano
+  //   const matchesPeriodo = !periodoPlano || String(item.dataCriacao || item.dataPagamento || '').startsWith(periodoPlano)
+  //   const matchesPlano = planoFiltro === 'todos' || item.planoNome === planoFiltro || item.plano === planoFiltro
+  //   const gateway = item.gateway || item.provider || item.metodoPagamento
+  //   const matchesGateway = gatewayFiltro === 'todos' || gateway === gatewayFiltro
+  //   return matchesStatus && matchesPeriodo && matchesPlano && matchesGateway
+  // }), [gatewayFiltro, pagamentosPlano, periodoPlano, planoFiltro, statusPlano])
+
   const totalPaginas = Math.max(1, Math.ceil(pagamentos.length / itensPorPagina))
   const paginaAtual = Math.min(pagina, totalPaginas)
   const pagamentosPaginados = useMemo(() => pagamentos.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina), [pagamentos, paginaAtual])
@@ -94,6 +118,9 @@ export default function Pagamentos() {
     setErroPlano('')
     try {
       await appApi.acaoEmMassaPagamentos(selecionados, bulkModal.acao)
+      if (bulkModal.acao === 'MARCAR_COMO_PAGO') {
+        atualizarContagem()
+      }
       await reload(true)
       limparSelecao()
     } catch (error) {
@@ -106,6 +133,7 @@ export default function Pagamentos() {
   async function alterarStatus(id, novoStatus) {
     if (novoStatus === 'PAGO') {
       await appApi.marcarPagamentoPago(id)
+      atualizarContagem()
     } else {
       await appApi.atualizarStatusPagamento(id, novoStatus)
     }
@@ -116,51 +144,58 @@ export default function Pagamentos() {
     alert('Exclusão em desenvolvimento.')
   }
 
-  async function carregarPagamentosPlano() {
-    if (!usuario?.empresaId) return
-    setErroPlano('')
-    try {
-      const pagamentos = await appApi.listarPagamentosPlano(usuario.empresaId)
-      setPagamentosPlano(pagamentos || [])
-    } catch (error) {
-      setErroPlano(error.response?.data?.mensagem || 'Nao foi possivel carregar pagamentos do plano.')
-    }
-  }
+  /*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
+  ║  Funções comentadas para reutilização        ║
+  ║  futura. Descomente para ativar.             ║
+  ╚══════════════════════════════════════════════╝
+  */
+  // async function carregarPagamentosPlano() {
+  //   if (!usuario?.empresaId) return
+  //   setErroPlano('')
+  //   try {
+  //     const pagamentos = await appApi.listarPagamentosPlano(usuario.empresaId)
+  //     setPagamentosPlano(pagamentos || [])
+  //   } catch (error) {
+  //     setErroPlano(error.response?.data?.mensagem || 'Nao foi possivel carregar pagamentos do plano.')
+  //   }
+  // }
 
   async function recarregarPagamentos() {
     if (recarregando) return
     setRecarregando(true)
     try {
       await reload(true)
-      await carregarPagamentosPlano()
+      // await carregarPagamentosPlano()
     } finally {
       setRecarregando(false)
     }
   }
 
-  async function tentarNovamentePlano() {
-    if (!usuario?.empresaId) return
-    setCarregandoPlano(true)
-    setErroPlano('')
-    try {
-      const pagamento = await appApi.iniciarPagamentoPro({
-        empresaId: usuario.empresaId,
-        metodoPagamento: 'PIX_AUTO',
-        plano: 'PRO',
-        customerName: usuario.nome,
-        customerEmail: usuario.email,
-        customerPhone: usuario.telefone,
-        customerDocType: usuario.documento ? 'cpf' : '',
-        customerDocNumber: usuario.documento || '',
-        antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
-      })
-      setPagamentosPlano((current) => [pagamento, ...current])
-    } catch (error) {
-      setErroPlano(error.response?.data?.mensagem || 'Nao foi possivel criar novo pagamento.')
-    } finally {
-      setCarregandoPlano(false)
-    }
-  }
+  // async function tentarNovamentePlano() {
+  //   if (!usuario?.empresaId) return
+  //   setCarregandoPlano(true)
+  //   setErroPlano('')
+  //   try {
+  //     const pagamento = await appApi.iniciarPagamentoPro({
+  //       empresaId: usuario.empresaId,
+  //       metodoPagamento: 'PIX_AUTO',
+  //       plano: 'PRO',
+  //       customerName: usuario.nome,
+  //       customerEmail: usuario.email,
+  //       customerPhone: usuario.telefone,
+  //       customerDocType: usuario.documento ? 'cpf' : '',
+  //       customerDocNumber: usuario.documento || '',
+  //       antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
+  //     })
+  //     setPagamentosPlano((current) => [pagamento, ...current])
+  //   } catch (error) {
+  //     setErroPlano(error.response?.data?.mensagem || 'Nao foi possivel criar novo pagamento.')
+  //   } finally {
+  //     setCarregandoPlano(false)
+  //   }
+  // }
 
   function statusSimples(statusAtual) {
     return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
@@ -219,7 +254,7 @@ export default function Pagamentos() {
           icon={RefreshCw}
           className="mass-action-icon-button"
           onClick={recarregarPagamentos}
-          disabled={recarregando || carregandoPlano}
+          disabled={recarregando}
           aria-label="Recarregar pagamentos"
         >
           {recarregando ? '...' : ''}
@@ -285,6 +320,14 @@ export default function Pagamentos() {
         onConfirm={executarBulk}
       />
 
+      {/*
+      ╔══════════════════════════════════════════════╗
+      ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
+      ║  Seção comentada para reutilização futura.   ║
+      ║  Descomente para ativar.                     ║
+      ╚══════════════════════════════════════════════╝
+      */}
+      {/*
       <section className="panel payments-plan-panel">
         <div className="panel-head">
           <div>
@@ -336,6 +379,7 @@ export default function Pagamentos() {
           empty="Nenhum pagamento de plano encontrado."
         />
       </section>
+      */}
     </section>
   )
 }

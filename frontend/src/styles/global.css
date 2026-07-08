@@ -300,6 +300,23 @@ button { cursor: pointer; }
 .sidebar a.active span { color: #ffffff; }
 .sidebar a.active svg { color: #ffffff; }
 
+.sidebar a span.badge-pendentes {
+  background-color: #EF4444;
+  color: #ffffff;
+  border-radius: 50%;
+  min-width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 5px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
 .sidebar-foot {
   display: flex;
   justify-content: space-between;

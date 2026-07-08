@@ -52,9 +52,11 @@ export default function AgendaCard({ agendamento, onIniciar, onPausar, onFinaliz
           <span className="agenda-card-nome">{agendamento.clienteNome}</span>
           <span className="agenda-card-protocolo">#{agendamento.protocolo || '------'}</span>
         </div>
-        <span className={`agenda-card-badge agenda-card-badge-${statusClass}`}>
-          {statusLabel(status)}
-        </span>
+        {status !== 'FINALIZADO' && (
+          <span className={`agenda-card-badge agenda-card-badge-${statusClass}`}>
+            {statusLabel(status)}
+          </span>
+        )}
         <div className="agenda-card-menu-wrap">
           <button className="agenda-card-menu-btn" onClick={() => setMenuAberto(!menuAberto)} type="button">
             <MoreVertical size={16} />
@@ -104,6 +106,14 @@ export default function AgendaCard({ agendamento, onIniciar, onPausar, onFinaliz
         <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
           Retomar Atendimento
         </button>
+      )}
+
+      {status === 'FINALIZADO' && (
+        <div className="agenda-card-footer-finalizado">
+          <span className="agenda-card-badge-finalizado">
+            &#10003; FINALIZADO
+          </span>
+        </div>
       )}
     </div>
   )

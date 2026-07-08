@@ -53,4 +53,5 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<Object[]> resumoReceitaPorDia(Long empresaId, List<StatusPagamento> statuses, LocalDateTime inicio, LocalDateTime fim);
     boolean existsByClienteId(Long clienteId);
     boolean existsByAgendamentoId(Long agendamentoId);
+    long countByEmpresaIdAndStatus(Long empresaId, StatusPagamento status);
 }

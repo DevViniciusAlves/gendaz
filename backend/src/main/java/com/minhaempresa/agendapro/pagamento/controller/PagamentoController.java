@@ -55,6 +55,11 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoBulkService.executar(request));
     }
 
+    @GetMapping("/pendentes/contagem")
+    public ResponseEntity<Map<String, Long>> contarPendentes(@RequestParam Long empresaId) {
+        return ResponseEntity.ok(Map.of("count", pagamentoService.contarPendentes(empresaId)));
+    }
+
     @PostMapping("/planos/pro/iniciar")
     public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPro(@Valid @RequestBody IniciarPagamentoPlanoRequest request) {
         return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlanoPro(request));

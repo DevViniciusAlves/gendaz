@@ -222,8 +222,10 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse iniciar(Long id) {
         AgendamentoEntity agendamento = buscarEntidade(id);
-        if (agendamento.getStatus() != StatusAgendamento.PENDENTE && agendamento.getStatus() != StatusAgendamento.CONFIRMADO) {
-            throw new BusinessException("Apenas agendamentos pendentes ou confirmados podem ser iniciados.");
+        if (agendamento.getStatus() != StatusAgendamento.PENDENTE
+                && agendamento.getStatus() != StatusAgendamento.CONFIRMADO
+                && agendamento.getStatus() != StatusAgendamento.PAUSADO) {
+            throw new BusinessException("Apenas agendamentos pendentes, confirmados ou pausados podem ser iniciados.");
         }
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
         return mapper.toResponse(agendamentoRepository.save(agendamento));

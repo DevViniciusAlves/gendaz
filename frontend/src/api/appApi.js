@@ -652,6 +652,10 @@ export const appApi = {
     })
   },
 
+  contarPagamentosPendentes(empresaId = empresaIdAtual()) {
+    return api.get('/pagamentos/pendentes/contagem', { params: { empresaId } }).then((response) => response.data.count || 0)
+  },
+
   iniciarPagamentoPlano(payload, options = {}) {
     return api.post('/pagamentos/planos/pro/iniciar', payload, options).then((response) => response.data)
   },

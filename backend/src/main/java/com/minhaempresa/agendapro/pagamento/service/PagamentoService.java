@@ -567,6 +567,11 @@ public class PagamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
     }
 
+    @Transactional(readOnly = true)
+    public long contarPendentes(Long empresaId) {
+        return pagamentoRepository.countByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE);
+    }
+
     private PagamentoPlanoEntity novoPagamentoPlano(EmpresaEntity empresa, PlanoEntity plano, MetodoPagamento metodoPagamento) {
         return novoPagamentoPlano(empresa, plano, metodoPagamento, null, null, null, null, null, null);
     }

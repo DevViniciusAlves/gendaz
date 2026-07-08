@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import { BarChart3, CalendarDays, CreditCard, Home, MessageCircle, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
+import { usePagamentosPendentes } from '../hooks/usePagamentosPendentes.js'
 import logoSidebar from '../assets/logos/gendaz-logo-green.png'
 
 const items = [
@@ -19,6 +20,7 @@ const items = [
 
 export default function Sidebar() {
   const { usuario } = useAuth()
+  const { contagemPendentes } = usePagamentosPendentes()
   const allowed = PLANOS[usuario?.plano]?.rotas || []
   const visibleItems = items.filter((item) => allowed.includes(item.key))
 
@@ -29,7 +31,7 @@ export default function Sidebar() {
       </div>
       <span className="nav-label">Navegação</span>
       <nav>
-        {visibleItems.map(({ to, label, icon: Icon }) => (
+        {visibleItems.map(({ to, key, label, icon: Icon }) => (
           <NavLink
             key={to}
             to={to}
@@ -37,6 +39,9 @@ export default function Sidebar() {
           >
             <Icon size={18} />
             <span>{label}</span>
+            {key === 'pagamentos' && contagemPendentes > 0 && (
+              <span className="badge-pendentes">{contagemPendentes}</span>
+            )}
           </NavLink>
         ))}
       </nav>

@@ -5,7 +5,6 @@ import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
 import AgendaCard from '../components/AgendaCard.jsx'
-import ConfirmacaoAcao from '../components/ConfirmacaoAcao.jsx'
 import Pagination from '../components/Pagination.jsx'
 import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
@@ -142,8 +141,6 @@ export default function Agenda() {
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 12
-  const [fluxoModal, setFluxoModal] = useState({ open: false, acao: null, agendamento: null })
-  const [executandoFluxo, setExecutandoFluxo] = useState(false)
 
   const termoBusca = busca.trim().toLowerCase()
 
@@ -251,8 +248,6 @@ export default function Agenda() {
       setBulkExecutando(false)
     }
   }
-
-  console.log('[agenda-debug] agendamentos carregados', data.agendamentos)
 
   function montarAgendamento(payload) {
     return {
@@ -389,20 +384,6 @@ export default function Agenda() {
     }
   }
 
-  async function finalizarAtendimento(id) {
-    if (acaoId) return
-    setAcaoId(id)
-    setErroAcao('')
-    try {
-      await appApi.finalizarAgendamento(id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível finalizar o atendimento.')
-    } finally {
-      setAcaoId(null)
-    }
-  }
-
   async function cancelarAgendamento(id) {
     if (acaoId) return
     setAcaoId(id)
@@ -452,32 +433,45 @@ export default function Agenda() {
     }
   }
 
-  function abrirFluxo(acao, agendamento) {
-    setFluxoModal({ open: true, acao, agendamento })
-  }
-
-  function fecharFluxo() {
-    setFluxoModal({ open: false, acao: null, agendamento: null })
-  }
-
-  async function executarFluxo(acao, agendamento) {
-    if (executandoFluxo) return
-    setExecutandoFluxo(true)
+  async function iniciarAtendimento(agendamento) {
+    if (acaoId) return
+    setAcaoId(agendamento.id)
     setErroAcao('')
     try {
-      if (acao === 'INICIAR') {
-        await appApi.iniciarAgendamento(agendamento.id)
-      } else if (acao === 'PAUSAR') {
-        await appApi.pausarAgendamento(agendamento.id)
-      } else if (acao === 'FINALIZAR') {
-        await appApi.finalizarAgendamento(agendamento.id)
-      }
+      await appApi.iniciarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível executar a ação.')
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
     } finally {
-      setExecutandoFluxo(false)
-      fecharFluxo()
+      setAcaoId(null)
+    }
+  }
+
+  async function pausarAtendimento(agendamento) {
+    if (acaoId) return
+    setAcaoId(agendamento.id)
+    setErroAcao('')
+    try {
+      await appApi.pausarAgendamento(agendamento.id)
+      await reload(true)
+    } catch (error) {
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
+    } finally {
+      setAcaoId(null)
+    }
+  }
+
+  async function finalizarAtendimentoDireto(agendamento) {
+    if (acaoId) return
+    setAcaoId(agendamento.id)
+    setErroAcao('')
+    try {
+      await appApi.finalizarAgendamento(agendamento.id)
+      await reload(true)
+    } catch (error) {
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
+    } finally {
+      setAcaoId(null)
     }
   }
 
@@ -604,9 +598,9 @@ export default function Agenda() {
           <AgendaCard
             key={agendamento.id}
             agendamento={agendamento}
-            onIniciar={(ag) => abrirFluxo('INICIAR', ag)}
-            onPausar={(ag) => abrirFluxo('PAUSAR', ag)}
-            onFinalizar={(ag) => abrirFluxo('FINALIZAR', ag)}
+            onIniciar={() => iniciarAtendimento(agendamento)}
+            onPausar={() => pausarAtendimento(agendamento)}
+            onFinalizar={() => finalizarAtendimentoDireto(agendamento)}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
@@ -698,13 +692,6 @@ export default function Agenda() {
         loading={bulkExecutando}
         onCancel={() => setBulkModal(null)}
         onConfirm={executarBulk}
-      />
-      <ConfirmacaoAcao
-        open={fluxoModal.open}
-        acao={fluxoModal.acao}
-        agendamento={fluxoModal.agendamento}
-        onConfirmar={executarFluxo}
-        onCancelar={fecharFluxo}
       />
         </>
       )}
