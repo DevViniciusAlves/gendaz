@@ -1107,7 +1107,7 @@ const buscarContexto = carregarContextoEmpresa;
 
 async function buscarClienteNome(baseUrl, token, tenantId, phoneCliente) {
   const telefone = String(phoneCliente || '').trim();
-  if (!/^\d{10,15}$/.test(telefone)) {
+  if (!/^\d{13}$/.test(telefone)) {
     return '';
   }
   const headers = token ? { 'X-Internal-Token': token } : {};

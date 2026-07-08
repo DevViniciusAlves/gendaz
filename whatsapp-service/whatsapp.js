@@ -16,7 +16,7 @@ const { montarMensagem } = require('./mensagens');
 
 // ============================================
 // MESSAGE QUEUE - Fila de envio com throttling
-// Garante espaçamento entre mensagens por contato
+// Garante espaÃƒÂ§amento entre mensagens por contato
 // ============================================
 const messageQueue = new Map();
 
@@ -123,103 +123,50 @@ const PAIRING_FAILURE_PATTERNS = [
 function normalizarTelefone(phoneNumber) {
   const entrada = String(phoneNumber || '').trim();
   let digitos = entrada.replace(/\D/g, '');
-  if (!digitos) {
-    return '';
-  }
-  if (digitos.length === 13) {
-    return digitos;
-  }
-  if (digitos.length === 10) {
-    return `55${digitos}`;
-  }
-  if (digitos.length === 11) {
-    return `55${digitos}`;
-  }
+  if (!digitos) return '';
   if (!digitos.startsWith('55')) {
-    digitos = `55${digitos}`;
+    digitos = '55' + digitos;
   }
-  const nacional = digitos.slice(2);
-  if (nacional.length < 10 || nacional.length > 11) {
-    return digitos;
+  if (digitos.length === 12 && digitos.startsWith('55')) {
+    digitos = digitos.substring(0, 4) + '9' + digitos.substring(4);
   }
-  const ddd = nacional.slice(0, 2);
-  let local = nacional.slice(2);
-  if (local.length === 10 && local.startsWith('9')) {
-    local = local.slice(1);
-  }
-  if (local.length !== 9) {
-    return `55${ddd}${local}`;
-  }
-  const resultado = `55${ddd}${local}`;
-  console.log('[normalize] entrada:', entrada, 'â†’ saída:', resultado, `(${resultado.length} dígitos)`);
-  return resultado;
+  if (digitos.length !== 13) return '';
+  const ddd = parseInt(digitos.substring(2, 4), 10);
+  if (ddd < 11 || ddd > 99) return '';
+  return digitos;
 }
 
 function normalizarTelefoneInternacional(remoteJidOuTelefone) {
-  let digitos = String(remoteJidOuTelefone || '')
-    .replace(/\D/g, '')
-    .trim();
-
+  let digitos = String(remoteJidOuTelefone || '').replace(/\D/g, '').trim();
   if (!digitos) return null;
-
-  // Se já tem 13 dígitos começando com 55, retorna direto
-  if (digitos.startsWith('55') && digitos.length === 13) {
+  if (!digitos.startsWith('55')) {
+    digitos = '55' + digitos;
+  }
+  if (digitos.length === 12 && digitos.startsWith('55')) {
+    digitos = digitos.substring(0, 4) + '9' + digitos.substring(4);
+  }
+  if (digitos.length === 13 && digitos.startsWith('55')) {
     return digitos;
   }
-
-  // Se tem exatamente 11 dígitos (DDD + 9 dígitos do número), adiciona 55
-  if (digitos.length === 11 && !digitos.startsWith('55')) {
-    return `55${digitos}`;
-  }
-
-  // Se tem exatamente 10 dígitos (DDD + 8 dígitos), adiciona 55
-  if (digitos.length === 10 && !digitos.startsWith('55')) {
-    return `55${digitos}`;
-  }
-
-  // Se tem 13 dígitos MAS NÃO começa com 55, significa que já está
-  // no formato internacional (tipo um ID de contato WhatsApp)
-  // Nesse caso, retorna como está
-  if (digitos.length === 13 && !digitos.startsWith('55')) {
-    return digitos; // ou retorna '55' + digitos.slice(-11) se precisar forçar começa com 55
-  }
-
-  // Se tem MAIS de 13 dígitos, algo tá errado — retorna null ou loga aviso
   if (digitos.length > 13) {
-    console.warn('[normalize] número com mais de 13 dígitos, possivelmente corrompido', { 
-      digitos, 
-      tamanho: digitos.length,
-      primeiros13: digitos.slice(0, 13),
-      ultimos13: digitos.slice(-13)
-    });
-    // Tentar pegar os 13 primeiros se começarem com 55
     if (digitos.slice(0, 13).startsWith('55')) {
       return digitos.slice(0, 13);
     }
-    return null; // Número ambíguo, não processa
-  }
-
-  // Se chegou aqui com menos de 9 dígitos, é número inválido
-  if (digitos.length < 9) {
-    console.warn('[normalize] número muito curto', { digitos, tamanho: digitos.length });
     return null;
   }
-
-  // Fallback pra outros casos não previstos
-  console.warn('[normalize] número em formato desconhecido', { digitos, tamanho: digitos.length });
-  return digitos;
+  return null;
 }
 
 function validarTelefonePareamento(phoneNumber) {
   const telefone = normalizarTelefone(phoneNumber);
   if (!telefone) {
-    throw new Error('Telefone é obrigatório.');
+    throw new Error('Telefone ÃƒÂ© obrigatÃƒÂ³rio.');
   }
   if (telefone.length !== 13) {
-    throw new Error('Informe o número com DDI, DDD e telefone. Exemplo: 5565992700672.');
+    throw new Error('Informe o nÃƒÂºmero com DDI, DDD e telefone. Exemplo: 5565992700672.');
   }
   if (telefone.startsWith('0')) {
-    throw new Error('Informe o número com DDI, sem zero antes do código do país.');
+    throw new Error('Informe o nÃƒÂºmero com DDI, sem zero antes do cÃƒÂ³digo do paÃƒÂ­s.');
   }
   return telefone;
 }
@@ -262,13 +209,13 @@ function extrairNumeroCorreto(entrada) {
 
   for (const candidato of candidatos) {
     const numero = normalizarTelefoneInternacional(candidato.valor);
-    if (numero && numero.startsWith('55') && (numero.length === 12 || numero.length === 13)) {
+    if (numero && numero.startsWith('55') && numero.length === 13) {
       return numero;
     }
   }
 
   if (remoteJid.includes('@lid')) {
-    console.warn('[numero-extracao] @lid sem mapeamento confiável', {
+    console.warn('[numero-extracao] @lid sem mapeamento confiÃƒÂ¡vel', {
       remoteJid,
       senderPn: key?.senderPn || null,
       participantPn: key?.participantPn || null,
@@ -280,7 +227,7 @@ function extrairNumeroCorreto(entrada) {
   }
 
   const fallback = normalizarTelefoneInternacional(remoteJid);
-  if (fallback && fallback.startsWith('55') && (fallback.length === 12 || fallback.length === 13)) {
+  if (fallback && fallback.startsWith('55') && fallback.length === 13) {
     return fallback;
   }
 
@@ -391,12 +338,12 @@ function statusLabel(status) {
   const normalized = String(status || '').toLowerCase();
   if (normalized === 'conectado' || normalized === 'connected') return 'WhatsApp conectado';
   if (normalized === 'connecting' || normalized === 'reconnecting') return 'Reconectando WhatsApp';
-  if (normalized === 'generating_code' || normalized === 'gerando_codigo') return 'Gerando código';
+  if (normalized === 'generating_code' || normalized === 'gerando_codigo') return 'Gerando cÃƒÂ³digo';
   if (normalized === 'aguardando' || normalized === 'waiting_pairing') return 'Aguardando pareamento';
   if (normalized === 'pairing' || normalized === 'pairing_code') return 'Aguardando pareamento';
   if (normalized === 'pairing_failed') return 'Pareamento falhou';
-  if (normalized === 'pairing_expired') return 'Código expirado';
-  if (normalized === 'session_error') return 'Sessão inválida';
+  if (normalized === 'pairing_expired') return 'CÃƒÂ³digo expirado';
+  if (normalized === 'session_error') return 'SessÃƒÂ£o invÃƒÂ¡lida';
   if (normalized === 'disconnected') return 'Desconectado';
   return 'Desconectado';
 }
@@ -479,7 +426,7 @@ function agendarExpiracaoPareamento(empresaId, expiresAt) {
       phoneNumber: session.phoneNumber,
     });
     session.status = 'pairing_expired';
-    session.lastError = 'Código de pareamento expirado.';
+    session.lastError = 'CÃƒÂ³digo de pareamento expirado.';
     session.pairingCode = null;
     session.pairingExpiresAt = null;
     session.disconnectedAt = new Date();
@@ -574,7 +521,7 @@ function agendarReconnectEmpresa(empresaId, current, reason, reasonMessage, dela
   current.lastError = reason ? `disconnect:${reason}` : 'disconnect';
   current.reconnectAttempts = Number(current.reconnectAttempts || 0) + 1;
   const tentativas = current.reconnectAttempts;
-  console.log('[whatsapp] reconexão agendada', {
+  console.log('[whatsapp] reconexÃƒÂ£o agendada', {
     empresaId,
     reason,
     reasonMessage,
@@ -856,15 +803,15 @@ async function forceResetBaileysSession() {
     try {
       fs.rmSync(authPath, { recursive: true, force: true });
       sessionLocalRemovida = true;
-      console.log('[baileys-force-reset] sessão local removida', { authPath });
+      console.log('[baileys-force-reset] sessÃƒÂ£o local removida', { authPath });
     } catch (error) {
-      console.warn('[baileys-force-reset] falha ao remover sessão local', {
+      console.warn('[baileys-force-reset] falha ao remover sessÃƒÂ£o local', {
         authPath,
         detalhe: error.message,
       });
     }
   } else {
-    console.log('[baileys-force-reset] nenhuma sessão local encontrada', { authPath });
+    console.log('[baileys-force-reset] nenhuma sessÃƒÂ£o local encontrada', { authPath });
   }
 
   if (FORCE_RESET_BAILEYS_SESSION) {
@@ -877,14 +824,14 @@ async function forceResetBaileysSession() {
           await removerSessaoPersistidaBackend(empresaId);
           sessoesPersistidasRemovidas += 1;
         } catch (error) {
-          console.warn('[baileys-force-reset] falha ao remover sessão persistida', {
+          console.warn('[baileys-force-reset] falha ao remover sessÃƒÂ£o persistida', {
             empresaId,
             detalhe: error.message,
           });
         }
       }
     } catch (error) {
-      console.warn('[baileys-force-reset] falha ao listar sessões persistidas', {
+      console.warn('[baileys-force-reset] falha ao listar sessÃƒÂµes persistidas', {
         detalhe: error.message,
       });
     }
@@ -964,7 +911,7 @@ async function marcarSessionError(empresaId, session, motivo) {
   limparFilasRespostaEmpresa(empresaId);
   limparReconnectTimerEmpresa(empresaId);
   await removerSessaoPersistidaBackend(session.empresaId);
-  console.warn('[Bot-Service] sessão quebrada detectada:', {
+  console.warn('[Bot-Service] sessÃƒÂ£o quebrada detectada:', {
     empresaId,
     phoneNumber: session.phoneNumber,
     motivo,
@@ -1294,7 +1241,7 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
               pausadoAte: new Date(Date.now() + DURACAO_PAUSA_HUMANO_MS).toISOString(),
             });
           } else {
-            console.log('[bot-pausa] fromMe sem texto real, não pausar bot', {
+            console.log('[bot-pausa] fromMe sem texto real, nÃƒÂ£o pausar bot', {
               empresaId,
               remoteJid,
               isGroup,
@@ -1335,7 +1282,7 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
 
         const phoneCliente = numeroCorreto;
         if (!phoneCliente) {
-          console.warn('[numero-extracao] não foi possível resolver um telefone confiável', {
+          console.warn('[numero-extracao] nÃƒÂ£o foi possÃƒÂ­vel resolver um telefone confiÃƒÂ¡vel', {
             remoteJid,
             senderPn: message?.key?.senderPn || null,
             participantPn: message?.key?.participantPn || null,
@@ -1459,14 +1406,14 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
         current.pairingCode = null;
         current.pairingExpiresAt = null;
         current.pairingRequested = false;
-        current.lastError = current.lastError || 'Sessão do WhatsApp inválida. Desconecte e conecte novamente.';
+        current.lastError = current.lastError || 'SessÃƒÂ£o do WhatsApp invÃƒÂ¡lida. Desconecte e conecte novamente.';
         await marcarSessionError(empresaId, current, current.lastError);
         return;
       }
 
       if (reason === 401) {
         if (current.registered || current.status === 'conectado') {
-          console.warn('[whatsapp] 401 tratado como autenticação inválida após conexão estabelecida', {
+          console.warn('[whatsapp] 401 tratado como autenticaÃƒÂ§ÃƒÂ£o invÃƒÂ¡lida apÃƒÂ³s conexÃƒÂ£o estabelecida', {
             empresaId,
             registered: Boolean(current.sock?.authState?.creds?.registered),
             statusAtual: current.status,
@@ -1475,7 +1422,7 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
           await marcarSessionError(empresaId, current, 'Autenticacao invalida retornada pelo WhatsApp.');
           return;
         }
-        await marcarPareamentoFalhou(empresaId, current, 'Não foi possível conectar o WhatsApp. Gere um novo código e tente novamente.');
+        await marcarPareamentoFalhou(empresaId, current, 'NÃƒÂ£o foi possÃƒÂ­vel conectar o WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.');
         return;
       }
 
@@ -1489,10 +1436,10 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
         isPairingFailureMessage(reasonMessage)
       ) {
         if (current.status === 'generating_code' || current.status === 'waiting_pairing') {
-          await marcarPareamentoFalhou(empresaId, current, 'Não foi possível conectar o WhatsApp. Gere um novo código e tente novamente.');
+          await marcarPareamentoFalhou(empresaId, current, 'NÃƒÂ£o foi possÃƒÂ­vel conectar o WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.');
           return;
         }
-        console.log('[whatsapp] queda temporária detectada, iniciando reconexão automática', {
+        console.log('[whatsapp] queda temporÃƒÂ¡ria detectada, iniciando reconexÃƒÂ£o automÃƒÂ¡tica', {
           empresaId,
           reason,
           statusAtual: current.status,
@@ -1523,9 +1470,9 @@ async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
       current.status = ['generating_code', 'waiting_pairing'].includes(current.status) ? current.status : 'desconectado';
       current.disconnectedAt = new Date();
       if (['generating_code', 'waiting_pairing'].includes(current.status)) {
-        current.lastError = 'Conexão encerrada antes da conclusão do pareamento.';
+        current.lastError = 'ConexÃƒÂ£o encerrada antes da conclusÃƒÂ£o do pareamento.';
         current.pairingRequested = false;
-        await marcarPareamentoFalhou(empresaId, current, 'Não foi possível conectar o WhatsApp. Gere um novo código e tente novamente.');
+        await marcarPareamentoFalhou(empresaId, current, 'NÃƒÂ£o foi possÃƒÂ­vel conectar o WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.');
         return;
       }
       current.pairingCode = null;
@@ -1544,7 +1491,7 @@ async function restaurarSessoesPersistidas() {
   try {
     const sessoesPersistidas = await listarSessoesPersistidasBackend();
     if (!sessoesPersistidas.length) {
-      console.log('[Bot-Service] nenhuma sessão persistida encontrada no backend');
+      console.log('[Bot-Service] nenhuma sessÃƒÂ£o persistida encontrada no backend');
       return;
     }
 
@@ -1554,11 +1501,11 @@ async function restaurarSessoesPersistidas() {
         if (!empresaId) continue;
         if (sessions.has(empresaKey(empresaId))) continue;
         if (!item?.registered) {
-          console.log('[Bot-Service] sessão persistida sem registro ignorada:', { empresaId });
+          console.log('[Bot-Service] sessÃƒÂ£o persistida sem registro ignorada:', { empresaId });
           continue;
         }
 
-        console.log('[Bot-Service] restaurando sessão persistida via backend:', {
+        console.log('[Bot-Service] restaurando sessÃƒÂ£o persistida via backend:', {
           empresaId,
           registered: Boolean(item?.registered),
           phoneNumber: item?.phoneNumber || null,
@@ -1571,7 +1518,7 @@ async function restaurarSessoesPersistidas() {
         session.status = 'connecting';
         sessions.set(empresaKey(empresaId), session);
       } catch (error) {
-        console.warn('[Bot-Service] falha ao restaurar sessão persistida:', {
+        console.warn('[Bot-Service] falha ao restaurar sessÃƒÂ£o persistida:', {
           detalhe: error.message,
         });
       }
@@ -1625,12 +1572,12 @@ function aguardarSocketPareamento(sock, timeoutMs = 20000) {
 function mensagemPareamentoAmigavel(error) {
   const mensagem = String(error?.message || error || '');
   if (isPairingFailureMessage(mensagem) || mensagem.includes('428')) {
-    return 'Não foi possível iniciar a conexão com o WhatsApp. Gere um novo código e tente novamente.';
+    return 'NÃƒÂ£o foi possÃƒÂ­vel iniciar a conexÃƒÂ£o com o WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.';
   }
   if (mensagem.toLowerCase().includes('tempo excedido')) {
-    return 'Tempo excedido ao iniciar a conexão do WhatsApp. Gere um novo código e tente novamente.';
+    return 'Tempo excedido ao iniciar a conexÃƒÂ£o do WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.';
   }
-  return 'Não foi possível gerar o código de conexão. Gere um novo código e tente novamente.';
+  return 'NÃƒÂ£o foi possÃƒÂ­vel gerar o cÃƒÂ³digo de conexÃƒÂ£o. Gere um novo cÃƒÂ³digo e tente novamente.';
 }
 
 async function reiniciarEmpresa(empresaId, phoneNumber) {
@@ -1672,14 +1619,14 @@ async function conectarEmpresa(empresaId, phoneNumber) {
     session = null;
   }
   if (ehSessaoPareamentoAtivo(session)) {
-    console.warn('[Bot-Service] tentativa de connect ignorada - pareamento já em andamento:', {
+    console.warn('[Bot-Service] tentativa de connect ignorada - pareamento jÃƒÂ¡ em andamento:', {
       empresaId,
       phoneNumberNormalizado: telefone,
     });
     return {
       status: 'waiting_pairing',
       statusLabel: statusLabel('waiting_pairing'),
-      message: 'Já existe um pareamento em andamento.',
+      message: 'JÃƒÂ¡ existe um pareamento em andamento.',
       pairingCode: session.pairingCode,
       code: session.pairingCode,
       phoneNumber: session.phoneNumber,
@@ -1691,7 +1638,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
     return {
       status: 'conectado',
       statusLabel: statusLabel('conectado'),
-      message: 'WhatsApp já está conectado.',
+      message: 'WhatsApp jÃƒÂ¡ estÃƒÂ¡ conectado.',
       code: null,
       phoneNumber: telefone,
       empresaId,
@@ -1705,7 +1652,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
       return {
         status: 'GENERATING_CODE',
         statusLabel: statusLabel('generating_code'),
-        message: 'Gerando código de pareamento.',
+        message: 'Gerando cÃƒÂ³digo de pareamento.',
         pairingCode: null,
         code: null,
         phoneNumber: lockedSession.phoneNumber || telefone,
@@ -1717,7 +1664,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
       return {
         status: 'waiting_pairing',
         statusLabel: statusLabel('waiting_pairing'),
-        message: 'Já existe um pareamento em andamento.',
+        message: 'JÃƒÂ¡ existe um pareamento em andamento.',
         pairingCode: lockedSession.pairingCode,
         code: lockedSession.pairingCode,
         phoneNumber: lockedSession.phoneNumber,
@@ -1725,7 +1672,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
         expiresAt: lockedSession.pairingExpiresAt || null,
       };
     }
-    throw new Error('Já existe uma tentativa de pareamento em andamento para esta empresa.');
+    throw new Error('JÃƒÂ¡ existe uma tentativa de pareamento em andamento para esta empresa.');
   }
 
   try {
@@ -1733,7 +1680,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
       return {
         status: 'GENERATING_CODE',
         statusLabel: statusLabel('generating_code'),
-        message: 'Gerando código de pareamento.',
+        message: 'Gerando cÃƒÂ³digo de pareamento.',
         pairingCode: null,
         code: null,
         phoneNumber: session.phoneNumber || telefone,
@@ -1792,7 +1739,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
         console.log('[whatsapp] requestPairingCode respondeu em:', tempoPairing, 'ms');
         const pairingCode = limparCodigo(code);
         if (!pairingCode) {
-          throw new Error('Baileys não retornou código de pareamento.');
+          throw new Error('Baileys nÃƒÂ£o retornou cÃƒÂ³digo de pareamento.');
         }
         if (tempoPairing > 20000) {
           console.warn('[Bot-Service] requestPairingCode demorou mais que 20s:', {
@@ -1828,7 +1775,7 @@ async function conectarEmpresa(empresaId, phoneNumber) {
         return {
           status: 'waiting_pairing',
           statusLabel: statusLabel('waiting_pairing'),
-          message: 'Use o código para conectar o WhatsApp desta empresa.',
+          message: 'Use o cÃƒÂ³digo para conectar o WhatsApp desta empresa.',
           pairingCode: attemptSession.pairingCode,
           code: attemptSession.pairingCode,
           phoneNumber: telefone,
@@ -1860,12 +1807,12 @@ async function conectarEmpresa(empresaId, phoneNumber) {
         }
         await marcarPareamentoFalhou(empresaId, attemptSession, mensagem);
         if (tentativa >= 2) {
-          throw new Error('Não foi possível iniciar a conexão com o WhatsApp. Limpe a sessão e tente novamente.');
+          throw new Error('NÃƒÂ£o foi possÃƒÂ­vel iniciar a conexÃƒÂ£o com o WhatsApp. Limpe a sessÃƒÂ£o e tente novamente.');
         }
       }
     }
 
-    throw ultimaFalha || new Error('Não foi possível iniciar a conexão com o WhatsApp.');
+    throw ultimaFalha || new Error('NÃƒÂ£o foi possÃƒÂ­vel iniciar a conexÃƒÂ£o com o WhatsApp.');
   } catch (error) {
     liberarLockPareamento(empresaId);
     throw error;
@@ -1879,7 +1826,7 @@ async function statusEmpresa(empresaId) {
       empresaId: null,
       status: 'DISCONNECTED',
       statusLabel: statusLabel('disconnected'),
-      message: 'Nenhuma conexão ativa.',
+      message: 'Nenhuma conexÃƒÂ£o ativa.',
       pairingCode: null,
       code: null,
       phoneNumber: null,
@@ -1890,12 +1837,12 @@ async function statusEmpresa(empresaId) {
   }
   const session = obterSessaoAtiva(empresaId);
   if (!session) {
-    console.log('[Bot-Service] status consultado sem sessão ativa:', { empresaId });
+    console.log('[Bot-Service] status consultado sem sessÃƒÂ£o ativa:', { empresaId });
     return {
       empresaId,
       status: 'DISCONNECTED',
       statusLabel: statusLabel('desconectado'),
-      message: 'Nenhuma conexão ativa.',
+      message: 'Nenhuma conexÃƒÂ£o ativa.',
       pairingCode: null,
       code: null,
       phoneNumber: null,
@@ -1936,16 +1883,16 @@ async function statusEmpresa(empresaId) {
       : statusAtual === 'RECONNECTING'
         ? 'Reconectando WhatsApp.'
       : statusAtual === 'GENERATING_CODE'
-        ? 'Gerando código de pareamento.'
+        ? 'Gerando cÃƒÂ³digo de pareamento.'
       : statusAtual === 'SESSION_ERROR'
-        ? 'Sessão do WhatsApp inválida. Desconecte e conecte novamente.'
+        ? 'SessÃƒÂ£o do WhatsApp invÃƒÂ¡lida. Desconecte e conecte novamente.'
       : statusAtual === 'PAIRING_FAILED'
-          ? 'Não foi possível conectar o WhatsApp. Gere um novo código e tente novamente.'
+          ? 'NÃƒÂ£o foi possÃƒÂ­vel conectar o WhatsApp. Gere um novo cÃƒÂ³digo e tente novamente.'
           : statusAtual === 'PAIRING_EXPIRED'
-            ? 'Código expirado. Gere um novo código e tente novamente.'
+            ? 'CÃƒÂ³digo expirado. Gere um novo cÃƒÂ³digo e tente novamente.'
             : statusAtual === 'WAITING_PAIRING'
               ? 'Aguardando pareamento.'
-              : 'Aguardando código de pareamento.',
+              : 'Aguardando cÃƒÂ³digo de pareamento.',
     pairingCode: session.pairingCode,
     code: session.pairingCode,
     phoneNumber: session.phoneNumber,
@@ -2032,12 +1979,12 @@ async function enviarMensagemParaProprioNumeroEmpresa(empresaId, message) {
 
   const telefone = normalizarTelefone(session.phoneNumber || session.numero || session.userPhone || extrairNumeroDeCreds(session.creds));
   if (!telefone) {
-    throw new Error('Número do WhatsApp da empresa não encontrado.');
+    throw new Error('NÃƒÂºmero do WhatsApp da empresa nÃƒÂ£o encontrado.');
   }
 
   const conteudo = String(message || '').trim();
   if (!conteudo) {
-    throw new Error('Mensagem inválida.');
+    throw new Error('Mensagem invÃƒÂ¡lida.');
   }
 
   const jid = `${telefone}@s.whatsapp.net`;
