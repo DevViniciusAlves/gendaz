@@ -468,11 +468,24 @@ public class AdminService {
         if (valor == null || valor.isBlank()) {
             return null;
         }
-        String telefone = valor.replaceAll("\\D", "");
-        if (telefone.length() < 10 || telefone.length() > 15) {
-            throw new BusinessException("Telefone deve ter de 10 a 15 digitos.");
+        String digitos = valor.replaceAll("\\D", "");
+        if (digitos.isEmpty()) {
+            return null;
         }
-        return telefone;
+        if (!digitos.startsWith("55")) {
+            digitos = "55" + digitos;
+        }
+        if (digitos.length() == 12 && digitos.startsWith("55")) {
+            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
+        }
+        if (digitos.length() != 13) {
+            throw new BusinessException("Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999");
+        }
+        int ddd = Integer.parseInt(digitos.substring(2, 4));
+        if (ddd < 11 || ddd > 99) {
+            throw new BusinessException("DDD invalido. Deve ser entre 11 e 99.");
+        }
+        return digitos;
     }
 
     private String normalizarEmail(String valor) {

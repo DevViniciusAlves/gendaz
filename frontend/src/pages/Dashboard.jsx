@@ -60,7 +60,7 @@ function GraficoBarras({ dados }) {
   if (!temDados) {
     return (
       <div className="bar-chart-empty">
-        <BarChart2 size={40} color="#42f569" />
+        <BarChart2 size={40} color="var(--primary)" />
         <p>Nenhuma receita registrada nos ultimos 30 dias.</p>
         <small>Os valores aparecerao aqui conforme os pagamentos forem confirmados.</small>
       </div>
@@ -98,9 +98,7 @@ function GraficoBarras({ dados }) {
                 width={barW}
                 height={barH}
                 rx={3}
-                fill={isHovered ? '#42f569' : hasValue ? '#42f569' : 'var(--dashboard-chart-empty-bar)'}
-                opacity={isHovered ? 1 : hasValue ? 0.85 : 0.6}
-                style={{ cursor: hasValue ? 'pointer' : 'default', transition: 'fill 0.14s, opacity 0.14s' }}
+                style={{ fill: isHovered ? 'var(--primary)' : hasValue ? 'var(--primary)' : 'var(--dashboard-chart-empty-bar)', cursor: hasValue ? 'pointer' : 'default', transition: 'fill 0.14s, opacity 0.14s', opacity: isHovered ? 1 : hasValue ? 0.85 : 0.6 }}
                 onMouseEnter={() => {
                   if (!hasValue) return
                   setTooltip({ index: i, x: x + barW / 2, y, valor: d.valor, label: d.label })
@@ -317,7 +315,7 @@ export default function Dashboard() {
               </div>
               {proximosAtendimentos.length === 0 ? (
                 <div className="dash-empty-state">
-                  <CalendarDays size={32} color="#42f569" />
+                  <CalendarDays size={32} color="var(--primary)" />
                   <p>Nenhum atendimento agendado.</p>
                 </div>
               ) : (
@@ -347,7 +345,7 @@ export default function Dashboard() {
                 </div>
                 {servicosTop.length === 0 ? (
                   <div className="dash-empty-state">
-                    <Wrench size={28} color="#42f569" />
+                    <Wrench size={28} color="var(--primary)" />
                     <p>Nenhum agendamento ainda.</p>
                   </div>
                 ) : (
@@ -372,7 +370,7 @@ export default function Dashboard() {
                   </div>
                   {receitaServicoTop.length === 0 ? (
                     <div className="dash-empty-state">
-                      <BarChart2 size={28} color="#42f569" />
+                      <BarChart2 size={28} color="var(--primary)" />
                       <p>Nenhuma receita registrada.</p>
                     </div>
                   ) : (
@@ -419,7 +417,7 @@ export default function Dashboard() {
                     </div>
                   ) : (
                     <div className="dash-empty-state">
-                      <CreditCard size={28} color="#42f569" />
+                      <CreditCard size={28} color="var(--primary)" />
                       <p>Nenhum pendente. 🎉</p>
                     </div>
                   )}
@@ -438,7 +436,7 @@ export default function Dashboard() {
             </div>
             {data.agendamentos.length === 0 ? (
               <div className="dash-empty-state" style={{ padding: '32px 0' }}>
-                <CalendarDays size={36} color="#42f569" />
+                <CalendarDays size={36} color="var(--primary)" />
                 <p>Nenhum atendimento registrado ainda.</p>
                 <small>Crie agendamentos na secao de Agenda.</small>
               </div>

@@ -121,7 +121,7 @@
 
 .hero-window-dots span:nth-child(1) { background: #ff5f56; }
 .hero-window-dots span:nth-child(2) { background: #ffbd2e; }
-.hero-window-dots span:nth-child(3) { background: #27c93f; }
+.hero-window-dots span:nth-child(3) { background: var(--primary); }
 
 .hero-mockup-head {
   display: flex;

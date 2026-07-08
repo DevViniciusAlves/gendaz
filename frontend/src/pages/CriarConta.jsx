@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, Phone, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import logoSvg from '../assets/logos/gendaz-logo-green.png'
 
 const PLANOS_INFO = {
@@ -159,7 +160,11 @@ export default function CriarConta() {
     const nomeEmpresa = normalizarTexto(form.nomeEmpresa)
     const nomeProprietario = normalizarTexto(form.nomeProprietario)
     const email = String(form.email || '').trim().toLowerCase()
-    const telefone = somenteDigitos(form.telefone)
+    const telefone = padronizarTelefone(form.telefone)
+    if (!telefone) {
+      setErro('Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999')
+      return
+    }
     const documento = somenteDigitos(form.documentoNumero)
 
     if (!form.aceiteTermos) {
@@ -178,8 +183,9 @@ export default function CriarConta() {
       setErro('E-mail deve ter no maximo 120 caracteres.')
       return
     }
-    if (telefone.length < 10 || telefone.length > 15) {
-      setErro('Telefone deve ter entre 10 e 15 digitos.')
+    const telValidationError = validarTelefone(form.telefone)
+    if (telValidationError) {
+      setErro(telValidationError)
       return
     }
     if (!documentoValido(form.documentoTipo, documento)) {
@@ -308,10 +314,10 @@ export default function CriarConta() {
               <input
                 type="tel"
                 inputMode="numeric"
-                placeholder="(65) 99999-9999"
-                maxLength={15}
+                placeholder="+55 (65) 99999-9999"
+                maxLength={19}
                 value={form.telefone}
-                onChange={(e) => set('telefone', somenteDigitos(e.target.value))}
+                onChange={(e) => set('telefone', aplicarMascara(e.target.value))}
                 required
               />
             </div>

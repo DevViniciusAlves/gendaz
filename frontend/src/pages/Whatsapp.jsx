@@ -10,6 +10,7 @@ import Modal from '../components/Modal.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import { todayIso } from '../services/localStore.js'
 
 const statusLabels = {
@@ -50,10 +51,6 @@ function formatarData(valor) {
   const data = new Date(valor)
   if (Number.isNaN(data.getTime())) return '-'
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(data)
-}
-
-function normalizarTelefone(valor) {
-  return String(valor || '').replace(/\D/g, '')
 }
 
 function formatarCodigoPareamento(valor) {
@@ -293,7 +290,7 @@ export default function Whatsapp() {
         setPairingCode(String(persistidoValido.pairingCode).trim())
         setAguardandoPairing(true)
         if (persistidoValido.phoneNumber) {
-          setPhoneInput(normalizarTelefone(persistidoValido.phoneNumber))
+          setPhoneInput(padronizarTelefone(persistidoValido.phoneNumber))
         }
       } else {
         clearStatusPolling()
@@ -470,13 +467,13 @@ export default function Whatsapp() {
       setPairingCode(String(persistido.pairingCode).trim())
       pairingCodeRef.current = String(persistido.pairingCode).trim()
       if (persistido.phoneNumber) {
-        setPhoneInput(normalizarTelefone(persistido.phoneNumber))
+        setPhoneInput(padronizarTelefone(persistido.phoneNumber))
       }
     }
   }, [tenantId])
 
   async function conectarWhatsapp() {
-    const telefone = normalizarTelefone(phoneInput)
+    const telefone = padronizarTelefone(phoneInput)
     if (!telefone) {
       setConnectionError('Digite um numero de WhatsApp valido.')
       return
@@ -826,16 +823,17 @@ export default function Whatsapp() {
                 inputMode="numeric"
                 maxLength={15}
                 value={phoneInput}
-                onChange={(event) => setPhoneInput(normalizarTelefone(event.target.value))}
-                placeholder="5565999999999"
+                onChange={(event) => setPhoneInput(aplicarMascara(event.target.value))}
+                placeholder="+55 (65) 99999-9999"
+                maxLength={19}
               />
-              <small className="field-hint">Digite o numero com DDI + DDD + numero. Exemplo: 55 65 99999-9999</small>
+              <small className="field-hint">Formato: +55 (DDD) 99999-9999</small>
             </label>
           </div>
           {connectionError && <p className="form-error">{connectionError}</p>}
           {connectionNotice && <p className="success-text">{connectionNotice}</p>}
           <div className="whatsapp-official-actions">
-            <Button icon={ExternalLink} type="button" onClick={conectarWhatsapp} disabled={connectionBusy || normalizarTelefone(phoneInput).length < 10}>
+            <Button icon={ExternalLink} type="button" onClick={conectarWhatsapp} disabled={connectionBusy || !validarTelefone(phoneInput)}>
               {connectionBusy ? 'Gerando...' : sessionError ? 'Reconectar WhatsApp' : 'Gerar codigo de conexao'}
             </Button>
             <Button variant="secondary" icon={RefreshCw} type="button" onClick={atualizarStatusManual} disabled={connectionBusy}>Atualizar status</Button>
@@ -909,7 +907,7 @@ export default function Whatsapp() {
       <section className="panel whatsapp-connected-panel">
         <div>
           <span className="whatsapp-connected-badge"><CheckCircle size={14} />Conectado</span>
-          <h2><CheckCircle size={18} style={{ color: '#16a34a', verticalAlign: 'middle', marginRight: '8px' }} />{configConexao.numeroConectado || statusConexao?.numero || phoneInput || '-'}</h2>
+          <h2><CheckCircle size={18} style={{ color: 'var(--primary)', verticalAlign: 'middle', marginRight: '8px' }} />{configConexao.numeroConectado || statusConexao?.numero || phoneInput || '-'}</h2>
           <p>Status conectado. Ultima atualizacao: <strong>{formatarData(statusConexao?.connectedAt || new Date())}</strong></p>
         </div>
         <div className="whatsapp-connected-actions">

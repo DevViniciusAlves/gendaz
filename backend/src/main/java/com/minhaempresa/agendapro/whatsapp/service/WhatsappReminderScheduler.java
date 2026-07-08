@@ -157,29 +157,16 @@ public class WhatsappReminderScheduler {
         if (telefone == null || telefone.isBlank()) return null;
         String digitos = telefone.replaceAll("\\D", "");
         if (digitos.isEmpty()) return null;
-        // Já está no formato correto: 55 + DDD (2) + número (9) = 13 dígitos
-        if (digitos.length() == 13 && digitos.startsWith("55")) {
-            return digitos;
+        if (!digitos.startsWith("55")) {
+            digitos = "55" + digitos;
         }
-        // DDD + 9 dígitos (11 dígitos sem DDI)
-        if (digitos.length() == 11 && !digitos.startsWith("55")) {
-            return "55" + digitos;
+        if (digitos.length() == 12 && digitos.startsWith("55")) {
+            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
         }
-        // DDD + 8 dígitos (10 dígitos sem DDI — número antigo sem o 9)
-        if (digitos.length() == 10 && !digitos.startsWith("55")) {
-            return "55" + digitos;
-        }
-        // Tem 55 mas o nacional tem 10 dígitos (sem o 9 extra)
-        if (digitos.startsWith("55") && digitos.length() == 12) {
-            String nacional = digitos.substring(2); // 10 dígitos
-            return "55" + nacional;
-        }
-        // Tem 55 e nacional tem 11 dígitos com 9 extra (ex: 5565992700672 = 13, já tratado acima)
-        // Caso raro: começa com 0 antes do DDD
-        if (digitos.startsWith("0") && digitos.length() == 12) {
-            return "55" + digitos.substring(1);
-        }
-        return null;
+        if (digitos.length() != 13) return null;
+        int ddd = Integer.parseInt(digitos.substring(2, 4));
+        if (ddd < 11 || ddd > 99) return null;
+        return digitos;
     }
 
     private ZoneId resolverZoneId(String timezone) {

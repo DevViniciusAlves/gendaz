@@ -5,9 +5,6 @@ import jakarta.validation.ConstraintValidatorContext;
 
 public class TelefoneInternacionalValidator implements ConstraintValidator<TelefoneInternacional, String> {
 
-    private static final java.util.regex.Pattern PHONE_PATTERN =
-            java.util.regex.Pattern.compile("^\\+?\\d{10,15}$");
-
     @Override
     public void initialize(TelefoneInternacional constraintAnnotation) {
     }
@@ -17,10 +14,17 @@ public class TelefoneInternacionalValidator implements ConstraintValidator<Telef
         if (value == null || value.isBlank()) {
             return true;
         }
-        String digits = value.replaceAll("[^\\d+]", "");
-        if (!digits.startsWith("+")) {
-            digits = "+" + digits;
+        String digitos = value.replaceAll("\\D", "");
+        if (!digitos.startsWith("55")) {
+            digitos = "55" + digitos;
         }
-        return PHONE_PATTERN.matcher(digits).matches();
+        if (digitos.length() == 12 && digitos.startsWith("55")) {
+            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
+        }
+        if (digitos.length() != 13) {
+            return false;
+        }
+        int ddd = Integer.parseInt(digitos.substring(2, 4));
+        return ddd >= 11 && ddd <= 99;
     }
 }

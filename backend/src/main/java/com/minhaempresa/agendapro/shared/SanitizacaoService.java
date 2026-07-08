@@ -27,13 +27,23 @@ public class SanitizacaoService {
         if (valor == null) {
             return null;
         }
-        String normalizado = valor.replaceAll("\\D", "");
-        if (normalizado.isBlank()) {
+        String digitos = valor.replaceAll("\\D", "");
+        if (digitos.isEmpty()) {
             return null;
         }
-        if (!normalizado.startsWith("55")) {
-            normalizado = "55" + normalizado;
+        if (!digitos.startsWith("55")) {
+            digitos = "55" + digitos;
         }
-        return normalizado;
+        if (digitos.length() == 12 && digitos.startsWith("55")) {
+            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
+        }
+        if (digitos.length() != 13) {
+            return null;
+        }
+        int ddd = Integer.parseInt(digitos.substring(2, 4));
+        if (ddd < 11 || ddd > 99) {
+            return null;
+        }
+        return digitos;
     }
 }

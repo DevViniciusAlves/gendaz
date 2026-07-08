@@ -8,6 +8,7 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { PLANOS } from '../services/localStore.js'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import whatsappLogo from '../assets/whatsapp.png'
 
 const DIAS_ATENDIMENTO = [
@@ -162,9 +163,9 @@ export default function Configuracoes() {
     setErro('')
     setSalvo(false)
 
-    const telefone = String(empresa.telefone || '').replace(/\D/g, '')
-    if (telefone.length < 10 || telefone.length > 15) {
-      setErro('Telefone deve ter de 10 a 15 dígitos.')
+    const telefone = padronizarTelefone(empresa.telefone)
+    if (!telefone) {
+      setErro('Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999')
       return
     }
 
@@ -374,7 +375,7 @@ export default function Configuracoes() {
         <form className="form-grid settings-form-grid" onSubmit={salvar}>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
-          <Input label="Telefone" helper="Digite apenas números, de 10 a 15 dígitos." inputMode="numeric" maxLength={15} value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: e.target.value.replace(/\D/g, '') })} />
+          <Input label="Telefone" helper={empresa?.telefone ? (validarTelefone(empresa.telefone) || '✓ Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })} />
           <label className="field">
             <span>Fuso horário</span>
             <select

@@ -4927,7 +4927,7 @@ tbody tr:hover { background: #fffaf5; }
   stroke: rgba(255, 255, 255, 0.08);
 }
 
-.app-shell .dashboard-page .bar-chart-shell svg rect[fill="var(--color-primary)"] {
+.app-shell .dashboard-page .bar-chart-shell svg rect {
   fill: rgba(var(--primary-rgb), 0.62);
 }
 
@@ -5051,7 +5051,7 @@ tbody tr:hover { background: #fffaf5; }
   stroke: rgba(255, 255, 255, 0.08);
 }
 
-.app-shell .dashboard-page .bar-chart-shell svg rect[fill="var(--color-primary)"] {
+.app-shell .dashboard-page .bar-chart-shell svg rect {
   fill: rgba(var(--primary-rgb), 0.62);
 }
 
