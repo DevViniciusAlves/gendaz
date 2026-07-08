@@ -780,6 +780,8 @@ export default function Whatsapp() {
     }
   }
 
+  const podeGerarCodigo = phoneInput && phoneInput.replace(/\D/g, '').length === 13
+
   const statusDisplay = etapaRestaurada
   const copy = connectionCopy[statusDisplay]
   const Icon = copy.icon
@@ -821,11 +823,10 @@ export default function Whatsapp() {
               <span>Numero do WhatsApp</span>
               <input
                 inputMode="numeric"
-                maxLength={15}
+                maxLength={19}
                 value={phoneInput}
                 onChange={(event) => setPhoneInput(aplicarMascara(event.target.value))}
                 placeholder="+55 (65) 99999-9999"
-                maxLength={19}
               />
               <small className="field-hint">Formato: +55 (DDD) 99999-9999</small>
             </label>
@@ -833,7 +834,7 @@ export default function Whatsapp() {
           {connectionError && <p className="form-error">{connectionError}</p>}
           {connectionNotice && <p className="success-text">{connectionNotice}</p>}
           <div className="whatsapp-official-actions">
-            <Button icon={ExternalLink} type="button" onClick={conectarWhatsapp} disabled={connectionBusy || !validarTelefone(phoneInput)}>
+            <Button icon={ExternalLink} type="button" onClick={conectarWhatsapp} disabled={connectionBusy || !podeGerarCodigo}>
               {connectionBusy ? 'Gerando...' : sessionError ? 'Reconectar WhatsApp' : 'Gerar codigo de conexao'}
             </Button>
             <Button variant="secondary" icon={RefreshCw} type="button" onClick={atualizarStatusManual} disabled={connectionBusy}>Atualizar status</Button>
