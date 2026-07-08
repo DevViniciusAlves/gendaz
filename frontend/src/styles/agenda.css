@@ -26,19 +26,25 @@
    ============================================================ */
 
 .agenda-card {
-  background: var(--panel-card-bg, #1a1a1a);
-  border: 1px solid var(--panel-border-color, #404040);
-  border-radius: 10px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  transition: box-shadow 0.2s, border-color 0.2s;
+  background: var(--surface, #1a1a1a) !important;
+  border: 1px solid var(--line, #404040) !important;
+  border-radius: 10px !important;
+  padding: 16px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important;
+  transition: box-shadow 0.2s, border-color 0.2s !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
 }
 
 .agenda-card:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-  border-color: rgba(var(--primary-rgb, 255, 149, 0), 0.3);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15) !important;
+  border-color: rgba(var(--primary-rgb, 255, 149, 0), 0.3) !important;
 }
 
 /* ============================================================
@@ -46,78 +52,85 @@
    ============================================================ */
 
 .agenda-card-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--panel-border-soft, #404040);
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px !important;
+  padding-bottom: 12px !important;
+  border-bottom: 1px solid var(--line, #404040) !important;
 }
 
 .agenda-card-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--color-primary, #FF9500);
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
-  flex-shrink: 0;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 50% !important;
+  background: var(--color-primary, #FF9500) !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 700 !important;
+  font-size: 13px !important;
+  flex-shrink: 0 !important;
 }
 
 .agenda-card-titulo {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+  flex: 1 !important;
+  min-width: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1px !important;
 }
 
 .agenda-card-nome {
-  color: var(--panel-text-primary, #ffffff);
-  font-weight: 600;
-  font-size: 13px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--text, #ffffff) !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 .agenda-card-protocolo {
-  color: var(--panel-text-muted, #b0b0b0);
-  font-size: 11px;
+  color: var(--muted, #b0b0b0) !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
 }
 
 .agenda-card-badge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-  flex-shrink: 0;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 3px 8px !important;
+  border-radius: 4px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
 }
 
 .agenda-card-badge-pendente {
-  background: rgba(255, 149, 0, 0.12);
-  color: #FF9500;
+  background: rgba(255, 149, 0, 0.12) !important;
+  color: #FF9500 !important;
 }
 
-.agenda-card-badge-confirmado {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10B981;
+.agenda-card-badge-confirmado,
+.agenda-card-badge-em_atendimento {
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10B981 !important;
+}
+
+.agenda-card-badge-pausado {
+  background: rgba(251, 191, 36, 0.12) !important;
+  color: #FBBF24 !important;
 }
 
 .agenda-card-badge-finalizado {
-  background: rgba(16, 185, 129, 0.12);
-  color: #10B981;
+  background: rgba(16, 185, 129, 0.12) !important;
+  color: #10B981 !important;
 }
 
 .agenda-card-badge-cancelado {
-  background: rgba(239, 68, 68, 0.12);
-  color: #EF4444;
+  background: rgba(239, 68, 68, 0.12) !important;
+  color: #EF4444 !important;
 }
 
 /* ============================================================
@@ -125,57 +138,57 @@
    ============================================================ */
 
 .agenda-card-menu-wrap {
-  position: relative;
-  flex-shrink: 0;
+  position: relative !important;
+  flex-shrink: 0 !important;
 }
 
 .agenda-card-menu-btn {
-  background: none;
-  border: none;
-  color: var(--panel-text-muted, #b0b0b0);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  background: none !important;
+  border: none !important;
+  color: var(--muted, #b0b0b0) !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: background 0.15s, color 0.15s !important;
 }
 
 .agenda-card-menu-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--panel-text-primary, #ffffff);
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--text, #ffffff) !important;
 }
 
 .agenda-card-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 20;
-  min-width: 140px;
-  background: var(--panel-dropdown-bg, #222222);
-  border: 1px solid var(--panel-border-color, #404040);
-  border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
+  position: absolute !important;
+  top: 100% !important;
+  right: 0 !important;
+  z-index: 20 !important;
+  min-width: 140px !important;
+  background: var(--surface, #222222) !important;
+  border: 1px solid var(--line, #404040) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+  padding: 4px !important;
+  display: flex !important;
+  flex-direction: column !important;
 }
 
 .agenda-card-dropdown button {
-  background: none;
-  border: none;
-  color: var(--panel-text-primary, #ffffff);
-  padding: 8px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s;
+  background: none !important;
+  border: none !important;
+  color: var(--text, #ffffff) !important;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  transition: background 0.15s !important;
 }
 
 .agenda-card-dropdown button:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.06) !important;
 }
 
 .agenda-card-dropdown-danger {
@@ -191,26 +204,19 @@
    ============================================================ */
 
 .agenda-card-servico {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
+  display: flex !important;
+  align-items: baseline !important;
+  justify-content: space-between !important;
+  gap: 8px !important;
 }
 
 .agenda-card-servico-nome {
-  color: var(--panel-text-primary, #ffffff);
-  font-size: 13px;
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.agenda-card-servico-label {
-  color: var(--panel-text-muted, #b0b0b0);
-  font-size: 11px;
-  white-space: nowrap;
-  flex-shrink: 0;
+  color: var(--text, #ffffff) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 /* ============================================================
@@ -218,39 +224,74 @@
    ============================================================ */
 
 .agenda-card-horario {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
 }
 
 .agenda-card-horario-texto {
-  color: var(--panel-text-primary, #ffffff);
-  font-size: 13px;
+  color: var(--text, #ffffff) !important;
+  font-size: 13px !important;
+  font-weight: 400 !important;
 }
 
 /* ============================================================
-   BOTÃO INICIAR
+   BOTÕES
    ============================================================ */
 
+.agenda-card-botao {
+  width: 100% !important;
+  padding: 10px 16px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  cursor: pointer !important;
+  transition: filter 0.15s, transform 0.1s !important;
+  font-family: inherit !important;
+}
+
+.agenda-card-botao:active {
+  transform: scale(0.98) !important;
+}
+
 .agenda-card-botao-iniciar {
-  background: var(--color-primary, #FF9500);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 16px;
-  font-weight: 600;
-  font-size: 13px;
-  cursor: pointer;
-  transition: filter 0.15s, transform 0.1s;
-  width: 100%;
+  background: var(--color-primary, #FF9500) !important;
+  color: #ffffff !important;
 }
 
 .agenda-card-botao-iniciar:hover {
-  filter: brightness(1.1);
+  filter: brightness(1.1) !important;
 }
 
-.agenda-card-botao-iniciar:active {
-  transform: scale(0.98);
+.agenda-card-botao-pausar {
+  background: #FBBF24 !important;
+  color: #1a1a1a !important;
+}
+
+.agenda-card-botao-pausar:hover {
+  filter: brightness(1.1) !important;
+}
+
+.agenda-card-botao-finalizar {
+  background: #10B981 !important;
+  color: #ffffff !important;
+}
+
+.agenda-card-botao-finalizar:hover {
+  filter: brightness(1.1) !important;
+}
+
+.agenda-card-botoes-duplos {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px !important;
+}
+
+@media (max-width: 640px) {
+  .agenda-card-botoes-duplos {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 /* ============================================================
@@ -258,21 +299,123 @@
    ============================================================ */
 
 .agenda-card-empty {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 48px 20px;
-  color: var(--panel-text-muted, #b0b0b0);
+  grid-column: 1 / -1 !important;
+  text-align: center !important;
+  padding: 48px 20px !important;
+  color: var(--muted, #b0b0b0) !important;
 }
 
 .agenda-card-empty strong {
-  display: block;
-  margin-bottom: 6px;
-  color: var(--panel-text-primary, #ffffff);
-  font-size: 15px;
+  display: block !important;
+  margin-bottom: 6px !important;
+  color: var(--text, #ffffff) !important;
+  font-size: 15px !important;
 }
 
 .agenda-card-empty p {
-  font-size: 13px;
+  font-size: 13px !important;
+}
+
+/* ============================================================
+   CONFIRMAÇÃO MODAL
+   ============================================================ */
+
+.confirmacao-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+  padding: 20px !important;
+}
+
+.confirmacao-conteudo {
+  background: var(--surface, #1a1a1a) !important;
+  border: 1px solid var(--line, #404040) !important;
+  border-radius: 12px !important;
+  padding: 24px !important;
+  max-width: 400px !important;
+  width: 100% !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4) !important;
+}
+
+.confirmacao-header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  margin-bottom: 16px !important;
+}
+
+.confirmacao-header h3 {
+  margin: 0 !important;
+  font-size: 18px !important;
+  font-weight: 600 !important;
+  color: var(--text, #ffffff) !important;
+}
+
+.confirmacao-close {
+  background: none !important;
+  border: none !important;
+  color: var(--muted, #b0b0b0) !important;
+  cursor: pointer !important;
+  padding: 4px !important;
+  border-radius: 4px !important;
+  display: flex !important;
+}
+
+.confirmacao-close:hover {
+  color: var(--text, #ffffff) !important;
+}
+
+.confirmacao-mensagem {
+  color: var(--muted, #b0b0b0) !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  margin: 0 0 8px 0 !important;
+}
+
+.confirmacao-cliente {
+  color: var(--text, #ffffff) !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  margin: 0 0 24px 0 !important;
+}
+
+.confirmacao-botoes {
+  display: flex !important;
+  gap: 12px !important;
+  justify-content: flex-end !important;
+}
+
+.confirmacao-botao {
+  padding: 10px 20px !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+  font-size: 14px !important;
+  cursor: pointer !important;
+  transition: filter 0.15s !important;
+  font-family: inherit !important;
+}
+
+.confirmacao-botao-cancelar {
+  background: var(--line, #404040) !important;
+  color: var(--text, #ffffff) !important;
+}
+
+.confirmacao-botao-cancelar:hover {
+  filter: brightness(1.2) !important;
+}
+
+.confirmacao-botao-confirmar {
+  background: var(--color-primary, #FF9500) !important;
+  color: #ffffff !important;
+}
+
+.confirmacao-botao-confirmar:hover {
+  filter: brightness(1.1) !important;
 }
 
 /* ============================================================
@@ -280,56 +423,89 @@
    ============================================================ */
 
 :root[data-theme='light'] .agenda-card {
-  background: #ffffff;
-  border-color: #e5e7eb;
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
 }
 
 :root[data-theme='light'] .agenda-card:hover {
-  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08) !important;
 }
 
 :root[data-theme='light'] .agenda-card-header {
-  border-bottom-color: #e5e7eb;
+  border-bottom-color: #e5e7eb !important;
 }
 
 :root[data-theme='light'] .agenda-card-nome,
 :root[data-theme='light'] .agenda-card-servico-nome,
 :root[data-theme='light'] .agenda-card-horario-texto {
-  color: #111827;
+  color: #111827 !important;
 }
 
-:root[data-theme='light'] .agenda-card-protocolo,
-:root[data-theme='light'] .agenda-card-servico-label {
-  color: #6b7280;
+:root[data-theme='light'] .agenda-card-protocolo {
+  color: #6b7280 !important;
 }
 
 :root[data-theme='light'] .agenda-card-menu-btn {
-  color: #6b7280;
+  color: #6b7280 !important;
 }
 
 :root[data-theme='light'] .agenda-card-menu-btn:hover {
-  background: #f3f4f6;
-  color: #111827;
+  background: #f3f4f6 !important;
+  color: #111827 !important;
 }
 
 :root[data-theme='light'] .agenda-card-dropdown {
-  background: #ffffff;
-  border-color: #e5e7eb;
-  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
 }
 
 :root[data-theme='light'] .agenda-card-dropdown button {
-  color: #111827;
+  color: #111827 !important;
 }
 
 :root[data-theme='light'] .agenda-card-dropdown button:hover {
-  background: #f3f4f6;
+  background: #f3f4f6 !important;
 }
 
 :root[data-theme='light'] .agenda-card-empty strong {
-  color: #111827;
+  color: #111827 !important;
 }
 
 :root[data-theme='light'] .agenda-card-empty p {
-  color: #6b7280;
+  color: #6b7280 !important;
+}
+
+:root[data-theme='light'] .confirmacao-overlay {
+  background: rgba(0, 0, 0, 0.3) !important;
+}
+
+:root[data-theme='light'] .confirmacao-conteudo {
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
+
+:root[data-theme='light'] .confirmacao-header h3 {
+  color: #111827 !important;
+}
+
+:root[data-theme='light'] .confirmacao-mensagem {
+  color: #6b7280 !important;
+}
+
+:root[data-theme='light'] .confirmacao-cliente {
+  color: #111827 !important;
+}
+
+:root[data-theme='light'] .confirmacao-botao-cancelar {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+:root[data-theme='light'] .confirmacao-close {
+  color: #6b7280 !important;
+}
+
+:root[data-theme='light'] .confirmacao-close:hover {
+  color: #111827 !important;
 }

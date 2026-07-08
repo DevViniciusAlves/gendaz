@@ -560,6 +560,7 @@
 :root[data-theme='light'] .app-shell .status-aprovado,
 :root[data-theme='light'] .app-shell .status-pago,
 :root[data-theme='light'] .app-shell .status-confirmado,
+:root[data-theme='light'] .app-shell .status-em-atendimento,
 :root[data-theme='light'] .app-shell .status-emitida,
 :root[data-theme='light'] .app-shell .status-entregue,
 :root[data-theme='light'] .app-shell .status-aberta,
@@ -569,6 +570,13 @@
   -webkit-text-fill-color: #166534 !important;
   background: rgba(34, 197, 94, 0.12) !important;
   border-color: rgba(34, 197, 94, 0.22) !important;
+}
+
+:root[data-theme='light'] .app-shell .status-pausado {
+  color: #92400e !important;
+  -webkit-text-fill-color: #92400e !important;
+  background: rgba(251, 191, 36, 0.12) !important;
+  border-color: rgba(251, 191, 36, 0.22) !important;
 }
 
 :root[data-theme='light'] .app-shell .status-pendente,
@@ -919,6 +927,7 @@
 :root[data-theme='light'] .app-shell .schedule-card .status-aprovado,
 :root[data-theme='light'] .app-shell .schedule-card .status-pago,
 :root[data-theme='light'] .app-shell .schedule-card .status-confirmado,
+:root[data-theme='light'] .app-shell .schedule-card .status-em-atendimento,
 :root[data-theme='light'] .app-shell .schedule-card .status-emitida,
 :root[data-theme='light'] .app-shell .schedule-card .status-entregue,
 :root[data-theme='light'] .app-shell .schedule-card .status-aberta,
@@ -926,6 +935,11 @@
 :root[data-theme='light'] .app-shell .schedule-card .status-finalizado {
   color: #166534 !important;
   -webkit-text-fill-color: #166534 !important;
+}
+
+:root[data-theme='light'] .app-shell .schedule-card .status-pausado {
+  color: #92400e !important;
+  -webkit-text-fill-color: #92400e !important;
 }
 
 :root[data-theme='light'] .app-shell .schedule-card .status-pendente,

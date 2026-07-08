@@ -572,6 +572,22 @@ export const appApi = {
     })
   },
 
+  iniciarAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/iniciar`).then((response) => response.data), {
+      loading: 'Iniciando atendimento... aguarde',
+      success: 'Atendimento iniciado com sucesso.',
+      error: 'Não foi possível iniciar o atendimento.',
+    })
+  },
+
+  pausarAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/pausar`).then((response) => response.data), {
+      loading: 'Pausando atendimento... aguarde',
+      success: 'Atendimento pausado com sucesso.',
+      error: 'Não foi possível pausar o atendimento.',
+    })
+  },
+
   cancelarAgendamento(id) {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/cancelar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Cancelando agendamento... aguarde',

@@ -220,6 +220,26 @@ public class AgendamentoService {
     }
 
     @Transactional
+    public AgendamentoResponse iniciar(Long id) {
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        if (agendamento.getStatus() != StatusAgendamento.PENDENTE && agendamento.getStatus() != StatusAgendamento.CONFIRMADO) {
+            throw new BusinessException("Apenas agendamentos pendentes ou confirmados podem ser iniciados.");
+        }
+        agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
+        return mapper.toResponse(agendamentoRepository.save(agendamento));
+    }
+
+    @Transactional
+    public AgendamentoResponse pausar(Long id) {
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        if (agendamento.getStatus() != StatusAgendamento.EM_ATENDIMENTO) {
+            throw new BusinessException("Apenas agendamentos em atendimento podem ser pausados.");
+        }
+        agendamento.setStatus(StatusAgendamento.PAUSADO);
+        return mapper.toResponse(agendamentoRepository.save(agendamento));
+    }
+
+    @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         LocalTime horaFim = request.horaInicio().plusMinutes(agendamento.getServico().getDuracaoMinutos());

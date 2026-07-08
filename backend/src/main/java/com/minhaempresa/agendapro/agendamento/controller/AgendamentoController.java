@@ -68,6 +68,16 @@ public class AgendamentoController {
         return ResponseEntity.ok(agendamentoService.finalizar(id));
     }
 
+    @PatchMapping("/{id}/iniciar")
+    public ResponseEntity<AgendamentoResponse> iniciar(@PathVariable Long id) {
+        return ResponseEntity.ok(agendamentoService.iniciar(id));
+    }
+
+    @PatchMapping("/{id}/pausar")
+    public ResponseEntity<AgendamentoResponse> pausar(@PathVariable Long id) {
+        return ResponseEntity.ok(agendamentoService.pausar(id));
+    }
+
     @PutMapping("/{id}/remarcar")
     public ResponseEntity<AgendamentoResponse> remarcar(@PathVariable Long id, @Valid @RequestBody RemarcarAgendamentoRequest request) {
         return ResponseEntity.ok(agendamentoService.remarcar(id, request));

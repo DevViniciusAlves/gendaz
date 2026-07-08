@@ -5,6 +5,7 @@ import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
 import AgendaCard from '../components/AgendaCard.jsx'
+import ConfirmacaoAcao from '../components/ConfirmacaoAcao.jsx'
 import Pagination from '../components/Pagination.jsx'
 import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
@@ -141,6 +142,8 @@ export default function Agenda() {
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 12
+  const [fluxoModal, setFluxoModal] = useState({ open: false, acao: null, agendamento: null })
+  const [executandoFluxo, setExecutandoFluxo] = useState(false)
 
   const termoBusca = busca.trim().toLowerCase()
 
@@ -449,6 +452,35 @@ export default function Agenda() {
     }
   }
 
+  function abrirFluxo(acao, agendamento) {
+    setFluxoModal({ open: true, acao, agendamento })
+  }
+
+  function fecharFluxo() {
+    setFluxoModal({ open: false, acao: null, agendamento: null })
+  }
+
+  async function executarFluxo(acao, agendamento) {
+    if (executandoFluxo) return
+    setExecutandoFluxo(true)
+    setErroAcao('')
+    try {
+      if (acao === 'INICIAR') {
+        await appApi.iniciarAgendamento(agendamento.id)
+      } else if (acao === 'PAUSAR') {
+        await appApi.pausarAgendamento(agendamento.id)
+      } else if (acao === 'FINALIZAR') {
+        await appApi.finalizarAgendamento(agendamento.id)
+      }
+      await reload(true)
+    } catch (error) {
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível executar a ação.')
+    } finally {
+      setExecutandoFluxo(false)
+      fecharFluxo()
+    }
+  }
+
   return (
     <section className="page">
       <div className="page-title row-title agenda-header">
@@ -528,6 +560,8 @@ export default function Agenda() {
           <option value="todos">Todos os status</option>
           <option value="PENDENTE">Pendente</option>
           <option value="CONFIRMADO">Confirmado</option>
+          <option value="EM_ATENDIMENTO">Em atendimento</option>
+          <option value="PAUSADO">Pausado</option>
           <option value="CANCELADO">Cancelado</option>
           <option value="FINALIZADO">Finalizado</option>
         </select>
@@ -570,7 +604,9 @@ export default function Agenda() {
           <AgendaCard
             key={agendamento.id}
             agendamento={agendamento}
-            onIniciar={(ag) => finalizarAtendimento(ag.id)}
+            onIniciar={(ag) => abrirFluxo('INICIAR', ag)}
+            onPausar={(ag) => abrirFluxo('PAUSAR', ag)}
+            onFinalizar={(ag) => abrirFluxo('FINALIZAR', ag)}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
@@ -623,7 +659,7 @@ export default function Agenda() {
             {temProfissionais && (
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
-            <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
+            <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
@@ -662,6 +698,13 @@ export default function Agenda() {
         loading={bulkExecutando}
         onCancel={() => setBulkModal(null)}
         onConfirm={executarBulk}
+      />
+      <ConfirmacaoAcao
+        open={fluxoModal.open}
+        acao={fluxoModal.acao}
+        agendamento={fluxoModal.agendamento}
+        onConfirmar={executarFluxo}
+        onCancelar={fecharFluxo}
       />
         </>
       )}

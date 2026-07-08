@@ -28,20 +28,21 @@ function obterIniciais(nome) {
 function statusLabel(status) {
   const mapa = {
     PENDENTE: 'PENDENTE',
-    CONFIRMADO: 'EM ATENDIMENTO',
+    CONFIRMADO: 'CONFIRMADO',
+    EM_ATENDIMENTO: 'EM ATENDIMENTO',
+    PAUSADO: 'PAUSADO',
     FINALIZADO: 'FINALIZADO',
     CANCELADO: 'CANCELADO',
   }
   return mapa[status] || status
 }
 
-export default function AgendaCard({ agendamento, onIniciar, onEditar, onCancelar, onExcluir }) {
+export default function AgendaCard({ agendamento, onIniciar, onPausar, onFinalizar, onEditar, onCancelar, onExcluir }) {
   const [menuAberto, setMenuAberto] = useState(false)
   const status = agendamento.status || 'PENDENTE'
   const statusClass = status.toLowerCase()
   const iniciais = obterIniciais(agendamento.clienteNome)
   const horaFim = obterHoraFim(agendamento)
-  const podeIniciar = status === 'PENDENTE' || status === 'CONFIRMADO'
 
   return (
     <div className="agenda-card">
@@ -72,16 +73,36 @@ export default function AgendaCard({ agendamento, onIniciar, onEditar, onCancela
 
       <div className="agenda-card-servico">
         <span className="agenda-card-servico-nome">{agendamento.servicoNome} · {agendamento.profissionalNome}</span>
-        <span className="agenda-card-servico-label">Profissional</span>
       </div>
 
       <div className="agenda-card-horario">
         <span className="agenda-card-horario-texto">{formatarData(agendamento.data)} · {agendamento.horaInicio} – {horaFim}</span>
       </div>
 
-      {podeIniciar && onIniciar && (
-        <button className="agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
+      {(status === 'PENDENTE' || status === 'CONFIRMADO') && onIniciar && (
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
           Iniciar Atendimento
+        </button>
+      )}
+
+      {status === 'EM_ATENDIMENTO' && (
+        <div className="agenda-card-botoes-duplos">
+          {onPausar && (
+            <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button">
+              Pausar
+            </button>
+          )}
+          {onFinalizar && (
+            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button">
+              Finalizar
+            </button>
+          )}
+        </div>
+      )}
+
+      {status === 'PAUSADO' && onIniciar && (
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
+          Retomar Atendimento
         </button>
       )}
     </div>
