@@ -1,0 +1,16 @@
+name: Keep Alive - Render
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # A cada 5 minutos
+  workflow_dispatch:        # Permite rodar manualmente
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping backend
+        run: curl -f https://api.gendaz.site/api/health || true
+
+      - name: Ping whatsapp-service
+        run: curl -f https://whatsapp-service-zkuj.onrender.com/health || true
