@@ -1319,6 +1319,322 @@
   border-color: #d1d5db !important;
 }
 
+/* ============================================================
+   MISSING LIGHT-THEME OVERRIDES
+   Counteract dark overrides from global.css lines 1405-2065
+   ============================================================ */
+
+/* Reset color-scheme for native form controls (scrollbars, dropdowns, date pickers) */
+:root[data-theme='light'] .app-shell .content input,
+:root[data-theme='light'] .app-shell .content select,
+:root[data-theme='light'] .app-shell .content textarea,
+:root[data-theme='light'] .app-shell .content .search-shell input,
+:root[data-theme='light'] .app-shell input,
+:root[data-theme='light'] .app-shell select,
+:root[data-theme='light'] .app-shell textarea {
+  color-scheme: light !important;
+}
+
+/* Dashboard summary card span text — white-on-white fix */
+:root[data-theme='light'] .app-shell .content .dashboard-summary-card span {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+:root[data-theme='light'] .app-shell .content .dashboard-summary-card small {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Input autofill — white background in light theme */
+:root[data-theme='light'] .app-shell .content input:-webkit-autofill,
+:root[data-theme='light'] .app-shell .content input:-webkit-autofill:hover,
+:root[data-theme='light'] .app-shell .content input:-webkit-autofill:focus,
+:root[data-theme='light'] .app-shell .content input:-webkit-autofill:active,
+:root[data-theme='light'] .app-shell .content textarea:-webkit-autofill,
+:root[data-theme='light'] .app-shell .content textarea:-webkit-autofill:hover,
+:root[data-theme='light'] .app-shell .content textarea:-webkit-autofill:focus,
+:root[data-theme='light'] .app-shell .content select:-webkit-autofill,
+:root[data-theme='light'] .app-shell .content select:-webkit-autofill:hover,
+:root[data-theme='light'] .app-shell .content select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  caret-color: var(--panel-text-primary) !important;
+  box-shadow: 0 0 0 1000px #ffffff inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+  border: 1px solid var(--panel-border-color) !important;
+  transition: background-color 9999s ease-out 0s !important;
+}
+
+/* Dashboard summary card hover — subtle lift, no dark glow */
+:root[data-theme='light'] .app-shell .content .dashboard-summary-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: rgba(var(--primary-rgb), 0.28) !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
+}
+
+/* Card hover states — remove dark glow, use subtle shadow */
+:root[data-theme='light'] .app-shell .panel:hover,
+:root[data-theme='light'] .app-shell .metric-card:hover,
+:root[data-theme='light'] .app-shell .plan-card:hover,
+:root[data-theme='light'] .app-shell .schedule-card:hover,
+:root[data-theme='light'] .app-shell .first-step:hover,
+:root[data-theme='light'] .app-shell .settings-card:hover {
+  transform: translateY(-3px) !important;
+  border-color: var(--panel-border-color) !important;
+  box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
+}
+
+/* Modal backdrop — light semi-transparent overlay */
+:root[data-theme='light'] .app-shell .modal-backdrop,
+:root[data-theme='light'] .admin-shell .modal-backdrop {
+  background: rgba(15, 23, 42, 0.30) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* Admin modal — white background */
+:root[data-theme='light'] .admin-shell .modal {
+  background: var(--panel-card-bg) !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14) !important;
+  color: var(--panel-text-primary) !important;
+}
+
+/* Dropdown / action-menu panels — light background */
+:root[data-theme='light'] .app-shell .dropdown-panel,
+:root[data-theme='light'] .app-shell .action-menu-panel,
+:root[data-theme='light'] .admin-shell .dropdown-panel,
+:root[data-theme='light'] .admin-shell .action-menu-panel {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.14) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+:root[data-theme='light'] .app-shell .dropdown-panel a,
+:root[data-theme='light'] .app-shell .dropdown-panel button,
+:root[data-theme='light'] .app-shell .dropdown-panel span,
+:root[data-theme='light'] .app-shell .action-menu-panel button,
+:root[data-theme='light'] .admin-shell .dropdown-panel a,
+:root[data-theme='light'] .admin-shell .dropdown-panel button,
+:root[data-theme='light'] .admin-shell .dropdown-panel span,
+:root[data-theme='light'] .admin-shell .action-menu-panel button {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .action-danger,
+:root[data-theme='light'] .admin-shell .action-danger {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+}
+
+:root[data-theme='light'] .app-shell .action-danger:hover,
+:root[data-theme='light'] .admin-shell .action-danger:hover {
+  background: rgba(239, 68, 68, 0.10) !important;
+}
+
+/* Inner cards/boxes — white background */
+:root[data-theme='light'] .app-shell .conversation,
+:root[data-theme='light'] .app-shell .chat-message,
+:root[data-theme='light'] .app-shell .mini-row,
+:root[data-theme='light'] .app-shell .ranking > div,
+:root[data-theme='light'] .app-shell .payment-wait-card,
+:root[data-theme='light'] .app-shell .payment-method-card,
+:root[data-theme='light'] .app-shell .delivery-mini,
+:root[data-theme='light'] .app-shell .plan-payment-flow,
+:root[data-theme='light'] .app-shell .plan-payment-status,
+:root[data-theme='light'] .app-shell .plan-pix-box,
+:root[data-theme='light'] .app-shell .support-ticket-item,
+:root[data-theme='light'] .app-shell .support-form-grid,
+:root[data-theme='light'] .app-shell .booking-qr-card {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-soft) !important;
+}
+
+/* Chat body background */
+:root[data-theme='light'] .app-shell .chat-body {
+  background: #f8fafc !important;
+}
+
+/* Table row hover */
+:root[data-theme='light'] .app-shell tbody tr:hover,
+:root[data-theme='light'] .admin-shell tbody tr:hover {
+  background: #f3f4f6 !important;
+}
+
+/* Table th/td borders */
+:root[data-theme='light'] .app-shell th,
+:root[data-theme='light'] .admin-shell th {
+  color: #6b7280 !important;
+  -webkit-text-fill-color: #6b7280 !important;
+  border-bottom-color: var(--panel-border-color) !important;
+}
+
+:root[data-theme='light'] .app-shell td,
+:root[data-theme='light'] .admin-shell td {
+  border-bottom-color: var(--panel-border-soft) !important;
+}
+
+/* Generic app-shell input override (catches late dark overrides) */
+:root[data-theme='light'] .app-shell input,
+:root[data-theme='light'] .app-shell select,
+:root[data-theme='light'] .app-shell textarea,
+:root[data-theme='light'] .admin-shell input,
+:root[data-theme='light'] .admin-shell select,
+:root[data-theme='light'] .admin-shell textarea {
+  background: #ffffff !important;
+  border: 1px solid var(--panel-border-color) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  color-scheme: light !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme='light'] .app-shell input::placeholder,
+:root[data-theme='light'] .app-shell textarea::placeholder,
+:root[data-theme='light'] .admin-shell input::placeholder,
+:root[data-theme='light'] .admin-shell textarea::placeholder {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Focus states — subtle green border, no dark glow */
+:root[data-theme='light'] .app-shell .content input:focus,
+:root[data-theme='light'] .app-shell .content select:focus,
+:root[data-theme='light'] .app-shell .content textarea:focus,
+:root[data-theme='light'] .app-shell .content .search-shell input:focus,
+:root[data-theme='light'] .app-shell input:focus,
+:root[data-theme='light'] .app-shell select:focus,
+:root[data-theme='light'] .app-shell textarea:focus {
+  border-color: rgba(var(--primary-rgb), 0.40) !important;
+  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.10) !important;
+}
+
+/* Select option background */
+:root[data-theme='light'] .app-shell .content select option,
+:root[data-theme='light'] .app-shell .content select optgroup,
+:root[data-theme='light'] .admin-shell select option,
+:root[data-theme='light'] .admin-shell select optgroup {
+  background: #ffffff !important;
+  color: var(--panel-text-primary) !important;
+}
+
+/* Page title / headings — dark override sets #ffffff */
+:root[data-theme='light'] .app-shell .page-title h1,
+:root[data-theme='light'] .app-shell .dashboard-hero h1,
+:root[data-theme='light'] .app-shell .panel h2,
+:root[data-theme='light'] .app-shell .panel-head h2,
+:root[data-theme='light'] .app-shell .whatsapp-official-card h1,
+:root[data-theme='light'] .app-shell .payment-pro-card h1,
+:root[data-theme='light'] .app-shell .payment-checkout-card h2,
+:root[data-theme='light'] .admin-shell .page-title h1,
+:root[data-theme='light'] .admin-shell .page-title-admin h1,
+:root[data-theme='light'] .admin-shell .admin-metrics strong,
+:root[data-theme='light'] .admin-shell .admin-panels h2,
+:root[data-theme='light'] .admin-shell .admin-config strong {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+/* Muted paragraphs / spans — dark override sets rgba(226,233,247,...) */
+:root[data-theme='light'] .app-shell .page-title p,
+:root[data-theme='light'] .app-shell .dashboard-hero p,
+:root[data-theme='light'] .app-shell .panel p,
+:root[data-theme='light'] .app-shell .panel small,
+:root[data-theme='light'] .app-shell .conversation-empty,
+:root[data-theme='light'] .app-shell .settings-card-muted,
+:root[data-theme='light'] .app-shell .first-step small,
+:root[data-theme='light'] .app-shell .whatsapp-official-card > p,
+:root[data-theme='light'] .app-shell .whatsapp-ai-note p,
+:root[data-theme='light'] .app-shell .payment-pro-copy,
+:root[data-theme='light'] .app-shell .payment-checkout-card p,
+:root[data-theme='light'] .app-shell .payment-checkout-card span,
+:root[data-theme='light'] .admin-shell .page-title p,
+:root[data-theme='light'] .admin-shell .admin-config span,
+:root[data-theme='light'] .admin-shell .admin-panels span,
+:root[data-theme='light'] .admin-shell .admin-detail-list p,
+:root[data-theme='light'] .admin-shell .admin-toast span {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Field-hint overrides — dark override sets rgba(226,233,247,0.62) */
+:root[data-theme='light'] .app-shell .dashboard-summary-card span,
+:root[data-theme='light'] .app-shell .search-shell .field-hint,
+:root[data-theme='light'] .app-shell .filters .field-hint,
+:root[data-theme='light'] .app-shell .report-filters .field-hint,
+:root[data-theme='light'] .admin-shell .search-shell .field-hint {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Dashboard summary card strong — dark override sets #ffffff */
+:root[data-theme='light'] .app-shell .dashboard-summary-card strong,
+:root[data-theme='light'] .admin-shell .admin-metrics strong {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+/* Dashboard summary card small — dark override sets rgba(226,233,247,0.54) */
+:root[data-theme='light'] .app-shell .dashboard-summary-card small,
+:root[data-theme='light'] .admin-shell .admin-panels p,
+:root[data-theme='light'] .admin-shell .admin-config p,
+:root[data-theme='light'] .admin-shell .admin-section p {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Topbar text — dark override sets white/rgba */
+:root[data-theme='light'] .app-shell .topbar strong,
+:root[data-theme='light'] .app-shell .user-menu strong,
+:root[data-theme='light'] .app-shell .demo-pill,
+:root[data-theme='light'] .app-shell .topbar-link,
+:root[data-theme='light'] .app-shell .dropdown-panel a,
+:root[data-theme='light'] .app-shell .dropdown-panel button,
+:root[data-theme='light'] .app-shell .dropdown-panel span,
+:root[data-theme='light'] .admin-shell .dropdown-panel a,
+:root[data-theme='light'] .admin-shell .dropdown-panel button,
+:root[data-theme='light'] .admin-shell .dropdown-panel span {
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .topbar span,
+:root[data-theme='light'] .app-shell .user-menu small,
+:root[data-theme='light'] .app-shell .dropdown-panel span,
+:root[data-theme='light'] .admin-shell .dropdown-panel span {
+  color: var(--panel-text-muted) !important;
+  -webkit-text-fill-color: var(--panel-text-muted) !important;
+}
+
+/* Chat message text — dark override sets white */
+:root[data-theme='light'] .app-shell .chat-message {
+  color: var(--panel-text-primary) !important;
+}
+
+:root[data-theme='light'] .app-shell .chat-message.mine {
+  color: #14532d !important;
+  -webkit-text-fill-color: #14532d !important;
+}
+
+/* Chat header / actions / message-form borders */
+:root[data-theme='light'] .app-shell .chat-header,
+:root[data-theme='light'] .app-shell .client-panel dl div,
+:root[data-theme='light'] .app-shell .settings-meta-list div,
+:root[data-theme='light'] .app-shell .admin-bar,
+:root[data-theme='light'] .app-shell .plan-summary,
+:root[data-theme='light'] .app-shell .first-step,
+:root[data-theme='light'] .app-shell .support-ticket-item,
+:root[data-theme='light'] .admin-shell .admin-bar {
+  border-color: var(--panel-border-soft) !important;
+}
+
+/* ============================================================
+   END MISSING LIGHT-THEME OVERRIDES
+   ============================================================ */
+
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-header,
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-title-block,
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-controls,
