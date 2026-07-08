@@ -197,6 +197,9 @@ public class WhatsappNodeClient {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             String mensagem = extrairMensagem(response.body());
             String detalhe = mensagem.isBlank() ? response.body() : mensagem;
+            if (detalhe != null && (detalhe.contains("<!DOCTYPE") || detalhe.contains("<html") || detalhe.contains("<body") || detalhe.contains("502 Bad Gateway") || detalhe.contains("503 Service Temporarily Unavailable") || detalhe.contains("502 bad gateway"))) {
+                detalhe = "Serviço temporariamente indisponível. Tente novamente em instantes.";
+            }
             throw new BusinessException("WhatsApp service respondeu " + response.statusCode()
                     + " em " + request.uri().getPath()
                     + (detalhe == null || detalhe.isBlank() ? "" : ": " + detalhe));

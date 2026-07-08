@@ -63,6 +63,16 @@ async function tentarRefreshSessao(config) {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (error.response) {
+      const isHtml = typeof error.response.data === 'string' &&
+        (error.response.data.includes('<!DOCTYPE') || error.response.data.includes('<html') || error.response.data.includes('<body'));
+      if (isHtml || error.response.status >= 500) {
+        error.response.data = {
+          mensagem: 'Serviço temporariamente indisponível. Tente novamente em instantes.',
+          message: 'Serviço temporariamente indisponível. Tente novamente em instantes.'
+        }
+      }
+    }
     const originalRequest = error.config || {}
     const status = error.response?.status
     const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || '').toLowerCase()
