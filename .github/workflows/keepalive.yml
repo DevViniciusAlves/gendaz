@@ -13,4 +13,4 @@ jobs:
         run: curl -f https://api.gendaz.site/api/health || true
 
       - name: Ping whatsapp-service
-        run: curl -f https://whatsapp-service-zkuj.onrender.com/health || true
+        run: curl -f https://wpp-serice.onrender.com/health || true
