@@ -2,6 +2,7 @@ package com.minhaempresa.agendapro.agendamentopublico.dto;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.agendapro.configuracao.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
+import com.minhaempresa.agendapro.shared.TelefoneInternacional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -45,7 +46,7 @@ public final class AgendamentoPublicoDtos {
             @NotNull LocalDate data,
             @NotNull LocalTime horaInicio,
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String clienteNome,
-            @NotBlank @Size(min = 10, max = 25) String clienteTelefone,
+            @NotBlank @TelefoneInternacional String clienteTelefone,
             @Email @Size(max = 120) String clienteEmail,
             @Size(max = 500) String observacao
     ) {}

@@ -5,7 +5,12 @@ import com.minhaempresa.agendapro.shared.BusinessException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
-import lombok.*;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -22,6 +27,7 @@ public class ClienteEntity {
     @Column(nullable = false)
     private String nome;
 
+    @Setter(AccessLevel.NONE)
     @Column(name = "telefone", length = 20)
     @NotBlank(message = "Telefone é obrigatório")
     private String telefone;

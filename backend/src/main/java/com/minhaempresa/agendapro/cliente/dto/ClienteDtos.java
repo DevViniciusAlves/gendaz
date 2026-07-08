@@ -1,5 +1,6 @@
 package com.minhaempresa.agendapro.cliente.dto;
 
+import com.minhaempresa.agendapro.shared.TelefoneInternacional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Email;
@@ -13,7 +14,7 @@ public final class ClienteDtos {
 
     public record SalvarClienteRequest(
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String nome,
-            @NotBlank @Size(min = 10, max = 25) String telefone,
+            @NotBlank @TelefoneInternacional String telefone,
             @Email @Size(max = 120) String email,
             @Size(max = 300) String observacoes,
             @NotNull Long empresaId

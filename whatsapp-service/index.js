@@ -1,4 +1,5 @@
 require('dotenv').config();
+const axios = require('axios');
 const express = require('express');
 const {
   conectarEmpresa,
@@ -263,7 +264,34 @@ app.post('/webhook/agendamento', async (_req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+const BACKEND_URL = (process.env.BACKEND_URL || process.env.BACKEND_JAVA_URL || 'http://localhost:8080').replace(/\/+$/, '');
+const PUBLIC_WHATSAPP_URL = (process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_WHATSAPP_URL || '').replace(/\/+$/, '');
+const KEEP_ALIVE_INTERVAL_MS = 5 * 60 * 1000;
+
+async function pingKeepAlive() {
+  const targets = [
+    { name: 'backend', url: `${BACKEND_URL}/health` },
+  ];
+
+  if (PUBLIC_WHATSAPP_URL) {
+    targets.push({ name: 'whatsapp-service', url: `${PUBLIC_WHATSAPP_URL}/health` });
+  } else {
+    targets.push({ name: 'whatsapp-service', url: `http://127.0.0.1:${port}/health` });
+  }
+
+  for (const target of targets) {
+    try {
+      const response = await axios.get(target.url, { timeout: 15000, validateStatus: () => true });
+      if (response.status >= 200 && response.status < 300) {
+        console.log(`[keep-alive] ${target.name} ping ok status=${response.status}`, new Date().toISOString());
+      } else {
+        console.warn(`[keep-alive] ${target.name} ping falhou status=${response.status} url=${target.url}`);
+      }
+    } catch (error) {
+      console.warn(`[keep-alive] ${target.name} ping erro url=${target.url} detalhe=${error.message}`);
+    }
+  }
+}
 
 console.log('[cleanup] iniciado cleanup automático de conversas (TTL: 24h)');
 setInterval(() => {
@@ -275,11 +303,16 @@ setInterval(() => {
 }, 60 * 60 * 1000).unref?.();
 
 setInterval(() => {
-  console.log('[keep-alive] ping ok', new Date().toISOString());
-}, 5 * 60 * 1000);
+  pingKeepAlive().catch((error) => {
+    console.warn('[keep-alive] falha no ping agendado:', error.message);
+  });
+}, KEEP_ALIVE_INTERVAL_MS).unref?.();
 
 app.listen(port, () => {
   console.log(`[Bot-Service] running on port ${port}`);
+  pingKeepAlive().catch((error) => {
+    console.warn('[keep-alive] falha no ping inicial:', error.message);
+  });
   restaurarSessoesPersistidas().catch((error) => {
     console.warn('[Bot-Service] falha ao restaurar sessoes ativas no boot:', error.message);
   });

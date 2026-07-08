@@ -29,11 +29,6 @@ public class WhatsappReminderScheduler {
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
-    @Scheduled(fixedDelay = 300000)
-    public void keepAlive() {
-        log.info("[keep-alive] ping ok");
-    }
-
     @Scheduled(fixedDelay = 60000)
     public void enviarLembretes() {
         log.info("[Scheduler] enviarLembretes() executando");

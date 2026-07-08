@@ -1,4 +1,4 @@
-﻿import { CalendarPlus, Check, Pencil, Power, RefreshCw, Trash } from 'lucide-react'
+import { CalendarPlus, Check, Pencil, Power, RefreshCw, Trash } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
@@ -268,7 +268,7 @@ export default function Agenda() {
     if (temProfissionais && !payload.profissionalId) return 'Cliente, serviço e profissional são obrigatórios.'
     const hoje = todayIso()
     if (!payload.data || payload.data < hoje || payload.data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
-    if (!payload.horaInicio || payload.horaInicio < '06:00' || payload.horaInicio > '22:59') return 'Horário deve estar entre 06:00 e 23:00.'
+    if (!payload.horaInicio || payload.horaInicio < '00:00' || payload.horaInicio > '23:59') return 'Horário inválido.'
     if (payload.data === hoje) {
       const partesAgora = agoraNoFuso(AGENDA_TIMEZONE)
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
@@ -638,7 +638,7 @@ export default function Agenda() {
             </label>
           )}
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
-          <Input label="Hora" type="time" min="06:00" max="22:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
+          <Input label="Hora" type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
           <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>
@@ -655,7 +655,7 @@ export default function Agenda() {
             )}
             <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
-            <Input label="Hora" helper="Horário permitido: 06:00 a 23:00." type="time" min="06:00" max="22:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
+            <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correções'}</Button>

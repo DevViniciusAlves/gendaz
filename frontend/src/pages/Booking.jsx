@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 function dataLocalISO() {
   const agora = new Date()
@@ -18,44 +19,8 @@ function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
-function somenteNumeros(valor) {
-  return String(valor || '').replace(/\D/g, '')
-}
-
 function somenteLetras(valor) {
   return String(valor || '').replace(/[^\p{L}\s]/gu, '').replace(/\s{2,}/g, ' ')
-}
-
-function aplicarMascara(telefone) {
-  if (!telefone) return '';
-  const digitos = telefone.replace(/\D/g, '');
-  if (digitos.length === 0) return '';
-  if (digitos.length <= 2) return '+' + digitos;
-  if (digitos.length <= 4) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2) + ')';
-  if (digitos.length <= 9) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4);
-  return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4, 9) + '-' + digitos.slice(9, 13);
-}
-
-function validarTelefone(telefone) {
-  if (!telefone) return 'Telefone é obrigatório';
-  const digitos = telefone.replace(/\D/g, '');
-  if (digitos.length === 0) {
-    return 'Telefone é obrigatório';
-  }
-  if (digitos.length < 13) {
-    return `Incompleto: ${digitos.length}/13 dígitos. Formato: +55 (DDD) 99999-9999`;
-  }
-  if (digitos.length > 13) {
-    return 'Telefone muito longo';
-  }
-  if (!digitos.startsWith('55')) {
-    return 'Adicione o código do país +55';
-  }
-  const ddd = parseInt(digitos.substring(2, 4));
-  if (ddd < 11 || ddd > 99) {
-    return `DDD inválido. Deve ser entre 11 e 99`;
-  }
-  return '';
 }
 
 function diaSemanaParaIndice(diaSemana) {
@@ -191,7 +156,6 @@ export default function Booking() {
     setErro('')
     setSucesso('')
 
-    const telefone = somenteNumeros(cliente.telefone)
     if (!servicoId || !data || !horaInicio) {
       setErro('Escolha serviço, data e horário.')
       return
@@ -200,9 +164,15 @@ export default function Booking() {
       setErro('Escolha um profissional para continuar.')
       return
     }
+
     const telValidationError = validarTelefone(cliente.telefone)
     if (cliente.nome.trim().length < 2 || telValidationError) {
       setErro(telValidationError || 'Informe um nome válido.')
+      return
+    }
+    const telefone = padronizarTelefone(cliente.telefone)
+    if (!telefone) {
+      setErro('Telefone inválido. Formato correto: +55 (DDD) 99999-9999')
       return
     }
 

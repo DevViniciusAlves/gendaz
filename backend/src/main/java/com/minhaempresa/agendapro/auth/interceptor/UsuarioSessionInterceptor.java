@@ -25,6 +25,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/auth/recuperar-senha",
             "/api/auth/redefinir-senha",
             "/api/public/",
+            "/api/health",
             "/api/pagamentos/planos/webhook",
             "/api/pagamentos/planos/webhook/cakto"
     );

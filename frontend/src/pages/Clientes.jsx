@@ -13,47 +13,12 @@ import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
 import whatsappLogo from '../assets/whatsapp.png'
+import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
 
 function limparNome(valor) {
   return valor.replace(/[^\p{L}\s]/gu, '')
-}
-
-function somenteNumeros(valor) {
-  return valor.replace(/\D/g, '')
-}
-
-function aplicarMascara(telefone) {
-  if (!telefone) return '';
-  const digitos = telefone.replace(/\D/g, '');
-  if (digitos.length === 0) return '';
-  if (digitos.length <= 2) return '+' + digitos;
-  if (digitos.length <= 4) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2) + ')';
-  if (digitos.length <= 9) return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4);
-  return '+' + digitos.slice(0, 2) + ' (' + digitos.slice(2, 4) + ') ' + digitos.slice(4, 9) + '-' + digitos.slice(9, 13);
-}
-
-function validarTelefone(telefone) {
-  if (!telefone) return 'Telefone é obrigatório';
-  const digitos = telefone.replace(/\D/g, '');
-  if (digitos.length === 0) {
-    return 'Telefone é obrigatório';
-  }
-  if (digitos.length < 13) {
-    return `Incompleto: ${digitos.length}/13 dígitos. Formato: +55 (DDD) 99999-9999`;
-  }
-  if (digitos.length > 13) {
-    return 'Telefone muito longo';
-  }
-  if (!digitos.startsWith('55')) {
-    return 'Adicione o código do país +55';
-  }
-  const ddd = parseInt(digitos.substring(2, 4));
-  if (ddd < 11 || ddd > 99) {
-    return `DDD inválido. Deve ser entre 11 e 99`;
-  }
-  return '';
 }
 
 export default function Clientes() {
@@ -208,7 +173,6 @@ export default function Clientes() {
     setErro('')
 
     const nome = form.nome.trim().replace(/\s+/g, ' ')
-    const telefone = somenteNumeros(form.telefone)
     const email = form.email.trim().toLowerCase()
 
     if (!/^[\p{L} ]{2,80}$/u.test(nome)) {
@@ -218,6 +182,11 @@ export default function Clientes() {
     const telValidationError = validarTelefone(form.telefone)
     if (telValidationError) {
       setErro(telValidationError)
+      return
+    }
+    const telefone = padronizarTelefone(form.telefone)
+    if (!telefone) {
+      setErro('Telefone inválido. Formato correto: +55 (DDD) 99999-9999')
       return
     }
     if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
@@ -319,7 +288,7 @@ export default function Clientes() {
           { key: 'telefone', label: 'TELEFONE', render: (row) => (
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} />
-                <span>{row.telefone}</span>
+                <span>{exibirTelefone(row.telefone)}</span>
              </div>
           )},
           { key: 'email', label: 'E-MAIL' },

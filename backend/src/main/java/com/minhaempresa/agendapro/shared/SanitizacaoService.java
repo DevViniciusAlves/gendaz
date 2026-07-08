@@ -28,6 +28,12 @@ public class SanitizacaoService {
             return null;
         }
         String normalizado = valor.replaceAll("\\D", "");
-        return normalizado.isBlank() ? null : normalizado;
+        if (normalizado.isBlank()) {
+            return null;
+        }
+        if (!normalizado.startsWith("55")) {
+            normalizado = "55" + normalizado;
+        }
+        return normalizado;
     }
 }
