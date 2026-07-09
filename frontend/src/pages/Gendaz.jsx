@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteProvider } from '../context/ClienteContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
@@ -54,3 +54,4 @@ export default function Gendaz() {
     </ClienteProvider>
   )
 }
+
