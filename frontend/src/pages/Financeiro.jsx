@@ -1,5 +1,6 @@
-import { RefreshCw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+﻿import { RefreshCw } from 'lucide-react'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { RefreshContext } from '../context/RefreshContext.jsx'
 import Button from '../components/Button.jsx'
 import DashboardCard from '../components/DashboardCard.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
@@ -37,8 +38,13 @@ function ordenarMaisRecente(a, b) {
 
 export default function Financeiro() {
   const [data, , { reload }] = useLocalData('financeiro')
+  const { refreshTrigger } = useContext(RefreshContext)
   const [mes, setMes] = useState(mesReferenciaAtual())
   const [recarregando, setRecarregando] = useState(false)
+
+  useEffect(() => {
+    reload(true)
+  }, [refreshTrigger, reload])
 
   const pagamentosDoMes = useMemo(() => {
     const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
@@ -100,17 +106,17 @@ export default function Financeiro() {
         <div className="financeiro-title-block">
           <span className="section-kicker">Financeiro</span>
           <h1>Financeiro</h1>
-          <p>Resumo mensal, pendências e rankings operacionais.</p>
+          <p>Resumo mensal, pendÃªncias e rankings operacionais.</p>
         </div>
 
         <div className="financeiro-controls">
           <label className="field compact-field financeiro-month-field">
-            <span>Mês</span>
+            <span>MÃªs</span>
             <input
               type="month"
               value={mes}
               onChange={(e) => setMes(e.target.value)}
-              aria-label="Filtrar financeiro por mês"
+              aria-label="Filtrar financeiro por mÃªs"
             />
           </label>
 
@@ -160,3 +166,7 @@ export default function Financeiro() {
     </section>
   )
 }
+
+
+
+

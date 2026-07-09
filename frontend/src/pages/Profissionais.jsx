@@ -1,5 +1,6 @@
 ﻿import { Pencil, Plus, Power, RefreshCw, Trash } from 'lucide-react'
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
@@ -14,6 +15,7 @@ const formInicial = { nome: '', especialidade: '', telefone: '' }
 
 export default function Profissionais() {
   const [data, , { reload }] = useLocalData('profissionais')
+  const { refreshTrigger } = useContext(RefreshContext)
   const [modal, setModal] = useState(false)
   const [modalEditar, setModalEditar] = useState(false)
   const [form, setForm] = useState(formInicial)
@@ -25,6 +27,10 @@ export default function Profissionais() {
   const [acaoId, setAcaoId] = useState(null)
   const [recarregando, setRecarregando] = useState(false)
   const [confirmacao, setConfirmacao] = useState(null)
+
+  useEffect(() => {
+    reload(true)
+  }, [refreshTrigger, reload])
 
   function abrirNovo() {
     setForm(formInicial)
@@ -223,3 +229,7 @@ export default function Profissionais() {
     </section>
   )
 }
+
+
+
+

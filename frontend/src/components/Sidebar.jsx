@@ -1,5 +1,5 @@
-import { NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, CreditCard, Home, MessageCircle, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
+﻿import { NavLink } from 'react-router-dom'
+import { BarChart3, CalendarDays, CreditCard, Home, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
 import { usePagamentosPendentes } from '../hooks/usePagamentosPendentes.js'
@@ -7,16 +7,14 @@ import logoSidebar from '../assets/logos/gendaz-logo-green.png'
 
 const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },
-  // ⚠️ DESATIVADO - WhatsApp
-  // { key: 'whatsapp',      to: '/sistema/whatsapp',      label: 'WhatsApp',       icon: MessageCircle },
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
-  { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
+  { key: 'servicos',      to: '/sistema/servicos',      label: 'ServiÃ§os',       icon: Wrench },
   { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3 },
   { key: 'pagamentos',    to: '/sistema/pagamentos',    label: 'Pagamentos',     icon: CreditCard },
-  { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
-  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
+  { key: 'relatorios',    to: '/sistema/relatorios',    label: 'RelatÃ³rios',     icon: ReceiptText },
+  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'ConfiguraÃ§Ãµes',  icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -30,7 +28,7 @@ export default function Sidebar() {
       <div className="sidebar-logo-wrapper">
         <img src={logoSidebar} alt="gendaz" className="sidebar-logo" />
       </div>
-      <span className="nav-label">Navegação</span>
+      <span className="nav-label">NavegaÃ§Ã£o</span>
       <nav>
         {visibleItems.map(({ to, key, label, icon: Icon }) => (
           <NavLink
@@ -52,3 +50,4 @@ export default function Sidebar() {
     </aside>
   )
 }
+

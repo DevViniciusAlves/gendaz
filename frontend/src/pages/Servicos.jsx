@@ -1,5 +1,6 @@
 ﻿import { Pencil, Plus, Power, RefreshCw, Trash } from 'lucide-react'
-import { useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
+import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
@@ -23,6 +24,7 @@ function formatarDuracao(minutos) {
 
 export default function Servicos() {
   const [data, , { loading, reload }] = useLocalData('servicos')
+  const { refreshTrigger } = useContext(RefreshContext)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState(formInicial)
   const [erro, setErro] = useState('')
@@ -31,6 +33,10 @@ export default function Servicos() {
   const [servicoEditando, setServicoEditando] = useState(null)
   const [recarregando, setRecarregando] = useState(false)
   const [confirmacao, setConfirmacao] = useState(null)
+
+  useEffect(() => {
+    reload(true)
+  }, [refreshTrigger, reload])
 
   function abrirNovo() {
     setServicoEditando(null)
@@ -222,3 +228,7 @@ export default function Servicos() {
     </section>
   )
 }
+
+
+
+

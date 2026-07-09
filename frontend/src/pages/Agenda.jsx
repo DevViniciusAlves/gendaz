@@ -1,5 +1,6 @@
-import { CalendarPlus, RefreshCw } from 'lucide-react'
-import { useMemo, useState } from 'react'
+﻿import { CalendarPlus, RefreshCw } from 'lucide-react'
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
@@ -111,11 +112,12 @@ function montarFormularioInicial(dados) {
 
 export default function Agenda() {
   const [data, , { loading, reload }] = useLocalData('agenda')
+  const { refreshTrigger } = useContext(RefreshContext)
   const { usuario } = useAuth()
   const servicosAtivos = data.servicos.filter((item) => item.status !== 'INATIVO')
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && data.profissionais.length > 0
-  const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
+  const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviÃ§o ou profissional' : 'Cliente ou serviÃ§o'
   const hoje = todayIso()
   const [filtroPeriodo, setFiltroPeriodo] = useState('TODOS')
   const [dataFiltro, setDataFiltro] = useState(hoje)
@@ -141,6 +143,10 @@ export default function Agenda() {
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 12
+
+  useEffect(() => {
+    reload(true)
+  }, [refreshTrigger, reload])
 
   const termoBusca = busca.trim().toLowerCase()
 
@@ -185,9 +191,9 @@ export default function Agenda() {
     const profissional = profissionaisPorId.get(item.profissionalId)
     return {
       ...item,
-      clienteNome: cliente ? cliente.nome : item.clienteNome || 'Cliente não encontrado',
-      servicoNome: servico ? servico.nome : item.servicoNome || 'Serviço não encontrado',
-      profissionalNome: profissional ? profissional.nome : item.profissionalNome || 'Profissional não encontrado',
+      clienteNome: cliente ? cliente.nome : item.clienteNome || 'Cliente nÃ£o encontrado',
+      servicoNome: servico ? servico.nome : item.servicoNome || 'ServiÃ§o nÃ£o encontrado',
+      profissionalNome: profissional ? profissional.nome : item.profissionalNome || 'Profissional nÃ£o encontrado',
     }
   })
   const agendamentosOrdenados = [...filtradosEnriquecidos].sort((a, b) => {
@@ -211,7 +217,7 @@ export default function Agenda() {
     setSelecionados((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id)
       if (current.length >= 10) {
-        setErroAcao('Você pode selecionar no máximo 10 itens por vez.')
+        setErroAcao('VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.')
         return current
       }
       setErroAcao('')
@@ -228,7 +234,7 @@ export default function Agenda() {
       FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
       CANCELAR: ['Cancelar agendamentos', 'Tem certeza que deseja cancelar os agendamentos selecionados?', 'Cancelar', false],
       PENDENTE: ['Marcar como pendentes', 'Tem certeza que deseja marcar os agendamentos selecionados como pendentes?', 'Marcar como pendente', false],
-      EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
+      EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[acao]
     setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
@@ -243,7 +249,7 @@ export default function Agenda() {
       await reload(true)
       limparSelecao()
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível executar a ação em massa.')
+      setErroAcao(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel executar a aÃ§Ã£o em massa.')
     } finally {
       setBulkExecutando(false)
     }
@@ -262,17 +268,17 @@ export default function Agenda() {
   }
 
   function validarAgendamento(payload) {
-    if (!payload.clienteId || !payload.servicoId) return 'Cliente e serviço são obrigatórios.'
-    if (temProfissionais && !payload.profissionalId) return 'Cliente, serviço e profissional são obrigatórios.'
+    if (!payload.clienteId || !payload.servicoId) return 'Cliente e serviÃ§o sÃ£o obrigatÃ³rios.'
+    if (temProfissionais && !payload.profissionalId) return 'Cliente, serviÃ§o e profissional sÃ£o obrigatÃ³rios.'
     const hoje = todayIso()
-    if (!payload.data || payload.data < hoje || payload.data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
-    if (!payload.horaInicio || payload.horaInicio < '00:00' || payload.horaInicio > '23:59') return 'Horário inválido.'
+    if (!payload.data || payload.data < hoje || payload.data > limiteDataMaxima()) return 'Data deve estar dentro dos prÃ³ximos 2 anos e nÃ£o pode ser no passado.'
+    if (!payload.horaInicio || payload.horaInicio < '00:00' || payload.horaInicio > '23:59') return 'HorÃ¡rio invÃ¡lido.'
     if (payload.data === hoje) {
       const partesAgora = agoraNoFuso(AGENDA_TIMEZONE)
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
-      if (payload.horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
+      if (payload.horaInicio < horaAtual) return 'NÃ£o Ã© possÃ­vel criar agendamento em horÃ¡rio que jÃ¡ passou.'
     }
-    if ((payload.observacoes || '').length > 300) return 'Observações deve ter até 300 caracteres.'
+    if ((payload.observacoes || '').length > 300) return 'ObservaÃ§Ãµes deve ter atÃ© 300 caracteres.'
     return ''
   }
 
@@ -328,7 +334,7 @@ export default function Agenda() {
       const profissionalIdFinal = await obterProfissionalParaAgendamento(form.profissionalId)
       const agendamento = montarAgendamento({ ...form, profissionalId: profissionalIdFinal })
       if (existeConflito(agendamento)) {
-        setErroCriar('Já existe agendamento para este profissional neste horário.')
+        setErroCriar('JÃ¡ existe agendamento para este profissional neste horÃ¡rio.')
         return
       }
       await appApi.criarAgendamento(agendamento)
@@ -336,7 +342,7 @@ export default function Agenda() {
       setModalCriar(false)
       setForm(novoFormulario)
     } catch (error) {
-      setErroCriar(error.response?.data?.mensagem || 'Não foi possível criar o agendamento.')
+      setErroCriar(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel criar o agendamento.')
     } finally {
       setSalvandoCriar(false)
     }
@@ -370,7 +376,7 @@ export default function Agenda() {
         return
       }
       if (existeConflito(agendamentoAtualizado, edicao.id)) {
-        setErroEditar('Já existe agendamento para este profissional neste horário.')
+        setErroEditar('JÃ¡ existe agendamento para este profissional neste horÃ¡rio.')
         return
       }
       await appApi.atualizarAgendamento(edicao.id, agendamentoAtualizado)
@@ -378,7 +384,7 @@ export default function Agenda() {
       setModalEditar(false)
       setEdicao(null)
     } catch (error) {
-      setErroEditar(error.response?.data?.mensagem || 'Não foi possível salvar o agendamento.')
+      setErroEditar(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel salvar o agendamento.')
     } finally {
       setSalvandoEditar(false)
     }
@@ -392,7 +398,7 @@ export default function Agenda() {
       await appApi.cancelarAgendamento(id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
+      setErroAcao(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel cancelar o agendamento.')
     } finally {
       setAcaoId(null)
     }
@@ -406,7 +412,7 @@ export default function Agenda() {
       await appApi.confirmarAgendamento(id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
+      setErroAcao(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel confirmar o agendamento.')
     } finally {
       setAcaoId(null)
     }
@@ -420,9 +426,9 @@ export default function Agenda() {
       await appApi.excluirAgendamento(id)
     } catch (error) {
       const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || error.message || '')
-      const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento nao encontrado') || mensagem.toLowerCase().includes('agendamento não encontrado')
+      const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento nao encontrado') || mensagem.toLowerCase().includes('agendamento nÃ£o encontrado')
       if (!jaNaoExiste) {
-        setErroAcao(mensagem || 'Não foi possível excluir o agendamento.')
+        setErroAcao(mensagem || 'NÃ£o foi possÃ­vel excluir o agendamento.')
         return
       }
     } finally {
@@ -441,7 +447,7 @@ export default function Agenda() {
       await appApi.iniciarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'NÃ£o foi possÃ­vel iniciar o atendimento.')
     } finally {
       setAcaoId(null)
     }
@@ -455,7 +461,7 @@ export default function Agenda() {
       await appApi.pausarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'NÃ£o foi possÃ­vel pausar o atendimento.')
     } finally {
       setAcaoId(null)
     }
@@ -469,7 +475,7 @@ export default function Agenda() {
       await appApi.finalizarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
+      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'NÃ£o foi possÃ­vel finalizar o atendimento.')
     } finally {
       setAcaoId(null)
     }
@@ -481,7 +487,7 @@ export default function Agenda() {
         <div>
           <span className="section-kicker">Agenda operacional</span>
           <h1>Agenda</h1>
-          <p>Lista por data com filtros, criação, edição e correção de atendimentos.</p>
+          <p>Lista por data com filtros, criaÃ§Ã£o, ediÃ§Ã£o e correÃ§Ã£o de atendimentos.</p>
         </div>
         <div className="table-actions">
           <div className="agenda-search">
@@ -500,8 +506,8 @@ export default function Agenda() {
                 {busca.length >= 80
                   ? 'Limite de caracteres atingido.'
                   : temProfissionais
-                    ? 'Filtre cliente, serviço ou profissional rapidamente.'
-                    : 'Filtre cliente ou serviço rapidamente.'}
+                    ? 'Filtre cliente, serviÃ§o ou profissional rapidamente.'
+                    : 'Filtre cliente ou serviÃ§o rapidamente.'}
               </span>
               <strong>{busca.length}/80</strong>
             </div>
@@ -538,10 +544,10 @@ export default function Agenda() {
         >
           <option value="TODOS">Todos os agendamentos</option>
           <option value="HOJE">Hoje</option>
-          <option value="AMANHA">Amanhã</option>
+          <option value="AMANHA">AmanhÃ£</option>
           <option value="SEMANA">Esta semana</option>
-          <option value="MES">Este mês</option>
-          <option value="DATA">Data específica</option>
+          <option value="MES">Este mÃªs</option>
+          <option value="DATA">Data especÃ­fica</option>
         </select>
         {filtroPeriodo === 'DATA' && (
           <input type="date" min={todayIso()} max={limiteDataMaxima()} value={dataFiltro} onChange={(e) => setDataFiltro(e.target.value)} />
@@ -625,7 +631,7 @@ export default function Agenda() {
             })}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
-              descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
+              descricao: 'Tem certeza que deseja excluir este agendamento? Essa aÃ§Ã£o Ã© permanente.',
               acao: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}
@@ -637,7 +643,7 @@ export default function Agenda() {
       <Modal title="Criar agendamento" open={modalCriar} onClose={() => setModalCriar(false)}>
         <form className="form-grid" onSubmit={criarAgendamento}>
           <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-          <label className="field"><span>Serviço</span><select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: Number(e.target.value) })}>{servicosAtivos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label className="field"><span>ServiÃ§o</span><select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: Number(e.target.value) })}>{servicosAtivos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           {temProfissionais && (
             <label className="field">
               <span>Profissional</span>
@@ -652,9 +658,9 @@ export default function Agenda() {
               </select>
             </label>
           )}
-          <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+          <Input label="Data" helper="Escolha uma data dentro dos prÃ³ximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           <Input label="Hora" type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
-          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
+          <label className="field field-wide"><span>ObservaÃ§Ãµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observaÃ§Ã£o curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>
         </form>
@@ -664,20 +670,20 @@ export default function Agenda() {
         {edicao && (
           <form className="form-grid" onSubmit={salvarEdicao}>
             <label className="field"><span>Cliente</span><select value={edicao.clienteId} onChange={(e) => setEdicao({ ...edicao, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-            <label className="field"><span>Serviço</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{data.servicos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+            <label className="field"><span>ServiÃ§o</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{data.servicos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             {temProfissionais && (
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
             <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
-            <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
-            <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
-            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
+            <Input label="Data" helper="Escolha uma data dentro dos prÃ³ximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
+            <Input label="Hora" helper="Escolha o horÃ¡rio do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
+            <label className="field field-wide"><span>ObservaÃ§Ãµes</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observaÃ§Ã£o curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
-            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correções'}</Button>
+            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correÃ§Ãµes'}</Button>
           </form>
         )}
       </Modal>
-      <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>
+      <Modal title={confirmacao?.titulo || 'Confirmar aÃ§Ã£o'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>
         <div className="form-grid">
           <p className="panel-description">{confirmacao?.descricao}</p>
           <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
@@ -700,7 +706,7 @@ export default function Agenda() {
       </Modal>
       <BulkConfirmModal
         open={Boolean(bulkModal)}
-        title={bulkModal?.titulo || 'Confirmar ação'}
+        title={bulkModal?.titulo || 'Confirmar aÃ§Ã£o'}
         description={bulkModal?.descricao || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
@@ -713,3 +719,7 @@ export default function Agenda() {
     </section>
   )
 }
+
+
+
+

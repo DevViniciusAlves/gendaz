@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
+﻿import { useContext, useEffect, useMemo, useState } from 'react'
+import { RefreshContext } from '../context/RefreshContext.jsx'
 import { Check, RefreshCw, Trash, X } from 'lucide-react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
@@ -15,17 +16,18 @@ import { currency } from '../services/localStore.js'
 
 export default function Pagamentos() {
   const [data, , { reload }] = useLocalData('pagamentos')
+  const { refreshTrigger } = useContext(RefreshContext)
   const { usuario } = useAuth()
   const { atualizarContagem } = usePagamentosPendentes()
   const [status, setStatus] = useState('todos')
   const [periodo, setPeriodo] = useState('')
   const [metodo, setMetodo] = useState('todos')
   /*
-  ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
-  ║  Variáveis comentadas para reutilização      ║
-  ║  futura. Descomente para ativar.             ║
-  ╚══════════════════════════════════════════════╝
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
+  â•‘  VariÃ¡veis comentadas para reutilizaÃ§Ã£o      â•‘
+  â•‘  futura. Descomente para ativar.             â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
   // const [statusPlano, setStatusPlano] = useState('todos')
   // const [periodoPlano, setPeriodoPlano] = useState('')
@@ -42,12 +44,16 @@ export default function Pagamentos() {
   const [bulkExecutando, setBulkExecutando] = useState(false)
   const itensPorPagina = 10
 
+  useEffect(() => {
+    reload(true)
+  }, [refreshTrigger, reload])
+
   /*
-  ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
-  ║  useEffect comentado para reutilização       ║
-  ║  futura. Descomente para ativar.             ║
-  ╚══════════════════════════════════════════════╝
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
+  â•‘  useEffect comentado para reutilizaÃ§Ã£o       â•‘
+  â•‘  futura. Descomente para ativar.             â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
   // useEffect(() => {
   //   carregarPagamentosPlano()
@@ -64,11 +70,11 @@ export default function Pagamentos() {
   }), [data.pagamentos, metodo, periodo, status])
 
   /*
-  ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
-  ║  Filtro de plano comentado para reutilização ║
-  ║  futura. Descomente para ativar.             ║
-  ╚══════════════════════════════════════════════╝
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
+  â•‘  Filtro de plano comentado para reutilizaÃ§Ã£o â•‘
+  â•‘  futura. Descomente para ativar.             â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
   // const pagamentosPlanoFiltrados = useMemo(() => pagamentosPlano.filter((item) => {
   //   const matchesStatus = statusPlano === 'todos' || item.status === statusPlano
@@ -94,7 +100,7 @@ export default function Pagamentos() {
     setSelecionados((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id)
       if (current.length >= 10) {
-        setErroPlano('Você pode selecionar no máximo 10 itens por vez.')
+        setErroPlano('VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.')
         return current
       }
       return [...current, id]
@@ -106,7 +112,7 @@ export default function Pagamentos() {
     const configs = {
       MARCAR_COMO_PAGO: ['Marcar pagamentos como pagos', 'Tem certeza que deseja marcar os pagamentos selecionados como pagos?', 'Marcar como pago', false],
       MARCAR_COMO_PENDENTE: ['Marcar pagamentos como pendentes', 'Tem certeza que deseja marcar os pagamentos selecionados como pendentes?', 'Marcar como pendente', false],
-      EXCLUIR: ['Excluir pagamentos', 'Tem certeza que deseja excluir os pagamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
+      EXCLUIR: ['Excluir pagamentos', 'Tem certeza que deseja excluir os pagamentos selecionados? Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[acao]
     setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
@@ -124,7 +130,7 @@ export default function Pagamentos() {
       await reload(true)
       limparSelecao()
     } catch (error) {
-      setErroPlano(error.response?.data?.mensagem || 'Não foi possível executar a ação em massa.')
+      setErroPlano(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel executar a aÃ§Ã£o em massa.')
     } finally {
       setBulkExecutando(false)
     }
@@ -141,15 +147,15 @@ export default function Pagamentos() {
   }
 
   function excluirPagamento() {
-    alert('Exclusão em desenvolvimento.')
+    alert('ExclusÃ£o em desenvolvimento.')
   }
 
   /*
-  ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
-  ║  Funções comentadas para reutilização        ║
-  ║  futura. Descomente para ativar.             ║
-  ╚══════════════════════════════════════════════╝
+  â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+  â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
+  â•‘  FunÃ§Ãµes comentadas para reutilizaÃ§Ã£o        â•‘
+  â•‘  futura. Descomente para ativar.             â•‘
+  â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
   // async function carregarPagamentosPlano() {
   //   if (!usuario?.empresaId) return
@@ -206,8 +212,8 @@ export default function Pagamentos() {
   }
 
   function metodoLegivel(metodoPagamento) {
-    if (metodoPagamento === 'PIX_AUTO') return 'PIX automático'
-    if (metodoPagamento === 'CREDIT_CARD' || metodoPagamento === 'CARTAO') return 'Cartão'
+    if (metodoPagamento === 'PIX_AUTO') return 'PIX automÃ¡tico'
+    if (metodoPagamento === 'CREDIT_CARD' || metodoPagamento === 'CARTAO') return 'CartÃ£o'
     return metodoPagamento || '-'
   }
 
@@ -290,11 +296,11 @@ export default function Pagamentos() {
           },
           { key: 'telefone', label: 'TELEFONE', render: (row) => data.clientes.find((item) => item.id === row.clienteId)?.telefone || '-' },
           { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
-          { key: 'metodoPagamento', label: 'MÉTODO', render: (row) => metodoLegivel(row.metodoPagamento) },
+          { key: 'metodoPagamento', label: 'MÃ‰TODO', render: (row) => metodoLegivel(row.metodoPagamento) },
           { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
           {
             key: 'acao',
-            label: 'AÇÕES',
+            label: 'AÃ‡Ã•ES',
             render: (row) => (
               <ActionMenu
                 actions={[
@@ -311,7 +317,7 @@ export default function Pagamentos() {
       <Pagination page={paginaAtual} totalPages={totalPaginas} totalItems={pagamentos.length} pageSize={itensPorPagina} onPageChange={setPagina} />
       <BulkConfirmModal
         open={Boolean(bulkModal)}
-        title={bulkModal?.titulo || 'Confirmar ação'}
+        title={bulkModal?.titulo || 'Confirmar aÃ§Ã£o'}
         description={bulkModal?.descricao || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
@@ -321,11 +327,11 @@ export default function Pagamentos() {
       />
 
       {/*
-      ╔══════════════════════════════════════════════╗
-      ║  ⚠️  DESATIVADO - Pagamentos do Plano        ║
-      ║  Seção comentada para reutilização futura.   ║
-      ║  Descomente para ativar.                     ║
-      ╚══════════════════════════════════════════════╝
+      â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
+      â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
+      â•‘  SeÃ§Ã£o comentada para reutilizaÃ§Ã£o futura.   â•‘
+      â•‘  Descomente para ativar.                     â•‘
+      â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
       */}
       {/*
       <section className="panel payments-plan-panel">
@@ -351,7 +357,7 @@ export default function Pagamentos() {
             <option value="CAKTO">Cakto</option>
             <option value="MERCADO_PAGO">Mercado Pago</option>
             <option value="PIX">PIX</option>
-            <option value="PIX_AUTO">PIX automático</option>
+            <option value="PIX_AUTO">PIX automÃ¡tico</option>
             <option value="CREDIT_CARD">Cartao</option>
           </select>
           <input type="month" value={periodoPlano} onChange={(e) => setPeriodoPlano(e.target.value)} aria-label="Periodo do pagamento do plano" />
@@ -361,12 +367,12 @@ export default function Pagamentos() {
           columns={[
             { key: 'planoNome', label: 'PLANO' },
             { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
-            { key: 'metodoPagamento', label: 'MÉTODO', render: (row) => metodoLegivel(row.metodoPagamento) },
+            { key: 'metodoPagamento', label: 'MÃ‰TODO', render: (row) => metodoLegivel(row.metodoPagamento) },
             { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
             { key: 'dataCriacao', label: 'DATA', render: (row) => row.dataCriacao ? new Date(row.dataCriacao).toLocaleString('pt-BR') : '-' },
             {
               key: 'acao',
-              label: 'AÇÕES',
+              label: 'AÃ‡Ã•ES',
               render: (row) => (
                 <div className="table-actions">
                   {row.checkoutUrl && statusSimples(row.status) === 'PENDENTE' && <a className="btn btn-secondary" href={row.checkoutUrl} target="_blank" rel="noreferrer">Checkout</a>}
@@ -383,3 +389,7 @@ export default function Pagamentos() {
     </section>
   )
 }
+
+
+
+

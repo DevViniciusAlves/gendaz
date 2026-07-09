@@ -1,4 +1,4 @@
-import { initialData } from '../data/mockData.js'
+﻿import { initialData } from '../data/mockData.js'
 
 const KEY = 'agendapro_data'
 const USER_KEY = 'agendapro_usuario'
@@ -7,11 +7,11 @@ const DATA_VERSION = 4
 export const PLANOS = {
   BASICO: {
     nome: 'Plano Basico',
-    rotas: ['dashboard', /* ⚠️ DESATIVADO — 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'configuracoes'],
+    rotas: ['dashboard', /* âš ï¸ DESATIVADO â€” 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'configuracoes'],
   },
   PRO: {
     nome: 'Plano Pro',
-    rotas: ['dashboard', /* ⚠️ DESATIVADO — 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
+    rotas: ['dashboard', /* âš ï¸ DESATIVADO â€” 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
   },
 }
 
@@ -24,7 +24,7 @@ export function emptyData(usuario = null) {
       documento: '',
       telefone: '',
       email: usuario?.email || '',
-      // ⚠️ DESATIVADO — whatsappStatus: 'Pendente',
+      // âš ï¸ DESATIVADO â€” whatsappStatus: 'Pendente',
     },
     usuarios: [],
     equipe: [],
@@ -92,3 +92,4 @@ export function todayIso() {
   const timezoneOffset = hoje.getTimezoneOffset() * 60000
   return new Date(hoje.getTime() - timezoneOffset).toISOString().slice(0, 10)
 }
+
