@@ -19,8 +19,6 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         StatusAgendamento getStatus();
     }
 
-    // ⚠️ DESATIVADO - WhatsApp projection disabled
-    /*
     interface AgendamentoLembreteProjection {
         Long getId();
         Long getEmpresaId();
@@ -41,7 +39,6 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         Boolean getConfirmacaoPagamentoDonoRespondida();
         java.time.LocalDateTime getConfirmacaoPagamentoDonoRespondidaEm();
     }
-    */
 
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaId(Long empresaId);
