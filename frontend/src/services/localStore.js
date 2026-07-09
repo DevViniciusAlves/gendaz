@@ -6,12 +6,10 @@ const DATA_VERSION = 4
 
 export const PLANOS = {
   BASICO: {
-    nome: 'Plano Basico',
-    rotas: ['dashboard', /* âš ï¸ DESATIVADO â€” 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'configuracoes'],
+    nome: 'Plano Basico',    rotas: ['dashboard', 'agenda', 'clientes', 'servicos', 'configuracoes'],
   },
   PRO: {
-    nome: 'Plano Pro',
-    rotas: ['dashboard', /* âš ï¸ DESATIVADO â€” 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
+    nome: 'Plano Pro',    rotas: ['dashboard', 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
   },
 }
 
@@ -23,9 +21,7 @@ export function emptyData(usuario = null) {
       nomeFantasia: usuario?.empresaNome || '',
       documento: '',
       telefone: '',
-      email: usuario?.email || '',
-      // âš ï¸ DESATIVADO â€” whatsappStatus: 'Pendente',
-    },
+      email: usuario?.email || '',    },
     usuarios: [],
     equipe: [],
     clientes: [],
@@ -92,4 +88,6 @@ export function todayIso() {
   const timezoneOffset = hoje.getTimezoneOffset() * 60000
   return new Date(hoje.getTime() - timezoneOffset).toISOString().slice(0, 10)
 }
+
+
 

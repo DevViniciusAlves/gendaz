@@ -1,4 +1,4 @@
-import api, { modoDemo } from './axiosConfig.js'
+﻿import api, { modoDemo } from './axiosConfig.js'
 import { emptyData, getData } from '../services/localStore.js'
 
 function empresaIdAtual() {
@@ -25,8 +25,8 @@ function emitirToast(type, message) {
 async function comNotificacao(acao, textos = {}) {
   const {
     loading = 'Processando... aguarde',
-    success = 'Operação concluída com sucesso.',
-    error = 'Não foi possível concluir a operação.',
+    success = 'OperaÃ§Ã£o concluÃ­da com sucesso.',
+    error = 'NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o.',
   } = textos
 
   emitirToast('loading', loading)
@@ -149,7 +149,6 @@ function criarBaseLocal(scope, usuario) {
   if (scope === 'agenda') return { ...base, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, empresa: data.empresa }
   if (scope === 'financeiro') return { ...base, clientes: data.clientes, servicos: data.servicos, agendamentos: data.agendamentos, pagamentos: data.pagamentos, financeiro: data.financeiro, empresa: data.empresa }
   if (scope === 'pagamentos') return { ...base, clientes: data.clientes, pagamentos: data.pagamentos, empresa: data.empresa }
-  if (scope === 'whatsapp') return { ...base, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, mensagens: [], empresa: data.empresa }
   if (scope === 'relatorios') return { ...base, clientes: data.clientes, servicos: data.servicos, agendamentos: data.agendamentos, empresa: data.empresa }
   if (scope === 'dashboard') return { ...base, empresa: data.empresa, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, pagamentos: data.pagamentos, financeiro: data.financeiro, planos: data.planos }
   if (scope === 'configuracoes') return { ...base, empresa: data.empresa }
@@ -293,17 +292,6 @@ export const appApi = {
         ])
         return { empresa, clientesBase: [], servicosBase: [], agendamentosBase: [], pagamentosBase, financeiro }
       },
-      whatsapp: async () => {
-        const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas] = await Promise.all([
-          api.get(`/empresas/${empresaId}`).then((response) => response.data),
-          api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
-        ])
-        return { empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas }
-      },
       relatorios: async () => {
         const [empresa, clientesBase, servicosBase, agendamentosBase] = await Promise.all([
           api.get(`/empresas/${empresaId}`).then((response) => response.data),
@@ -373,7 +361,6 @@ export const appApi = {
 
     const agendamentos = normalizarAgendamentos(loaded.agendamentosBase || [])
     const pagamentos = normalizarPagamentos(loaded.pagamentosBase || [])
-    const whatsappStatus = empresa?.whatsappConnected ? 'Conectado' : 'Desconectado'
     const clientesBase = loaded.clientesBase || []
     const servicosBase = loaded.servicosBase || []
     const profissionais = loaded.profissionais || []
@@ -392,8 +379,6 @@ export const appApi = {
       __remote: true,
       empresa: {
         ...empresa,
-        whatsappStatus,
-        whatsappPhone: empresa?.whatsappPhone || empresa?.telefone || '',
       },
       clientes: enriquecerClientes(clientesBase, pagamentos),
       servicos: enriquecerServicos(servicosBase, agendamentos),
@@ -445,15 +430,15 @@ export const appApi = {
     return comNotificacao(() => api.put(`/empresas/${id}`, payload).then((response) => response.data), {
       loading: 'Editando empresa... aguarde',
       success: 'Empresa atualizada com sucesso.',
-      error: 'Não foi possível atualizar a empresa.',
+      error: 'NÃ£o foi possÃ­vel atualizar a empresa.',
     })
   },
 
   atualizarUsuario(id, payload) {
     return comNotificacao(() => api.put(`/usuarios/${id}`, payload).then((response) => response.data), {
-      loading: 'Editando usuário... aguarde',
-      success: 'Usuário atualizado com sucesso.',
-      error: 'Não foi possível atualizar o usuário.',
+      loading: 'Editando usuÃ¡rio... aguarde',
+      success: 'UsuÃ¡rio atualizado com sucesso.',
+      error: 'NÃ£o foi possÃ­vel atualizar o usuÃ¡rio.',
     })
   },
 
@@ -461,7 +446,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/clientes', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando cliente... aguarde',
       success: 'Cliente criado com sucesso.',
-      error: 'Não foi possível criar o cliente.',
+      error: 'NÃ£o foi possÃ­vel criar o cliente.',
     })
   },
 
@@ -469,39 +454,39 @@ export const appApi = {
     return comNotificacao(() => api.put(`/clientes/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando cliente... aguarde',
       success: 'Cliente atualizado com sucesso.',
-      error: 'Não foi possível atualizar o cliente.',
+      error: 'NÃ£o foi possÃ­vel atualizar o cliente.',
     })
   },
 
   excluirCliente(id) {
     return comNotificacao(() => api.delete(`/clientes/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo cliente... aguarde',
-      success: 'Cliente excluído com sucesso.',
-      error: 'Não foi possível excluir o cliente.',
+      success: 'Cliente excluÃ­do com sucesso.',
+      error: 'NÃ£o foi possÃ­vel excluir o cliente.',
     })
   },
 
   excluirClientesEmMassa(ids) {
     return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'EXCLUIR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Excluindo clientes... aguarde',
-      success: 'Clientes excluídos com sucesso.',
-      error: 'Não foi possível excluir os clientes.',
+      success: 'Clientes excluÃ­dos com sucesso.',
+      error: 'NÃ£o foi possÃ­vel excluir os clientes.',
     })
   },
 
   criarServico(payload) {
     return comNotificacao(() => api.post('/servicos', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
-      loading: 'Criando serviço... aguarde',
-      success: 'Serviço criado com sucesso.',
-      error: 'Não foi possível criar o serviço.',
+      loading: 'Criando serviÃ§o... aguarde',
+      success: 'ServiÃ§o criado com sucesso.',
+      error: 'NÃ£o foi possÃ­vel criar o serviÃ§o.',
     })
   },
 
   atualizarServico(id, payload) {
     return comNotificacao(() => api.put(`/servicos/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
-      loading: 'Editando serviço... aguarde',
-      success: 'Serviço atualizado com sucesso.',
-      error: 'Não foi possível atualizar o serviço.',
+      loading: 'Editando serviÃ§o... aguarde',
+      success: 'ServiÃ§o atualizado com sucesso.',
+      error: 'NÃ£o foi possÃ­vel atualizar o serviÃ§o.',
     })
   },
 
@@ -512,9 +497,9 @@ export const appApi = {
 
   excluirServico(id) {
     return comNotificacao(() => api.delete(`/servicos/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
-      loading: 'Excluindo serviço... aguarde',
-      success: 'Serviço excluído com sucesso.',
-      error: 'Não foi possível excluir o serviço.',
+      loading: 'Excluindo serviÃ§o... aguarde',
+      success: 'ServiÃ§o excluÃ­do com sucesso.',
+      error: 'NÃ£o foi possÃ­vel excluir o serviÃ§o.',
     })
   },
 
@@ -522,7 +507,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/profissionais', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando profissional... aguarde',
       success: 'Profissional criado com sucesso.',
-      error: 'Não foi possível criar o profissional.',
+      error: 'NÃ£o foi possÃ­vel criar o profissional.',
     })
   },
 
@@ -535,15 +520,15 @@ export const appApi = {
     return comNotificacao(() => api.put(`/profissionais/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando profissional... aguarde',
       success: 'Profissional atualizado com sucesso.',
-      error: 'Não foi possível atualizar o profissional.',
+      error: 'NÃ£o foi possÃ­vel atualizar o profissional.',
     })
   },
 
   excluirProfissional(id) {
     return comNotificacao(() => api.delete(`/profissionais/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo profissional... aguarde',
-      success: 'Profissional excluído com sucesso.',
-      error: 'Não foi possível excluir o profissional.',
+      success: 'Profissional excluÃ­do com sucesso.',
+      error: 'NÃ£o foi possÃ­vel excluir o profissional.',
     })
   },
 
@@ -552,7 +537,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/agendamentos', { ...body, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando agendamento... aguarde',
       success: 'Agendamento criado com sucesso.',
-      error: 'Não foi possível criar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel criar o agendamento.',
     })
   },
 
@@ -560,7 +545,7 @@ export const appApi = {
     return comNotificacao(() => api.put(`/agendamentos/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando agendamento... aguarde',
       success: 'Agendamento atualizado com sucesso.',
-      error: 'Não foi possível atualizar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel atualizar o agendamento.',
     })
   },
 
@@ -568,7 +553,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`).then((response) => response.data), {
       loading: 'Finalizando agendamento... aguarde',
       success: 'Agendamento finalizado com sucesso.',
-      error: 'Não foi possível finalizar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel finalizar o agendamento.',
     })
   },
 
@@ -576,7 +561,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/iniciar`).then((response) => response.data), {
       loading: 'Iniciando atendimento... aguarde',
       success: 'Atendimento iniciado com sucesso.',
-      error: 'Não foi possível iniciar o atendimento.',
+      error: 'NÃ£o foi possÃ­vel iniciar o atendimento.',
     })
   },
 
@@ -584,7 +569,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/pausar`).then((response) => response.data), {
       loading: 'Pausando atendimento... aguarde',
       success: 'Atendimento pausado com sucesso.',
-      error: 'Não foi possível pausar o atendimento.',
+      error: 'NÃ£o foi possÃ­vel pausar o atendimento.',
     })
   },
 
@@ -592,15 +577,15 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/cancelar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Cancelando agendamento... aguarde',
       success: 'Agendamento cancelado com sucesso.',
-      error: 'Não foi possível cancelar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel cancelar o agendamento.',
     })
   },
 
   excluirAgendamento(id) {
     return comNotificacao(() => api.delete(`/agendamentos/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo agendamento... aguarde',
-      success: 'Agendamento excluído com sucesso.',
-      error: 'Não foi possível excluir o agendamento.',
+      success: 'Agendamento excluÃ­do com sucesso.',
+      error: 'NÃ£o foi possÃ­vel excluir o agendamento.',
     })
   },
 
@@ -608,7 +593,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Processando agendamentos... aguarde',
       success: 'Agendamentos processados com sucesso.',
-      error: 'Não foi possível processar os agendamentos.',
+      error: 'NÃ£o foi possÃ­vel processar os agendamentos.',
     })
   },
 
@@ -616,7 +601,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/confirmar`).then((response) => response.data), {
       loading: 'Confirmando agendamento... aguarde',
       success: 'Agendamento confirmado com sucesso.',
-      error: 'Não foi possível confirmar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel confirmar o agendamento.',
     })
   },
 
@@ -624,7 +609,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/pagamentos', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando pagamento... aguarde',
       success: 'Pagamento criado com sucesso.',
-      error: 'Não foi possível criar o pagamento.',
+      error: 'NÃ£o foi possÃ­vel criar o pagamento.',
     })
   },
 
@@ -632,7 +617,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/pagamentos/${id}/marcar-pago`).then((response) => response.data), {
       loading: 'Marcando pagamento como pago... aguarde',
       success: 'Pagamento marcado como pago.',
-      error: 'Não foi possível atualizar o pagamento.',
+      error: 'NÃ£o foi possÃ­vel atualizar o pagamento.',
     })
   },
 
@@ -640,7 +625,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/pagamentos/${id}/status`, { status }).then((response) => response.data), {
       loading: 'Atualizando pagamento... aguarde',
       success: 'Pagamento atualizado com sucesso.',
-      error: 'Não foi possível atualizar o pagamento.',
+      error: 'NÃ£o foi possÃ­vel atualizar o pagamento.',
     })
   },
 
@@ -648,7 +633,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/pagamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Processando pagamentos... aguarde',
       success: 'Pagamentos processados com sucesso.',
-      error: 'Não foi possível processar os pagamentos.',
+      error: 'NÃ£o foi possÃ­vel processar os pagamentos.',
     })
   },
 
@@ -698,7 +683,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/conversas/${id}/finalizar`).then((response) => response.data), {
       loading: 'Finalizando conversa... aguarde',
       success: 'Conversa finalizada com sucesso.',
-      error: 'Não foi possível finalizar a conversa.',
+      error: 'NÃ£o foi possÃ­vel finalizar a conversa.',
     })
   },
 
@@ -722,7 +707,7 @@ export const appApi = {
     }).then((response) => response.data), {
       loading: 'Criando chamado... aguarde',
       success: 'Chamado criado com sucesso.',
-      error: 'Não foi possível criar o chamado.',
+      error: 'NÃ£o foi possÃ­vel criar o chamado.',
     })
   },
 
@@ -730,108 +715,6 @@ export const appApi = {
     return api.get(`/chamados/empresa/${empresaId}`, {
       headers: usuarioHeaders(),
     }).then((response) => response.data)
-  },
-
-  // ⚠️ DESATIVADO - WhatsApp
-  conectarWhatsapp(phone) {
-    // return api.post('/whatsapp/conectar', { phone }, {
-    //   headers: usuarioHeaders(),
-    // }).then((response) => {
-    //   const data = response.data || {}
-    //   const pairingCode = String(data.pairingCode || data.code || '').trim()
-    //   const status = String(data.status || '').toUpperCase()
-    //   const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
-    //     || status === 'CONNECTED'
-    //     || status === 'CONECTADO'
-    //   const waiting = status === 'WAITING_PAIRING'
-    //   const generating = status === 'GENERATING_CODE'
-    //   const sessionError = status === 'SESSION_ERROR'
-    //   const pairingFailed = status === 'PAIRING_FAILED'
-    //   const pairingExpired = status === 'PAIRING_EXPIRED'
-    //   return {
-    //     status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'CONNECTING')),
-    //     statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Aguardando codigo')),
-    //     message: data.message || 'Codigo de pareamento gerado.',
-    //     pairingCode: pairingCode || null,
-    //     conectado,
-    //     numero: data.numero || data.phoneNumber || phone,
-    //   }
-    // })
-    return Promise.resolve(null)
-  },
-
-  // ⚠️ DESATIVADO - WhatsApp
-  getWhatsappStatus(tenantId = empresaIdAtual()) {
-    // const endpoint = tenantId ? `/whatsapp/status/${tenantId}` : '/whatsapp/status'
-    // return api.get(endpoint, {
-    //   headers: usuarioHeaders(),
-    // }).then((response) => {
-    //   const data = response.data || {}
-    //   const pairingCode = String(data.pairingCode || data.code || '').trim()
-    //   const status = String(data.status || '').toUpperCase()
-    //   const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
-    //     || status === 'CONNECTED'
-    //     || status === 'CONECTADO'
-    //   const waiting = status === 'WAITING_PAIRING'
-    //   const generating = status === 'GENERATING_CODE'
-    //   const sessionError = status === 'SESSION_ERROR'
-    //   const pairingFailed = status === 'PAIRING_FAILED'
-    //   const pairingExpired = status === 'PAIRING_EXPIRED'
-    //   return {
-    //     status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'DISCONNECTED')),
-    //     statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Desconectado')),
-    //     message: data.message || data.mensagem || '',
-    //     pairingCode: pairingCode || null,
-    //     conectado,
-    //     numero: data.numeroConectado || data.numero || data.whatsappPhone || data.displayPhoneNumber || '',
-    //     notificationsEnabled: Boolean(data.notificationsEnabled),
-    //     secretariaIaEnabled: Boolean(data.secretariaIaEnabled),
-    //     connectedAt: data.connectedAt || null,
-    //     disconnectedAt: data.disconnectedAt || null,
-    //     expiresAt: data.expiresAt || null,
-    //   }
-    // })
-    return Promise.resolve(null)
-  },
-
-  // ⚠️ DESATIVADO - WhatsApp
-  getWhatsappConfig(tenantId) {
-    // return api.get(`/whatsapp/config/${tenantId}`, {
-    //   headers: usuarioHeaders(),
-    // }).then((response) => response.data)
-    return Promise.resolve(null)
-  },
-
-  // ⚠️ DESATIVADO - WhatsApp
-  salvarWhatsappConfig(tenantId, config) {
-    // return comNotificacao(() => api.put(`/whatsapp/config/${tenantId}`, config, {
-    //   headers: usuarioHeaders(),
-    // }).then((response) => response.data), {
-    //   loading: 'Salvando configuração... aguarde',
-    //   success: 'Configuração salva com sucesso.',
-    //   error: 'Não foi possível salvar a configuração.',
-    // })
-    return Promise.resolve(null)
-  },
-
-  // ⚠️ DESATIVADO - WhatsApp
-  desconectarWhatsapp(tenantId = empresaIdAtual()) {
-    // const endpoint = tenantId ? `/whatsapp/desconectar/${tenantId}` : '/whatsapp/desconectar'
-    // return comNotificacao(() => api.post(endpoint, null, {
-    //   headers: usuarioHeaders(),
-    // }).then((response) => {
-    //   const data = response.data || {}
-    //   return {
-    //     success: Boolean(data.success ?? true),
-    //     conectado: false,
-    //     numero: '',
-    //   }
-    // }), {
-    //   loading: 'Desconectando WhatsApp... aguarde',
-    //   success: 'WhatsApp desconectado com sucesso.',
-    //   error: 'Não foi possível desconectar o WhatsApp.',
-    // })
-    return Promise.resolve(null)
   },
 
   primeirosPassos() {
@@ -852,7 +735,7 @@ export const appApi = {
     }).then((response) => response.data), {
       loading: 'Salvando link... aguarde',
       success: 'Link de agendamento salvo com sucesso.',
-      error: 'Não foi possível atualizar o link de agendamento.',
+      error: 'NÃ£o foi possÃ­vel atualizar o link de agendamento.',
     })
   },
 
@@ -874,7 +757,7 @@ export const appApi = {
     return comNotificacao(() => api.post(`/public/agendamento/${slugOuEmpresaId}/confirmar`, payload).then((response) => response.data), {
       loading: 'Confirmando agendamento... aguarde',
       success: 'Agendamento confirmado com sucesso.',
-      error: 'Não foi possível confirmar o agendamento.',
+      error: 'NÃ£o foi possÃ­vel confirmar o agendamento.',
     })
   },
 
@@ -888,9 +771,11 @@ export const appApi = {
     return comNotificacao(() => api.put('/configuracoes/horario-atendimento', { horarios }, {
       headers: usuarioHeaders(),
     }).then((response) => response.data), {
-      loading: 'Salvando horários... aguarde',
-      success: 'Horários salvos com sucesso.',
-      error: 'Não foi possível salvar os horários.',
+      loading: 'Salvando horÃ¡rios... aguarde',
+      success: 'HorÃ¡rios salvos com sucesso.',
+      error: 'NÃ£o foi possÃ­vel salvar os horÃ¡rios.',
     })
   },
 }
+
+

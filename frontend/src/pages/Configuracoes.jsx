@@ -9,7 +9,6 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { PLANOS } from '../services/localStore.js'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
-import whatsappLogo from '../assets/whatsapp.png'
 
 const DIAS_ATENDIMENTO = [
   { value: 'SEGUNDA', label: 'Seg', fullLabel: 'Segunda' },
@@ -293,8 +292,7 @@ export default function Configuracoes() {
   const planoAtivo = PLANOS[usuario.plano]
   const recursosPlano = usuario.plano === 'PRO'
     ? ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios']
-    : ['WhatsApp', 'Agenda', 'Clientes', 'Serviços']
-  const whatsappStatus = empresa?.whatsappConnected ? 'Conectado' : 'Desconectado'
+    : ['Agenda', 'Clientes', 'Serviços']
   const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = agendamentoLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(agendamentoLink.publicUrl)}`
@@ -305,7 +303,7 @@ export default function Configuracoes() {
       <div className="page-title">
         <span className="section-kicker">Configuração</span>
         <h1>Configurações</h1>
-        <p>Centralize os dados da empresa, acesso da conta, plano atual, horário de atendimento e conexão do WhatsApp.</p>
+        <p>Centralize os dados da empresa, acesso da conta, plano atual e horário de atendimento.</p>
         <div className="page-title-actions">
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
             {recarregando ? 'Recarregando...' : 'Recarregar'}
@@ -342,24 +340,6 @@ export default function Configuracoes() {
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>
         </section>
 
-        {/* ⚠️ DESATIVADO - WhatsApp
-        <section className="panel settings-card">
-          <div className="settings-card-head">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <img src={whatsappLogo} alt="WhatsApp" style={{ width: '32px', height: '32px', flexShrink: 0 }} />
-              <div>
-                <span className="section-kicker">WhatsApp</span>
-                <h2>Conexão ativa</h2>
-              </div>
-            </div>
-            <StatusBadge status="ATIVO" />
-          </div>
-          <div className="settings-meta-list">
-            <div><span>Status</span><strong>{whatsappStatus}</strong></div>
-            <div><span>Número conectado</span><strong>{empresa?.whatsappPhone || empresa?.telefone || '-'}</strong></div>
-          </div>
-        </section>
-        */}
       </div>
 
       <section className="panel settings-form-panel">
