@@ -21,8 +21,8 @@ payment:
   success-url: http://localhost:5173/sistema/planos
   cancel-url: http://localhost:5173/sistema/planos
 
-whatsapp-service:
-  url: http://localhost:3000
+# ⚠️ DESATIVADO - whatsapp-service:
+# ⚠️ DESATIVADO -   url: http://localhost:3000
 
-whatsapp:
-  internal-token: local-dev-whatsapp-token
+# ⚠️ DESATIVADO - whatsapp:
+# ⚠️ DESATIVADO -   internal-token: local-dev-whatsapp-token

@@ -1,3 +1,10 @@
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 package com.minhaempresa.agendapro.whatsapp.service;
 
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
@@ -34,6 +41,7 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
+    /*
     @Scheduled(fixedDelay = 60000)
     public void processarConfirmacoesPagamentoDono() {
         List<EmpresaEntity> empresas = empresaRepository.findByWhatsappConnectedTrue();
@@ -45,8 +53,12 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
             }
         }
     }
+    */
+
+    // public void processarConfirmacoesPagamentoDono() { }
 
     public void enviarLembrete(Long empresaId, Long agendamentoId, boolean segundoLembrete) {
+        /*
         EmpresaEntity empresa = empresaRepository.findById(empresaId).orElse(null);
         AgendamentoEntity agendamento = agendamentoRepository.findById(agendamentoId).orElse(null);
         if (empresa == null || agendamento == null || agendamento.getEmpresa() == null || !empresaId.equals(agendamento.getEmpresa().getId())) {
@@ -59,13 +71,18 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
             throw new IllegalStateException("Falha ao enviar lembrete.");
         }
         marcarEnviadoDaEntidade(agendamento, segundoLembrete);
+        */
     }
 
     private boolean enviarParaNodeDaEntidade(EmpresaEntity empresa, AgendamentoEntity agendamento, boolean segundoLembrete) {
+        /*
         return enviarParaNode(empresa, toProjection(agendamento), segundoLembrete);
+        */
+        return false;
     }
 
     private void processarEmpresa(EmpresaEntity empresa) {
+        /*
         ZoneId zoneId = resolverZoneId(empresa.getTimezone());
         LocalDateTime agora = ZonedDateTime.now(zoneId).toLocalDateTime();
 
@@ -143,9 +160,11 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
                         agendamento.getId(), ex.getMessage());
             }
         }
+        */
     }
 
     private boolean deveEnviarPrimeiro(AgendamentoRepository.AgendamentoLembreteProjection agendamento, LocalDateTime dataLimiteInferior, LocalDateTime dataLimiteSuperior) {
+        /*
         if (agendamento == null || agendamento.getEmpresaId() == null || agendamento.getData() == null || agendamento.getHoraInicio() == null) {
             return false;
         }
@@ -160,9 +179,12 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
         }
         LocalDateTime horarioAgendamento = LocalDateTime.of(agendamento.getData(), agendamento.getHoraInicio());
         return !horarioAgendamento.isBefore(dataLimiteInferior) && !horarioAgendamento.isAfter(dataLimiteSuperior);
+        */
+        return false;
     }
 
     private boolean deveEnviarSegundo(AgendamentoRepository.AgendamentoLembreteProjection agendamento, LocalDateTime dataLimiteInferior, LocalDateTime dataLimiteSuperior) {
+        /*
         if (agendamento == null || agendamento.getEmpresaId() == null || agendamento.getData() == null || agendamento.getHoraInicio() == null) {
             return false;
         }
@@ -182,9 +204,12 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
         return enviadaEm != null
                 && !enviadaEm.isBefore(dataLimiteInferior)
                 && !enviadaEm.isAfter(dataLimiteSuperior);
+        */
+        return false;
     }
 
     private boolean enviarParaNode(EmpresaEntity empresa, AgendamentoRepository.AgendamentoLembreteProjection agendamento, boolean segundoLembrete) {
+        /*
         PagamentoEntity pagamento = pagamentoRepository.findByAgendamento_Id(agendamento.getId()).orElse(null);
         if (pagamento == null) {
             log.warn("[confirmacao-pagamento-dono] ignorado sem pagamento empresaId={} agendamentoId={}", empresa.getId(), agendamento.getId());
@@ -217,55 +242,73 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
                     empresa.getId(), agendamento.getId(), ex.getMessage());
             return false;
         }
+        */
+        return false;
     }
 
     private void marcarPrimeiroEnviado(AgendamentoRepository.AgendamentoLembreteProjection agendamento) {
+        /*
         AgendamentoEntity entity = agendamentoRepository.findById(agendamento.getId()).orElseThrow();
         entity.setConfirmacaoPagamentoDonoEnviada(Boolean.TRUE);
         entity.setConfirmacaoPagamentoDonoEnviadaEm(LocalDateTime.now(resolverZoneId(entity.getEmpresa() == null ? null : entity.getEmpresa().getTimezone())));
         agendamentoRepository.save(entity);
+        */
     }
 
     private void marcarSegundoEnviado(AgendamentoRepository.AgendamentoLembreteProjection agendamento) {
+        /*
         AgendamentoEntity entity = agendamentoRepository.findById(agendamento.getId()).orElseThrow();
         entity.setSegundaConfirmacaoPagamentoDonoEnviada(Boolean.TRUE);
         entity.setSegundaConfirmacaoPagamentoDonoEnviadaEm(LocalDateTime.now(resolverZoneId(entity.getEmpresa() == null ? null : entity.getEmpresa().getTimezone())));
         agendamentoRepository.save(entity);
+        */
     }
 
     private void marcarEnviado(AgendamentoRepository.AgendamentoLembreteProjection agendamento, boolean segundoLembrete) {
+        /*
         if (segundoLembrete) {
             marcarSegundoEnviado(agendamento);
         } else {
             marcarPrimeiroEnviado(agendamento);
         }
+        */
     }
 
     private void marcarPrimeiroEnviadoDaEntidade(AgendamentoEntity agendamento) {
+        /*
         agendamento.setConfirmacaoPagamentoDonoEnviada(Boolean.TRUE);
         agendamento.setConfirmacaoPagamentoDonoEnviadaEm(LocalDateTime.now(resolverZoneId(agendamento.getEmpresa() == null ? null : agendamento.getEmpresa().getTimezone())));
         agendamentoRepository.save(agendamento);
+        */
     }
 
     private void marcarSegundoEnviadoDaEntidade(AgendamentoEntity agendamento) {
+        /*
         agendamento.setSegundaConfirmacaoPagamentoDonoEnviada(Boolean.TRUE);
         agendamento.setSegundaConfirmacaoPagamentoDonoEnviadaEm(LocalDateTime.now(resolverZoneId(agendamento.getEmpresa() == null ? null : agendamento.getEmpresa().getTimezone())));
         agendamentoRepository.save(agendamento);
+        */
     }
 
     private void marcarEnviadoDaEntidade(AgendamentoEntity agendamento, boolean segundoLembrete) {
+        /*
         if (segundoLembrete) {
             marcarSegundoEnviadoDaEntidade(agendamento);
         } else {
             marcarPrimeiroEnviadoDaEntidade(agendamento);
         }
+        */
     }
 
     private boolean isPago(StatusPagamento status) {
+        /*
         return status == StatusPagamento.PAGO || status == StatusPagamento.PAYMENT_APPROVED;
+        */
+        return false;
     }
 
     private String montarMensagem(AgendamentoRepository.AgendamentoLembreteProjection agendamento, boolean segundoLembrete) {
+        /*
         String clienteNome = textoOuPadrao(agendamento.getClienteNome(), "Cliente");
         String clienteTelefone = textoOuPadrao(agendamento.getClienteTelefone(), "-");
         String protocolo = textoOuPadrao(agendamento.getProtocolo(), "------");
@@ -293,9 +336,12 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
                 .append("2. Não, ficou pendente\n")
                 .append("3. Foi cancelado");
         return builder.toString();
+        */
+        return "";
     }
 
     private AgendamentoRepository.AgendamentoLembreteProjection toProjection(AgendamentoEntity agendamento) {
+        /*
         return new AgendamentoRepository.AgendamentoLembreteProjection() {
             @Override
             public Long getId() {
@@ -387,14 +433,20 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
                 return agendamento.getConfirmacaoPagamentoDonoRespondidaEm();
             }
         };
+        */
+        return null;
     }
 
     private String textoOuPadrao(String valor, String padrao) {
+        /*
         String texto = valor == null ? "" : valor.trim();
         return texto.isBlank() ? padrao : texto;
+        */
+        return padrao;
     }
 
     private ZoneId resolverZoneId(String timezone) {
+        /*
         String valor = timezone == null || timezone.isBlank()
                 ? appTimezone
                 : timezone;
@@ -402,5 +454,7 @@ public class ConfirmacaoPagamentoDonoWhatsappService {
             valor = TimezoneEnum.AMERICA_CUIABA.getValue();
         }
         return ZoneId.of(valor);
+        */
+        return ZoneId.of(TimezoneEnum.AMERICA_CUIABA.getValue());
     }
 }

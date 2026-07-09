@@ -84,7 +84,7 @@ export default function ContaInativa() {
   const formularioPadrao = useMemo(() => ({
     customerName: usuario?.nome || usuario?.nomeResponsavel || '',
     customerEmail: usuario?.email || '',
-    customerPhone: usuario?.telefone || usuario?.whatsapp || usuario?.empresa?.telefone || '',
+    customerPhone: usuario?.telefone || /* ⚠️ DESATIVADO — usuario?.whatsapp || */ usuario?.empresa?.telefone || '',
     customerDocType: identificarTipoDocumento(usuario?.documento || usuario?.cpfCnpj || usuario?.empresa?.documento),
     customerDocNumber: usuario?.documento || usuario?.cpfCnpj || usuario?.empresa?.documento || '',
   }), [usuario])

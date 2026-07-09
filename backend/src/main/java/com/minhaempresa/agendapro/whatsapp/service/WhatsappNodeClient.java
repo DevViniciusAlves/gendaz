@@ -1,3 +1,10 @@
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 package com.minhaempresa.agendapro.whatsapp.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,6 +36,8 @@ public class WhatsappNodeClient {
             .build();
 
     public WhatsappConnectResponse conectar(WhatsappConnectRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         JsonNode node = postJson("/connect", Map.of(
                 "empresaId", request.empresaId(),
                 "phone", request.phoneNumber(),
@@ -43,9 +52,13 @@ public class WhatsappNodeClient {
                 request.empresaId(),
                 request.phoneNumber()
         );
+        */
+        return null;
     }
 
     public WhatsappStatusResponse status(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (empresaId == null) {
             return toStatusResponse(objectMapper.createObjectNode(), null);
         }
@@ -57,9 +70,13 @@ public class WhatsappNodeClient {
             node = objectMapper.createObjectNode();
         }
         return toStatusResponse(node, empresaId);
+        */
+        return null;
     }
 
     public WhatsappStatusResponse desconectar(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         JsonNode node = postJson("/disconnect/" + empresaId, Map.of());
         if (node == null || node.isMissingNode()) {
             node = postJson("/disconnect", Map.of());
@@ -68,37 +85,61 @@ public class WhatsappNodeClient {
             node = objectMapper.createObjectNode();
         }
         return toStatusResponse(node, empresaId);
+        */
+        return null;
     }
 
     public WhatsappStatusResponse limparSessao(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         JsonNode node = deleteJson("/session/" + empresaId);
         if (node == null || node.isMissingNode()) {
             node = objectMapper.createObjectNode();
         }
         return toStatusResponse(node, empresaId);
+        */
+        return null;
     }
 
     public void enviarAgendamento(Map<String, Object> payload) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         postJson("/webhook/agendamento", payload);
+        */
+        return;
     }
 
     public void enviarMensagem(Long empresaId, String phone, String message) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         postJson("/send", Map.of(
                 "empresaId", empresaId,
                 "phone", phone,
                 "message", message
         ));
+        */
+        return;
     }
 
     public void enviarConfirmacaoPagamentoDono(Map<String, Object> payload) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         postJson("/payment-owner-reminder", payload);
+        */
+        return;
     }
 
     public void enviarLembrete(Map<String, Object> payload) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         postJson("/api/whatsapp/enviar-lembrete", payload);
+        */
+        return;
     }
 
     private WhatsappStatusResponse toStatusResponse(JsonNode node, Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String status = texto(node.path("status").asText(
                 node.path("connected").asBoolean(node.path("conectado").asBoolean(false))
                         ? "CONNECTED"
@@ -132,9 +173,13 @@ public class WhatsappNodeClient {
                 node.path("notificationsEnabled").asBoolean(true),
                 node.path("secretariaIaEnabled").asBoolean(true)
         );
+        */
+        return null;
     }
 
     private JsonNode postJson(String path, Map<String, Object> body) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             URI base = baseUri();
             HttpRequest request = HttpRequest.newBuilder()
@@ -152,9 +197,13 @@ public class WhatsappNodeClient {
         } catch (Exception ex) {
             throw new BusinessException("Nao foi possivel comunicar com o servico de WhatsApp: " + detalheErro(ex));
         }
+        */
+        return objectMapper.createObjectNode();
     }
 
     private JsonNode getJson(String path) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             URI base = baseUri();
             HttpRequest request = HttpRequest.newBuilder()
@@ -171,9 +220,13 @@ public class WhatsappNodeClient {
         } catch (Exception ex) {
             throw new BusinessException("Nao foi possivel consultar o servico de WhatsApp: " + detalheErro(ex));
         }
+        */
+        return objectMapper.createObjectNode();
     }
 
     private JsonNode deleteJson(String path) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             URI base = baseUri();
             HttpRequest request = HttpRequest.newBuilder()
@@ -190,9 +243,13 @@ public class WhatsappNodeClient {
         } catch (Exception ex) {
             throw new BusinessException("Nao foi possivel limpar a sessao do servico de WhatsApp: " + detalheErro(ex));
         }
+        */
+        return objectMapper.createObjectNode();
     }
 
     private JsonNode sendJson(HttpRequest request) throws Exception {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             String mensagem = extrairMensagem(response.body());
@@ -209,18 +266,26 @@ public class WhatsappNodeClient {
             return objectMapper.createObjectNode();
         }
         return objectMapper.readTree(body);
+        */
+        return objectMapper.createObjectNode();
     }
 
     private String extrairMensagem(String body) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             JsonNode node = objectMapper.readTree(body == null ? "{}" : body);
             return texto(node.path("message").asText(node.path("mensagem").asText("")));
         } catch (Exception ex) {
             return "";
         }
+        */
+        return "";
     }
 
     private URI baseUri() {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String value = properties.whatsappServiceUrl();
         if (value.isBlank()) {
             throw new BusinessException("URL do servico de WhatsApp nao configurada.");
@@ -234,9 +299,13 @@ public class WhatsappNodeClient {
         } catch (URISyntaxException ex) {
             throw new BusinessException("URL do servico de WhatsApp invalida: " + value);
         }
+        */
+        return URI.create("http://localhost:0");
     }
 
     private String detalheErro(Exception ex) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (ex instanceof BusinessException businessException) {
             return texto(businessException.getMessage());
         }
@@ -248,13 +317,21 @@ public class WhatsappNodeClient {
             return message;
         }
         return ex.getClass().getSimpleName();
+        */
+        return "";
     }
 
     private String texto(String valor) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return valor == null ? "" : valor.trim();
+        */
+        return "";
     }
 
     private com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus mapStatus(String status) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if ("CONECTADO".equalsIgnoreCase(status) || "CONNECTED".equalsIgnoreCase(status)) return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.CONNECTED;
         if ("RECONNECTING".equalsIgnoreCase(status)) return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.RECONNECTING;
         if ("GENERATING_CODE".equalsIgnoreCase(status) || "WAITING_PAIRING".equalsIgnoreCase(status) || "AGUARDANDO".equalsIgnoreCase(status) || "CONNECTING".equalsIgnoreCase(status) || "PAIRING_CODE".equalsIgnoreCase(status)) return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.CONNECTING;
@@ -262,9 +339,13 @@ public class WhatsappNodeClient {
         if ("DISCONNECTED".equalsIgnoreCase(status)) return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.DISCONNECTED;
         if ("CONFIG_PENDING".equalsIgnoreCase(status)) return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.CONFIG_PENDING;
         return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.DISCONNECTED;
+        */
+        return com.minhaempresa.agendapro.whatsapp.enums.WhatsappConnectionStatus.DISCONNECTED;
     }
 
     private java.time.LocalDateTime toLocalDateTime(String valor) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             return java.time.Instant.parse(valor).atZone(java.time.ZoneId.systemDefault()).toLocalDateTime();
         } catch (Exception ignored) {
@@ -274,9 +355,13 @@ public class WhatsappNodeClient {
                 return null;
             }
         }
+        */
+        return null;
     }
 
     private String statusLabel(String status) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return switch (String.valueOf(status).toLowerCase()) {
             case "conectado", "connected" -> "WhatsApp conectado";
             case "reconnecting" -> "Reconectando WhatsApp";
@@ -291,5 +376,7 @@ public class WhatsappNodeClient {
             case "error" -> "Erro na conexao";
             default -> "Desconectado";
         };
+        */
+        return "Desconectado";
     }
 }

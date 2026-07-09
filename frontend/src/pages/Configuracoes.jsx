@@ -342,6 +342,7 @@ export default function Configuracoes() {
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>
         </section>
 
+        {/* ⚠️ DESATIVADO - WhatsApp
         <section className="panel settings-card">
           <div className="settings-card-head">
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -358,6 +359,7 @@ export default function Configuracoes() {
             <div><span>Número conectado</span><strong>{empresa?.whatsappPhone || empresa?.telefone || '-'}</strong></div>
           </div>
         </section>
+        */}
       </div>
 
       <section className="panel settings-form-panel">

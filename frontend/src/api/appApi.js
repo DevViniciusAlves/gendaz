@@ -732,96 +732,106 @@ export const appApi = {
     }).then((response) => response.data)
   },
 
+  // ⚠️ DESATIVADO - WhatsApp
   conectarWhatsapp(phone) {
-    return api.post('/whatsapp/conectar', { phone }, {
-      headers: usuarioHeaders(),
-    }).then((response) => {
-      const data = response.data || {}
-      const pairingCode = String(data.pairingCode || data.code || '').trim()
-      const status = String(data.status || '').toUpperCase()
-      const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
-        || status === 'CONNECTED'
-        || status === 'CONECTADO'
-      const waiting = status === 'WAITING_PAIRING'
-      const generating = status === 'GENERATING_CODE'
-      const sessionError = status === 'SESSION_ERROR'
-      const pairingFailed = status === 'PAIRING_FAILED'
-      const pairingExpired = status === 'PAIRING_EXPIRED'
-      return {
-        status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'CONNECTING')),
-        statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Aguardando codigo')),
-        message: data.message || 'Codigo de pareamento gerado.',
-        pairingCode: pairingCode || null,
-        conectado,
-        numero: data.numero || data.phoneNumber || phone,
-      }
-    })
+    // return api.post('/whatsapp/conectar', { phone }, {
+    //   headers: usuarioHeaders(),
+    // }).then((response) => {
+    //   const data = response.data || {}
+    //   const pairingCode = String(data.pairingCode || data.code || '').trim()
+    //   const status = String(data.status || '').toUpperCase()
+    //   const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
+    //     || status === 'CONNECTED'
+    //     || status === 'CONECTADO'
+    //   const waiting = status === 'WAITING_PAIRING'
+    //   const generating = status === 'GENERATING_CODE'
+    //   const sessionError = status === 'SESSION_ERROR'
+    //   const pairingFailed = status === 'PAIRING_FAILED'
+    //   const pairingExpired = status === 'PAIRING_EXPIRED'
+    //   return {
+    //     status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'CONNECTING')),
+    //     statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Aguardando codigo')),
+    //     message: data.message || 'Codigo de pareamento gerado.',
+    //     pairingCode: pairingCode || null,
+    //     conectado,
+    //     numero: data.numero || data.phoneNumber || phone,
+    //   }
+    // })
+    return Promise.resolve(null)
   },
 
+  // ⚠️ DESATIVADO - WhatsApp
   getWhatsappStatus(tenantId = empresaIdAtual()) {
-    const endpoint = tenantId ? `/whatsapp/status/${tenantId}` : '/whatsapp/status'
-    return api.get(endpoint, {
-      headers: usuarioHeaders(),
-    }).then((response) => {
-      const data = response.data || {}
-      const pairingCode = String(data.pairingCode || data.code || '').trim()
-      const status = String(data.status || '').toUpperCase()
-      const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
-        || status === 'CONNECTED'
-        || status === 'CONECTADO'
-      const waiting = status === 'WAITING_PAIRING'
-      const generating = status === 'GENERATING_CODE'
-      const sessionError = status === 'SESSION_ERROR'
-      const pairingFailed = status === 'PAIRING_FAILED'
-      const pairingExpired = status === 'PAIRING_EXPIRED'
-      return {
-        status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'DISCONNECTED')),
-        statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Desconectado')),
-        message: data.message || data.mensagem || '',
-        pairingCode: pairingCode || null,
-        conectado,
-        numero: data.numeroConectado || data.numero || data.whatsappPhone || data.displayPhoneNumber || '',
-        notificationsEnabled: Boolean(data.notificationsEnabled),
-        secretariaIaEnabled: Boolean(data.secretariaIaEnabled),
-        connectedAt: data.connectedAt || null,
-        disconnectedAt: data.disconnectedAt || null,
-        expiresAt: data.expiresAt || null,
-      }
-    })
+    // const endpoint = tenantId ? `/whatsapp/status/${tenantId}` : '/whatsapp/status'
+    // return api.get(endpoint, {
+    //   headers: usuarioHeaders(),
+    // }).then((response) => {
+    //   const data = response.data || {}
+    //   const pairingCode = String(data.pairingCode || data.code || '').trim()
+    //   const status = String(data.status || '').toUpperCase()
+    //   const conectado = Boolean(data.conectado ?? data.connected ?? data.whatsappConnected)
+    //     || status === 'CONNECTED'
+    //     || status === 'CONECTADO'
+    //   const waiting = status === 'WAITING_PAIRING'
+    //   const generating = status === 'GENERATING_CODE'
+    //   const sessionError = status === 'SESSION_ERROR'
+    //   const pairingFailed = status === 'PAIRING_FAILED'
+    //   const pairingExpired = status === 'PAIRING_EXPIRED'
+    //   return {
+    //     status: data.status || (sessionError ? 'SESSION_ERROR' : pairingExpired ? 'PAIRING_EXPIRED' : pairingFailed ? 'PAIRING_FAILED' : waiting ? 'WAITING_PAIRING' : generating ? 'GENERATING_CODE' : (conectado ? 'CONNECTED' : 'DISCONNECTED')),
+    //     statusLabel: data.statusLabel || (sessionError ? 'Sessão inválida' : pairingExpired ? 'Codigo expirado' : pairingFailed ? 'Pareamento falhou' : waiting ? 'Aguardando pareamento' : generating ? 'Gerando codigo' : (conectado ? 'WhatsApp conectado' : 'Desconectado')),
+    //     message: data.message || data.mensagem || '',
+    //     pairingCode: pairingCode || null,
+    //     conectado,
+    //     numero: data.numeroConectado || data.numero || data.whatsappPhone || data.displayPhoneNumber || '',
+    //     notificationsEnabled: Boolean(data.notificationsEnabled),
+    //     secretariaIaEnabled: Boolean(data.secretariaIaEnabled),
+    //     connectedAt: data.connectedAt || null,
+    //     disconnectedAt: data.disconnectedAt || null,
+    //     expiresAt: data.expiresAt || null,
+    //   }
+    // })
+    return Promise.resolve(null)
   },
 
+  // ⚠️ DESATIVADO - WhatsApp
   getWhatsappConfig(tenantId) {
-    return api.get(`/whatsapp/config/${tenantId}`, {
-      headers: usuarioHeaders(),
-    }).then((response) => response.data)
+    // return api.get(`/whatsapp/config/${tenantId}`, {
+    //   headers: usuarioHeaders(),
+    // }).then((response) => response.data)
+    return Promise.resolve(null)
   },
 
+  // ⚠️ DESATIVADO - WhatsApp
   salvarWhatsappConfig(tenantId, config) {
-    return comNotificacao(() => api.put(`/whatsapp/config/${tenantId}`, config, {
-      headers: usuarioHeaders(),
-    }).then((response) => response.data), {
-      loading: 'Salvando configuração... aguarde',
-      success: 'Configuração salva com sucesso.',
-      error: 'Não foi possível salvar a configuração.',
-    })
+    // return comNotificacao(() => api.put(`/whatsapp/config/${tenantId}`, config, {
+    //   headers: usuarioHeaders(),
+    // }).then((response) => response.data), {
+    //   loading: 'Salvando configuração... aguarde',
+    //   success: 'Configuração salva com sucesso.',
+    //   error: 'Não foi possível salvar a configuração.',
+    // })
+    return Promise.resolve(null)
   },
 
+  // ⚠️ DESATIVADO - WhatsApp
   desconectarWhatsapp(tenantId = empresaIdAtual()) {
-    const endpoint = tenantId ? `/whatsapp/desconectar/${tenantId}` : '/whatsapp/desconectar'
-    return comNotificacao(() => api.post(endpoint, null, {
-      headers: usuarioHeaders(),
-    }).then((response) => {
-      const data = response.data || {}
-      return {
-        success: Boolean(data.success ?? true),
-        conectado: false,
-        numero: '',
-      }
-    }), {
-      loading: 'Desconectando WhatsApp... aguarde',
-      success: 'WhatsApp desconectado com sucesso.',
-      error: 'Não foi possível desconectar o WhatsApp.',
-    })
+    // const endpoint = tenantId ? `/whatsapp/desconectar/${tenantId}` : '/whatsapp/desconectar'
+    // return comNotificacao(() => api.post(endpoint, null, {
+    //   headers: usuarioHeaders(),
+    // }).then((response) => {
+    //   const data = response.data || {}
+    //   return {
+    //     success: Boolean(data.success ?? true),
+    //     conectado: false,
+    //     numero: '',
+    //   }
+    // }), {
+    //   loading: 'Desconectando WhatsApp... aguarde',
+    //   success: 'WhatsApp desconectado com sucesso.',
+    //   error: 'Não foi possível desconectar o WhatsApp.',
+    // })
+    return Promise.resolve(null)
   },
 
   primeirosPassos() {

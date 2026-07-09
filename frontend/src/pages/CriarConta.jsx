@@ -308,7 +308,7 @@ export default function CriarConta() {
           </div>
 
           <div className="login-field-v2">
-            <label className="login-label-v2">Telefone / WhatsApp</label>
+            <label className="login-label-v2">Telefone{/* ⚠️ DESATIVADO — / WhatsApp */}</label>
             <div className="login-input-wrap-v2">
               <Phone size={16} className="login-input-icon-left" />
               <input

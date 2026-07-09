@@ -1,3 +1,10 @@
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 package com.minhaempresa.agendapro.whatsapp.service;
 
 import com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento;
@@ -29,57 +36,15 @@ public class WhatsappReminderScheduler {
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
-    @Scheduled(fixedDelay = 60000)
+    // @Scheduled(fixedDelay = 60000)  // ⚠️ DESATIVADO
     public void enviarLembretes() {
-        log.info("[Scheduler] enviarLembretes() executando");
-
-        try {
-            List<EmpresaEntity> empresas = empresaRepository.findByWhatsappConnectedTrue();
-            log.info("[Scheduler] encontradas {} empresas com whatsapp conectado", empresas.size());
-            for (EmpresaEntity empresa : empresas) {
-                ZoneId zoneId = resolverZoneId(empresa.getTimezone());
-                ZonedDateTime agoraZoned = ZonedDateTime.now(zoneId);
-                LocalDateTime agora = agoraZoned.toLocalDateTime();
-                LocalDateTime dataLimiteInferior = agora.plusMinutes(25);
-                LocalDateTime dataLimiteSuperior = agora.plusMinutes(35);
-                LocalDate data = dataLimiteInferior.toLocalDate();
-                LocalTime inicio = dataLimiteInferior.toLocalTime();
-                LocalTime fim = dataLimiteSuperior.toLocalTime();
-
-                log.info("[Reminder] timezone={} agora={} empresaId={} buscando lembretes data={} janela={}..{}",
-                        zoneId, agoraZoned, empresa.getId(), data, inicio, fim);
-
-                List<AgendamentoRepository.AgendamentoLembreteProjection> agendamentos = agendamentoRepository.findLembretesClienteProjection(
-                        empresa.getId(),
-                        List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
-                        data,
-                        inicio,
-                        fim
-                );
-
-                for (AgendamentoRepository.AgendamentoLembreteProjection agendamento : agendamentos) {
-                    try {
-                        tentarEnviarLembrete(agendamento);
-
-                        log.info("[Scheduler-Delay] aguardando 10 segundos antes do proximo lembrete...");
-                        try {
-                            Thread.sleep(10000);
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt();
-                        }
-                    } catch (RuntimeException ex) {
-                        log.warn("[Reminder] falha ao enviar lembrete agendamentoId={} detalhe={}",
-                                agendamento.getId(), ex.getMessage());
-                    }
-                }
-            }
-        } catch (Exception e) {
-            log.error("[Scheduler] ERRO GERAL NO SCHEDULER", e);
-            e.printStackTrace();
-        }
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        return;
     }
 
     private void tentarEnviarLembrete(AgendamentoRepository.AgendamentoLembreteProjection agendamento) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (agendamento == null || agendamento.getEmpresaId() == null) {
             return;
         }
@@ -122,9 +87,13 @@ public class WhatsappReminderScheduler {
         nodeClient.enviarLembrete(payload);
         log.info("[Reminder] lembrete enviado empresaId={} agendamentoId={} protocolo={} horario={}",
                 agendamento.getEmpresaId(), agendamento.getId(), agendamento.getProtocolo(), agendamento.getHoraInicio());
+        */
+        return;
     }
 
     private String montarMensagem(AgendamentoRepository.AgendamentoLembreteProjection agendamento) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String cliente = textoOuPadrao(agendamento.getClienteNome(), "Cliente");
         String servico = textoOuPadrao(agendamento.getServicoNome(), "seu atendimento");
         String profissional = textoOuPadrao(agendamento.getProfissionalNome(), "-");
@@ -141,11 +110,17 @@ public class WhatsappReminderScheduler {
                 .append("\nEsperamos você no horário marcado. ✅\n\n")
                 .append("Se precisar cancelar ou reagendar, responda esta mensagem.");
         return builder.toString();
+        */
+        return "";
     }
 
     private String textoOuPadrao(String valor, String padrao) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String texto = valor == null ? "" : valor.trim();
         return texto.isBlank() ? padrao : texto;
+        */
+        return padrao;
     }
 
     /**
@@ -154,6 +129,8 @@ public class WhatsappReminderScheduler {
      * Retorna null se o número não puder ser normalizado para 13 dígitos com DDI 55.
      */
     static String normalizarTelefone(String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (telefone == null || telefone.isBlank()) return null;
         String digitos = telefone.replaceAll("\\D", "");
         if (digitos.isEmpty()) return null;
@@ -167,9 +144,13 @@ public class WhatsappReminderScheduler {
         int ddd = Integer.parseInt(digitos.substring(2, 4));
         if (ddd < 11 || ddd > 99) return null;
         return digitos;
+        */
+        return null;
     }
 
     private ZoneId resolverZoneId(String timezone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String valor = timezone == null || timezone.isBlank()
                 ? appTimezone
                 : timezone;
@@ -177,5 +158,7 @@ public class WhatsappReminderScheduler {
             valor = TimezoneEnum.AMERICA_CUIABA.getValue();
         }
         return ZoneId.of(valor);
+        */
+        return ZoneId.of("America/Cuiaba");
     }
 }

@@ -2,17 +2,18 @@ import { useEffect, useRef, useState } from 'react'
 import { MessageCircle, CalendarCheck, Users, LayoutDashboard } from 'lucide-react'
 
 const STEPS = [
-  {
-    id: 'whatsapp',
-    num: '01',
-    icon: MessageCircle,
-    heading: 'Atenda pelo WhatsApp',
-    body: 'Centralize todas as conversas com seus clientes diretamente no painel. Histórico, status e respostas rápidas em um só lugar.',
-    visual: {
-      label: 'Conversa organizada',
-      detail: '4 mensagens novas',
-    },
-  },
+  // ⚠️ DESATIVADO — Slide "Atenda pelo WhatsApp"
+  // {
+  //   id: 'whatsapp',
+  //   num: '01',
+  //   icon: MessageCircle,
+  //   heading: 'Atenda pelo WhatsApp',
+  //   body: 'Centralize todas as conversas com seus clientes diretamente no painel. Histórico, status e respostas rápidas em um só lugar.',
+  //   visual: {
+  //     label: 'Conversa organizada',
+  //     detail: '4 mensagens novas',
+  //   },
+  // },
   {
     id: 'agenda',
     num: '02',
@@ -40,7 +41,9 @@ const STEPS = [
     num: '04',
     icon: LayoutDashboard,
     heading: 'Tudo em um só painel',
-    body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne WhatsApp, agenda, clientes e pagamentos com simplicidade.',
+    // ⚠️ DESATIVADO — body com WhatsApp
+    // body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne WhatsApp, agenda, clientes e pagamentos com simplicidade.',
+    body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne agenda, clientes e pagamentos com simplicidade.',
     visual: {
       label: 'Painel completo',
       detail: 'Operação em tempo real',

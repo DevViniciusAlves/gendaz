@@ -134,7 +134,7 @@ export function useLocalData(scope = 'full') {
   }
 
   useEffect(() => {
-    reload()
+    reload(true)
     function reloadFromEvent() {
       reload(true)
     }

@@ -1,4 +1,13 @@
-﻿const textoBase = (valor) => String(valor || '').trim();
+﻿/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Código comentado. Remova comentários  ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+
+/*
+const textoBase = (valor) => String(valor || '').trim();
 
 function preencher(template, dados) {
   return template.replace(/\{\{(\w+)\}\}/g, (_, chave) => {
@@ -30,3 +39,6 @@ function montarMensagem(tipo, dados = {}) {
 module.exports = {
   montarMensagem,
 };
+*/
+
+module.exports = { montarMensagem: async () => null };

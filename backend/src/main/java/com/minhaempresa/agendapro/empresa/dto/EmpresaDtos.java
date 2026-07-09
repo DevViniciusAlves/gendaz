@@ -33,10 +33,11 @@ public final class EmpresaDtos {
             String telefone,
             String email,
             StatusEmpresa status,
-            Boolean whatsappConnected,
-            String whatsappPhone,
-            Boolean whatsappNotificationsEnabled,
-            Boolean whatsappSecretariaIaEnabled,
+            // ⚠️ DESATIVADO - WhatsApp
+            // Boolean whatsappConnected,
+            // String whatsappPhone,
+            // Boolean whatsappNotificationsEnabled,
+            // Boolean whatsappSecretariaIaEnabled,
             String timezone,
             LocalDateTime dataCriacao,
             LocalDateTime dataAtualizacao

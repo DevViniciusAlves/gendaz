@@ -1,3 +1,10 @@
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 package com.minhaempresa.agendapro.whatsapp.service;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -12,14 +19,23 @@ public class WhatsappIntegrationProperties {
     private String internalToken;
 
     public String whatsappServiceUrl() {
+        /*
         return clean(whatsappServiceUrl);
+        */
+        return "";
     }
 
     public String internalToken() {
+        /*
         return clean(internalToken);
+        */
+        return "";
     }
 
     private String clean(String value) {
+        /*
         return value == null ? "" : value.trim();
+        */
+        return "";
     }
 }

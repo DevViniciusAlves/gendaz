@@ -9,7 +9,7 @@ import com.minhaempresa.agendapro.mensagem.dto.MensagemDtos.MensagemResponse;
 import com.minhaempresa.agendapro.mensagem.entity.MensagemEntity;
 import com.minhaempresa.agendapro.mensagem.enums.DirecaoMensagem;
 import com.minhaempresa.agendapro.mensagem.enums.TipoMensagem;
-import com.minhaempresa.agendapro.mensagem.gateway.WhatsappGateway;
+// ⚠️ DESATIVADO — import com.minhaempresa.agendapro.mensagem.gateway.WhatsappGateway;
 import com.minhaempresa.agendapro.mensagem.mapper.MensagemMapper;
 import com.minhaempresa.agendapro.mensagem.repository.MensagemRepository;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
@@ -25,7 +25,7 @@ public class MensagemService {
     private final MensagemRepository mensagemRepository;
     private final ConversaService conversaService;
     private final AgendamentoService agendamentoService;
-    private final WhatsappGateway whatsappGateway;
+    // ⚠️ DESATIVADO — private final WhatsappGateway whatsappGateway;
     private final SanitizacaoService sanitizacaoService;
     private final MensagemMapper mapper = new MensagemMapper();
 
@@ -38,7 +38,7 @@ public class MensagemService {
     public MensagemResponse enviar(EnviarMensagemRequest request) {
         ConversaEntity conversa = conversaService.buscarEntidade(request.conversaId());
         String conteudo = sanitizacaoService.textoObrigatorio(request.conteudo());
-        whatsappGateway.enviarMensagem(conversa.getCliente().getTelefone(), conteudo);
+        // ⚠️ DESATIVADO — whatsappGateway.enviarMensagem(conversa.getCliente().getTelefone(), conteudo);
         return salvar(conversa, conteudo, DirecaoMensagem.EMPRESA_PARA_CLIENTE, TipoMensagem.TEXTO);
     }
 
@@ -47,7 +47,7 @@ public class MensagemService {
         ConversaEntity conversa = conversaService.buscarEntidade(request.conversaId());
         String horarios = String.join(", ", agendamentoService.horariosDisponiveis(request.empresaId(), request.profissionalId(), request.servicoId(), request.data()));
         String conteudo = sanitizacaoService.textoObrigatorio("Horarios disponiveis para " + request.data() + ": " + horarios);
-        whatsappGateway.enviarMensagem(conversa.getCliente().getTelefone(), conteudo);
+        // ⚠️ DESATIVADO — whatsappGateway.enviarMensagem(conversa.getCliente().getTelefone(), conteudo);
         return salvar(conversa, conteudo, DirecaoMensagem.EMPRESA_PARA_CLIENTE, TipoMensagem.HORARIOS_DISPONIVEIS);
     }
 

@@ -11,7 +11,7 @@ export const initialData = {
     documento: '12.345.678/0001-90',
     telefone: '(65) 99999-0000',
     email: 'contato@agendapro.com',
-    whatsappStatus: 'WhatsApp conectado',
+    // ⚠️ DESATIVADO — whatsappStatus: 'WhatsApp conectado',
   },
   usuarios: demoUsers.map(({ senha, ...usuario }) => usuario),
   equipe: [
@@ -20,7 +20,7 @@ export const initialData = {
   ],
   clientes: [
     { id: 1, nome: 'Ana Souza', telefone: '(65) 99911-1111', email: 'ana@email.com', observacoes: 'Prefere atendimento pela manhã.', totalGasto: 1058.8 },
-    { id: 2, nome: 'Nori Garden', telefone: '(65) 99922-2222', email: 'nori@email.com', observacoes: 'Cliente recorrente. Sempre pede confirmação por WhatsApp.', totalGasto: 469.6 },
+    { id: 2, nome: 'Nori Garden', telefone: '(65) 99922-2222', email: 'nori@email.com', observacoes: 'Cliente recorrente. Sempre pede confirmação.', totalGasto: 469.6 },
     { id: 3, nome: 'Kaito Bistrô', telefone: '(65) 99933-3333', email: 'kaito@email.com', observacoes: 'Tem interesse em pacote mensal.', totalGasto: 299.8 },
     { id: 4, nome: 'Casa Midori', telefone: '(65) 99944-4444', email: 'midori@email.com', observacoes: 'Precisa de nota fiscal em todos os atendimentos.', totalGasto: 234.7 },
     { id: 5, nome: 'Lead sem pagamento', telefone: '(65) 99955-5555', email: 'lead@email.com', observacoes: 'Ainda não realizou pagamento.', totalGasto: 0 },
@@ -66,7 +66,7 @@ export const initialData = {
   entregas: [
     { id: 1, protocolo: 'BAK5103246', clienteId: 2, clienteNome: 'Nori Garden', responsavel: 'Caio Mendes', endereco: 'Rua das Flores, 100', status: 'NOVO', observacoes: 'Kit pós-atendimento', dataPrevisao: '2026-06-17', horaInicio: '18:00', horaFim: '19:00', total: 524.3 },
     { id: 2, protocolo: 'BAK3744856', clienteId: 2, clienteNome: 'Nori Garden', responsavel: 'Caio Mendes', endereco: 'Av. Japão, 47', status: 'ENTREGUE', observacoes: 'Entrega concluída.', dataPrevisao: '2026-06-16', horaInicio: '18:00', horaFim: '19:00', total: 469.6 },
-    { id: 3, protocolo: 'BAK260615A', clienteId: 3, clienteNome: 'Kaito Bistrô', responsavel: 'Marina Alves', endereco: 'Rua Central, 22', status: 'ENTREGUE', observacoes: 'Confirmação por WhatsApp.', dataPrevisao: '2026-06-16', horaInicio: '18:00', horaFim: '19:00', total: 299.8 },
+    { id: 3, protocolo: 'BAK260615A', clienteId: 3, clienteNome: 'Kaito Bistrô', responsavel: 'Marina Alves', endereco: 'Rua Central, 22', status: 'ENTREGUE', observacoes: 'Confirmação por e-mail.', dataPrevisao: '2026-06-16', horaInicio: '18:00', horaFim: '19:00', total: 299.8 },
   ],
   produtos: [
     { id: 1, nome: 'Notebook Dell Latitude', categoria: 'Notebook', sku: 'ELE-NB-001', estoque: 8, valor: 4290, status: 'ATIVO' },

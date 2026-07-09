@@ -18,7 +18,7 @@ import logoWhite from '../assets/logos/gendaz-logo-navbar.png'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 
-const WHATSAPP_LINK = 'https://wa.me/5565993360300'
+// ⚠️ DESATIVADO — const WHATSAPP_LINK = 'https://wa.me/5565993360300'
 
 const features = [
   ['01', MessageCircle, 'Assistente de IA no painel', 'Organize agenda, clientes e tarefas do dia com apoio inteligente para reduzir retrabalho e manter tudo em um só lugar.'],
@@ -30,11 +30,13 @@ const features = [
 const plans = [
   {
     nome: 'Plano Básico',
-    subtitulo: 'WhatsApp e agenda simples',
+    // ⚠️ DESATIVADO — subtitulo: 'WhatsApp e agenda simples',
+    subtitulo: 'Agenda simples',
     preco: 'R$ 39,00/mês',
     extra: '7 dias grátis',
     descricao: 'Para organizar conversas, agenda, clientes e serviços no mesmo painel.',
-    beneficios: ['WhatsApp interno', 'Agenda organizada', 'Cadastro de clientes', 'Cadastro de serviços', 'Confirmação de consulta', 'Cancelamento e remarcação'],
+    // ⚠️ DESATIVADO — beneficios: ['WhatsApp interno', 'Agenda organizada', 'Cadastro de clientes', 'Cadastro de serviços', 'Confirmação de consulta', 'Cancelamento e remarcação'],
+    beneficios: ['Agenda organizada', 'Cadastro de clientes', 'Cadastro de serviços', 'Confirmação de consulta', 'Cancelamento e remarcação'],
     indicadoPara: ['Clínicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
     naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios'],
     cta: 'Começar no Básico',
@@ -98,7 +100,7 @@ export default function Home() {
           >
             <span className="hero-new-badge">
               <Sparkles size={14} />
-              WhatsApp + agenda + gestão
+              {/* ⚠️ DESATIVADO — WhatsApp + */} agenda + gestão
             </span>
           </motion.div>
 
@@ -171,7 +173,8 @@ export default function Home() {
           <p>O gendaz não é uma tela para o cliente final. Ele é o painel interno da sua empresa para controlar agenda, clientes, serviços, pagamentos e atendimentos com mais clareza.
 
 Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organizar informações e deixar sua operação mais simples no dia a dia.</p>
-          <p>O foco é reduzir retrabalho no WhatsApp, dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p>
+          {/* ⚠️ DESATIVADO — <p>O foco é reduzir retrabalho no WhatsApp, dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p> */}
+          <p>O foco é dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p>
         </div>
       </ScrollReveal>
 
@@ -281,11 +284,13 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <ScrollReveal className="panel support-card premium-border" delay={0}>
             <LifeBuoy size={26} />
             <h2>Base de ajuda</h2>
-            <p>Orientações rápidas para WhatsApp, agenda, clientes, pagamentos e configurações.</p>
+            {/* ⚠️ DESATIVADO — <p>Orientações rápidas para WhatsApp, agenda, clientes, pagamentos e configurações.</p> */}
+            <p>Orientações rápidas para agenda, clientes, pagamentos e configurações.</p>
           </ScrollReveal>
           <ScrollReveal className="panel support-card premium-border" delay={80}>
             <MessageCircle size={26} />
-            <h2>Atendimento no WhatsApp</h2>
+            {/* ⚠️ DESATIVADO — <h2>Atendimento no WhatsApp</h2> */}
+            <h2>Atendimento por e-mail</h2>
             <p>Converse com a equipe para entender o produto, preços e ativação da conta.</p>
           </ScrollReveal>
           <ScrollReveal className="panel support-card premium-border" delay={160}>
@@ -302,7 +307,8 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <span className="section-kicker">Contato</span>
           <h2>Fale com a equipe e veja como o gendaz funciona na prática.</h2>
         </div>
-        <a href={WHATSAPP_LINK} className="primary-link" target="_blank" rel="noreferrer">Entrar em contato</a>
+        {/* ⚠️ DESATIVADO — <a href={WHATSAPP_LINK} className="primary-link" target="_blank" rel="noreferrer">Entrar em contato</a> */}
+        <Link to="/criar-conta" className="primary-link">Criar conta grátis</Link>
       </ScrollReveal>
 
       {/* ── Footer ─────────────────────────────────────── */}

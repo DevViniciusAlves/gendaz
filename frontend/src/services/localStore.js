@@ -7,11 +7,11 @@ const DATA_VERSION = 4
 export const PLANOS = {
   BASICO: {
     nome: 'Plano Basico',
-    rotas: ['dashboard', 'whatsapp', 'agenda', 'clientes', 'servicos', 'configuracoes'],
+    rotas: ['dashboard', /* ⚠️ DESATIVADO — 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'configuracoes'],
   },
   PRO: {
     nome: 'Plano Pro',
-    rotas: ['dashboard', 'whatsapp', 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
+    rotas: ['dashboard', /* ⚠️ DESATIVADO — 'whatsapp', */ 'agenda', 'clientes', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
   },
 }
 
@@ -24,7 +24,7 @@ export function emptyData(usuario = null) {
       documento: '',
       telefone: '',
       email: usuario?.email || '',
-      whatsappStatus: 'Pendente',
+      // ⚠️ DESATIVADO — whatsappStatus: 'Pendente',
     },
     usuarios: [],
     equipe: [],

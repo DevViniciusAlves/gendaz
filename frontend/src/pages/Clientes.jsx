@@ -12,7 +12,7 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
-import whatsappLogo from '../assets/whatsapp.png'
+// ⚠️ DESATIVADO — import whatsappLogo from '../assets/whatsapp.png'
 import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
@@ -287,7 +287,7 @@ export default function Clientes() {
           }},
           { key: 'telefone', label: 'TELEFONE', render: (row) => (
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} />
+                {/* ⚠️ DESATIVADO — <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} /> */}
                 <span>{exibirTelefone(row.telefone)}</span>
              </div>
           )},

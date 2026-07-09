@@ -12,10 +12,11 @@ public class EmpresaMapper {
                 empresa.getTelefone(),
                 empresa.getEmail(),
                 empresa.getStatus(),
-                empresa.getWhatsappConnected(),
-                empresa.getWhatsappPhone(),
-                empresa.getWhatsappNotificationsEnabled(),
-                empresa.getWhatsappSecretariaIaEnabled(),
+                // ⚠️ DESATIVADO - WhatsApp
+                // empresa.getWhatsappConnected(),
+                // empresa.getWhatsappPhone(),
+                // empresa.getWhatsappNotificationsEnabled(),
+                // empresa.getWhatsappSecretariaIaEnabled(),
                 empresa.getTimezone(),
                 empresa.getDataCriacao(),
                 empresa.getDataAtualizacao()

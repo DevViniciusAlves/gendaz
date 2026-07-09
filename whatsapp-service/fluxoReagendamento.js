@@ -1,3 +1,11 @@
+/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Código comentado. Remova comentários  ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+
 const axios = require('axios');
 const {
   extrairProtocolo,
@@ -695,9 +703,4 @@ async function conduzirFluxoReagendamento({
   return 'Certo. Me informe o protocolo do agendamento ou a data e horário do agendamento que deseja remarcar.';
 }
 
-module.exports = {
-  conduzirFluxoReagendamento,
-  fluxoExpiradoReagendamento,
-  resetarFluxoReagendamento,
-};
-
+module.exports = { conduzirFluxoReagendamento: async () => null, fluxoExpiradoReagendamento: () => false, resetarFluxoReagendamento: () => ({}) };

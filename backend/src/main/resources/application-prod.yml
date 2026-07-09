@@ -36,8 +36,8 @@ app:
   jwt-secret: ${JWT_SECRET}
   timezone: ${APP_TIMEZONE:America/Cuiaba}
 
-whatsapp-service:
-  url: ${WHATSAPP_SERVICE_URL:}
+# ⚠️ DESATIVADO - whatsapp-service:
+# ⚠️ DESATIVADO -   url: ${WHATSAPP_SERVICE_URL:}
 
-whatsapp:
-  internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
+# ⚠️ DESATIVADO - whatsapp:
+# ⚠️ DESATIVADO -   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}

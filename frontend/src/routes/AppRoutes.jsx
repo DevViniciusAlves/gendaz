@@ -17,7 +17,8 @@ import ContaInativa from '../pages/ContaInativa.jsx'
 import TermosDeUso from '../pages/TermosDeUso.jsx'
 import PoliticaPrivacidade from '../pages/PoliticaPrivacidade.jsx'
 import Dashboard from '../pages/Dashboard.jsx'
-import Whatsapp from '../pages/Whatsapp.jsx'
+// ⚠️ DESATIVADO - WhatsApp
+// import Whatsapp from '../pages/Whatsapp.jsx'
 import Agenda from '../pages/Agenda.jsx'
 import Clientes from '../pages/Clientes.jsx'
 import Servicos from '../pages/Servicos.jsx'
@@ -107,7 +108,8 @@ export default function AppRoutes() {
       <Route path="/sistema" element={<ClientRoute><AppLayout /></ClientRoute>}>
         <Route index element={<Navigate to="/sistema/dashboard" replace />} />
         <Route path="dashboard" element={<PlanRoute routeKey="dashboard"><Dashboard /></PlanRoute>} />
-        <Route path="whatsapp" element={<PlanRoute routeKey="whatsapp"><Whatsapp /></PlanRoute>} />
+        {/* ⚠️ DESATIVADO - WhatsApp */}
+        {/* <Route path="whatsapp" element={<PlanRoute routeKey="whatsapp"><Whatsapp /></PlanRoute>} /> */}
         <Route path="agenda" element={<PlanRoute routeKey="agenda"><Agenda /></PlanRoute>} />
         <Route path="clientes" element={<PlanRoute routeKey="clientes"><Clientes /></PlanRoute>} />
         <Route path="servicos" element={<PlanRoute routeKey="servicos"><Servicos /></PlanRoute>} />

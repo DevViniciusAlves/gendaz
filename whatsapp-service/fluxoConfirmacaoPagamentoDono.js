@@ -1,3 +1,11 @@
+/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Código comentado. Remova comentários  ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+
 const axios = require('axios');
 
 function normalizarBusca(valor) {
@@ -112,7 +120,4 @@ async function conduzirFluxoConfirmacaoPagamentoDono({ entrada, estado, empresaI
   return 'Status atualizado no SaaS.';
 }
 
-module.exports = {
-  identificarStatusPagamentoDono,
-  conduzirFluxoConfirmacaoPagamentoDono,
-};
+module.exports = { conduzirFluxoConfirmacaoPagamentoDono: async () => null };

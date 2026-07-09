@@ -25,7 +25,7 @@ import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
-import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
+// ⚠️ DESATIVADO - import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -48,7 +48,7 @@ class AgendamentoServiceHorariosTest {
     @Mock PagamentoRepository pagamentoRepository;
     @Mock SanitizacaoService sanitizacaoService;
     @Mock ResendEmailService resendEmailService;
-    @Mock WhatsappLembretePagamentoRepository lembretePagamentoRepository;
+    // ⚠️ DESATIVADO - @Mock WhatsappLembretePagamentoRepository lembretePagamentoRepository;
     @InjectMocks AgendamentoService agendamentoService;
 
     private EmpresaEntity criarEmpresa(Long id) {

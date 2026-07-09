@@ -7,7 +7,8 @@ import logoSidebar from '../assets/logos/gendaz-logo-green.png'
 
 const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },
-  { key: 'whatsapp',      to: '/sistema/whatsapp',      label: 'WhatsApp',       icon: MessageCircle },
+  // ⚠️ DESATIVADO - WhatsApp
+  // { key: 'whatsapp',      to: '/sistema/whatsapp',      label: 'WhatsApp',       icon: MessageCircle },
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
   { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },

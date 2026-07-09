@@ -19,6 +19,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         StatusAgendamento getStatus();
     }
 
+    // ⚠️ DESATIVADO - WhatsApp projection disabled
+    /*
     interface AgendamentoLembreteProjection {
         Long getId();
         Long getEmpresaId();
@@ -39,6 +41,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         Boolean getConfirmacaoPagamentoDonoRespondida();
         java.time.LocalDateTime getConfirmacaoPagamentoDonoRespondidaEm();
     }
+    */
 
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaId(Long empresaId);
@@ -79,6 +82,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             LocalDate data
     );
 
+    // ⚠️ DESATIVADO - WhatsApp query disabled
+    /*
     @Query("""
             select a.id as id,
                    a.empresa.id as empresaId,
@@ -112,7 +117,13 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("horaInicio") LocalTime horaInicio,
             @Param("horaFim") LocalTime horaFim
     );
+    */
+    default List<Object> findLembretesClienteProjection(Long empresaId, List<StatusAgendamento> status, LocalDate data, LocalTime horaInicio, LocalTime horaFim) {
+        return java.util.Collections.emptyList();
+    }
 
+    // ⚠️ DESATIVADO - WhatsApp query disabled
+    /*
     @Query("""
             select a.id as id,
                    a.empresa.id as empresaId,
@@ -143,6 +154,10 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("status") List<StatusAgendamento> status,
             @Param("data") LocalDate data
     );
+    */
+    default List<Object> findConfirmacoesPagamentoDonoProjection(Long empresaId, List<StatusAgendamento> status, LocalDate data) {
+        return java.util.Collections.emptyList();
+    }
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     @Query("""
             select a from AgendamentoEntity a
@@ -159,6 +174,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("horaFim") LocalTime horaFim
     );
 
+    // ⚠️ DESATIVADO - WhatsApp query disabled
+    /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByLembreteWppEnviadoFalseAndStatusInAndDataAndHoraInicioBetween(
             List<StatusAgendamento> status,
@@ -166,7 +183,10 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             LocalTime horaInicio,
             LocalTime horaFim
     );
+    */
 
+    // ⚠️ DESATIVADO - WhatsApp query disabled
+    /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     @Query("""
             select a from AgendamentoEntity a
@@ -181,7 +201,10 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("horaInicio") LocalTime horaInicio,
             @Param("horaFim") LocalTime horaFim
     );
+    */
 
+    // ⚠️ DESATIVADO - WhatsApp query disabled
+    /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     @Query("""
             select a from AgendamentoEntity a
@@ -196,6 +219,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("horaInicio") LocalTime horaInicio,
             @Param("horaFim") LocalTime horaFim
     );
+    */
 
     @Query("""
             select new com.minhaempresa.agendapro.agendamento.dto.AgendamentoSimplesProjection(

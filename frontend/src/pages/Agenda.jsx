@@ -598,9 +598,24 @@ export default function Agenda() {
           <AgendaCard
             key={agendamento.id}
             agendamento={agendamento}
-            onIniciar={() => iniciarAtendimento(agendamento)}
-            onPausar={() => pausarAtendimento(agendamento)}
-            onFinalizar={() => finalizarAtendimentoDireto(agendamento)}
+            onIniciar={(ag) => setConfirmacao({
+              titulo: 'Iniciar atendimento',
+              descricao: 'Tem certeza que deseja iniciar este atendimento?',
+              acao: () => iniciarAtendimento(ag),
+              acaoLabel: 'Iniciar',
+            })}
+            onPausar={(ag) => setConfirmacao({
+              titulo: 'Pausar atendimento',
+              descricao: 'Tem certeza que deseja pausar este atendimento?',
+              acao: () => pausarAtendimento(ag),
+              acaoLabel: 'Pausar',
+            })}
+            onFinalizar={(ag) => setConfirmacao({
+              titulo: 'Finalizar atendimento',
+              descricao: 'Tem certeza que deseja finalizar este atendimento?',
+              acao: () => finalizarAtendimentoDireto(ag),
+              acaoLabel: 'Finalizar',
+            })}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',

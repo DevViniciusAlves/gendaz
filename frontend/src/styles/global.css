@@ -1,3 +1,17 @@
+﻿/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Estilos comentados. Remova comentários ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+/*
+╔════════════════════════════════════════╗
+║  Estilos comentados. Remova comentários ║,
+║  para reativar.                        ║,
+╚════════════════════════════════════════╝,
+*/,
+:root,
 :root {
   color-scheme: light;
   /* =============================================
@@ -1020,11 +1034,14 @@ tbody tr:hover { background: #fffaf5; }
   color: #ffffff;
 }
 
+/*
 .whatsapp-official-page {
   min-height: calc(100vh - 150px);
   display: grid;
   place-items: center;
 }
+*/
+/*
 .whatsapp-official-card {
   width: min(760px, 100%);
   display: grid;
@@ -1039,6 +1056,9 @@ tbody tr:hover { background: #fffaf5; }
     0 18px 42px rgba(0, 0, 0, 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
+*/
+/*
+/*
 .whatsapp-official-head,
 .whatsapp-official-actions,
 .whatsapp-connected-actions {
@@ -1047,6 +1067,9 @@ tbody tr:hover { background: #fffaf5; }
   gap: 12px;
   flex-wrap: wrap;
 }
+*/
+*/
+/*
 .whatsapp-connected-badge {
   display: inline-flex;
   align-items: center;
@@ -1061,6 +1084,8 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 13px;
   font-weight: 850;
 }
+*/
+/*
 .whatsapp-status-icon {
   display: inline-grid;
   place-items: center;
@@ -1070,6 +1095,8 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: 16px;
   background: var(--primary-soft);
 }
+*/
+/*
 .whatsapp-status-pill {
   display: inline-flex;
   align-items: center;
@@ -1082,6 +1109,8 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 13px;
   font-weight: 850;
 }
+*/
+/*
 .whatsapp-official-card h1 {
   max-width: 620px;
   margin: 0;
@@ -1089,6 +1118,8 @@ tbody tr:hover { background: #fffaf5; }
   letter-spacing: -0.04em;
   color: var(--text);
 }
+*/
+/*
 .whatsapp-official-card > p {
   max-width: 640px;
   margin: 0;
@@ -1096,6 +1127,9 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 17px;
   line-height: 1.7;
 }
+*/
+/*
+/*
 .whatsapp-official-alert,
 .whatsapp-ai-note {
   display: flex;
@@ -1106,17 +1140,26 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: var(--radius-sm);
   background: #fffaf5;
 }
+*/
+*/
+/*
 .whatsapp-ai-note {
   border-color: var(--line);
   background: var(--surface-soft);
 }
+*/
+/*
 .whatsapp-ai-note p {
   margin: 4px 0 0;
   color: var(--muted);
 }
+*/
+/*
 .whatsapp-connect-phone {
   max-width: 360px;
 }
+*/
+/*
 .whatsapp-pairing-code {
   display: flex;
   align-items: center;
@@ -1127,11 +1170,15 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
 }
+*/
+/*
 .whatsapp-pairing-code span {
   color: rgba(226, 233, 247, 0.68);
   font-size: 13px;
   font-weight: 800;
 }
+*/
+/*
 .whatsapp-pairing-code strong {
   display: block;
   width: 100%;
@@ -1144,6 +1191,8 @@ tbody tr:hover { background: #fffaf5; }
   white-space: nowrap;
   overflow: visible;
 }
+*/
+/*
 .whatsapp-pairing-code-value {
   display: block;
   width: 100%;
@@ -1151,17 +1200,23 @@ tbody tr:hover { background: #fffaf5; }
   text-align: right;
   word-break: normal;
 }
+*/
+/*
 .whatsapp-pairing-code strong.whatsapp-code-placeholder {
   color: rgba(226, 233, 247, 0.45);
   letter-spacing: 0.02em;
   font-size: 20px;
 }
+*/
+/*
 .whatsapp-status-note {
   margin: 0;
   color: var(--color-primary);
   font-size: 13px;
   font-weight: 800;
 }
+*/
+/*
 .whatsapp-pairing-status {
   display: flex;
   align-items: center;
@@ -1169,6 +1224,8 @@ tbody tr:hover { background: #fffaf5; }
   gap: 12px;
   flex-wrap: wrap;
 }
+*/
+/*
 .whatsapp-tutorial {
   display: grid;
   gap: 10px;
@@ -1177,12 +1234,16 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
 }
+*/
+/*
 .whatsapp-tutorial strong {
   color: rgba(226, 233, 247, 0.68);
   font-size: 12px;
   text-transform: uppercase;
   letter-spacing: .04em;
 }
+*/
+/*
 .whatsapp-requirements {
   display: grid;
   gap: 10px;
@@ -1194,9 +1255,13 @@ tbody tr:hover { background: #fffaf5; }
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
 }
+*/
+/*
 .whatsapp-requirements li {
   color: var(--text);
 }
+*/
+/*
 .whatsapp-requirements ul {
   display: grid;
   gap: 8px;
@@ -1204,6 +1269,8 @@ tbody tr:hover { background: #fffaf5; }
   padding-left: 18px;
   color: var(--muted);
 }
+*/
+/*
 .whatsapp-connected-panel {
   display: flex;
   justify-content: space-between;
@@ -1215,31 +1282,45 @@ tbody tr:hover { background: #fffaf5; }
     0 18px 42px rgba(0, 0, 0, 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
 }
+*/
+/*
 .whatsapp-connected-panel h2 {
   margin: 6px 0 8px;
 }
+*/
+/*
 .whatsapp-connected-panel p {
   margin: 3px 0;
   color: var(--muted);
 }
+*/
+/*
 .whatsapp-speeches-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 14px;
 }
+*/
+/*
 .whatsapp-speeches-grid .field {
   margin: 0;
 }
+*/
+/*
 .whatsapp-speeches-grid textarea {
   min-height: 112px;
   resize: vertical;
 }
+*/
+/*
 .whatsapp-speeches-actions {
   grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
 }
+*/
 
+/*
 @media (max-width: 900px) {
   .whatsapp-speeches-grid {
     grid-template-columns: 1fr;
@@ -1249,6 +1330,7 @@ tbody tr:hover { background: #fffaf5; }
     grid-column: auto;
   }
 }
+*/
 
 .spin {
   color: var(--primary);
@@ -10115,7 +10197,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .booking-link-panel,
 .app-shell .booking-qr-card,
 .app-shell .first-steps-card,
-.app-shell .whatsapp-official-card,
 .app-shell .payment-pro-card,
 .app-shell .payment-checkout-card,
 .admin-shell .page-title-admin,
@@ -10137,7 +10218,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .client-panel h2,
 .app-shell .plan-card h2,
 .app-shell .settings-card h2,
-.app-shell .whatsapp-official-card h1,
 .app-shell .payment-pro-card h1,
 .app-shell .payment-checkout-card h2,
 .admin-shell .page-title h1,
@@ -10158,9 +10238,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .settings-card-muted,
 .app-shell .settings-meta-list span,
 .app-shell .first-step small,
-.app-shell .whatsapp-official-card > p,
-.app-shell .whatsapp-ai-note p,
-.app-shell .whatsapp-requirements ul,
 .app-shell .payment-pro-copy,
 .app-shell .payment-checkout-card p,
 .app-shell .payment-checkout-card span,
@@ -10186,7 +10263,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .booking-link-panel,
 .app-shell .booking-qr-card,
 .app-shell .first-steps-card,
-.app-shell .whatsapp-official-card,
 .app-shell .payment-pro-card,
 .app-shell .payment-checkout-card,
 .admin-shell .admin-metrics article,
@@ -10356,8 +10432,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .app-shell .status,
-.admin-shell .status,
-.app-shell .whatsapp-status-pill {
+.admin-shell .status {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
@@ -10502,9 +10577,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .support-ticket-item,
 .app-shell .support-form-grid,
 .app-shell .booking-qr-card,
-.app-shell .whatsapp-official-alert,
-.app-shell .whatsapp-ai-note,
-.app-shell .whatsapp-requirements,
 .admin-shell .admin-bar,
 .admin-shell .admin-detail-list,
 .admin-shell .admin-form-grid {
@@ -10831,7 +10903,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .booking-link-panel,
 .app-shell .content .booking-qr-card,
 .app-shell .content .first-steps-card,
-.app-shell .content .whatsapp-official-card,
 .app-shell .content .payment-pro-card,
 .app-shell .content .payment-checkout-card,
 .admin-shell .admin-metrics article,
@@ -10850,6 +10921,7 @@ tbody tr:hover { background: #fffaf5; }
     0 0 28px rgba(var(--primary-rgb), 0.08) !important;
 }
 
+/*
 .app-shell .content .whatsapp-official-card {
   background: linear-gradient(180deg, rgba(17, 18, 22, 0.98), rgba(11, 12, 16, 0.98)) !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
@@ -10857,6 +10929,7 @@ tbody tr:hover { background: #fffaf5; }
     0 18px 52px rgba(0, 0, 0, 0.38),
     0 0 0 1px rgba(255, 255, 255, 0.02) inset !important;
 }
+*/
 
 .app-shell .content .dashboard-hero h1,
 .app-shell .content .panel h2,
@@ -10866,7 +10939,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .client-panel h3,
 .app-shell .content .plan-card h2,
 .app-shell .content .settings-card h2,
-.app-shell .content .whatsapp-official-card h1,
 .app-shell .content .payment-pro-card h1,
 .app-shell .content .payment-checkout-card h2,
 .admin-shell .page-title h1,
@@ -10886,9 +10958,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .settings-card-muted,
 .app-shell .content .settings-meta-list span,
 .app-shell .content .first-step small,
-.app-shell .content .whatsapp-official-card > p,
-.app-shell .content .whatsapp-ai-note p,
-.app-shell .content .whatsapp-requirements ul,
 .app-shell .content .payment-pro-copy,
 .app-shell .content .payment-checkout-card p,
 .app-shell .content .payment-checkout-card span,
@@ -11109,7 +11178,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .booking-link-panel,
 .app-shell .content .booking-qr-card,
 .app-shell .content .first-steps-card,
-.app-shell .content .whatsapp-official-card,
 .app-shell .content .payment-pro-card,
 .app-shell .content .payment-checkout-card,
 .app-shell .content .plan-payment-panel,
@@ -11141,7 +11209,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .client-panel h3,
 .app-shell .content .plan-card h2,
 .app-shell .content .settings-card h2,
-.app-shell .content .whatsapp-official-card h1,
 .app-shell .content .payment-pro-card h1,
 .app-shell .content .payment-checkout-card h2,
 .admin-shell .page-title h1,
@@ -11161,9 +11228,6 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .settings-card-muted,
 .app-shell .content .settings-meta-list span,
 .app-shell .content .first-step small,
-.app-shell .content .whatsapp-official-card > p,
-.app-shell .content .whatsapp-ai-note p,
-.app-shell .content .whatsapp-requirements ul,
 .app-shell .content .payment-pro-copy,
 .app-shell .content .payment-checkout-card p,
 .app-shell .content .payment-checkout-card span,
@@ -12677,8 +12741,6 @@ tbody tr:hover { background: #fffaf5; }
     grid-template-columns: 1fr !important;
   }
 }
-
-
 
 
 

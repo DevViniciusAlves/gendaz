@@ -1,3 +1,10 @@
+/*
+  ╔══════════════════════════════════════════════╗
+  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║  Todo código comentado. Remova comentários   ║
+  ║  para reativar.                              ║
+  ╚══════════════════════════════════════════════╝
+*/
 package com.minhaempresa.agendapro.whatsapp.service;
 
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
@@ -117,22 +124,32 @@ public class WhatsappIntegrationService {
     private String appTimezone;
 
     public WhatsappStatusResponse status(Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         return statusDaEmpresa(usuario.getEmpresa().getId());
+        */
+        return null;
     }
 
     @Cacheable(value = "contextoEmpresa", key = "#empresaId", unless = "#result == null")
     public WhatsappConfigResponse contextoDaEmpresa(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaRepository.WhatsappConfigView empresa = buscarEmpresaConfig(empresaId);
         return montarConfiguracaoWhatsapp(
                 empresa,
                 Boolean.TRUE.equals(empresa.getWhatsappConnected()),
                 empresa.getWhatsappPhone()
         );
+        */
+        return null;
     }
 
     @Transactional(readOnly = true)
     public List<WhatsappServicoResposta> listarServicosWhatsApp(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         return servicoRepository.findByEmpresaId(empresa.getId()).stream()
                 .filter(servico -> servico.getStatus() == StatusCadastro.ATIVO)
@@ -143,10 +160,14 @@ public class WhatsappIntegrationService {
                         servico.getDuracaoMinutos()
                 ))
                 .toList();
+        */
+        return List.of();
     }
 
     @Transactional(readOnly = true)
     public WhatsappDisponibilidadeResponse consultarDisponibilidadeWhatsApp(Long empresaId, Long servicoId, Long profissionalId, LocalDate data) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         ZoneId zoneId = ZoneId.of(appTimezone == null || appTimezone.isBlank() ? "America/Cuiaba" : appTimezone);
         LocalDate hoje = LocalDate.now(zoneId);
@@ -193,10 +214,14 @@ public class WhatsappIntegrationService {
                     .toList();
         }
         return new WhatsappDisponibilidadeResponse(data, !horarios.isEmpty(), horarios);
+        */
+        return new WhatsappDisponibilidadeResponse(data, false, List.of());
     }
 
     @Transactional
     public WhatsappAgendarResponse agendarWhatsApp(WhatsappAgendarRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         log.info(
                 "[agendamento-whatsapp] criando empresaId={} clienteNome='{}' servicoId={} data={} horario={} remoteJid='{}' origem='{}'",
                 request.empresaId(),
@@ -267,10 +292,14 @@ public class WhatsappIntegrationService {
         } catch (ConflictException ex) {
             throw new ConflictException("Esse horario acabou de ficar indisponivel.");
         }
+        */
+        return new WhatsappAgendarResponse(false, null, null, "WhatsApp desativado.", null);
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> buscarAgendamentoCancelamentoPorProtocolo(Long empresaId, String protocolo, String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         log.info("[whatsapp-cancelamento] buscar por protocolo empresaId={} protocolo={}", empresaId, protocolo);
         String protocoloNormalizado = textoOuNulo(protocolo);
         if (protocoloNormalizado == null || protocoloNormalizado.isBlank()) {
@@ -308,10 +337,18 @@ public class WhatsappIntegrationService {
         resultado.put("success", true);
         resultado.put("agendamento", dadosAgendamento);
         return resultado;
+        */
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("success", false);
+        erro.put("erro", "WHATSAPP_DESATIVADO");
+        erro.put("mensagem", "Funcionalidade WhatsApp desativada.");
+        return erro;
     }
 
     @Transactional(readOnly = true)
     public List<Map<String, Object>> listarAgendamentosCancelamentoPorData(Long empresaId, LocalDate data, String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String telefoneNormalizado = normalizarTelefone(telefone);
         return agendamentoRepository.findByEmpresaIdAndData(empresaId, data).stream()
                 .filter(agendamento -> agendamento.getStatus() != null && agendamento.getStatus() != com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento.CANCELADO)
@@ -327,10 +364,14 @@ public class WhatsappIntegrationService {
                         "status", agendamento.getStatus()
                 ))
                 .toList();
+        */
+        return List.of();
     }
 
     @Transactional
     public Map<String, Object> cancelarAgendamentoWhatsapp(Long empresaId, Long agendamentoId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         AgendamentoEntity agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
         if (!agendamento.getEmpresa().getId().equals(empresaId)) {
@@ -364,10 +405,18 @@ public class WhatsappIntegrationService {
                         "status", "CANCELADO"
                 )
         );
+        */
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("success", false);
+        erro.put("erro", "WHATSAPP_DESATIVADO");
+        erro.put("mensagem", "Funcionalidade WhatsApp desativada.");
+        return erro;
     }
 
     @Transactional
     public Map<String, Object> confirmarPagamentoDonoWhatsapp(Long empresaId, Long agendamentoId, String statusPagamentoTexto) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Map<String, Object> erro = new HashMap<>();
         if (empresaId == null || agendamentoId == null) {
             erro.put("success", false);
@@ -412,10 +461,18 @@ public class WhatsappIntegrationService {
         log.info("[confirmacao-pagamento-dono] pagamento atualizado empresaId={} agendamentoId={} status={}",
                 empresaId, agendamentoId, pagamento.getStatus().name());
         return resposta;
+        */
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("success", false);
+        erro.put("erro", "WHATSAPP_DESATIVADO");
+        erro.put("mensagem", "Funcionalidade WhatsApp desativada.");
+        return erro;
     }
 
     @Transactional
     public Map<String, Object> marcarLembreteEnviado(Long agendamentoId, String tipo) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Map<String, Object> resposta = new HashMap<>();
         if (agendamentoId == null || tipo == null || tipo.isBlank()) {
             resposta.put("success", false);
@@ -447,10 +504,18 @@ public class WhatsappIntegrationService {
         resposta.put("agendamentoId", agendamento.getId());
         resposta.put("tipo", tipoNormalizado);
         return resposta;
+        */
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("success", false);
+        erro.put("erro", "WHATSAPP_DESATIVADO");
+        erro.put("mensagem", "Funcionalidade WhatsApp desativada.");
+        return erro;
     }
 
     @Transactional
     public Map<String, Object> reagendarAgendamentoWhatsapp(Long empresaId, Long agendamentoId, LocalDate novaData, LocalTime novoHorario, Long profissionalId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         AgendamentoEntity agendamento = agendamentoRepository.findById(agendamentoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
         if (!agendamento.getEmpresa().getId().equals(empresaId)) {
@@ -509,24 +574,40 @@ public class WhatsappIntegrationService {
                         "status", salvo.getStatus()
                 )
         );
+        */
+        Map<String, Object> erro = new HashMap<>();
+        erro.put("success", false);
+        erro.put("erro", "WHATSAPP_DESATIVADO");
+        erro.put("mensagem", "Funcionalidade WhatsApp desativada.");
+        return erro;
     }
 
     @Transactional(readOnly = true)
     public List<WhatsappSessionSummaryResponse> listarSessoesPersistidas() {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return sessionRepository.findAllByOrderByUpdatedAtDesc().stream()
                 .map(this::toSessionSummaryResponse)
                 .toList();
+        */
+        return List.of();
     }
 
     @Transactional(readOnly = true)
     public WhatsappSessionResponse obterSessaoPersistida(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         WhatsappSessionEntity session = sessionRepository.findByEmpresa_Id(empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Sessao do WhatsApp nao encontrada."));
         return toSessionResponse(session);
+        */
+        return null;
     }
 
     @Transactional
     public WhatsappSessionResponse salvarSessaoPersistida(Long empresaId, WhatsappSessionSaveRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         WhatsappSessionEntity session = sessionRepository.findByEmpresa_Id(empresaId)
                 .orElseGet(() -> WhatsappSessionEntity.builder()
@@ -549,16 +630,24 @@ public class WhatsappIntegrationService {
                 textoOuPadrao(salva.getMeId(), ""),
                 textoOuPadrao(salva.getMeLid(), ""));
         return toSessionResponse(salva);
+        */
+        return null;
     }
 
     @Transactional
     public void removerSessaoPersistida(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         sessionRepository.findByEmpresa_Id(empresaId).ifPresent(sessionRepository::delete);
         log.info("[whatsapp-session] removida empresaId={}", empresaId);
+        */
+        return;
     }
 
     @Transactional(readOnly = true)
     public WhatsappFluxoConversaResponse obterFluxoConversa(Long empresaId, String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String telefoneNormalizado = normalizarTelefone(telefone);
         if (telefoneNormalizado.isBlank()) {
             return null;
@@ -575,10 +664,14 @@ public class WhatsappIntegrationService {
             return null;
         }
         return toFluxoResponse(fluxo);
+        */
+        return null;
     }
 
     @Transactional
     public WhatsappFluxoConversaResponse salvarFluxoConversa(WhatsappFluxoConversaRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(request.empresaId());
         String telefone = normalizarTelefone(request.telefoneCliente());
         WhatsappFluxoConversaEntity fluxo = fluxoConversaRepository
@@ -609,17 +702,25 @@ public class WhatsappIntegrationService {
                 textoOuPadrao(salvo.getModoSelecionado(), "")
         );
         return toFluxoResponse(salvo);
+        */
+        return null;
     }
 
     @Transactional
     public void resetarFluxoConversa(Long empresaId, String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String telefoneNormalizado = normalizarTelefone(telefone);
         fluxoConversaRepository.deleteAllByEmpresa_IdAndTelefoneCliente(empresaId, telefoneNormalizado);
         log.info("[whatsapp-fluxo] resetado empresaId={} telefone='{}'", empresaId, telefoneNormalizado);
+        */
+        return;
     }
 
     @Transactional(readOnly = true)
     public boolean conversaPausada(Long empresaId, String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String telefoneNormalizado = normalizarTelefone(telefone);
         if (telefoneNormalizado.isBlank()) {
             return false;
@@ -627,9 +728,13 @@ public class WhatsappIntegrationService {
         return conversationRepository.findByEmpresaIdAndContactPhone(empresaId, telefoneNormalizado)
                 .map(conversa -> Boolean.TRUE.equals(conversa.getBotPausado()))
                 .orElse(false);
+        */
+        return false;
     }
 
     public WhatsappConfigResponse configuracaoDaEmpresa(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaRepository.WhatsappConfigView empresa = buscarEmpresaConfig(empresaId);
         WhatsappConnectionEntity connection = connectionRepository.findByEmpresaId(empresaId).orElse(null);
         WhatsappStatusResponse status = null;
@@ -643,9 +748,13 @@ public class WhatsappIntegrationService {
                 ? status.whatsappPhone()
                 : empresa.getWhatsappPhone();
         return montarConfiguracaoWhatsapp(empresa, conectado, numeroConectado);
+        */
+        return null;
     }
 
     private WhatsappConfigResponse montarConfiguracaoWhatsapp(EmpresaRepository.WhatsappConfigView empresa, boolean conectado, String numeroConectado) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         List<com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.ServicoContextResponse> servicos = servicoRepository.findContextByEmpresaId(empresa.getId()).stream()
                 .filter(servico -> servico.getNome() != null && !servico.getNome().isBlank())
                 .map(servico -> new com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.ServicoContextResponse(
@@ -694,9 +803,13 @@ public class WhatsappIntegrationService {
                 profissionais,
                 List.of()
         );
+        */
+        return null;
     }
 
     public WhatsappConnectResponse conectar(Long usuarioId, WhatsappConnectRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         EmpresaEntity empresa = usuario.getEmpresa();
         if (!empresa.getId().equals(request.empresaId())) {
@@ -733,14 +846,22 @@ public class WhatsappIntegrationService {
         }
         persistirInicioPareamento(empresa.getId(), request.phoneNumber(), usuarioId);
         return response;
+        */
+        return null;
     }
 
     public WhatsappStatusResponse concluirConexao(Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         return statusDaEmpresa(usuario.getEmpresa().getId());
+        */
+        return null;
     }
 
     public WhatsappStatusResponse desconectar(Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         EmpresaEntity empresa = usuario.getEmpresa();
         try {
@@ -749,9 +870,13 @@ public class WhatsappIntegrationService {
             log.warn("Falha ao desconectar WhatsApp na integracao Node: empresa={}", empresa.getId());
         }
         return marcarEmpresaComoDesconectadaPorPainel(empresa.getId(), usuarioId);
+        */
+        return null;
     }
 
     public SendTestMessageResponse enviarMensagemTeste(Long usuarioId, SendTestMessageRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         EmpresaEntity empresa = usuario.getEmpresa();
         try {
@@ -762,10 +887,14 @@ public class WhatsappIntegrationService {
             registrarAuditoriaMensagemTeste(empresa.getId(), usuarioId, false, ex.getMessage());
             throw new BusinessException("Nao foi possivel enviar a mensagem teste.");
         }
+        */
+        return new SendTestMessageResponse("NOT_SENT", "WhatsApp desativado.", null);
     }
 
     @Transactional(readOnly = true)
     public WhatsappContextResponse obterContexto(Long empresaId, String clientePhone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         String telefone = normalizarTelefone(clientePhone);
         ClienteEntity cliente = telefone.isBlank()
@@ -797,10 +926,14 @@ public class WhatsappIntegrationService {
                 ),
                 clienteContexto
         );
+        */
+        return null;
     }
 
     @Transactional
     public void processarAgendamentoIa(WhatsappAgendamentoIaRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(request.empresaId());
         String telefone = normalizarTelefone(request.clientePhone());
         if (telefone.isBlank()) {
@@ -826,19 +959,31 @@ public class WhatsappIntegrationService {
 
         mensagemSalvar(empresa, conversaSalva, request.texto(), telefone);
         auditService.registrar("WHATSAPP_IA_CALLBACK", "INFO", null, null, empresa, "Callback da IA processado com sucesso", telefone, null, null);
+        */
+        return;
     }
 
     public WhatsappStatusResponse atualizarPreferencias(WhatsappPreferenciasRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         atualizarPreferenciasPersistidas(request);
         return statusDaEmpresa(request.empresaId());
+        */
+        return null;
     }
 
     public WhatsappStatusResponse atualizarStatusEmpresa(Long empresaId, String status, String phoneNumber, String pairingCode) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         atualizarStatusEmpresaPersistido(empresaId, status, phoneNumber, pairingCode);
         return statusDaEmpresa(empresaId);
+        */
+        return null;
     }
 
     public WhatsappStatusResponse statusDaEmpresa(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         WhatsappConnectionEntity connection = connectionRepository.findByEmpresaId(empresaId).orElse(null);
         try {
@@ -848,10 +993,14 @@ public class WhatsappIntegrationService {
             log.warn("Falha ao consultar status remoto do WhatsApp: empresa={}, detalhe={}", empresaId, ex.getMessage());
             return combinarStatus(empresa, connection, null);
         }
+        */
+        return null;
     }
 
     @Transactional
     protected void atualizarStatusEmpresaPersistido(Long empresaId, String status, String phoneNumber, String pairingCode) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         WhatsappConnectionEntity connection = connectionRepository.findByEmpresaId(empresaId)
                 .orElseGet(() -> criarConexao(empresa));
@@ -879,9 +1028,13 @@ public class WhatsappIntegrationService {
         connectionRepository.save(connection);
         empresaRepository.save(empresa);
         auditService.registrar("WHATSAPP_STATUS_UPDATE", "INFO", null, null, empresa, "Status do WhatsApp atualizado pelo servico Node: " + novoStatus.name(), null, null, null);
+        */
+        return;
     }
 
     private WhatsappStatusResponse combinarStatus(EmpresaEntity empresa, WhatsappConnectionEntity connection, WhatsappStatusResponse remoto) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         WhatsappConnectionStatus status = remoto != null && remoto.status() != null
                 ? remoto.status()
                 : connection != null && connection.getStatus() != null
@@ -909,10 +1062,10 @@ public class WhatsappIntegrationService {
         String message = remoto != null && remoto.message() != null && !remoto.message().isBlank()
                 ? remoto.message()
                 : switch (status) {
-                    case CONNECTED -> "ConexÃƒÆ’Ã‚Â£o oficial ativa pela integraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o Baileys.";
+                    case CONNECTED -> "ConexÃƒÆ'Ã‚Â£o oficial ativa pela integraÃƒÆ'Ã‚Â§ÃƒÆ'Ã‚Â£o Baileys.";
                     case CONNECTING -> "Aguardando o codigo de pareamento.";
-                    case CONFIG_PENDING -> "Configure a integraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do WhatsApp para continuar.";
-                    case ERROR -> "Revise a conexÃƒÆ’Ã‚Â£o do WhatsApp.";
+                    case CONFIG_PENDING -> "Configure a integraÃƒÆ'Ã‚Â§ÃƒÆ'Ã‚Â£o do WhatsApp para continuar.";
+                    case ERROR -> "Revise a conexÃƒÆ'Ã‚Â£o do WhatsApp.";
                     default -> "Nenhum WhatsApp conectado.";
                 };
 
@@ -935,9 +1088,13 @@ public class WhatsappIntegrationService {
                 Boolean.TRUE.equals(empresa.getWhatsappNotificationsEnabled()),
                 Boolean.TRUE.equals(empresa.getWhatsappSecretariaIaEnabled())
         );
+        */
+        return null;
     }
 
     private WhatsappConnectionStatus mapStatus(String status) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String valor = normalizarTexto(status).toLowerCase(Locale.ROOT);
         return switch (valor) {
             case "conectado", "connected", "connected_success" -> WhatsappConnectionStatus.CONNECTED;
@@ -948,17 +1105,25 @@ public class WhatsappIntegrationService {
             case "disconnected", "desconectado" -> WhatsappConnectionStatus.DISCONNECTED;
             default -> WhatsappConnectionStatus.DISCONNECTED;
         };
+        */
+        return WhatsappConnectionStatus.DISCONNECTED;
     }
 
     private List<AgendamentoEntity> agendamentosRecentes(Long clienteId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return agendamentoRepository.findByClienteId(clienteId).stream()
                 .sorted(Comparator.comparing(AgendamentoEntity::getData).reversed()
                         .thenComparing(AgendamentoEntity::getHoraInicio, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(5)
                 .toList();
+        */
+        return List.of();
     }
 
     private AgendamentoContextResponse toAgendamentoContextResponse(AgendamentoEntity agendamento) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return new AgendamentoContextResponse(
                 agendamento.getId(),
                 agendamento.getData(),
@@ -968,9 +1133,13 @@ public class WhatsappIntegrationService {
                 agendamento.getProfissional() == null ? null : agendamento.getProfissional().getNome(),
                 agendamento.getStatus() == null ? null : agendamento.getStatus().name()
         );
+        */
+        return null;
     }
 
     private void mensagemSalvar(EmpresaEntity empresa, WhatsappConversationEntity conversa, String texto, String phone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String conteudo = normalizarTexto(texto);
         if (conteudo.isBlank()) {
             return;
@@ -987,17 +1156,25 @@ public class WhatsappIntegrationService {
                 .build());
         conversa.setLastMessageAt(LocalDateTime.now());
         conversationRepository.save(conversa);
+        */
+        return;
     }
 
     private WhatsappConnectionEntity criarConexao(EmpresaEntity empresa) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return WhatsappConnectionEntity.builder()
                 .empresa(empresa)
                 .provider(WhatsappProvider.BAILEYS)
                 .status(WhatsappConnectionStatus.DISCONNECTED)
                 .build();
+        */
+        return null;
     }
 
     private WhatsappSessionSummaryResponse toSessionSummaryResponse(WhatsappSessionEntity session) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return new WhatsappSessionSummaryResponse(
                 session.getEmpresa() == null ? null : session.getEmpresa().getId(),
                 Boolean.TRUE.equals(session.getRegistered()),
@@ -1006,9 +1183,13 @@ public class WhatsappIntegrationService {
                 textoOuNulo(session.getMeLid()),
                 session.getUpdatedAt()
         );
+        */
+        return null;
     }
 
     private WhatsappSessionResponse toSessionResponse(WhatsappSessionEntity session) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return new WhatsappSessionResponse(
                 session.getEmpresa() == null ? null : session.getEmpresa().getId(),
                 textoOuPadrao(session.getCredsJson(), "{}"),
@@ -1021,9 +1202,13 @@ public class WhatsappIntegrationService {
                 textoOuNulo(session.getLastError()),
                 session.getUpdatedAt()
         );
+        */
+        return null;
     }
 
     private WhatsappFluxoConversaResponse toFluxoResponse(WhatsappFluxoConversaEntity fluxo) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         Map<String, Object> payload = desserializarPayload(fluxo.getPayloadJson());
         return new WhatsappFluxoConversaResponse(
                 fluxo.getId(),
@@ -1039,9 +1224,13 @@ public class WhatsappIntegrationService {
                 fluxo.getAtualizadoEm(),
                 fluxo.getExpiraEm()
         );
+        */
+        return null;
     }
 
     private WhatsappStatusResponse marcarEmpresaComoDesconectada(EmpresaEntity empresa, UsuarioEntity usuario, String motivo) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         WhatsappConnectionEntity connection = connectionRepository.findByEmpresaId(empresa.getId())
                 .orElseGet(() -> criarConexao(empresa));
         connection.setProvider(WhatsappProvider.BAILEYS);
@@ -1053,23 +1242,35 @@ public class WhatsappIntegrationService {
         removerSessaoPersistida(empresa.getId());
         auditService.registrar("WHATSAPP_DESCONECTADO", "INFO", null, usuario, empresa, motivo, null, null, null);
         return combinarStatus(empresa, connection, null);
+        */
+        return null;
     }
 
     private UsuarioEntity buscarUsuarioComEmpresa(Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         if (usuario.getEmpresa() == null) {
             throw new BusinessException("Usuario sem empresa nao pode gerenciar WhatsApp.");
         }
         return usuario;
+        */
+        return null;
     }
 
     private EmpresaEntity buscarEmpresa(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+        */
+        return null;
     }
 
     private String serializarPayload(Map<String, Object> payload) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             if (payload == null || payload.isEmpty()) {
                 return "{}";
@@ -1079,9 +1280,13 @@ public class WhatsappIntegrationService {
             log.warn("Falha ao serializar payload do fluxo WhatsApp: detalhe={}", ex.getMessage());
             return "{}";
         }
+        */
+        return "{}";
     }
 
     private Map<String, Object> desserializarPayload(String valorJson) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         try {
             if (valorJson == null || valorJson.isBlank()) {
                 return Map.of();
@@ -1091,9 +1296,13 @@ public class WhatsappIntegrationService {
             log.warn("Falha ao desserializar payload do fluxo WhatsApp: detalhe={}", ex.getMessage());
             return Map.of();
         }
+        */
+        return Map.of();
     }
 
     private String normalizarTelefone(String telefone) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (telefone == null) return "";
         String digitos = telefone.replaceAll("\\D", "");
         if (digitos.isEmpty()) return "";
@@ -1107,28 +1316,44 @@ public class WhatsappIntegrationService {
         int ddd = Integer.parseInt(digitos.substring(2, 4));
         if (ddd < 11 || ddd > 99) return "";
         return digitos;
+        */
+        return "";
     }
 
     private String textoOuPadrao(String valor, String padrao) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String texto = normalizarTexto(valor);
         return texto.isBlank() ? padrao : texto;
+        */
+        return padrao;
     }
 
     private String textoOuNulo(String valor) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String texto = normalizarTexto(valor);
         return texto.isBlank() ? null : texto;
+        */
+        return null;
     }
 
     private String construirLinkAgendamento(String slug) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String valorSlug = normalizarTexto(slug);
         if (valorSlug.isBlank()) {
             return null;
         }
         return baseFrontendUrl() + "/agendar/" + valorSlug;
+        */
+        return null;
     }
 
     @Transactional
     protected void persistirInicioPareamento(Long empresaId, String phoneNumber, Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         WhatsappConnectionEntity connection = connectionRepository.findByEmpresaId(empresa.getId())
@@ -1144,18 +1369,26 @@ public class WhatsappIntegrationService {
         empresa.setWhatsappPhone(normalizarTelefone(phoneNumber));
         empresaRepository.save(empresa);
         auditService.registrar("WHATSAPP_CONNECT_START", "INFO", null, usuario, empresa, "Pareamento do WhatsApp iniciado", null, null, null);
+        */
+        return;
     }
 
     @Transactional
     protected WhatsappStatusResponse marcarEmpresaComoDesconectadaPorPainel(Long empresaId, Long usuarioId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         removerSessaoPersistida(empresaId);
         return marcarEmpresaComoDesconectada(empresa, usuario, "WhatsApp desconectado pelo painel.");
+        */
+        return null;
     }
 
     @Transactional
     protected void registrarAuditoriaMensagemTeste(Long empresaId, Long usuarioId, boolean sucesso, String detalhe) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         UsuarioEntity usuario = buscarUsuarioComEmpresa(usuarioId);
         if (sucesso) {
@@ -1163,11 +1396,15 @@ public class WhatsappIntegrationService {
             return;
         }
         auditService.registrar("WHATSAPP_TESTE_FALHOU", "WARN", null, usuario, empresa, "Falha ao enviar mensagem teste do WhatsApp", detalhe, null, null);
+        */
+        return;
     }
 
     @Transactional
     @CacheEvict(value = "contextoEmpresa", key = "#request.empresaId()")
     protected void atualizarPreferenciasPersistidas(WhatsappPreferenciasRequest request) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         EmpresaEntity empresa = buscarEmpresa(request.empresaId());
         empresa.setWhatsappNotificationsEnabled(request.notificacoesAutomaticas());
         empresa.setWhatsappSecretariaIaEnabled(request.secretariaIaAtiva());
@@ -1178,23 +1415,35 @@ public class WhatsappIntegrationService {
         empresa.setWhatsappRespostaNaoEntende(textoOuNulo(request.respostaNaoEntende()));
         empresa.setWhatsappMensagemHumano(textoOuNulo(request.mensagemHumano()));
         empresaRepository.save(empresa);
+        */
+        return;
     }
 
     private EmpresaRepository.WhatsappConfigView buscarEmpresaConfig(Long empresaId) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return empresaRepository.findWhatsappConfigViewById(empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+        */
+        return null;
     }
 
     private String resolverSlugAgendamento(Long empresaId, String nomeFantasia, String slugAtual) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String slug = normalizarTexto(slugAtual);
         if (!slug.isBlank()) {
             return slug;
         }
         String base = normalizarSlugParaAgendamento(nomeFantasia);
         return base.isBlank() ? "empresa-" + empresaId : base;
+        */
+        return "";
     }
 
     private EmpresaEntity garantirSlugAgendamento(EmpresaEntity empresa) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (empresa == null) {
             return null;
         }
@@ -1218,9 +1467,13 @@ public class WhatsappIntegrationService {
         }
         empresa.setAgendamentoSlug(slug);
         return empresaRepository.save(empresa);
+        */
+        return null;
     }
 
     private String normalizarSlugParaAgendamento(String valor) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (valor == null) {
             return "";
         }
@@ -1228,9 +1481,13 @@ public class WhatsappIntegrationService {
                 .replaceAll("\\p{M}", "")
                 .replaceAll("[^a-z0-9]+", "-")
                 .replaceAll("(^-|-$)", "");
+        */
+        return "";
     }
 
     private String baseFrontendUrl() {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String base = normalizarTexto(System.getenv("PUBLIC_BASE_URL"));
         if (base.isBlank()) {
             base = normalizarTexto(frontendUrl);
@@ -1239,9 +1496,13 @@ public class WhatsappIntegrationService {
             base = "https://gendaz.site";
         }
         return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        */
+        return "https://gendaz.site";
     }
 
     private List<com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.HorarioDisponivelResponse> construirHorariosDisponiveis(Long empresaId, List<com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.ServicoContextResponse> servicos) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         if (servicos.isEmpty() || servicos.get(0).id() == null) {
             return List.of();
         }
@@ -1259,17 +1520,29 @@ public class WhatsappIntegrationService {
             }
         }
         return resposta;
+        */
+        return List.of();
     }
 
     private String formatarHora(java.time.LocalTime hora) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return hora == null ? "--:--" : hora.toString().substring(0, 5);
+        */
+        return "--:--";
     }
 
     private String normalizarTexto(String valor) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         return valor == null ? "" : valor.trim();
+        */
+        return "";
     }
 
     private StatusPagamento mapearStatusPagamentoDono(String statusPagamentoTexto) {
+        // DESATIVADO - Funcionalidade WhatsApp comentada
+        /*
         String valor = normalizarTexto(statusPagamentoTexto).toUpperCase(Locale.ROOT);
         return switch (valor) {
             case "PAGO", "SIM", "S", "1", "FOI PAGO", "PAGOU", "CONFIRMADO" -> StatusPagamento.PAGO;
@@ -1277,6 +1550,8 @@ public class WhatsappIntegrationService {
             case "CANCELADO", "CANCELAR", "CANCELOU", "FOI CANCELADO", "CLIENTE CANCELOU", "3", "CANCELADA", "CANCELAMENTO" -> StatusPagamento.CANCELADO;
             default -> null;
         };
+        */
+        return null;
     }
 
 }

@@ -1,5 +1,8 @@
 package com.minhaempresa.agendapro.manutencao.service;
 
+// ⚠️ DESATIVADO — Esta classe é exclusiva para manutenção de mensagens WhatsApp.
+// ⚠️ DESATIVADO — Todos os métodos estão desativados. Não utilizar em produção.
+
 import com.minhaempresa.agendapro.whatsapp.entity.WhatsappMessageEntity;
 import com.minhaempresa.agendapro.whatsapp.repository.WhatsappMessageRepository;
 import java.time.LocalDateTime;
@@ -21,41 +24,41 @@ public class WhatsappMessageMaintenanceService {
 
     @Scheduled(cron = "${whatsapp.messages-cleanup-cron:0 0 3 * * *}")
     public void limparMensagensAntigasAgendada() {
-        try {
-            long removidas = limparMensagensAntigas(30);
-            log.info("[whatsapp-maintenance] limpeza agendada concluida totalRemovido={}", removidas);
-        } catch (Exception ex) {
-            log.warn("[whatsapp-maintenance] limpeza agendada falhou: {}", ex.getMessage());
-        }
+        // ⚠️ DESATIVADO — try {
+        // ⚠️ DESATIVADO —     long removidas = limparMensagensAntigas(30);
+        // ⚠️ DESATIVADO —     log.info("[whatsapp-maintenance] limpeza agendada concluida totalRemovido={}", removidas);
+        // ⚠️ DESATIVADO — } catch (Exception ex) {
+        // ⚠️ DESATIVADO —     log.warn("[whatsapp-maintenance] limpeza agendada falhou: {}", ex.getMessage());
+        // ⚠️ DESATIVADO — }
     }
 
     public long limparMensagensAntigas(int dias) {
-        int diasValidos = Math.max(dias, 1);
-        LocalDateTime corte = LocalDateTime.now().minusDays(diasValidos);
-        long totalRemovido = 0L;
-
-        while (true) {
-            List<WhatsappMessageEntity> lote = messageRepository
-                    .findByCreatedAtBeforeOrderByCreatedAtAsc(corte, PageRequest.of(0, LOTE_MAXIMO, Sort.by(Sort.Direction.ASC, "createdAt")))
-                    .getContent();
-
-            if (lote.isEmpty()) {
-                break;
-            }
-
-            messageRepository.deleteAllInBatch(lote);
-            totalRemovido += lote.size();
-
-            log.info("[whatsapp-maintenance] lote removido totalParcial={} corte={} dias={} loteMaximo={}",
-                    totalRemovido, corte, diasValidos, LOTE_MAXIMO);
-
-            if (lote.size() < LOTE_MAXIMO) {
-                break;
-            }
-        }
-
-        log.info("[whatsapp-maintenance] limpeza concluida totalRemovido={} dias={} corte={}",
-                totalRemovido, diasValidos, corte);
-        return totalRemovido;
+        // ⚠️ DESATIVADO — int diasValidos = Math.max(dias, 1);
+        // ⚠️ DESATIVADO — LocalDateTime corte = LocalDateTime.now().minusDays(diasValidos);
+        // ⚠️ DESATIVADO — long totalRemovido = 0L;
+        //
+        // ⚠️ DESATIVADO — while (true) {
+        // ⚠️ DESATIVADO —     List<WhatsappMessageEntity> lote = messageRepository
+        // ⚠️ DESATIVADO —             .findByCreatedAtBeforeOrderByCreatedAtAsc(corte, PageRequest.of(0, LOTE_MAXIMO, Sort.by(Sort.Direction.ASC, "createdAt")))
+        // ⚠️ DESATIVADO —             .getContent();
+        //
+        // ⚠️ DESATIVADO —     if (lote.isEmpty()) {
+        // ⚠️ DESATIVADO —         break;
+        // ⚠️ DESATIVADO —     }
+        //
+        // ⚠️ DESATIVADO —     messageRepository.deleteAllInBatch(lote);
+        // ⚠️ DESATIVADO —     totalRemovido += lote.size();
+        //
+        // ⚠️ DESATIVADO —     log.info("[whatsapp-maintenance] lote removido totalParcial={} corte={} dias={} loteMaximo={}",
+        // ⚠️ DESATIVADO —             totalRemovido, corte, diasValidos, LOTE_MAXIMO);
+        //
+        // ⚠️ DESATIVADO —     if (lote.size() < LOTE_MAXIMO) {
+        // ⚠️ DESATIVADO —         break;
+        // ⚠️ DESATIVADO —     }
+        // ⚠️ DESATIVADO — }
+        //
+        // ⚠️ DESATIVADO — log.info("[whatsapp-maintenance] limpeza concluida totalRemovido={} dias={} corte={}",
+        // ⚠️ DESATIVADO —         totalRemovido, diasValidos, corte);
+        return 0L;
     }
 }

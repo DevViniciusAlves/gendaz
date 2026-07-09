@@ -1,3 +1,10 @@
+﻿/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Estilos comentados. Remova comentários ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
 /* =============================================
    PANEL THEME - Flat Dark Design
    Internal panel only (.app-shell scoped)
@@ -83,7 +90,6 @@
 .app-shell .first-steps-card,
 .app-shell .first-step,
 .app-shell .delivery-mini,
-.app-shell .whatsapp-official-card,
 .app-shell .account-card,
 .app-shell .payments-plan-panel,
 .app-shell .placeholder-panel,
@@ -399,7 +405,6 @@
 :root[data-theme='light'] .app-shell .first-steps-card,
 :root[data-theme='light'] .app-shell .first-step,
 :root[data-theme='light'] .app-shell .delivery-mini,
-:root[data-theme='light'] .app-shell .whatsapp-official-card,
 :root[data-theme='light'] .app-shell .account-card,
 :root[data-theme='light'] .app-shell .payments-plan-panel,
 :root[data-theme='light'] .app-shell .placeholder-panel,
@@ -605,6 +610,7 @@
   border-color: rgba(239, 68, 68, 0.20) !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-official-card,
 :root[data-theme='light'] .app-shell .whatsapp-connected-panel,
 :root[data-theme='light'] .app-shell .whatsapp-config-panel,
@@ -615,7 +621,9 @@
   border: 1px solid var(--panel-border-color) !important;
   box-shadow: var(--panel-shadow) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-official-card h1,
 :root[data-theme='light'] .app-shell .whatsapp-official-card > p,
 :root[data-theme='light'] .app-shell .whatsapp-official-card span,
@@ -631,7 +639,9 @@
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-official-card .form-error,
 :root[data-theme='light'] .app-shell .whatsapp-official-card .success-text,
 :root[data-theme='light'] .app-shell .whatsapp-connected-panel .form-error,
@@ -639,6 +649,7 @@
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
+*/
 
 :root[data-theme='light'] .app-shell .whatsapp-status-pill {
   color: #14532d !important;
@@ -659,6 +670,7 @@
   color: var(--brand-green) !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
 :root[data-theme='light'] .app-shell .whatsapp-connect-phone .field-hint,
 :root[data-theme='light'] .app-shell .whatsapp-speeches-grid .field span,
@@ -668,29 +680,36 @@
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-tutorial,
 :root[data-theme='light'] .app-shell .whatsapp-requirements {
   background: #f8fafc !important;
   border-color: var(--panel-border-color) !important;
 }
+*/
 
 :root[data-theme='light'] .app-shell .whatsapp-tutorial strong {
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-requirements,
 :root[data-theme='light'] .app-shell .whatsapp-requirements li {
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
 :root[data-theme='light'] .app-shell .whatsapp-pairing-code span {
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
+*/
 
 :root[data-theme='light'] .app-shell .whatsapp-pairing-code strong {
   color: #111827 !important;
@@ -702,24 +721,31 @@
   -webkit-text-fill-color: var(--brand-green) !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary,
 :root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost {
   color: var(--panel-text-primary) !important;
   background: #ffffff !important;
   border: 1px solid var(--panel-border-color) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary:hover,
 :root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost:hover {
   background: #f9fafb !important;
 }
+*/
 
 /* WhatsApp light-theme hard reset: covers late global.css dark overrides. */
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card {
   color: var(--panel-text-primary) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card h1,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card > p,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card span,
@@ -729,7 +755,9 @@
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-note,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .field-hint,
@@ -740,22 +768,27 @@
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
+*/
 
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill {
   background: #f8fafc !important;
   border-color: var(--panel-border-color) !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-connected-badge,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-icon {
   color: var(--brand-green) !important;
 }
+*/
 
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code strong,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code-value {
   color: #111827 !important;
   -webkit-text-fill-color: #111827 !important;
 }
+*/
 
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-code-placeholder {
   color: #9ca3af !important;
@@ -766,10 +799,12 @@
   background: #ffffff !important;
 }
 
+/*
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements strong,
 :root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements li::marker {
   color: var(--brand-green) !important;
 }
+*/
 
 /* WhatsApp chat area in light theme */
 :root[data-theme='light'] .app-shell .chat-layout,
@@ -1540,7 +1575,6 @@
 :root[data-theme='light'] .app-shell .dashboard-hero h1,
 :root[data-theme='light'] .app-shell .panel h2,
 :root[data-theme='light'] .app-shell .panel-head h2,
-:root[data-theme='light'] .app-shell .whatsapp-official-card h1,
 :root[data-theme='light'] .app-shell .payment-pro-card h1,
 :root[data-theme='light'] .app-shell .payment-checkout-card h2,
 :root[data-theme='light'] .admin-shell .page-title h1,
@@ -1560,8 +1594,6 @@
 :root[data-theme='light'] .app-shell .conversation-empty,
 :root[data-theme='light'] .app-shell .settings-card-muted,
 :root[data-theme='light'] .app-shell .first-step small,
-:root[data-theme='light'] .app-shell .whatsapp-official-card > p,
-:root[data-theme='light'] .app-shell .whatsapp-ai-note p,
 :root[data-theme='light'] .app-shell .payment-pro-copy,
 :root[data-theme='light'] .app-shell .payment-checkout-card p,
 :root[data-theme='light'] .app-shell .payment-checkout-card span,

@@ -442,7 +442,7 @@ export default function Booking() {
               </label>
 
               <label className="field">
-                <span>Telefone / WhatsApp</span>
+                <span>Telefone{/* ⚠️ DESATIVADO — / WhatsApp */}</span>
                 <input
                   inputMode="numeric"
                   value={cliente.telefone}

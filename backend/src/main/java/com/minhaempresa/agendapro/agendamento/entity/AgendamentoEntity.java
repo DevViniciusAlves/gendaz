@@ -57,8 +57,9 @@ public class AgendamentoEntity {
     @Column(length = 1000)
     private String observacoes;
 
-    @Column(name = "lembrete_wpp_enviado", nullable = false)
-    private Boolean lembreteWppEnviado;
+    // ⚠️ DESATIVADO - WhatsApp functionality disabled
+    // @Column(name = "lembrete_wpp_enviado", nullable = false)
+    // private Boolean lembreteWppEnviado;
 
     @Builder.Default
     @Column(name = "confirmacao_pagamento_dono_enviada", nullable = false)
@@ -87,7 +88,8 @@ public class AgendamentoEntity {
 
     @PrePersist
     void prePersist() {
-        lembreteWppEnviado = lembreteWppEnviado == null ? Boolean.FALSE : lembreteWppEnviado;
+        // ⚠️ DESATIVADO - WhatsApp functionality disabled
+        // lembreteWppEnviado = lembreteWppEnviado == null ? Boolean.FALSE : lembreteWppEnviado;
         confirmacaoPagamentoDonoEnviada = confirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : confirmacaoPagamentoDonoEnviada;
         segundaConfirmacaoPagamentoDonoEnviada = segundaConfirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : segundaConfirmacaoPagamentoDonoEnviada;
         confirmacaoPagamentoDono2Enviada = confirmacaoPagamentoDono2Enviada == null ? Boolean.FALSE : confirmacaoPagamentoDono2Enviada;

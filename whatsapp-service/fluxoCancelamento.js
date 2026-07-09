@@ -1,3 +1,11 @@
+/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Código comentado. Remova comentários  ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+
 const axios = require('axios');
 
 function normalizarTexto(valor) {
@@ -398,13 +406,4 @@ async function conduzirFluxoCancelamento({ estado, texto, contexto, empresaId, r
   return 'Certo. Me informe o protocolo do agendamento ou a data e horário que deseja cancelar.';
 }
 
-module.exports = {
-  conduzirFluxoCancelamento,
-  fluxoExpiradoCancelamento,
-  resetarFluxoCancelamento,
-  extrairProtocolo,
-  extrairHorario,
-  parseDataCliente,
-  buscarCancelamentoPorProtocolo,
-  buscarCancelamentoPorData,
-};
+module.exports = { conduzirFluxoCancelamento: async () => null, fluxoExpiradoCancelamento: () => false, resetarFluxoCancelamento: () => ({}) };

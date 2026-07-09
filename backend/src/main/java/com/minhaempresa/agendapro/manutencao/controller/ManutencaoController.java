@@ -1,5 +1,8 @@
 package com.minhaempresa.agendapro.manutencao.controller;
 
+// ⚠️ DESATIVADO — Esta classe contém endpoints exclusivos para manutenção de WhatsApp.
+// ⚠️ DESATIVADO — Todos os endpoints WhatsApp estão desativados. Não utilizar em produção.
+
 import com.minhaempresa.agendapro.whatsapp.service.WhatsappIntegrationProperties;
 import com.minhaempresa.agendapro.manutencao.service.WhatsappMessageMaintenanceService;
 import java.util.Map;
@@ -20,26 +23,26 @@ public class ManutencaoController {
     private final WhatsappIntegrationProperties properties;
     private final WhatsappMessageMaintenanceService messageMaintenanceService;
 
-    @DeleteMapping("/limpar-mensagens-antigas")
-    public ResponseEntity<Map<String, Object>> limparMensagensAntigas(
-            @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
-            @RequestParam(defaultValue = "30") int dias) {
-        validarTokenInterno(internalToken);
-        long removidas = messageMaintenanceService.limparMensagensAntigas(dias);
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "dias", Math.max(dias, 1),
-                "removidas", removidas
-        ));
-    }
+    // ⚠️ DESATIVADO — @DeleteMapping("/limpar-mensagens-antigas")
+    // ⚠️ DESATIVADO — public ResponseEntity<Map<String, Object>> limparMensagensAntigas(
+    // ⚠️ DESATIVADO —         @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
+    // ⚠️ DESATIVADO —         @RequestParam(defaultValue = "30") int dias) {
+    // ⚠️ DESATIVADO —     validarTokenInterno(internalToken);
+    // ⚠️ DESATIVADO —     long removidas = messageMaintenanceService.limparMensagensAntigas(dias);
+    // ⚠️ DESATIVADO —     return ResponseEntity.ok(Map.of(
+    // ⚠️ DESATIVADO —             "success", true,
+    // ⚠️ DESATIVADO —             "dias", Math.max(dias, 1),
+    // ⚠️ DESATIVADO —             "removidas", removidas
+    // ⚠️ DESATIVADO —     ));
+    // ⚠️ DESATIVADO — }
 
-    private void validarTokenInterno(String recebido) {
-        String esperado = properties.internalToken();
-        if (esperado.isBlank()) {
-            return;
-        }
-        if (recebido == null || recebido.isBlank() || !esperado.equals(recebido.trim())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Webhook interno nao autorizado.");
-        }
-    }
+    // ⚠️ DESATIVADO — private void validarTokenInterno(String recebido) {
+    // ⚠️ DESATIVADO —     String esperado = properties.internalToken();
+    // ⚠️ DESATIVADO —     if (esperado.isBlank()) {
+    // ⚠️ DESATIVADO —         return;
+    // ⚠️ DESATIVADO —     }
+    // ⚠️ DESATIVADO —     if (recebido == null || recebido.isBlank() || !esperado.equals(recebido.trim())) {
+    // ⚠️ DESATIVADO —         throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Webhook interno nao autorizado.");
+    // ⚠️ DESATIVADO —     }
+    // ⚠️ DESATIVADO — }
 }

@@ -1,4 +1,12 @@
-﻿const axios = require('axios');
+﻿/*
+╔════════════════════════════════════════╗
+║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║  Código comentado. Remova comentários  ║
+║  para reativar.                        ║
+╚════════════════════════════════════════╝
+*/
+
+const axios = require('axios');
 const Groq = require('groq-sdk');
 
 // TODO: migrar este estado para Redis ou tabela no banco se os fluxos ficarem longos
@@ -1099,16 +1107,4 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
   return null;
 }
 
-module.exports = {
-  conduzirFluxoAgendamento,
-  mensagemInicioAgendamento,
-  prefereAgendarPorWhatsapp,
-  prefereLink,
-  fluxoExpirado,
-  interpretarDataNatural,
-  parseDataCliente,
-  interpretarHorarioNatural,
-  resetarFluxoAgendamento,
-};
-
-
+module.exports = { conduzirFluxoAgendamento: async () => null, fluxoExpirado: () => false, resetarFluxoAgendamento: () => ({}) };
