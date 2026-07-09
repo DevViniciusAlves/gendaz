@@ -12805,6 +12805,86 @@ tbody tr:hover { background: #fffaf5; }
   border-color: rgba(255, 255, 255, 0.10);
 }
 
+.gendaz-card {
+  display: grid;
+  gap: 8px;
+  min-height: 136px;
+  background: #111111;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 18px;
+}
+
+.gendaz-card--highlight {
+  background: #141414;
+}
+
+.gendaz-card strong,
+.gendaz-card span,
+.gendaz-card small,
+.gendaz-panel strong,
+.gendaz-panel span,
+.gendaz-panel small,
+.gendaz-table__row strong,
+.gendaz-table__row span,
+.gendaz-table__row small {
+  color: #ffffff;
+}
+
+.gendaz-table__row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 0.7fr) minmax(120px, 0.5fr) minmax(240px, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+
+.gendaz-table__row--agenda {
+  grid-template-columns: minmax(180px, 1.2fr) minmax(140px, 0.7fr) minmax(120px, 0.5fr) minmax(240px, 1fr) auto;
+}
+
+.gendaz-mini-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: #0f0f0f;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.gendaz-page__header--hero {
+  padding-bottom: 8px;
+}
+
+.gendaz-auth__error {
+  margin: 12px 0 0;
+  color: #ffffff;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  padding: 12px 14px;
+  border-radius: 14px;
+}
+
+.gendaz-chat__prefs {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+}
+
+.gendaz-list {
+  margin: 0;
+}
+
+.gendaz-list li {
+  line-height: 1.5;
+}
+
+@media (max-width: 1080px) {
+  .gendaz-table__row,
+  .gendaz-table__row--agenda {
+    grid-template-columns: 1fr;
+  }
+}
+
 
 
 

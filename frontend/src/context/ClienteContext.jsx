@@ -11,15 +11,21 @@ const portalInicial = {
   dashboard: {
     ultimoAtendimento: 'Corte e barba em 03/07/2026',
     proximoAtendimento: '10/07/2026 às 18:00',
+    proximoAtendimentoDetalhe: 'Barbearia VIP • Corte + barba com Marcos',
     sugestoes: [
       'Seu próximo corte está perto do intervalo ideal.',
       'A IA recomenda repetir o mesmo horário da última visita.',
+      'Você costuma agendar sextas no fim do dia.',
     ],
     notificacoes: [
       'Promoção de hidratação válida até sexta-feira.',
       'Seu cupom de aniversário está disponível.',
     ],
     recompensas: 'Você tem 120 pontos acumulados.',
+    promoAtual: {
+      titulo: '10% em hidratação',
+      descricao: 'Válido até domingo para clientes frequentes.',
+    },
   },
   agendamentos: [
     {
@@ -29,6 +35,7 @@ const portalInicial = {
       data: '2026-07-10',
       hora: '18:00',
       status: 'Confirmado',
+      observacao: 'Corte + barba, com prioridade no horário da noite.',
     },
     {
       id: 2,
@@ -37,6 +44,7 @@ const portalInicial = {
       data: '2026-07-17',
       hora: '19:00',
       status: 'Pendente',
+      observacao: 'Aguardando confirmação do cliente.',
     },
   ],
   historico: [
@@ -81,17 +89,22 @@ const portalInicial = {
   assistente: {
     mensagens: [
       { id: 1, origem: 'ia', texto: 'Olá, João. Quer agendar novamente seu corte de sexta?' },
+      { id: 2, origem: 'cliente', texto: 'Quero cortar sexta.' },
+      { id: 3, origem: 'ia', texto: 'Tenho 18h e 19h.' },
     ],
     preferencias: {
       profissionalFavorito: 'Marcos',
       servicoFavorito: 'Corte masculino',
       diasPreferidos: 'Sexta-feira',
       horariosPreferidos: '18h',
+      frequencia: 'A cada 14 dias',
     },
   },
   configuracoes: {
     receberNotificacoes: true,
     privacidadeCompartilhada: false,
+    email: 'joao@exemplo.com',
+    telefone: '+55 (65) 99999-9999',
   },
 }
 
@@ -130,6 +143,19 @@ export function ClienteProvider({ children }) {
             { id: Date.now() + 1, origem: 'ia', texto: 'Posso seguir com o próximo horário disponível.' },
           ],
         },
+      }))
+    },
+    agendarNovamente(servicoId) {
+      setPortal((atual) => ({
+        ...atual,
+        dashboard: {
+          ...atual.dashboard,
+          ultimoAtendimento: atual.dashboard.ultimoAtendimento,
+          proximoAtendimento: atual.dashboard.proximoAtendimento,
+        },
+        agendamentos: atual.agendamentos.map((item) => (
+          item.id === servicoId ? { ...item, status: 'Confirmado' } : item
+        )),
       }))
     },
   }), [portal])
