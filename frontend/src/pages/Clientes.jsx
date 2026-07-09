@@ -106,6 +106,7 @@ export default function Clientes() {
       } else {
         await appApi.excluirClientesEmMassa(selecionados)
         await reload(true)
+        window.dispatchEvent(new Event('agendapro:data-changed'))
       }
       limparSelecao()
     } catch (error) {
@@ -160,6 +161,7 @@ export default function Clientes() {
         try {
           await appApi.excluirCliente(cliente.id)
           await reload(true)
+          window.dispatchEvent(new Event('agendapro:data-changed'))
         } catch (error) {
           setErro(error.response?.data?.mensagem || 'Não foi possível excluir o cliente.')
         }
