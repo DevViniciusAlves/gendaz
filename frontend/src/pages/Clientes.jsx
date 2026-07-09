@@ -13,7 +13,7 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
-// âš ï¸ DESATIVADO â€” import whatsappLogo from '../assets/whatsapp.png'
+// âš ï¸ DESATIVADO — import whatsappLogo from '../assets/whatsapp.png'
 import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
@@ -69,7 +69,7 @@ export default function Clientes() {
         return current.filter((item) => item !== id)
       }
       if (current.length >= 10) {
-        setErro('VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.')
+        setErro('Você pode selecionar no máximo 10 itens por vez.')
         return current
       }
       setErro('')
@@ -91,7 +91,7 @@ export default function Clientes() {
       },
       EXCLUIR: {
         titulo: 'Excluir clientes',
-        descricao: 'Tem certeza que deseja excluir os clientes selecionados? Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.',
+        descricao: 'Tem certeza que deseja excluir os clientes selecionados? Essa ação não poderá ser desfeita.',
         confirmLabel: 'Excluir',
         danger: true,
       },
@@ -116,7 +116,7 @@ export default function Clientes() {
       }
       limparSelecao()
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel executar a aÃ§Ã£o em massa.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível executar a ação em massa.')
     } finally {
       setBulkExecutando(false)
     }
@@ -160,7 +160,7 @@ export default function Clientes() {
   async function excluir(cliente) {
     setConfirmacao({
       titulo: 'Excluir cliente',
-      descricao: `Tem certeza que deseja excluir ${cliente.nome}? Essa aÃ§Ã£o Ã© permanente e nÃ£o terÃ¡ como retornar.`,
+      descricao: `Tem certeza que deseja excluir ${cliente.nome}? Essa ação é permanente e não terá como retornar.`,
       acaoLabel: 'Excluir',
       acao: async () => {
         setErro('')
@@ -172,7 +172,7 @@ export default function Clientes() {
             window.dispatchEvent(new Event('agendapro:data-changed'))
           }, 2000)
         } catch (error) {
-          setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel excluir o cliente.')
+          setErro(error.response?.data?.mensagem || 'Não foi possível excluir o cliente.')
         }
       },
     })
@@ -197,11 +197,11 @@ export default function Clientes() {
     }
     const telefone = padronizarTelefone(form.telefone)
     if (!telefone) {
-      setErro('Telefone invÃ¡lido. Formato correto: +55 (DDD) 99999-9999')
+      setErro('Telefone inválido. Formato correto: +55 (DDD) 99999-9999')
       return
     }
     if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
-      setErro('Informe um e-mail vÃ¡lido com atÃ© 120 caracteres.')
+      setErro('Informe um e-mail válido com até 120 caracteres.')
       return
     }
 
@@ -223,7 +223,7 @@ export default function Clientes() {
       setModal(false)
       setClienteEditando(null)
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel salvar o cliente.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível salvar o cliente.')
     } finally {
       setSalvando(false)
     }
@@ -235,7 +235,7 @@ export default function Clientes() {
         <div>
           <span className="section-kicker">Base de clientes</span>
           <h1>Clientes</h1>
-          <p>Busca, cadastro e histÃ³rico bÃ¡sico da base atendida.</p>
+          <p>Busca, cadastro e histórico básico da base atendida.</p>
         </div>
         <div className="table-actions">
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
@@ -298,7 +298,7 @@ export default function Clientes() {
           }},
           { key: 'telefone', label: 'TELEFONE', render: (row) => (
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {/* âš ï¸ DESATIVADO â€” <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} /> */}
+                {/* âš ï¸ DESATIVADO — <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} /> */}
                 <span>{exibirTelefone(row.telefone)}</span>
              </div>
           )},
@@ -307,7 +307,7 @@ export default function Clientes() {
           { key: 'totalGasto', label: 'TOTAL GASTO', render: (row) => currency(row.totalGasto) },
           { key: 'observacoes', label: 'HISTÃ“RICO', render: (row) => (
              <div className="stacked-cell">
-               <strong>{row.observacoes || 'Sem histÃ³rico'}</strong>
+               <strong>{row.observacoes || 'Sem histórico'}</strong>
              </div>
           ) },
           { key: 'acao', label: 'AÃ‡Ã•ES', render: (row) => (
@@ -336,8 +336,8 @@ export default function Clientes() {
             onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })}
             required
           />
-          <Input label="E-mail" helper="Use um e-mail vÃ¡lido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input label="ObservaÃ§Ãµes" helper="Resumo curto do histÃ³rico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label="ObservaçÃµes" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
           <Button type="submit" disabled={salvando || !form.nome || (validarTelefone(form.telefone) !== '')}>
             {salvando ? 'Salvando...' : 'Salvar'}
@@ -345,7 +345,7 @@ export default function Clientes() {
         </form>
       </Modal>
 
-      <Modal title={confirmacao?.titulo || 'Confirmar aÃ§Ã£o'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
+      <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
           <p>{confirmacao?.descricao}</p>
           <div className="confirm-actions">
@@ -365,7 +365,7 @@ export default function Clientes() {
       </Modal>
       <BulkConfirmModal
         open={Boolean(bulkModal)}
-        title={bulkModal?.titulo || 'Confirmar aÃ§Ã£o'}
+        title={bulkModal?.titulo || 'Confirmar ação'}
         description={bulkModal?.descricao || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}

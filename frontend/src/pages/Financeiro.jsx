@@ -106,17 +106,17 @@ export default function Financeiro() {
         <div className="financeiro-title-block">
           <span className="section-kicker">Financeiro</span>
           <h1>Financeiro</h1>
-          <p>Resumo mensal, pendÃªncias e rankings operacionais.</p>
+          <p>Resumo mensal, pendências e rankings operacionais.</p>
         </div>
 
         <div className="financeiro-controls">
           <label className="field compact-field financeiro-month-field">
-            <span>MÃªs</span>
+            <span>Mês</span>
             <input
               type="month"
               value={mes}
               onChange={(e) => setMes(e.target.value)}
-              aria-label="Filtrar financeiro por mÃªs"
+              aria-label="Filtrar financeiro por mês"
             />
           </label>
 

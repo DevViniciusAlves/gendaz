@@ -101,11 +101,11 @@ export function AuthProvider({ children }) {
           || mensagem.includes('mensalidade')
         const falhaFatal = status === 401
           || mensagem.includes('sessao foi encerrada')
-          || mensagem.includes('sessÃ£o foi encerrada')
+          || mensagem.includes('sessão foi encerrada')
           || mensagem.includes('usuario autenticado invalido')
-          || mensagem.includes('usuÃ¡rio autenticado invÃ¡lido')
+          || mensagem.includes('usuário autenticado inválido')
           || mensagem.includes('sessao expirada')
-          || mensagem.includes('sessÃ£o expirada')
+          || mensagem.includes('sessão expirada')
         if (contaMarcadaInativa) {
           const atualizado = normalizarUsuarioSessao(
             {

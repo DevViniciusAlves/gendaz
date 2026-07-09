@@ -25,7 +25,7 @@ export default function Pagamentos() {
   /*
   â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
   â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
-  â•‘  VariÃ¡veis comentadas para reutilizaÃ§Ã£o      â•‘
+  â•‘  Variáveis comentadas para reutilização      â•‘
   â•‘  futura. Descomente para ativar.             â•‘
   â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
@@ -51,7 +51,7 @@ export default function Pagamentos() {
   /*
   â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
   â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
-  â•‘  useEffect comentado para reutilizaÃ§Ã£o       â•‘
+  â•‘  useEffect comentado para reutilização       â•‘
   â•‘  futura. Descomente para ativar.             â•‘
   â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
@@ -72,7 +72,7 @@ export default function Pagamentos() {
   /*
   â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
   â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
-  â•‘  Filtro de plano comentado para reutilizaÃ§Ã£o â•‘
+  â•‘  Filtro de plano comentado para reutilização â•‘
   â•‘  futura. Descomente para ativar.             â•‘
   â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
@@ -100,7 +100,7 @@ export default function Pagamentos() {
     setSelecionados((current) => {
       if (current.includes(id)) return current.filter((item) => item !== id)
       if (current.length >= 10) {
-        setErroPlano('VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.')
+        setErroPlano('Você pode selecionar no máximo 10 itens por vez.')
         return current
       }
       return [...current, id]
@@ -112,7 +112,7 @@ export default function Pagamentos() {
     const configs = {
       MARCAR_COMO_PAGO: ['Marcar pagamentos como pagos', 'Tem certeza que deseja marcar os pagamentos selecionados como pagos?', 'Marcar como pago', false],
       MARCAR_COMO_PENDENTE: ['Marcar pagamentos como pendentes', 'Tem certeza que deseja marcar os pagamentos selecionados como pendentes?', 'Marcar como pendente', false],
-      EXCLUIR: ['Excluir pagamentos', 'Tem certeza que deseja excluir os pagamentos selecionados? Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.', 'Excluir', true],
+      EXCLUIR: ['Excluir pagamentos', 'Tem certeza que deseja excluir os pagamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[acao]
     setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
@@ -130,7 +130,7 @@ export default function Pagamentos() {
       await reload(true)
       limparSelecao()
     } catch (error) {
-      setErroPlano(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel executar a aÃ§Ã£o em massa.')
+      setErroPlano(error.response?.data?.mensagem || 'Não foi possível executar a ação em massa.')
     } finally {
       setBulkExecutando(false)
     }
@@ -147,13 +147,13 @@ export default function Pagamentos() {
   }
 
   function excluirPagamento() {
-    alert('ExclusÃ£o em desenvolvimento.')
+    alert('Exclusão em desenvolvimento.')
   }
 
   /*
   â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
   â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
-  â•‘  FunÃ§Ãµes comentadas para reutilizaÃ§Ã£o        â•‘
+  â•‘  FunçÃµes comentadas para reutilização        â•‘
   â•‘  futura. Descomente para ativar.             â•‘
   â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
   */
@@ -212,8 +212,8 @@ export default function Pagamentos() {
   }
 
   function metodoLegivel(metodoPagamento) {
-    if (metodoPagamento === 'PIX_AUTO') return 'PIX automÃ¡tico'
-    if (metodoPagamento === 'CREDIT_CARD' || metodoPagamento === 'CARTAO') return 'CartÃ£o'
+    if (metodoPagamento === 'PIX_AUTO') return 'PIX automático'
+    if (metodoPagamento === 'CREDIT_CARD' || metodoPagamento === 'CARTAO') return 'Cartão'
     return metodoPagamento || '-'
   }
 
@@ -317,7 +317,7 @@ export default function Pagamentos() {
       <Pagination page={paginaAtual} totalPages={totalPaginas} totalItems={pagamentos.length} pageSize={itensPorPagina} onPageChange={setPagina} />
       <BulkConfirmModal
         open={Boolean(bulkModal)}
-        title={bulkModal?.titulo || 'Confirmar aÃ§Ã£o'}
+        title={bulkModal?.titulo || 'Confirmar ação'}
         description={bulkModal?.descricao || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
@@ -329,7 +329,7 @@ export default function Pagamentos() {
       {/*
       â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
       â•‘  âš ï¸  DESATIVADO - Pagamentos do Plano        â•‘
-      â•‘  SeÃ§Ã£o comentada para reutilizaÃ§Ã£o futura.   â•‘
+      â•‘  Seção comentada para reutilização futura.   â•‘
       â•‘  Descomente para ativar.                     â•‘
       â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
       */}
@@ -357,7 +357,7 @@ export default function Pagamentos() {
             <option value="CAKTO">Cakto</option>
             <option value="MERCADO_PAGO">Mercado Pago</option>
             <option value="PIX">PIX</option>
-            <option value="PIX_AUTO">PIX automÃ¡tico</option>
+            <option value="PIX_AUTO">PIX automático</option>
             <option value="CREDIT_CARD">Cartao</option>
           </select>
           <input type="month" value={periodoPlano} onChange={(e) => setPeriodoPlano(e.target.value)} aria-label="Periodo do pagamento do plano" />

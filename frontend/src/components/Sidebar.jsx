@@ -9,12 +9,12 @@ const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
-  { key: 'servicos',      to: '/sistema/servicos',      label: 'ServiÃ§os',       icon: Wrench },
+  { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
   { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3 },
   { key: 'pagamentos',    to: '/sistema/pagamentos',    label: 'Pagamentos',     icon: CreditCard },
-  { key: 'relatorios',    to: '/sistema/relatorios',    label: 'RelatÃ³rios',     icon: ReceiptText },
-  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'ConfiguraÃ§Ãµes',  icon: Settings },
+  { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
+  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'ConfiguraçÃµes',  icon: Settings },
 ]
 
 export default function Sidebar() {
@@ -28,7 +28,7 @@ export default function Sidebar() {
       <div className="sidebar-logo-wrapper">
         <img src={logoSidebar} alt="gendaz" className="sidebar-logo" />
       </div>
-      <span className="nav-label">NavegaÃ§Ã£o</span>
+      <span className="nav-label">Navegação</span>
       <nav>
         {visibleItems.map(({ to, key, label, icon: Icon }) => (
           <NavLink
