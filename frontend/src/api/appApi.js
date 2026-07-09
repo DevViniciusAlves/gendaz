@@ -402,6 +402,14 @@ export const appApi = {
     return response.data
   },
 
+  solicitarCodigoMeuGendaz(email) {
+    return api.post('/meu-gendaz/auth/solicitar-codigo', { email }).then((response) => response.data)
+  },
+
+  validarCodigoMeuGendaz(email, codigo) {
+    return api.post('/meu-gendaz/auth/validar-codigo', { email, codigo }).then((response) => response.data)
+  },
+
   async criarConta(payload) {
     const response = await api.post('/auth/criar-conta', payload)
     return response.data

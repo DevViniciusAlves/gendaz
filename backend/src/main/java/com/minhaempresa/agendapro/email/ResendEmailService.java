@@ -95,6 +95,21 @@ public class ResendEmailService {
         }
     }
 
+    public boolean enviarCodigoMeuGendaz(String emailCliente, String nomeCliente, String codigo) {
+        if (emailCliente == null || emailCliente.isBlank()) {
+            log.warn("[resend] email do cliente vazio, codigo do Meu Gendaz ignorado");
+            return false;
+        }
+        try {
+            String assunto = "Seu código de acesso ao Meu Gendaz";
+            String html = montarHtmlCodigoMeuGendaz(safe(nomeCliente, "cliente"), safe(codigo, "000000"));
+            return enviarEmail(emailCliente, assunto, html);
+        } catch (Exception e) {
+            log.error("[resend] erro ao montar email de codigo Meu Gendaz: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
     private boolean enviarEmail(String destinatario, String assunto, String html) {
         if (apiKey.isBlank()) {
             log.warn("[resend] RESEND_API_KEY ausente; email nao enviado para {}", destinatario);
@@ -218,6 +233,26 @@ public class ResendEmailService {
                   </body>
                 </html>
                 """.formatted(nomeCliente, emailCliente, telefoneCliente, data, hora, protocolo, fromName);
+    }
+
+    private String montarHtmlCodigoMeuGendaz(String nomeCliente, String codigo) {
+        return """
+                <html>
+                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
+                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; color: #111111;">
+                      <h2 style="margin-top: 0;">Meu Gendaz</h2>
+                      <p>Olá %s,</p>
+                      <p>Seu código de acesso é:</p>
+                      <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; margin: 24px 0; padding: 16px 20px; background: #111111; color: #ffffff; border-radius: 12px; text-align: center;">
+                        %s
+                      </div>
+                      <p>Este código expira em 10 minutos.</p>
+                      <p>Se você não solicitou este acesso, ignore este e-mail.</p>
+                      <p style="margin-top: 24px;">Atenciosamente,<br><strong>Equipe %s</strong></p>
+                    </div>
+                  </body>
+                </html>
+                """.formatted(nomeCliente, codigo, fromName);
     }
 
     public boolean sendNewCustomerNotification(String nomeCliente, String emailCliente, String telefoneCliente,

@@ -109,15 +109,8 @@ export default function AppRoutes() {
       <Route path="/conta-inativa" element={<ContaInativaRoute><ContaInativa /></ContaInativaRoute>} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
-      <Route path="/meu-gendaz" element={<Gendaz />}>
-        <Route index element={<GendazDashboard />} />
-        <Route path="dashboard" element={<GendazDashboard />} />
-        <Route path="agenda" element={<GendazAgenda />} />
-        <Route path="historico" element={<GendazHistorico />} />
-        <Route path="ia" element={<GendazAssistenteIA />} />
-        <Route path="beneficios" element={<GendazBeneficios />} />
-        <Route path="configuracoes" element={<GendazConfiguracoes />} />
-      </Route>
+      <Route path="/meu-gendaz" element={<Gendaz />} />
+      <Route path="/meu-gendaz/:slugOuEmpresaId" element={<Gendaz />} />
       <Route path="/dashboard" element={<Navigate to="/sistema/dashboard" replace />} />
       <Route path="/sistema" element={<ClientRoute><AppLayout /></ClientRoute>}>
         <Route index element={<Navigate to="/sistema/dashboard" replace />} />

@@ -61,7 +61,7 @@ public class AgendamentoConfigService {
         return new AgendamentoLinkResponse(
                 empresa.getId(),
                 empresa.getAgendamentoSlug(),
-                baseFrontendUrl() + "/agendar/" + empresa.getAgendamentoSlug()
+                baseFrontendUrl() + "/meu-gendaz/" + empresa.getAgendamentoSlug()
         );
     }
 

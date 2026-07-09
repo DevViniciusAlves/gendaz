@@ -109,8 +109,8 @@ export default function Configuracoes() {
   const [statusSenha, setStatusSenha] = useState('')
   const [erroSenha, setErroSenha] = useState('')
   const [salvandoSenha, setSalvandoSenha] = useState(false)
-  const [agendamentoLink, setAgendamentoLink] = useState(null)
-  const [slugAgendamento, setSlugAgendamento] = useState('')
+  const [portalClienteLink, setPortalClienteLink] = useState(null)
+  const [slugPortalCliente, setSlugPortalCliente] = useState('')
   const [statusLink, setStatusLink] = useState('')
   const [erroLink, setErroLink] = useState('')
   const [salvandoLink, setSalvandoLink] = useState(false)
@@ -127,8 +127,8 @@ export default function Configuracoes() {
 
   async function carregarLink() {
     const response = await appApi.obterLinkAgendamento()
-    setAgendamentoLink(response)
-    setSlugAgendamento(response.slug || '')
+    setPortalClienteLink(response)
+    setSlugPortalCliente(response.slug || '')
   }
 
   async function carregarHorarios() {
@@ -138,7 +138,7 @@ export default function Configuracoes() {
   }
 
   useEffect(() => {
-    carregarLink().catch(() => setErroLink('Não foi possível carregar o link de agendamento.'))
+    carregarLink().catch(() => setErroLink('Não foi possível carregar o link do Meu Gendaz.'))
     carregarHorarios().catch(() => setErroHorario('Não foi possível carregar o horário de atendimento.'))
   }, [])
 
@@ -244,10 +244,10 @@ export default function Configuracoes() {
     setStatusLink('')
     setSalvandoLink(true)
     try {
-      const response = await appApi.atualizarLinkAgendamento(slugAgendamento.trim())
-      setAgendamentoLink(response)
-      setSlugAgendamento(response.slug || '')
-      setStatusLink('Link de agendamento atualizado.')
+      const response = await appApi.atualizarLinkAgendamento(slugPortalCliente.trim())
+      setPortalClienteLink(response)
+      setSlugPortalCliente(response.slug || '')
+      setStatusLink('Portal do cliente atualizado.')
     } catch (error) {
       setErroLink(error.response?.data?.mensagem || Object.values(error.response?.data?.campos || {})[0] || 'Não foi possível atualizar o link.')
     } finally {
@@ -256,9 +256,9 @@ export default function Configuracoes() {
   }
 
   async function copiarLinkAgendamento() {
-    if (!agendamentoLink?.publicUrl) return
+    if (!portalClienteLink?.publicUrl) return
     try {
-      await navigator.clipboard.writeText(agendamentoLink.publicUrl)
+      await navigator.clipboard.writeText(portalClienteLink.publicUrl)
       setStatusLink('Link copiado.')
     } catch {
       setErroLink('Não foi possível copiar automaticamente. Selecione o link e copie manualmente.')
@@ -294,8 +294,8 @@ export default function Configuracoes() {
     ? ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios']
     : ['Agenda', 'Clientes', 'Serviços']
   const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
-  const qrCodeUrl = agendamentoLink?.publicUrl
-    ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(agendamentoLink.publicUrl)}`
+  const qrCodeUrl = portalClienteLink?.publicUrl
+    ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
     : ''
 
   return (
@@ -481,9 +481,9 @@ export default function Configuracoes() {
       <section className="panel settings-form-panel booking-link-panel">
         <div className="panel-head settings-form-head">
           <div>
-            <span className="section-kicker">Agendamento</span>
-            <h2>Link de agendamento</h2>
-            <p>Compartilhe este link na bio, WhatsApp ou redes sociais para seus clientes agendarem sozinhos.</p>
+            <span className="section-kicker">Portal do cliente</span>
+            <h2>Meu Gendaz</h2>
+            <p>Compartilhe este link na bio, WhatsApp ou redes sociais para seus clientes acessarem o portal.</p>
           </div>
           <LinkIcon size={22} color="var(--primary)" />
         </div>
@@ -491,24 +491,24 @@ export default function Configuracoes() {
         <div className="booking-link-grid">
           <form className="booking-link-form" onSubmit={salvarSlugAgendamento}>
             <label className="field">
-              <span>URL pública da empresa</span>
-              <input value={agendamentoLink?.publicUrl || ''} readOnly />
+              <span>URL pública do Meu Gendaz</span>
+              <input value={portalClienteLink?.publicUrl || ''} readOnly />
             </label>
             <label className="field">
               <span>Slug</span>
-              <input maxLength={80} value={slugAgendamento} onChange={(event) => setSlugAgendamento(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />
+              <input maxLength={80} value={slugPortalCliente} onChange={(event) => setSlugPortalCliente(event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} />
               <small className="field-hint">Use letras minúsculas, números e hífen.</small>
             </label>
             {statusLink && <p className="success-text">{statusLink}</p>}
             {erroLink && <p className="form-error">{erroLink}</p>}
             <div className="booking-link-actions">
               <Button icon={Save} type="submit" disabled={salvandoLink}>{salvandoLink ? 'Salvando...' : 'Salvar link'}</Button>
-              <Button variant="secondary" icon={Copy} type="button" onClick={copiarLinkAgendamento} disabled={!agendamentoLink?.publicUrl}>Copiar link</Button>
+              <Button variant="secondary" icon={Copy} type="button" onClick={copiarLinkAgendamento} disabled={!portalClienteLink?.publicUrl}>Copiar link</Button>
             </div>
           </form>
 
           <div className="booking-qr-card">
-            {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code do link de agendamento" /> : <span>QR Code indisponível</span>}
+            {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code do Meu Gendaz" /> : <span>QR Code indisponível</span>}
             <a className="btn btn-secondary" href={qrCodeUrl} download="agendeasy-qrcode.png" target="_blank" rel="noreferrer">
               <Download size={17} />
               <span>Baixar QR Code</span>

@@ -20,6 +20,13 @@ public final class AuthDtos {
             String recaptchaToken
     ) {}
 
+    public record MeuGendazSolicitarCodigoRequest(@Email @NotBlank @Size(max = 120) String email) {}
+
+    public record MeuGendazValidarCodigoRequest(
+            @Email @NotBlank @Size(max = 120) String email,
+            @NotBlank @Size(min = 6, max = 6) String codigo
+    ) {}
+
     public record CriarContaRequest(
             @NotBlank @Size(min = 2, max = 100) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome da empresa deve conter apenas letras.") String nomeEmpresa,
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome do proprietario deve conter apenas letras.") String nomeProprietario,
@@ -84,4 +91,17 @@ public final class AuthDtos {
     public record RecuperacaoSenhaResponse(String mensagem) {}
 
     public record TrocarSenhaResponse(String mensagem) {}
+
+    public record MeuGendazAuthResponse(
+            String mensagem,
+            String email,
+            String sessionToken,
+            String status
+    ) {}
+
+    public record MeuGendazCodigoResponse(
+            String mensagem,
+            String email,
+            boolean reenviarDisponivel
+    ) {}
 }
