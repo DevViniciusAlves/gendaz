@@ -3396,6 +3396,7 @@ tbody tr:hover { background: #fffaf5; }
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-hover);
   backdrop-filter: blur(8px);
+  color: #000000;
 }
 
 .cookie-banner-content {
@@ -3404,19 +3405,19 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .cookie-banner-content strong {
-  color: var(--brand);
+  color: #000000;
   font-size: 14px;
 }
 
 .cookie-banner-content p {
   margin: 0;
-  color: var(--muted);
+  color: #333333;
   line-height: 1.6;
   font-size: 14px;
 }
 
 .cookie-banner-content a {
-  color: var(--primary);
+  color: #000000;
   text-decoration: none;
   font-weight: 800;
 }
