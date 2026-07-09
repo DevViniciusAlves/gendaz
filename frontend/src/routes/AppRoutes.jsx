@@ -29,6 +29,13 @@ import Configuracoes from '../pages/Configuracoes.jsx'
 import Suporte from '../pages/Suporte.jsx'
 import Conta from '../pages/Conta.jsx'
 import NotFound from '../pages/NotFound.jsx'
+import Gendaz from '../pages/Gendaz.jsx'
+import GendazDashboard from '../pages/gendaz/Dashboard.jsx'
+import GendazAgenda from '../pages/gendaz/Agenda.jsx'
+import GendazHistorico from '../pages/gendaz/Historico.jsx'
+import GendazAssistenteIA from '../pages/gendaz/AssistenteIA.jsx'
+import GendazBeneficios from '../pages/gendaz/Beneficios.jsx'
+import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
@@ -102,6 +109,15 @@ export default function AppRoutes() {
       <Route path="/conta-inativa" element={<ContaInativaRoute><ContaInativa /></ContaInativaRoute>} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+      <Route path="/meu-gendaz" element={<Gendaz />}>
+        <Route index element={<GendazDashboard />} />
+        <Route path="dashboard" element={<GendazDashboard />} />
+        <Route path="agenda" element={<GendazAgenda />} />
+        <Route path="historico" element={<GendazHistorico />} />
+        <Route path="ia" element={<GendazAssistenteIA />} />
+        <Route path="beneficios" element={<GendazBeneficios />} />
+        <Route path="configuracoes" element={<GendazConfiguracoes />} />
+      </Route>
       <Route path="/dashboard" element={<Navigate to="/sistema/dashboard" replace />} />
       <Route path="/sistema" element={<ClientRoute><AppLayout /></ClientRoute>}>
         <Route index element={<Navigate to="/sistema/dashboard" replace />} />
