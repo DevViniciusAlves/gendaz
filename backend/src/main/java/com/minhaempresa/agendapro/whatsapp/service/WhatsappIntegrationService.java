@@ -752,7 +752,8 @@ public class WhatsappIntegrationService {
         return null;
     }
 
-    private WhatsappConfigResponse montarConfiguracaoWhatsapp(EmpresaRepository.WhatsappConfigView empresa, boolean conectado, String numeroConectado) {
+    // DESATIVADO - Metodo depende de WhatsappConfigView comentado
+    private WhatsappConfigResponse montarConfiguracaoWhatsapp(Object empresa, boolean conectado, String numeroConectado) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         /*
         List<com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.ServicoContextResponse> servicos = servicoRepository.findContextByEmpresaId(empresa.getId()).stream()
@@ -1419,7 +1420,8 @@ public class WhatsappIntegrationService {
         return;
     }
 
-    private EmpresaRepository.WhatsappConfigView buscarEmpresaConfig(Long empresaId) {
+    // DESATIVADO - Metodo depende de WhatsappConfigView comentado
+    private Object buscarEmpresaConfig(Long empresaId) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         /*
         return empresaRepository.findWhatsappConfigViewById(empresaId)
