@@ -1,8 +1,98 @@
-import { Bell, LogOut, Mail, Shield, UserRound } from 'lucide-react'
-import { useCliente } from '../../context/ClienteContext.jsx'
+import { useContext, useState, useEffect } from 'react'
+import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
+import clienteApi from '../../api/clienteApi.js'
+import { Bell, LogOut, Shield, UserRound, Loader } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 
 export default function Configuracoes() {
-  const { portal, atualizarConfiguracoes } = useCliente()
+  const navigate = useNavigate()
+  const { cliente, configuracoes, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout } = useContext(ClienteGendazContext)
+
+  const [formData, setFormData] = useState({ nome: '', telefone: '', email: '' })
+  const [notificacoes, setNotificacoes] = useState({ email: true, sms: false, push: true })
+  const [privacidade, setPrivacidade] = useState({ compartilharHistorico: false })
+  const [salvando, setSalvando] = useState(false)
+  const [mensagem, setMensagem] = useState('')
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    if (cliente) {
+      setFormData({
+        nome: cliente.nome || '',
+        telefone: cliente.telefone || '',
+        email: cliente.email || '',
+      })
+    }
+  }, [cliente])
+
+  useEffect(() => {
+    if (configuracoes) {
+      setNotificacoes({
+        email: configuracoes.notificacoes?.email ?? true,
+        sms: configuracoes.notificacoes?.sms ?? false,
+        push: configuracoes.notificacoes?.push ?? true,
+      })
+      setPrivacidade({
+        compartilharHistorico: configuracoes.compartilharHistorico ?? false,
+      })
+    }
+  }, [configuracoes])
+
+  function mostrarMensagem(texto) {
+    setMensagem(texto)
+    setErro('')
+    setTimeout(() => setMensagem(''), 3000)
+  }
+
+  async function handleSalvarPerfil(e) {
+    e.preventDefault()
+    setErro('')
+    try {
+      setSalvando(true)
+      await atualizarPerfil(formData)
+      mostrarMensagem('Perfil atualizado com sucesso!')
+    } catch (err) {
+      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar perfil.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function handleSalvarNotificacoes(e) {
+    e.preventDefault()
+    setErro('')
+    try {
+      setSalvando(true)
+      await atualizarNotificacoes(notificacoes)
+      mostrarMensagem('Preferências de notificação atualizadas!')
+    } catch (err) {
+      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar notificações.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function handleSalvarPrivacidade(e) {
+    e.preventDefault()
+    setErro('')
+    try {
+      setSalvando(true)
+      await atualizarPrivacidade(privacidade)
+      mostrarMensagem('Preferências de privacidade atualizadas!')
+    } catch (err) {
+      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar privacidade.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  async function handleLogout() {
+    if (window.confirm('Tem certeza que deseja sair?')) {
+      await logout()
+      navigate('/meu-gendaz', { replace: true })
+      window.location.reload()
+    }
+  }
 
   return (
     <section className="gendaz-page">
@@ -12,42 +102,75 @@ export default function Configuracoes() {
         <p>Telefone, e-mail, notificações, privacidade e saída da sessão.</p>
       </header>
 
+      {mensagem && <div className="gendaz-mensagem gendaz-mensagem--sucesso">{mensagem}</div>}
+      {erro && <div className="gendaz-auth__error">{erro}</div>}
+
       <div className="gendaz-grid gendaz-grid--two">
         <article className="gendaz-panel">
           <div className="gendaz-panel__head"><UserRound size={18} /><h2>Meu perfil</h2></div>
-          <div className="gendaz-stack">
-            <div className="gendaz-mini-card"><strong>Nome</strong><span>{portal.cliente.nome}</span></div>
-            <div className="gendaz-mini-card"><strong>Telefone</strong><span>{portal.configuracoes.telefone}</span></div>
-            <div className="gendaz-mini-card"><strong>E-mail</strong><span>{portal.configuracoes.email}</span></div>
-          </div>
+          <form className="gendaz-form" onSubmit={handleSalvarPerfil}>
+            <label>
+              <span>Nome</span>
+              <input type="text" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+            </label>
+            <label>
+              <span>Telefone</span>
+              <input type="tel" value={formData.telefone} onChange={(e) => setFormData({ ...formData, telefone: e.target.value })} />
+            </label>
+            <label>
+              <span>E-mail</span>
+              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+            </label>
+            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Alterações'}
+            </button>
+          </form>
         </article>
 
         <article className="gendaz-panel">
           <div className="gendaz-panel__head"><Bell size={18} /><h2>Notificações</h2></div>
-          <label className="gendaz-toggle">
-            <input
-              type="checkbox"
-              checked={portal.configuracoes.receberNotificacoes}
-              onChange={(event) => atualizarConfiguracoes({ receberNotificacoes: event.target.checked })}
-            />
-            <span>Receber notificações</span>
-          </label>
-          <label className="gendaz-toggle">
-            <input
-              type="checkbox"
-              checked={portal.configuracoes.privacidadeCompartilhada}
-              onChange={(event) => atualizarConfiguracoes({ privacidadeCompartilhada: event.target.checked })}
-            />
-            <span>Compartilhar preferências com a IA</span>
-          </label>
+          <form className="gendaz-form" onSubmit={handleSalvarNotificacoes}>
+            <label className="gendaz-checkbox">
+              <input type="checkbox" checked={notificacoes.email} onChange={(e) => setNotificacoes({ ...notificacoes, email: e.target.checked })} />
+              <span>Receber notificações por e-mail</span>
+            </label>
+            <label className="gendaz-checkbox">
+              <input type="checkbox" checked={notificacoes.sms} onChange={(e) => setNotificacoes({ ...notificacoes, sms: e.target.checked })} />
+              <span>Receber notificações por SMS</span>
+            </label>
+            <label className="gendaz-checkbox">
+              <input type="checkbox" checked={notificacoes.push} onChange={(e) => setNotificacoes({ ...notificacoes, push: e.target.checked })} />
+              <span>Receber notificações push</span>
+            </label>
+            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Preferências'}
+            </button>
+          </form>
         </article>
       </div>
 
-      <article className="gendaz-panel">
-        <div className="gendaz-panel__head"><Shield size={18} /><h2>Privacidade e saída</h2></div>
-        <p>Se quiser, sua sessão pode permanecer salva por longo período no mesmo dispositivo.</p>
-        <button className="gendaz-btn gendaz-btn--ghost" type="button"><LogOut size={16} />Sair</button>
-      </article>
+      <div className="gendaz-grid gendaz-grid--two">
+        <article className="gendaz-panel">
+          <div className="gendaz-panel__head"><Shield size={18} /><h2>Privacidade</h2></div>
+          <form className="gendaz-form" onSubmit={handleSalvarPrivacidade}>
+            <label className="gendaz-checkbox">
+              <input type="checkbox" checked={privacidade.compartilharHistorico} onChange={(e) => setPrivacidade({ ...privacidade, compartilharHistorico: e.target.checked })} />
+              <span>Compartilhar histórico com a IA para recomendações</span>
+            </label>
+            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Privacidade'}
+            </button>
+          </form>
+        </article>
+
+        <article className="gendaz-panel">
+          <div className="gendaz-panel__head"><LogOut size={18} /><h2>Sair da conta</h2></div>
+          <p>Sua sessão pode permanecer salva por longo período no mesmo dispositivo.</p>
+          <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={handleLogout}>
+            <LogOut size={16} /> Sair
+          </button>
+        </article>
+      </div>
     </section>
   )
 }

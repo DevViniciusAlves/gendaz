@@ -14,7 +14,7 @@ export default function Sidebar() {
   return (
     <aside className="gendaz-sidebar">
       <div className="gendaz-sidebar__brand">
-        <strong>Meu Gendaz</strong>
+        <strong>Meu gendaz</strong>
         <span>Portal inteligente do cliente</span>
       </div>
 

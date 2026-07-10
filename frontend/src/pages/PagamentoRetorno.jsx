@@ -5,7 +5,7 @@ import Button from '../components/Button.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
-import logoWhite from '../assets/logos/gendaz-logo-green.png'
+import logoWhite from '../assets/logos/gendaz-logo-branco.png'
 
 const statusTexto = {
   PAYMENT_PENDING: 'Aguardando confirmacao',

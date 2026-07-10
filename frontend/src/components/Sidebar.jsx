@@ -3,7 +3,7 @@ import { BarChart3, CalendarDays, CreditCard, Home, ReceiptText, Settings, Users
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
 import { usePagamentosPendentes } from '../hooks/usePagamentosPendentes.js'
-import logoSidebar from '../assets/logos/gendaz-logo-green.png'
+import logoSidebar from '../assets/logos/gendaz-logo-branco.png'
 
 const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
-import logoSvg from '../assets/logos/gendaz-logo-green.png'
+import logoSvg from '../assets/logos/gendaz-logo-branco.png'
 
 export default function Login() {
   const { usuario, adminUsuario, login } = useAuth()

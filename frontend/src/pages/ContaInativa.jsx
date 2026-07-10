@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
-import logoGendaz from '../assets/logos/gendaz-logo-conta-inativa.png'
+import logoGendaz from '../assets/logos/gendaz-logo-branco.png'
 
 const statusView = {
   PAYMENT_PENDING: { label: 'Pagamento pendente', tone: 'pending' },

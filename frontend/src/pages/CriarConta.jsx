@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, Phone, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
-import logoSvg from '../assets/logos/gendaz-logo-green.png'
+import logoSvg from '../assets/logos/gendaz-logo-branco.png'
 
 const PLANOS_INFO = {
   BASICO: {

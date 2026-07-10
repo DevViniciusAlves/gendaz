@@ -1,23 +1,20 @@
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
+import { createContext, useState, useEffect, useCallback } from 'react'
 import clienteApi from '../api/clienteApi.js'
 
-const ClienteContext = createContext(null)
+export const ClienteGendazContext = createContext()
 
-export function ClienteProvider({ children }) {
+export function ClienteGendazProvider({ children }) {
   const [cliente, setCliente] = useState(null)
-  const [dashboard, setDashboard] = useState(null)
-  const [agendamentos, setAgendamentos] = useState([])
-  const [historico, setHistorico] = useState({ agendamentos: [], total: 0, pagina: 1, proximaPagina: false })
-  const [beneficios, setBeneficios] = useState({ promocoes: [], cupons: [] })
-  const [assistente, setAssistente] = useState({ mensagens: [], preferencias: null })
-  const [configuracoes, setConfiguracoes] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
-
-  const autenticado = useMemo(() => Boolean(localStorage.getItem('meu-gendaz-auth')), [])
+  const [agendamentos, setAgendamentos] = useState([])
+  const [dashboard, setDashboard] = useState(null)
+  const [beneficios, setBeneficios] = useState({ promocoes: [], cupons: [] })
+  const [configuracoes, setConfiguracoes] = useState(null)
 
   const sincronizarDados = useCallback(async () => {
-    if (!autenticado) {
+    const token = localStorage.getItem('clienteToken')
+    if (!token) {
       setCarregando(false)
       return
     }
@@ -26,9 +23,9 @@ export function ClienteProvider({ children }) {
       setErro(null)
 
       const [perfilRes, dashboardRes, agendamentosRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/perfil'),
-        clienteApi.get('/meu-gendaz/dashboard'),
-        clienteApi.get('/meu-gendaz/agendamentos/proximos'),
+        clienteApi.get('/clientes/perfil'),
+        clienteApi.get('/clientes/dashboard'),
+        clienteApi.get('/clientes/agendamentos/proximos'),
       ])
 
       if (perfilRes.status === 'fulfilled') {
@@ -42,33 +39,39 @@ export function ClienteProvider({ children }) {
       }
 
       if (agendamentosRes.status === 'fulfilled') {
-        setAgendamentos(Array.isArray(agendamentosRes.value.data) ? agendamentosRes.value.data : agendamentosRes.value.data.agendamentos || [])
+        const data = agendamentosRes.value.data
+        setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
       }
     } catch (err) {
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar dados.')
     } finally {
       setCarregando(false)
     }
-  }, [autenticado])
+  }, [])
 
   useEffect(() => {
-    sincronizarDados()
+    const token = localStorage.getItem('clienteToken')
+    if (token) {
+      sincronizarDados()
+    } else {
+      setCarregando(false)
+    }
   }, [sincronizarDados])
 
   useEffect(() => {
-    if (!autenticado || !cliente) return
+    if (!cliente) return
 
     const intervalDashboard = setInterval(async () => {
       try {
-        const { data } = await clienteApi.get('/meu-gendaz/dashboard')
+        const { data } = await clienteApi.get('/clientes/dashboard')
         setDashboard(data)
       } catch { /* silencioso */ }
     }, 5 * 60 * 1000)
 
     const intervalAgendamentos = setInterval(async () => {
       try {
-        const { data } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
-        setAgendamentos(Array.isArray(data) ? data : data.agendamentos || [])
+        const { data } = await clienteApi.get('/clientes/agendamentos/proximos')
+        setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
       } catch { /* silencioso */ }
     }, 5 * 60 * 1000)
 
@@ -76,37 +79,48 @@ export function ClienteProvider({ children }) {
       clearInterval(intervalDashboard)
       clearInterval(intervalAgendamentos)
     }
-  }, [autenticado, cliente])
+  }, [cliente])
 
   const criarAgendamento = useCallback(async (dados) => {
-    const { data } = await clienteApi.post('/meu-gendaz/agendamentos/criar', dados)
-    await sincronizarDados()
+    const { data } = await clienteApi.post('/clientes/agendamentos/criar', dados)
+    const token = localStorage.getItem('clienteToken')
+    if (token) {
+      const { data: ags } = await clienteApi.get('/clientes/agendamentos/proximos')
+      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
+    }
     return data
-  }, [sincronizarDados])
+  }, [])
 
   const reagendar = useCallback(async (agendamentoId, novosDados) => {
-    const { data } = await clienteApi.patch(`/meu-gendaz/agendamentos/${agendamentoId}/reagendar`, novosDados)
-    await sincronizarDados()
+    const { data } = await clienteApi.patch(`/clientes/agendamentos/${agendamentoId}/reagendar`, novosDados)
+    const token = localStorage.getItem('clienteToken')
+    if (token) {
+      const { data: ags } = await clienteApi.get('/clientes/agendamentos/proximos')
+      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
+    }
     return data
-  }, [sincronizarDados])
+  }, [])
 
   const cancelarAgendamento = useCallback(async (agendamentoId, motivo) => {
-    await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`, {
+    await clienteApi.delete(`/clientes/agendamentos/${agendamentoId}/cancelar`, {
       data: { motivo },
     })
-    await sincronizarDados()
-  }, [sincronizarDados])
+    const token = localStorage.getItem('clienteToken')
+    if (token) {
+      const { data: ags } = await clienteApi.get('/clientes/agendamentos/proximos')
+      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
+    }
+  }, [])
 
   const carregarHistorico = useCallback(async (pagina = 1, limite = 10) => {
-    const { data } = await clienteApi.get('/meu-gendaz/agendamentos/historico', {
+    const { data } = await clienteApi.get('/clientes/agendamentos/historico', {
       params: { pagina, limite },
     })
-    setHistorico(data)
     return data
   }, [])
 
   const buscarHorarios = useCallback(async (servicoId, profissionalId, data) => {
-    const { data: horarios } = await clienteApi.get('/meu-gendaz/horarios-disponiveis', {
+    const { data: horarios } = await clienteApi.get('/clientes/horarios-disponiveis', {
       params: { servicoId, profissionalId, data },
     })
     return horarios
@@ -114,8 +128,8 @@ export function ClienteProvider({ children }) {
 
   const carregarBeneficios = useCallback(async () => {
     const [promosRes, cuponsRes] = await Promise.allSettled([
-      clienteApi.get('/meu-gendaz/promocoes'),
-      clienteApi.get('/meu-gendaz/cupons'),
+      clienteApi.get('/clientes/promocoes'),
+      clienteApi.get('/clientes/cupons'),
     ])
     setBeneficios({
       promocoes: promosRes.status === 'fulfilled' ? promosRes.value.data : [],
@@ -124,13 +138,13 @@ export function ClienteProvider({ children }) {
   }, [])
 
   const usarCupom = useCallback(async (cupomId) => {
-    const { data } = await clienteApi.post(`/meu-gendaz/cupons/${cupomId}/usar`)
+    const { data } = await clienteApi.post(`/clientes/cupons/${cupomId}/usar`)
     await carregarBeneficios()
     return data
   }, [carregarBeneficios])
 
   const enviarMensagemIA = useCallback(async (mensagem, historicoChat = []) => {
-    const { data } = await clienteApi.post('/meu-gendaz/ia/mensagem', {
+    const { data } = await clienteApi.post('/clientes/ia/mensagem', {
       mensagem,
       historico: historicoChat,
     })
@@ -138,54 +152,49 @@ export function ClienteProvider({ children }) {
   }, [])
 
   const carregarPreferenciasIA = useCallback(async () => {
-    const { data } = await clienteApi.get('/meu-gendaz/ia/preferencias')
-    setAssistente((prev) => ({ ...prev, preferencias: data }))
+    const { data } = await clienteApi.get('/clientes/ia/preferencias')
     return data
   }, [])
 
   const atualizarPerfil = useCallback(async (dados) => {
-    const { data } = await clienteApi.patch('/meu-gendaz/perfil', dados)
+    const { data } = await clienteApi.patch('/clientes/perfil', dados)
     setCliente((prev) => ({ ...prev, ...data }))
     return data
   }, [])
 
   const atualizarNotificacoes = useCallback(async (dados) => {
-    const { data } = await clienteApi.patch('/meu-gendaz/notificacoes', dados)
+    const { data } = await clienteApi.patch('/clientes/notificacoes', dados)
     setConfiguracoes((prev) => ({ ...prev, ...data }))
     return data
   }, [])
 
   const atualizarPrivacidade = useCallback(async (dados) => {
-    const { data } = await clienteApi.patch('/meu-gendaz/privacidade', dados)
+    const { data } = await clienteApi.patch('/clientes/privacidade', dados)
     setConfiguracoes((prev) => ({ ...prev, ...data }))
     return data
   }, [])
 
   const logout = useCallback(async () => {
     try {
-      await clienteApi.post('/meu-gendaz/auth/logout')
-    } catch { /* ignora erro no logout */ }
-    localStorage.removeItem('meu-gendaz-auth')
+      await clienteApi.post('/clientes/auth/logout')
+    } catch { /* ignora */ }
+    localStorage.removeItem('clienteToken')
+    localStorage.removeItem('clienteRefreshToken')
     setCliente(null)
     setDashboard(null)
     setAgendamentos([])
-    setHistorico({ agendamentos: [], total: 0, pagina: 1, proximaPagina: false })
     setBeneficios({ promocoes: [], cupons: [] })
-    setAssistente({ mensagens: [], preferencias: null })
     setConfiguracoes(null)
   }, [])
 
-  const value = useMemo(() => ({
+  const value = {
     cliente,
     dashboard,
     agendamentos,
-    historico,
     beneficios,
-    assistente,
     configuracoes,
     carregando,
     erro,
-    autenticado,
     sincronizarDados,
     criarAgendamento,
     reagendar,
@@ -200,17 +209,11 @@ export function ClienteProvider({ children }) {
     atualizarNotificacoes,
     atualizarPrivacidade,
     logout,
-  }), [
-    cliente, dashboard, agendamentos, historico, beneficios, assistente, configuracoes,
-    carregando, erro, autenticado, sincronizarDados, criarAgendamento, reagendar,
-    cancelarAgendamento, carregarHistorico, buscarHorarios, carregarBeneficios, usarCupom,
-    enviarMensagemIA, carregarPreferenciasIA, atualizarPerfil, atualizarNotificacoes,
-    atualizarPrivacidade, logout,
-  ])
+  }
 
-  return <ClienteContext.Provider value={value}>{children}</ClienteContext.Provider>
-}
-
-export function useCliente() {
-  return useContext(ClienteContext)
+  return (
+    <ClienteGendazContext.Provider value={value}>
+      {children}
+    </ClienteGendazContext.Provider>
+  )
 }

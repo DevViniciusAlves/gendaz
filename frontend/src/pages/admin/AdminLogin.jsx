@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import Input from '../../components/Input.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
-import logoWhite from '../../assets/logos/gendaz-logo-white.png'
+import logoWhite from '../../assets/logos/gendaz-logo-branco.png'
 
 export default function AdminLogin() {
   const { usuario, adminUsuario, adminLogin } = useAuth()

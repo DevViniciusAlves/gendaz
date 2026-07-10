@@ -14,7 +14,7 @@ import {
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
-import logoWhite from '../assets/logos/gendaz-logo-navbar.png'
+import logoWhite from '../assets/logos/gendaz-logo-preto.png'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 
