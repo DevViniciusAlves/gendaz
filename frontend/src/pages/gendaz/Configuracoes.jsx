@@ -1,6 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import clienteApi from '../../api/clienteApi.js'
 import { Bell, LogOut, Shield, UserRound, Loader } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 
@@ -19,7 +18,7 @@ export default function Configuracoes() {
     if (cliente) {
       setFormData({
         nome: cliente.nome || '',
-        telefone: cliente.telefone || '',
+        telefone: cliente.empresaTelefone || cliente.telefone || '',
         email: cliente.email || '',
       })
     }

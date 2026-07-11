@@ -16,11 +16,10 @@ export default function Historico() {
       setCarregando(true)
       setErro(null)
       const data = await carregarHistorico(p, 10)
-      console.log('[Historico] dados:', data)
       const lista = data?.agendamentos || data?.historico || (Array.isArray(data) ? data : [])
       setAgendamentos(lista)
       setTotal(data?.total || lista.length || 0)
-      setTotalPaginas(Math.ceil((data?.total || lista.length || 1) / 10))
+      setTotalPaginas(data?.totalPaginas || Math.ceil((data?.total || lista.length || 1) / 10))
     } catch (err) {
       console.error('[Historico] erro:', err)
       setErro(null)
@@ -58,19 +57,16 @@ export default function Historico() {
             {agendamentos.map((item) => (
               <article key={item.id} className="gendaz-table__row">
                 <div>
-                  <strong>{item.servico || item.servicoNome || item.servico?.nome || 'Serviço'}</strong>
-                  <small>{item.profissional || item.profissionalNome || item.profissional?.nome || 'Profissional'}</small>
+                  <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
+                  <small>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</small>
                 </div>
                 <div>
                   <span>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</span>
-                  {item.hora && <small> • {item.hora}</small>}
+                  {(item.horaInicio || item.hora) && <small> • {item.horaInicio || item.hora}</small>}
                 </div>
                 <div>
-                  <strong>{item.valor != null ? Number(item.valor).toFixed(2) : '—'}</strong>
+                  <span className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Finalizado'}</span>
                 </div>
-                {item.avaliacao && (
-                  <div><small>{'⭐'.repeat(item.avaliacao)}</small></div>
-                )}
                 {(item.observacoes || item.observacao) && <small>{item.observacoes || item.observacao}</small>}
               </article>
             ))}

@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Calendar, Clock, Gift, AlertCircle, ArrowRight, Sparkles, BellRing } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -9,7 +9,7 @@ export default function Dashboard() {
   if (carregando) return <div className="gendaz-loading">Carregando dashboard...</div>
   if (erro) return <div className="gendaz-erro">{erro}</div>
 
-  const nome = cliente?.nome || 'cliente'
+  const nome = cliente?.nome || cliente?.empresaNome || 'cliente'
   const proximo = dashboard?.proximoAgendamento || (agendamentos && agendamentos.length > 0 ? agendamentos[0] : null)
   const ultimos = dashboard?.ultimosAtendimentos || []
   const promos = dashboard?.promocoes || []
@@ -28,8 +28,8 @@ export default function Dashboard() {
           <article className="gendaz-card card-proxima gendaz-card--highlight">
             <Calendar size={18} />
             <span>Próximo agendamento</span>
-            <strong>{proximo.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} às {proximo.hora || '—'}</strong>
-            <small>{proximo.servico || proximo.servicoNome || 'Serviço'} • {proximo.profissional || proximo.profissionalNome || 'Profissional'}</small>
+            <strong>{proximo.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} às {proximo.horaInicio || proximo.hora || '—'}</strong>
+            <small>{proximo.servicoNome || proximo.servico || 'Serviço'} • {proximo.profissionalNome || proximo.profissional || 'Profissional'}</small>
             <span className={`gendaz-status gendaz-status--${(proximo.status || '').toLowerCase()}`}>{proximo.status || 'Confirmado'}</span>
           </article>
         )}
@@ -39,8 +39,8 @@ export default function Dashboard() {
           <span>Último atendimento</span>
           {ultimos.length > 0 ? (
             <>
-              <strong>{ultimos[0].servico || ultimos[0].servicoNome || 'Serviço'}</strong>
-              <small>{ultimos[0].data ? new Date(`${ultimos[0].data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} • {ultimos[0].profissional || ultimos[0].profissionalNome || 'Profissional'}</small>
+              <strong>{ultimos[0].servicoNome || ultimos[0].servico || 'Serviço'}</strong>
+              <small>{ultimos[0].data ? new Date(`${ultimos[0].data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} • {ultimos[0].profissionalNome || ultimos[0].profissional || 'Profissional'}</small>
             </>
           ) : (
             <>
@@ -87,9 +87,8 @@ export default function Dashboard() {
             </div>
             {ultimos.map((item, idx) => (
               <div key={idx} className="atendimento-item gendaz-mini-card">
-                <strong>{item.servico || item.servicoNome || 'Serviço'}</strong>
-                <small>{item.profissional || item.profissionalNome || 'Profissional'} em {item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</small>
-                {item.valor != null && <span>R$ {Number(item.valor).toFixed(2)}</span>}
+                <strong>{item.servicoNome || item.servico || 'Serviço'}</strong>
+                <small>{item.profissionalNome || item.profissional || 'Profissional'} em {item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</small>
               </div>
             ))}
           </article>

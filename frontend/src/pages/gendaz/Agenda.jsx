@@ -4,35 +4,12 @@ import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
 
 function NovoAgendamentoModal({ onFechar, onCriar }) {
-  const [servicos, setServicos] = useState([])
-  const [profissionais, setProfissionais] = useState([])
+  const { servicos, profissionais } = useContext(ClienteGendazContext)
   const [horarios, setHorarios] = useState([])
   const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: '', hora: '', observacoes: '' })
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
-  const [carregandoDados, setCarregandoDados] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
-
-  useEffect(() => {
-    const carregar = async () => {
-      setCarregandoDados(true)
-      try {
-        const [servs, profs] = await Promise.allSettled([
-          clienteApi.get('/clientes/servicos'),
-          clienteApi.get('/clientes/profissionais'),
-        ])
-        console.log('[Agenda] servicos:', servs.status, servs.value?.data)
-        console.log('[Agenda] profissionais:', profs.status, profs.value?.data)
-        if (servs.status === 'fulfilled') setServicos(Array.isArray(servs.value.data) ? servs.value.data : servs.value.data?.servicos || [])
-        if (profs.status === 'fulfilled') setProfissionais(Array.isArray(profs.value.data) ? profs.value.data : profs.value.data?.profissionais || [])
-      } catch (err) {
-        console.error('[Agenda] Erro ao carregar dados:', err)
-      } finally {
-        setCarregandoDados(false)
-      }
-    }
-    carregar()
-  }, [])
 
   useEffect(() => {
     if (!form.servicoId || !form.profissionalId || !form.data) {
@@ -42,10 +19,9 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
     const buscar = async () => {
       try {
         setCarregandoHorarios(true)
-        const { data } = await clienteApi.get('/clientes/horarios-disponiveis', {
+        const { data } = await clienteApi.get('/meu-gendaz/horarios-disponiveis', {
           params: { servicoId: form.servicoId, profissionalId: form.profissionalId, data: form.data },
         })
-        console.log('[Agenda] horarios:', data)
         setHorarios(Array.isArray(data) ? data : data?.horarios || [])
       } catch (err) {
         console.error('[Agenda] Erro ao buscar horários:', err)
@@ -84,46 +60,40 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
         </div>
         {erro && <p className="gendaz-auth__error">{erro}</p>}
         <form className="gendaz-modal__form" onSubmit={handleSubmit}>
-          {carregandoDados ? (
-            <div className="gendaz-loading"><Loader size={16} /> Carregando serviços e profissionais...</div>
-          ) : (
-            <>
-              <label>
-                <span>Serviço *</span>
-                <select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: e.target.value })} required>
-                  <option value="">Selecione um serviço</option>
-                  {servicos.map((s) => <option key={s.id} value={s.id}>{s.nome || s.titulo || `Serviço ${s.id}`}</option>)}
-                </select>
-                {servicos.length === 0 && <small className="gendaz-texto-aviso">Nenhum serviço disponível.</small>}
-              </label>
-              <label>
-                <span>Profissional *</span>
-                <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value })} required>
-                  <option value="">Selecione um profissional</option>
-                  {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
-                </select>
-                {profissionais.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível.</small>}
-              </label>
-              <label>
-                <span>Data *</span>
-                <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
-              </label>
-              {carregandoHorarios && <div className="gendaz-loading"><Loader size={16} /> Buscando horários...</div>}
-              {!carregandoHorarios && horarios.length > 0 && (
-                <label>
-                  <span>Horário *</span>
-                  <select value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} required>
-                    <option value="">Selecione um horário</option>
-                    {horarios.filter((h) => h.disponivel !== false).map((h) => (
-                      <option key={h.horario || h} value={h.horario || h}>{h.horario || h}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
-              {!carregandoHorarios && form.servicoId && form.profissionalId && form.data && horarios.length === 0 && (
-                <p className="gendaz-texto-aviso">Nenhum horário disponível para esta data.</p>
-              )}
-            </>
+          <label>
+            <span>Serviço *</span>
+            <select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: e.target.value })} required>
+              <option value="">Selecione um serviço</option>
+              {servicos.map((s) => <option key={s.id} value={s.id}>{s.nome || s.titulo || `Serviço ${s.id}`}</option>)}
+            </select>
+            {servicos.length === 0 && <small className="gendaz-texto-aviso">Nenhum serviço disponível.</small>}
+          </label>
+          <label>
+            <span>Profissional *</span>
+            <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value })} required>
+              <option value="">Selecione um profissional</option>
+              {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
+            </select>
+            {profissionais.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível.</small>}
+          </label>
+          <label>
+            <span>Data *</span>
+            <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
+          </label>
+          {carregandoHorarios && <div className="gendaz-loading"><Loader size={16} /> Buscando horários...</div>}
+          {!carregandoHorarios && horarios.length > 0 && (
+            <label>
+              <span>Horário *</span>
+              <select value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} required>
+                <option value="">Selecione um horário</option>
+                {horarios.filter((h) => h.disponivel !== false).map((h) => (
+                  <option key={h.horario || h} value={h.horario || h}>{h.horario || h}</option>
+                ))}
+              </select>
+            </label>
+          )}
+          {!carregandoHorarios && form.servicoId && form.profissionalId && form.data && horarios.length === 0 && (
+            <p className="gendaz-texto-aviso">Nenhum horário disponível para esta data.</p>
           )}
           <label>
             <span>Observações (opcional)</span>
@@ -131,7 +101,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           </label>
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Cancelar</button>
-            <button type="submit" className="gendaz-btn gendaz-btn--primary" disabled={salvando || carregandoDados}>
+            <button type="submit" className="gendaz-btn gendaz-btn--primary" disabled={salvando}>
               {salvando ? <><Loader size={16} /> Salvando...</> : 'Confirmar agendamento'}
             </button>
           </div>
@@ -143,7 +113,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
 
 function ReagendarModal({ agendamento, onFechar, onReagendar }) {
   const [novaData, setNovaData] = useState(agendamento.data || '')
-  const [novaHora, setNovaHora] = useState(agendamento.hora || '')
+  const [novaHora, setNovaHora] = useState(agendamento.horaInicio || agendamento.hora || '')
   const [horarios, setHorarios] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
   const [salvando, setSalvando] = useState(false)
@@ -154,7 +124,7 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
     const buscar = async () => {
       try {
         setCarregandoHorarios(true)
-        const { data } = await clienteApi.get('/clientes/horarios-disponiveis', {
+        const { data } = await clienteApi.get('/meu-gendaz/horarios-disponiveis', {
           params: { servicoId: agendamento.servicoId, profissionalId: agendamento.profissionalId, data: novaData },
         })
         setHorarios(Array.isArray(data) ? data : data?.horarios || [])
@@ -171,7 +141,7 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
     if (!novaData || !novaHora) { setErro('Selecione data e horário.'); return }
     try {
       setSalvando(true)
-      await onReagendar(agendamento.id, { novadata: novaData, novaHora })
+      await onReagendar(agendamento.id, { novaData, novaHora })
       onFechar()
     } catch (err) {
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao reagendar.')
@@ -245,7 +215,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
         </div>
         {erro && <p className="gendaz-auth__error">{erro}</p>}
         <form className="gendaz-modal__form" onSubmit={handleSubmit}>
-          <p>Tem certeza que deseja cancelar o agendamento de <strong>{agendamento.servico || agendamento.servicoNome || 'Serviço'}</strong>?</p>
+          <p>Tem certeza que deseja cancelar o agendamento de <strong>{agendamento.servicoNome || agendamento.servico || 'Serviço'}</strong>?</p>
           <label>
             <span>Motivo (opcional)</span>
             <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Informe o motivo do cancelamento..." />
@@ -267,8 +237,6 @@ export default function Agenda() {
   const [showNovo, setShowNovo] = useState(false)
   const [modalReagendar, setModalReagendar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)
-
-  console.log('[Agenda] render', { agendamentos, carregando, erro })
 
   if (carregando) {
     return (
@@ -299,12 +267,12 @@ export default function Agenda() {
           agendamentos.map((item) => (
             <article key={item.id} className="gendaz-table__row gendaz-table__row--agenda">
               <div>
-                <strong>{item.servico || item.servicoNome || item.servico?.nome || 'Serviço'}</strong>
-                <small>{item.profissional || item.profissionalNome || item.profissional?.nome || 'Profissional'}</small>
+                <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
+                <small>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</small>
               </div>
               <div>
                 <span>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : 'Data não definida'}</span>
-                <small><Clock3 size={14} /> {item.hora || item.horaInicio || '—'}</small>
+                <small><Clock3 size={14} /> {item.horaInicio || item.hora || '—'}</small>
               </div>
               <div>
                 <span>Status</span>

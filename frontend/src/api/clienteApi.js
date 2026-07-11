@@ -13,16 +13,6 @@ const clienteApi = axios.create({
 const MAX_REQUESTS = 60
 let requestCount = 0
 let resetTime = Date.now() + 60000
-let isRefreshing = false
-let failedQueue = []
-
-function processQueue(error, token = null) {
-  failedQueue.forEach(({ resolve, reject }) => {
-    if (error) reject(error)
-    else resolve(token)
-  })
-  failedQueue = []
-}
 
 function emitirToast(type, message) {
   if (typeof window === 'undefined') return
@@ -42,36 +32,8 @@ clienteApi.interceptors.request.use((config) => {
     return Promise.reject(new Error('RATE_LIMIT_EXCEEDED'))
   }
   requestCount++
-
-  const token = localStorage.getItem('clienteToken')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-
   return config
 })
-
-async function tentarRefreshToken(config) {
-  const refreshToken = localStorage.getItem('clienteRefreshToken')
-  const url = String(config?.url || '')
-  if (!refreshToken || config?._retry || url.includes('/clientes/auth/')) {
-    return false
-  }
-  config._retry = true
-  try {
-    const { data } = await axios.post(`${API_BASE}/clientes/auth/refresh`, {
-      refreshToken,
-    })
-    localStorage.setItem('clienteToken', data.token)
-    localStorage.setItem('clienteRefreshToken', data.refreshToken)
-    return true
-  } catch {
-    localStorage.removeItem('clienteToken')
-    localStorage.removeItem('clienteRefreshToken')
-    window.location.href = '/gendaz/login'
-    return false
-  }
-}
 
 clienteApi.interceptors.response.use(
   (response) => response,
@@ -91,29 +53,11 @@ clienteApi.interceptors.response.use(
       }
     }
 
-    const originalRequest = error.config || {}
     const status = error.response?.status
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      const refreshToken = localStorage.getItem('clienteRefreshToken')
-      if (refreshToken) {
-        try {
-          const { data } = await axios.post(`${API_BASE}/clientes/auth/refresh`, {
-            refreshToken,
-          })
-
-          localStorage.setItem('clienteToken', data.token)
-          localStorage.setItem('clienteRefreshToken', data.refreshToken)
-
-          originalRequest.headers.Authorization = `Bearer ${data.token}`
-          return clienteApi(originalRequest)
-        } catch (err) {
-          localStorage.removeItem('clienteToken')
-          localStorage.removeItem('clienteRefreshToken')
-          window.location.href = '/gendaz/login'
-        }
+    if (status === 401) {
+      localStorage.removeItem('meu-gendaz-auth')
+      if (!error.config?.url?.includes('/meu-gendaz/auth/')) {
+        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
       }
     }
 
