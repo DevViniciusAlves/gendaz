@@ -54,11 +54,11 @@ clienteApi.interceptors.response.use(
     }
 
     const status = error.response?.status
-    if (status === 401) {
+    const url = error.config?.url || ''
+
+    if (status === 401 && url.includes('/meu-gendaz/')) {
       localStorage.removeItem('meu-gendaz-auth')
-      if (!error.config?.url?.includes('/meu-gendaz/auth/')) {
-        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
-      }
+      window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
     }
 
     if (status === 429) {

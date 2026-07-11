@@ -342,7 +342,11 @@ export default function Agenda() {
       setModalCriar(false)
       setForm(novoFormulario)
     } catch (error) {
-      setErroCriar(error.response?.data?.mensagem || 'Não foi possível criar o agendamento.')
+      const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
+      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
+        ? 'Você precisa cadastrar o cliente primeiro. Vá em Clientes → Novo cliente.'
+        : mensagemErro || 'Não foi possível criar o agendamento.'
+      setErroCriar(mensagemFormatada)
     } finally {
       setSalvandoCriar(false)
     }
@@ -384,7 +388,11 @@ export default function Agenda() {
       setModalEditar(false)
       setEdicao(null)
     } catch (error) {
-      setErroEditar(error.response?.data?.mensagem || 'Não foi possível salvar o agendamento.')
+      const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
+      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
+        ? 'Você precisa cadastrar o cliente primeiro. Vá em Clientes → Novo cliente.'
+        : mensagemErro || 'Não foi possível salvar o agendamento.'
+      setErroEditar(mensagemFormatada)
     } finally {
       setSalvandoEditar(false)
     }
