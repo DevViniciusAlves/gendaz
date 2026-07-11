@@ -3,6 +3,8 @@ package com.minhaempresa.agendapro.auth.controller;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
+import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
+import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
@@ -29,6 +31,7 @@ public class MeuGendazController {
 
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
+    private final ClienteRepository clienteRepository;
     private final ServicoService servicoService;
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
@@ -48,6 +51,18 @@ public class MeuGendazController {
             throw new BusinessException("Empresa não encontrada para este usuário.");
         }
         return user.getEmpresa().getId();
+    }
+
+    private ClienteEntity findOrCreateCliente(UsuarioEntity user) {
+        Long empresaId = getEmpresaId(user);
+        return clienteRepository
+                .findFirstByEmpresaIdAndEmail(empresaId, user.getEmail())
+                .orElseGet(() -> clienteRepository.save(ClienteEntity.builder()
+                        .nome(user.getNome())
+                        .email(user.getEmail())
+                        .telefone("5500000000000")
+                        .empresa(user.getEmpresa())
+                        .build()));
     }
 
     // === EMPRESA INFO BY SLUG ===
@@ -143,7 +158,8 @@ public class MeuGendazController {
     public ResponseEntity<?> agendamentosProximos(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
-            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(user.getId());
+            ClienteEntity cliente = findOrCreateCliente(user);
+            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
@@ -163,7 +179,8 @@ public class MeuGendazController {
     ) {
         try {
             UsuarioEntity user = findUserFromSession(request);
-            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(user.getId());
+            ClienteEntity cliente = findOrCreateCliente(user);
+            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
@@ -189,9 +206,10 @@ public class MeuGendazController {
         try {
             UsuarioEntity user = findUserFromSession(request);
             Long empresaId = getEmpresaId(user);
+            ClienteEntity cliente = findOrCreateCliente(user);
 
             CriarAgendamentoRequest agendamentoRequest = new CriarAgendamentoRequest(
-                    user.getId(),
+                    cliente.getId(),
                     Long.valueOf(body.get("servicoId").toString()),
                     body.get("profissionalId") != null ? Long.valueOf(body.get("profissionalId").toString()) : null,
                     empresaId,
@@ -264,8 +282,9 @@ public class MeuGendazController {
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
+            ClienteEntity cliente = findOrCreateCliente(user);
 
-            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(user.getId());
+            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(cliente.getId());
 
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
