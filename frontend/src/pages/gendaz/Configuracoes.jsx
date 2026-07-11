@@ -12,7 +12,7 @@ export default function Configuracoes() {
   const [privacidade, setPrivacidade] = useState({ compartilharHistorico: false })
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState('')
-  const [erro, setErro] = useState('')
+  const [erros, setErros] = useState({})
 
   useEffect(() => {
     if (cliente) {
@@ -39,19 +39,43 @@ export default function Configuracoes() {
 
   function mostrarMensagem(texto) {
     setMensagem(texto)
-    setErro('')
+    setErros({})
     setTimeout(() => setMensagem(''), 3000)
+  }
+
+  function validarFormulario() {
+    const novosErros = {}
+
+    if (!formData.nome || formData.nome.trim().length < 3) {
+      novosErros.nome = 'Nome deve ter pelo menos 3 caracteres.'
+    } else if (/^\d+$/.test(formData.nome.trim())) {
+      novosErros.nome = 'Nome não pode conter apenas números.'
+    }
+
+    if (!formData.email || !formData.email.includes('@') || !formData.email.includes('.')) {
+      novosErros.email = 'Email inválido.'
+    }
+
+    setErros(novosErros)
+    return Object.keys(novosErros).length === 0
   }
 
   async function handleSalvarPerfil(e) {
     e.preventDefault()
-    setErro('')
+    setErros({})
+    if (!validarFormulario()) return
+
     try {
       setSalvando(true)
       await atualizarPerfil(formData)
       mostrarMensagem('Perfil atualizado com sucesso!')
     } catch (err) {
-      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar perfil.')
+      const msg = err.response?.data?.mensagem || err.message || 'Erro ao salvar perfil.'
+      if (err.response?.status === 400) {
+        setErros({ geral: msg })
+      } else {
+        setErros({ geral: msg })
+      }
     } finally {
       setSalvando(false)
     }
@@ -59,13 +83,12 @@ export default function Configuracoes() {
 
   async function handleSalvarNotificacoes(e) {
     e.preventDefault()
-    setErro('')
     try {
       setSalvando(true)
       await atualizarNotificacoes(notificacoes)
       mostrarMensagem('Preferências de notificação atualizadas!')
     } catch (err) {
-      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar notificações.')
+      setErros({ geral: err.response?.data?.mensagem || err.message || 'Erro ao salvar notificações.' })
     } finally {
       setSalvando(false)
     }
@@ -73,13 +96,12 @@ export default function Configuracoes() {
 
   async function handleSalvarPrivacidade(e) {
     e.preventDefault()
-    setErro('')
     try {
       setSalvando(true)
       await atualizarPrivacidade(privacidade)
       mostrarMensagem('Preferências de privacidade atualizadas!')
     } catch (err) {
-      setErro(err.response?.data?.mensagem || err.message || 'Erro ao salvar privacidade.')
+      setErros({ geral: err.response?.data?.mensagem || err.message || 'Erro ao salvar privacidade.' })
     } finally {
       setSalvando(false)
     }
@@ -98,11 +120,11 @@ export default function Configuracoes() {
       <header className="gendaz-page__header">
         <span className="gendaz-kicker">Configurações</span>
         <h1>Meu perfil e preferências</h1>
-        <p>Telefone, e-mail, notificações, privacidade e saída da sessão.</p>
+        <p>Nome, e-mail, notificações, privacidade e saída da sessão.</p>
       </header>
 
       {mensagem && <div className="gendaz-mensagem gendaz-mensagem--sucesso">{mensagem}</div>}
-      {erro && <div className="gendaz-auth__error">{erro}</div>}
+      {erros.geral && <div className="gendaz-auth__error">{erros.geral}</div>}
 
       <div className="gendaz-grid gendaz-grid--two">
         <article className="gendaz-panel">
@@ -111,6 +133,7 @@ export default function Configuracoes() {
             <label>
               <span>Nome</span>
               <input type="text" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} required />
+              {erros.nome && <small className="gendaz-texto-erro">{erros.nome}</small>}
             </label>
             <label>
               <span>Telefone</span>
@@ -119,6 +142,7 @@ export default function Configuracoes() {
             <label>
               <span>E-mail</span>
               <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+              {erros.email && <small className="gendaz-texto-erro">{erros.email}</small>}
             </label>
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
               {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Alterações'}

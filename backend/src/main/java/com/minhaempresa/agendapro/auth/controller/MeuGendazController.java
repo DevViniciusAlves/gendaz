@@ -4,6 +4,7 @@ import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.BusinessException;
@@ -27,12 +28,12 @@ import org.springframework.web.bind.annotation.*;
 public class MeuGendazController {
 
     private final UsuarioRepository usuarioRepository;
+    private final EmpresaRepository empresaRepository;
     private final ServicoService servicoService;
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
     private final UsuarioSessionService usuarioSessionService;
 
-    // --- Helper to find user from meu_gendaz_session cookie ---
     private UsuarioEntity findUserFromSession(HttpServletRequest request) {
         String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
         if (session == null || session.isBlank()) {
@@ -44,9 +45,25 @@ public class MeuGendazController {
 
     private Long getEmpresaId(UsuarioEntity user) {
         if (user.getEmpresa() == null) {
-            throw new BusinessException("Empresa não encontrada.");
+            throw new BusinessException("Empresa não encontrada para este usuário.");
         }
         return user.getEmpresa().getId();
+    }
+
+    // === EMPRESA INFO BY SLUG ===
+    @GetMapping("/empresa/{slug}")
+    public ResponseEntity<?> empresaPorSlug(@PathVariable String slug) {
+        Optional<EmpresaEntity> empresa = empresaRepository.findByAgendamentoSlug(slug);
+        if (empresa.isEmpty()) {
+            return ResponseEntity.status(404).body(Map.of("mensagem", "Empresa não encontrada."));
+        }
+        EmpresaEntity e = empresa.get();
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("id", e.getId());
+        result.put("nome", e.getNomeFantasia());
+        result.put("telefone", e.getTelefone());
+        result.put("email", e.getEmail());
+        return ResponseEntity.ok(result);
     }
 
     // === PROFILE ===
@@ -63,6 +80,7 @@ public class MeuGendazController {
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
             result.put("empresaTelefone", empresa != null ? empresa.getTelefone() : null);
             result.put("empresaEmail", empresa != null ? empresa.getEmail() : null);
+            result.put("empresaSlug", empresa != null ? empresa.getAgendamentoSlug() : null);
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -114,7 +132,7 @@ public class MeuGendazController {
             }).toList();
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
-            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+            return ResponseEntity.status(400).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados inválidos."));
         }
@@ -246,10 +264,9 @@ public class MeuGendazController {
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
 
             List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(user.getId());
-            
+
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
@@ -307,20 +324,56 @@ public class MeuGendazController {
         return ResponseEntity.ok(body);
     }
 
-    // === UPDATE PROFILE ===
+    // === UPDATE PROFILE WITH VALIDATION ===
     @PatchMapping("/perfil")
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
-            if (body.containsKey("nome")) user.setNome(body.get("nome"));
-            if (body.containsKey("email")) user.setEmail(body.get("email"));
+
+            String nome = body.get("nome");
+            String email = body.get("email");
+            String telefone = body.get("telefone");
+
+            List<String> erros = new ArrayList<>();
+
+            if (nome != null) {
+                nome = nome.trim();
+                if (nome.length() < 3) {
+                    erros.add("Nome deve ter pelo menos 3 caracteres.");
+                }
+                if (nome.matches("^\\d+$")) {
+                    erros.add("Nome não pode conter apenas números.");
+                }
+                user.setNome(nome);
+            }
+
+            if (email != null) {
+                email = email.trim().toLowerCase();
+                if (!email.contains("@") || !email.contains(".")) {
+                    erros.add("Email inválido.");
+                }
+                if (!email.equals(user.getEmail()) && usuarioRepository.findByEmail(email).isPresent()) {
+                    erros.add("Este email já está cadastrado em nossa plataforma.");
+                }
+                if (erros.isEmpty()) {
+                    user.setEmail(email);
+                }
+            }
+
+            if (!erros.isEmpty()) {
+                return ResponseEntity.status(400).body(Map.of("mensagem", String.join(" ", erros)));
+            }
+
             usuarioRepository.save(user);
+
+            EmpresaEntity empresa = user.getEmpresa();
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("id", user.getId());
             result.put("nome", user.getNome());
             result.put("email", user.getEmail());
-            result.put("empresaId", user.getEmpresa() != null ? user.getEmpresa().getId() : null);
-            result.put("empresaNome", user.getEmpresa() != null ? user.getEmpresa().getNomeFantasia() : null);
+            result.put("empresaId", empresa != null ? empresa.getId() : null);
+            result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
+            result.put("mensagem", "Perfil atualizado com sucesso!");
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
