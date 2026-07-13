@@ -1,17 +1,34 @@
-import { useContext } from 'react'
+import { useContext, useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, AlertCircle, ArrowRight, Sparkles, BellRing } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing } from 'lucide-react'
 
 export default function Dashboard() {
-  const { cliente, dashboard, agendamentos, carregando, erro } = useContext(ClienteGendazContext)
+  const navigate = useNavigate()
+  const { cliente, dashboard, agendamentos, carregarHistorico, carregando, erro } = useContext(ClienteGendazContext)
+  const [ultimosAtendimentos, setUltimosAtendimentos] = useState([])
+  const [carregandoAtendimentos, setCarregandoAtendimentos] = useState(false)
+
+  useEffect(() => {
+    const buscar = async () => {
+      try {
+        setCarregandoAtendimentos(true)
+        const data = await carregarHistorico(1, 3)
+        setUltimosAtendimentos(data?.agendamentos || data || [])
+      } catch {
+        /* silencioso */
+      } finally {
+        setCarregandoAtendimentos(false)
+      }
+    }
+    if (cliente) buscar()
+  }, [cliente, carregarHistorico])
 
   if (carregando) return <div className="gendaz-loading">Carregando dashboard...</div>
   if (erro) return <div className="gendaz-erro">{erro}</div>
 
   const nome = cliente?.nome || cliente?.empresaNome || 'cliente'
   const proximo = dashboard?.proximoAgendamento || (agendamentos && agendamentos.length > 0 ? agendamentos[0] : null)
-  const ultimos = dashboard?.ultimosAtendimentos || []
   const promos = dashboard?.promocoes || []
   const notifs = dashboard?.notificacoes || []
 
@@ -20,134 +37,165 @@ export default function Dashboard() {
       <header className="gendaz-page__header gendaz-page__header--hero">
         <span className="gendaz-kicker">Dashboard</span>
         <h1>Bom te ver novamente, {nome}. 👋</h1>
-        <p>Seu relacionamento com a empresa em um único espaço, com agenda, histórico, IA e benefícios.</p>
+        <p>Acompanhe sua agenda, conversas e beneficios em um unico espaco.</p>
       </header>
 
-      <div className="gendaz-grid gendaz-grid--four">
-        {proximo && (
-          <article className="gendaz-card card-proxima gendaz-card--highlight">
-            <Calendar size={18} />
-            <span>Próximo agendamento</span>
-            <strong>{proximo.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} às {proximo.horaInicio || proximo.hora || '—'}</strong>
-            <small>{proximo.servicoNome || proximo.servico || 'Serviço'} • {proximo.profissionalNome || proximo.profissional || 'Profissional'}</small>
-            <span className={`gendaz-status gendaz-status--${(proximo.status || '').toLowerCase()}`}>{proximo.status || 'Confirmado'}</span>
-          </article>
-        )}
+      {/* PROXIMO AGENDAMENTO */}
+      {proximo ? (
+        <article className="gendaz-card gendaz-card--highlight gendaz-card--agendamento">
+          <div className="gendaz-card__top">
+            <div className="gendaz-card__icon-title">
+              <Calendar size={18} />
+              <span>Proximo agendamento</span>
+            </div>
+            <span className={`gendaz-status gendaz-status--${(proximo.status || 'confirmado').toLowerCase()}`}>
+              {proximo.status || 'Confirmado'}
+            </span>
+          </div>
 
-        <article className="gendaz-card">
-          <Clock size={18} />
-          <span>Último atendimento</span>
-          {ultimos.length > 0 ? (
-            <>
-              <strong>{ultimos[0].servicoNome || ultimos[0].servico || 'Serviço'}</strong>
-              <small>{ultimos[0].data ? new Date(`${ultimos[0].data}T12:00:00`).toLocaleDateString('pt-BR') : '—'} • {ultimos[0].profissionalNome || ultimos[0].profissional || 'Profissional'}</small>
-            </>
-          ) : (
-            <>
-              <strong>—</strong>
-              <small>Nenhum atendimento registrado</small>
-            </>
-          )}
+          <div className="gendaz-card__body">
+            <div className="gendaz-info-row">
+              <Clock size={16} />
+              <span>
+                {proximo.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}
+                {' as '}
+                {proximo.horaInicio || proximo.hora || '—'}
+              </span>
+            </div>
+            <div className="gendaz-info-row">
+              <strong>{proximo.servicoNome || proximo.servico || 'Servico'}</strong>
+            </div>
+            <div className="gendaz-info-row">
+              <span>Com {proximo.profissionalNome || proximo.profissional || 'Profissional'}</span>
+            </div>
+          </div>
+
+          <div className="gendaz-card__actions">
+            <button className="gendaz-btn gendaz-btn--secondary" onClick={() => navigate('/meu-gendaz/agenda')}>
+              Reagendar
+            </button>
+            <button className="gendaz-btn gendaz-btn--danger" onClick={() => navigate('/meu-gendaz/agenda')}>
+              Cancelar
+            </button>
+          </div>
         </article>
+      ) : (
+        <article className="gendaz-card gendaz-card--empty">
+          <div className="gendaz-empty-state">
+            <Calendar size={48} />
+            <h3>Sem agendamentos proximos</h3>
+            <p>Voce nao possui agendamentos no momento.</p>
+            <button className="gendaz-btn gendaz-btn--primary" onClick={() => navigate('/meu-gendaz/agenda')}>
+              <Plus size={16} /> Agendar Agora
+            </button>
+          </div>
+        </article>
+      )}
 
-        {notifs.length > 0 && (
-          <article className="gendaz-card">
-            <BellRing size={18} />
-            <span>Notificações</span>
-            <strong>{notifs.filter((n) => !n.lida).length} não lidas</strong>
-            <small>{notifs[0]?.mensagem || 'Sem notificações'}</small>
-          </article>
-        )}
+      {/* GRID 2 COLUNAS */}
+      <div className="gendaz-dashboard-grid">
+        <div className="gendaz-dashboard-col">
+          {/* PROMOCOES */}
+          {promos.length > 0 && (
+            <article className="gendaz-card gendaz-card--promocoes">
+              <div className="gendaz-card__top">
+                <div className="gendaz-card__icon-title">
+                  <Gift size={18} />
+                  <span>Promocoes disponiveis</span>
+                </div>
+              </div>
+              <div className="gendaz-stack">
+                {promos.map((promo) => (
+                  <div key={promo.id} className="gendaz-mini-card">
+                    <div className="gendaz-mini-card__header">
+                      <strong>{promo.titulo}</strong>
+                      <span className="gendaz-desconto">{promo.desconto}% OFF</span>
+                    </div>
+                    <span>{promo.descricao}</span>
+                    {promo.cupom && <small>Cupom: <strong>{promo.cupom}</strong></small>}
+                  </div>
+                ))}
+              </div>
+              <button className="gendaz-btn gendaz-btn--ghost" onClick={() => navigate('/meu-gendaz/beneficios')}>
+                Ver todos os beneficios <ChevronRight size={16} />
+              </button>
+            </article>
+          )}
 
-        {promos.length > 0 && (
-          <article className="gendaz-card card-promocoes">
-            <Gift size={18} />
-            <span>Promoção ativa</span>
-            <strong>{promos[0].titulo}</strong>
-            <small>{promos[0].desconto}% OFF • Válido até {promos[0].validade}</small>
+          {/* CONTATO RAPIDO */}
+          <article className="gendaz-card gendaz-card--contato">
+            <div className="gendaz-card__top">
+              <div className="gendaz-card__icon-title">
+                <MessageCircle size={18} />
+                <span>Contato rapido</span>
+              </div>
+            </div>
+            <div className="gendaz-botoes-contato">
+              <button className="gendaz-btn-contato" onClick={() => navigate('/meu-gendaz/ia')}>
+                <Sparkles size={18} />
+                <span>Assistente IA</span>
+              </button>
+              <button className="gendaz-btn-contato">
+                <MessageCircle size={18} />
+                <span>Mensagem</span>
+              </button>
+              <button className="gendaz-btn-contato">
+                <Phone size={18} />
+                <span>Ligar</span>
+              </button>
+            </div>
           </article>
-        )}
+        </div>
 
-        {!proximo && notifs.length === 0 && promos.length === 0 && (
-          <article className="gendaz-card">
-            <AlertCircle size={18} />
-            <span>Bem-vindo</span>
-            <strong>{nome}</strong>
-            <small>Agende seu primeiro serviço!</small>
+        <div className="gendaz-dashboard-col">
+          {/* HISTORICO */}
+          <article className="gendaz-card gendaz-card--historico">
+            <div className="gendaz-card__top">
+              <div className="gendaz-card__icon-title">
+                <Clock size={18} />
+                <span>Ultimos atendimentos</span>
+              </div>
+              <button className="gendaz-link-mais" onClick={() => navigate('/meu-gendaz/historico')}>
+                Ver mais <ChevronRight size={14} />
+              </button>
+            </div>
+
+            {carregandoAtendimentos ? (
+              <p className="gendaz-vazio">Carregando...</p>
+            ) : ultimosAtendimentos.length > 0 ? (
+              <div className="gendaz-stack">
+                {ultimosAtendimentos.map((at, idx) => (
+                  <div key={idx} className="gendaz-mini-card gendaz-mini-card--historico">
+                    <div className="gendaz-mini-card__data">
+                      <strong>{at.data ? new Date(`${at.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</strong>
+                    </div>
+                    <div className="gendaz-mini-card__info">
+                      <p className="gendaz-mini-card__servico">{at.servicoNome || at.servico || 'Servico'}</p>
+                      <p className="gendaz-mini-card__profissional">Com {at.profissionalNome || at.profissional || 'Profissional'}</p>
+                    </div>
+                    {at.valor && (
+                      <div className="gendaz-mini-card__valor">
+                        R$ {Number(at.valor).toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="gendaz-vazio">Sem atendimentos registrados</p>
+            )}
           </article>
-        )}
+        </div>
       </div>
 
-      {ultimos.length > 0 && (
-        <div className="gendaz-grid gendaz-grid--two">
-          <article className="gendaz-panel card-historico-rapido">
-            <div className="gendaz-panel__head">
-              <Clock size={18} />
-              <h2>Últimos atendimentos</h2>
-            </div>
-            {ultimos.map((item, idx) => (
-              <div key={idx} className="atendimento-item gendaz-mini-card">
-                <strong>{item.servicoNome || item.servico || 'Serviço'}</strong>
-                <small>{item.profissionalNome || item.profissional || 'Profissional'} em {item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</small>
-              </div>
-            ))}
-          </article>
-
-          <article className="gendaz-panel">
-            <div className="gendaz-panel__head">
-              <Calendar size={18} />
-              <h2>Agendar novamente</h2>
-            </div>
-            <p>Repetir a última visita é a forma mais rápida de voltar.</p>
-            <Link to="/meu-gendaz/agenda" className="gendaz-btn gendaz-btn--primary">
-              Agendar novamente <ArrowRight size={16} />
-            </Link>
-          </article>
-        </div>
-      )}
-
-      {promos.length > 0 && (
-        <div className="gendaz-grid gendaz-grid--two">
-          <article className="gendaz-panel">
-            <div className="gendaz-panel__head">
-              <Gift size={18} />
-              <h2>Promoções disponíveis</h2>
-            </div>
-            <div className="gendaz-stack">
-              {promos.map((promo) => (
-                <div key={promo.id} className="gendaz-mini-card">
-                  <div className="gendaz-mini-card__header">
-                    <strong>{promo.titulo}</strong>
-                    <span className="gendaz-desconto">{promo.desconto}% OFF</span>
-                  </div>
-                  <span>{promo.descricao}</span>
-                  {promo.cupom && <small>Cupom: {promo.cupom}</small>}
-                </div>
-              ))}
-            </div>
-            <Link to="/meu-gendaz/beneficios" className="gendaz-btn gendaz-btn--ghost">
-              Ver todos os benefícios <ArrowRight size={16} />
-            </Link>
-          </article>
-
-          <article className="gendaz-panel">
-            <div className="gendaz-panel__head">
-              <Sparkles size={18} />
-              <h2>Assistente IA</h2>
-            </div>
-            <p>Precisa de ajuda? Converse com a IA sobre agendamentos, preços e serviços.</p>
-            <Link to="/meu-gendaz/ia" className="gendaz-btn gendaz-btn--primary">
-              Abrir assistente <ArrowRight size={16} />
-            </Link>
-          </article>
-        </div>
-      )}
-
+      {/* NOTIFICACOES */}
       {notifs.length > 0 && (
-        <article className="gendaz-panel">
-          <div className="gendaz-panel__head">
-            <BellRing size={18} />
-            <h2>Notificações recentes</h2>
+        <article className="gendaz-card">
+          <div className="gendaz-card__top">
+            <div className="gendaz-card__icon-title">
+              <BellRing size={18} />
+              <span>Notificacoes recentes</span>
+            </div>
           </div>
           <ul className="gendaz-list">
             {notifs.slice(0, 5).map((notif) => (
@@ -156,6 +204,21 @@ export default function Dashboard() {
               </li>
             ))}
           </ul>
+        </article>
+      )}
+
+      {/* BANNER ACAO RAPIDA */}
+      {!proximo && (
+        <article className="gendaz-card gendaz-card--acao-rapida">
+          <div className="gendaz-acao-content">
+            <div>
+              <h3>Agende Agora</h3>
+              <p>Clique abaixo para fazer seu primeiro agendamento</p>
+            </div>
+            <button className="gendaz-btn gendaz-btn--primary gendaz-btn--lg" onClick={() => navigate('/meu-gendaz/agenda')}>
+              <Plus size={18} /> Novo Agendamento
+            </button>
+          </div>
         </article>
       )}
     </section>
