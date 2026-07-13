@@ -12496,8 +12496,8 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 290px minmax(0, 1fr);
-  background: #000000;
+  grid-template-columns: 264px minmax(0, 1fr);
+  background: #0d0c0c;
   color: #ffffff;
 }
 
@@ -12505,19 +12505,21 @@ tbody tr:hover { background: #fffaf5; }
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 24px 18px;
-  background: #080808;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
+  padding: 22px 14px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 34%),
+    linear-gradient(180deg, #292929 0%, #292929 100%);
+  border-right: 0;
+  color: #ffffff;
 }
 
 .gendaz-sidebar__brand strong,
 .gendaz-page__header h1,
 .gendaz-panel h2,
 .gendaz-auth__card h1 {
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 .gendaz-sidebar__brand span,
@@ -12525,43 +12527,88 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-panel span,
 .gendaz-panel small,
 .gendaz-auth__card p {
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
 }
 
 .gendaz-sidebar__nav {
   display: grid;
-  gap: 8px;
-  margin-top: 24px;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+.gendaz-sidebar .sidebar-logo-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 128px;
+  padding: 18px 10px 18px;
+}
+
+.gendaz-sidebar .sidebar-logo {
+  display: block;
+  width: 100%;
+  max-width: 212px;
+  max-height: 148px;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  transform: scale(1.14);
+  transform-origin: center;
+  filter: none;
+}
+
+.gendaz-sidebar .nav-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .08em;
+  text-transform: uppercase;
 }
 
 .gendaz-sidebar__link {
-  min-height: 48px;
+  min-height: 42px;
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 0 14px;
-  border-radius: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  padding: 0 12px;
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.78);
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.03);
+  background: transparent;
+  font-weight: 700;
+  transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.gendaz-sidebar__link:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.09);
+  transform: translateX(2px);
 }
 
 .gendaz-sidebar__link.is-active {
-  color: #0a0a0a;
-  background: #ffffff;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-left: 3px solid #42f569;
+  padding-left: 9px;
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-sidebar__footer {
-  margin-top: 24px;
+  margin-top: 28px;
   display: flex;
   align-items: center;
   gap: 8px;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 11px;
 }
 
 .gendaz-main {
   min-width: 0;
-  padding: 28px;
+  padding: 30px;
 }
 
 .gendaz-page {
@@ -12574,11 +12621,23 @@ tbody tr:hover { background: #fffaf5; }
   gap: 8px;
 }
 
-.gendaz-kicker {
-  color: #ffffff;
-  font-size: 12px;
+.gendaz-page__header h1 {
+  margin: 0;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: .12em;
+  letter-spacing: -0.02em;
+}
+
+.gendaz-page__header p {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+}
+
+.gendaz-kicker {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: .08em;
   text-transform: uppercase;
 }
 
@@ -12596,11 +12655,20 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-panel,
 .gendaz-auth__card,
 .gendaz-chat {
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 18px;
-  box-shadow: none;
+  background: rgba(18, 20, 28, 0.92);
+  backdrop-filter: blur(18px) saturate(120%);
+  -webkit-backdrop-filter: blur(18px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gendaz-card:hover,
+.gendaz-panel:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.42);
 }
 
 .gendaz-card,
@@ -12619,7 +12687,13 @@ tbody tr:hover { background: #fffaf5; }
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+}
+
+.gendaz-panel__head h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .gendaz-list,
@@ -12647,21 +12721,41 @@ tbody tr:hover { background: #fffaf5; }
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 14px;
-  padding: 0 16px;
+  border-radius: 10px;
+  padding: 0 15px;
   font-weight: 700;
+  font-size: 14px;
   text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
 }
 
 .gendaz-btn {
-  background: #1b1b1b;
+  background: rgba(255, 255, 255, 0.06);
   color: #ffffff;
+}
+
+.gendaz-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+
+.gendaz-btn:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  transform: none;
+  box-shadow: none;
 }
 
 .gendaz-btn--primary,
 .gendaz-fab {
-  background: #ffffff;
+  background: #42f569;
   color: #000000;
+}
+
+.gendaz-btn--primary:hover {
+  background: #35d455;
+  box-shadow: 0 8px 24px rgba(66, 245, 105, 0.2);
 }
 
 .gendaz-btn--ghost {
@@ -12675,10 +12769,11 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-table__row {
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  background: rgba(18, 20, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
   padding: 16px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-chat__messages {
@@ -12694,7 +12789,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-chat__message--ia {
-  background: #1a1a1a;
+  background: rgba(18, 20, 28, 0.92);
   color: #ffffff;
 }
 
@@ -12712,11 +12807,18 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-chat__form input,
 .gendaz-auth__form input {
   min-height: 48px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: #111111;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
   padding: 0 14px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.gendaz-chat__form input:focus,
+.gendaz-auth__form input:focus {
+  border-color: #42f569;
+  box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
 }
 
 .gendaz-toggle {
@@ -12782,7 +12884,7 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #000000;
+  background: #0d0c0c;
 }
 
 .gendaz-auth__card {
@@ -12821,12 +12923,14 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-sidebar__link.is-active {
-  color: #000000;
-  background: #ffffff;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+  border-left: 3px solid #42f569;
+  padding-left: 9px;
 }
 
 .gendaz-sidebar__link {
-  background: #141414;
+  background: transparent;
 }
 
 .gendaz-sidebar__footer,
@@ -12836,15 +12940,16 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-panel small,
 .gendaz-auth__card p {
   color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
 }
 
 .gendaz-chat__message--cliente {
-  background: #1b1b1b;
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-chat__form input,
 .gendaz-auth__form input {
-  background: #0f0f0f;
+  background: rgba(255, 255, 255, 0.04);
   border-color: rgba(255, 255, 255, 0.10);
 }
 
@@ -12852,14 +12957,15 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   gap: 8px;
   min-height: 136px;
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
-  padding: 18px;
+  background: rgba(18, 20, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-card--highlight {
-  background: #141414;
+  background: rgba(25, 27, 36, 0.95);
 }
 
 .gendaz-card strong,
@@ -12889,9 +12995,10 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   gap: 6px;
   padding: 14px 16px;
-  border-radius: 16px;
-  background: #0f0f0f;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  background: rgba(18, 20, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-page__header--hero {
@@ -12900,11 +13007,11 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-auth__error {
   margin: 12px 0 0;
-  color: #ffffff;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #fca5a5;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.2);
   padding: 12px 14px;
-  border-radius: 14px;
+  border-radius: 10px;
 }
 
 .gendaz-chat__prefs {
@@ -12939,7 +13046,7 @@ tbody tr:hover { background: #fffaf5; }
   padding: 16px;
   background: rgba(220, 38, 38, 0.1);
   border: 1px solid rgba(220, 38, 38, 0.2);
-  border-radius: 14px;
+  border-radius: 10px;
   color: #fca5a5;
   text-align: center;
 }
@@ -12953,7 +13060,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-mensagem {
   padding: 12px 16px;
-  border-radius: 14px;
+  border-radius: 10px;
   margin-bottom: 16px;
   font-size: 14px;
 }
@@ -13046,7 +13153,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-btn--small {
   padding: 6px 12px;
   font-size: 12px;
-  border-radius: 10px;
+  border-radius: 8px;
 }
 
 .gendaz-modal-overlay {
@@ -13063,10 +13170,11 @@ tbody tr:hover { background: #fffaf5; }
   width: min(520px, 90vw);
   max-height: 90vh;
   overflow-y: auto;
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  background: rgba(18, 20, 28, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 12px;
   padding: 24px;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.52);
 }
 
 .gendaz-modal__head {
@@ -13099,11 +13207,19 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-modal__form textarea {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0f0f0f;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
   font-size: 14px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.gendaz-modal__form input:focus,
+.gendaz-modal__form select:focus,
+.gendaz-modal__form textarea:focus {
+  border-color: #42f569;
+  box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
 }
 
 .gendaz-modal__form textarea {
@@ -13179,11 +13295,19 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-form input[type="tel"] {
   width: 100%;
   padding: 10px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #0f0f0f;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
   color: #ffffff;
   font-size: 14px;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+.gendaz-form input[type="text"]:focus,
+.gendaz-form input[type="email"]:focus,
+.gendaz-form input[type="tel"]:focus {
+  border-color: #42f569;
+  box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
 }
 
 @media (max-width: 1080px) {

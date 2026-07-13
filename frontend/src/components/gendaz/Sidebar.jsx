@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Bot, CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, History } from 'lucide-react'
+import logoSidebar from '../../assets/logos/gendaz-logo-branco.png'
 
 const items = [
   { to: '/meu-gendaz', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -13,12 +14,11 @@ const items = [
 export default function Sidebar() {
   return (
     <aside className="gendaz-sidebar">
-      <div className="gendaz-sidebar__brand">
-        <strong>Meu gendaz</strong>
-        <span>Portal inteligente do cliente</span>
+      <div className="sidebar-logo-wrapper">
+        <img src={logoSidebar} alt="gendaz" className="sidebar-logo" />
       </div>
-
-      <nav className="gendaz-sidebar__nav" aria-label="Navegação principal">
+      <span className="nav-label">Navegação</span>
+      <nav>
         {items.map(({ to, label, icon: Icon, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'gendaz-sidebar__link is-active' : 'gendaz-sidebar__link')}>
             <Icon size={18} />
@@ -26,7 +26,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-
       <div className="gendaz-sidebar__footer">
         <Bot size={16} />
         <small>IA sempre disponível</small>
