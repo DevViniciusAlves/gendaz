@@ -41,7 +41,7 @@ public class MeuGendazAuthController {
     ) {
         MeuGendazAuthResponse auth = authService.validarCodigo(request.email(), request.codigo());
         adicionarCookie(http, response, "meu_gendaz_session", auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
-        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), null, auth.status()));
+        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
     }
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {

@@ -32,6 +32,19 @@ clienteApi.interceptors.request.use((config) => {
     return Promise.reject(new Error('RATE_LIMIT_EXCEEDED'))
   }
   requestCount++
+
+  if (config.url?.includes('/meu-gendaz/')) {
+    try {
+      const raw = localStorage.getItem('meu-gendaz-auth')
+      if (raw) {
+        const tokenData = JSON.parse(raw)
+        if (tokenData?.sessionToken) {
+          config.headers['X-Session-Token'] = tokenData.sessionToken
+        }
+      }
+    } catch { /* ignora */ }
+  }
+
   return config
 })
 

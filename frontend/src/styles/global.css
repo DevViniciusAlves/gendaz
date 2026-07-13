@@ -12763,6 +12763,22 @@ tbody tr:hover { background: #fffaf5; }
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
+.gendaz-btn--voltar {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--color-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.gendaz-btn--voltar:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+
 .gendaz-table {
   display: grid;
   gap: 12px;

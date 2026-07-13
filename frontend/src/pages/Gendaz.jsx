@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, Outlet } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
@@ -56,7 +57,14 @@ function GendazAuthGate({ onLogin }) {
       })
 
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
-        localStorage.setItem('meu-gendaz-auth', JSON.stringify({ email: email.trim(), at: Date.now() }))
+        const token = response.data?.sessionToken || ''
+        const tokenData = {
+          email: email.trim(),
+          sessionToken: token,
+          savedAt: Date.now(),
+          expiresIn: 30 * 24 * 60 * 60 * 1000,
+        }
+        localStorage.setItem('meu-gendaz-auth', JSON.stringify(tokenData))
         onLogin()
         navigate('/meu-gendaz/dashboard', { replace: true })
       } else {
@@ -121,8 +129,13 @@ function GendazAuthGate({ onLogin }) {
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={carregando || bloqueado}>
               {carregando ? 'Validando...' : 'Confirmar'}
             </button>
-            <button className="gendaz-btn" type="button" onClick={() => setEtapa('email')}>
-              Alterar e-mail
+            <button
+              className="gendaz-btn gendaz-btn--voltar"
+              type="button"
+              onClick={() => { setEtapa('email'); setCodigo(''); setErro(''); }}
+              disabled={carregando}
+            >
+              <ArrowLeft size={16} /> Voltar
             </button>
             <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => void reenviarCodigo()} disabled={reenviarEm > 0 || bloqueado}>
               {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar código'}
@@ -135,13 +148,25 @@ function GendazAuthGate({ onLogin }) {
   )
 }
 
+function isAuthValid() {
+  try {
+    const raw = localStorage.getItem('meu-gendaz-auth')
+    if (!raw) return false
+    const data = JSON.parse(raw)
+    if (!data?.sessionToken) return false
+    if (data.savedAt && data.expiresIn) {
+      const age = Date.now() - data.savedAt
+      if (age > data.expiresIn) {
+        localStorage.removeItem('meu-gendaz-auth')
+        return false
+      }
+    }
+    return true
+  } catch { return false }
+}
+
 export default function Gendaz() {
-  const [logado, setLogado] = useState(() => {
-    try {
-      const auth = localStorage.getItem('meu-gendaz-auth')
-      return Boolean(auth)
-    } catch { return false }
-  })
+  const [logado, setLogado] = useState(() => isAuthValid())
 
   const handleLogin = useCallback(() => setLogado(true), [])
 
@@ -151,10 +176,7 @@ export default function Gendaz() {
   }, [])
 
   useEffect(() => {
-    try {
-      const auth = localStorage.getItem('meu-gendaz-auth')
-      setLogado(Boolean(auth))
-    } catch { setLogado(false) }
+    setLogado(isAuthValid())
     window.addEventListener('meu-gendaz:logout', handleLogout)
     return () => window.removeEventListener('meu-gendaz:logout', handleLogout)
   }, [handleLogout])

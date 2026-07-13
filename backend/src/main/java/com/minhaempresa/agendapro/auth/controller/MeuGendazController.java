@@ -40,6 +40,9 @@ public class MeuGendazController {
     private UsuarioEntity findUserFromSession(HttpServletRequest request) {
         String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
         if (session == null || session.isBlank()) {
+            session = request.getHeader("X-Session-Token");
+        }
+        if (session == null || session.isBlank()) {
             throw new BusinessException("Sessão não encontrada. Faça login novamente.");
         }
         return usuarioRepository.findBySessaoAtiva(session)
@@ -261,6 +264,9 @@ public class MeuGendazController {
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
             String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+            if (session == null || session.isBlank()) {
+                session = request.getHeader("X-Session-Token");
+            }
             if (session != null) {
                 UsuarioEntity user = usuarioRepository.findBySessaoAtiva(session).orElse(null);
                 if (user != null) {

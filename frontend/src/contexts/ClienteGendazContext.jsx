@@ -20,6 +20,23 @@ export function ClienteGendazProvider({ children }) {
       setCarregando(false)
       return
     }
+
+    try {
+      const tokenData = JSON.parse(auth)
+      if (tokenData?.savedAt && tokenData?.expiresIn) {
+        const age = Date.now() - tokenData.savedAt
+        if (age > tokenData.expiresIn) {
+          localStorage.removeItem('meu-gendaz-auth')
+          setCarregando(false)
+          return
+        }
+      }
+    } catch {
+      localStorage.removeItem('meu-gendaz-auth')
+      setCarregando(false)
+      return
+    }
+
     try {
       setCarregando(true)
       setErro(null)
@@ -69,6 +86,21 @@ export function ClienteGendazProvider({ children }) {
   useEffect(() => {
     const auth = localStorage.getItem('meu-gendaz-auth')
     if (auth) {
+      try {
+        const tokenData = JSON.parse(auth)
+        if (tokenData?.savedAt && tokenData?.expiresIn) {
+          const age = Date.now() - tokenData.savedAt
+          if (age > tokenData.expiresIn) {
+            localStorage.removeItem('meu-gendaz-auth')
+            setCarregando(false)
+            return
+          }
+        }
+      } catch {
+        localStorage.removeItem('meu-gendaz-auth')
+        setCarregando(false)
+        return
+      }
       sincronizarDados()
     } else {
       setCarregando(false)

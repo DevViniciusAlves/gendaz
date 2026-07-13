@@ -69,7 +69,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addMapping("/api/**")
                 .allowedOrigins(origens.toArray(String[]::new))
                 .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-Usuario-Id", "X-Usuario-Perfil")
+                .allowedHeaders("Authorization", "Content-Type", "Accept", "Origin", "X-Requested-With", "X-Usuario-Id", "X-Usuario-Perfil", "X-Session-Token")
                 .exposedHeaders("Set-Cookie", "Retry-After")
                 .allowCredentials(true)
                 .maxAge(3600);
