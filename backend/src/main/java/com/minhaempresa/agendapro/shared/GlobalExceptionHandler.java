@@ -32,6 +32,12 @@ public class GlobalExceptionHandler {
                 .body(ApiErrorResponse.of(400, "Regra de negócio", ex.getMessage(), request.getRequestURI()));
     }
 
+    @ExceptionHandler(SessaoExpiradaException.class)
+    public ResponseEntity<ApiErrorResponse> handleSessaoExpirada(SessaoExpiradaException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(ApiErrorResponse.of(401, "Sessão expirada", ex.getMessage(), request.getRequestURI()));
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ValidationErrorResponse> handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         Map<String, String> campos = new LinkedHashMap<>();

@@ -10,6 +10,7 @@ import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.shared.CookieHelper;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
@@ -43,10 +44,10 @@ public class MeuGendazController {
             session = request.getHeader("X-Session-Token");
         }
         if (session == null || session.isBlank()) {
-            throw new BusinessException("Sessão não encontrada. Faça login novamente.");
+            throw new SessaoExpiradaException("Sessão não encontrada. Faça login novamente.");
         }
         return usuarioRepository.findBySessaoAtiva(session)
-                .orElseThrow(() -> new BusinessException("Sessão inválida. Faça login novamente."));
+                .orElseThrow(() -> new SessaoExpiradaException("Sessão inválida. Faça login novamente."));
     }
 
     private Long getEmpresaId(UsuarioEntity user) {

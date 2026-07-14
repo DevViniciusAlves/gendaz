@@ -27,7 +27,12 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/public/",
             "/api/health",
             "/api/pagamentos/planos/webhook",
-            "/api/pagamentos/planos/webhook/cakto"
+            "/api/pagamentos/planos/webhook/cakto",
+            "/api/meu-gendaz/auth/solicitar-codigo",
+            "/api/meu-gendaz/auth/validar-codigo",
+            "/api/meu-gendaz/servicos",
+            "/api/meu-gendaz/profissionais",
+            "/api/meu-gendaz/horarios-disponiveis"
     );
 
     private final UsuarioSessionService usuarioSessionService;
