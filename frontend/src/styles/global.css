@@ -13400,6 +13400,43 @@ tbody tr:hover { background: #fffaf5; }
   display: block;
 }
 
+.gendaz-input--disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+.gendaz-alerta-aviso {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 16px;
+  margin-bottom: 20px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: 12px;
+  color: #fbbf24;
+}
+
+.gendaz-alerta-aviso strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.gendaz-alerta-aviso p {
+  margin: 0;
+  font-size: 13px;
+  color: rgba(251, 191, 36, 0.7);
+}
+
+.gendaz-info-row-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
 .gendaz-pagination {
   display: flex;
   align-items: center;

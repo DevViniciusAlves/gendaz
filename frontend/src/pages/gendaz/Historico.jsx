@@ -1,9 +1,9 @@
 import { useContext, useState, useEffect, useCallback } from 'react'
-import { Loader, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Loader, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 
 export default function Historico() {
-  const { carregarHistorico } = useContext(ClienteGendazContext)
+  const { cliente, carregarHistorico } = useContext(ClienteGendazContext)
   const [agendamentos, setAgendamentos] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
@@ -22,6 +22,11 @@ export default function Historico() {
       setTotalPaginas(data?.totalPaginas || Math.ceil((data?.total || lista.length || 1) / 10))
     } catch (err) {
       console.error('[Historico] erro:', err)
+      if (err.response?.status === 401) {
+        localStorage.removeItem('meu-gendaz-auth')
+        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        return
+      }
       setErro(null)
       setAgendamentos([])
     } finally {
@@ -30,13 +35,13 @@ export default function Historico() {
   }, [carregarHistorico])
 
   useEffect(() => {
-    buscar(pagina)
-  }, [pagina, buscar])
+    if (cliente) buscar(pagina)
+  }, [cliente, pagina, buscar])
 
   if (carregando) {
     return (
       <section className="gendaz-page">
-        <div className="gendaz-loading"><Loader size={20} /> Carregando histórico...</div>
+        <div className="gendaz-loading"><Loader size={20} /> Carregando historico...</div>
       </section>
     )
   }
@@ -44,9 +49,9 @@ export default function Historico() {
   return (
     <section className="gendaz-page">
       <header className="gendaz-page__header">
-        <span className="gendaz-kicker">Histórico</span>
+        <span className="gendaz-kicker">Historico</span>
         <h1>Atendimentos passados</h1>
-        <p>Serviços, profissionais, valores pagos e observações organizados de forma limpa.</p>
+        <p>Servicos, profissionais, valores pagos e observacoes.</p>
       </header>
 
       {erro && <div className="gendaz-erro">{erro}</div>}
@@ -57,16 +62,20 @@ export default function Historico() {
             {agendamentos.map((item) => (
               <article key={item.id} className="gendaz-table__row">
                 <div>
-                  <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
+                  <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Servico'}</strong>
                   <small>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</small>
                 </div>
                 <div>
-                  <span>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}</span>
-                  {(item.horaInicio || item.hora) && <small> • {item.horaInicio || item.hora}</small>}
+                  <span className="gendaz-info-row-inline">
+                    <Calendar size={14} />
+                    {item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}
+                    {(item.horaInicio || item.hora) && <><Clock size={14} /> {item.horaInicio || item.hora}</>}
+                  </span>
                 </div>
                 <div>
                   <span className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Finalizado'}</span>
                 </div>
+                {item.valor && <div><strong>R$ {Number(item.valor).toFixed(2)}</strong></div>}
                 {(item.observacoes || item.observacao) && <small>{item.observacoes || item.observacao}</small>}
               </article>
             ))}
@@ -77,15 +86,21 @@ export default function Historico() {
               <button className="gendaz-btn" onClick={() => setPagina((p) => Math.max(1, p - 1))} disabled={pagina === 1}>
                 <ChevronLeft size={16} /> Anterior
               </button>
-              <span>Página {pagina} de {totalPaginas} ({total} atendimentos)</span>
+              <span>Pagina {pagina} de {totalPaginas} ({total} atendimentos)</span>
               <button className="gendaz-btn" onClick={() => setPagina((p) => Math.min(totalPaginas, p + 1))} disabled={pagina === totalPaginas}>
-                Próxima <ChevronRight size={16} />
+                Proxima <ChevronRight size={16} />
               </button>
             </div>
           )}
         </>
       ) : (
-        <p className="gendaz-vazio">Você ainda não possui atendimentos no histórico.</p>
+        <div className="gendaz-card gendaz-card--empty">
+          <div className="gendaz-empty-state">
+            <Calendar size={48} />
+            <h3>Sem historico</h3>
+            <p>Voce ainda nao possui atendimentos registrados.</p>
+          </div>
+        </div>
       )}
     </section>
   )
