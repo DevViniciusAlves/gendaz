@@ -62,7 +62,7 @@ function GendazAuthGate({ onLogin }) {
           email: email.trim(),
           sessionToken: token,
           savedAt: Date.now(),
-          expiresIn: 30 * 24 * 60 * 60 * 1000,
+          expiresIn: 90 * 24 * 60 * 60 * 1000,
         }
         localStorage.setItem('meu-gendaz-auth', JSON.stringify(tokenData))
         onLogin()
@@ -154,13 +154,6 @@ function isAuthValid() {
     if (!raw) return false
     const data = JSON.parse(raw)
     if (!data?.sessionToken) return false
-    if (data.savedAt && data.expiresIn) {
-      const age = Date.now() - data.savedAt
-      if (age > data.expiresIn) {
-        localStorage.removeItem('meu-gendaz-auth')
-        return false
-      }
-    }
     return true
   } catch { return false }
 }
