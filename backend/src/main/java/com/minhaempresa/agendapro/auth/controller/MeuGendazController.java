@@ -39,15 +39,36 @@ public class MeuGendazController {
     private final UsuarioSessionService usuarioSessionService;
 
     private UsuarioEntity findUserFromSession(HttpServletRequest request) {
+        // Tenta cookie primeiro
         String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+
+        // Se não, tenta header
         if (session == null || session.isBlank()) {
             session = request.getHeader("X-Session-Token");
         }
+
+        // DEBUG
+        System.out.println("🔍 Validando sessão:");
+        System.out.println("  Session: " + (session != null ? session.substring(0, Math.min(20, session.length())) + "..." : "NULL"));
+        System.out.println("  Cookie vazio: " + (CookieHelper.lerCookie(request, "meu_gendaz_session").isEmpty()));
+
+        // Se nenhum dos dois → 401
         if (session == null || session.isBlank()) {
+            System.out.println("❌ Sessão não encontrada no cookie ou header");
             throw new SessaoExpiradaException("Sessão não encontrada. Faça login novamente.");
         }
-        return usuarioRepository.findBySessaoAtiva(session)
-                .orElseThrow(() -> new SessaoExpiradaException("Sessão inválida. Faça login novamente."));
+
+        // DEBUG: Procurar no banco
+        Optional<UsuarioEntity> user = usuarioRepository.findBySessaoAtiva(session);
+
+        if (user.isEmpty()) {
+            System.out.println("❌ Session '" + session.substring(0, Math.min(20, session.length())) + "...' NÃO ENCONTRADA no banco");
+            System.out.println("   Query: SELECT * FROM usuarios WHERE sessao_ativa = '" + session + "'");
+        } else {
+            System.out.println("✅ Usuário encontrado: " + user.get().getEmail());
+        }
+
+        return user.orElseThrow(() -> new SessaoExpiradaException("Sessão inválida. Faça login novamente."));
     }
 
     private Long getEmpresaId(UsuarioEntity user) {
