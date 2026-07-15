@@ -81,22 +81,48 @@ export function ClienteGendazProvider({ children }) {
   }, [])
 
   useEffect(() => {
+    console.log('🔍 Verificando autenticação ao montar...')
+    
     const auth = localStorage.getItem('meu-gendaz-auth')
-    if (auth) {
-      try {
-        const tokenData = JSON.parse(auth)
-        if (!tokenData?.sessionToken) {
-          localStorage.removeItem('meu-gendaz-auth')
-          setCarregando(false)
-          return
-        }
-        sincronizarDados()
-      } catch (err) {
-        console.error('Erro ao parsear token:', err)
+    
+    if (!auth) {
+      console.log('❌ Nenhum token encontrado')
+      setCarregando(false)
+      return
+    }
+
+    try {
+      const tokenData = JSON.parse(auth)
+      const agora = Date.now()
+      const idade = agora - tokenData.savedAt
+      const validoAte = tokenData.savedAt + tokenData.expiresIn
+      
+      console.log('📊 Token Info:')
+      console.log('  - Salvo em:', new Date(tokenData.savedAt).toLocaleString())
+      console.log('  - Valido até:', new Date(validoAte).toLocaleString())
+      console.log('  - Idade atual:', Math.floor(idade / 1000 / 60 / 60), 'horas')
+      console.log('  - sessionToken existe:', !!tokenData.sessionToken)
+
+      if (!tokenData?.sessionToken) {
+        console.log('❌ sessionToken vazio - limpando')
         localStorage.removeItem('meu-gendaz-auth')
         setCarregando(false)
+        return
       }
-    } else {
+
+      if (idade > tokenData.expiresIn) {
+        console.log('❌ Token expirou - idade excedeu 90 dias')
+        localStorage.removeItem('meu-gendaz-auth')
+        setCarregando(false)
+        return
+      }
+
+      console.log('✅ Token válido - sincronizando dados')
+      sincronizarDados()
+
+    } catch (err) {
+      console.error('❌ Erro ao validar token:', err)
+      localStorage.removeItem('meu-gendaz-auth')
       setCarregando(false)
     }
   }, [])
