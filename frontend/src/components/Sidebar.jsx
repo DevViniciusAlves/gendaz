@@ -1,5 +1,5 @@
 ﻿import { NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, CreditCard, Home, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
+import { BarChart3, CalendarDays, CreditCard, Home, MessageCircle, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
 import { usePagamentosPendentes } from '../hooks/usePagamentosPendentes.js'
@@ -9,6 +9,7 @@ const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
+  { key: 'crm',           to: '/sistema/crm',           label: 'CRM',            icon: MessageCircle },
   { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
   { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3 },

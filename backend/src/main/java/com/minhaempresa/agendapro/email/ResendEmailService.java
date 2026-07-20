@@ -110,6 +110,10 @@ public class ResendEmailService {
         }
     }
 
+    public boolean enviarEmailCrm(String destinatario, String assunto, String html) {
+        return enviarEmail(destinatario, assunto, html);
+    }
+
     private boolean enviarEmail(String destinatario, String assunto, String html) {
         if (apiKey.isBlank()) {
             log.warn("[resend] RESEND_API_KEY ausente; email nao enviado para {}", destinatario);
