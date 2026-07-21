@@ -113,6 +113,10 @@ public class CrmService {
         ClienteEntity cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new BusinessException("Cliente nao encontrado."));
 
+        if (cliente.getEmpresa() == null || !Objects.equals(cliente.getEmpresa().getId(), empresaId)) {
+            throw new BusinessException("Empresa nao foi encontrada");
+        }
+
         if (cliente.getEmail() == null || cliente.getEmail().isBlank()) {
             throw new BusinessException("Cliente nao possui e-mail cadastrado.");
         }
@@ -193,7 +197,6 @@ public class CrmService {
     }
 
     private String calcularSegmento(double totalGasto, int agendamentos, int diasSemAgendar, ClienteEntity cliente) {
-        if (totalGasto > 500 || agendamentos > 15) return "vip";
         if (agendamentos <= 2) return "novo";
         if (cliente.getDataCriacao() != null
                 && ChronoUnit.DAYS.between(cliente.getDataCriacao(), LocalDate.now()) < 30) return "novo";

@@ -23,7 +23,7 @@ export default function Crm() {
     <section className="page">
       <div className="page-title">
         <div>
-          <span className="section-kicker">Relacionamento</span>
+          <span className="section-kicker" style={{ color: 'var(--text)', letterSpacing: '0.12em' }}>Relacionamento</span>
           <h1>CRM - Relacionamento com Clientes</h1>
           <p>Acompanhe, segmente e automatize contatos com seus clientes.</p>
         </div>
@@ -45,7 +45,7 @@ export default function Crm() {
                   className="animate-pulse"
                   style={{
                     height: 160,
-                    background: 'rgba(255,255,255,0.05)',
+                    background: 'var(--surface-soft)',
                     borderRadius: 10,
                   }}
                 />
@@ -55,8 +55,8 @@ export default function Crm() {
             <div style={{
               textAlign: 'center',
               padding: 40,
-              color: '#EF4444',
-              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--text)',
+              background: 'var(--surface-soft)',
               borderRadius: 10,
               fontSize: 13,
             }}>
@@ -66,8 +66,8 @@ export default function Crm() {
             <div style={{
               textAlign: 'center',
               padding: 40,
-              color: '#9ca3af',
-              background: 'rgba(255,255,255,0.05)',
+              color: 'var(--muted)',
+              background: 'var(--surface-soft)',
               borderRadius: 10,
             }}>
               <Users size={32} style={{ margin: '0 auto 12px', opacity: 0.5 }} />

@@ -2,10 +2,9 @@ import { Search } from 'lucide-react'
 
 const SEGMENTO_OPTIONS = [
   { value: 'todos', label: 'Todos', cor: '' },
-  { value: 'at_risk', label: 'At-risk', cor: '#EF4444' },
-  { value: 'vip', label: 'VIP', cor: '#42f569' },
-  { value: 'regular', label: 'Regular', cor: '#F59E0B' },
-  { value: 'novo', label: 'Novo', cor: '#3B82F6' },
+  { value: 'at_risk', label: 'At-risk', cor: 'var(--text)' },
+  { value: 'regular', label: 'Regular', cor: 'var(--muted)' },
+  { value: 'novo', label: 'Novo', cor: 'var(--muted)' },
 ]
 
 const ORDENACAO_OPTIONS = [
@@ -30,8 +29,8 @@ const inputStyle = {
   padding: '8px 12px',
   border: '1px solid rgba(255,255,255,0.2)',
   borderRadius: 6,
-  background: 'rgba(255,255,255,0.05)',
-  color: '#fff',
+  background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
+  color: 'var(--text)',
   fontSize: 12,
   outline: 'none',
   boxSizing: 'border-box',
@@ -42,8 +41,8 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
     <div style={{
       width: 260,
       flexShrink: 0,
-      background: 'rgba(255,255,255,0.05)',
-      border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
+      border: '1px solid var(--line)',
       borderRadius: 10,
       padding: 16,
       display: 'flex',
@@ -53,20 +52,20 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
       position: 'sticky',
       top: 24,
     }}>
-      <span style={{ color: '#fff', fontWeight: 700, fontSize: 13 }}>Filtros</span>
+      <span style={{ color: 'var(--text)', fontWeight: 700, fontSize: 13 }}>Filtros</span>
 
       <div>
-        <span style={{ color: '#9ca3af', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Segmentacao</span>
+        <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Segmentacao</span>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {SEGMENTO_OPTIONS.map((opt) => (
-            <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#d1d5db' }}>
+            <label key={opt.value} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: 'var(--text)' }}>
               <input
                 type="radio"
                 name="segmento"
                 value={opt.value}
                 checked={filtros.segment === opt.value}
                 onChange={() => onFiltroChange({ segment: opt.value })}
-                style={{ accentColor: '#42f569', width: 14, height: 14, cursor: 'pointer' }}
+                style={{ accentColor: 'var(--text)', width: 14, height: 14, cursor: 'pointer' }}
               />
               {opt.cor && <span style={{ width: 7, height: 7, borderRadius: '50%', background: opt.cor, flexShrink: 0 }} />}
               {opt.label}
@@ -76,9 +75,9 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
       </div>
 
       <div>
-        <span style={{ color: '#9ca3af', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Buscar</span>
+        <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Buscar</span>
         <div style={{ position: 'relative' }}>
-          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: '#9ca3af' }} />
+          <Search size={12} style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)' }} />
           <input
             type="text"
             placeholder="Nome, telefone..."
@@ -90,7 +89,7 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
       </div>
 
       <div>
-        <span style={{ color: '#9ca3af', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Ordenar por</span>
+        <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Ordenar por</span>
         <select
           value={filtros.orderBy}
           onChange={(e) => onFiltroChange({ orderBy: e.target.value })}
@@ -103,7 +102,7 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
       </div>
 
       <div>
-        <span style={{ color: '#9ca3af', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Periodo</span>
+        <span style={{ color: 'var(--muted)', fontSize: 11, fontWeight: 700, display: 'block', marginBottom: 6 }}>Periodo</span>
         <select
           value={filtros.period}
           onChange={(e) => onFiltroChange({ period: Number(e.target.value) })}
@@ -120,15 +119,15 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
         style={{
           background: 'transparent',
           border: 'none',
-          color: '#9ca3af',
+          color: 'var(--muted)',
           cursor: 'pointer',
           fontSize: 12,
           padding: '4px 0',
           textAlign: 'left',
           transition: 'color 0.2s',
         }}
-        onMouseEnter={(e) => e.target.style.color = '#42f569'}
-        onMouseLeave={(e) => e.target.style.color = '#9ca3af'}
+        onMouseEnter={(e) => e.target.style.color = 'var(--text)'}
+        onMouseLeave={(e) => e.target.style.color = 'var(--muted)'}
       >
         Limpar filtros
       </button>

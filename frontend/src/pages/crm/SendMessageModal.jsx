@@ -77,33 +77,33 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
 
   return (
     <div className="modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
-      <section className="modal" style={{ minWidth: 480, maxWidth: 600 }}>
-        <div className="modal-header">
-          <h2>{tmpl.titulo}</h2>
+      <section className="modal" style={{ minWidth: 480, maxWidth: 600, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
+        <div className="modal-header" style={{ background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', borderBottom: '1px solid var(--line)' }}>
+          <h2 style={{ color: 'var(--text)' }}>{tmpl.titulo}</h2>
           <button type="button" className="icon-btn" onClick={handleClose} aria-label="Fechar modal">
             <span style={{ fontSize: 18, lineHeight: 1 }}>×</span>
           </button>
         </div>
 
-        <div style={{ padding: '0 24px 24px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))' }}>
           <div>
-            <div style={{ color: '#9ca3af', fontSize: 13, marginBottom: 4 }}>Cliente</div>
-            <div style={{ color: '#fff', fontSize: 14 }}>{nomeCliente}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Cliente</div>
+            <div style={{ color: 'var(--text)', fontSize: 14 }}>{nomeCliente}</div>
           </div>
 
           <div>
-            <div style={{ color: '#9ca3af', fontSize: 13, marginBottom: 4 }}>Email</div>
-            <div style={{ color: '#fff', fontSize: 14 }}>{cliente.email || 'Nao cadastrado'}</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Email</div>
+            <div style={{ color: 'var(--text)', fontSize: 14 }}>{cliente.email || 'Nao cadastrado'}</div>
           </div>
 
           <div>
-            <div style={{ color: '#9ca3af', fontSize: 13, marginBottom: 4 }}>Mensagem padrao</div>
+            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Mensagem padrao</div>
             <div style={{
               padding: 16,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
+              background: 'var(--surface-soft)',
+              border: '1px solid var(--line)',
               borderRadius: 8,
-              color: '#d1d5db',
+              color: 'var(--text)',
               fontSize: 14,
               lineHeight: 1.5,
               whiteSpace: 'pre-wrap',
@@ -112,12 +112,12 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
             </div>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: '#d1d5db' }}>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: 'var(--text)', lineHeight: 1.3 }}>
             <input
               type="checkbox"
               checked={personalizar}
               onChange={(e) => setPersonalizar(e.target.checked)}
-              style={{ accentColor: '#42f569' }}
+              style={{ accentColor: 'var(--text)', width: 18, height: 18, flexShrink: 0, margin: 0 }}
             />
             Personalizar mensagem
           </label>
@@ -130,11 +130,12 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
               style={{
                 width: '100%',
                 minHeight: 120,
+                maxHeight: 120,
                 padding: 12,
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.2)',
+                background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
+                border: '1px solid var(--line)',
                 borderRadius: 8,
-                color: '#fff',
+                color: 'var(--text)',
                 fontSize: 14,
                 resize: 'vertical',
                 outline: 'none',
@@ -143,9 +144,9 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
             />
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8 }}>
-            <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
-            <Button onClick={handleEnviar} disabled={enviando || !cliente.email}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8, alignItems: 'center' }}>
+            <Button variant="secondary" onClick={handleClose} style={{ height: 40, padding: '12px 16px', fontSize: 14 }}>Cancelar</Button>
+            <Button onClick={handleEnviar} disabled={enviando || !cliente.email} style={{ height: 40, padding: '12px 16px', fontSize: 14 }}>
               {enviando ? 'Enviando...' : 'Enviar agora'}
             </Button>
           </div>

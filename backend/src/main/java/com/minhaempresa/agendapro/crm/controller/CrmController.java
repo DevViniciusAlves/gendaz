@@ -38,9 +38,12 @@ public class CrmController {
     @PostMapping("/clientes/{clienteId}/enviar-mensagem")
     public ResponseEntity<?> enviarMensagem(
             @PathVariable Long clienteId,
+            @RequestParam(required = false) Long empresaId,
             @Valid @RequestBody EnviarMensagemRequest request
     ) {
-        Long empresaId = CompanyContext.getCompanyId();
+        if (empresaId == null) {
+            empresaId = CompanyContext.getCompanyId();
+        }
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("success", false, "mensagem", "Empresa nao identificada."));
         }
