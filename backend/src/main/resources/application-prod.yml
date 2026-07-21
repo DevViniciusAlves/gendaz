@@ -35,9 +35,3 @@ app:
   frontend-url: ${FRONTEND_URL}
   jwt-secret: ${JWT_SECRET}
   timezone: ${APP_TIMEZONE:America/Cuiaba}
-
-#  DESATIVADO - whatsapp-service:
-#  DESATIVADO -   url: ${WHATSAPP_SERVICE_URL:}
-
-#  DESATIVADO - whatsapp:
-#  DESATIVADO -   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}

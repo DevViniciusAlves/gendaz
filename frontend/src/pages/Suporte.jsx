@@ -85,7 +85,7 @@ export default function Suporte() {
         <article className="panel support-card">
           <LifeBuoy size={26} />
           <h2>Base de ajuda</h2>
-          <p>Guias rápidos para usar WhatsApp, agenda, financeiro e configurações.</p>
+          <p>Guias rápidos para usar agenda, financeiro e configurações.</p>
         </article>
         <article className="panel support-card">
           <MessageCircle size={26} />

@@ -39,11 +39,7 @@ payment:
   success-url: ${PAYMENT_SUCCESS_URL:https://gendaz.site/sistema/planos}
   cancel-url: ${PAYMENT_CANCEL_URL:https://gendaz.site/sistema/planos}
 
-#  DESATIVADO - whatsapp-service:
-#  DESATIVADO -   url: ${WHATSAPP_SERVICE_URL:http://localhost:3000}
 
-#  DESATIVADO - whatsapp:
-#  DESATIVADO -   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
 
 recaptcha:
   secret-key: ${RECAPTCHA_SECRET_KEY:}

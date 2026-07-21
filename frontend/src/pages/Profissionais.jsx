@@ -92,7 +92,7 @@ export default function Profissionais() {
       setModal(false)
       setForm(formInicial)
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'Não foi possível salvar o profissional.')
+      setErro(error.response?.data?.mensagem || 'Nï¿½o foi possï¿½vel salvar o profissional.')
     } finally {
       setSalvando(false)
     }
@@ -111,7 +111,7 @@ export default function Profissionais() {
       setModalEditar(false)
       setEdicao(null)
     } catch (error) {
-      setErroEditar(error.response?.data?.mensagem || 'Não foi possível atualizar o profissional.')
+      setErroEditar(error.response?.data?.mensagem || 'Nï¿½o foi possï¿½vel atualizar o profissional.')
     } finally {
       setSalvandoEditar(false)
     }
@@ -125,7 +125,7 @@ export default function Profissionais() {
       await appApi.alterarStatusProfissional(profissional.id, profissional.status)
       await reload(true)
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'Não foi possível alterar o status do profissional.')
+      setErro(error.response?.data?.mensagem || 'Nï¿½o foi possï¿½vel alterar o status do profissional.')
     } finally {
       setAcaoId(null)
     }
@@ -135,7 +135,7 @@ export default function Profissionais() {
     if (acaoId) return
     setConfirmacao({
       titulo: 'Excluir profissional',
-      descricao: `Deseja excluir o profissional "${profissional.nome}"? Esta ação é permanente e não terá como retornar.`,
+      descricao: `Deseja excluir o profissional "${profissional.nome}"? Esta aï¿½ï¿½o ï¿½ permanente e nï¿½o terï¿½ como retornar.`,
       acaoLabel: 'Excluir',
       acao: async () => {
         setAcaoId(profissional.id)
@@ -144,7 +144,7 @@ export default function Profissionais() {
           await appApi.excluirProfissional(profissional.id)
           await reload(true)
         } catch (error) {
-          setErro(error.response?.data?.mensagem || 'Não foi possível excluir o profissional.')
+          setErro(error.response?.data?.mensagem || 'Nï¿½o foi possï¿½vel excluir o profissional.')
         } finally {
           setAcaoId(null)
         }
@@ -175,7 +175,7 @@ export default function Profissionais() {
         { key: 'especialidade', label: 'ESPECIALIDADE' },
         { key: 'telefone', label: 'TELEFONE' },
         { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
-        { key: 'acao', label: 'AÇÕES', render: (row) => (
+        { key: 'acao', label: 'Aï¿½ï¿½ES', render: (row) => (
           <ActionMenu
             actions={[
               { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(row) },
@@ -203,12 +203,12 @@ export default function Profissionais() {
             <Input label="Especialidade" helper="Digite apenas letras." maxLength={80} value={edicao.especialidade} onChange={(e) => setEdicao({ ...edicao, especialidade: e.target.value.replace(/[^\p{L}\s]/gu, '') })} />
             <Input label="Telefone (opcional)" helper={edicao.telefone ? (validarTelefone(edicao.telefone) || ' Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={edicao.telefone} onChange={(e) => setEdicao({ ...edicao, telefone: aplicarMascara(e.target.value) })} />
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
-            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar alterações'}</Button>
+            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar alteraï¿½ï¿½es'}</Button>
           </form>
         )}
       </Modal>
 
-      <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
+      <Modal title={confirmacao?.titulo || 'Confirmar aï¿½ï¿½o'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
           <p>{confirmacao?.descricao}</p>
           <div className="confirm-actions">

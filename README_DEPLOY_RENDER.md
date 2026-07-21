@@ -1,4 +1,4 @@
-﻿# Deploy do backend AgendEasy no Render com Docker
+# Deploy do backend AgendEasy no Render com Docker
 
 Este guia configura o backend Spring Boot da pasta `backend/` como Web Service no Render usando Runtime Docker e banco PostgreSQL Neon.
 
@@ -72,7 +72,7 @@ VITE_MODO_DEMO=false
 
 - Nao commite `.env` real.
 - Nao coloque senha Neon no repositorio.
-- Nao coloque tokens da Meta ou WhatsApp no codigo.
+- Nao coloque tokens sensiveis no codigo.
 - Nao use JWT secret real em arquivo versionado.
 - Use `backend/.env.example` apenas como modelo seguro.
 

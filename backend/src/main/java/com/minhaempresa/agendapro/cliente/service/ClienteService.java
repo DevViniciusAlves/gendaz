@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.cliente.service;
+package com.minhaempresa.agendapro.cliente.service;
 
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
@@ -20,7 +20,6 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
-//  DESATIVADO — import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,6 @@ public class ClienteService {
     private final EntregaRepository entregaRepository;
     private final NotificacaoRepository notificacaoRepository;
     private final NotaFiscalRepository notaFiscalRepository;
-    //  DESATIVADO — private final WhatsappLembretePagamentoRepository lembretePagamentoRepository;
     private final SanitizacaoService sanitizacaoService;
     private final AdminAuditService auditService;
     private final ClienteMapper mapper = new ClienteMapper();
@@ -100,7 +98,6 @@ public class ClienteService {
         validarEmpresa(cliente, empresaId);
 
         for (AgendamentoEntity agendamento : agendamentoRepository.findByClienteId(id)) {
-            //  DESATIVADO — lembretePagamentoRepository.deleteByAgendamento_Id(agendamento.getId());
             pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
             agendamentoRepository.delete(agendamento);
         }

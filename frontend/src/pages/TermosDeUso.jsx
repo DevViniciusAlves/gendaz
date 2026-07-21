@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const contatoEmail = import.meta.env.VITE_CONTATO_EMAIL || 'contato@gendaz.com.br'
 
@@ -74,14 +74,7 @@ const secoes = [
     ],
   },
   {
-    titulo: '11. Uso futuro do WhatsApp',
-    conteudos: [
-      'O gendaz poderá, no futuro, integrar recursos com o WhatsApp para comunicação, atendimento e gestão de contatos.',
-      'Quando essa integração estiver ativa, regras adicionais de uso, tratamento de mensagens e permissões poderão ser aplicadas.',
-    ],
-  },
-  {
-    titulo: '12. Condutas proibidas',
+    titulo: '11. Condutas proibidas',
     itens: [
       'Usar a plataforma para atividades ilícitas, abusivas ou fraudulentas.',
       'Tentar acessar contas de terceiros sem autorização.',
@@ -90,14 +83,14 @@ const secoes = [
     ],
   },
   {
-    titulo: '13. Alterações nos termos',
+    titulo: '12. Alterações nos termos',
     conteudos: [
       'Os Termos de Uso podem ser atualizados a qualquer momento para refletir mudanças no produto, nas integrações ou nas exigências legais.',
       'A versão mais recente sempre estará disponível nesta página.',
     ],
   },
   {
-    titulo: '14. Contato',
+    titulo: '13. Contato',
     conteudos: [
       `Em caso de dúvidas sobre estes Termos de Uso, entre em contato pelo e-mail ${contatoEmail}.`,
       'Se houver necessidade de suporte adicional, o canal oficial da plataforma poderá ser utilizado como ponto de contato complementar.',

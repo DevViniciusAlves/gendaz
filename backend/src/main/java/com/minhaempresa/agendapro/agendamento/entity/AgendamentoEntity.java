@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.agendamento.entity;
+package com.minhaempresa.agendapro.agendamento.entity;
 
 import com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
@@ -57,42 +57,4 @@ public class AgendamentoEntity {
     @Column(length = 1000)
     private String observacoes;
 
-    //  DESATIVADO - WhatsApp functionality disabled
-    // @Column(name = "lembrete_wpp_enviado", nullable = false)
-    // private Boolean lembreteWppEnviado;
-
-    @Builder.Default
-    @Column(name = "confirmacao_pagamento_dono_enviada", nullable = false)
-    private Boolean confirmacaoPagamentoDonoEnviada = Boolean.FALSE;
-
-    @Column(name = "confirmacao_pagamento_dono_enviada_em")
-    private java.time.LocalDateTime confirmacaoPagamentoDonoEnviadaEm;
-
-    @Builder.Default
-    @Column(name = "segunda_confirmacao_pagamento_dono_enviada", nullable = false)
-    private Boolean segundaConfirmacaoPagamentoDonoEnviada = Boolean.FALSE;
-
-    @Column(name = "segunda_confirmacao_pagamento_dono_enviada_em")
-    private java.time.LocalDateTime segundaConfirmacaoPagamentoDonoEnviadaEm;
-
-    @Builder.Default
-    @Column(name = "confirmacao_pagamento_dono_2_enviada", nullable = false)
-    private Boolean confirmacaoPagamentoDono2Enviada = Boolean.FALSE;
-
-    @Builder.Default
-    @Column(name = "confirmacao_pagamento_dono_respondida", nullable = false)
-    private Boolean confirmacaoPagamentoDonoRespondida = Boolean.FALSE;
-
-    @Column(name = "confirmacao_pagamento_dono_respondida_em")
-    private java.time.LocalDateTime confirmacaoPagamentoDonoRespondidaEm;
-
-    @PrePersist
-    void prePersist() {
-        //  DESATIVADO - WhatsApp functionality disabled
-        // lembreteWppEnviado = lembreteWppEnviado == null ? Boolean.FALSE : lembreteWppEnviado;
-        confirmacaoPagamentoDonoEnviada = confirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : confirmacaoPagamentoDonoEnviada;
-        segundaConfirmacaoPagamentoDonoEnviada = segundaConfirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : segundaConfirmacaoPagamentoDonoEnviada;
-        confirmacaoPagamentoDono2Enviada = confirmacaoPagamentoDono2Enviada == null ? Boolean.FALSE : confirmacaoPagamentoDono2Enviada;
-        confirmacaoPagamentoDonoRespondida = confirmacaoPagamentoDonoRespondida == null ? Boolean.FALSE : confirmacaoPagamentoDonoRespondida;
-    }
 }

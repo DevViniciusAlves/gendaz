@@ -18,7 +18,7 @@ public class PlanoBootstrap implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        garantirPlano("BASICO", "WhatsApp, agenda, clientes e servicos.", VALOR_BASICO_MENSAL);
+        garantirPlano("BASICO", "Agenda, clientes e servicos.", VALOR_BASICO_MENSAL);
         garantirPlano("PRO", "Agenda com financeiro, pagamentos e relatorios.", VALOR_PRO_MENSAL);
     }
 

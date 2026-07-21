@@ -1,4 +1,4 @@
-﻿/* =============================================
+/* =============================================
    REDUCAO VISUAL DO SISTEMA (SaaS COMPACTO)
    Escopo restrito a .app-shell (painel interno)
    ============================================= */
@@ -22,7 +22,6 @@
 .app-shell .metric-card h3 { font-size: 13px !important; }
 .app-shell .metric-card strong { font-size: 24px !important; }
 
-/* WhatsApp Ajustes */
 .app-shell .chat-layout { grid-template-columns: 280px 1fr 280px !important; }
 .app-shell .conversation-list { padding: 14px !important; }
 .app-shell .conversation-list h2 { font-size: 15px !important; margin-bottom: 10px !important; }

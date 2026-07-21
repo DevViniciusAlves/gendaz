@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.agendamento.service;
+package com.minhaempresa.agendapro.agendamento.service;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AtualizarAgendamentoRequest;
@@ -29,8 +29,6 @@ import com.minhaempresa.agendapro.shared.ConflictException;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.enums.TimezoneEnum;
-//  DESATIVADO - WhatsApp functionality disabled
-// import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -55,8 +53,6 @@ public class AgendamentoService {
     private final EmpresaService empresaService;
     private final HorarioAtendimentoService horarioAtendimentoService;
     private final PagamentoRepository pagamentoRepository;
-    //  DESATIVADO - WhatsApp functionality disabled
-    // private final WhatsappLembretePagamentoRepository lembretePagamentoRepository;
     private final AgendaBlockedDayService agendaBlockedDayService;
     private final SanitizacaoService sanitizacaoService;
     private final ResendEmailService resendEmailService;
@@ -211,7 +207,6 @@ public class AgendamentoService {
     public void excluir(Long id, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
-        //  DESATIVADO - WhatsApp functionality disabled
         // lembretePagamentoRepository.deleteByAgendamento_Id(id);
         pagamentoRepository.deleteByAgendamentoId(id);
         agendamentoRepository.delete(agendamento);

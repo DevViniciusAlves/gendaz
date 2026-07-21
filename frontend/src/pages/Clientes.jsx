@@ -1,4 +1,4 @@
-﻿import { Pencil, Plus, Power, RefreshCw, Trash } from 'lucide-react'
+import { Pencil, Plus, Power, RefreshCw, Trash } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
@@ -13,7 +13,6 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
-// âš ï¸ DESATIVADO — import whatsappLogo from '../assets/whatsapp.png'
 import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
@@ -298,7 +297,6 @@ export default function Clientes() {
           }},
           { key: 'telefone', label: 'TELEFONE', render: (row) => (
              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {/* âš ï¸ DESATIVADO — <img src={whatsappLogo} alt="WhatsApp" style={{ width: '18px', height: '18px', flexShrink: 0 }} /> */}
                 <span>{exibirTelefone(row.telefone)}</span>
              </div>
           )},

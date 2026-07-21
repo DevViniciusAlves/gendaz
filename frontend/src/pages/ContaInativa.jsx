@@ -1,4 +1,4 @@
-﻿import { Copy, CreditCard, Info, LockKeyhole, RefreshCw, ShieldAlert, QrCode } from 'lucide-react'
+import { Copy, CreditCard, Info, LockKeyhole, RefreshCw, ShieldAlert, QrCode } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
@@ -84,7 +84,7 @@ export default function ContaInativa() {
   const formularioPadrao = useMemo(() => ({
     customerName: usuario?.nome || usuario?.nomeResponsavel || '',
     customerEmail: usuario?.email || '',
-    customerPhone: usuario?.telefone || /*  DESATIVADO — usuario?.whatsapp || */ usuario?.empresa?.telefone || '',
+    customerPhone: usuario?.telefone || usuario?.empresa?.telefone || '',
     customerDocType: identificarTipoDocumento(usuario?.documento || usuario?.cpfCnpj || usuario?.empresa?.documento),
     customerDocNumber: usuario?.documento || usuario?.cpfCnpj || usuario?.empresa?.documento || '',
   }), [usuario])

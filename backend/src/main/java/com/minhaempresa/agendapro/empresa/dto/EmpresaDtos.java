@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.empresa.dto;
+package com.minhaempresa.agendapro.empresa.dto;
 
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import jakarta.validation.constraints.NotBlank;
@@ -33,11 +33,6 @@ public final class EmpresaDtos {
             String telefone,
             String email,
             StatusEmpresa status,
-            //  DESATIVADO - WhatsApp
-            // Boolean whatsappConnected,
-            // String whatsappPhone,
-            // Boolean whatsappNotificationsEnabled,
-            // Boolean whatsappSecretariaIaEnabled,
             String timezone,
             LocalDateTime dataCriacao,
             LocalDateTime dataAtualizacao

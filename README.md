@@ -1,6 +1,6 @@
 # AgendaPro
 
-Sistema para atendimento interno com foco em WhatsApp, agenda, clientes, serviços, profissionais, financeiro e pagamentos.
+Sistema para atendimento interno com foco em agenda, clientes, serviços, profissionais, financeiro e pagamentos.
 
 ## Estrutura
 

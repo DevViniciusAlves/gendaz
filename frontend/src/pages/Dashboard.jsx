@@ -1,4 +1,4 @@
-﻿import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { BarChart2, CalendarDays, CheckCircle, Circle, CreditCard, MessageCircle, RefreshCw, TrendingUp, UserPlus, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -209,8 +209,6 @@ export default function Dashboard() {
 
   const metrics = [
     { key: 'agenda', icon: CalendarDays, label: 'Agendamentos hoje', value: agendamentosHoje, detail: agendamentosHoje === 0 ? 'nenhum hoje' : 'na agenda de hoje' },
-    // âš ï¸ DESATIVADO - WhatsApp
-    // { key: 'whatsapp', icon: MessageCircle, label: 'Conversas abertas', value: conversasAbertas, detail: conversasAbertas === 0 ? 'tudo resolvido' : 'em andamento' },
     { key: 'clientes', icon: UserPlus, label: 'Clientes cadastrados', value: totalClientes, detail: totalClientes === 0 ? 'nenhum cadastrado' : 'base ativa' },
     { key: 'servicos', icon: Wrench, label: 'Servicos ativos', value: servicosAtivos, detail: servicosAtivos === 0 ? 'nenhum cadastrado' : 'no catalogo' },
   ]

@@ -1,10 +1,3 @@
-/*
-+----------------------------------------+
-¦    DESATIVADO - FUNCIONALIDADE WhatsApp ¦
-¦  Estilos comentados. Remova comentários ¦
-¦  para reativar.                        ¦
-+----------------------------------------+
-*/
 /* =============================================
    PANEL THEME - Flat Dark Design
    Internal panel only (.app-shell scoped)
@@ -610,203 +603,14 @@
   border-color: rgba(239, 68, 68, 0.20) !important;
 }
 
-/*
-:root[data-theme='light'] .app-shell .whatsapp-official-card,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel,
-:root[data-theme='light'] .app-shell .whatsapp-config-panel,
-:root[data-theme='light'] .app-shell .whatsapp-inline-feedback,
-:root[data-theme='light'] .app-shell .whatsapp-official-alert,
-:root[data-theme='light'] .app-shell .whatsapp-ai-note {
-  background: #ffffff !important;
-  border: 1px solid var(--panel-border-color) !important;
-  box-shadow: var(--panel-shadow) !important;
-}
-*/
 
-/*
-:root[data-theme='light'] .app-shell .whatsapp-official-card h1,
-:root[data-theme='light'] .app-shell .whatsapp-official-card > p,
-:root[data-theme='light'] .app-shell .whatsapp-official-card span,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel h2,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel p,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel strong,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel span,
-:root[data-theme='light'] .app-shell .whatsapp-status-note,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code span,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code strong,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code-value,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-status span {
-  color: var(--panel-text-primary) !important;
-  -webkit-text-fill-color: var(--panel-text-primary) !important;
-}
-*/
 
-/*
-:root[data-theme='light'] .app-shell .whatsapp-official-card .form-error,
-:root[data-theme='light'] .app-shell .whatsapp-official-card .success-text,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel .form-error,
-:root[data-theme='light'] .app-shell .whatsapp-connected-panel .success-text {
-  color: var(--panel-text-primary) !important;
-  -webkit-text-fill-color: var(--panel-text-primary) !important;
-}
-*/
 
-:root[data-theme='light'] .app-shell .whatsapp-status-pill {
-  color: #14532d !important;
-  -webkit-text-fill-color: #14532d !important;
-  background: rgba(34, 197, 94, 0.12) !important;
-  border: 1px solid rgba(34, 197, 94, 0.22) !important;
-}
 
-:root[data-theme='light'] .app-shell .whatsapp-connected-badge {
-  color: #14532d !important;
-  -webkit-text-fill-color: #14532d !important;
-  background: rgba(34, 197, 94, 0.12) !important;
-  border-color: rgba(34, 197, 94, 0.22) !important;
-}
 
-:root[data-theme='light'] .app-shell .whatsapp-status-icon {
-  background: rgba(34, 197, 94, 0.12) !important;
-  color: var(--brand-green) !important;
-}
 
-/*
-:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
-:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field-hint,
-:root[data-theme='light'] .app-shell .whatsapp-speeches-grid .field span,
-:root[data-theme='light'] .app-shell .whatsapp-speeches-grid .field-hint,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code span,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-status .whatsapp-status-pill {
-  color: var(--panel-text-muted) !important;
-  -webkit-text-fill-color: var(--panel-text-muted) !important;
-}
-*/
 
-/*
-:root[data-theme='light'] .app-shell .whatsapp-tutorial,
-:root[data-theme='light'] .app-shell .whatsapp-requirements {
-  background: #f8fafc !important;
-  border-color: var(--panel-border-color) !important;
-}
-*/
 
-:root[data-theme='light'] .app-shell .whatsapp-tutorial strong {
-  color: var(--panel-text-muted) !important;
-  -webkit-text-fill-color: var(--panel-text-muted) !important;
-}
-
-/*
-:root[data-theme='light'] .app-shell .whatsapp-requirements,
-:root[data-theme='light'] .app-shell .whatsapp-requirements li {
-  color: var(--panel-text-primary) !important;
-  -webkit-text-fill-color: var(--panel-text-primary) !important;
-}
-*/
-
-/*
-:root[data-theme='light'] .app-shell .whatsapp-connect-phone .field span,
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code span {
-  color: var(--panel-text-muted) !important;
-  -webkit-text-fill-color: var(--panel-text-muted) !important;
-}
-*/
-
-:root[data-theme='light'] .app-shell .whatsapp-pairing-code strong {
-  color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
-}
-
-:root[data-theme='light'] .app-shell .whatsapp-status-note {
-  color: var(--brand-green) !important;
-  -webkit-text-fill-color: var(--brand-green) !important;
-}
-
-/*
-:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary,
-:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost {
-  color: var(--panel-text-primary) !important;
-  background: #ffffff !important;
-  border: 1px solid var(--panel-border-color) !important;
-}
-*/
-
-/*
-:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-secondary:hover,
-:root[data-theme='light'] .app-shell .whatsapp-official-actions .btn-ghost:hover {
-  background: #f9fafb !important;
-}
-*/
-
-/* WhatsApp light-theme hard reset: covers late global.css dark overrides. */
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card {
-  color: var(--panel-text-primary) !important;
-}
-*/
-
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card h1,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card > p,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card span,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card strong,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card li,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card label {
-  color: var(--panel-text-primary) !important;
-  -webkit-text-fill-color: var(--panel-text-primary) !important;
-}
-*/
-
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-note,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .field-hint,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .form-error,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .success-text,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements li {
-  color: var(--panel-text-muted) !important;
-  -webkit-text-fill-color: var(--panel-text-muted) !important;
-}
-*/
-
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-pill {
-  background: #f8fafc !important;
-  border-color: var(--panel-border-color) !important;
-}
-
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-connected-badge,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-status-icon {
-  color: var(--brand-green) !important;
-}
-*/
-
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code strong,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-pairing-code-value {
-  color: #111827 !important;
-  -webkit-text-fill-color: #111827 !important;
-}
-*/
-
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-code-placeholder {
-  color: #9ca3af !important;
-  -webkit-text-fill-color: #9ca3af !important;
-}
-
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements {
-  background: #ffffff !important;
-}
-
-/*
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements strong,
-:root[data-theme='light'] .app-shell .page.whatsapp-official-page .whatsapp-official-card .whatsapp-requirements li::marker {
-  color: var(--brand-green) !important;
-}
-*/
-
-/* WhatsApp chat area in light theme */
 :root[data-theme='light'] .app-shell .chat-layout,
 :root[data-theme='light'] .app-shell .conversation-list,
 :root[data-theme='light'] .app-shell .chat-center,
@@ -1384,7 +1188,7 @@
   color-scheme: light !important;
 }
 
-/* Dashboard summary card span text — white-on-white fix */
+/* Dashboard summary card span text ï¿½ white-on-white fix */
 :root[data-theme='light'] .app-shell .content .dashboard-summary-card span {
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
@@ -1395,7 +1199,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Input autofill — white background in light theme */
+/* Input autofill ï¿½ white background in light theme */
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill,
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill:hover,
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill:focus,
@@ -1414,14 +1218,14 @@
   transition: background-color 9999s ease-out 0s !important;
 }
 
-/* Dashboard summary card hover — subtle lift, no dark glow */
+/* Dashboard summary card hover ï¿½ subtle lift, no dark glow */
 :root[data-theme='light'] .app-shell .content .dashboard-summary-card:hover {
   transform: translateY(-3px) !important;
   border-color: rgba(var(--primary-rgb), 0.28) !important;
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
 }
 
-/* Card hover states — remove dark glow, use subtle shadow */
+/* Card hover states ï¿½ remove dark glow, use subtle shadow */
 :root[data-theme='light'] .app-shell .panel:hover,
 :root[data-theme='light'] .app-shell .metric-card:hover,
 :root[data-theme='light'] .app-shell .plan-card:hover,
@@ -1433,7 +1237,7 @@
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
 }
 
-/* Modal backdrop — light semi-transparent overlay */
+/* Modal backdrop ï¿½ light semi-transparent overlay */
 :root[data-theme='light'] .app-shell .modal-backdrop,
 :root[data-theme='light'] .admin-shell .modal-backdrop {
   background: rgba(15, 23, 42, 0.30) !important;
@@ -1441,7 +1245,7 @@
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
-/* Admin modal — white background */
+/* Admin modal ï¿½ white background */
 :root[data-theme='light'] .admin-shell .modal {
   background: var(--panel-card-bg) !important;
   border: 1px solid var(--panel-border-color) !important;
@@ -1449,7 +1253,7 @@
   color: var(--panel-text-primary) !important;
 }
 
-/* Dropdown / action-menu panels — light background */
+/* Dropdown / action-menu panels ï¿½ light background */
 :root[data-theme='light'] .app-shell .dropdown-panel,
 :root[data-theme='light'] .app-shell .action-menu-panel,
 :root[data-theme='light'] .admin-shell .dropdown-panel,
@@ -1484,7 +1288,7 @@
   background: rgba(239, 68, 68, 0.10) !important;
 }
 
-/* Inner cards/boxes — white background */
+/* Inner cards/boxes ï¿½ white background */
 :root[data-theme='light'] .app-shell .conversation,
 :root[data-theme='light'] .app-shell .chat-message,
 :root[data-theme='light'] .app-shell .mini-row,
@@ -1549,7 +1353,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Focus states — subtle green border, no dark glow */
+/* Focus states ï¿½ subtle green border, no dark glow */
 :root[data-theme='light'] .app-shell .content input:focus,
 :root[data-theme='light'] .app-shell .content select:focus,
 :root[data-theme='light'] .app-shell .content textarea:focus,
@@ -1570,7 +1374,7 @@
   color: var(--panel-text-primary) !important;
 }
 
-/* Page title / headings — dark override sets #ffffff */
+/* Page title / headings ï¿½ dark override sets #ffffff */
 :root[data-theme='light'] .app-shell .page-title h1,
 :root[data-theme='light'] .app-shell .dashboard-hero h1,
 :root[data-theme='light'] .app-shell .panel h2,
@@ -1586,7 +1390,7 @@
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
-/* Muted paragraphs / spans — dark override sets rgba(226,233,247,...) */
+/* Muted paragraphs / spans ï¿½ dark override sets rgba(226,233,247,...) */
 :root[data-theme='light'] .app-shell .page-title p,
 :root[data-theme='light'] .app-shell .dashboard-hero p,
 :root[data-theme='light'] .app-shell .panel p,
@@ -1606,7 +1410,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Field-hint overrides — dark override sets rgba(226,233,247,0.62) */
+/* Field-hint overrides ï¿½ dark override sets rgba(226,233,247,0.62) */
 :root[data-theme='light'] .app-shell .dashboard-summary-card span,
 :root[data-theme='light'] .app-shell .search-shell .field-hint,
 :root[data-theme='light'] .app-shell .filters .field-hint,
@@ -1616,14 +1420,14 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Dashboard summary card strong — dark override sets #ffffff */
+/* Dashboard summary card strong ï¿½ dark override sets #ffffff */
 :root[data-theme='light'] .app-shell .dashboard-summary-card strong,
 :root[data-theme='light'] .admin-shell .admin-metrics strong {
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
-/* Dashboard summary card small — dark override sets rgba(226,233,247,0.54) */
+/* Dashboard summary card small ï¿½ dark override sets rgba(226,233,247,0.54) */
 :root[data-theme='light'] .app-shell .dashboard-summary-card small,
 :root[data-theme='light'] .admin-shell .admin-panels p,
 :root[data-theme='light'] .admin-shell .admin-config p,
@@ -1632,7 +1436,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Topbar text — dark override sets white/rgba */
+/* Topbar text ï¿½ dark override sets white/rgba */
 :root[data-theme='light'] .app-shell .topbar strong,
 :root[data-theme='light'] .app-shell .user-menu strong,
 :root[data-theme='light'] .app-shell .demo-pill,
@@ -1655,7 +1459,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Chat message text — dark override sets white */
+/* Chat message text ï¿½ dark override sets white */
 :root[data-theme='light'] .app-shell .chat-message {
   color: var(--panel-text-primary) !important;
 }

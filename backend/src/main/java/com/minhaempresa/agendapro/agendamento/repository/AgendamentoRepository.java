@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.agendamento.repository;
+package com.minhaempresa.agendapro.agendamento.repository;
 
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoSimplesProjection;
@@ -17,27 +17,6 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         LocalTime getHoraInicio();
         LocalTime getHoraFim();
         StatusAgendamento getStatus();
-    }
-
-    interface AgendamentoLembreteProjection {
-        Long getId();
-        Long getEmpresaId();
-        Boolean getEmpresaWhatsappConnected();
-        String getClienteNome();
-        String getClienteTelefone();
-        String getServicoNome();
-        String getProfissionalNome();
-        java.time.LocalDate getData();
-        LocalTime getHoraInicio();
-        String getProtocolo();
-        Boolean getLembreteWppEnviado();
-        StatusAgendamento getStatus();
-        Boolean getConfirmacaoPagamentoDonoEnviada();
-        java.time.LocalDateTime getConfirmacaoPagamentoDonoEnviadaEm();
-        Boolean getSegundaConfirmacaoPagamentoDonoEnviada();
-        java.time.LocalDateTime getSegundaConfirmacaoPagamentoDonoEnviadaEm();
-        Boolean getConfirmacaoPagamentoDonoRespondida();
-        java.time.LocalDateTime getConfirmacaoPagamentoDonoRespondidaEm();
     }
 
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
@@ -78,145 +57,6 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             List<StatusAgendamento> status,
             LocalDate data
     );
-
-    //  DESATIVADO - WhatsApp query disabled
-    /*
-    @Query("""
-            select a.id as id,
-                   a.empresa.id as empresaId,
-                   a.empresa.whatsappConnected as empresaWhatsappConnected,
-                   a.cliente.nome as clienteNome,
-                   a.cliente.telefone as clienteTelefone,
-                   a.servico.nome as servicoNome,
-                   a.profissional.nome as profissionalNome,
-                   a.data as data,
-                   a.horaInicio as horaInicio,
-                   a.protocolo as protocolo,
-                   a.lembreteWppEnviado as lembreteWppEnviado,
-                   a.status as status,
-                   a.confirmacaoPagamentoDonoEnviada as confirmacaoPagamentoDonoEnviada,
-                   a.confirmacaoPagamentoDonoEnviadaEm as confirmacaoPagamentoDonoEnviadaEm,
-                   a.segundaConfirmacaoPagamentoDonoEnviada as segundaConfirmacaoPagamentoDonoEnviada,
-                   a.segundaConfirmacaoPagamentoDonoEnviadaEm as segundaConfirmacaoPagamentoDonoEnviadaEm,
-                   a.confirmacaoPagamentoDonoRespondida as confirmacaoPagamentoDonoRespondida,
-                   a.confirmacaoPagamentoDonoRespondidaEm as confirmacaoPagamentoDonoRespondidaEm
-            from AgendamentoEntity a
-            where a.empresa.id = :empresaId
-              and a.data = :data
-              and a.horaInicio between :horaInicio and :horaFim
-              and a.status in :status
-              and (a.lembreteWppEnviado = false or a.lembreteWppEnviado is null)
-            """)
-    List<AgendamentoLembreteProjection> findLembretesClienteProjection(
-            @Param("empresaId") Long empresaId,
-            @Param("status") List<StatusAgendamento> status,
-            @Param("data") LocalDate data,
-            @Param("horaInicio") LocalTime horaInicio,
-            @Param("horaFim") LocalTime horaFim
-    );
-    */
-    default List<Object> findLembretesClienteProjection(Long empresaId, List<StatusAgendamento> status, LocalDate data, LocalTime horaInicio, LocalTime horaFim) {
-        return java.util.Collections.emptyList();
-    }
-
-    //  DESATIVADO - WhatsApp query disabled
-    /*
-    @Query("""
-            select a.id as id,
-                   a.empresa.id as empresaId,
-                   a.empresa.whatsappConnected as empresaWhatsappConnected,
-                   a.cliente.nome as clienteNome,
-                   a.cliente.telefone as clienteTelefone,
-                   a.servico.nome as servicoNome,
-                   a.profissional.nome as profissionalNome,
-                   a.data as data,
-                   a.horaInicio as horaInicio,
-                   a.protocolo as protocolo,
-                   a.lembreteWppEnviado as lembreteWppEnviado,
-                   a.status as status,
-                   a.confirmacaoPagamentoDonoEnviada as confirmacaoPagamentoDonoEnviada,
-                   a.confirmacaoPagamentoDonoEnviadaEm as confirmacaoPagamentoDonoEnviadaEm,
-                   a.segundaConfirmacaoPagamentoDonoEnviada as segundaConfirmacaoPagamentoDonoEnviada,
-                   a.segundaConfirmacaoPagamentoDonoEnviadaEm as segundaConfirmacaoPagamentoDonoEnviadaEm,
-                   a.confirmacaoPagamentoDonoRespondida as confirmacaoPagamentoDonoRespondida,
-                   a.confirmacaoPagamentoDonoRespondidaEm as confirmacaoPagamentoDonoRespondidaEm
-            from AgendamentoEntity a
-            where a.empresa.id = :empresaId
-              and a.data = :data
-              and a.status in :status
-            order by a.horaInicio asc
-            """)
-    List<AgendamentoLembreteProjection> findConfirmacoesPagamentoDonoProjection(
-            @Param("empresaId") Long empresaId,
-            @Param("status") List<StatusAgendamento> status,
-            @Param("data") LocalDate data
-    );
-    */
-    default List<Object> findConfirmacoesPagamentoDonoProjection(Long empresaId, List<StatusAgendamento> status, LocalDate data) {
-        return java.util.Collections.emptyList();
-    }
-    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    @Query("""
-            select a from AgendamentoEntity a
-            where a.empresa.id = :empresaId
-              and a.data = :data
-              and a.horaInicio between :horaInicio and :horaFim
-              and a.status in :status
-            """)
-    List<AgendamentoEntity> findConfirmacaoPagamentoPendente(
-            @Param("empresaId") Long empresaId,
-            @Param("status") List<StatusAgendamento> status,
-            @Param("data") LocalDate data,
-            @Param("horaInicio") LocalTime horaInicio,
-            @Param("horaFim") LocalTime horaFim
-    );
-
-    //  DESATIVADO - WhatsApp query disabled
-    /*
-    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    List<AgendamentoEntity> findByLembreteWppEnviadoFalseAndStatusInAndDataAndHoraInicioBetween(
-            List<StatusAgendamento> status,
-            LocalDate data,
-            LocalTime horaInicio,
-            LocalTime horaFim
-    );
-    */
-
-    //  DESATIVADO - WhatsApp query disabled
-    /*
-    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    @Query("""
-            select a from AgendamentoEntity a
-            where a.data = :data
-              and a.horaInicio between :horaInicio and :horaFim
-              and a.status in :status
-              and (a.lembreteWppEnviado = false or a.lembreteWppEnviado is null)
-            """)
-    List<AgendamentoEntity> findByLembretePendente(
-            @Param("status") List<StatusAgendamento> status,
-            @Param("data") LocalDate data,
-            @Param("horaInicio") LocalTime horaInicio,
-            @Param("horaFim") LocalTime horaFim
-    );
-    */
-
-    //  DESATIVADO - WhatsApp query disabled
-    /*
-    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    @Query("""
-            select a from AgendamentoEntity a
-            where a.data = :data
-              and a.horaInicio between :horaInicio and :horaFim
-              and a.status in :status
-              and (a.lembreteWppEnviado = false or a.lembreteWppEnviado is null)
-            """)
-    List<AgendamentoEntity> buscarAgendamentosParaLembreteWhatsapp(
-            @Param("status") List<StatusAgendamento> status,
-            @Param("data") LocalDate data,
-            @Param("horaInicio") LocalTime horaInicio,
-            @Param("horaFim") LocalTime horaFim
-    );
-    */
 
     @Query("""
             select new com.minhaempresa.agendapro.agendamento.dto.AgendamentoSimplesProjection(

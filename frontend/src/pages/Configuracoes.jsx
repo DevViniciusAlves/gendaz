@@ -1,4 +1,4 @@
-﻿import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, Send } from 'lucide-react'
+import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -486,7 +486,7 @@ export default function Configuracoes() {
           <div>
             <span className="section-kicker">Portal do cliente</span>
             <h2>Meu Gendaz</h2>
-            <p>Compartilhe este link na bio, WhatsApp ou redes sociais para seus clientes acessarem o portal.</p>
+            <p>Compartilhe este link na bio ou redes sociais para seus clientes acessarem o portal.</p>
           </div>
           <LinkIcon size={22} color="var(--primary)" />
         </div>

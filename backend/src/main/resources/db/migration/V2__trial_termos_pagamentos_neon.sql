@@ -8,7 +8,7 @@ alter table if exists assinaturas add column if not exists data_inicio_teste dat
 alter table if exists assinaturas add column if not exists data_fim_teste date;
 
 insert into planos (nome, descricao, valor_mensal, status)
-values ('BASICO', 'WhatsApp, agenda, clientes e servicos.', 69.99, 'ATIVO')
+values ('BASICO', 'Agenda, clientes e servicos.', 69.99, 'ATIVO')
 on conflict (nome) do nothing;
 
 insert into planos (nome, descricao, valor_mensal, status)

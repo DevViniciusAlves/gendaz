@@ -12,10 +12,10 @@ const planosBase = [
   {
     codigo: 'BASICO',
     nome: 'Plano Basico',
-    subtitulo: 'WhatsApp e agenda simples',
+    subtitulo: 'Agenda simples',
     extra: '7 dias gratis',
     descricao: 'Para organizar conversas, agenda, clientes e servicos no mesmo painel.',
-    beneficios: ['WhatsApp interno', 'Agenda organizada', 'Cadastro de clientes', 'Cadastro de servicos', 'Confirmacao de consulta', 'Cancelamento e remarcacao'],
+    beneficios: ['Agenda organizada', 'Cadastro de clientes', 'Cadastro de servicos', 'Confirmacao de consulta', 'Cancelamento e remarcacao'],
     indicadoPara: ['Clinicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
     naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatorios'],
     cta: 'Comecar no Basico',

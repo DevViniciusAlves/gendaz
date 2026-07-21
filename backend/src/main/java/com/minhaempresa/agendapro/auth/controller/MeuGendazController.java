@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.auth.controller;
+package com.minhaempresa.agendapro.auth.controller;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;

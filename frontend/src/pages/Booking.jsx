@@ -1,4 +1,4 @@
-﻿import { CalendarDays, CheckCircle, Search } from 'lucide-react'
+import { CalendarDays, CheckCircle, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -442,7 +442,7 @@ export default function Booking() {
               </label>
 
               <label className="field">
-                <span>Telefone{/*  DESATIVADO — / WhatsApp */}</span>
+                <span>Telefone</span>
                 <input
                   inputMode="numeric"
                   value={cliente.telefone}

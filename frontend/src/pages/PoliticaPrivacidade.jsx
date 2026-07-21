@@ -1,4 +1,4 @@
-﻿import { Link } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 const contatoEmail = import.meta.env.VITE_CONTATO_EMAIL || 'contato@gendaz.com.br'
 
@@ -92,21 +92,14 @@ const secoes = [
     ],
   },
   {
-    titulo: '13. Integração futura com WhatsApp',
-    conteudos: [
-      'O gendaz pode, no futuro, integrar recursos com o WhatsApp para atendimento, contato e troca de mensagens dentro do fluxo do sistema.',
-      'Quando essa funcionalidade for ativada, o tratamento de mensagens e contatos seguirá esta política e as configurações da empresa usuária.',
-    ],
-  },
-  {
-    titulo: '14. Alterações nesta política',
+    titulo: '13. Alterações nesta política',
     conteudos: [
       'Esta Política de Privacidade pode ser atualizada a qualquer momento para refletir mudanças no sistema, na legislação ou nas práticas de tratamento de dados.',
       'A versão mais recente sempre estará disponível nesta página.',
     ],
   },
   {
-    titulo: '15. Contato',
+    titulo: '14. Contato',
     conteudos: [
       `Se você tiver dúvidas sobre esta Política de Privacidade ou sobre o tratamento de dados no gendaz, entre em contato pelo e-mail ${contatoEmail}.`,
       'Se houver necessidade de atendimento adicional, o canal de suporte da plataforma poderá ser usado como ponto de contato complementar.',

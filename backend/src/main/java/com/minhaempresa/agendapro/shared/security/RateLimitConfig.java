@@ -17,7 +17,6 @@ public class RateLimitConfig {
         public static final int REGISTRAR_PER_DAY = 3;
         public static final int HORARIOS_PER_MINUTE = 10;
         public static final int API_GERAL_PER_MINUTE = 100;
-        public static final int WHATSAPP_WEBHOOK_PER_MINUTE = 50;
     }
 
     private final Map<String, Bucket> loginBuckets = new ConcurrentHashMap<>();

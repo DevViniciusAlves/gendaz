@@ -10,7 +10,6 @@ CREATE INDEX IF NOT EXISTS idx_profissionais_empresa_id ON profissionais (empres
 CREATE INDEX IF NOT EXISTS idx_agendamentos_empresa_id_data ON agendamentos (empresa_id, data);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_cliente_id ON agendamentos (cliente_id);
 CREATE INDEX IF NOT EXISTS idx_agendamentos_profissional_data_hora ON agendamentos (profissional_id, data, hora_inicio, hora_fim);
-CREATE INDEX IF NOT EXISTS idx_agendamentos_lembrete ON agendamentos (lembrete_wpp_enviado, status, data, hora_inicio);
 
 CREATE INDEX IF NOT EXISTS idx_conversas_empresa_ultima_msg ON conversas (empresa_id, data_ultima_mensagem DESC);
 CREATE INDEX IF NOT EXISTS idx_mensagens_conversa_data ON mensagens (conversa_id, data_envio ASC);
