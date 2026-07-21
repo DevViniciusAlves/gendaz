@@ -9,7 +9,7 @@ export const PLANOS = {
     nome: 'Plano Basico',    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'configuracoes'],
   },
   PRO: {
-    nome: 'Plano Pro',    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'profissionais', 'financeiro', 'pagamentos', 'relatorios', 'configuracoes'],
+    nome: 'Plano Pro',    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'configuracoes'],
   },
 }
 

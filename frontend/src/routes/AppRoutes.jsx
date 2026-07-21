@@ -23,7 +23,6 @@ import Crm from '../pages/Crm.jsx'
 import Servicos from '../pages/Servicos.jsx'
 import Profissionais from '../pages/Profissionais.jsx'
 import Financeiro from '../pages/Financeiro.jsx'
-import Pagamentos from '../pages/Pagamentos.jsx'
 import Relatorios from '../pages/Relatorios.jsx'
 import Planos from '../pages/Planos.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
@@ -129,7 +128,7 @@ export default function AppRoutes() {
         <Route path="servicos" element={<PlanRoute routeKey="servicos"><Servicos /></PlanRoute>} />
         <Route path="profissionais" element={<PlanRoute routeKey="profissionais"><Profissionais /></PlanRoute>} />
         <Route path="financeiro" element={<PlanRoute routeKey="financeiro"><Financeiro /></PlanRoute>} />
-        <Route path="pagamentos" element={<PlanRoute routeKey="pagamentos"><Pagamentos /></PlanRoute>} />
+        <Route path="pagamentos/*" element={<Navigate to="/sistema/financeiro" replace />} />
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
         <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />
