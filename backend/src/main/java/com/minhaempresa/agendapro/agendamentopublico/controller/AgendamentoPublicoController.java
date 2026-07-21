@@ -83,34 +83,10 @@ public class AgendamentoPublicoController {
         }
 
         String digitos = telefone.replaceAll("\\D", "");
-
-        if (digitos.length() != 13) {
+        if (digitos.length() < 11 || digitos.length() > 14) {
             return ResponseEntity.badRequest().body(java.util.Map.of(
                     "erro", "TELEFONE_INVALIDO",
-                    "mensagem", "Telefone inválido. Formato correto: +55 (DDD) 99999-9999. Você informou apenas " + digitos.length() + " dígitos."
-            ));
-        }
-
-        if (!digitos.startsWith("55")) {
-            return ResponseEntity.badRequest().body(java.util.Map.of(
-                    "erro", "TELEFONE_INVALIDO",
-                    "mensagem", "Telefone inválido. Deve ser Brasil (+55)"
-            ));
-        }
-
-        String ddd = digitos.substring(2, 4);
-        try {
-            int dddInt = Integer.parseInt(ddd);
-            if (dddInt < 11 || dddInt > 99) {
-                return ResponseEntity.badRequest().body(java.util.Map.of(
-                        "erro", "TELEFONE_INVALIDO",
-                        "mensagem", "DDD inválido: " + ddd + ". DDD deve estar entre 11 e 99"
-                ));
-            }
-        } catch (NumberFormatException e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of(
-                    "erro", "TELEFONE_INVALIDO",
-                    "mensagem", "DDD inválido: " + ddd
+                    "mensagem", "Telefone invalido. Use codigo da cidade + numero. Voce informou apenas " + digitos.length() + " digitos."
             ));
         }
 

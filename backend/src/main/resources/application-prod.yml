@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -36,8 +36,8 @@ app:
   jwt-secret: ${JWT_SECRET}
   timezone: ${APP_TIMEZONE:America/Cuiaba}
 
-# ⚠️ DESATIVADO - whatsapp-service:
-# ⚠️ DESATIVADO -   url: ${WHATSAPP_SERVICE_URL:}
+#  DESATIVADO - whatsapp-service:
+#  DESATIVADO -   url: ${WHATSAPP_SERVICE_URL:}
 
-# ⚠️ DESATIVADO - whatsapp:
-# ⚠️ DESATIVADO -   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
+#  DESATIVADO - whatsapp:
+#  DESATIVADO -   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}

@@ -1,6 +1,6 @@
-/*
+﻿/*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -36,7 +36,7 @@ public class WhatsappReminderScheduler {
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
-    // @Scheduled(fixedDelay = 60000)  // ⚠️ DESATIVADO
+    // @Scheduled(fixedDelay = 60000)  //  DESATIVADO
     public void enviarLembretes() {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         return;
@@ -107,7 +107,7 @@ public class WhatsappReminderScheduler {
             builder.append("Profissional: ").append(profissional).append('\n');
         }
         builder.append("Horário: ").append(horario).append('\n')
-                .append("\nEsperamos você no horário marcado. ✅\n\n")
+                .append("\nEsperamos você no horário marcado. \n\n")
                 .append("Se precisar cancelar ou reagendar, responda esta mensagem.");
         return builder.toString();
         */

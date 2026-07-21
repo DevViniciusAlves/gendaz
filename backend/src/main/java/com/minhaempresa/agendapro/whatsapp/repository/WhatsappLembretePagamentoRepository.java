@@ -1,6 +1,6 @@
-/*
+﻿/*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -12,7 +12,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WhatsappLembretePagamentoRepository extends JpaRepository<WhatsappLembretePagamentoEntity, Long> {
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     /*
     Optional<WhatsappLembretePagamentoEntity> findByAgendamento_Id(Long agendamentoId);
 

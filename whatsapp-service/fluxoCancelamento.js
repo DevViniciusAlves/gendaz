@@ -1,6 +1,6 @@
-/*
+﻿/*
 ╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║    DESATIVADO - FUNCIONALIDADE WhatsApp ║
 ║  Código comentado. Remova comentários  ║
 ║  para reativar.                        ║
 ╚════════════════════════════════════════╝

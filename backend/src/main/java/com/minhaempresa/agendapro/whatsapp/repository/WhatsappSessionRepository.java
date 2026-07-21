@@ -1,6 +1,6 @@
-/*
+﻿/*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -13,7 +13,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WhatsappSessionRepository extends JpaRepository<WhatsappSessionEntity, Long> {
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     /*
     Optional<WhatsappSessionEntity> findByEmpresa_Id(Long empresaId);
     List<WhatsappSessionEntity> findAllByOrderByUpdatedAtDesc();

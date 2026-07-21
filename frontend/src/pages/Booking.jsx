@@ -1,4 +1,4 @@
-import { CalendarDays, CheckCircle, Search } from 'lucide-react'
+﻿import { CalendarDays, CheckCircle, Search } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -442,7 +442,7 @@ export default function Booking() {
               </label>
 
               <label className="field">
-                <span>Telefone{/* ⚠️ DESATIVADO — / WhatsApp */}</span>
+                <span>Telefone{/*  DESATIVADO — / WhatsApp */}</span>
                 <input
                   inputMode="numeric"
                   value={cliente.telefone}
@@ -451,7 +451,7 @@ export default function Booking() {
                   required
                 />
                 <small className={validarTelefone(cliente.telefone) ? "field-hint limit-reached" : "field-hint"}>
-                  {cliente.telefone ? (validarTelefone(cliente.telefone) || '✓ Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
+                  {cliente.telefone ? (validarTelefone(cliente.telefone) || ' Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
                 </small>
               </label>
             </div>

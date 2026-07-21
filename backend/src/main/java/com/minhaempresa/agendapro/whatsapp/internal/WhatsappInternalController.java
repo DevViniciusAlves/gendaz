@@ -1,6 +1,6 @@
-/*
+﻿/*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -79,7 +79,7 @@ public class WhatsappInternalController {
     private final WhatsappConversationRepository conversationRepository;
     private final WhatsappMessageRepository messageRepository;
 
-    // @GetMapping("/cliente")  // ⚠️ DESATIVADO
+    // @GetMapping("/cliente")  //  DESATIVADO
     public ResponseEntity<ClienteInternoResponse> buscarClientePorTelefone(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @RequestParam String phone) {
@@ -94,7 +94,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/config/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> config(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long tenantId) {
@@ -115,7 +115,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/contexto/{tenantId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/contexto/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> contexto(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long tenantId) {
@@ -136,7 +136,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/servicos/{empresaId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/servicos/{empresaId}")  //  DESATIVADO
     public ResponseEntity<List<WhatsappServicoResposta>> servicos(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId) {
@@ -148,7 +148,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/disponibilidade/{empresaId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/disponibilidade/{empresaId}")  //  DESATIVADO
     public ResponseEntity<WhatsappDisponibilidadeResponse> disponibilidade(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId,
@@ -163,7 +163,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/agendar")  // ⚠️ DESATIVADO
+    // @PostMapping("/agendar")  //  DESATIVADO
     public ResponseEntity<?> agendar(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody WhatsappAgendarRequest request) {
@@ -216,7 +216,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/agendamentos/protocolo/{protocolo}")  // ⚠️ DESATIVADO
+    // @GetMapping("/agendamentos/protocolo/{protocolo}")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> buscarAgendamentoPorProtocolo(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable String protocolo,
@@ -230,7 +230,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/agendamentos")  // ⚠️ DESATIVADO
+    // @GetMapping("/agendamentos")  //  DESATIVADO
     public ResponseEntity<List<Map<String, Object>>> listarAgendamentosParaCancelamento(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @RequestParam Long empresaId,
@@ -244,7 +244,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/agendamentos/{id}/cancelar")  // ⚠️ DESATIVADO
+    // @PostMapping("/agendamentos/{id}/cancelar")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> cancelarAgendamento(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long id,
@@ -258,7 +258,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PutMapping("/agendamentos/{id}/reagendar")  // ⚠️ DESATIVADO
+    // @PutMapping("/agendamentos/{id}/reagendar")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> reagendarAgendamento(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long id,
@@ -276,7 +276,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/profissionais/{empresaId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/profissionais/{empresaId}")  //  DESATIVADO
     public ResponseEntity<List<Map<String, Object>>> profissionais(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId,
@@ -299,7 +299,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/sessoes")  // ⚠️ DESATIVADO
+    // @GetMapping("/sessoes")  //  DESATIVADO
     public ResponseEntity<List<WhatsappSessionSummaryResponse>> listarSessoesPersistidas(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
@@ -310,7 +310,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/sessao/{empresaId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/sessao/{empresaId}")  //  DESATIVADO
     public ResponseEntity<WhatsappSessionResponse> obterSessaoPersistida(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId) {
@@ -322,7 +322,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PutMapping("/sessao/{empresaId}")  // ⚠️ DESATIVADO
+    // @PutMapping("/sessao/{empresaId}")  //  DESATIVADO
     public ResponseEntity<WhatsappSessionResponse> salvarSessaoPersistida(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId,
@@ -335,7 +335,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @DeleteMapping("/sessao/{empresaId}")  // ⚠️ DESATIVADO
+    // @DeleteMapping("/sessao/{empresaId}")  //  DESATIVADO
     public ResponseEntity<MensagemResposta> removerSessaoPersistida(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId) {
@@ -348,7 +348,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/sessao/{empresaId}/conectar")  // ⚠️ DESATIVADO
+    // @PostMapping("/sessao/{empresaId}/conectar")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> marcarConectado(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId) {
@@ -370,7 +370,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/sessao/{empresaId}/desconectar")  // ⚠️ DESATIVADO
+    // @PostMapping("/sessao/{empresaId}/desconectar")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> marcarDesconectado(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long empresaId) {
@@ -392,7 +392,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/mensagem")  // ⚠️ DESATIVADO
+    // @PostMapping("/mensagem")  //  DESATIVADO
     public ResponseEntity<MensagemResposta> mensagem(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody MensagemRequest request) {
@@ -405,7 +405,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/notificar")  // ⚠️ DESATIVADO
+    // @PostMapping("/notificar")  //  DESATIVADO
     public ResponseEntity<MensagemResposta> notificar(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody NotificarRequest request) {
@@ -418,7 +418,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/agendamento-ia")  // ⚠️ DESATIVADO
+    // @PostMapping("/agendamento-ia")  //  DESATIVADO
     public ResponseEntity<MensagemResposta> agendamentoIa(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody WhatsappAgendamentoIaRequest request) {
@@ -431,7 +431,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PostMapping("/marcar-lembrete-enviado")  // ⚠️ DESATIVADO
+    // @PostMapping("/marcar-lembrete-enviado")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> marcarLembreteEnviado(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @RequestBody Map<String, Object> payload) {
@@ -445,7 +445,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PutMapping("/agendamentos/{id}/confirmacao-pagamento-dono")  // ⚠️ DESATIVADO
+    // @PutMapping("/agendamentos/{id}/confirmacao-pagamento-dono")  //  DESATIVADO
     public ResponseEntity<Map<String, Object>> confirmarPagamentoDono(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long id,
@@ -460,7 +460,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @GetMapping("/fluxo")  // ⚠️ DESATIVADO
+    // @GetMapping("/fluxo")  //  DESATIVADO
     public ResponseEntity<WhatsappFluxoConversaResponse> obterFluxo(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @RequestParam Long empresaId,
@@ -477,7 +477,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PostMapping("/fluxo/salvar")  // ⚠️ DESATIVADO
+    // @PostMapping("/fluxo/salvar")  //  DESATIVADO
     public ResponseEntity<WhatsappFluxoConversaResponse> salvarFluxo(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody WhatsappFluxoConversaRequest request) {
@@ -489,7 +489,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PostMapping("/fluxo/resetar")  // ⚠️ DESATIVADO
+    // @PostMapping("/fluxo/resetar")  //  DESATIVADO
     public ResponseEntity<MensagemResposta> resetarFluxo(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody FluxoResetRequest request) {
@@ -502,7 +502,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @GetMapping("/conversa-pausada")  // ⚠️ DESATIVADO
+    // @GetMapping("/conversa-pausada")  //  DESATIVADO
     public ResponseEntity<ConversaPausadaResponse> conversaPausada(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @RequestParam Long empresaId,
@@ -515,7 +515,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PostMapping("/conectar")  // ⚠️ DESATIVADO
+    // @PostMapping("/conectar")  //  DESATIVADO
     public ResponseEntity<WhatsappConnectResponse> conectar(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody WhatsappConnectRequest request) {
@@ -527,7 +527,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @GetMapping("/status")  // ⚠️ DESATIVADO
+    // @GetMapping("/status")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> status(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken) {
         // DESATIVADO
@@ -538,7 +538,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // @PutMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
+    // @PutMapping("/config/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> atualizarConfig(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @org.springframework.web.bind.annotation.PathVariable Long tenantId,
@@ -556,7 +556,7 @@ public class WhatsappInternalController {
         return ResponseEntity.ok(null);
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private void registrarMensagem(Long tenantId, String phone, String mensagem, String origem) {
         // DESATIVADO
         /*
@@ -586,7 +586,7 @@ public class WhatsappInternalController {
         */
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private void validarTokenInterno(String recebido) {
         // DESATIVADO
         /*
@@ -600,7 +600,7 @@ public class WhatsappInternalController {
         */
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private String normalizar(String valor) {
         // DESATIVADO
         /*

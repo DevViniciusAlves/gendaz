@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, Phone, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -308,7 +308,7 @@ export default function CriarConta() {
           </div>
 
           <div className="login-field-v2">
-            <label className="login-label-v2">Telefone{/* ⚠️ DESATIVADO — / WhatsApp */}</label>
+            <label className="login-label-v2">Telefone{/*  DESATIVADO — / WhatsApp */}</label>
             <div className="login-input-wrap-v2">
               <Phone size={16} className="login-input-icon-left" />
               <input

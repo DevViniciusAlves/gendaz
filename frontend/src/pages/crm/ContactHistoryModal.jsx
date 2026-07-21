@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import Modal from '../../components/Modal.jsx'
 import Button from '../../components/Button.jsx'
 import { buscarHistoricoContatos } from '../../api/crmApi.js'
@@ -61,7 +61,7 @@ export default function ContactHistoryModal({ open, onClose, cliente }) {
                       <td style={{ padding: '10px 8px', color: 'var(--text)' }}>{c.assunto || c.template}</td>
                       <td style={{ padding: '10px 8px' }}>
                         <span style={{ color: c.status === 'aberto' ? 'var(--text)' : 'var(--muted)' }}>
-                          {c.status === 'aberto' ? 'Abriu ✅' : 'Nao abriu ❌'}
+                          {c.status === 'aberto' ? 'Abriu ' : 'Nao abriu '}
                         </span>
                       </td>
                     </tr>

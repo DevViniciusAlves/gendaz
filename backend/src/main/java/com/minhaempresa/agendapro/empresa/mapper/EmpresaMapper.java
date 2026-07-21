@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.empresa.mapper;
+﻿package com.minhaempresa.agendapro.empresa.mapper;
 
 import com.minhaempresa.agendapro.empresa.dto.EmpresaDtos.EmpresaResponse;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
@@ -12,7 +12,7 @@ public class EmpresaMapper {
                 empresa.getTelefone(),
                 empresa.getEmail(),
                 empresa.getStatus(),
-                // ⚠️ DESATIVADO - WhatsApp
+                //  DESATIVADO - WhatsApp
                 // empresa.getWhatsappConnected(),
                 // empresa.getWhatsappPhone(),
                 // empresa.getWhatsappNotificationsEnabled(),

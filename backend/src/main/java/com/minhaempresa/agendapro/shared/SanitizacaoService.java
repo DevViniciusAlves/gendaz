@@ -31,17 +31,7 @@ public class SanitizacaoService {
         if (digitos.isEmpty()) {
             return null;
         }
-        if (!digitos.startsWith("55")) {
-            digitos = "55" + digitos;
-        }
-        if (digitos.length() == 12 && digitos.startsWith("55")) {
-            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
-        }
-        if (digitos.length() != 13) {
-            return null;
-        }
-        int ddd = Integer.parseInt(digitos.substring(2, 4));
-        if (ddd < 11 || ddd > 99) {
+        if (digitos.length() < 11 || digitos.length() > 14) {
             return null;
         }
         return digitos;

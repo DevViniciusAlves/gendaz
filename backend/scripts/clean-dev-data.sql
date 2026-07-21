@@ -1,4 +1,4 @@
--- =====================================================
+﻿-- =====================================================
 -- SCRIPT: Limpeza de Dados de Desenvolvimento
 -- Projeto: SaaS Gendaz (PostgreSQL / Neon)
 -- =====================================================
@@ -14,12 +14,12 @@
 -- =====================================================
 -- Impede que triggers de auditoria/validacao atrapalhem a limpeza.
 
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_lembrete_pagamento   DISABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_messages            DISABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_fluxo_conversa      DISABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_conversations       DISABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_connections         DISABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_sessions            DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_lembrete_pagamento   DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_messages            DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_fluxo_conversa      DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_conversations       DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_connections         DISABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_sessions            DISABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS mensagens                    DISABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS conversas                    DISABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS notificacoes                 DISABLE TRIGGER ALL;
@@ -85,12 +85,12 @@ DELETE FROM usuarios WHERE perfil != 'SUPER_ADMIN';
 -- BLOCO 5: Reabilitar triggers
 -- =====================================================
 
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_lembrete_pagamento   ENABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_messages            ENABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_fluxo_conversa      ENABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_conversations       ENABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_connections         ENABLE TRIGGER ALL;
--- ⚠️ DESATIVADO - ALTER TABLE IF EXISTS whatsapp_sessions            ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_lembrete_pagamento   ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_messages            ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_fluxo_conversa      ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_conversations       ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_connections         ENABLE TRIGGER ALL;
+--  DESATIVADO - ALTER TABLE IF EXISTS whatsapp_sessions            ENABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS mensagens                    ENABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS conversas                    ENABLE TRIGGER ALL;
 ALTER TABLE IF EXISTS notificacoes                 ENABLE TRIGGER ALL;

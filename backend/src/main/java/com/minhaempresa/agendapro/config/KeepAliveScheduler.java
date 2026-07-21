@@ -1,7 +1,7 @@
-package com.minhaempresa.agendapro.config;
+﻿package com.minhaempresa.agendapro.config;
 
-// ⚠️ DESATIVADO — Esta classe é exclusiva para manter vivo o serviço WhatsApp.
-// ⚠️ DESATIVADO — O método keepalive está desativado. Não utilizar em produção.
+//  DESATIVADO — Esta classe é exclusiva para manter vivo o serviço WhatsApp.
+//  DESATIVADO — O método keepalive está desativado. Não utilizar em produção.
 
 import com.minhaempresa.agendapro.whatsapp.service.WhatsappIntegrationProperties;
 import java.net.URI;
@@ -26,31 +26,31 @@ public class KeepAliveScheduler {
 
     @Scheduled(fixedRate = 5 * 60 * 1000, initialDelay = 30 * 1000)
     public void keepAliveTask() {
-        // ⚠️ DESATIVADO — pingWhatsappService();
+        //  DESATIVADO — pingWhatsappService();
     }
 
     private void pingWhatsappService() {
-        // ⚠️ DESATIVADO — String baseUrl = whatsappProperties.whatsappServiceUrl();
-        // ⚠️ DESATIVADO — if (baseUrl.isBlank()) {
-        // ⚠️ DESATIVADO —     log.debug("[keep-alive] WHATSAPP_SERVICE_URL nao configurada, ping ignorado");
-        // ⚠️ DESATIVADO —     return;
-        // ⚠️ DESATIVADO — }
+        //  DESATIVADO — String baseUrl = whatsappProperties.whatsappServiceUrl();
+        //  DESATIVADO — if (baseUrl.isBlank()) {
+        //  DESATIVADO —     log.debug("[keep-alive] WHATSAPP_SERVICE_URL nao configurada, ping ignorado");
+        //  DESATIVADO —     return;
+        //  DESATIVADO — }
         //
-        // ⚠️ DESATIVADO — String healthUrl = (baseUrl.endsWith("/") ? baseUrl : baseUrl + "/") + "health";
-        // ⚠️ DESATIVADO — try {
-        // ⚠️ DESATIVADO —     HttpRequest request = HttpRequest.newBuilder()
-        // ⚠️ DESATIVADO —             .uri(URI.create(healthUrl))
-        // ⚠️ DESATIVADO —             .timeout(Duration.ofSeconds(15))
-        // ⚠️ DESATIVADO —             .GET()
-        // ⚠️ DESATIVADO —             .build();
-        // ⚠️ DESATIVADO —     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        // ⚠️ DESATIVADO —     if (response.statusCode() >= 200 && response.statusCode() < 300) {
-        // ⚠️ DESATIVADO —         log.info("[keep-alive] whatsapp ping ok status={} url={}", response.statusCode(), healthUrl);
-        // ⚠️ DESATIVADO —     } else {
-        // ⚠️ DESATIVADO —         log.warn("[keep-alive] whatsapp ping falhou status={} url={}", response.statusCode(), healthUrl);
-        // ⚠️ DESATIVADO —     }
-        // ⚠️ DESATIVADO — } catch (Exception ex) {
-        // ⚠️ DESATIVADO —     log.warn("[keep-alive] whatsapp ping erro url={} detalhe={}", healthUrl, ex.getMessage());
-        // ⚠️ DESATIVADO — }
+        //  DESATIVADO — String healthUrl = (baseUrl.endsWith("/") ? baseUrl : baseUrl + "/") + "health";
+        //  DESATIVADO — try {
+        //  DESATIVADO —     HttpRequest request = HttpRequest.newBuilder()
+        //  DESATIVADO —             .uri(URI.create(healthUrl))
+        //  DESATIVADO —             .timeout(Duration.ofSeconds(15))
+        //  DESATIVADO —             .GET()
+        //  DESATIVADO —             .build();
+        //  DESATIVADO —     HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        //  DESATIVADO —     if (response.statusCode() >= 200 && response.statusCode() < 300) {
+        //  DESATIVADO —         log.info("[keep-alive] whatsapp ping ok status={} url={}", response.statusCode(), healthUrl);
+        //  DESATIVADO —     } else {
+        //  DESATIVADO —         log.warn("[keep-alive] whatsapp ping falhou status={} url={}", response.statusCode(), healthUrl);
+        //  DESATIVADO —     }
+        //  DESATIVADO — } catch (Exception ex) {
+        //  DESATIVADO —     log.warn("[keep-alive] whatsapp ping erro url={} detalhe={}", healthUrl, ex.getMessage());
+        //  DESATIVADO — }
     }
 }

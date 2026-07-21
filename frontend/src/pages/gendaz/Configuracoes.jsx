@@ -2,6 +2,7 @@ import { useContext, useState, useEffect } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Bell, LogOut, Shield, UserRound, Loader, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../../utils/phoneUtils.js'
 
 export default function Configuracoes() {
   const navigate = useNavigate()
@@ -19,11 +20,11 @@ export default function Configuracoes() {
     if (cliente) {
       setFormData({
         nome: cliente.nome || '',
-        telefone: cliente.telefone || '',
+        telefone: aplicarMascara(cliente.telefone || ''),
         email: cliente.email || '',
       })
       const nomeOk = cliente.nome && cliente.nome.trim().length >= 3 && cliente.nome !== 'Cliente'
-      const telOk = cliente.telefone && cliente.telefone.replace(/\D/g, '').length === 11
+      const telOk = !validarTelefone(cliente.telefone || '')
       setPerfilIncompleto(!nomeOk || !telOk)
     }
   }, [cliente])
@@ -58,9 +59,9 @@ export default function Configuracoes() {
       novosErros.nome = 'Nome nao pode conter apenas numeros.'
     }
 
-    const tel = (formData.telefone || '').replace(/\D/g, '')
-    if (!tel || tel.length !== 11) {
-      novosErros.telefone = 'Telefone deve ter 11 digitos (DDD + numero).'
+    const erroTelefone = validarTelefone(formData.telefone)
+    if (erroTelefone) {
+      novosErros.telefone = erroTelefone
     }
 
     setErros(novosErros)
@@ -74,9 +75,10 @@ export default function Configuracoes() {
 
     try {
       setSalvando(true)
+      const telefone = padronizarTelefone(formData.telefone)
       await atualizarPerfil({
         nome: formData.nome.trim(),
-        telefone: formData.telefone.replace(/\D/g, ''),
+        telefone,
       })
       setPerfilIncompleto(false)
       mostrarMensagem('Perfil atualizado com sucesso!')
@@ -157,12 +159,13 @@ export default function Configuracoes() {
               <input
                 type="tel"
                 value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: e.target.value.replace(/\D/g, '').slice(0, 11) })}
-                placeholder="00000000000"
+                onChange={(e) => setFormData({ ...formData, telefone: aplicarMascara(e.target.value) })}
+                placeholder="65 993360300"
+                maxLength={19}
                 required
               />
               {erros.telefone && <small className="gendaz-texto-erro">{erros.telefone}</small>}
-              <small>11 digitos: DDD + 9 digitos</small>
+              <small>Use apenas o código da cidade + número.</small>
             </label>
             <label>
               <span>E-mail (somente leitura)</span>

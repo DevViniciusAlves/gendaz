@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import Modal from '../../components/Modal.jsx'
 import Button from '../../components/Button.jsx'
 import { enviarMensagemCrm } from '../../api/crmApi.js'
@@ -55,7 +55,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       if (response && response.success === false) {
         emitirToast('error', response.mensagem || 'Nao foi possivel enviar.')
       } else {
-        emitirToast('success', `Email enviado pra ${nomeCliente}! ✅`)
+        emitirToast('success', `Email enviado pra ${nomeCliente}! `)
         setPersonalizar(false)
         setMensagemCustom('')
         onEnviado?.()

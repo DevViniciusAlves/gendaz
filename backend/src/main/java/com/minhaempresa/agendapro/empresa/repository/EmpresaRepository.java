@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.empresa.repository;
+﻿package com.minhaempresa.agendapro.empresa.repository;
 
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import java.util.Optional;
@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // interface WhatsappConfigView {
     //     Long getId();
     //     String getNomeFantasia();
@@ -34,7 +34,7 @@ public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
 
     Optional<EmpresaEntity> findByAgendamentoSlug(String agendamentoSlug);
 
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // @Query("""
     //         select e.id as id,
     //                e.nomeFantasia as nomeFantasia,
@@ -57,6 +57,6 @@ public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
 
     boolean existsByAgendamentoSlug(String agendamentoSlug);
 
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // java.util.List<EmpresaEntity> findByWhatsappConnectedTrue();
 }

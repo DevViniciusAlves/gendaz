@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing } from 'lucide-react'
@@ -36,7 +36,7 @@ export default function Dashboard() {
     <section className="gendaz-page gendaz-dashboard">
       <header className="gendaz-page__header gendaz-page__header--hero">
         <span className="gendaz-kicker">Dashboard</span>
-        <h1>Bom te ver novamente, {nome}. 👋</h1>
+        <h1>Bom te ver novamente, {nome}. </h1>
         <p>Acompanhe sua agenda, conversas e beneficios em um unico espaco.</p>
       </header>
 

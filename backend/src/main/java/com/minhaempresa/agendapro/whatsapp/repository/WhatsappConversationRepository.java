@@ -1,6 +1,6 @@
-/*
+﻿/*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -12,7 +12,7 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WhatsappConversationRepository extends JpaRepository<WhatsappConversationEntity, Long> {
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     /*
     Optional<WhatsappConversationEntity> findByEmpresaIdAndContactPhone(Long empresaId, String contactPhone);
     */

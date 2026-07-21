@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useRef, useCallback } from 'react'
+﻿import { useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Bot, Send, Sparkles, Loader, Calendar, ArrowRight } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -17,7 +17,7 @@ export default function AssistenteIA() {
     setMensagens([{
       id: 1,
       origem: 'ia',
-      texto: `Olá, ${nome}! 👋 Sou a assistente virtual da **${empresaNome}**. Posso ajudar com agendamentos, preços, serviços, horários e promoções. Como posso ajudá-lo?`,
+      texto: `Olá, ${nome}!  Sou a assistente virtual da **${empresaNome}**. Posso ajudar com agendamentos, preços, serviços, horários e promoções. Como posso ajudá-lo?`,
     }])
   }, [cliente])
 
@@ -210,19 +210,19 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const hora = new Date().getHours()
       const periodo = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
       return {
-        resposta: `${periodo}, ${nome}! 😊 Bem-vindo(a) à **${empresaNome}**. Como posso ajudá-lo?`,
+        resposta: `${periodo}, ${nome}!  Bem-vindo(a) à **${empresaNome}**. Como posso ajudá-lo?`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviços vocês têm?'],
       }
     }
     case 'sobre': {
       return {
-        resposta: `Sou a assistente virtual da **${empresaNome}**! 🤖\n\nPosso ajudar com:\n\n• **Agendar** serviços\n• **Reagendar** compromissos\n• **Cancelar** agendamentos\n• Listar **serviços e preços**\n• Consultar **promoções**\n• Ver **horários disponíveis**\n\nÉ só me dizer o que precisa!`,
+        resposta: `Sou a assistente virtual da **${empresaNome}**! \n\nPosso ajudar com:\n\n• **Agendar** serviços\n• **Reagendar** compromissos\n• **Cancelar** agendamentos\n• Listar **serviços e preços**\n• Consultar **promoções**\n• Ver **horários disponíveis**\n\nÉ só me dizer o que precisa!`,
         sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }
     }
     case 'agradecimento': {
       return {
-        resposta: `Por nada, ${nome}! 😊 Estou sempre aqui quando precisar da **${empresaNome}**.`,
+        resposta: `Por nada, ${nome}!  Estou sempre aqui quando precisar da **${empresaNome}**.`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos'],
       }
     }
@@ -305,14 +305,14 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'agendar': {
       if (!servicos || servicos.length === 0) {
         return {
-          resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! 🗓️\n\nAcesse a aba **Agenda** e clique em **"Novo agendamento"**.`,
+          resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! \n\nAcesse a aba **Agenda** e clique em **"Novo agendamento"**.`,
           sugestoes: ['Ir para Agenda'],
           acao: { tipo: 'AGENDAR' },
         }
       }
       const servicosLista = servicos.slice(0, 5).map(s => `• ${s.nome || s.titulo} — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
       return {
-        resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! 🗓️\n\nServiços disponíveis:\n${servicosLista}\n\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
+        resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! \n\nServiços disponíveis:\n${servicosLista}\n\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
         sugestoes: ['Ir para Agenda', ...servicos.slice(0, 2).map(s => `Agendar ${s.nome || s.titulo}`)],
         acao: { tipo: 'AGENDAR' },
       }

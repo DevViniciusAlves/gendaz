@@ -1,9 +1,9 @@
-ï»¿/*
-â•”â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•—
-â•‘  âš ï¸  DESATIVADO - FUNCIONALIDADE WhatsApp â•‘
-â•‘  CÃ³digo comentado. Remova comentÃ¡rios  â•‘
-â•‘  para reativar.                        â•‘
-â•šâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/*
++----------------------------------------+
+¦    DESATIVADO - FUNCIONALIDADE WhatsApp ¦
+¦  Código comentado. Remova comentários  ¦
+¦  para reativar.                        ¦
++----------------------------------------+
 */
 // const axios = require('axios');
 // const Groq = require('groq-sdk');
@@ -107,10 +107,10 @@
 // function detectarIntencaoWpp2(texto) {
 //   const valor = normalizarBusca(texto);
 //   if (!valor) return 'OUTRO';
-//   if (/(cancelamento|cancelar|desmarcar|nao vou conseguir ir|nÃ£o vou conseguir ir|nao posso ir|nÃ£o posso ir|tirar meu horario|tirar meu horÃ¡rio|preciso cancelar|cancelar agendamento)/.test(valor)) return 'CANCELAMENTO';
+//   if (/(cancelamento|cancelar|desmarcar|nao vou conseguir ir|não vou conseguir ir|nao posso ir|não posso ir|tirar meu horario|tirar meu horário|preciso cancelar|cancelar agendamento)/.test(valor)) return 'CANCELAMENTO';
 //   if (/(reagendar|reagendamento|reagenda|remarcar|remarca|remarco|quero remarcar|quero reagendar|queria remarcar|queria reagendar|mudar meu horario|mudar horario|trocar horario|trocar meu horario|alterar horario|alterar meu horario|mudar minha consulta|trocar minha consulta|muda o horario|troca o horario)/.test(valor)) return 'REAGENDAMENTO';
-//   if (/(outro horario|outro horÃ¡rio|ver outro horario|ver outro horÃ¡rio|tem outro|tem mais horario|tem mais horÃ¡rio|mudar horario|mudar horÃ¡rio|trocar horario|trocar horÃ¡rio)/.test(valor)) return 'HORARIOS';
-//   if (/(quero marcar|quero agendar|quero fazer um agendamento|agendamento|agenda pra mim|quero um horario|quero um horÃ¡rio|tem horario|tem horÃ¡rio|tem vaga|fazer agendamento|marcar um corte|queria marcar)/.test(valor)) return 'AGENDAMENTO';
+//   if (/(outro horario|outro horário|ver outro horario|ver outro horário|tem outro|tem mais horario|tem mais horário|mudar horario|mudar horário|trocar horario|trocar horário)/.test(valor)) return 'HORARIOS';
+//   if (/(quero marcar|quero agendar|quero fazer um agendamento|agendamento|agenda pra mim|quero um horario|quero um horário|tem horario|tem horário|tem vaga|fazer agendamento|marcar um corte|queria marcar)/.test(valor)) return 'AGENDAMENTO';
 //   return 'OUTRO';
 // }
 
@@ -145,10 +145,10 @@
 //   }
 //   if (linkAgendamento) {
 //     texto = texto.replace(/\[link de agendamento\]/gi, linkAgendamento);
-//     const respostaProibida = /(nÃ£o encontrei|nao encontrei|nÃ£o hÃ¡ horÃ¡rios|nao ha horarios|nÃ£o ha horarios|nÃ£o hÃ¡ dias|nao ha dias|dias livres|vou verificar|te retorno|em breve)/i.test(texto);
-//     const assuntoAgendamento = /(hor[aÃ¡]rio|agenda|agendamento|marcar|consulta|dispon[iÃ­]vel|vaga|dia)/i.test(texto);
+//     const respostaProibida = /(não encontrei|nao encontrei|não há horários|nao ha horarios|não ha horarios|não há dias|nao ha dias|dias livres|vou verificar|te retorno|em breve)/i.test(texto);
+//     const assuntoAgendamento = /(hor[aá]rio|agenda|agendamento|marcar|consulta|dispon[ií]vel|vaga|dia)/i.test(texto);
 //     if (respostaProibida && assuntoAgendamento) {
-//       return `Claro! Para verificar os dias e horÃ¡rios disponÃ­veis e fazer seu agendamento, acesse este link:\n${linkAgendamento}\n\nPor lÃ¡ vocÃª escolhe o serviÃ§o, o dia e o horÃ¡rio disponÃ­vel.`;
+//       return `Claro! Para verificar os dias e horários disponíveis e fazer seu agendamento, acesse este link:\n${linkAgendamento}\n\nPor lá você escolhe o serviço, o dia e o horário disponível.`;
 //     }
 //   }
 //   return texto;
@@ -173,9 +173,9 @@
 //   const nome = primeiroNome(clienteNome);
 //   if (!nome) return respostaBoasVindas;
 //   const saudacao = primeiraFrase(respostaBoasVindas)
-//     .replace(/^ol[aÃ¡]!?[\s,]*/i, '')
+//     .replace(/^ol[aá]!?[\s,]*/i, '')
 //     .trim();
-//   return `OlÃ¡ ${nome}! ${saudacao || 'Como posso te ajudar hoje?'}`;
+//   return `Olá ${nome}! ${saudacao || 'Como posso te ajudar hoje?'}`;
 // }
 
 // function montarDescricaoEmpresa(nomeEmpresa, servicos) {
@@ -405,7 +405,7 @@
 
 // function ehConfirmacaoNegativa(texto) {
 //   const valor = normalizarBusca(texto);
-//   return ['nao', 'nÃ£o', 'n', 'nao quero', 'nÃ£o quero', 'cancelar', 'cancela', 'desmarcar', 'desmarca'].some((item) => valor.includes(normalizarBusca(item)));
+//   return ['nao', 'não', 'n', 'nao quero', 'não quero', 'cancelar', 'cancela', 'desmarcar', 'desmarca'].some((item) => valor.includes(normalizarBusca(item)));
 // }
 
 // function isRespostaEsperadaDaEtapa(estado, texto) {
@@ -750,7 +750,7 @@
 //   if (!servico || typeof servico !== 'object') return '';
 //   const nome = normalizarTexto(servico.nome || '');
 //   if (!nome) return '';
-//   const partes = [`â€¢ *${nome}*`];
+//   const partes = [`• *${nome}*`];
 //   const valorFormatado = formatarMoeda(servico.valor);
 //   if (valorFormatado) {
 //     partes.push(valorFormatado);
@@ -759,7 +759,7 @@
 //   if (duracaoFormatada) {
 //     partes.push(`(${duracaoFormatada})`);
 //   }
-//   return partes.join(' â€” ');
+//   return partes.join(' — ');
 // }
 
 // function formatarListaServicos(servicos) {
@@ -770,9 +770,9 @@
 //     .filter(Boolean);
 //   if (!linhas.length) return '';
 //   if (lista.length > 10) {
-//     linhas.push('E mais alguns outros â€” me diga qual serviÃ§o te interessa que eu confirmo o valor.');
+//     linhas.push('E mais alguns outros — me diga qual serviço te interessa que eu confirmo o valor.');
 //   }
-//   return `Aqui estÃ£o nossos serviÃ§os:\n\n${linhas.join('\n')}\n\nQuer agendar algum desses? Posso te mandar o link de agendamento.`;
+//   return `Aqui estão nossos serviços:\n\n${linhas.join('\n')}\n\nQuer agendar algum desses? Posso te mandar o link de agendamento.`;
 // }
 
 // function formatarListaHorarios(horarios) {
@@ -783,7 +783,7 @@
 //       const dataFormatada = matchDataIso
 //         ? `${matchDataIso[3]}/${matchDataIso[2]}`
 //         : dataTexto;
-//       return `â€¢ ${dataFormatada}: ${item.horarios.join(', ')}`;
+//       return `• ${dataFormatada}: ${item.horarios.join(', ')}`;
 //     })
 //     .filter(Boolean)
 //     .join('\n');
@@ -816,18 +816,18 @@
 //     'certo',
 //     'sim',
 //     'nao',
-//     'nÃ£o',
+//     'não',
 //     'entendi',
 //     'perfeito',
 //     'pode ser',
 //     'achou',
 //     'achou?',
 //     'e ai',
-//     'e aÃ­',
+//     'e aí',
 //     'conseguiu',
 //     'conseguiu?',
 //     'ta bom',
-//     'tÃ¡ bom',
+//     'tá bom',
 //     'verificou',
 //     'verificou?',
 //     'viu',
@@ -887,7 +887,7 @@
 //     /\b(vc|voce)\s+(e|eh)\s+real\b/,
 //     /\bisso\s+e\s+automatico\b/,
 //     /\be\s+uma\s+ia\b/,
-//     /\bt[oÃ´]\s+falando\s+com\s+quem\b/,
+//     /\bt[oô]\s+falando\s+com\s+quem\b/,
 //     /\bestou\s+falando\s+com\s+quem\b/,
 //     /\bquem\s+estou\s+falando\b/,
 //     /\bquem\s+sou\s+eu\s+falando\b/,
@@ -950,10 +950,10 @@
 //     nomeEmpresa: '',
 //     descricaoEmpresa: '',
 //     assistenteAtivo: false,
-//     mensagemBoasVindas: 'OlÃ¡! Seja bem-vindo. Como posso te ajudar hoje?',
-//     respostaHorarios: 'Claro! Para verificar os dias e horÃ¡rios disponÃ­veis, acesse o link de agendamento.',
-//     respostaServicos: 'Temos alguns serviÃ§os disponÃ­veis. Me diga qual vocÃª deseja agendar.',
-//     respostaNaoEntende: 'Desculpa, nÃ£o entendi muito bem. Pode me explicar de outra forma?',
+//     mensagemBoasVindas: 'Olá! Seja bem-vindo. Como posso te ajudar hoje?',
+//     respostaHorarios: 'Claro! Para verificar os dias e horários disponíveis, acesse o link de agendamento.',
+//     respostaServicos: 'Temos alguns serviços disponíveis. Me diga qual você deseja agendar.',
+//     respostaNaoEntende: 'Desculpa, não entendi muito bem. Pode me explicar de outra forma?',
 //     mensagemHumano: 'Vou encaminhar sua mensagem para um atendente continuar o atendimento.',
 //     linkAgendamento: '',
 //     servicos: [],
@@ -979,10 +979,10 @@
 //     descricaoEmpresa: valorOuPadrao(base.descricaoEmpresa, ''),
 //     agendamentoSlug: valorOuPadrao(base.agendamentoSlug, ''),
 //     assistenteAtivo: Boolean(base.assistenteAtivo || base.iaHabilitada || base.secretariaIaAtiva),
-//     mensagemBoasVindas: valorOuPadrao(base.mensagemBoasVindas, nomeEmpresa ? `OlÃ¡! Seja bem-vindo Ã  ${nomeEmpresa}. Como posso te ajudar hoje?` : 'OlÃ¡! Seja bem-vindo. Como posso te ajudar hoje?'),
-//     respostaHorarios: valorOuPadrao(base.respostaHorarios, 'Claro! Para verificar os dias e horÃ¡rios disponÃ­veis, acesse o link de agendamento.'),
-//     respostaServicos: valorOuPadrao(base.respostaServicos, 'Temos alguns serviÃ§os disponÃ­veis. Me diga qual vocÃª deseja agendar.'),
-//     respostaNaoEntende: valorOuPadrao(base.respostaNaoEntende, 'Desculpa, nÃ£o entendi muito bem. Pode me explicar de outra forma?'),
+//     mensagemBoasVindas: valorOuPadrao(base.mensagemBoasVindas, nomeEmpresa ? `Olá! Seja bem-vindo à ${nomeEmpresa}. Como posso te ajudar hoje?` : 'Olá! Seja bem-vindo. Como posso te ajudar hoje?'),
+//     respostaHorarios: valorOuPadrao(base.respostaHorarios, 'Claro! Para verificar os dias e horários disponíveis, acesse o link de agendamento.'),
+//     respostaServicos: valorOuPadrao(base.respostaServicos, 'Temos alguns serviços disponíveis. Me diga qual você deseja agendar.'),
+//     respostaNaoEntende: valorOuPadrao(base.respostaNaoEntende, 'Desculpa, não entendi muito bem. Pode me explicar de outra forma?'),
 //     mensagemHumano: valorOuPadrao(base.mensagemHumano, 'Vou encaminhar sua mensagem para um atendente continuar o atendimento.'),
 //     linkAgendamento,
 //     servicos,
@@ -1135,62 +1135,62 @@
 //   const nomeEmpresa = nomeEmpresaSeguro(contexto);
 //   const descricaoEmpresa = contexto?.descricaoEmpresa || '';
 //   const servicos = normalizarServicos(contexto?.servicos);
-//   const linhasServicos = servicos.length ? formatarListaServicos(servicos) : 'nenhum serviÃ§o cadastrado';
+//   const linhasServicos = servicos.length ? formatarListaServicos(servicos) : 'nenhum serviço cadastrado';
 //   const linkAgendamento = resolverLinkAgendamento(contexto);
 //   const proibicoes = [
 //     nomeEmpresa
-//       ? `REGRA ABSOLUTA: VocÃª representa APENAS a empresa ${nomeEmpresa}.`
-//       : 'REGRA ABSOLUTA: VocÃª representa APENAS a empresa configurada no sistema.',
-//     'Nunca diga que Ã© uma "plataforma", "sistema", "empresa de atendimento pelo WhatsApp" ou qualquer outra descriÃ§Ã£o inventada.',
-//     'Se o cliente perguntar o que vocÃª Ã©, ou se vocÃª Ã© um robÃ´/IA, responda com transparÃªncia que Ã© uma assistente virtual de IA da empresa, sem fingir ser humana.',
-//     nomeEmpresa ? `Nunca use o nome "nossa empresa" â€” sempre use: ${nomeEmpresa}.` : 'Nunca invente o nome da empresa.',
-//     'Nunca invente serviÃ§os, preÃ§os, horÃ¡rios ou qualquer dado nÃ£o fornecido abaixo.',
+//       ? `REGRA ABSOLUTA: Você representa APENAS a empresa ${nomeEmpresa}.`
+//       : 'REGRA ABSOLUTA: Você representa APENAS a empresa configurada no sistema.',
+//     'Nunca diga que é uma "plataforma", "sistema", "empresa de atendimento pelo WhatsApp" ou qualquer outra descrição inventada.',
+//     'Se o cliente perguntar o que você é, ou se você é um robô/IA, responda com transparência que é uma assistente virtual de IA da empresa, sem fingir ser humana.',
+//     nomeEmpresa ? `Nunca use o nome "nossa empresa" — sempre use: ${nomeEmpresa}.` : 'Nunca invente o nome da empresa.',
+//     'Nunca invente serviços, preços, horários ou qualquer dado não fornecido abaixo.',
 //     'Nunca invente o que a empresa faz.',
-//     'Nunca diga que nÃ£o hÃ¡ horÃ¡rios disponÃ­veis.',
-//     'Nunca diga que nÃ£o encontrou horÃ¡rios, dias livres ou vagas.',
-//     'Nunca diga que vai verificar horÃ¡rios ou retornar depois.',
+//     'Nunca diga que não há horários disponíveis.',
+//     'Nunca diga que não encontrou horários, dias livres ou vagas.',
+//     'Nunca diga que vai verificar horários ou retornar depois.',
 //     'Nunca use o texto literal "[link de agendamento]".',
-//     'Se nÃ£o souber algo, diga que nÃ£o tem essa informaÃ§Ã£o e ofereÃ§a ajuda com o que estÃ¡ disponÃ­vel.',
+//     'Se não souber algo, diga que não tem essa informação e ofereça ajuda com o que está disponível.',
 //   ].join('\n');
 //   const instrucaoPorIntencao = {
-//     SAUDACAO: `O cliente estÃ¡ cumprimentando. Responda usando exatamente a mensagem de boas-vindas configurada no painel. NÃ£o acrescente descriÃ§Ã£o da empresa, nÃ£o invente informaÃ§Ãµes e nÃ£o substitua o texto configurado.`,
-//     IDENTIDADE: `O cliente quer saber quem vocÃª Ã©, se Ã© robÃ´ ou IA. Responda com transparÃªncia que vocÃª Ã© a assistente virtual de IA da ${nomeEmpresa || 'empresa'} e convide a continuar perguntando sobre serviÃ§os, valores e agendamento.`,
-//     NOME_LOJA: `O cliente quer saber o nome da empresa. Responda apenas com o nome real: ${nomeEmpresa || 'nÃ£o configurado'}. Descreva brevemente o que a empresa faz e ofereÃ§a ajuda.`,
-//     SERVICOS: `O cliente quer saber sobre serviÃ§os ou valores. Use APENAS os serviÃ§os cadastrados abaixo. NÃ£o invente serviÃ§os. Se o cliente mencionou um serviÃ§o especÃ­fico, foque nele.`,
-//     HORARIOS: `O cliente quer saber sobre horÃ¡rios, dias livres, agenda ou disponibilidade. A resposta obrigatÃ³ria Ã© enviar o link oficial de agendamento: ${linkAgendamento || 'link nÃ£o configurado'}.`,
-//     AGENDAMENTO: `O cliente quer agendar. A resposta obrigatÃ³ria Ã© enviar o link oficial de agendamento: ${linkAgendamento || 'link nÃ£o configurado'}.`,
+//     SAUDACAO: `O cliente está cumprimentando. Responda usando exatamente a mensagem de boas-vindas configurada no painel. Não acrescente descrição da empresa, não invente informações e não substitua o texto configurado.`,
+//     IDENTIDADE: `O cliente quer saber quem você é, se é robô ou IA. Responda com transparência que você é a assistente virtual de IA da ${nomeEmpresa || 'empresa'} e convide a continuar perguntando sobre serviços, valores e agendamento.`,
+//     NOME_LOJA: `O cliente quer saber o nome da empresa. Responda apenas com o nome real: ${nomeEmpresa || 'não configurado'}. Descreva brevemente o que a empresa faz e ofereça ajuda.`,
+//     SERVICOS: `O cliente quer saber sobre serviços ou valores. Use APENAS os serviços cadastrados abaixo. Não invente serviços. Se o cliente mencionou um serviço específico, foque nele.`,
+//     HORARIOS: `O cliente quer saber sobre horários, dias livres, agenda ou disponibilidade. A resposta obrigatória é enviar o link oficial de agendamento: ${linkAgendamento || 'link não configurado'}.`,
+//     AGENDAMENTO: `O cliente quer agendar. A resposta obrigatória é enviar o link oficial de agendamento: ${linkAgendamento || 'link não configurado'}.`,
 //     HUMANO: `O cliente quer falar com um atendente humano. Use a mensagem configurada: ${contexto?.mensagemHumano || 'Vou encaminhar para um atendente.'}.`,
-//     FALLBACK: `O cliente fez uma pergunta que pode ser sobre a empresa. Tente responder de forma natural e Ãºtil. Se nÃ£o souber a resposta, use a mensagem de fallback e ofereÃ§a ajuda com serviÃ§os, horÃ¡rios ou agendamento.`,
-//   }[intencao] || `Responda de forma natural e Ãºtil sobre a ${nomeEmpresa}.`;
+//     FALLBACK: `O cliente fez uma pergunta que pode ser sobre a empresa. Tente responder de forma natural e útil. Se não souber a resposta, use a mensagem de fallback e ofereça ajuda com serviços, horários ou agendamento.`,
+//   }[intencao] || `Responda de forma natural e útil sobre a ${nomeEmpresa}.`;
 //   return [
 //     proibicoes,
 //     nomeEmpresa
-//       ? `VocÃª Ã© a assistente virtual da empresa: ${nomeEmpresa}.`
-//       : 'VocÃª Ã© a assistente virtual desta empresa.',
+//       ? `Você é a assistente virtual da empresa: ${nomeEmpresa}.`
+//       : 'Você é a assistente virtual desta empresa.',
 //     descricaoEmpresa ? `Sobre a empresa: ${descricaoEmpresa}.` : '',
-//     'VocÃª atende clientes pelo WhatsApp de forma curta, natural, educada e objetiva, como uma atendente real.',
-//     'Represente apenas a empresa conectada. Nunca diga que Ã© assistente da plataforma.',
+//     'Você atende clientes pelo WhatsApp de forma curta, natural, educada e objetiva, como uma atendente real.',
+//     'Represente apenas a empresa conectada. Nunca diga que é assistente da plataforma.',
 //     'Nunca use o nome do dono/usuario como se fosse o cliente.',
-//     'NÃ£o invente serviÃ§os, horÃ¡rios ou preÃ§os.',
-//     nomeEmpresa ? `Nome da empresa: ${nomeEmpresa}.` : 'Nome da empresa: nÃ£o configurado.',
+//     'Não invente serviços, horários ou preços.',
+//     nomeEmpresa ? `Nome da empresa: ${nomeEmpresa}.` : 'Nome da empresa: não configurado.',
 //     `Ultima intencao conhecida: ${estado?.lastIntent || 'nenhuma'}.`,
 //     estado?.lastService?.nome ? `Ultimo servico citado: ${estado.lastService.nome}.` : 'Ultimo servico citado: nenhum.',
 //     estado?.lastMessage ? `Ultima pergunta do cliente: ${estado.lastMessage}.` : 'Ultima pergunta do cliente: nenhuma.',
 //     `Mensagem de boas-vindas: ${contexto?.mensagemBoasVindas || ''}.`,
-//     `Resposta sobre horÃ¡rios: ${contexto?.respostaHorarios || ''}.`,
-//     `Resposta sobre serviÃ§os: ${contexto?.respostaServicos || ''}.`,
+//     `Resposta sobre horários: ${contexto?.respostaHorarios || ''}.`,
+//     `Resposta sobre serviços: ${contexto?.respostaServicos || ''}.`,
 //     `Mensagem de fallback: ${contexto?.respostaNaoEntende || ''}.`,
 //     `Mensagem para humano: ${contexto?.mensagemHumano || ''}.`,
-//     `Link oficial de agendamento: ${linkAgendamento || 'nÃ£o configurado'}.`,
-//     `InstruÃ§Ã£o principal para esta mensagem: ${instrucaoPorIntencao}.`,
-//     `ServiÃ§os cadastrados:\n${linhasServicos}.`,
-//     clienteNome ? `Cliente atual: ${clienteNome}.` : 'Cliente atual: nÃ£o identificado.',
-//     'Se o cliente perguntar sobre horÃ¡rio, dia disponÃ­vel, agenda, vaga, consulta ou agendamento, envie o link oficial e diga que por lÃ¡ ele vÃª dias e horÃ¡rios disponÃ­veis.',
+//     `Link oficial de agendamento: ${linkAgendamento || 'não configurado'}.`,
+//     `Instrução principal para esta mensagem: ${instrucaoPorIntencao}.`,
+//     `Serviços cadastrados:\n${linhasServicos}.`,
+//     clienteNome ? `Cliente atual: ${clienteNome}.` : 'Cliente atual: não identificado.',
+//     'Se o cliente perguntar sobre horário, dia disponível, agenda, vaga, consulta ou agendamento, envie o link oficial e diga que por lá ele vê dias e horários disponíveis.',
 //     'Se a pergunta for sobre nome da loja, responda apenas com o nome da empresa e o que ela faz.',
-//     'Se a pergunta for sobre serviÃ§os ou valores, liste os serviÃ§os reais, com valor e duraÃ§Ã£o se existirem.',
-//     'Se nÃ£o souber responder, use a mensagem de fallback configurada.',
-//     'Seja breve e direto. MÃ¡ximo 3 parÃ¡grafos por resposta.',
-//     'Responda sempre em portuguÃªs brasileiro.',
+//     'Se a pergunta for sobre serviços ou valores, liste os serviços reais, com valor e duração se existirem.',
+//     'Se não souber responder, use a mensagem de fallback configurada.',
+//     'Seja breve e direto. Máximo 3 parágrafos por resposta.',
+//     'Responda sempre em português brasileiro.',
 //   ].join('\n');
 // }
 
@@ -1210,7 +1210,7 @@
 // function detectarIntencao(texto, lastIntent) {
 //   const valor = normalizarBusca(texto);
 //   if (!valor) return 'FALLBACK';
-//   if (/(atendente|humano|pessoa|pessoa real|falar com alguem|falar com pessoa|suporte|dono|responsavel|responsÃ¡vel|me passa para|passa para atendente|quero falar com)/.test(valor)) return 'HUMANO';
+//   if (/(atendente|humano|pessoa|pessoa real|falar com alguem|falar com pessoa|suporte|dono|responsavel|responsável|me passa para|passa para atendente|quero falar com)/.test(valor)) return 'HUMANO';
 //   if (/(^|\s)(oi+|ola+|olaa+|oii+|eai|e ai|iae|ei+|hey|bom dia|boa tarde|boa noite|boas|tudo bem|tudo bom|tudo certo|opa|salve|e isso|oi tudo|ola tudo|como vai|como voce|bom dia tudo|boa tarde tudo)(\s|$|[?!])/.test(valor)) return 'SAUDACAO';
 //   if (ehIntencaoIdentidade(valor)) return 'IDENTIDADE';
 //   if (/(qual nome|nome da loja|nome da empresa|que loja|qual empresa|onde estou|quem e voce|voces sao quem|quem sao vcs|quem sao voces|qual o nome da empresa|qual o nome|voce e quem|com quem falo|qual o estabelecimento|qual negocio|que negocio|que estabelecimento)/.test(valor)) return 'NOME_LOJA';
@@ -1218,26 +1218,26 @@
 //   if (/(servicos|servico|servi\s*os|quais servicos|qual servico|o que voces fazem|o que vcs fazem|o que voce faz|o que fazem|que servicos|que oferecem|o que oferecem|valores|preco|precos|quanto custa|quanto e|quanto cobram|quanto voces cobram|valor|tabela|cardapio|menu|quanto cobra|pacote|opcoes|opcao|tem servico|tem servicos|quais sao os|quais sao seus)/.test(valor)) return 'SERVICOS';
 //   if (/(horarios|horario|hor\s*rios|tem horario|tem vaga|tem vagas|agenda|vaga|vagas|hoje|amanha|essa semana|proxima semana|disponivel|disponiveis|horario disponivel|dia disponivel|dias disponiveis|proximo horario|quando tem|quando voces|tem dia|tem algum)/.test(valor)) return 'HORARIOS';
 //   if (/(quero marcar|quero agendar|queria marcar|queria agendar|marcar|agendar|agendamento|consulta|atendimento|reservar|reserva|quero um horario|quero uma consulta|como agendar|como marco|como faco para agendar|quero contratar|quero chamar|quero usar|preciso marcar|preciso agendar)/.test(valor)) return 'AGENDAMENTO';
-//   if (ehMensagemVaga(valor) || /(e os horarios|e os servicos|e os dados|e entao|e entÃ£o)/.test(valor)) return 'VAGO';
+//   if (ehMensagemVaga(valor) || /(e os horarios|e os servicos|e os dados|e entao|e então)/.test(valor)) return 'VAGO';
 //   return 'FALLBACK';
 // }
 
 // function responderPorIntencao({ intencao, contexto, estado, texto, clienteNome }) {
 //   const nomeEmpresa = nomeEmpresaSeguro(contexto);
 //   const descricaoEmpresa = contexto?.descricaoEmpresa || '';
-//   const respostaBoasVindas = contexto?.mensagemBoasVindas || 'OlÃ¡! Como posso te ajudar hoje?';
-//   const respostaServicos = contexto?.respostaServicos || 'Temos alguns serviÃ§os disponÃ­veis. Me diga qual vocÃª deseja agendar.';
-//   const respostaNaoEntende = contexto?.respostaNaoEntende || 'Desculpa, nÃ£o entendi muito bem. Pode me explicar de outra forma?';
+//   const respostaBoasVindas = contexto?.mensagemBoasVindas || 'Olá! Como posso te ajudar hoje?';
+//   const respostaServicos = contexto?.respostaServicos || 'Temos alguns serviços disponíveis. Me diga qual você deseja agendar.';
+//   const respostaNaoEntende = contexto?.respostaNaoEntende || 'Desculpa, não entendi muito bem. Pode me explicar de outra forma?';
 //   const mensagemHumano = contexto?.mensagemHumano || 'Vou encaminhar sua mensagem para um atendente continuar o atendimento.';
 //   const linkAgendamento = resolverLinkAgendamento(contexto);
 //   const servicos = normalizarServicos(contexto?.servicos);
 //   const listaServicosFormatada = servicos.length ? formatarListaServicos(servicos) : '';
 //   const servicoMencionado = identificarServicoMencionado(texto, servicos);
-//   const baseSaudacao = primeiraFrase(respostaBoasVindas) || `OlÃ¡! Seja bem-vindo Ã  ${nomeEmpresa}.`;
-//   const baseServicos = primeiraFrase(respostaServicos) || 'Temos estes serviÃ§os disponÃ­veis:';
-//   const baseFallback = primeiraFrase(respostaNaoEntende) || 'Desculpa, nÃ£o entendi muito bem.';
-//   const respostaSemLink = 'Ainda nÃ£o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
-//   const respostaLinkAgendamento = `Claro! Para verificar os dias e horÃ¡rios disponÃ­veis e fazer seu agendamento, acesse este link:\n${linkAgendamento}\n\nPor lÃ¡ vocÃª escolhe o serviÃ§o, o dia e o horÃ¡rio disponÃ­vel.`;
+//   const baseSaudacao = primeiraFrase(respostaBoasVindas) || `Olá! Seja bem-vindo à ${nomeEmpresa}.`;
+//   const baseServicos = primeiraFrase(respostaServicos) || 'Temos estes serviços disponíveis:';
+//   const baseFallback = primeiraFrase(respostaNaoEntende) || 'Desculpa, não entendi muito bem.';
+//   const respostaSemLink = 'Ainda não encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
+//   const respostaLinkAgendamento = `Claro! Para verificar os dias e horários disponíveis e fazer seu agendamento, acesse este link:\n${linkAgendamento}\n\nPor lá você escolhe o serviço, o dia e o horário disponível.`;
 //   const respostaDeLinkObrigatoria = ['HORARIOS', 'DISPONIBILIDADE', 'DIAS_DISPONIVEIS'].includes(intencao);
 
 //   switch (intencao) {
@@ -1250,10 +1250,10 @@
 //       return {
 //         resposta: combinarTomComConteudo(
 //           nomeEmpresa
-//             ? `Sou a assistente virtual da ${nomeEmpresa}! Estou aqui pra te ajudar com informaÃ§Ãµes sobre serviÃ§os, valores e agendamentos.`
-//             : 'Sou a assistente virtual desta empresa! Estou aqui pra te ajudar com informaÃ§Ãµes sobre serviÃ§os, valores e agendamentos.',
+//             ? `Sou a assistente virtual da ${nomeEmpresa}! Estou aqui pra te ajudar com informações sobre serviços, valores e agendamentos.`
+//             : 'Sou a assistente virtual desta empresa! Estou aqui pra te ajudar com informações sobre serviços, valores e agendamentos.',
 //           descricaoEmpresa ? `Sobre a empresa: ${descricaoEmpresa}` : '',
-//           'Quer ver os horÃ¡rios disponÃ­veis ou saber mais sobre algum serviÃ§o?',
+//           'Quer ver os horários disponíveis ou saber mais sobre algum serviço?',
 //         ),
 //         intent: 'IDENTIDADE',
 //       };
@@ -1261,9 +1261,9 @@
 //       return {
 //         resposta: combinarTomComConteudo(
 //           nomeEmpresa
-//             ? `VocÃª estÃ¡ falando com a ${nomeEmpresa}.`
-//             : 'O nome da empresa ainda nÃ£o estÃ¡ configurado aqui.',
-//           `${descricaoEmpresa ? `Sobre a empresa: ${descricaoEmpresa}\n` : ''}Sou a assistente virtual${nomeEmpresa ? ` da ${nomeEmpresa}` : ''} e posso te ajudar com dÃºvidas sobre serviÃ§os, valores e agendamento.`,
+//             ? `Você está falando com a ${nomeEmpresa}.`
+//             : 'O nome da empresa ainda não está configurado aqui.',
+//           `${descricaoEmpresa ? `Sobre a empresa: ${descricaoEmpresa}\n` : ''}Sou a assistente virtual${nomeEmpresa ? ` da ${nomeEmpresa}` : ''} e posso te ajudar com dúvidas sobre serviços, valores e agendamento.`,
 //         ),
 //         intent: 'NOME_LOJA',
 //       };
@@ -1304,7 +1304,7 @@
 //       }
 //       if (listaServicosFormatada) {
 //         return {
-//           resposta: `Temos os seguintes serviÃ§os disponÃ­veis:\n${listaServicosFormatada}${linkAgendamento ? `\n\nPara agendar, acesse: ${linkAgendamento}.` : ''}`,
+//           resposta: `Temos os seguintes serviços disponíveis:\n${listaServicosFormatada}${linkAgendamento ? `\n\nPara agendar, acesse: ${linkAgendamento}.` : ''}`,
 //           servico: servicos[0] || null,
 //           intent: 'SERVICOS',
 //         };
@@ -1313,8 +1313,8 @@
 //         resposta: combinarTomComConteudo(
 //           baseServicos,
 //           linkAgendamento
-//             ? `O agendamento Ã© feito pelo link: ${linkAgendamento}.`
-//             : 'No momento ainda nÃ£o encontrei serviÃ§os cadastrados no sistema.',
+//             ? `O agendamento é feito pelo link: ${linkAgendamento}.`
+//             : 'No momento ainda não encontrei serviços cadastrados no sistema.',
 //         ),
 //         servico: null,
 //         intent: 'SERVICOS',
@@ -1334,8 +1334,8 @@
 //         resposta: combinarTomComConteudo(
 //           baseSaudacao,
 //           nomeEmpresa
-//             ? `Como atendente da ${nomeEmpresa}, posso te ajudar com serviÃ§os, valores, horÃ¡rios e agendamento.`
-//             : 'Como posso te ajudar hoje com serviÃ§os, valores, horÃ¡rios e agendamento?',
+//             ? `Como atendente da ${nomeEmpresa}, posso te ajudar com serviços, valores, horários e agendamento.`
+//             : 'Como posso te ajudar hoje com serviços, valores, horários e agendamento?',
 //         ),
 //         intent: estado?.lastIntent || 'SAUDACAO',
 //       };
@@ -1356,7 +1356,7 @@
 //         return {
 //           resposta: combinarTomComConteudo(
 //             baseServicos,
-//             `Temos estes serviÃ§os disponÃ­veis:\n${listaServicosFormatada}${linkAgendamento ? `\n\nO agendamento Ã© feito pelo link: ${linkAgendamento}.` : ''}`,
+//             `Temos estes serviços disponíveis:\n${listaServicosFormatada}${linkAgendamento ? `\n\nO agendamento é feito pelo link: ${linkAgendamento}.` : ''}`,
 //           ),
 //           intent: 'SERVICOS',
 //         };
@@ -1373,7 +1373,7 @@
 //       return {
 //         resposta: combinarTomComConteudo(
 //           baseFallback,
-//           `Posso te ajudar com serviÃ§os, valores, horÃ¡rios ou agendamento${nomeEmpresa ? ` da ${nomeEmpresa}` : ''}.`,
+//           `Posso te ajudar com serviços, valores, horários ou agendamento${nomeEmpresa ? ` da ${nomeEmpresa}` : ''}.`,
 //         ),
 //         intent: 'FALLBACK',
 //       };
@@ -1408,7 +1408,7 @@
 //     };
 //   }
 //   if (!conteudo) {
-//     return 'NÃ£o consegui ler sua mensagem. Pode enviar novamente?';
+//     return 'Não consegui ler sua mensagem. Pode enviar novamente?';
 //   }
 
 //   console.log('[bot-state] estado carregado', {
@@ -1456,7 +1456,7 @@
 //       motivo: checagemRateLimit.motivo,
 //     });
 //     if (checagemRateLimit.deveAvisar) {
-//       const avisoRateLimit = 'Notei que vocÃª mandou vÃ¡rias mensagens muito rÃ¡pido. Vou precisar de um instante para te responder com calma â€” me dÃ¡ sÃ³ um minutinho? ðŸ˜Š';
+//       const avisoRateLimit = 'Notei que você mandou várias mensagens muito rápido. Vou precisar de um instante para te responder com calma — me dá só um minutinho? ';
 //       estado.updatedAt = Date.now();
 //       return {
 //         respostaFinal: avisoRateLimit,
@@ -1720,12 +1720,12 @@
 //       estado.fluxoAgendamento.etapa = 'AGUARDANDO_NOME';
 //       estado.fluxoAgendamento.updatedAt = Date.now();
 //       estado.updatedAt = Date.now();
-//       console.log('[Scheduling] avanÃ§ando para nome', {
+//       console.log('[Scheduling] avançando para nome', {
 //         empresaId: identificadorTenant,
 //         remoteJid: remoteJid || null,
 //       });
 //       return {
-//         respostaFinal: 'Perfeito! Para comeÃ§ar, qual Ã© o seu nome?',
+//         respostaFinal: 'Perfeito! Para começar, qual é o seu nome?',
 //         intentFinal: 'AGENDAMENTO_FLUXO',
 //         contexto,
 //         estado,
@@ -1743,8 +1743,8 @@
 //       limparEstadoConversa(identificadorTenant, remoteJid || chaveCliente, 'troca_de_assunto');
 //       return {
 //         respostaFinal: linkAgendamento
-//           ? `Perfeito! Ã‰ sÃ³ acessar:\n${linkAgendamento}\n\nPor lÃ¡ vocÃª escolhe o serviÃ§o, o dia e o horÃ¡rio disponÃ­vel.`
-//           : 'Ainda nÃ£o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.',
+//           ? `Perfeito! É só acessar:\n${linkAgendamento}\n\nPor lá você escolhe o serviço, o dia e o horário disponível.`
+//           : 'Ainda não encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.',
 //         intentFinal: 'AGENDAMENTO_FLUXO',
 //         contexto,
 //         estado: garantirEstadoConversa(identificadorTenant, remoteJid || chaveCliente),
@@ -1758,8 +1758,8 @@
 //     }
 //     return {
 //       respostaFinal: linkAgendamento
-//         ? `Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÃ§o, dia e horÃ¡rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?`
-//         : 'Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?',
+//         ? `Claro! Você pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviço, dia e horário:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?`
+//         : 'Claro! Você pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?',
 //       intentFinal: 'AGENDAMENTO_FLUXO',
 //       contexto,
 //       estado,
@@ -1842,7 +1842,7 @@
 //       motivo: 'cliente_respondeu_nao',
 //     });
 //     return {
-//       respostaFinal: 'Sem problemas! Cancelei esse processo de agendamento por aqui. Se quiser tentar de novo, Ã© sÃ³ me chamar.',
+//       respostaFinal: 'Sem problemas! Cancelei esse processo de agendamento por aqui. Se quiser tentar de novo, é só me chamar.',
 //       intentFinal: 'CANCELAMENTO',
 //       contexto,
 //       estado: garantirEstadoConversa(identificadorTenant, remoteJid || chaveCliente),
@@ -1861,7 +1861,7 @@
 //     limparEstadoConversa(identificadorTenant, remoteJid || chaveCliente, 'troca_de_assunto');
 //     fluxoPersistente = null;
 //     return {
-//       respostaFinal: 'Claro! Me diga qual dia vocÃª prefere para eu ver outros horÃ¡rios disponÃ­veis.',
+//       respostaFinal: 'Claro! Me diga qual dia você prefere para eu ver outros horários disponíveis.',
 //       intentFinal: 'HORARIOS',
 //       contexto,
 //       estado: garantirEstadoConversa(identificadorTenant, remoteJid || chaveCliente),
@@ -1995,12 +1995,12 @@
 //   if (['AGENDAMENTO', 'HORARIOS', 'DISPONIBILIDADE', 'DIAS_DISPONIVEIS', 'CANCELAMENTO'].includes(intencao) && !estado.fluxoAgendamento?.ativo) {
 //     const mensagens = {
 //       AGENDAMENTO: linkAgendamento
-//         ? `Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÃ§o, dia e horÃ¡rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?`
-//         : 'Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?',
-//       HORARIOS: 'Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÃ§o, dia e horÃ¡rio.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?',
-//       DISPONIBILIDADE: 'Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÃ§o, dia e horÃ¡rio.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?',
-//       DIAS_DISPONIVEIS: 'Claro! VocÃª pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÃ§o, dia e horÃ¡rio.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÃª prefere fazer pelo link ou por aqui?',
-//       CANCELAMENTO: 'Claro. VocÃª prefere cancelar por aqui mesmo ou pelo link de gerenciamento?',
+//         ? `Claro! Você pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviço, dia e horário:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?`
+//         : 'Claro! Você pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?',
+//       HORARIOS: 'Claro! Você pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviço, dia e horário.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?',
+//       DISPONIBILIDADE: 'Claro! Você pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviço, dia e horário.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?',
+//       DIAS_DISPONIVEIS: 'Claro! Você pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviço, dia e horário.\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocê prefere fazer pelo link ou por aqui?',
+//       CANCELAMENTO: 'Claro. Você prefere cancelar por aqui mesmo ou pelo link de gerenciamento?',
 //     };
 //     estado.fluxoAgendamento.ativo = true;
 //     estado.fluxoAgendamento.tipoFluxo = ['HORARIOS', 'DISPONIBILIDADE', 'DIAS_DISPONIVEIS'].includes(intencao) ? 'AGENDAMENTO' : intencao;
@@ -2095,7 +2095,7 @@
 //       resposta = chat.choices?.[0]?.message?.content || '';
 //       intentFinal = intencao !== 'FALLBACK' ? intencao : (respostaIndicaAgendamento(resposta) ? 'AGENDAMENTO' : 'FALLBACK');
 //     } catch (error) {
-//       console.warn('[AI-Response] falha no Groq, usando roteador determinÃ­stico:', {
+//       console.warn('[AI-Response] falha no Groq, usando roteador determinístico:', {
 //         empresaId: identificadorTenant,
 //         remoteJid: remoteJid || null,
 //         detalhe: error.message,
@@ -2123,7 +2123,7 @@
 //   }
 
 //   const respostaFinal = sanitizarResposta(
-//     limitarParagrafos(resposta || contexto.respostaNaoEntende || 'Desculpa, nÃ£o entendi muito bem. Pode me explicar de outra forma?'),
+//     limitarParagrafos(resposta || contexto.respostaNaoEntende || 'Desculpa, não entendi muito bem. Pode me explicar de outra forma?'),
 //     contexto,
 //     fluxoAtivo,
 //   );

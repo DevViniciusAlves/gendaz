@@ -1,15 +1,15 @@
-﻿/*
-╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
-║  Estilos comentados. Remova comentários ║
-║  para reativar.                        ║
-╚════════════════════════════════════════╝
+/*
++----------------------------------------+
+�    DESATIVADO - FUNCIONALIDADE WhatsApp �
+�  Estilos comentados. Remova coment�rios �
+�  para reativar.                        �
++----------------------------------------+
 */
 
 :root {
   color-scheme: light;
   /* =============================================
-     Paleta AgendEasy Redesign — TEMA CLARO
+     Paleta AgendEasy Redesign � TEMA CLARO
      ============================================= */
   --bg: #FFFFFF;
   --bg-strong: #FFFFFF;
@@ -91,7 +91,7 @@
   --text: #FFFFFF;
   --muted: rgba(255, 255, 255, 0.6);
   --line: #404040;
-  /* cores institucionais — TEMA ESCURO */
+  /* cores institucionais � TEMA ESCURO */
   --brand: #FFFFFF;
   --color-primary: #FFFFFF;
   --color-primary-hover: #E0E0E0;
@@ -105,7 +105,7 @@
   --primary-soft: var(--color-primary-soft);
   --primary-border: var(--color-primary-border);
   --primary-rgb: 255, 255, 255;
-  /* estados — NÃO MUDAM */
+  /* estados � N�O MUDAM */
   --success: #10B981;
   --warning: #F59E0B;
   --danger: #EF4444;
@@ -4205,7 +4205,7 @@ tbody tr:hover { background: #fffaf5; }
   accent-color: var(--primary);
 }
 
-/* Ações do form criar conta */
+/* A��es do form criar conta */
 .cc-actions {
   display: flex;
   align-items: center;
@@ -4397,7 +4397,7 @@ tbody tr:hover { background: #fffaf5; }
   accent-color: var(--primary);
 }
 
-/* Ações do form criar conta */
+/* A��es do form criar conta */
 .cc-actions {
   display: flex;
   align-items: center;
@@ -4441,7 +4441,7 @@ tbody tr:hover { background: #fffaf5; }
 .cc-btn-voltar { gap: 6px; }
 
 /* =============================================
-   PLAN LIST: destaque "Tudo do Básico"
+   PLAN LIST: destaque "Tudo do B�sico"
    ============================================= */
 .plan-list strong.plan-list-tudo-basico,
 .plan-list-tudo-basico {
@@ -4532,7 +4532,7 @@ tbody tr:hover { background: #fffaf5; }
 .dash-empty-state p { margin: 0; color: var(--muted); font-size: 14px; }
 .dash-empty-state small { color: var(--muted); font-size: 12px; }
 
-/* Hora mini nos próximos atendimentos */
+/* Hora mini nos pr�ximos atendimentos */
 .dash-mini-hora {
   display: flex;
   flex-direction: column;
@@ -4543,7 +4543,7 @@ tbody tr:hover { background: #fffaf5; }
 .dash-mini-hora strong { font-size: 14px; }
 .dash-mini-hora small { font-size: 10px; color: var(--muted); }
 
-/* Desempenho por serviço */
+/* Desempenho por servi�o */
 .servico-desempenho {
   display: grid;
   gap: 14px;
@@ -4571,7 +4571,7 @@ tbody tr:hover { background: #fffaf5; }
   min-width: 4px;
 }
 
-/* Estado vazio do gráfico de barras */
+/* Estado vazio do gr�fico de barras */
 .bar-chart-empty {
   display: flex;
   flex-direction: column;
@@ -4585,7 +4585,7 @@ tbody tr:hover { background: #fffaf5; }
 .bar-chart-empty small { color: var(--muted); font-size: 12px; }
 
 /* =============================================
-   LOGO — Sidebar e Nav
+   LOGO � Sidebar e Nav
    ============================================= */
 .sidebar-logo {
   width: 100%;
@@ -4610,7 +4610,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 /* =============================================
-   TIPOGRAFIA — Azul escuro nos títulos
+   TIPOGRAFIA � Azul escuro nos t�tulos
    ============================================= */
 .topbar strong { display: block; font-size: 20px; color: var(--brand); }
 .dashboard-hero h1 { max-width: 820px; margin: 10px 0 8px; font-size: 36px; letter-spacing: -0.03em; color: var(--brand); }
@@ -4621,7 +4621,7 @@ tbody tr:hover { background: #fffaf5; }
 .contact-band h2 { margin: 10px 0 0; color: var(--brand); }
 
 /* =============================================
-   PLANOS — Preço em azul escuro
+   PLANOS � Pre�o em azul escuro
    ============================================= */
 .plan-price { font-size: 34px; line-height: 1; letter-spacing: -0.03em; color: var(--brand); }
 .plan-price-extra { color: var(--primary); font-size: 13px; font-weight: 800; }
@@ -4632,7 +4632,7 @@ tbody tr:hover { background: #fffaf5; }
 .solution-card svg, .support-card svg { color: var(--primary); }
 
 /* =============================================
-   TOPBAR — detalhes azul escuro
+   TOPBAR � detalhes azul escuro
    ============================================= */
 .topbar { background: rgba(255,255,255,0.96); border-bottom: 1px solid var(--line); }
 /* =============================================
@@ -6561,6 +6561,10 @@ tbody tr:hover { background: #fffaf5; }
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
+.app-shell .page .booking-qr-card {
+  background: #1A1A1A !important;
+}
+
 .app-shell .booking-qr-card img {
   max-width: 150px;
 }
@@ -7059,7 +7063,7 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
-/* Redesenho da aba Agendamentos conforme imagem de referência */
+/* Redesenho da aba Agendamentos conforme imagem de refer�ncia */
 .app-shell .content .schedule-card {
   grid-template-columns: 192px minmax(150px, 1fr) minmax(150px, 1fr) minmax(150px, 1fr) auto auto !important;
   align-items: center !important;
@@ -7133,7 +7137,7 @@ tbody tr:hover { background: #fffaf5; }
   height: 18px !important;
   padding: 0 !important;
   border-radius: 0 !important;
-  color: var(--color-primary) !important; /* Cor roxa/violeta para os ícones internos */
+  color: var(--color-primary) !important; /* Cor roxa/violeta para os �cones internos */
   background: transparent !important;
 }
 
@@ -7198,7 +7202,7 @@ tbody tr:hover { background: #fffaf5; }
   color: #9ca3af !important;
 }
 
-/* Botão de 3 pontos do menu */
+/* Bot�o de 3 pontos do menu */
 .app-shell .content .schedule-actions .action-menu-btn {
   border: 1px solid rgba(17, 24, 39, .085) !important;
   background: #ffffff !important;
@@ -7330,7 +7334,7 @@ tbody tr:hover { background: #fffaf5; }
   -webkit-text-fill-color: rgba(226, 233, 247, 0.42) !important;
 }
 
-/* Filtros da página */
+/* Filtros da p�gina */
 .app-shell .content .filters {
   background: #ffffff !important;
   border: 1px solid rgba(17, 24, 39, .06) !important;
@@ -11333,7 +11337,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 /* ============================================================
-   Hero � shadcn-inspired centered layout
+   Hero ? shadcn-inspired centered layout
    ============================================================ */
 .hero-section-new {
   position: relative;
@@ -11543,7 +11547,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 /* ============================================================
-   Login V2 — Fresh dark design
+   Login V2 � Fresh dark design
    ============================================================ */
 .login-screen-v2 {
   background: var(--bg);
@@ -11943,7 +11947,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 /* ============================================================
-   AGENDA: alinhar lista de atendimentos ao padrão da tabela de Clientes
+   AGENDA: alinhar lista de atendimentos ao padr�o da tabela de Clientes
    ============================================================ */
 .app-shell .content .schedule-grid {
   gap: 0 !important;

@@ -1,7 +1,7 @@
-export default function Input({ label, helper, ...props }) {
+export default function Input({ label, helper, neutralLimit = false, ...props }) {
   const hasCounter = props.maxLength && typeof props.value === 'string'
   const currentLength = hasCounter ? props.value.length : 0
-  const limitReached = hasCounter && currentLength >= Number(props.maxLength)
+  const limitReached = !neutralLimit && hasCounter && currentLength >= Number(props.maxLength)
 
   return (
     <label className="field">

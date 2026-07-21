@@ -122,7 +122,10 @@ export default function Configuracoes() {
   const [salvandoHorario, setSalvandoHorario] = useState(false)
 
   useEffect(() => {
-    setEmpresa(data.empresa)
+    setEmpresa({
+      ...data.empresa,
+      telefone: aplicarMascara(data.empresa?.telefone || ''),
+    })
   }, [data.empresa])
 
   async function carregarLink() {
@@ -164,7 +167,7 @@ export default function Configuracoes() {
 
     const telefone = padronizarTelefone(empresa.telefone)
     if (!telefone) {
-      setErro('Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999')
+      setErro('Telefone deve ter entre 16 e 19 caracteres.')
       return
     }
 
@@ -357,7 +360,7 @@ export default function Configuracoes() {
         <form className="form-grid settings-form-grid" onSubmit={salvar}>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
-          <Input label="Telefone" helper={empresa?.telefone ? (validarTelefone(empresa.telefone) || '✓ Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })} />
+          <Input label="Telefone" helper={empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : 'Use codigo da cidade + numero.'} inputMode="numeric" maxLength={19} neutralLimit value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })} />
           <label className="field">
             <span>Fuso horário</span>
             <select

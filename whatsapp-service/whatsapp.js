@@ -1,12 +1,12 @@
-/*
+﻿/*
 ╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║    DESATIVADO - FUNCIONALIDADE WhatsApp ║
 ║  Código comentado. Remova comentários  ║
 ║  para reativar.                        ║
 ╚════════════════════════════════════════╝
 */
 
-// ⚠️ DESATIVADO - Imports Baileys comentados
+//  DESATIVADO - Imports Baileys comentados
 // const axios = require('axios');
 // const fs = require('fs');
 // const path = require('path');
@@ -24,7 +24,7 @@
 // const { montarMensagem } = require('./mensagens');
 
 // ============================================
-// ⚠️ DESATIVADO - MESSAGE QUEUE comentado
+//  DESATIVADO - MESSAGE QUEUE comentado
 // ============================================
 // const messageQueue = new Map();
 //
@@ -89,7 +89,7 @@
 //   }
 // }
 
-// ⚠️ DESATIVADO - Constantes e configuracoes comentadas
+//  DESATIVADO - Constantes e configuracoes comentadas
 // const backendBaseUrl = (process.env.BACKEND_URL || process.env.BACKEND_JAVA_URL || 'http://localhost:8080').replace(/\/$/, '');
 // const backendToken = String(process.env.WHATSAPP_INTERNAL_TOKEN || process.env.BACKEND_INTERNAL_TOKEN || '').trim();
 // const backendHttp = axios.create({
@@ -129,7 +129,7 @@
 //   'qr refs attempts ended',
 // ];
 
-// ⚠️ DESATIVADO - Funcoes helper comentadas
+//  DESATIVADO - Funcoes helper comentadas
 // function normalizarTelefone(phoneNumber) {
 //   const entrada = String(phoneNumber || '').trim();
 //   let digitos = entrada.replace(/\D/g, '');
@@ -298,7 +298,7 @@
 //   return true;
 // }
 
-// ⚠️ DESATIVADO - Funcoes de texto e estado comentadas
+//  DESATIVADO - Funcoes de texto e estado comentadas
 // function extrairTextoMensagemBaileys(message) {
 //   const payload = message?.message || {};
 //   const wrappers = [
@@ -492,7 +492,7 @@
 //   limparRecentesMensagemEmpresa(empresaId);
 // }
 
-// ⚠️ DESATIVADO - Funcoes de reconexao e fila comentadas
+//  DESATIVADO - Funcoes de reconexao e fila comentadas
 // function limparReconnectTimerEmpresa(empresaId) {
 //   const chave = empresaKey(empresaId);
 //   const timer = reconnectTimers.get(chave);
@@ -730,7 +730,7 @@
 //   });
 // }
 
-// ⚠️ DESATIVADO - Funcoes de sessao e persistencia comentadas
+//  DESATIVADO - Funcoes de sessao e persistencia comentadas
 // function ehSessaoPareamentoAtivo(session) {
 //   if (!session || !['generating_code', 'waiting_pairing'].includes(session.status)) return false;
 //   if (!session.pairingCode) return false;
@@ -857,7 +857,7 @@
 //   });
 // }
 
-// ⚠️ DESATIVADO - Funcoes de reset e auth comentadas
+//  DESATIVADO - Funcoes de reset e auth comentadas
 // async function resetWhatsappSession(empresaId, motivo = 'reset') {
 //   const session = obterSessaoAtiva(empresaId);
 //   if (!session) {
@@ -1107,7 +1107,7 @@
 //   };
 // }
 
-// ⚠️ DESATIVADO - criarSocket (Baileys) comentado
+//  DESATIVADO - criarSocket (Baileys) comentado
 // async function criarSocket(empresaId, phoneNumber, opcoes = {}) {
 //   const { authSnapshot = null, statusInicial = 'generating_code' } = opcoes;
 //   const { state, saveCreds, flushSalvamentoDebounced, cancelarSalvamentoDebounced } = await criarAuthStatePersistido(empresaId, phoneNumber, authSnapshot);
@@ -1502,7 +1502,7 @@
 //   return session;
 // }
 
-// ⚠️ DESATIVADO - Funcoes de restauracao e pareamento comentadas
+//  DESATIVADO - Funcoes de restauracao e pareamento comentadas
 // async function restaurarSessoesPersistidas() {
 //   try {
 //     const sessoesPersistidas = await listarSessoesPersistidasBackend();
@@ -2040,7 +2040,7 @@
 //   return String(code || '').trim();
 // }
 
-// ⚠️ DESATIVADO - Exports stubs
+//  DESATIVADO - Exports stubs
 // module.exports = {
 //   conectarEmpresa,
 //   statusEmpresa,
@@ -2059,7 +2059,7 @@
 //   restaurarSessoesAtivas,
 // };
 
-// ⚠️ DESATIVADO - Stub exports (todas as funcoes retornam null)
+//  DESATIVADO - Stub exports (todas as funcoes retornam null)
 module.exports = {
   conectarEmpresa: async () => null,
   statusEmpresa: async () => null,

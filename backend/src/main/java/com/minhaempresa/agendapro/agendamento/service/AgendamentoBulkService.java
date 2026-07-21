@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.agendamento.service;
+﻿package com.minhaempresa.agendapro.agendamento.service;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AcaoEmMassaResponse;
@@ -10,7 +10,7 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
-// ⚠️ DESATIVADO - WhatsApp functionality disabled
+//  DESATIVADO - WhatsApp functionality disabled
 // import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -25,7 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AgendamentoBulkService {
     private final AgendamentoRepository agendamentoRepository;
     private final PagamentoRepository pagamentoRepository;
-    // ⚠️ DESATIVADO - WhatsApp functionality disabled
+    //  DESATIVADO - WhatsApp functionality disabled
     // private final WhatsappLembretePagamentoRepository lembretePagamentoRepository;
 
     @Transactional
@@ -54,7 +54,7 @@ public class AgendamentoBulkService {
                     case "CANCELAR" -> agendamento.setStatus(StatusAgendamento.CANCELADO);
                     case "PENDENTE" -> agendamento.setStatus(StatusAgendamento.PENDENTE);
                     case "EXCLUIR" -> {
-                        // ⚠️ DESATIVADO - WhatsApp functionality disabled
+                        //  DESATIVADO - WhatsApp functionality disabled
                         // lembretePagamentoRepository.deleteByAgendamento_Id(id);
                         pagamentoRepository.deleteByAgendamentoId(id);
                         agendamentoRepository.delete(agendamento);

@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.agendamento.repository;
+﻿package com.minhaempresa.agendapro.agendamento.repository;
 
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoSimplesProjection;
@@ -79,7 +79,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             LocalDate data
     );
 
-    // ⚠️ DESATIVADO - WhatsApp query disabled
+    //  DESATIVADO - WhatsApp query disabled
     /*
     @Query("""
             select a.id as id,
@@ -119,7 +119,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         return java.util.Collections.emptyList();
     }
 
-    // ⚠️ DESATIVADO - WhatsApp query disabled
+    //  DESATIVADO - WhatsApp query disabled
     /*
     @Query("""
             select a.id as id,
@@ -171,7 +171,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("horaFim") LocalTime horaFim
     );
 
-    // ⚠️ DESATIVADO - WhatsApp query disabled
+    //  DESATIVADO - WhatsApp query disabled
     /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByLembreteWppEnviadoFalseAndStatusInAndDataAndHoraInicioBetween(
@@ -182,7 +182,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     );
     */
 
-    // ⚠️ DESATIVADO - WhatsApp query disabled
+    //  DESATIVADO - WhatsApp query disabled
     /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     @Query("""
@@ -200,7 +200,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     );
     */
 
-    // ⚠️ DESATIVADO - WhatsApp query disabled
+    //  DESATIVADO - WhatsApp query disabled
     /*
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     @Query("""

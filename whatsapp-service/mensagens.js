@@ -1,9 +1,9 @@
-﻿/*
-╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
-║  Código comentado. Remova comentários  ║
-║  para reativar.                        ║
-╚════════════════════════════════════════╝
+/*
++----------------------------------------+
+�    DESATIVADO - FUNCIONALIDADE WhatsApp �
+�  C�digo comentado. Remova coment�rios  �
+�  para reativar.                        �
++----------------------------------------+
 */
 
 /*
@@ -19,17 +19,17 @@ function preencher(template, dados) {
 function montarMensagem(tipo, dados = {}) {
   const payload = {
     nome: textoBase(dados.nome) || 'Cliente',
-    servico: textoBase(dados.servico) || 'serviço',
+    servico: textoBase(dados.servico) || 'servi�o',
     profissional: textoBase(dados.profissional) || 'equipe',
     data: textoBase(dados.data) || 'em breve',
     hora: textoBase(dados.hora) || '--:--',
   };
 
   const templates = {
-    CONFIRMACAO: `Olá, {{nome}}! ✅ Seu agendamento foi confirmado.\n\n📋 *Serviço:* {{servico}}\n👤 *Profissional:* {{profissional}}\n📅 *Data:* {{data}} às {{hora}}\n\nQualquer dúvida é só chamar!`,
-    LEMBRETE: `Olá, {{nome}}! ⏰ Lembrando do seu horário em 1 hora.\n\n*{{servico}}* com {{profissional}} às {{hora}}.\n\nTe esperamos! 😊`,
-    CANCELAMENTO: `Olá, {{nome}}. ❌ Seu agendamento de *{{servico}}* no dia {{data}} às {{hora}} foi cancelado.\n\nPara reagendar, entre em contato.`,
-    REMARCACAO: `Olá, {{nome}}! 🔄 Seu agendamento foi remarcado.\n\n📅 *Novo horário:* {{data}} às {{hora}}\n📋 *Serviço:* {{servico}} com {{profissional}}`,
+    CONFIRMACAO: `Ol�, {{nome}}!  Seu agendamento foi confirmado.\n\n *Servi�o:* {{servico}}\n *Profissional:* {{profissional}}\n *Data:* {{data}} �s {{hora}}\n\nQualquer d�vida � s� chamar!`,
+    LEMBRETE: `Ol�, {{nome}}! ? Lembrando do seu hor�rio em 1 hora.\n\n*{{servico}}* com {{profissional}} �s {{hora}}.\n\nTe esperamos! `,
+    CANCELAMENTO: `Ol�, {{nome}}.  Seu agendamento de *{{servico}}* no dia {{data}} �s {{hora}} foi cancelado.\n\nPara reagendar, entre em contato.`,
+    REMARCACAO: `Ol�, {{nome}}!  Seu agendamento foi remarcado.\n\n *Novo hor�rio:* {{data}} �s {{hora}}\n *Servi�o:* {{servico}} com {{profissional}}`,
   };
 
   const template = templates[String(tipo || '').toUpperCase()] || templates.CONFIRMACAO;

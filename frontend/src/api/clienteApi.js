@@ -1,4 +1,4 @@
-import axios from 'axios'
+﻿import axios from 'axios'
 
 const API_BASE = import.meta.env.VITE_API_URL
   ? (import.meta.env.VITE_API_URL.endsWith('/api') ? import.meta.env.VITE_API_URL : `${import.meta.env.VITE_API_URL}/api`)
@@ -38,24 +38,24 @@ clienteApi.interceptors.request.use((config) => {
       const raw = localStorage.getItem('meu-gendaz-auth')
       
       if (!raw) {
-        console.log('⚠️ Nenhum auth encontrado no localStorage para:', config.url)
+        console.log(' Nenhum auth encontrado no localStorage para:', config.url)
         return config
       }
       
       const tokenData = JSON.parse(raw)
       
       if (!tokenData?.sessionToken) {
-        console.log('⚠️ sessionToken vazio em localStorage')
+        console.log(' sessionToken vazio em localStorage')
         return config
       }
       
       config.headers['X-Session-Token'] = tokenData.sessionToken
       
-      console.log('✅ Token enviado para:', config.url.split('/').slice(-1)[0])
+      console.log(' Token enviado para:', config.url.split('/').slice(-1)[0])
       console.log('   Token (primeiros 30 caracteres):', tokenData.sessionToken.slice(0, 30) + '...')
       
     } catch (err) {
-      console.error('❌ Erro ao adicionar token:', err)
+      console.error(' Erro ao adicionar token:', err)
     }
   }
   return config
@@ -83,11 +83,11 @@ clienteApi.interceptors.response.use(
     const url = error.config?.url || ''
 
     if (status === 401) {
-      console.log('❌ 401 Recebido do backend - token inválido')
+      console.log(' 401 Recebido do backend - token inválido')
       console.log('URL:', url)
       console.log('Headers enviados:', error.config.headers)
       localStorage.removeItem('meu-gendaz-auth')
-      console.log('✅ localStorage limpo')
+      console.log(' localStorage limpo')
       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
       window.location.href = '/meu-gendaz/login'
     }

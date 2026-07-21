@@ -1,16 +1,16 @@
-Ôªø/*
-‚ïî‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïó
-‚ïë  ‚ö†Ô∏è  DESATIVADO - FUNCIONALIDADE WhatsApp ‚ïë
-‚ïë  C√≥digo comentado. Remova coment√°rios  ‚ïë
-‚ïë  para reativar.                        ‚ïë
-‚ïö‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïê‚ïù
+/*
++----------------------------------------+
+¶    DESATIVADO - FUNCIONALIDADE WhatsApp ¶
+¶  CÛdigo comentado. Remova coment·rios  ¶
+¶  para reativar.                        ¶
++----------------------------------------+
 */
 
 const axios = require('axios');
 const Groq = require('groq-sdk');
 
 // TODO: migrar este estado para Redis ou tabela no banco se os fluxos ficarem longos
-// ou se o servi√ßo reiniciar com frequ√™ncia durante conversas ativas.
+// ou se o serviÁo reiniciar com frequÍncia durante conversas ativas.
 
 function normalizarTexto(valor) {
   return String(valor || '').trim();
@@ -43,7 +43,7 @@ function respostaPositiva(texto) {
 
 function respostaNegativa(texto) {
   const valor = normalizarBusca(texto);
-  return /^(nao|n√£o|cancelar|cancela|deixa|esquece)/.test(valor);
+  return /^(nao|n„o|cancelar|cancela|deixa|esquece)/.test(valor);
 }
 
 function prefereAgendarPorWhatsapp(texto) {
@@ -51,11 +51,11 @@ function prefereAgendarPorWhatsapp(texto) {
   const palavrasChave = [
     'por aq', 'aq','2',
     'por aqui', 'pelo whatsapp', 'faz por aqui', 'aqui mesmo',
-    'nao quero link', 'n√£o quero link', 'sem link', 'me ajuda por aqui',
+    'nao quero link', 'n„o quero link', 'sem link', 'me ajuda por aqui',
     'pode ser aqui', 'marca pra mim', 'marca para mim', 'melhor voce marcar',
-    'melhor voc√™ marcar', 'voce marca', 'voc√™ marca', 'quero por aqui',
-    'continuar por aqui', 'nao sei mexer', 'n√£o sei mexer', 'pode resolver',
-    'resolve ai', 'resolve a√≠', 'voce mesmo', 'voc√™ mesmo', 'prefiro aqui',
+    'melhor vocÍ marcar', 'voce marca', 'vocÍ marca', 'quero por aqui',
+    'continuar por aqui', 'nao sei mexer', 'n„o sei mexer', 'pode resolver',
+    'resolve ai', 'resolve aÌ', 'voce mesmo', 'vocÍ mesmo', 'prefiro aqui',
   ];
   return palavrasChave.some((p) => valor.includes(normalizarBusca(p)));
 }
@@ -105,7 +105,7 @@ async function classificarPreferenciaComIA(texto, groqApiKey) {
       model: 'llama-3.1-8b-instant',
       messages: [{
         role: 'system',
-        content: 'Classifique a mensagem do cliente em uma palavra: "WHATSAPP" se ele quer que voc√™ conduza o agendamento na conversa, ou "LINK" se ele prefere usar o link. Se n√£o estiver claro, responda "INDEFINIDO". Responda APENAS a palavra.',
+        content: 'Classifique a mensagem do cliente em uma palavra: "WHATSAPP" se ele quer que vocÍ conduza o agendamento na conversa, ou "LINK" se ele prefere usar o link. Se n„o estiver claro, responda "INDEFINIDO". Responda APENAS a palavra.',
       }, { role: 'user', content: texto }],
       temperature: 0,
       max_tokens: 10,
@@ -171,7 +171,7 @@ function iniciarEscolhaCanalAgendamento(fluxo, { empresaId, remoteJid, linkAgend
     remoteJid,
     linkAgendamento,
   });
-  return `Claro! Voc√™ pode agendar de duas formas:\n\n1. Pelo link, escolhendo servi√ßo, dia e hor√°rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVoc√™ prefere fazer pelo link ou por aqui?`;
+  return `Claro! VocÍ pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÁo, dia e hor·rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÍ prefere fazer pelo link ou por aqui?`;
 }
 
 function montarMensagemSucessoAgendamento({ nome, servico, data, horario, protocolo, profissional }) {
@@ -180,11 +180,11 @@ function montarMensagemSucessoAgendamento({ nome, servico, data, horario, protoc
     'Agendamento confirmado com sucesso!',
     protocolo ? `Protocolo: ${protocolo}` : null,
     `Nome: ${nome}`,
-    `Servi√ßo: ${servico}`,
+    `ServiÁo: ${servico}`,
     `Data: ${dataFormatada}`,
-    `Hor√°rio: ${horario}`,
+    `Hor·rio: ${horario}`,
     profissional ? `Profissional: ${profissional}` : null,
-    'Guarde esse protocolo. Ele pode ser usado caso voc√™ queira cancelar ou reagendar.',
+    'Guarde esse protocolo. Ele pode ser usado caso vocÍ queira cancelar ou reagendar.',
   ];
   return linhas.filter(Boolean).join('\n');
 }
@@ -214,7 +214,7 @@ function formatarMoeda(valor) {
 
 function montarMensagemListaServicos(servicos) {
   const linhas = (Array.isArray(servicos) ? servicos : []).map((s, i) => `${i + 1}. ${s.nome} - ${formatarMoeda(s.valor) || 'sob consulta'}`);
-  return `Qual servi√ßo voc√™ deseja?\n\n${linhas.join('\n')}`;
+  return `Qual serviÁo vocÍ deseja?\n\n${linhas.join('\n')}`;
 }
 
 function montarMensagemListaProfissionais(profissionais) {
@@ -227,15 +227,15 @@ function montarMensagemListaProfissionais(profissionais) {
 
 function mensagemInicioAgendamento(linkAgendamento) {
   return linkAgendamento
-    ? `Claro! Voc√™ pode agendar de duas formas:\n\n1. Pelo link, escolhendo servi√ßo, dia e hor√°rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVoc√™ prefere fazer pelo link ou por aqui?`
-    : 'Claro! Voc√™ pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVoc√™ prefere fazer pelo link ou por aqui?';
+    ? `Claro! VocÍ pode agendar de duas formas:\n\n1. Pelo link, escolhendo serviÁo, dia e hor·rio:\n${linkAgendamento}\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÍ prefere fazer pelo link ou por aqui?`
+    : 'Claro! VocÍ pode agendar de duas formas:\n\n1. Pelo link oficial de agendamento.\n\n2. Ou, se preferir, posso te ajudar por aqui pelo WhatsApp.\n\nVocÍ prefere fazer pelo link ou por aqui?';
 }
 
 function nomeClienteValido(texto) {
   const valor = String(texto || '').trim();
   if (valor.length < 2) return '';
-  if (/^(sim|nao|n√£o|ok|okey|pode|claro|beleza|tudo bem)$/i.test(valor)) return '';
-  if (!/[a-z√°√†√¢√£√©√®√™√≠√Ø√≥√¥√µ√∫√ß]/i.test(valor)) return '';
+  if (/^(sim|nao|n„o|ok|okey|pode|claro|beleza|tudo bem)$/i.test(valor)) return '';
+  if (!/[a-z·‡‚„ÈËÍÌÔÛÙı˙Á]/i.test(valor)) return '';
   return valor.replace(/\s+/g, ' ');
 }
 
@@ -298,22 +298,22 @@ function ehCorrecaoData(texto) {
   if (!valor) return false;
   return [
     'nao e',
-    'n√£o e',
+    'n„o e',
     'nao eh',
-    'n√£o eh',
+    'n„o eh',
     'errado',
     'essa nao',
-    'essa n√£o',
+    'essa n„o',
     'data errada',
     'dia errado',
     'isso esta errado',
-    'isso est√° errado',
+    'isso est· errado',
     'esse nao',
-    'esse n√£o',
-    'nao √© esse dia',
-    'n√£o √© esse dia',
-    'n√£o √© essa data',
-    'nao √© essa data',
+    'esse n„o',
+    'nao È esse dia',
+    'n„o È esse dia',
+    'n„o È essa data',
+    'nao È essa data',
   ].some((trecho) => valor.includes(normalizarBusca(trecho)));
 }
 
@@ -324,7 +324,7 @@ function interpretarHorarioNatural(texto, disponiveis) {
     : [];
   if (!horarios.length) return null;
 
-  const temPeriodoTarde = /\b(pm|da tarde|de tarde|a tarde|tarde|√† tarde|noite|da noite|de noite|a noite)\b/.test(valor);
+  const temPeriodoTarde = /\b(pm|da tarde|de tarde|a tarde|tarde|‡ tarde|noite|da noite|de noite|a noite)\b/.test(valor);
   const temPeriodoManha = /\b(am|da manha|de manha|a manha|manha|matutino)\b/.test(valor);
 
   const ajustarHorario = (horaTexto, minutoTexto = '00', periodoTexto = '') => {
@@ -472,7 +472,7 @@ function montarMensagemHorariosDisponiveis(dataYYYYMMDD, horarios) {
   const horariosFuturos = filtrarHorariosFuturos(dataYYYYMMDD, horarios);
   if (!horariosFuturos.length) return null;
 
-  return `Tenho esses hor√°rios dispon√≠veis para ${new Date(`${dataYYYYMMDD}T12:00:00`).toLocaleDateString('pt-BR')}:\n${horariosFuturos.join('\n')}\n\nQual hor√°rio voc√™ prefere?`;
+  return `Tenho esses hor·rios disponÌveis para ${new Date(`${dataYYYYMMDD}T12:00:00`).toLocaleDateString('pt-BR')}:\n${horariosFuturos.join('\n')}\n\nQual hor·rio vocÍ prefere?`;
 }
 
 function nomeDiaSemana(nome) {
@@ -480,12 +480,12 @@ function nomeDiaSemana(nome) {
     domingo: 0,
     segunda: 1,
     terca: 2,
-    'ter√ßa': 2,
+    'terÁa': 2,
     quarta: 3,
     quinta: 4,
     sexta: 5,
     sabado: 6,
-    's√°bado': 6,
+    's·bado': 6,
   };
   return mapa[nome];
 }
@@ -560,13 +560,13 @@ function interpretarDataNatural(texto, agora = new Date()) {
     return dataHojeYYYYMMDD('America/Sao_Paulo', agora);
   }
 
-  if (valor.includes('depois de amanha') || valor.includes('depois de amanh√£')) {
+  if (valor.includes('depois de amanha') || valor.includes('depois de amanh„')) {
     const data = new Date(hoje);
     data.setDate(data.getDate() + 2);
     return normalizarParaISO(data);
   }
 
-  if (valor.includes('amanha') || valor.includes('amanh√£')) {
+  if (valor.includes('amanha') || valor.includes('amanh„')) {
     const data = new Date(hoje);
     data.setDate(data.getDate() + 1);
     return normalizarParaISO(data);
@@ -658,11 +658,11 @@ function interpretarDataNatural(texto, agora = new Date()) {
   const diasSemana = [
     { nomes: ['domingo'], index: 0 },
     { nomes: ['segunda'], index: 1 },
-    { nomes: ['terca', 'ter√ßa'], index: 2 },
+    { nomes: ['terca', 'terÁa'], index: 2 },
     { nomes: ['quarta'], index: 3 },
     { nomes: ['quinta'], index: 4 },
     { nomes: ['sexta'], index: 5 },
-    { nomes: ['sabado', 's√°bado'], index: 6 },
+    { nomes: ['sabado', 's·bado'], index: 6 },
   ];
   const diaSemana = diasSemana.find((item) => item.nomes.some((nome) => valor.includes(nome)));
   if (diaSemana) {
@@ -741,13 +741,13 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
       estado.etapa = fluxo.etapa;
       fluxo.ativo = true;
       fluxo.modoSelecionado = 'WHATSAPP';
-      return 'Perfeito! Para come√ßar, qual √© o seu nome?';
+      return 'Perfeito! Para comeÁar, qual È o seu nome?';
     }
     if (prefereLink(texto)) {
       resetarFluxoAgendamento(estado);
       return linkAgendamento
-        ? `Perfeito! √â s√≥ acessar:\n${linkAgendamento}\n\nPor l√° voc√™ escolhe o servi√ßo, o dia e o hor√°rio dispon√≠vel.`
-        : 'Ainda n√£o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
+        ? `Perfeito! … sÛ acessar:\n${linkAgendamento}\n\nPor l· vocÍ escolhe o serviÁo, o dia e o hor·rio disponÌvel.`
+        : 'Ainda n„o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
     }
     const classificacao = await classificarPreferenciaComIA(texto, groqApiKey);
     if (classificacao === 'WHATSAPP') {
@@ -755,13 +755,13 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
       estado.etapa = fluxo.etapa;
       fluxo.ativo = true;
       fluxo.modoSelecionado = 'WHATSAPP';
-      return 'Perfeito! Para come√ßar, qual √© o seu nome?';
+      return 'Perfeito! Para comeÁar, qual È o seu nome?';
     }
     if (classificacao === 'LINK') {
       resetarFluxoAgendamento(estado);
       return linkAgendamento
-        ? `Perfeito! √â s√≥ acessar:\n${linkAgendamento}\n\nPor l√° voc√™ escolhe o servi√ßo, o dia e o hor√°rio dispon√≠vel.`
-        : 'Ainda n√£o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
+        ? `Perfeito! … sÛ acessar:\n${linkAgendamento}\n\nPor l· vocÍ escolhe o serviÁo, o dia e o hor·rio disponÌvel.`
+        : 'Ainda n„o encontrei o link de agendamento configurado para esta empresa. Vou encaminhar para um atendente te ajudar.';
     }
     return mensagemInicioAgendamento(linkAgendamento);
   }
@@ -779,8 +779,8 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
     if (!servicos.length) {
       resetarFluxoAgendamento(estado);
       return linkAgendamento
-        ? `No momento n√£o encontrei servi√ßos cadastrados. Voc√™ pode fazer seu agendamento pelo link:\n${linkAgendamento}`
-        : 'No momento n√£o encontrei servi√ßos cadastrados. Vou encaminhar para um atendente te ajudar.';
+        ? `No momento n„o encontrei serviÁos cadastrados. VocÍ pode fazer seu agendamento pelo link:\n${linkAgendamento}`
+        : 'No momento n„o encontrei serviÁos cadastrados. Vou encaminhar para um atendente te ajudar.';
     }
     fluxo.servicosDisponiveis = servicos;
     return montarMensagemListaServicos(servicos);
@@ -789,7 +789,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
   if (fluxo.etapa === 'AGUARDANDO_SERVICO' || fluxo.etapa === 'ESCOLHENDO_SERVICO') {
     const servico = identificarServicoEscolhido(texto, fluxo.servicosDisponiveis);
     if (!servico) {
-      return `N√£o encontrei esse servi√ßo. Escolha uma das op√ß√µes:\n${montarMensagemListaServicos(fluxo.servicosDisponiveis)}`;
+      return `N„o encontrei esse serviÁo. Escolha uma das opÁıes:\n${montarMensagemListaServicos(fluxo.servicosDisponiveis)}`;
     }
     fluxo.servicoSelecionado = servico;
     const profissionaisAtivos = Array.isArray(fluxo.profissionaisDisponiveis) ? fluxo.profissionaisDisponiveis : [];
@@ -803,19 +803,19 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
     atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
     estado.etapa = fluxo.etapa;
     fluxo.ativo = true;
-    return '√ìtimo! Qual dia voc√™ prefere?';
+    return '”timo! Qual dia vocÍ prefere?';
   }
 
   if (fluxo.etapa === 'AGUARDANDO_PROFISSIONAL' || fluxo.etapa === 'ESCOLHENDO_PROFISSIONAL') {
     const profissional = identificarProfissionalEscolhido(texto, fluxo.profissionaisDisponiveis);
     if (!profissional) {
-      return `N√£o encontrei esse profissional. Escolha uma das op√ß√µes:\n${montarMensagemListaProfissionais(fluxo.profissionaisDisponiveis)}`;
+      return `N„o encontrei esse profissional. Escolha uma das opÁıes:\n${montarMensagemListaProfissionais(fluxo.profissionaisDisponiveis)}`;
     }
     fluxo.profissionalSelecionado = profissional;
     atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
     estado.etapa = fluxo.etapa;
     fluxo.ativo = true;
-    return '√ìtimo! Qual dia voc√™ prefere?';
+    return '”timo! Qual dia vocÍ prefere?';
   }
 
   if (fluxo.etapa === 'AGUARDANDO_DATA' || fluxo.etapa === 'ESCOLHENDO_DATA') {
@@ -826,7 +826,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
       atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
       estado.etapa = fluxo.etapa;
       fluxo.ativo = true;
-      return 'Desculpa pelo erro! Qual o dia certo que voc√™ prefere?';
+      return 'Desculpa pelo erro! Qual o dia certo que vocÍ prefere?';
     }
     console.log('[bot-data] tentando interpretar data', {
       empresaId,
@@ -840,7 +840,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
         remoteJid,
         texto,
       });
-      return 'N√£o entendi a data. Pode me dizer o dia que prefere? Ex: "amanh√£", "sexta", "dia 10".';
+      return 'N„o entendi a data. Pode me dizer o dia que prefere? Ex: "amanh„", "sexta", "dia 10".';
     }
     let horariosDisponiveis;
     try {
@@ -857,7 +857,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
         codigoErro: error.code,
         detalhe: error.message,
       });
-      return 'Entendi a data, mas tive uma instabilidade para buscar os hor√°rios agora. Pode tentar novamente em alguns segundos?';
+      return 'Entendi a data, mas tive uma instabilidade para buscar os hor·rios agora. Pode tentar novamente em alguns segundos?';
     }
     if (!horariosDisponiveis.length) {
       console.log('[bot-data] data invalida ou passada', {
@@ -869,8 +869,8 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
       fluxo.dataSelecionada = null;
       fluxo.horariosDisponiveis = [];
       return isHoje(dataIso)
-        ? 'Para hoje n√£o encontrei mais hor√°rios dispon√≠veis. Quer tentar amanh√£ ou outro dia?'
-        : `N√£o encontrei hor√°rios dispon√≠veis para ${new Date(`${dataIso}T12:00:00`).toLocaleDateString('pt-BR')}. Quer tentar outro dia?`;
+        ? 'Para hoje n„o encontrei mais hor·rios disponÌveis. Quer tentar amanh„ ou outro dia?'
+        : `N„o encontrei hor·rios disponÌveis para ${new Date(`${dataIso}T12:00:00`).toLocaleDateString('pt-BR')}. Quer tentar outro dia?`;
     }
     fluxo.dataSelecionada = dataIso;
     fluxo.horariosDisponiveis = horariosDisponiveis;
@@ -888,7 +888,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
       atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
       estado.etapa = fluxo.etapa;
       fluxo.ativo = true;
-      return 'Desculpa pelo erro! Qual o dia certo que voc√™ prefere?';
+      return 'Desculpa pelo erro! Qual o dia certo que vocÍ prefere?';
     }
     const horario = interpretarHorarioNatural(texto, fluxo.horariosDisponiveis);
     if (!horario) {
@@ -899,10 +899,10 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
         fluxo.horariosDisponiveis = [];
         atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
         estado.etapa = fluxo.etapa;
-        return 'N√£o encontrei hor√°rios livres para hoje a partir de agora. Quer tentar outro dia?';
+        return 'N„o encontrei hor·rios livres para hoje a partir de agora. Quer tentar outro dia?';
       }
       fluxo.horariosDisponiveis = horariosFuturos;
-      return `N√£o encontrei esse hor√°rio. Escolha um dos dispon√≠veis:\n${horariosFuturos.join('\n')}`;
+      return `N„o encontrei esse hor·rio. Escolha um dos disponÌveis:\n${horariosFuturos.join('\n')}`;
     }
     if (horarioJaPassou(fluxo.dataSelecionada, horario)) {
       const horariosFuturos = filtrarHorariosFuturos(fluxo.dataSelecionada, fluxo.horariosDisponiveis);
@@ -912,12 +912,12 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
         fluxo.dataSelecionada = null;
         atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
         estado.etapa = fluxo.etapa;
-        return 'Esse hor√°rio j√° passou. Para hoje n√£o encontrei mais hor√°rios dispon√≠veis. Quer tentar amanh√£ ou outro dia?';
+        return 'Esse hor·rio j· passou. Para hoje n„o encontrei mais hor·rios disponÌveis. Quer tentar amanh„ ou outro dia?';
       }
       atualizarEtapaFluxo(fluxo, 'AGUARDANDO_HORARIO', { empresaId, remoteJid });
       estado.etapa = fluxo.etapa;
       fluxo.ativo = true;
-      return `Esse hor√°rio j√° passou. Vou te mostrar os hor√°rios dispon√≠veis a partir de agora.\n${horariosFuturos.join('\n')}\n\nQual hor√°rio voc√™ prefere?`;
+      return `Esse hor·rio j· passou. Vou te mostrar os hor·rios disponÌveis a partir de agora.\n${horariosFuturos.join('\n')}\n\nQual hor·rio vocÍ prefere?`;
     }
     fluxo.horarioSelecionado = horario;
     atualizarEtapaFluxo(fluxo, 'AGUARDANDO_CONFIRMACAO', { empresaId, remoteJid });
@@ -926,10 +926,10 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
     const confirmacao = [
       'Confirmando seu agendamento:',
       '',
-      `Servi√ßo: ${fluxo.servicoSelecionado.nome}`,
+      `ServiÁo: ${fluxo.servicoSelecionado.nome}`,
       fluxo.profissionalSelecionado?.nome ? `Profissional: ${formatarProfissionalLista(fluxo.profissionalSelecionado)}` : null,
       `Data: ${new Date(`${fluxo.dataSelecionada}T12:00:00`).toLocaleDateString('pt-BR')}`,
-      `Hor√°rio: ${horario}`,
+      `Hor·rio: ${horario}`,
       '',
       'Posso confirmar?',
     ];
@@ -952,12 +952,12 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
           fluxo.dataSelecionada = null;
           atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
           estado.etapa = fluxo.etapa;
-          return 'Esse hor√°rio j√° passou. N√£o encontrei hor√°rios livres para hoje a partir de agora. Quer tentar outro dia?';
+          return 'Esse hor·rio j· passou. N„o encontrei hor·rios livres para hoje a partir de agora. Quer tentar outro dia?';
         }
         atualizarEtapaFluxo(fluxo, 'AGUARDANDO_HORARIO', { empresaId, remoteJid });
         estado.etapa = fluxo.etapa;
         fluxo.ativo = true;
-        return `Esse hor√°rio j√° passou. Vou te mostrar os hor√°rios dispon√≠veis a partir de agora.\n${horariosFuturos.join('\n')}\n\nQual hor√°rio voc√™ prefere?`;
+        return `Esse hor·rio j· passou. Vou te mostrar os hor·rios disponÌveis a partir de agora.\n${horariosFuturos.join('\n')}\n\nQual hor·rio vocÍ prefere?`;
       }
       try {
         const horarioConfirmado = fluxo.horarioSelecionado;
@@ -982,7 +982,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
           data: dataConfirmada,
           horario: horarioConfirmado,
         });
-        console.log('[Scheduling] payload cria√ß√£o', payload);
+        console.log('[Scheduling] payload criaÁ„o', payload);
         const resultado = await criarAgendamento(backendUrl, backendToken, payload);
         if (!resultado?.protocolo) {
           console.error('[Scheduling] protocolo ausente no retorno do backend', {
@@ -1038,12 +1038,12 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
             fluxo.dataSelecionada = null;
             atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
             estado.etapa = fluxo.etapa;
-            return 'Esse hor√°rio n√£o est√° mais dispon√≠vel. N√£o encontrei hor√°rios livres para hoje a partir de agora. Quer tentar outro dia?';
+            return 'Esse hor·rio n„o est· mais disponÌvel. N„o encontrei hor·rios livres para hoje a partir de agora. Quer tentar outro dia?';
           }
           atualizarEtapaFluxo(fluxo, 'AGUARDANDO_HORARIO', { empresaId, remoteJid });
           estado.etapa = fluxo.etapa;
           fluxo.ativo = true;
-          return `Esse hor√°rio n√£o est√° mais dispon√≠vel. Vou te mostrar os hor√°rios livres novamente.\n${horariosFuturos.join('\n')}`;
+          return `Esse hor·rio n„o est· mais disponÌvel. Vou te mostrar os hor·rios livres novamente.\n${horariosFuturos.join('\n')}`;
         }
 
         if (codigoErro.includes('validacao') || campoPrincipal) {
@@ -1063,12 +1063,12 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
               fluxo.dataSelecionada = null;
               atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
               estado.etapa = fluxo.etapa;
-              return 'N√£o encontrei hor√°rios livres para hoje a partir de agora. Quer tentar outro dia?';
+              return 'N„o encontrei hor·rios livres para hoje a partir de agora. Quer tentar outro dia?';
             }
             atualizarEtapaFluxo(fluxo, 'AGUARDANDO_HORARIO', { empresaId, remoteJid });
             estado.etapa = fluxo.etapa;
             fluxo.ativo = true;
-            return `Esse hor√°rio n√£o est√° mais dispon√≠vel. Vou te mostrar os hor√°rios livres novamente.\n${horariosFuturos.join('\n')}`;
+            return `Esse hor·rio n„o est· mais disponÌvel. Vou te mostrar os hor·rios livres novamente.\n${horariosFuturos.join('\n')}`;
           }
 
           if (campoPrincipal === 'data') {
@@ -1076,7 +1076,7 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
             fluxo.horarioSelecionado = null;
             atualizarEtapaFluxo(fluxo, 'AGUARDANDO_DATA', { empresaId, remoteJid });
             estado.etapa = fluxo.etapa;
-            return 'Preciso que voc√™ me diga a data novamente.';
+            return 'Preciso que vocÍ me diga a data novamente.';
           }
 
           if (campoPrincipal === 'servicoId' || campoPrincipal === 'servico') {
@@ -1085,23 +1085,23 @@ async function conduzirFluxoAgendamento({ estado, texto, contexto, empresaId, te
             fluxo.horarioSelecionado = null;
             atualizarEtapaFluxo(fluxo, 'AGUARDANDO_SERVICO', { empresaId, remoteJid });
             estado.etapa = fluxo.etapa;
-            return 'Preciso que voc√™ escolha o servi√ßo novamente.';
+            return 'Preciso que vocÍ escolha o serviÁo novamente.';
           }
 
           return 'Tive um problema para confirmar o agendamento. Vou te pedir os dados novamente.';
         }
         resetarFluxoAgendamento(estado);
         return linkAgendamento
-          ? `Tive um problema para confirmar o agendamento. Voc√™ pode tentar novamente ou fazer pelo link:\n${linkAgendamento}`
+          ? `Tive um problema para confirmar o agendamento. VocÍ pode tentar novamente ou fazer pelo link:\n${linkAgendamento}`
           : 'Tive um problema para confirmar o agendamento. Vou encaminhar para um atendente te ajudar.';
       }
     }
     if (respostaNegativa(texto)) {
       estado.finalizouFluxoAgendamento = 'cliente_respondeu_nao';
       resetarFluxoAgendamento(estado);
-      return 'Sem problemas! Se quiser tentar de novo √© s√≥ me chamar.';
+      return 'Sem problemas! Se quiser tentar de novo È sÛ me chamar.';
     }
-    return 'Posso confirmar o agendamento? Responda sim ou n√£o.';
+    return 'Posso confirmar o agendamento? Responda sim ou n„o.';
   }
 
   return null;

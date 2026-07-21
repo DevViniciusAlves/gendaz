@@ -46,10 +46,13 @@ export default function Login() {
       }
       navigate('/sistema/dashboard')
     } catch (error) {
-      const mensagem = error.message
-        || error.response?.data?.mensagem
-        || (error.code === 'ECONNABORTED' ? 'A conexao demorou demais. Tente novamente em instantes.' : null)
-        || 'Nao foi possivel entrar. Verifique e-mail e senha.'
+      const status = error.response?.status
+      const mensagem = status === 400 || status === 401
+        ? 'E-mail ou senha incorretos.'
+        : error.response?.data?.mensagem
+          || error.response?.data?.message
+          || (error.code === 'ECONNABORTED' ? 'A conexao demorou demais. Tente novamente em instantes.' : null)
+          || 'Nao foi possivel entrar. Verifique e-mail e senha.'
       setErro(mensagem)
     } finally {
       setCarregando(false)

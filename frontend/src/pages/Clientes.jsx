@@ -197,7 +197,7 @@ export default function Clientes() {
     }
     const telefone = padronizarTelefone(form.telefone)
     if (!telefone) {
-      setErro('Telefone inválido. Formato correto: +55 (DDD) 99999-9999')
+      setErro('Telefone invalido. Use codigo da cidade + numero.')
       return
     }
     if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
@@ -329,9 +329,10 @@ export default function Clientes() {
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: limparNome(e.target.value) })} required />
           <Input
             label="Telefone"
-            helper={form.telefone ? (validarTelefone(form.telefone) || 'âœ“ Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
+            helper={form.telefone ? (validarTelefone(form.telefone) || 'Pronto para confirmar') : 'Use codigo da cidade + numero.'}
             inputMode="numeric"
             maxLength={19}
+            neutralLimit
             value={form.telefone}
             onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })}
             required

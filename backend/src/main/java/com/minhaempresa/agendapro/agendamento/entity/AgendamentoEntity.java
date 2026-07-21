@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.agendamento.entity;
+﻿package com.minhaempresa.agendapro.agendamento.entity;
 
 import com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
@@ -57,7 +57,7 @@ public class AgendamentoEntity {
     @Column(length = 1000)
     private String observacoes;
 
-    // ⚠️ DESATIVADO - WhatsApp functionality disabled
+    //  DESATIVADO - WhatsApp functionality disabled
     // @Column(name = "lembrete_wpp_enviado", nullable = false)
     // private Boolean lembreteWppEnviado;
 
@@ -88,7 +88,7 @@ public class AgendamentoEntity {
 
     @PrePersist
     void prePersist() {
-        // ⚠️ DESATIVADO - WhatsApp functionality disabled
+        //  DESATIVADO - WhatsApp functionality disabled
         // lembreteWppEnviado = lembreteWppEnviado == null ? Boolean.FALSE : lembreteWppEnviado;
         confirmacaoPagamentoDonoEnviada = confirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : confirmacaoPagamentoDonoEnviada;
         segundaConfirmacaoPagamentoDonoEnviada = segundaConfirmacaoPagamentoDonoEnviada == null ? Boolean.FALSE : segundaConfirmacaoPagamentoDonoEnviada;

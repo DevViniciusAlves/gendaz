@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.empresa.entity;
+﻿package com.minhaempresa.agendapro.empresa.entity;
 
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.shared.enums.TimezoneEnum;
@@ -32,7 +32,7 @@ public class EmpresaEntity {
     @Column(name = "agendamento_slug", unique = true, length = 120)
     private String agendamentoSlug;
 
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // @Column(name = "whatsapp_descricao_empresa", length = 500)
     // private String whatsappDescricaoEmpresa;
 
@@ -40,7 +40,7 @@ public class EmpresaEntity {
     @Column(nullable = false)
     private StatusEmpresa status;
 
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // @Column(name = "whatsapp_connected", nullable = false)
     // private Boolean whatsappConnected;
 
@@ -59,7 +59,7 @@ public class EmpresaEntity {
     @Column(name = "timezone", nullable = false, length = 60)
     private String timezone;
 
-    // ⚠️ DESATIVADO - WhatsApp
+    //  DESATIVADO - WhatsApp
     // @Column(name = "whatsapp_resposta_horarios", length = 2000)
     // private String whatsappRespostaHorarios;
 
@@ -81,7 +81,7 @@ public class EmpresaEntity {
     void prePersist() {
         dataCriacao = LocalDateTime.now();
         status = status == null ? StatusEmpresa.ATIVA : status;
-        // ⚠️ DESATIVADO - WhatsApp
+        //  DESATIVADO - WhatsApp
         // whatsappConnected = whatsappConnected == null ? Boolean.FALSE : whatsappConnected;
         // whatsappNotificationsEnabled = whatsappNotificationsEnabled == null ? Boolean.TRUE : whatsappNotificationsEnabled;
         // whatsappSecretariaIaEnabled = whatsappSecretariaIaEnabled == null ? Boolean.TRUE : whatsappSecretariaIaEnabled;

@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback } from 'react'
+﻿import { createContext, useState, useEffect, useCallback } from 'react'
 import clienteApi from '../api/clienteApi.js'
 
 export const ClienteGendazContext = createContext()
@@ -81,12 +81,12 @@ export function ClienteGendazProvider({ children }) {
   }, [])
 
   useEffect(() => {
-    console.log('🔍 Verificando autenticação ao montar...')
+    console.log(' Verificando autenticação ao montar...')
     
     const auth = localStorage.getItem('meu-gendaz-auth')
     
     if (!auth) {
-      console.log('❌ Nenhum token encontrado')
+      console.log(' Nenhum token encontrado')
       setCarregando(false)
       return
     }
@@ -97,31 +97,31 @@ export function ClienteGendazProvider({ children }) {
       const idade = agora - tokenData.savedAt
       const validoAte = tokenData.savedAt + tokenData.expiresIn
       
-      console.log('📊 Token Info:')
+      console.log(' Token Info:')
       console.log('  - Salvo em:', new Date(tokenData.savedAt).toLocaleString())
       console.log('  - Valido até:', new Date(validoAte).toLocaleString())
       console.log('  - Idade atual:', Math.floor(idade / 1000 / 60 / 60), 'horas')
       console.log('  - sessionToken existe:', !!tokenData.sessionToken)
 
       if (!tokenData?.sessionToken) {
-        console.log('❌ sessionToken vazio - limpando')
+        console.log(' sessionToken vazio - limpando')
         localStorage.removeItem('meu-gendaz-auth')
         setCarregando(false)
         return
       }
 
       if (idade > tokenData.expiresIn) {
-        console.log('❌ Token expirou - idade excedeu 90 dias')
+        console.log(' Token expirou - idade excedeu 90 dias')
         localStorage.removeItem('meu-gendaz-auth')
         setCarregando(false)
         return
       }
 
-      console.log('✅ Token válido - sincronizando dados')
+      console.log(' Token válido - sincronizando dados')
       sincronizarDados()
 
     } catch (err) {
-      console.error('❌ Erro ao validar token:', err)
+      console.error(' Erro ao validar token:', err)
       localStorage.removeItem('meu-gendaz-auth')
       setCarregando(false)
     }
@@ -311,7 +311,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const hora = new Date().getHours()
       const periodo = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
       return {
-        resposta: `${periodo}, ${nome}! 😊 Como posso ajudá-lo? Posso agendar, reagendar, cancelar, listar serviços ou responder dúvidas.`,
+        resposta: `${periodo}, ${nome}!  Como posso ajudá-lo? Posso agendar, reagendar, cancelar, listar serviços ou responder dúvidas.`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviços vocês têm?'],
       }
     }
@@ -322,7 +322,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       }
     }
     case 'agradecimento': {
-      return { resposta: `Por nada, ${nome}! 😊 Estou sempre aqui quando precisar.` }
+      return { resposta: `Por nada, ${nome}!  Estou sempre aqui quando precisar.` }
     }
     case 'listar_servicos': {
       if (!servicos || servicos.length === 0) {
@@ -401,7 +401,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     }
     case 'agendar': {
       return {
-        resposta: `${nome}, vou te ajudar a agendar! 🗓️\n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
+        resposta: `${nome}, vou te ajudar a agendar! \n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
         sugestoes: ['Ir para Agenda', 'Ver serviços'],
       }
     }

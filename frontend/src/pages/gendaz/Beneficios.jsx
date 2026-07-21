@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+﻿import { useContext, useState, useEffect } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { BadgePercent, Ticket, Gift, Coins, Users, Copy, Check, Loader } from 'lucide-react'
 
@@ -84,7 +84,7 @@ export default function Beneficios() {
                   {item.cupom && <small>Cupom: <strong>{item.cupom}</strong></small>}
                   <small>Válido até {item.validade}</small>
                   {!item.elegivel && <small className="gendaz-texto-aviso">Você não é elegível</small>}
-                  {item.ja_usado && <small className="gendaz-texto-ok">✓ Já utilizada</small>}
+                  {item.ja_usado && <small className="gendaz-texto-ok"> Já utilizada</small>}
                 </div>
               ))}
             </div>

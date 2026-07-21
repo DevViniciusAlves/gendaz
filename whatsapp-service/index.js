@@ -1,6 +1,6 @@
-/*
+﻿/*
 ╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
+║    DESATIVADO - FUNCIONALIDADE WhatsApp ║
 ║  Código comentado. Remova comentários  ║
 ║  para reativar.                        ║
 ╚════════════════════════════════════════╝
@@ -9,7 +9,7 @@
 require('dotenv').config();
 const axios = require('axios');
 const express = require('express');
-// ⚠️ DESATIVADO - Imports WhatsApp comentados
+//  DESATIVADO - Imports WhatsApp comentados
 // const {
 //   conectarEmpresa,
 //   statusEmpresa,
@@ -31,7 +31,7 @@ const backendToken = String(process.env.WHATSAPP_INTERNAL_TOKEN || process.env.B
 
 app.use(express.json({ limit: '1mb' }));
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.get('/health', (_req, res) => {
 //   res.status(200).json({
 //     status: 'UP',
@@ -41,7 +41,7 @@ app.use(express.json({ limit: '1mb' }));
 //   });
 // });
 
-// ⚠️ DESATIVADO - Middleware de autenticacao desativado
+//  DESATIVADO - Middleware de autenticacao desativado
 // app.use((req, res, next) => {
 //   const requestPath = String(req.path || req.originalUrl || '').split('?')[0].replace(/\/+$/, '') || '/';
 //   if (!backendToken || (req.method === 'GET' && requestPath === '/health')) return next();
@@ -52,7 +52,7 @@ app.use(express.json({ limit: '1mb' }));
 //   return next();
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/connect', async (req, res) => {
 //   try {
 //     const phone = req.body?.phone || req.body?.phoneNumber || '';
@@ -74,7 +74,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.get('/status', async (_req, res) => {
 //   try {
 //     const response = await statusEmpresa();
@@ -104,7 +104,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.get('/status/:empresaId', async (req, res) => {
 //   try {
 //     const response = await statusEmpresa(req.params.empresaId);
@@ -129,7 +129,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/disconnect', async (_req, res) => {
 //   try {
 //     const response = await desconectarEmpresa();
@@ -139,7 +139,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/disconnect/:empresaId', async (req, res) => {
 //   try {
 //     const response = await desconectarEmpresa(req.params.empresaId);
@@ -149,7 +149,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.delete('/session/:empresaId', async (req, res) => {
 //   try {
 //     const response = await limparSessaoEmpresa(req.params.empresaId);
@@ -159,7 +159,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/send', async (req, res) => {
 //   try {
 //     const phone = req.body?.phone || req.body?.to || '';
@@ -171,7 +171,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/api/whatsapp/enviar-lembrete', async (req, res) => {
 //   console.log('[endpoint] POST /api/whatsapp/enviar-lembrete chamado', {
 //     body: req.body,
@@ -223,7 +223,7 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/payment-owner-reminder', async (req, res) => {
 //   try {
 //     const empresaId = Number(req.body?.empresaId);
@@ -280,12 +280,12 @@ app.use(express.json({ limit: '1mb' }));
 //   }
 // });
 
-// ⚠️ DESATIVADO - Rota desativada
+//  DESATIVADO - Rota desativada
 // app.post('/webhook/agendamento', async (_req, res) => {
 //   res.status(200).json({ status: 'ok' });
 // });
 
-// ⚠️ DESATIVADO - Keep-alive e cleanup comentados
+//  DESATIVADO - Keep-alive e cleanup comentados
 // const BACKEND_URL = (process.env.BACKEND_URL || process.env.BACKEND_JAVA_URL || 'http://localhost:8080').replace(/\/+$/, '');
 // const PUBLIC_WHATSAPP_URL = (process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_WHATSAPP_URL || '').replace(/\/+$/, '');
 // const KEEP_ALIVE_INTERVAL_MS = 5 * 60 * 1000;
@@ -330,7 +330,7 @@ app.use(express.json({ limit: '1mb' }));
 //   });
 // }, KEEP_ALIVE_INTERVAL_MS).unref?.();
 
-// ⚠️ DESATIVADO - server.listen comentado
+//  DESATIVADO - server.listen comentado
 // app.listen(port, () => {
 //   console.log(`[Bot-Service] running on port ${port}`);
 //   pingKeepAlive().catch((error) => {

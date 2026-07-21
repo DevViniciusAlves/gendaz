@@ -89,8 +89,8 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         padding: '10px 0',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.diasSemAgendar}</div>
-          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Dias</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.diasSemAgendar}d</div>
+          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Inativo há</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{formatCurrency(cliente.totalGasto)}</div>
@@ -98,20 +98,17 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.agendamentos}</div>
-          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Agd</div>
+          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Agendamentos</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.padraoFrequencia}d</div>
-          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Padrao</div>
+          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Frequência</div>
         </div>
       </div>
 
       {ultimaMsg && (
         <div style={{ fontSize: 11, color: 'var(--muted)' }}>
-          Ultima: <span style={{ color: 'var(--text)' }}>"{cliente.ultimaMensagem.template}"</span> - {formatarData(cliente.ultimaMensagem.dataCriacao)}
-          <span style={{ marginLeft: 6 }}>
-            {cliente.ultimaMensagem.status === 'aberto' ? '✅' : '❌'}
-          </span>
+          Ultima: <span style={{ color: 'var(--text)' }}>"{cliente.ultimaMensagem.template}"</span>
         </div>
       )}
 

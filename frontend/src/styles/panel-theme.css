@@ -1,9 +1,9 @@
-﻿/*
-╔════════════════════════════════════════╗
-║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp ║
-║  Estilos comentados. Remova comentários ║
-║  para reativar.                        ║
-╚════════════════════════════════════════╝
+/*
++----------------------------------------+
+�    DESATIVADO - FUNCIONALIDADE WhatsApp �
+�  Estilos comentados. Remova coment�rios �
+�  para reativar.                        �
++----------------------------------------+
 */
 /* =============================================
    PANEL THEME - Flat Dark Design
@@ -1384,7 +1384,7 @@
   color-scheme: light !important;
 }
 
-/* Dashboard summary card span text — white-on-white fix */
+/* Dashboard summary card span text � white-on-white fix */
 :root[data-theme='light'] .app-shell .content .dashboard-summary-card span {
   color: var(--panel-text-muted) !important;
   -webkit-text-fill-color: var(--panel-text-muted) !important;
@@ -1395,7 +1395,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Input autofill — white background in light theme */
+/* Input autofill � white background in light theme */
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill,
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill:hover,
 :root[data-theme='light'] .app-shell .content input:-webkit-autofill:focus,
@@ -1414,14 +1414,14 @@
   transition: background-color 9999s ease-out 0s !important;
 }
 
-/* Dashboard summary card hover — subtle lift, no dark glow */
+/* Dashboard summary card hover � subtle lift, no dark glow */
 :root[data-theme='light'] .app-shell .content .dashboard-summary-card:hover {
   transform: translateY(-3px) !important;
   border-color: rgba(var(--primary-rgb), 0.28) !important;
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
 }
 
-/* Card hover states — remove dark glow, use subtle shadow */
+/* Card hover states � remove dark glow, use subtle shadow */
 :root[data-theme='light'] .app-shell .panel:hover,
 :root[data-theme='light'] .app-shell .metric-card:hover,
 :root[data-theme='light'] .app-shell .plan-card:hover,
@@ -1433,7 +1433,7 @@
   box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10) !important;
 }
 
-/* Modal backdrop — light semi-transparent overlay */
+/* Modal backdrop � light semi-transparent overlay */
 :root[data-theme='light'] .app-shell .modal-backdrop,
 :root[data-theme='light'] .admin-shell .modal-backdrop {
   background: rgba(15, 23, 42, 0.30) !important;
@@ -1441,7 +1441,7 @@
   -webkit-backdrop-filter: blur(8px) !important;
 }
 
-/* Admin modal — white background */
+/* Admin modal � white background */
 :root[data-theme='light'] .admin-shell .modal {
   background: var(--panel-card-bg) !important;
   border: 1px solid var(--panel-border-color) !important;
@@ -1449,7 +1449,7 @@
   color: var(--panel-text-primary) !important;
 }
 
-/* Dropdown / action-menu panels — light background */
+/* Dropdown / action-menu panels � light background */
 :root[data-theme='light'] .app-shell .dropdown-panel,
 :root[data-theme='light'] .app-shell .action-menu-panel,
 :root[data-theme='light'] .admin-shell .dropdown-panel,
@@ -1484,7 +1484,7 @@
   background: rgba(239, 68, 68, 0.10) !important;
 }
 
-/* Inner cards/boxes — white background */
+/* Inner cards/boxes � white background */
 :root[data-theme='light'] .app-shell .conversation,
 :root[data-theme='light'] .app-shell .chat-message,
 :root[data-theme='light'] .app-shell .mini-row,
@@ -1549,7 +1549,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Focus states — subtle green border, no dark glow */
+/* Focus states � subtle green border, no dark glow */
 :root[data-theme='light'] .app-shell .content input:focus,
 :root[data-theme='light'] .app-shell .content select:focus,
 :root[data-theme='light'] .app-shell .content textarea:focus,
@@ -1570,7 +1570,7 @@
   color: var(--panel-text-primary) !important;
 }
 
-/* Page title / headings — dark override sets #ffffff */
+/* Page title / headings � dark override sets #ffffff */
 :root[data-theme='light'] .app-shell .page-title h1,
 :root[data-theme='light'] .app-shell .dashboard-hero h1,
 :root[data-theme='light'] .app-shell .panel h2,
@@ -1586,7 +1586,7 @@
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
-/* Muted paragraphs / spans — dark override sets rgba(226,233,247,...) */
+/* Muted paragraphs / spans � dark override sets rgba(226,233,247,...) */
 :root[data-theme='light'] .app-shell .page-title p,
 :root[data-theme='light'] .app-shell .dashboard-hero p,
 :root[data-theme='light'] .app-shell .panel p,
@@ -1606,7 +1606,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Field-hint overrides — dark override sets rgba(226,233,247,0.62) */
+/* Field-hint overrides � dark override sets rgba(226,233,247,0.62) */
 :root[data-theme='light'] .app-shell .dashboard-summary-card span,
 :root[data-theme='light'] .app-shell .search-shell .field-hint,
 :root[data-theme='light'] .app-shell .filters .field-hint,
@@ -1616,14 +1616,14 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Dashboard summary card strong — dark override sets #ffffff */
+/* Dashboard summary card strong � dark override sets #ffffff */
 :root[data-theme='light'] .app-shell .dashboard-summary-card strong,
 :root[data-theme='light'] .admin-shell .admin-metrics strong {
   color: var(--panel-text-primary) !important;
   -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
-/* Dashboard summary card small — dark override sets rgba(226,233,247,0.54) */
+/* Dashboard summary card small � dark override sets rgba(226,233,247,0.54) */
 :root[data-theme='light'] .app-shell .dashboard-summary-card small,
 :root[data-theme='light'] .admin-shell .admin-panels p,
 :root[data-theme='light'] .admin-shell .admin-config p,
@@ -1632,7 +1632,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Topbar text — dark override sets white/rgba */
+/* Topbar text � dark override sets white/rgba */
 :root[data-theme='light'] .app-shell .topbar strong,
 :root[data-theme='light'] .app-shell .user-menu strong,
 :root[data-theme='light'] .app-shell .demo-pill,
@@ -1655,7 +1655,7 @@
   -webkit-text-fill-color: var(--panel-text-muted) !important;
 }
 
-/* Chat message text — dark override sets white */
+/* Chat message text � dark override sets white */
 :root[data-theme='light'] .app-shell .chat-message {
   color: var(--panel-text-primary) !important;
 }

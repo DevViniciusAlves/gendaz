@@ -4,25 +4,31 @@ export function somenteNumeros(valor) {
 
 export function aplicarMascara(telefone) {
   if (!telefone) return ''
-  const digitos = somenteNumeros(telefone)
+  const digitos = somenteNumeros(telefone).slice(0, 14)
   if (digitos.length === 0) return ''
-  if (digitos.length <= 2) return `+${digitos}`
-  if (digitos.length <= 4) return `+${digitos.slice(0, 2)} (${digitos.slice(2)}`
-  if (digitos.length <= 9) return `+${digitos.slice(0, 2)} (${digitos.slice(2, 4)}) ${digitos.slice(4)}`
-  return `+${digitos.slice(0, 2)} (${digitos.slice(2, 4)}) ${digitos.slice(4, 9)}-${digitos.slice(9, 13)}`
+  if (digitos.length <= 2) return digitos
+
+  const codigoCidade = digitos.slice(0, 2)
+  const numero = digitos.slice(2)
+
+  if (numero.length <= 4) return `(${codigoCidade}) ${numero}`
+  if (numero.length <= 8) return `(${codigoCidade}) ${numero.slice(0, -4)}-${numero.slice(-4)}`
+
+  const prefixo = numero.slice(0, -8)
+  const meio = numero.slice(-8, -4)
+  const fim = numero.slice(-4)
+  return `(${codigoCidade}) ${prefixo} ${meio}-${fim}`
 }
 
 export function validarTelefone(telefone) {
   if (!telefone) return 'Telefone e obrigatorio'
   const digitos = somenteNumeros(telefone)
   if (digitos.length === 0) return 'Telefone e obrigatorio'
-  if (digitos.length < 13) {
-    return `Incompleto: ${digitos.length}/13 digitos. Formato: +55 (DDD) 99999-9999`
+  const formatado = aplicarMascara(telefone)
+  if (formatado.length < 16) {
+    return `Incompleto: ${formatado.length}/16 caracteres. Use codigo da cidade + numero.`
   }
-  if (digitos.length > 13) return 'Telefone muito longo'
-  if (!digitos.startsWith('55')) return 'Adicione o codigo do pais +55'
-  const ddd = parseInt(digitos.substring(2, 4), 10)
-  if (ddd < 11 || ddd > 99) return 'DDD invalido. Deve ser entre 11 e 99'
+  if (formatado.length > 19) return 'Telefone muito longo. Maximo de 19 caracteres.'
   return ''
 }
 
@@ -30,22 +36,10 @@ export function padronizarTelefone(entrada) {
   const digitos = somenteNumeros(entrada)
   if (!digitos) return null
 
-  let normalizado = digitos
+  const formatado = aplicarMascara(digitos)
+  if (formatado.length < 16 || formatado.length > 19) return null
 
-  if (!normalizado.startsWith('55')) {
-    normalizado = `55${normalizado}`
-  }
-
-  if (normalizado.length === 12 && normalizado.startsWith('55')) {
-    normalizado = normalizado.slice(0, 4) + '9' + normalizado.slice(4)
-  }
-
-  if (normalizado.length !== 13) return null
-
-  const ddd = parseInt(normalizado.substring(2, 4), 10)
-  if (ddd < 11 || ddd > 99) return null
-
-  return normalizado
+  return digitos
 }
 
 export function exibirTelefone(numero) {

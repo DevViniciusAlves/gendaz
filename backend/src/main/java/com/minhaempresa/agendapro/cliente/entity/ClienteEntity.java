@@ -57,22 +57,8 @@ public class ClienteEntity {
         }
 
         String digitos = telefone.replaceAll("\\D", "");
-
-        // Deve ter exatamente 13 dígitos (55 + DDD + número)
-        if (digitos.length() != 13) {
-            throw new BusinessException("Telefone inválido. Formato correto: +55 (DDD) 99999-9999. Você informou apenas " + digitos.length() + " dígitos.");
-        }
-
-        // Deve começar com 55 (Brasil)
-        if (!digitos.startsWith("55")) {
-            throw new BusinessException("Telefone inválido. Deve ser Brasil (+55)");
-        }
-
-        // DDD deve ser entre 11 e 99
-        String ddd = digitos.substring(2, 4);
-        int dddInt = Integer.parseInt(ddd);
-        if (dddInt < 11 || dddInt > 99) {
-            throw new BusinessException("DDD inválido: " + ddd + ". DDD deve estar entre 11 e 99");
+        if (digitos.length() < 11 || digitos.length() > 14) {
+            throw new BusinessException("Telefone invalido. Use codigo da cidade + numero. Voce informou apenas " + digitos.length() + " digitos.");
         }
     }
 

@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.auth.controller;
+﻿package com.minhaempresa.agendapro.auth.controller;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
@@ -48,13 +48,13 @@ public class MeuGendazController {
         }
 
         // DEBUG
-        System.out.println("🔍 Validando sessão:");
+        System.out.println(" Validando sessão:");
         System.out.println("  Session: " + (session != null ? session.substring(0, Math.min(20, session.length())) + "..." : "NULL"));
         System.out.println("  Cookie vazio: " + (CookieHelper.lerCookie(request, "meu_gendaz_session").isEmpty()));
 
         // Se nenhum dos dois → 401
         if (session == null || session.isBlank()) {
-            System.out.println("❌ Sessão não encontrada no cookie ou header");
+            System.out.println(" Sessão não encontrada no cookie ou header");
             throw new SessaoExpiradaException("Sessão não encontrada. Faça login novamente.");
         }
 
@@ -62,10 +62,10 @@ public class MeuGendazController {
         Optional<UsuarioEntity> user = usuarioRepository.findBySessaoAtiva(session);
 
         if (user.isEmpty()) {
-            System.out.println("❌ Session '" + session.substring(0, Math.min(20, session.length())) + "...' NÃO ENCONTRADA no banco");
+            System.out.println(" Session '" + session.substring(0, Math.min(20, session.length())) + "...' NÃO ENCONTRADA no banco");
             System.out.println("   Query: SELECT * FROM usuarios WHERE sessao_ativa = '" + session + "'");
         } else {
-            System.out.println("✅ Usuário encontrado: " + user.get().getEmail());
+            System.out.println(" Usuário encontrado: " + user.get().getEmail());
         }
 
         return user.orElseThrow(() -> new SessaoExpiradaException("Sessão inválida. Faça login novamente."));

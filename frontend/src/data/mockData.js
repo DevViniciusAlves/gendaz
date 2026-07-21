@@ -1,4 +1,4 @@
-export const demoUsers = [
+﻿export const demoUsers = [
   { id: 1, nome: 'Ana Basico', email: 'basico@agendapro.com', senha: 'Senha123!', perfil: 'DONO', plano: 'BASICO', empresaId: 1 },
   { id: 2, nome: 'Bruno Pro', email: 'pro@agendapro.com', senha: 'Senha123!', perfil: 'DONO', plano: 'PRO', empresaId: 1 },
 ]
@@ -11,7 +11,7 @@ export const initialData = {
     documento: '12.345.678/0001-90',
     telefone: '(65) 99999-0000',
     email: 'contato@agendapro.com',
-    // ⚠️ DESATIVADO — whatsappStatus: 'WhatsApp conectado',
+    //  DESATIVADO — whatsappStatus: 'WhatsApp conectado',
   },
   usuarios: demoUsers.map(({ senha, ...usuario }) => usuario),
   equipe: [

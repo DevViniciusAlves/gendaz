@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.cliente.service;
+﻿package com.minhaempresa.agendapro.cliente.service;
 
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
@@ -18,7 +18,7 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
-// ⚠️ DESATIVADO — import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
+//  DESATIVADO — import com.minhaempresa.agendapro.whatsapp.repository.WhatsappLembretePagamentoRepository;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -38,7 +38,7 @@ public class ClienteBulkService {
     private final EntregaRepository entregaRepository;
     private final NotificacaoRepository notificacaoRepository;
     private final NotaFiscalRepository notaFiscalRepository;
-    // ⚠️ DESATIVADO — private final WhatsappLembretePagamentoRepository lembretePagamentoRepository;
+    //  DESATIVADO — private final WhatsappLembretePagamentoRepository lembretePagamentoRepository;
     private final AdminAuditService auditService;
 
     @Transactional
@@ -63,7 +63,7 @@ public class ClienteBulkService {
                 }
 
                 for (AgendamentoEntity agendamento : agendamentoRepository.findByClienteId(id)) {
-                    // ⚠️ DESATIVADO — lembretePagamentoRepository.deleteByAgendamento_Id(agendamento.getId());
+                    //  DESATIVADO — lembretePagamentoRepository.deleteByAgendamento_Id(agendamento.getId());
                     pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
                     agendamentoRepository.delete(agendamento);
                 }

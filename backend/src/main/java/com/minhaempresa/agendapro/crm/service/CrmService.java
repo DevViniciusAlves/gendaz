@@ -178,7 +178,8 @@ public class CrmService {
                 .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
                 .max(Comparator.comparing(AgendamentoEntity::getData));
         if (ultimo.isEmpty()) return 9999;
-        return (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
+        int dias = (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
+        return Math.max(0, dias);
     }
 
     private int calcularPadraoFrequencia(List<AgendamentoEntity> agendamentos) {

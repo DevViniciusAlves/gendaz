@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { MessageCircle, CalendarCheck, Users, LayoutDashboard } from 'lucide-react'
 
 const STEPS = [
-  // ⚠️ DESATIVADO — Slide "Atenda pelo WhatsApp"
+  //  DESATIVADO — Slide "Atenda pelo WhatsApp"
   // {
   //   id: 'whatsapp',
   //   num: '01',
@@ -41,7 +41,7 @@ const STEPS = [
     num: '04',
     icon: LayoutDashboard,
     heading: 'Tudo em um só painel',
-    // ⚠️ DESATIVADO — body com WhatsApp
+    //  DESATIVADO — body com WhatsApp
     // body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne WhatsApp, agenda, clientes e pagamentos com simplicidade.',
     body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne agenda, clientes e pagamentos com simplicidade.',
     visual: {

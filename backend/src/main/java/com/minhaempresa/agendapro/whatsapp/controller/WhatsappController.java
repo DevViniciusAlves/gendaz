@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.whatsapp.controller;
+﻿package com.minhaempresa.agendapro.whatsapp.controller;
 
 import com.minhaempresa.agendapro.auth.service.AuthService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 /*
   ╔══════════════════════════════════════════════╗
-  ║  ⚠️  DESATIVADO - FUNCIONALIDADE WhatsApp    ║
+  ║    DESATIVADO - FUNCIONALIDADE WhatsApp    ║
   ║  Todo código comentado. Remova comentários   ║
   ║  para reativar.                              ║
   ╚══════════════════════════════════════════════╝
@@ -33,7 +33,7 @@ public class WhatsappController {
     private final AuthService authService;
     private final WhatsappIntegrationProperties properties;
 
-    // @GetMapping("/status")  // ⚠️ DESATIVADO
+    // @GetMapping("/status")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> status(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
@@ -46,7 +46,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/config/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> config(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
@@ -62,7 +62,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PutMapping("/config/{tenantId}")  // ⚠️ DESATIVADO
+    // @PutMapping("/config/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappConfigResponse> atualizarConfig(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
@@ -94,7 +94,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/conectar")  // ⚠️ DESATIVADO
+    // @PostMapping("/conectar")  //  DESATIVADO
     public ResponseEntity<WhatsappConnectResponse> iniciarConexao(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
@@ -110,7 +110,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/desconectar")  // ⚠️ DESATIVADO
+    // @PostMapping("/desconectar")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> desconectar(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
@@ -123,7 +123,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @GetMapping("/status/{tenantId}")  // ⚠️ DESATIVADO
+    // @GetMapping("/status/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> statusPorEmpresa(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
@@ -139,7 +139,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/desconectar/{tenantId}")  // ⚠️ DESATIVADO
+    // @PostMapping("/desconectar/{tenantId}")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> desconectarPorEmpresa(
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request,
@@ -155,7 +155,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // @PostMapping("/status-update")  // ⚠️ DESATIVADO
+    // @PostMapping("/status-update")  //  DESATIVADO
     public ResponseEntity<WhatsappStatusResponse> statusUpdate(
             @RequestHeader(name = "X-Internal-Token", required = false) String internalToken,
             @Valid @RequestBody com.minhaempresa.agendapro.whatsapp.dto.WhatsappDtos.WhatsappStatusUpdateRequest body
@@ -168,7 +168,7 @@ public class WhatsappController {
         return ResponseEntity.ok(null); // Stub desativado
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private Long usuarioAutenticado(Long usuarioId, HttpServletRequest request) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         /*
@@ -178,7 +178,7 @@ public class WhatsappController {
         return null; // Stub desativado
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private void validarTokenInterno(String recebido) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         /*
@@ -192,7 +192,7 @@ public class WhatsappController {
         */
     }
 
-    // ⚠️ DESATIVADO
+    //  DESATIVADO
     private void validarEmpresa(EmpresaEntity empresa, Long tenantId) {
         // DESATIVADO - Funcionalidade WhatsApp comentada
         /*
