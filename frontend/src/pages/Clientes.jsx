@@ -199,7 +199,7 @@ export default function Clientes() {
       setErro('Telefone invalido. Use codigo da cidade + numero.')
       return
     }
-    if (email && (email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    if (!email || email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setErro('Informe um e-mail válido com até 120 caracteres.')
       return
     }
@@ -210,7 +210,7 @@ export default function Clientes() {
         ...form,
         nome,
         telefone,
-        email: email || null,
+        email,
         observacoes: form.observacoes?.trim() || null,
       }
       if (clienteEditando) {
@@ -338,7 +338,7 @@ export default function Clientes() {
           <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="ObservaçÃµes" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
-          <Button type="submit" disabled={salvando || !form.nome || (validarTelefone(form.telefone) !== '')}>
+          <Button type="submit" disabled={salvando || !form.nome.trim() || !form.email.trim() || (validarTelefone(form.telefone) !== '')}>
             {salvando ? 'Salvando...' : 'Salvar'}
           </Button>
         </form>

@@ -31,7 +31,7 @@ public class SanitizacaoService {
         if (digitos.isEmpty()) {
             return null;
         }
-        if (digitos.length() < 11 || digitos.length() > 14) {
+        if (digitos.length() < 10 || digitos.length() > 14) {
             return null;
         }
         return digitos;

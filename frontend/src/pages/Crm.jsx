@@ -1,15 +1,25 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Users } from 'lucide-react'
 import { useCrmData } from '../hooks/useCrmData.js'
 import CrmFilters from './crm/CrmFilters.jsx'
 import ClienteCard from './crm/ClienteCard.jsx'
 import SendMessageModal from './crm/SendMessageModal.jsx'
 import ContactHistoryModal from './crm/ContactHistoryModal.jsx'
+import Pagination from '../components/Pagination.jsx'
+
+const CLIENTES_POR_PAGINA = 5
 
 export default function Crm() {
   const { clientes, loading, error, filtros, atualizarFiltros, limparFiltros } = useCrmData()
   const [modalEnvio, setModalEnvio] = useState(null)
   const [modalHistorico, setModalHistorico] = useState(null)
+  const [pagina, setPagina] = useState(1)
+  const totalPaginas = Math.max(1, Math.ceil(clientes.length / CLIENTES_POR_PAGINA))
+  const paginaAtual = Math.min(pagina, totalPaginas)
+  const clientesPaginados = useMemo(() => {
+    const inicio = (paginaAtual - 1) * CLIENTES_POR_PAGINA
+    return clientes.slice(inicio, inicio + CLIENTES_POR_PAGINA)
+  }, [clientes, paginaAtual])
 
   function handleEnviarMensagem(cliente, template) {
     setModalEnvio({ cliente, template })
@@ -76,7 +86,7 @@ export default function Crm() {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {clientes.map((cliente) => (
+              {clientesPaginados.map((cliente) => (
                 <ClienteCard
                   key={cliente.id}
                   cliente={cliente}
@@ -84,6 +94,13 @@ export default function Crm() {
                   onVerHistorico={handleVerHistorico}
                 />
               ))}
+              <Pagination
+                page={paginaAtual}
+                totalPages={totalPaginas}
+                totalItems={clientes.length}
+                pageSize={CLIENTES_POR_PAGINA}
+                onPageChange={setPagina}
+              />
             </div>
           )}
         </div>

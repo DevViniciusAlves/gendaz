@@ -29,15 +29,15 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
       background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
       border: '1px solid var(--line)',
       borderRadius: 10,
-      padding: 16,
+      padding: '10px 12px',
       display: 'flex',
       flexDirection: 'column',
-      gap: 12,
+      gap: 8,
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <div style={{
-          width: 36,
-          height: 36,
+          width: 28,
+          height: 28,
           borderRadius: '50%',
           background: 'var(--text)',
           display: 'flex',
@@ -45,7 +45,7 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
           justifyContent: 'center',
           color: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
           fontWeight: 700,
-          fontSize: 12,
+          fontSize: 10,
           flexShrink: 0,
         }}>
           {iniciais}
@@ -53,11 +53,11 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: 14 }}>{cliente.nome}</span>
+            <span style={{ color: 'var(--text)', fontWeight: 600, fontSize: 13 }}>{cliente.nome}</span>
             <span style={{
-              padding: '1px 8px',
+              padding: '1px 6px',
               borderRadius: 20,
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 600,
               background: seg.bg,
               color: seg.text,
@@ -65,14 +65,14 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
               {SEGMENTO_LABELS[cliente.segment] || cliente.segment}
             </span>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 2 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 1, flexWrap: 'wrap' }}>
             {cliente.telefone && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--muted)', fontSize: 11 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--muted)', fontSize: 10 }}>
                 <Phone size={10} /> {cliente.telefone}
               </span>
             )}
             {cliente.email && (
-              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--muted)', fontSize: 11 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 3, color: 'var(--muted)', fontSize: 10 }}>
                 <Mail size={10} /> {cliente.email}
               </span>
             )}
@@ -86,28 +86,28 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         gap: 8,
         borderTop: '1px solid var(--line)',
         borderBottom: '1px solid var(--line)',
-        padding: '10px 0',
+        padding: '7px 0',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.diasSemAgendar}d</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{cliente.diasSemAgendar}d</div>
           <div style={{ color: 'var(--muted)', fontSize: 10 }}>Inativo há</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{formatCurrency(cliente.totalGasto)}</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{formatCurrency(cliente.totalGasto)}</div>
           <div style={{ color: 'var(--muted)', fontSize: 10 }}>Gasto</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.agendamentos}</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{cliente.agendamentos}</div>
           <div style={{ color: 'var(--muted)', fontSize: 10 }}>Agendamentos</div>
         </div>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 12 }}>{cliente.padraoFrequencia}d</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{cliente.padraoFrequencia}d</div>
           <div style={{ color: 'var(--muted)', fontSize: 10 }}>Frequência</div>
         </div>
       </div>
 
       {ultimaMsg && (
-        <div style={{ fontSize: 11, color: 'var(--muted)' }}>
+        <div style={{ fontSize: 10, color: 'var(--muted)' }}>
           Ultima: <span style={{ color: 'var(--text)' }}>"{cliente.ultimaMensagem.template}"</span>
         </div>
       )}
@@ -122,16 +122,16 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
             key={btn.template}
             onClick={() => onEnviarMensagem?.(cliente, btn.template)}
             style={{
-              padding: '4px 10px',
+              padding: '3px 8px',
               border: '1px solid var(--text)',
               borderRadius: 4,
               background: 'var(--text)',
               color: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.15s',
-              height: 28,
+              height: 24,
             }}
             onMouseEnter={(e) => { e.target.style.background = 'var(--text)'; e.target.style.color = 'var(--surface-solid, var(--surface-strong, var(--surface)))'; e.target.style.transform = 'scale(1.02)' }}
             onMouseLeave={(e) => { e.target.style.background = 'var(--text)'; e.target.style.color = 'var(--surface-solid, var(--surface-strong, var(--surface)))'; e.target.style.transform = 'scale(1)' }}
@@ -142,11 +142,11 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         <button
           onClick={() => onVerHistorico?.(cliente)}
           style={{
-            padding: '4px 10px',
+            padding: '3px 8px',
             border: 'none',
             background: 'transparent',
             color: 'var(--text)',
-            fontSize: 11,
+            fontSize: 10,
             cursor: 'pointer',
             textDecoration: 'underline',
             marginLeft: 'auto',

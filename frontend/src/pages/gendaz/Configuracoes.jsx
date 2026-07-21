@@ -25,7 +25,8 @@ export default function Configuracoes() {
       })
       const nomeOk = cliente.nome && cliente.nome.trim().length >= 3 && cliente.nome !== 'Cliente'
       const telOk = !validarTelefone(cliente.telefone || '')
-      setPerfilIncompleto(!nomeOk || !telOk)
+      const emailOk = cliente.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)
+      setPerfilIncompleto(!nomeOk || !telOk || !emailOk)
     }
   }, [cliente])
 
@@ -63,6 +64,9 @@ export default function Configuracoes() {
     if (erroTelefone) {
       novosErros.telefone = erroTelefone
     }
+    if (!formData.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      novosErros.email = 'Informe um e-mail valido.'
+    }
 
     setErros(novosErros)
     return Object.keys(novosErros).length === 0
@@ -78,6 +82,7 @@ export default function Configuracoes() {
       const telefone = padronizarTelefone(formData.telefone)
       await atualizarPerfil({
         nome: formData.nome.trim(),
+        email: formData.email.trim().toLowerCase(),
         telefone,
       })
       setPerfilIncompleto(false)
@@ -168,11 +173,11 @@ export default function Configuracoes() {
               <small>Use apenas o código da cidade + número.</small>
             </label>
             <label>
-              <span>E-mail (somente leitura)</span>
-              <input type="email" value={formData.email} disabled className="gendaz-input--disabled" />
-              <small>Seu email de login. Para alterar, entre em contato.</small>
+              <span>E-mail</span>
+              <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />
+              {erros.email && <small className="field-error">{erros.email}</small>}
             </label>
-            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando || !formData.nome.trim() || !formData.email.trim() || Boolean(validarTelefone(formData.telefone))}>
               {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Alteracoes'}
             </button>
           </form>

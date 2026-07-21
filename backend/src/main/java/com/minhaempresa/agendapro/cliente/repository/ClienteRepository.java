@@ -16,4 +16,8 @@ public interface ClienteRepository extends JpaRepository<ClienteEntity, Long> {
     Optional<ClienteEntity> findFirstByEmpresaIdAndTelefone(Long empresaId, String telefone);
     @EntityGraph(attributePaths = {"empresa"})
     Optional<ClienteEntity> findFirstByEmpresaIdAndEmail(Long empresaId, String email);
+    boolean existsByEmpresaIdAndTelefoneAndIdNot(Long empresaId, String telefone, Long id);
+    boolean existsByEmpresaIdAndEmailAndIdNot(Long empresaId, String email, Long id);
+    boolean existsByEmpresaIdAndTelefone(Long empresaId, String telefone);
+    boolean existsByEmpresaIdAndEmail(Long empresaId, String email);
 }

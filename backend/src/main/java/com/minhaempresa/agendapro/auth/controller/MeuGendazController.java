@@ -12,6 +12,7 @@ import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.shared.CookieHelper;
+import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
@@ -37,6 +38,7 @@ public class MeuGendazController {
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
     private final UsuarioSessionService usuarioSessionService;
+    private final SanitizacaoService sanitizacaoService;
 
     private UsuarioEntity findUserFromSession(HttpServletRequest request) {
         // Tenta cookie primeiro
@@ -85,9 +87,18 @@ public class MeuGendazController {
                 .orElseGet(() -> clienteRepository.save(ClienteEntity.builder()
                         .nome(user.getNome())
                         .email(user.getEmail())
-                        .telefone("5500000000000")
+                        .telefone(obterTelefoneValidoParaCliente(user))
                         .empresa(user.getEmpresa())
                         .build()));
+    }
+
+    private String obterTelefoneValidoParaCliente(UsuarioEntity user) {
+        Long empresaId = getEmpresaId(user);
+        String telefone = sanitizacaoService.telefone(user.getEmpresa() != null ? user.getEmpresa().getTelefone() : null);
+        if (telefone == null || clienteRepository.existsByEmpresaIdAndTelefone(empresaId, telefone)) {
+            throw new BusinessException("Complete seu perfil com um telefone valido antes de continuar.");
+        }
+        return telefone;
     }
 
     // === EMPRESA INFO BY SLUG ===
@@ -112,10 +123,12 @@ public class MeuGendazController {
         try {
             UsuarioEntity user = findUserFromSession(request);
             EmpresaEntity empresa = user.getEmpresa();
+            ClienteEntity cliente = empresa == null ? null : clienteRepository.findFirstByEmpresaIdAndEmail(empresa.getId(), user.getEmail()).orElse(null);
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("id", user.getId());
-            result.put("nome", user.getNome());
-            result.put("email", user.getEmail());
+            result.put("nome", cliente != null ? cliente.getNome() : user.getNome());
+            result.put("email", cliente != null ? cliente.getEmail() : user.getEmail());
+            result.put("telefone", cliente != null ? cliente.getTelefone() : null);
             result.put("empresaId", empresa != null ? empresa.getId() : null);
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
             result.put("empresaTelefone", empresa != null ? empresa.getTelefone() : null);
@@ -376,34 +389,45 @@ public class MeuGendazController {
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
+            EmpresaEntity empresa = user.getEmpresa();
+            if (empresa == null) {
+                throw new BusinessException("Empresa nao encontrada para este usuario.");
+            }
 
-            String nome = body.get("nome");
-            String email = body.get("email");
-            String telefone = body.get("telefone");
+            Long empresaId = empresa.getId();
+            ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail()).orElse(null);
+            String nome = body.get("nome") == null ? "" : body.get("nome").trim();
+            String email = body.get("email") == null ? "" : body.get("email").trim().toLowerCase();
+            String telefone = sanitizacaoService.telefone(body.get("telefone"));
 
             List<String> erros = new ArrayList<>();
 
-            if (nome != null) {
-                nome = nome.trim();
-                if (nome.length() < 3) {
-                    erros.add("Nome deve ter pelo menos 3 caracteres.");
-                }
-                if (nome.matches("^\\d+$")) {
-                    erros.add("Nome não pode conter apenas números.");
-                }
-                user.setNome(nome);
+            if (nome.length() < 3) {
+                erros.add("Nome deve ter pelo menos 3 caracteres.");
+            }
+            if (nome.matches("^\\d+$")) {
+                erros.add("Nome nao pode conter apenas numeros.");
+            }
+            if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
+                erros.add("Email invalido.");
+            }
+            if (!email.equals(user.getEmail()) && usuarioRepository.findByEmail(email).isPresent()) {
+                erros.add("Este email ja esta cadastrado em nossa plataforma.");
+            }
+            if (telefone == null || telefone.isBlank()) {
+                erros.add("Telefone e obrigatorio.");
             }
 
-            if (email != null) {
-                email = email.trim().toLowerCase();
-                if (!email.contains("@") || !email.contains(".")) {
-                    erros.add("Email inválido.");
+            if (telefone != null) {
+                Optional<ClienteEntity> clienteMesmoTelefone = clienteRepository.findFirstByEmpresaIdAndTelefone(empresaId, telefone);
+                if (clienteMesmoTelefone.isPresent() && (cliente == null || !clienteMesmoTelefone.get().getId().equals(cliente.getId()))) {
+                    erros.add("Ja existe um cliente com este telefone.");
                 }
-                if (!email.equals(user.getEmail()) && usuarioRepository.findByEmail(email).isPresent()) {
-                    erros.add("Este email já está cadastrado em nossa plataforma.");
-                }
-                if (erros.isEmpty()) {
-                    user.setEmail(email);
+            }
+            if (!email.isBlank()) {
+                Optional<ClienteEntity> clienteMesmoEmail = clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, email);
+                if (clienteMesmoEmail.isPresent() && (cliente == null || !clienteMesmoEmail.get().getId().equals(cliente.getId()))) {
+                    erros.add("Ja existe um cliente com este e-mail.");
                 }
             }
 
@@ -411,15 +435,31 @@ public class MeuGendazController {
                 return ResponseEntity.status(400).body(Map.of("mensagem", String.join(" ", erros)));
             }
 
+            user.setNome(nome);
+            user.setEmail(email);
             usuarioRepository.save(user);
 
-            EmpresaEntity empresa = user.getEmpresa();
+            if (cliente == null) {
+                cliente = ClienteEntity.builder()
+                        .nome(nome)
+                        .email(email)
+                        .telefone(telefone)
+                        .empresa(empresa)
+                        .build();
+            } else {
+                cliente.setNome(nome);
+                cliente.setEmail(email);
+                cliente.setTelefone(telefone);
+            }
+            clienteRepository.save(cliente);
+
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("id", user.getId());
             result.put("nome", user.getNome());
             result.put("email", user.getEmail());
-            result.put("empresaId", empresa != null ? empresa.getId() : null);
-            result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
+            result.put("telefone", cliente.getTelefone());
+            result.put("empresaId", empresa.getId());
+            result.put("empresaNome", empresa.getNomeFantasia());
             result.put("mensagem", "Perfil atualizado com sucesso!");
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {

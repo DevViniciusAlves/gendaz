@@ -17,6 +17,7 @@ import com.minhaempresa.agendapro.mensagem.repository.MensagemRepository;
 import com.minhaempresa.agendapro.notafiscal.repository.NotaFiscalRepository;
 import com.minhaempresa.agendapro.notificacao.repository.NotificacaoRepository;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
@@ -44,10 +45,15 @@ public class ClienteService {
     @Transactional
     public ClienteResponse salvar(SalvarClienteRequest request) {
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+        String nome = sanitizacaoService.textoObrigatorio(request.nome());
+        String telefone = sanitizacaoService.telefone(request.telefone());
+        String email = sanitizacaoService.email(request.email());
+        validarCamposObrigatorios(nome, telefone, email);
+        validarDuplicidade(empresa.getId(), telefone, email, null);
         ClienteEntity cliente = ClienteEntity.builder()
-                .nome(sanitizacaoService.textoObrigatorio(request.nome()))
-                .telefone(sanitizacaoService.telefone(request.telefone()))
-                .email(sanitizacaoService.email(request.email()))
+                .nome(nome)
+                .telefone(telefone)
+                .email(email)
                 .observacoes(sanitizacaoService.texto(request.observacoes()))
                 .empresa(empresa)
                 .build();
@@ -83,9 +89,14 @@ public class ClienteService {
     public ClienteResponse atualizar(Long id, SalvarClienteRequest request) {
         ClienteEntity cliente = buscarEntidade(id);
         validarEmpresa(cliente, request.empresaId());
-        cliente.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
-        cliente.setTelefone(sanitizacaoService.telefone(request.telefone()));
-        cliente.setEmail(sanitizacaoService.email(request.email()));
+        String nome = sanitizacaoService.textoObrigatorio(request.nome());
+        String telefone = sanitizacaoService.telefone(request.telefone());
+        String email = sanitizacaoService.email(request.email());
+        validarCamposObrigatorios(nome, telefone, email);
+        validarDuplicidade(cliente.getEmpresa().getId(), telefone, email, cliente.getId());
+        cliente.setNome(nome);
+        cliente.setTelefone(telefone);
+        cliente.setEmail(email);
         cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
         ClienteEntity salvo = clienteRepository.save(cliente);
         auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", salvo.getNome(), null, null);
@@ -133,6 +144,34 @@ public class ClienteService {
         Long companyId = CompanyContext.getCompanyId();
         if (companyId != null && empresaId != null && !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Cliente não encontrado.");
+        }
+    }
+
+    private void validarCamposObrigatorios(String nome, String telefone, String email) {
+        if (nome == null || nome.isBlank()) {
+            throw new BusinessException("Nome e obrigatorio.");
+        }
+        if (telefone == null || telefone.isBlank()) {
+            throw new BusinessException("Telefone e obrigatorio.");
+        }
+        if (email == null || email.isBlank()) {
+            throw new BusinessException("E-mail e obrigatorio.");
+        }
+    }
+
+    private void validarDuplicidade(Long empresaId, String telefone, String email, Long ignorarClienteId) {
+        boolean telefoneExiste = ignorarClienteId == null
+                ? clienteRepository.existsByEmpresaIdAndTelefone(empresaId, telefone)
+                : clienteRepository.existsByEmpresaIdAndTelefoneAndIdNot(empresaId, telefone, ignorarClienteId);
+        if (telefoneExiste) {
+            throw new BusinessException("Ja existe um cliente com este telefone.");
+        }
+
+        boolean emailExiste = ignorarClienteId == null
+                ? clienteRepository.existsByEmpresaIdAndEmail(empresaId, email)
+                : clienteRepository.existsByEmpresaIdAndEmailAndIdNot(empresaId, email, ignorarClienteId);
+        if (emailExiste) {
+            throw new BusinessException("Ja existe um cliente com este e-mail.");
         }
     }
 }
