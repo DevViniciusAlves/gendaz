@@ -20,6 +20,7 @@ import Dashboard from '../pages/Dashboard.jsx'
 import Agenda from '../pages/Agenda.jsx'
 import Clientes from '../pages/Clientes.jsx'
 import Crm from '../pages/Crm.jsx'
+import Insights from '../pages/Insights.jsx'
 import Servicos from '../pages/Servicos.jsx'
 import Profissionais from '../pages/Profissionais.jsx'
 import Financeiro from '../pages/Financeiro.jsx'
@@ -125,6 +126,7 @@ export default function AppRoutes() {
         <Route path="agenda" element={<PlanRoute routeKey="agenda"><Agenda /></PlanRoute>} />
         <Route path="clientes" element={<PlanRoute routeKey="clientes"><Clientes /></PlanRoute>} />
         <Route path="crm" element={<PlanRoute routeKey="crm"><Crm /></PlanRoute>} />
+        <Route path="insights" element={<PlanRoute routeKey="insights"><Insights /></PlanRoute>} />
         <Route path="servicos" element={<PlanRoute routeKey="servicos"><Servicos /></PlanRoute>} />
         <Route path="profissionais" element={<PlanRoute routeKey="profissionais"><Profissionais /></PlanRoute>} />
         <Route path="financeiro" element={<PlanRoute routeKey="financeiro"><Financeiro /></PlanRoute>} />

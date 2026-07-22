@@ -6,10 +6,12 @@ const DATA_VERSION = 4
 
 export const PLANOS = {
   BASICO: {
-    nome: 'Plano Basico',    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'configuracoes'],
+    nome: 'Plano Basico',
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'configuracoes'],
   },
   PRO: {
-    nome: 'Plano Pro',    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'configuracoes'],
+    nome: 'Plano Pro',
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'configuracoes'],
   },
 }
 
@@ -21,7 +23,8 @@ export function emptyData(usuario = null) {
       nomeFantasia: usuario?.empresaNome || '',
       documento: '',
       telefone: '',
-      email: usuario?.email || '',    },
+      email: usuario?.email || '',
+    },
     usuarios: [],
     equipe: [],
     clientes: [],

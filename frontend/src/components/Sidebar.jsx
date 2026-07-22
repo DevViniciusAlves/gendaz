@@ -1,5 +1,5 @@
 ﻿import { NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, Home, MessageCircle, ReceiptText, Settings, Users, Wrench, UserRoundCog } from 'lucide-react'
+import { BarChart3, CalendarDays, Home, MessageCircle, ReceiptText, Settings, Sparkles, Users, Wrench, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
 import { usePendentes } from '../hooks/usePendentes.js'
@@ -10,11 +10,12 @@ const items = [
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
   { key: 'crm',           to: '/sistema/crm',           label: 'CRM',            icon: MessageCircle },
+  { key: 'insights',      to: '/sistema/insights',      label: 'Insights',       icon: Sparkles },
   { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
   { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3 },
   { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
-  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'ConfiguraçÃµes',  icon: Settings },
+  { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
 ]
 
 export default function Sidebar() {

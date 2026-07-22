@@ -50,6 +50,26 @@ async function tentarRefreshSessao(config) {
     console.log('[auth-debug] refresh token OK', { url })
     return true
   } catch (error) {
+    const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || '').toLowerCase()
+    if (error.response?.status === 401 && (
+      mensagem.includes('outro dispositivo')
+      || mensagem.includes('acessada em outro dispositivo')
+      || mensagem.includes('acesso em outro dispositivo')
+    )) {
+      console.warn('[auth-debug] refresh com outro dispositivo, mantendo sessao local', {
+        url,
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message,
+      })
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: {
+          type: 'warning',
+          message: 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.',
+        },
+      }))
+      return true
+    }
     console.warn('[auth-debug] refresh token falhou', {
       url,
       status: error.response?.status,

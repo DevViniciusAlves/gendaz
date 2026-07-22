@@ -42,6 +42,20 @@ function contaInativa(usuarioBase) {
   return usuarioBase?.statusConta === 'ACCOUNT_INACTIVE'
 }
 
+function mensagemAcessoOutroDispositivo(error) {
+  const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
+  return mensagem.includes('outro dispositivo')
+    || mensagem.includes('acessada em outro dispositivo')
+    || mensagem.includes('acesso em outro dispositivo')
+}
+
+function emitirToast(type, message) {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new CustomEvent('agendapro:toast', {
+    detail: { type, message },
+  }))
+}
+
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(() => Boolean(localStorage.getItem('agendapro_usuario')))
   const [usuario, setUsuario] = useState(() => {
@@ -116,6 +130,12 @@ export function AuthProvider({ children }) {
           )
           salvarUsuarioSessao(atualizado)
           setUsuario(atualizado)
+        } else if (status === 401 && mensagemAcessoOutroDispositivo(error)) {
+          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
+          console.warn('[auth-debug] refresh inicial detectou outro dispositivo, mantendo sessao local', {
+            status,
+            mensagem,
+          })
         } else if (falhaFatal) {
           limparSessaoUsuario()
           clearLocalData()
@@ -188,6 +208,14 @@ export function AuthProvider({ children }) {
           )
           salvarUsuarioSessao(atualizado)
           setUsuario(atualizado)
+          return
+        }
+        if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
+          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
+          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local', {
+            status: error.response?.status,
+            mensagem,
+          })
           return
         }
         if (!erroTemporarioAutenticacao(error)) {
