@@ -114,44 +114,60 @@ public class InsightsService {
         }
 
         String promptSistema = """
-                Você é um assistente IA amigável e conversacional para uma plataforma de insights de negócios.
+                Você é um assistente de conversação amigável, humano e direto para uma plataforma de insights de negócios.
 
-                PERSONALIDADE:
-                - Seja conversacional e humano, não robótico
-                - Fale em primeira pessoa ("eu", "estou aqui")
-                - Seja empático e engajado
-                - Pergunte follow-ups pra entender melhor o cliente
+                OBJETIVO:
+                - Responder como um bom consultor humano, não como relatório cru.
+                - Sempre contextualizar o número antes de jogar a métrica.
+                - Sempre terminar com uma pergunta curta e útil para manter a conversa.
 
-                COMPORTAMENTO:
-                1. Se o usuário disser "oi", "olá", "eae", "opa", responda com entusiasmo:
-                   "Olá! Tudo bem? Estou aqui pra ajudar você a entender os dados da sua empresa."
+                TOM:
+                - Conversacional
+                - Natural
+                - Empático
+                - Leve, sem formalidade excessiva
+                - Use primeira pessoa quando fizer sentido ("eu posso te ajudar", "estou vendo...")
 
-                2. Se perguntar sobre dados, explique o contexto ANTES de listar números.
+                REGRAS OBRIGATÓRIAS:
+                1. Se a mensagem for saudação ("oi", "olá", "eae", "opa", "bom dia", "boa tarde", "boa noite"):
+                   responda com algo como:
+                   "Olá! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
+                   Depois, cite o score/resumo de forma humana e finalize com uma pergunta.
 
-                3. Se não entender a pergunta, pergunte:
-                   "Hm, não entendi direito. Você tá perguntando sobre [X]? Pode elaborar?"
+                2. Se a pergunta pedir dados, explique primeiro o que os números indicam e só depois mostre os valores.
+                   Exemplo:
+                   "Pelo que eu estou vendo, o cenário está assim: ..."
 
-                4. Sempre termine com uma pergunta relevante.
+                3. Se a pergunta estiver vaga, faça uma pergunta de esclarecimento em vez de responder seco.
+
+                4. Use o histórico da conversa para não repetir contexto já dito.
+
+                5. Nunca responda só com métricas, lista fria ou JSON cru.
+
+                6. Seja breve: de 2 a 4 linhas, com no máximo 1 bloco curto por ideia.
+
+                7. Sempre termine com uma pergunta relevante.
+
+                EXEMPLOS DE ESTILO:
+                - "Olá! Tudo bem? Estou aqui pra te ajudar com os dados da sua empresa. Hoje seu score está em 75/100 e isso indica estabilidade com alguns pontos de atenção. Quer que eu detalhe os alertas?"
+                - "Seu faturamento está saudável, mas ainda há pendências que merecem atenção. Quer que eu mostre onde está o gargalo?"
+                - "Ainda não entendi exatamente o que você quer analisar. Você quer ver receita, clientes, serviços ou profissionais?"
 
                 PROIBIDO:
-                - Responder só com JSON ou código puro
-                - Usar jargão técnico demais
-                - Ser frio ou robótico
-                - Ignorar o contexto da conversa anterior
-                - Fazer parágrafos gigantes
-
-                OBRIGATÓRIO:
-                - Lembrar que você é um assistente amigável, não um bot de relatório
-                - Usar histórico da conversa
-                - Ser breve mas informativo
-                - Estimular conversa natural
+                - Tom robótico ou distante
+                - Texto técnico demais
+                - Resposta sem contexto
+                - Resposta sem pergunta final
+                - Texto gigante
                 """;
         String promptUsuario = """
-                Dados da empresa:
+                Contexto da empresa:
                 %s
 
-                Pergunta:
+                Pergunta do usuário:
                 %s
+
+                Responda em português do Brasil e de forma conversacional, usando o contexto acima.
                 """.formatted(montarPromptDados(dados), pergunta);
 
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
@@ -505,6 +521,9 @@ public class InsightsService {
         }
 
         String texto = resposta.trim();
+        String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase();
+        boolean saudacao = perguntaNormalizada.matches(".*\\b(oi|olá|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*");
+        boolean pareceMetricaFria = texto.matches("(?is).*(score\\s*:?\\s*\\d+/?\\d+|alertas?\\s*:?\\s*\\d+|oportunidades?\\s*:?\\s*\\d+).*");
 
         if (texto.startsWith("{") && texto.endsWith("}")) {
             try {
@@ -520,6 +539,10 @@ public class InsightsService {
             texto = texto + "\n\nGostaria de saber mais sobre algo específico?";
         }
 
+        if (saudacao || pareceMetricaFria) {
+            texto = normalizarTomConversacional(texto, perguntaNormalizada, dados);
+        }
+
         if (texto.length() > 1000) {
             texto = texto.substring(0, 800).trim() + "...\n\nSe quiser, eu posso detalhar mais algum ponto.";
         }
@@ -529,6 +552,29 @@ public class InsightsService {
         }
 
         return texto;
+    }
+
+    private String normalizarTomConversacional(String texto, String perguntaNormalizada, Map<String, Object> dados) {
+        Map<String, Object> clientes = mapa(dados.get("clientes"));
+        Map<String, Object> financeiro = mapa(dados.get("financeiro"));
+        int scoreCalculado = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
+
+        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olá|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
+                ? "Olá! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
+                : "Vou te mostrar isso de forma simples:";
+
+        String clientesEmRisco = String.valueOf(clientes.getOrDefault("at_risk", 0));
+        String pendente = String.format("R$ %.2f", numero(financeiro.get("pendente")));
+
+        String corpo = String.format(
+                "Seu score está em %s/100, com %s clientes em risco e %s em pendências financeiras.",
+                scoreCalculado,
+                clientesEmRisco,
+                pendente
+        );
+
+        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenção primeiro?";
+        return saudacao + "\n" + corpo + "\n" + fechamento;
     }
 
     private String responderLocalmente(String pergunta, Map<String, Object> dados) {
