@@ -20,8 +20,11 @@ public class InsightsController {
     private final InsightsService insightsService;
 
     @GetMapping("/dashboard")
-    public ResponseEntity<?> dashboard(@RequestParam(value = "periodo", defaultValue = "30") Integer periodo) {
-        Long empresaId = CompanyContext.getCompanyId();
+    public ResponseEntity<?> dashboard(
+            @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
@@ -30,8 +33,11 @@ public class InsightsController {
     }
 
     @PostMapping("/analisar")
-    public ResponseEntity<?> analisar(@Valid @RequestBody InsightsRequest request) {
-        Long empresaId = CompanyContext.getCompanyId();
+    public ResponseEntity<?> analisar(
+            @Valid @RequestBody InsightsRequest request,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
@@ -49,11 +55,17 @@ public class InsightsController {
     }
 
     @GetMapping("/historico")
-    public ResponseEntity<List<InsightHistoryResponse>> historico() {
-        Long empresaId = CompanyContext.getCompanyId();
+    public ResponseEntity<List<InsightHistoryResponse>> historico(
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(List.of());
         }
         return ResponseEntity.ok(insightsService.obterHistorico(empresaId));
+    }
+
+    private Long resolverEmpresaId(Long empresaId) {
+        return empresaId != null ? empresaId : CompanyContext.getCompanyId();
     }
 }
