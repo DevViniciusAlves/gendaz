@@ -115,7 +115,7 @@ public class AuthController {
         if (refresh.sessionToken() != null) {
             adicionarCookie(http, response, "agendapro_session", refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }
-        return ResponseEntity.ok(new RefreshResponse(refresh.mensagem(), refresh.usuario(), refresh.assinatura(), refresh.pagamentoPlano(), refresh.statusConta(), null));
+        return ResponseEntity.ok(refresh);
     }
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {

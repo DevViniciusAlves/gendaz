@@ -81,7 +81,15 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/**")
                 .excludePathPatterns("/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**");
         registry.addInterceptor(usuarioSessionInterceptor)
-                .addPathPatterns("/api/**");
+                .addPathPatterns("/api/**")
+                .excludePathPatterns(
+                        "/api/auth/login",
+                        "/api/auth/criar-conta",
+                        "/api/auth/refresh",
+                        "/api/auth/logout",
+                        "/api/public/**",
+                        "/api/health/**"
+                );
         registry.addInterceptor(adminIpWhitelistInterceptor)
                 .addPathPatterns("/admin", "/admin/**", "/api/admin", "/api/admin/**");
         registry.addInterceptor(adminTokenInterceptor)

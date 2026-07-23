@@ -291,13 +291,10 @@ public class AuthService {
 
     @Transactional
     public RefreshResponse refresh(Long usuarioId, String sessionToken) {
+        if (usuarioId == null) {
+            throw new BusinessException("Usuário não autenticado.");
+        }
         UsuarioEntity usuario = buscarUsuarioAutenticado(usuarioId);
-        if (sessionToken == null || sessionToken.isBlank()) {
-            throw new BusinessException("Sessão inválida.");
-        }
-        if (!usuarioSessionService.sessaoValida(usuarioId, sessionToken)) {
-            throw new BusinessException("Sessão expirada.");
-        }
         String novaSessao = usuarioSessionService.renovarSessao(usuario);
         AssinaturaResponse assinatura = usuario.getEmpresa() == null
                 ? null

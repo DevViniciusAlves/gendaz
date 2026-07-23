@@ -81,7 +81,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-            response.getWriter().write("{\"mensagem\":\"Sua sessao foi encerrada porque sua conta foi acessada em outro dispositivo.\"}");
+            response.getWriter().write("{\"mensagem\":\"Sessão inválida ou expirada. Faça login novamente.\"}");
             return false;
         } finally {
             CompanyContext.clear();
