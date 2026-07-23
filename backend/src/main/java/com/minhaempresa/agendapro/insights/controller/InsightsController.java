@@ -41,7 +41,9 @@ public class InsightsController {
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
-        InsightsResponse resposta = insightsService.analisarERegistrar(empresaId, request.pergunta());
+        String respostaChat = insightsService.analisarPergunta(empresaId, request.pergunta(), request.historico());
+        insightsService.salvarAnalise(empresaId, "pergunta", request.pergunta(), respostaChat);
+        InsightsResponse resposta = new InsightsResponse(true, respostaChat, java.time.LocalDateTime.now(java.time.ZoneId.of("America/Cuiaba")));
         return ResponseEntity.ok(resposta);
     }
 

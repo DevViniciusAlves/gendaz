@@ -9,6 +9,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -85,5 +86,74 @@ public class GroqClient {
             log.warn("[insights-groq] falha ao analisar: {}", e.getMessage(), e);
             return Optional.empty();
         }
+    }
+
+    public Optional<String> conversar(String systemPrompt, List<Map<String, String>> historico, String userPrompt) {
+        if (!disponivel()) {
+            return Optional.empty();
+        }
+
+        try {
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("model", model);
+            payload.put("temperature", 0.7);
+            payload.put("max_tokens", 500);
+            payload.put("top_p", 0.9);
+            payload.put("messages", montarMensagens(systemPrompt, historico, userPrompt));
+
+            String body = objectMapper.writeValueAsString(payload);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(GROQ_URI)
+                    .timeout(Duration.ofSeconds(40))
+                    .header("Authorization", "Bearer " + apiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                log.warn("[insights-groq] resposta nao-sucedida status={} body={}", response.statusCode(), response.body());
+                return Optional.empty();
+            }
+
+            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
+            String content = contentNode.isTextual() ? contentNode.asText() : null;
+            return Optional.ofNullable(content);
+        } catch (IOException e) {
+            log.warn("[insights-groq] falha ao serializar ou ler resposta: {}", e.getMessage());
+            return Optional.empty();
+        } catch (Exception e) {
+            log.warn("[insights-groq] falha ao conversar: {}", e.getMessage(), e);
+            return Optional.empty();
+        }
+    }
+
+    private List<Map<String, String>> montarMensagens(String systemPrompt, List<Map<String, String>> historico, String userPrompt) {
+        List<Map<String, String>> mensagens = new ArrayList<>();
+        mensagens.add(Map.of("role", "system", "content", systemPrompt));
+
+        if (historico != null) {
+            for (Map<String, String> mensagem : historico) {
+                String role = normalizarRole(mensagem.get("role"));
+                String content = mensagem.getOrDefault("content", "").trim();
+                if (content.isBlank()) {
+                    continue;
+                }
+                mensagens.add(Map.of("role", role, "content", content));
+            }
+        }
+
+        mensagens.add(Map.of("role", "user", "content", userPrompt));
+        return mensagens;
+    }
+
+    private String normalizarRole(String role) {
+        String valor = role == null ? "" : role.trim().toLowerCase();
+        return switch (valor) {
+            case "assistant", "bot", "ia" -> "assistant";
+            case "system" -> "system";
+            default -> "user";
+        };
     }
 }

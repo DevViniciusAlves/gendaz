@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { analisarPerguntaInsights, buscarDashboardInsights, buscarHistoricoInsights } from '../api/insightsApi.js'
+import { analisarPerguntaInsightsComHistorico, buscarDashboardInsights, buscarHistoricoInsights } from '../api/insightsApi.js'
 
 export function useInsights() {
   const [dashboard, setDashboard] = useState(null)
@@ -30,8 +30,8 @@ export function useInsights() {
     carregar(30)
   }, [carregar])
 
-  const analisar = useCallback(async (pergunta) => {
-    const resposta = await analisarPerguntaInsights(pergunta)
+  const analisar = useCallback(async (pergunta, historicoChat = []) => {
+    const resposta = await analisarPerguntaInsightsComHistorico(pergunta, historicoChat)
     const historicoAtualizado = await buscarHistoricoInsights().catch(() => historico)
     setHistorico(Array.isArray(historicoAtualizado) ? historicoAtualizado : historico)
     return resposta

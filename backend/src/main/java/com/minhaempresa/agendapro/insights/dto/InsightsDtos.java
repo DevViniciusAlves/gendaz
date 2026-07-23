@@ -7,7 +7,12 @@ import java.util.List;
 public final class InsightsDtos {
     private InsightsDtos() {}
 
-    public record InsightsRequest(@NotBlank String pergunta) {}
+    public record ChatMessageRequest(
+            String role,
+            String content
+    ) {}
+
+    public record InsightsRequest(@NotBlank String pergunta, List<ChatMessageRequest> historico) {}
 
     public record InsightItem(
             String titulo,

@@ -6,6 +6,7 @@ import com.minhaempresa.agendapro.email.ResendEmailService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.insights.client.GroqClient;
+import com.minhaempresa.agendapro.insights.dto.InsightsDtos.ChatMessageRequest;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.DashboardResponse;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightAction;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightHistoryResponse;
@@ -106,16 +107,44 @@ public class InsightsService {
     }
 
     @Transactional(readOnly = true)
-    public String analisarPergunta(Long empresaId, String pergunta) {
+    public String analisarPergunta(Long empresaId, String pergunta, List<ChatMessageRequest> historico) {
         Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
         if (!groqClient.disponivel()) {
             return responderLocalmente(pergunta, dados);
         }
 
         String promptSistema = """
-                Você é um consultor de negócios para empresas de serviços.
-                Responda em português do Brasil, de forma objetiva, usando os dados fornecidos.
-                Se os dados forem insuficientes, diga exatamente o que falta.
+                Você é um assistente IA amigável e conversacional para uma plataforma de insights de negócios.
+
+                PERSONALIDADE:
+                - Seja conversacional e humano, não robótico
+                - Fale em primeira pessoa ("eu", "estou aqui")
+                - Seja empático e engajado
+                - Pergunte follow-ups pra entender melhor o cliente
+
+                COMPORTAMENTO:
+                1. Se o usuário disser "oi", "olá", "eae", "opa", responda com entusiasmo:
+                   "Olá! Tudo bem? Estou aqui pra ajudar você a entender os dados da sua empresa."
+
+                2. Se perguntar sobre dados, explique o contexto ANTES de listar números.
+
+                3. Se não entender a pergunta, pergunte:
+                   "Hm, não entendi direito. Você tá perguntando sobre [X]? Pode elaborar?"
+
+                4. Sempre termine com uma pergunta relevante.
+
+                PROIBIDO:
+                - Responder só com JSON ou código puro
+                - Usar jargão técnico demais
+                - Ser frio ou robótico
+                - Ignorar o contexto da conversa anterior
+                - Fazer parágrafos gigantes
+
+                OBRIGATÓRIO:
+                - Lembrar que você é um assistente amigável, não um bot de relatório
+                - Usar histórico da conversa
+                - Ser breve mas informativo
+                - Estimular conversa natural
                 """;
         String promptUsuario = """
                 Dados da empresa:
@@ -125,13 +154,13 @@ public class InsightsService {
                 %s
                 """.formatted(montarPromptDados(dados), pergunta);
 
-        Optional<String> resposta = groqClient.analisar(promptSistema, promptUsuario);
-        return resposta.orElseGet(() -> responderLocalmente(pergunta, dados));
+        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
+        return resposta.map(valor -> humanizarResposta(valor, pergunta, dados)).orElseGet(() -> responderLocalmente(pergunta, dados));
     }
 
     @Transactional
     public InsightsResponse analisarERegistrar(Long empresaId, String pergunta) {
-        String resposta = analisarPergunta(empresaId, pergunta);
+        String resposta = analisarPergunta(empresaId, pergunta, List.of());
         salvarAnalise(empresaId, "pergunta", pergunta, resposta);
         return new InsightsResponse(true, resposta, LocalDateTime.now(ZoneId.of(appTimezone)));
     }
@@ -312,6 +341,33 @@ public class InsightsService {
         }
     }
 
+    private List<Map<String, String>> historicoParaGroq(List<ChatMessageRequest> historico) {
+        if (historico == null || historico.isEmpty()) {
+            return List.of();
+        }
+
+        List<Map<String, String>> mensagens = new ArrayList<>();
+        for (ChatMessageRequest item : historico) {
+            if (item == null || item.content() == null || item.content().isBlank()) {
+                continue;
+            }
+            Map<String, String> mensagem = new LinkedHashMap<>();
+            mensagem.put("role", normalizarRole(item.role()));
+            mensagem.put("content", item.content().trim());
+            mensagens.add(mensagem);
+        }
+        return mensagens;
+    }
+
+    private String normalizarRole(String role) {
+        String valor = role == null ? "" : role.trim().toLowerCase();
+        return switch (valor) {
+            case "assistant", "bot", "ia" -> "assistant";
+            case "system" -> "system";
+            default -> "user";
+        };
+    }
+
     private void enviarEmailResumo(EmpresaEntity empresa, DashboardResponse dashboard) {
         String destinatario = resolverEmailEmpresa(empresa);
         if (destinatario == null || destinatario.isBlank()) {
@@ -441,6 +497,38 @@ public class InsightsService {
 
     private String stringValor(Object valor) {
         return valor == null ? "" : String.valueOf(valor);
+    }
+
+    public String humanizarResposta(String resposta, String pergunta, Map<String, Object> dados) {
+        if (resposta == null || resposta.isBlank()) {
+            return responderLocalmente(pergunta, dados);
+        }
+
+        String texto = resposta.trim();
+
+        if (texto.startsWith("{") && texto.endsWith("}")) {
+            try {
+                Object json = objectMapper.readValue(texto, Object.class);
+                texto = "Aqui estão os dados que encontrei: "
+                        + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+            } catch (Exception ignored) {
+                texto = "Aqui estão os dados que encontrei: " + texto;
+            }
+        }
+
+        if (texto.length() < 20) {
+            texto = texto + "\n\nGostaria de saber mais sobre algo específico?";
+        }
+
+        if (texto.length() > 1000) {
+            texto = texto.substring(0, 800).trim() + "...\n\nSe quiser, eu posso detalhar mais algum ponto.";
+        }
+
+        if (!texto.contains("?")) {
+            texto = texto + "\n\nO que mais você gostaria de saber?";
+        }
+
+        return texto;
     }
 
     private String responderLocalmente(String pergunta, Map<String, Object> dados) {

@@ -24,8 +24,15 @@ export function buscarDashboardInsights(periodo = 30) {
 }
 
 export function analisarPerguntaInsights(pergunta) {
+  return analisarPerguntaInsightsComHistorico(pergunta, [])
+}
+
+export function analisarPerguntaInsightsComHistorico(pergunta, historico = []) {
   const empresaId = obterEmpresaIdUsuario()
-  return api.post('/insights/analisar', { pergunta }, {
+  return api.post('/insights/analisar', {
+    pergunta,
+    historico: Array.isArray(historico) ? historico : [],
+  }, {
     params: {
       empresaId: empresaId || undefined,
     },
