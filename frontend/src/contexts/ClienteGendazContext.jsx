@@ -1,4 +1,4 @@
-﻿import { createContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useState, useEffect, useCallback } from 'react'
 import clienteApi from '../api/clienteApi.js'
 
 export const ClienteGendazContext = createContext()
@@ -14,26 +14,17 @@ export function ClienteGendazProvider({ children }) {
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
 
+  const limparEstadoSessao = useCallback(() => {
+    setCliente(null)
+    setDashboard(null)
+    setAgendamentos([])
+    setBeneficios({ promocoes: [], cupons: [] })
+    setConfiguracoes(null)
+    setServicos([])
+    setProfissionais([])
+  }, [])
+
   const sincronizarDados = useCallback(async () => {
-    const auth = localStorage.getItem('meu-gendaz-auth')
-    if (!auth) {
-      setCarregando(false)
-      return
-    }
-
-    try {
-      const tokenData = JSON.parse(auth)
-      if (!tokenData?.sessionToken) {
-        localStorage.removeItem('meu-gendaz-auth')
-        setCarregando(false)
-        return
-      }
-    } catch {
-      localStorage.removeItem('meu-gendaz-auth')
-      setCarregando(false)
-      return
-    }
-
     try {
       setCarregando(true)
       setErro(null)
@@ -43,6 +34,17 @@ export function ClienteGendazProvider({ children }) {
         clienteApi.get('/meu-gendaz/dashboard'),
         clienteApi.get('/meu-gendaz/agendamentos/proximos'),
       ])
+
+      const respostas = [perfilRes, dashboardRes, agendamentosRes]
+      const houve401 = respostas.some((resultado) => (
+        resultado.status === 'rejected' && resultado.reason?.response?.status === 401
+      ))
+
+      if (houve401) {
+        limparEstadoSessao()
+        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        return
+      }
 
       if (perfilRes.status === 'fulfilled') {
         const dados = perfilRes.value.data
@@ -66,69 +68,53 @@ export function ClienteGendazProvider({ children }) {
         clienteApi.get('/meu-gendaz/servicos'),
         clienteApi.get('/meu-gendaz/profissionais'),
       ])
-      if (servRes.status === 'fulfilled') setServicos(Array.isArray(servRes.value.data) ? servRes.value.data : [])
-      if (profRes.status === 'fulfilled') setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
 
+      const houve401Complementar = [servRes, profRes].some((resultado) => (
+        resultado.status === 'rejected' && resultado.reason?.response?.status === 401
+      ))
+
+      if (houve401Complementar) {
+        limparEstadoSessao()
+        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        return
+      }
+
+      if (servRes.status === 'fulfilled') {
+        setServicos(Array.isArray(servRes.value.data) ? servRes.value.data : [])
+      }
+
+      if (profRes.status === 'fulfilled') {
+        setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
+      }
     } catch (err) {
       if (err.response?.status === 401) {
-        localStorage.removeItem('meu-gendaz-auth')
+        limparEstadoSessao()
         window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        return
       }
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar dados.')
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [limparEstadoSessao])
 
   useEffect(() => {
-    console.log(' Verificando autenticação ao montar...')
-    
-    const auth = localStorage.getItem('meu-gendaz-auth')
-    
-    if (!auth) {
-      console.log(' Nenhum token encontrado')
-      setCarregando(false)
-      return
-    }
-
-    try {
-      const tokenData = JSON.parse(auth)
-      const agora = Date.now()
-      const idade = agora - tokenData.savedAt
-      const validoAte = tokenData.savedAt + tokenData.expiresIn
-      
-      console.log(' Token Info:')
-      console.log('  - Salvo em:', new Date(tokenData.savedAt).toLocaleString())
-      console.log('  - Valido até:', new Date(validoAte).toLocaleString())
-      console.log('  - Idade atual:', Math.floor(idade / 1000 / 60 / 60), 'horas')
-      console.log('  - sessionToken existe:', !!tokenData.sessionToken)
-
-      if (!tokenData?.sessionToken) {
-        console.log(' sessionToken vazio - limpando')
-        localStorage.removeItem('meu-gendaz-auth')
-        setCarregando(false)
-        return
-      }
-
-      if (idade > tokenData.expiresIn) {
-        console.log(' Token expirou - idade excedeu 90 dias')
-        localStorage.removeItem('meu-gendaz-auth')
-        setCarregando(false)
-        return
-      }
-
-      console.log(' Token válido - sincronizando dados')
-      sincronizarDados()
-
-    } catch (err) {
-      console.error(' Erro ao validar token:', err)
-      localStorage.removeItem('meu-gendaz-auth')
-      setCarregando(false)
-    }
-  }, [])
+    void sincronizarDados()
+  }, [sincronizarDados])
 
   useEffect(() => {
-    if (!cliente) return
+    const lidarComLogout = () => {
+      limparEstadoSessao()
+      setErro(null)
+      setCarregando(false)
+    }
+
+    window.addEventListener('meu-gendaz:logout', lidarComLogout)
+    return () => window.removeEventListener('meu-gendaz:logout', lidarComLogout)
+  }, [limparEstadoSessao])
+
+  useEffect(() => {
+    if (!cliente) return undefined
 
     const intervalDashboard = setInterval(async () => {
       try {
@@ -152,21 +138,15 @@ export function ClienteGendazProvider({ children }) {
 
   const criarAgendamento = useCallback(async (dados) => {
     const { data } = await clienteApi.post('/meu-gendaz/agendamentos/criar', dados)
-    const auth = localStorage.getItem('meu-gendaz-auth')
-    if (auth) {
-      const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
-      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
-    }
+    const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
+    setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
     return data
   }, [])
 
   const reagendar = useCallback(async (agendamentoId, novosDados) => {
     const { data } = await clienteApi.patch(`/meu-gendaz/agendamentos/${agendamentoId}/reagendar`, novosDados)
-    const auth = localStorage.getItem('meu-gendaz-auth')
-    if (auth) {
-      const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
-      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
-    }
+    const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
+    setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
     return data
   }, [])
 
@@ -174,11 +154,8 @@ export function ClienteGendazProvider({ children }) {
     await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`, {
       data: { motivo },
     })
-    const auth = localStorage.getItem('meu-gendaz-auth')
-    if (auth) {
-      const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
-      setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
-    }
+    const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
+    setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
   }, [])
 
   const carregarHistorico = useCallback(async (pagina = 1, limite = 10) => {
@@ -206,12 +183,12 @@ export function ClienteGendazProvider({ children }) {
     })
   }, [])
 
-  const usarCupom = useCallback(async (cupomId) => {
+  const usarCupom = useCallback(async () => {
     await carregarBeneficios()
     return { mensagem: 'Cupom registrado.' }
   }, [carregarBeneficios])
 
-  const enviarMensagemIA = useCallback(async (mensagem, historicoChat = []) => {
+  const enviarMensagemIA = useCallback(async (mensagem) => {
     const intencao = detectarIntencaoLocal(mensagem)
     return gerarRespostaLocal(intencao, mensagem, { cliente, agendamentos, dashboard, servicos, profissionais, beneficios })
   }, [cliente, agendamentos, dashboard, servicos, profissionais, beneficios])
@@ -242,15 +219,8 @@ export function ClienteGendazProvider({ children }) {
     try {
       await clienteApi.post('/meu-gendaz/auth/logout')
     } catch { /* ignora */ }
-    localStorage.removeItem('meu-gendaz-auth')
-    setCliente(null)
-    setDashboard(null)
-    setAgendamentos([])
-    setBeneficios({ promocoes: [], cupons: [] })
-    setConfiguracoes(null)
-    setServicos([])
-    setProfissionais([])
-  }, [])
+    limparEstadoSessao()
+  }, [limparEstadoSessao])
 
   const value = {
     cliente,
@@ -334,7 +304,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const lista = servicos.map((s, i) => `${i + 1}. ${s.nome || s.titulo} — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
       return {
         resposta: `Serviços disponíveis:\n\n${lista}\n\nQuer agendar algum?`,
-        sugestoes: servicos.slice(0, 3).map(s => `Agendar ${s.nome || s.titulo}`),
+        sugestoes: servicos.slice(0, 3).map((s) => `Agendar ${s.nome || s.titulo}`),
       }
     }
     case 'listar_profissionais': {
@@ -347,7 +317,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const lista = profissionais.map((p, i) => `${i + 1}. ${p.nome}`).join('\n')
       return {
         resposta: `Nossa equipe:\n\n${lista}\n\nQuer agendar com algum deles?`,
-        sugestoes: profissionais.slice(0, 3).map(p => `Agendar com ${p.nome}`),
+        sugestoes: profissionais.slice(0, 3).map((p) => `Agendar com ${p.nome}`),
       }
     }
     case 'meus_agendamentos': {

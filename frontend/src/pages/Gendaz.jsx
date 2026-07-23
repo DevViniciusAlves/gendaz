@@ -1,8 +1,8 @@
-﻿import { useEffect, useState, useCallback } from 'react'
-import { useNavigate, Outlet } from 'react-router-dom'
+import { useEffect, useState, useCallback, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
-import { ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
+import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
 
 function GendazAuthGate({ onLogin }) {
@@ -29,7 +29,7 @@ function GendazAuthGate({ onLogin }) {
     if (!email.trim()) return
     setCarregando(true)
     try {
-      const response = await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { email: email.trim() })
+      await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { email: email.trim() })
       setEtapa('codigo')
       setReenviarEm(30)
       setTentativas(0)
@@ -57,15 +57,8 @@ function GendazAuthGate({ onLogin }) {
       })
 
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
-        const token = response.data?.sessionToken || ''
-        const tokenData = {
-          email: email.trim(),
-          sessionToken: token,
-          savedAt: Date.now(),
-          expiresIn: 90 * 24 * 60 * 60 * 1000,
-        }
-        localStorage.setItem('meu-gendaz-auth', JSON.stringify(tokenData))
-        onLogin()
+        console.log('✅ Login bem-sucedido. Cookie HttpOnly configurado pelo backend.')
+        await onLogin()
         navigate('/meu-gendaz/dashboard', { replace: true })
       } else {
         setErro(response.data?.mensagem || 'Não foi possível realizar login.')
@@ -148,35 +141,28 @@ function GendazAuthGate({ onLogin }) {
   )
 }
 
-function isAuthValid() {
-  try {
-    const raw = localStorage.getItem('meu-gendaz-auth')
-    if (!raw) return false
-    const data = JSON.parse(raw)
-    if (!data?.sessionToken) return false
-    return true
-  } catch { return false }
-}
-
 export default function Gendaz() {
-  const [logado, setLogado] = useState(() => isAuthValid())
-
-  const handleLogin = useCallback(() => setLogado(true), [])
-
-  const handleLogout = useCallback(() => {
-    localStorage.removeItem('meu-gendaz-auth')
-    setLogado(false)
-  }, [])
-
-  useEffect(() => {
-    setLogado(isAuthValid())
-    window.addEventListener('meu-gendaz:logout', handleLogout)
-    return () => window.removeEventListener('meu-gendaz:logout', handleLogout)
-  }, [handleLogout])
-
   return (
     <ClienteGendazProvider>
-      {logado ? <GendazLayout /> : <GendazAuthGate onLogin={handleLogin} />}
+      <GendazContent />
     </ClienteGendazProvider>
   )
+}
+
+function GendazContent() {
+  const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
+
+  const handleLogin = useCallback(async () => {
+    await sincronizarDados()
+  }, [sincronizarDados])
+
+  if (carregando) {
+    return (
+      <main className="gendaz-loading">
+        <p>Carregando sessão...</p>
+      </main>
+    )
+  }
+
+  return cliente ? <GendazLayout /> : <GendazAuthGate onLogin={handleLogin} />
 }

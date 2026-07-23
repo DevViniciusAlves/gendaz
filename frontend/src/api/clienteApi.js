@@ -34,29 +34,10 @@ clienteApi.interceptors.request.use((config) => {
   requestCount++
 
   if (config.url?.includes('/meu-gendaz/')) {
-    try {
-      const raw = localStorage.getItem('meu-gendaz-auth')
-      
-      if (!raw) {
-        console.log(' Nenhum auth encontrado no localStorage para:', config.url)
-        return config
-      }
-      
-      const tokenData = JSON.parse(raw)
-      
-      if (!tokenData?.sessionToken) {
-        console.log(' sessionToken vazio em localStorage')
-        return config
-      }
-      
-      config.headers['X-Session-Token'] = tokenData.sessionToken
-      
-      console.log(' Token enviado para:', config.url.split('/').slice(-1)[0])
-      console.log('   Token (primeiros 30 caracteres):', tokenData.sessionToken.slice(0, 30) + '...')
-      
-    } catch (err) {
-      console.error(' Erro ao adicionar token:', err)
-    }
+    console.log('[meu-gendaz] requisição autenticada via cookie HttpOnly', {
+      url: config.url,
+      method: config.method,
+    })
   }
   return config
 })
@@ -83,13 +64,17 @@ clienteApi.interceptors.response.use(
     const url = error.config?.url || ''
 
     if (status === 401) {
-      console.log(' 401 Recebido do backend - token inválido')
-      console.log('URL:', url)
-      console.log('Headers enviados:', error.config.headers)
-      localStorage.removeItem('meu-gendaz-auth')
-      console.log(' localStorage limpo')
+      const isAuthEndpoint = url.includes('/meu-gendaz/auth/solicitar-codigo')
+        || url.includes('/meu-gendaz/auth/validar-codigo')
+        || url.includes('/meu-gendaz/auth/logout')
+
+      if (isAuthEndpoint) {
+        return Promise.reject(error)
+      }
+
+      console.log('[meu-gendaz] 401 recebido - cookie inválido ou expirado', { url })
       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
-      window.location.href = '/meu-gendaz/login'
+      window.location.href = '/meu-gendaz'
     }
 
     if (status === 429) {
