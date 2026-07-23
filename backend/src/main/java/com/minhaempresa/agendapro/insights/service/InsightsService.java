@@ -160,18 +160,23 @@ public class InsightsService {
                 - Resposta sem pergunta final
                 - Texto gigante
                 """;
-        String promptUsuario = """
-                Contexto da empresa:
-                %s
+        String promptUsuario;
+        if (historico == null || historico.isEmpty()) {
+            promptUsuario = """
+                    Contexto da empresa:
+                    %s
 
-                Pergunta do usuário:
-                %s
+                    Pergunta do usuário:
+                    %s
 
-                Responda em português do Brasil e de forma conversacional, usando o contexto acima.
-                """.formatted(montarPromptDados(dados), pergunta);
+                    Responda em português do Brasil e de forma conversacional, usando o contexto acima.
+                    """.formatted(montarPromptDados(dados), pergunta);
+        } else {
+            promptUsuario = pergunta;
+        }
 
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        return resposta.map(valor -> humanizarResposta(valor, pergunta, dados)).orElseGet(() -> responderLocalmente(pergunta, dados));
+        return resposta.map(valor -> humanizarResposta(valor, pergunta, dados, historico)).orElseGet(() -> responderLocalmente(pergunta, dados));
     }
 
     @Transactional
@@ -515,7 +520,7 @@ public class InsightsService {
         return valor == null ? "" : String.valueOf(valor);
     }
 
-    public String humanizarResposta(String resposta, String pergunta, Map<String, Object> dados) {
+    public String humanizarResposta(String resposta, String pergunta, Map<String, Object> dados, List<ChatMessageRequest> historico) {
         if (resposta == null || resposta.isBlank()) {
             return responderLocalmente(pergunta, dados);
         }
@@ -524,6 +529,7 @@ public class InsightsService {
         String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase();
         boolean saudacao = perguntaNormalizada.matches(".*\\b(oi|olá|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*");
         boolean pareceMetricaFria = texto.matches("(?is).*(score\\s*:?\\s*\\d+/?\\d+|alertas?\\s*:?\\s*\\d+|oportunidades?\\s*:?\\s*\\d+).*");
+        boolean primeiraMensagem = historico == null || historico.isEmpty();
 
         if (texto.startsWith("{") && texto.endsWith("}")) {
             try {
@@ -539,7 +545,7 @@ public class InsightsService {
             texto = texto + "\n\nGostaria de saber mais sobre algo específico?";
         }
 
-        if (saudacao || pareceMetricaFria) {
+        if (saudacao || pareceMetricaFria || primeiraMensagem) {
             texto = normalizarTomConversacional(texto, perguntaNormalizada, dados);
         }
 
