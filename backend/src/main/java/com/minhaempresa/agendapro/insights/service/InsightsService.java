@@ -58,7 +58,7 @@ public class InsightsService {
         }
 
         String promptSistema = """
-                Você é um consultor de negócios para empresas de serviços. Analise os dados da empresa e devolva JSON puro no formato:
+                VocÃª Ã© um consultor de negÃ³cios para empresas de serviÃ§os. Analise os dados da empresa e devolva JSON puro no formato:
                 {
                   "scoreGeral": 0,
                   "alertas": [{"titulo":"","descricao":"","impacto":"","urgencia":"","tipo":"problema"}],
@@ -69,7 +69,7 @@ public class InsightsService {
                 Regras:
                 - Use somente os dados fornecidos.
                 - Seja direto e objetivo.
-                - Não explique o JSON.
+                - NÃ£o explique o JSON.
                 """;
         String promptUsuario = montarPromptDados(dados);
         Optional<String> resposta = groqClient.analisar(promptSistema, promptUsuario);
@@ -114,51 +114,15 @@ public class InsightsService {
         }
 
         String promptSistema = """
-                Você é um assistente de conversação amigável, humano e direto para uma plataforma de insights de negócios.
+                Você é um consultor amigável que analisa dados de negócios.
 
-                OBJETIVO:
-                - Responder como um bom consultor humano, não como relatório cru.
-                - Sempre contextualizar o número antes de jogar a métrica.
-                - Sempre terminar com uma pergunta curta e útil para manter a conversa.
-
-                TOM:
-                - Conversacional
-                - Natural
-                - Empático
-                - Leve, sem formalidade excessiva
-                - Use primeira pessoa quando fizer sentido ("eu posso te ajudar", "estou vendo...")
-
-                REGRAS OBRIGATÓRIAS:
-                1. Se a mensagem for saudação ("oi", "olá", "eae", "opa", "bom dia", "boa tarde", "boa noite"):
-                   responda com algo como:
-                   "Olá! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
-                   Depois, cite o score/resumo de forma humana e finalize com uma pergunta.
-
-                2. Se a pergunta pedir dados, explique primeiro o que os números indicam e só depois mostre os valores.
-                   Exemplo:
-                   "Pelo que eu estou vendo, o cenário está assim: ..."
-
-                3. Se a pergunta estiver vaga, faça uma pergunta de esclarecimento em vez de responder seco.
-
-                4. Use o histórico da conversa para não repetir contexto já dito.
-
-                5. Nunca responda só com métricas, lista fria ou JSON cru.
-
-                6. Seja breve: de 2 a 4 linhas, com no máximo 1 bloco curto por ideia.
-
-                7. Sempre termine com uma pergunta relevante.
-
-                EXEMPLOS DE ESTILO:
-                - "Olá! Tudo bem? Estou aqui pra te ajudar com os dados da sua empresa. Hoje seu score está em 75/100 e isso indica estabilidade com alguns pontos de atenção. Quer que eu detalhe os alertas?"
-                - "Seu faturamento está saudável, mas ainda há pendências que merecem atenção. Quer que eu mostre onde está o gargalo?"
-                - "Ainda não entendi exatamente o que você quer analisar. Você quer ver receita, clientes, serviços ou profissionais?"
-
-                PROIBIDO:
-                - Tom robótico ou distante
-                - Texto técnico demais
-                - Resposta sem contexto
-                - Resposta sem pergunta final
-                - Texto gigante
+                Regras:
+                - Responda em tom conversacional, como uma conversa natural.
+                - Se o usuário disser "oi", "olá", "eae" ou similar, cumprimente de forma natural.
+                - Use os dados fornecidos para contextualizar a resposta.
+                - Seja breve, com no máximo 3 ou 4 linhas.
+                - Sempre termine com uma pergunta relevante.
+                - Nunca ignore a pergunta do usuário.
                 """;
         String promptUsuario;
         if (historico == null || historico.isEmpty()) {
@@ -169,8 +133,8 @@ public class InsightsService {
                     Pergunta do usuário:
                     %s
 
-                    Responda em português do Brasil e de forma conversacional, usando o contexto acima.
-                    """.formatted(montarPromptDados(dados), pergunta);
+                    Responda em português do Brasil de forma natural, usando o contexto acima.
+                    """.formatted(montarPromptDadosConversa(dados), pergunta);
         } else {
             promptUsuario = pergunta;
         }
@@ -354,6 +318,38 @@ public class InsightsService {
         }
     }
 
+    private String montarPromptDadosConversa(Map<String, Object> dados) {
+        Map<String, Object> financeiro = mapa(dados.get("financeiro"));
+        Map<String, Object> clientes = mapa(dados.get("clientes"));
+        List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
+        List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
+
+        int scoreGeral = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
+
+        return """
+                Aqui está um resumo simples da empresa:
+                - Score geral: %d/100
+                - Receita dos últimos 30 dias: R$ %.2f
+                - Pendências financeiras: R$ %.2f
+                - Total de clientes: %d
+                - Clientes ativos: %d
+                - Clientes em risco: %d
+                - Total de serviços: %d
+                - Total de profissionais: %d
+
+                Use esses dados como contexto para responder de forma humana, consultiva e natural.
+                """.formatted(
+                scoreGeral,
+                numero(financeiro.get("receita_30d")),
+                numero(financeiro.get("pendente")),
+                inteiro(clientes.get("total")),
+                inteiro(clientes.get("ativos")),
+                inteiro(clientes.get("at_risk")),
+                servicos.size(),
+                profissionais.size()
+        );
+    }
+
     private String serializarDashboard(DashboardResponse dashboard) {
         try {
             return objectMapper.writeValueAsString(dashboard);
@@ -520,66 +516,50 @@ public class InsightsService {
         return valor == null ? "" : String.valueOf(valor);
     }
 
+    private int inteiro(Object valor) {
+        if (valor == null) return 0;
+        if (valor instanceof Number numero) return numero.intValue();
+        try {
+            return Integer.parseInt(String.valueOf(valor));
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     public String humanizarResposta(String resposta, String pergunta, Map<String, Object> dados, List<ChatMessageRequest> historico) {
         if (resposta == null || resposta.isBlank()) {
             return responderLocalmente(pergunta, dados);
         }
 
         String texto = resposta.trim();
-        String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase();
-        boolean saudacao = perguntaNormalizada.matches(".*\\b(oi|olá|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*");
-        boolean pareceMetricaFria = texto.matches("(?is).*(score\\s*:?\\s*\\d+/?\\d+|alertas?\\s*:?\\s*\\d+|oportunidades?\\s*:?\\s*\\d+).*");
-        boolean primeiraMensagem = historico == null || historico.isEmpty();
-
-        if (texto.startsWith("{") && texto.endsWith("}")) {
-            try {
-                Object json = objectMapper.readValue(texto, Object.class);
-                texto = "Aqui estão os dados que encontrei: "
-                        + objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
-            } catch (Exception ignored) {
-                texto = "Aqui estão os dados que encontrei: " + texto;
-            }
-        }
-
-        if (texto.length() < 20) {
-            texto = texto + "\n\nGostaria de saber mais sobre algo específico?";
-        }
-
-        if (saudacao || pareceMetricaFria || primeiraMensagem) {
-            texto = normalizarTomConversacional(texto, perguntaNormalizada, dados);
-        }
-
-        if (texto.length() > 1000) {
-            texto = texto.substring(0, 800).trim() + "...\n\nSe quiser, eu posso detalhar mais algum ponto.";
-        }
-
-        if (!texto.contains("?")) {
-            texto = texto + "\n\nO que mais você gostaria de saber?";
+        if (texto.startsWith("{") || texto.startsWith("[")) {
+            return responderLocalmente(pergunta, dados);
         }
 
         return texto;
     }
+
 
     private String normalizarTomConversacional(String texto, String perguntaNormalizada, Map<String, Object> dados) {
         Map<String, Object> clientes = mapa(dados.get("clientes"));
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
         int scoreCalculado = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
 
-        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olá|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
-                ? "Olá! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
+        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olÃ¡|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
+                ? "OlÃ¡! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
                 : "Vou te mostrar isso de forma simples:";
 
         String clientesEmRisco = String.valueOf(clientes.getOrDefault("at_risk", 0));
         String pendente = String.format("R$ %.2f", numero(financeiro.get("pendente")));
 
         String corpo = String.format(
-                "Seu score está em %s/100, com %s clientes em risco e %s em pendências financeiras.",
+                "Seu score estÃ¡ em %s/100, com %s clientes em risco e %s em pendÃªncias financeiras.",
                 scoreCalculado,
                 clientesEmRisco,
                 pendente
         );
 
-        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenção primeiro?";
+        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenÃ§Ã£o primeiro?";
         return saudacao + "\n" + corpo + "\n" + fechamento;
     }
 
@@ -627,7 +607,7 @@ public class InsightsService {
             );
         }
         return String.format(
-                "Score atual da empresa: %s/100. Alertas principais: clientes em risco (%s) e pendencias financeiras (R$ %.2f).",
+                "Pelo que eu estou vendo, sua empresa está com score %s/100. Os principais pontos de atenção são clientes em risco (%s) e pendências financeiras (R$ %.2f). Quer que eu detalhe algum ponto primeiro?",
                 construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral(),
                 clientes.getOrDefault("at_risk", 0),
                 numero(financeiro.get("pendente"))
