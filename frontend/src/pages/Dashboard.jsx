@@ -171,18 +171,20 @@ export default function Dashboard() {
   const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
   const totalClientesBase = clientesAtivos.length
   const servicosAtivosBase = servicosVisiveis.filter((s) => s.status === 'ATIVO').length
+  const receitaConfirmadaBase = data.pagamentos
+    .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
+    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
+  const pendenteCobrancaBase = data.pagamentos
+    .filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
+    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
 
   const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
   const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
   const totalClientes = resumoDashboard?.clientesCadastrados > 0 ? resumoDashboard.clientesCadastrados : totalClientesBase
   const servicosAtivos = resumoDashboard?.servicosAtivos > 0 ? resumoDashboard.servicosAtivos : servicosAtivosBase
 
-  const receitaTotal = resumoDashboard?.receitaConfirmada ?? data.pagamentos
-    .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
-    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
-  const totalPendente = resumoDashboard?.pendenteCobranca ?? data.pagamentos
-    .filter((p) => p.status === 'PENDENTE')
-    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
+  const receitaTotal = resumoDashboard?.receitaConfirmada > 0 ? resumoDashboard.receitaConfirmada : receitaConfirmadaBase
+  const totalPendente = resumoDashboard?.pendenteCobranca > 0 ? resumoDashboard.pendenteCobranca : pendenteCobrancaBase
   const servicosPorId = new Map((data.servicos || []).map((servico) => [servico.id, servico]))
   const servicoCountFallback = {}
   ;(data.agendamentos || []).forEach((a) => {

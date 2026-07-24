@@ -6381,9 +6381,12 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .dashboard-page .operation-metrics,
 .app-shell .dashboard-page .metric-grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
 }
 
 .app-shell .dashboard-page .operation-metrics article,
@@ -6839,9 +6842,12 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .dashboard-page .operation-metrics,
 .app-shell .dashboard-page .metric-grid {
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
+  width: 100%;
+  max-width: 1320px;
+  margin: 0 auto;
 }
 
 .app-shell .dashboard-page .operation-metrics article,
