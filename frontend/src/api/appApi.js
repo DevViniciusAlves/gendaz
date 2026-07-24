@@ -223,20 +223,25 @@ export const appApi = {
         }
       },
       dashboard: async () => {
-        const [empresa, resumo] = await Promise.all([
+        const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, resumo] = await Promise.all([
           api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/dashboard/resumo?empresaId=${empresaId}`).then((response) => response.data),
         ])
         const dashboardResumo = normalizarResumoDashboard(resumo)
         console.log('[dashboard-debug] dados recebidos', dashboardResumo)
-        const pagamentosBase = await api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data)
         return {
           empresa,
-          clientesBase: [],
-          servicosBase: [],
-          profissionais: [],
-          agendamentosBase: dashboardResumo?.ultimosAgendamentos || [],
-          conversas: [],
+          clientesBase,
+          servicosBase,
+          profissionais,
+          agendamentosBase,
+          conversas,
           pagamentosBase,
           planos: [],
           financeiro: {

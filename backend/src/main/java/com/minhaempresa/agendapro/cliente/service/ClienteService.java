@@ -12,6 +12,7 @@ import com.minhaempresa.agendapro.conversa.entity.ConversaEntity;
 import com.minhaempresa.agendapro.conversa.repository.ConversaRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.service.EmpresaService;
+import com.minhaempresa.agendapro.crm.repository.CrmContatoRepository;
 import com.minhaempresa.agendapro.entrega.repository.EntregaRepository;
 import com.minhaempresa.agendapro.mensagem.repository.MensagemRepository;
 import com.minhaempresa.agendapro.notafiscal.repository.NotaFiscalRepository;
@@ -34,6 +35,7 @@ public class ClienteService {
     private final AgendamentoRepository agendamentoRepository;
     private final PagamentoRepository pagamentoRepository;
     private final ConversaRepository conversaRepository;
+    private final CrmContatoRepository crmContatoRepository;
     private final MensagemRepository mensagemRepository;
     private final EntregaRepository entregaRepository;
     private final NotificacaoRepository notificacaoRepository;
@@ -118,6 +120,7 @@ public class ClienteService {
             conversaRepository.delete(conversa);
         }
 
+        crmContatoRepository.deleteByClienteId(id);
         entregaRepository.deleteByClienteId(id);
         notificacaoRepository.deleteByClienteId(id);
         notaFiscalRepository.deleteByClienteId(id);

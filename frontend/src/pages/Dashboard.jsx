@@ -157,16 +157,25 @@ export default function Dashboard() {
   const resumoDashboard = data.dashboardResumo || null
   console.log('[dashboard-debug] dados recebidos', data)
   const primeirosPassos = resumoDashboard?.primeirosPassos || null
+  const clientesAtivos = Array.isArray(data.clientes) ? data.clientes.filter((cliente) => !cliente.excluido) : []
+  const agendamentosVisiveis = Array.isArray(data.agendamentos) ? data.agendamentos : []
+  const conversasVisiveis = Array.isArray(data.conversas) ? data.conversas : []
+  const servicosVisiveis = Array.isArray(data.servicos) ? data.servicos : []
   const allowed = PLANOS[usuario?.plano]?.rotas || []
   const canFinanceiro = allowed.includes('financeiro')
   const hoje = todayIso()
   const hojeDate = new Date(`${hoje}T12:00:00`)
   const dataExtenso = hojeDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
 
-  const agendamentosHoje = resumoDashboard?.agendamentosHoje ?? data.agendamentos.filter((a) => a.data === hoje).length
-  const conversasAbertas = resumoDashboard?.conversasAbertas ?? data.conversas.filter((c) => c.status === 'ABERTA').length
-  const totalClientes = resumoDashboard?.clientesCadastrados ?? data.clientes.filter((cliente) => !cliente.excluido).length
-  const servicosAtivos = resumoDashboard?.servicosAtivos ?? data.servicos.filter((s) => s.status === 'ATIVO').length
+  const agendamentosHojeBase = agendamentosVisiveis.filter((a) => a.data === hoje).length
+  const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
+  const totalClientesBase = clientesAtivos.length
+  const servicosAtivosBase = servicosVisiveis.filter((s) => s.status === 'ATIVO').length
+
+  const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
+  const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
+  const totalClientes = resumoDashboard?.clientesCadastrados > 0 ? resumoDashboard.clientesCadastrados : totalClientesBase
+  const servicosAtivos = resumoDashboard?.servicosAtivos > 0 ? resumoDashboard.servicosAtivos : servicosAtivosBase
 
   const receitaTotal = resumoDashboard?.receitaConfirmada ?? data.pagamentos
     .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
