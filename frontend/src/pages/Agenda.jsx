@@ -256,10 +256,13 @@ export default function Agenda() {
   }
 
   function montarAgendamento(payload) {
+    const profissionalSelecionado = String(payload.profissionalId || '').trim()
     return {
       clienteId: Number(payload.clienteId),
       servicoId: Number(payload.servicoId),
-      profissionalId: payload.profissionalId ? Number(payload.profissionalId) : null,
+      profissionalId: profissionalSelecionado && profissionalSelecionado !== PROFISSIONAL_AUTOMATICO_VALUE
+        ? Number(profissionalSelecionado)
+        : null,
       data: payload.data,
       horaInicio: payload.horaInicio,
       status: payload.status,
@@ -268,17 +271,23 @@ export default function Agenda() {
   }
 
   function validarAgendamento(payload) {
-    if (!payload.clienteId || !payload.servicoId) return 'Cliente e serviço são obrigatórios.'
-    if (temProfissionais && !payload.profissionalId) return 'Cliente, serviço e profissional são obrigatórios.'
+    const clienteId = String(payload.clienteId ?? '').trim()
+    const servicoId = String(payload.servicoId ?? '').trim()
+    const profissionalId = String(payload.profissionalId ?? '').trim()
+    const data = String(payload.data ?? '').trim()
+    const horaInicio = String(payload.horaInicio ?? '').trim()
+
+    if (!clienteId || !servicoId) return 'Cliente e serviço são obrigatórios.'
+    if (temProfissionais && !profissionalId) return 'Cliente, serviço e profissional são obrigatórios.'
     const hoje = todayIso()
-    if (!payload.data || payload.data < hoje || payload.data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
-    if (!payload.horaInicio || payload.horaInicio < '00:00' || payload.horaInicio > '23:59') return 'Horário inválido.'
-    if (payload.data === hoje) {
+    if (!data || data < hoje || data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
+    if (!horaInicio || horaInicio < '00:00' || horaInicio > '23:59') return 'Horário inválido.'
+    if (data === hoje) {
       const partesAgora = agoraNoFuso(AGENDA_TIMEZONE)
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
-      if (payload.horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
+      if (horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
     }
-    if ((payload.observacoes || '').length > 300) return 'ObservaçÃµes deve ter até 300 caracteres.'
+    if ((payload.observacoes || '').length > 300) return 'Observações deve ter até 300 caracteres.'
     return ''
   }
 
@@ -338,9 +347,11 @@ export default function Agenda() {
         return
       }
       await appApi.criarAgendamento(agendamento)
-      await reload(true)
       setModalCriar(false)
       setForm(novoFormulario)
+      reload(true).catch((error) => {
+        console.warn('[agenda-debug] falha ao recarregar agenda após criar', error)
+      })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
       const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
@@ -384,9 +395,11 @@ export default function Agenda() {
         return
       }
       await appApi.atualizarAgendamento(edicao.id, agendamentoAtualizado)
-      await reload(true)
       setModalEditar(false)
       setEdicao(null)
+      reload(true).catch((error) => {
+        console.warn('[agenda-debug] falha ao recarregar agenda após editar', error)
+      })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
       const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
