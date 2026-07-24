@@ -1,6 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { Send } from 'lucide-react'
 
+function normalizarTexto(valor) {
+  return String(valor ?? '').trim()
+}
+
+function criarChaveHistorico(item) {
+  return [
+    normalizarTexto(item?.pergunta).toLowerCase(),
+    normalizarTexto(item?.resposta).toLowerCase(),
+  ].join('::')
+}
+
 function mapearHistorico(historico) {
   if (!Array.isArray(historico) || historico.length === 0) return []
 
@@ -39,20 +50,67 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
   const [carregando, setCarregando] = useState(false)
   const ref = useRef(null)
   const historicoProcessadoRef = useRef(new Set())
+  const envioPendenteRef = useRef(null)
 
   useEffect(() => {
     ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' })
   }, [mensagens])
 
   useEffect(() => {
-    const mensagensHistorico = mapearHistorico(historico).filter((mensagem) => {
-      const chave = String(mensagem.id)
-      if (historicoProcessadoRef.current.has(chave)) {
-        return false
-      }
-      historicoProcessadoRef.current.add(chave)
-      return true
-    })
+    const mensagensHistorico = []
+
+    historico
+      .slice()
+      .reverse()
+      .forEach((item, index) => {
+        const chave = criarChaveHistorico(item)
+        if (historicoProcessadoRef.current.has(chave)) {
+          return
+        }
+
+        const pergunta = normalizarTexto(item?.pergunta)
+        const resposta = normalizarTexto(item?.resposta)
+        const envioPendente = envioPendenteRef.current
+        const ehEnvioPendente = Boolean(
+          envioPendente &&
+          pergunta &&
+          pergunta.toLowerCase() === envioPendente.pergunta &&
+          resposta &&
+          resposta.toLowerCase() === envioPendente.resposta
+        )
+
+        if (ehEnvioPendente) {
+          if (resposta) {
+            mensagensHistorico.push({
+              id: `hist-assistant-${item?.id ?? `pendente-${index}`}`,
+              origem: 'bot',
+              texto: resposta,
+            })
+          }
+
+          historicoProcessadoRef.current.add(chave)
+          envioPendenteRef.current = null
+          return
+        }
+
+        if (pergunta) {
+          mensagensHistorico.push({
+            id: `hist-user-${item?.id ?? `hist-${index}`}`,
+            origem: 'user',
+            texto: pergunta,
+          })
+        }
+
+        if (resposta) {
+          mensagensHistorico.push({
+            id: `hist-assistant-${item?.id ?? `hist-${index}`}`,
+            origem: 'bot',
+            texto: resposta,
+          })
+        }
+
+        historicoProcessadoRef.current.add(chave)
+      })
 
     if (mensagensHistorico.length === 0) return
 
@@ -83,18 +141,20 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
       { id: `user-${Date.now()}`, origem: 'user', texto: pergunta },
     ])
 
+    envioPendenteRef.current = {
+      pergunta: pergunta.toLowerCase(),
+      resposta: '',
+    }
+
     setCarregando(true)
     try {
       const resposta = await onEnviar(pergunta, historicoParaEnviar)
-      setMensagens((current) => [
-        ...current,
-        {
-          id: `bot-${Date.now()}`,
-          origem: 'bot',
-          texto: resposta?.resposta || resposta || 'Sem resposta.',
-        },
-      ])
+      envioPendenteRef.current = {
+        pergunta: pergunta.toLowerCase(),
+        resposta: normalizarTexto(resposta?.resposta || resposta || 'Sem resposta.').toLowerCase(),
+      }
     } catch (error) {
+      envioPendenteRef.current = null
       setMensagens((current) => [
         ...current,
         {

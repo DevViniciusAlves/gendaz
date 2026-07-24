@@ -31,11 +31,11 @@ public class GroqClient {
     public GroqClient(
             ObjectMapper objectMapper,
             @Value("${groq.api-key:${GROQ_API_KEY:}}") String apiKey,
-            @Value("${groq.model:llama-3.1-70b-versatile}") String model
+            @Value("${groq.model:llama-3.3-70b-versatile}") String model
     ) {
         this.objectMapper = objectMapper;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "llama-3.1-70b-versatile" : model.trim();
+        this.model = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
@@ -89,6 +89,15 @@ public class GroqClient {
     }
 
     public Optional<String> conversar(String systemPrompt, List<Map<String, String>> historico, String userPrompt) {
+        System.out.println("\n========== GROQ DEBUG ==========");
+        System.out.println("[GROQ] disponivel(): " + disponivel());
+        System.out.println("[GROQ] API Key setada? " + (apiKey != null && !apiKey.isBlank()));
+        System.out.println("[GROQ] Model: " + model);
+        System.out.println("[GROQ] System prompt length: " + (systemPrompt == null ? 0 : systemPrompt.length()));
+        System.out.println("[GROQ] User prompt: " + userPrompt);
+        System.out.println("[GROQ] Histórico size: " + (historico == null ? 0 : historico.size()));
+        System.out.println("================================\n");
+
         if (!disponivel()) {
             return Optional.empty();
         }
@@ -111,6 +120,8 @@ public class GroqClient {
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            System.out.println("[GROQ-RESPONSE] Status: " + response.statusCode());
+            System.out.println("[GROQ-RESPONSE] Body: " + response.body());
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 log.warn("[insights-groq] resposta nao-sucedida status={} body={}", response.statusCode(), response.body());
                 return Optional.empty();
@@ -119,11 +130,17 @@ public class GroqClient {
             JsonNode root = objectMapper.readTree(response.body());
             JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
             String content = contentNode.isTextual() ? contentNode.asText() : null;
-            return Optional.ofNullable(content);
+            Optional<String> resultado = Optional.ofNullable(content);
+            System.out.println("[GROQ-RESULT] Retornando: " + (resultado.isPresent() ? "SIM" : "VAZIO"));
+            return resultado;
         } catch (IOException e) {
+            System.out.println("[GROQ-ERROR] " + e.getMessage());
+            e.printStackTrace();
             log.warn("[insights-groq] falha ao serializar ou ler resposta: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
+            System.out.println("[GROQ-ERROR] " + e.getMessage());
+            e.printStackTrace();
             log.warn("[insights-groq] falha ao conversar: {}", e.getMessage(), e);
             return Optional.empty();
         }

@@ -20,8 +20,11 @@ import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +61,7 @@ public class InsightsService {
         }
 
         String promptSistema = """
-                VocÃª Ã© um consultor de negÃ³cios para empresas de serviÃ§os. Analise os dados da empresa e devolva JSON puro no formato:
+                VocÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© um consultor de negÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³cios para empresas de serviÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os. Analise os dados da empresa e devolva JSON puro no formato:
                 {
                   "scoreGeral": 0,
                   "alertas": [{"titulo":"","descricao":"","impacto":"","urgencia":"","tipo":"problema"}],
@@ -69,7 +72,7 @@ public class InsightsService {
                 Regras:
                 - Use somente os dados fornecidos.
                 - Seja direto e objetivo.
-                - NÃ£o explique o JSON.
+                - NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o explique o JSON.
                 """;
         String promptUsuario = montarPromptDados(dados);
         Optional<String> resposta = groqClient.analisar(promptSistema, promptUsuario);
@@ -108,41 +111,53 @@ public class InsightsService {
 
     @Transactional(readOnly = true)
     public String analisarPergunta(Long empresaId, String pergunta, List<ChatMessageRequest> historico) {
+        validarAcessoEmpresa(empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
-        if (!groqClient.disponivel()) {
-            return responderLocalmente(pergunta, dados);
+        if (pergunta != null && pergunta.trim().toLowerCase().contains("nome")) {
+            return "Meu nome é GendazIA! 👋 Sou o assistente de negócios da plataforma Gendaz.";
         }
 
         String promptSistema = """
-                Você é um consultor amigável que analisa dados de negócios.
-
-                Regras:
-                - Responda em tom conversacional, como uma conversa natural.
-                - Se o usuário disser "oi", "olá", "eae" ou similar, cumprimente de forma natural.
-                - Use os dados fornecidos para contextualizar a resposta.
-                - Seja breve, com no máximo 3 ou 4 linhas.
-                - Sempre termine com uma pergunta relevante.
-                - Nunca ignore a pergunta do usuário.
+                Você é GendazIA, assistente de negócios da plataforma Gendaz.
+                Responda sempre em português do Brasil.
+                Seja conversacional, humano e direto.
+                Nunca ignore a pergunta do usuário.
+                Use os dados fornecidos para contextualizar a resposta.
+                Seja breve.
+                Sempre termine com uma pergunta relevante.
                 """;
-        String promptUsuario;
-        if (historico == null || historico.isEmpty()) {
-            promptUsuario = """
-                    Contexto da empresa:
-                    %s
+        String ramoEmpresa = identificarRamoEmpresa(listaMapa(dados.get("servicos")));
+        String promptUsuario = """
+                Dados da empresa (ramo: %s):
+                %s
 
-                    Pergunta do usuário:
-                    %s
+                Pergunta do usuário:
+                %s
 
-                    Responda em português do Brasil de forma natural, usando o contexto acima.
-                    """.formatted(montarPromptDadosConversa(dados), pergunta);
-        } else {
-            promptUsuario = pergunta;
+                Responda em português do Brasil de forma natural.
+                """.formatted(ramoEmpresa, montarPromptDadosConversa(dados), pergunta);
+
+        if (historico != null && !historico.isEmpty()) {
+            promptUsuario += """
+
+                    Histórico recente da conversa:
+                    %s
+                    """.formatted(String.valueOf(historicoParaGroq(historico)));
         }
 
-        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        return resposta.map(valor -> humanizarResposta(valor, pergunta, dados, historico)).orElseGet(() -> responderLocalmente(pergunta, dados));
-    }
+        System.out.println("=== GROQ INPUT ===");
+        System.out.println("Pergunta: " + pergunta);
+        System.out.println("Histórico: " + (historico == null ? "vazio" : historico.size() + " mensagens"));
+        System.out.println("Dados formatados:\n" + montarPromptDadosConversa(dados));
+        System.out.println("Ramo detectado: " + ramoEmpresa);
+        System.out.println("==================");
 
+        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
+        if (resposta.isEmpty()) {
+            return "Desculpa, tive um problema ao processar sua pergunta. Tente novamente.";
+        }
+        return humanizarResposta(resposta.get(), pergunta, dados, historico);
+    }
     @Transactional
     public InsightsResponse analisarERegistrar(Long empresaId, String pergunta) {
         String resposta = analisarPergunta(empresaId, pergunta, List.of());
@@ -327,14 +342,14 @@ public class InsightsService {
         int scoreGeral = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
 
         return """
-                Aqui está um resumo simples da empresa:
+                Aqui estÃƒÆ’Ã‚Â¡ um resumo simples da empresa:
                 - Score geral: %d/100
-                - Receita dos últimos 30 dias: R$ %.2f
-                - Pendências financeiras: R$ %.2f
+                - Receita dos ÃƒÆ’Ã‚Âºltimos 30 dias: R$ %.2f
+                - PendÃƒÆ’Ã‚Âªncias financeiras: R$ %.2f
                 - Total de clientes: %d
                 - Clientes ativos: %d
                 - Clientes em risco: %d
-                - Total de serviços: %d
+                - Total de serviÃƒÆ’Ã‚Â§os: %d
                 - Total de profissionais: %d
 
                 Use esses dados como contexto para responder de forma humana, consultiva e natural.
@@ -350,6 +365,32 @@ public class InsightsService {
         );
     }
 
+
+    private String identificarRamoEmpresa(List<Map<String, Object>> servicos) {
+        if (servicos == null || servicos.isEmpty()) {
+            return "Empresa de Serviços";
+        }
+
+        String servicosTxt = servicos.stream()
+                .map(s -> String.valueOf(s.getOrDefault("nome", "")))
+                .collect(java.util.stream.Collectors.joining(", "))
+                .toLowerCase();
+
+        if (servicosTxt.contains("cabelo") || servicosTxt.contains("corte") || servicosTxt.contains("barba")) {
+            return "Salão de Beleza / Barbearia";
+        }
+        if (servicosTxt.contains("consulta") || servicosTxt.contains("atendimento")) {
+            return "Clínica / Consultório";
+        }
+        if (servicosTxt.contains("aula") || servicosTxt.contains("treinamento")) {
+            return "Academia / Centro de Treinamento";
+        }
+        if (servicosTxt.contains("reparo") || servicosTxt.contains("manutenção")) {
+            return "Serviços Técnicos";
+        }
+        return "Empresa de Serviços";
+    }
+
     private String serializarDashboard(DashboardResponse dashboard) {
         try {
             return objectMapper.writeValueAsString(dashboard);
@@ -363,9 +404,14 @@ public class InsightsService {
             return List.of();
         }
 
+        Set<String> processadas = new HashSet<>();
         List<Map<String, String>> mensagens = new ArrayList<>();
         for (ChatMessageRequest item : historico) {
             if (item == null || item.content() == null || item.content().isBlank()) {
+                continue;
+            }
+            String chave = normalizarRole(item.role()) + ":" + item.content().trim();
+            if (!processadas.add(chave)) {
                 continue;
             }
             Map<String, String> mensagem = new LinkedHashMap<>();
@@ -374,6 +420,16 @@ public class InsightsService {
             mensagens.add(mensagem);
         }
         return mensagens;
+    }
+
+    private void validarAcessoEmpresa(Long empresaId) {
+        if (empresaId == null) {
+            throw new IllegalArgumentException("Empresa nao identificada.");
+        }
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null && !empresaContexto.equals(empresaId)) {
+            throw new SecurityException("Acesso negado. Voce nao tem permissao para acessar essa empresa.");
+        }
     }
 
     private String normalizarRole(String role) {
@@ -536,30 +592,37 @@ public class InsightsService {
             return responderLocalmente(pergunta, dados);
         }
 
+        if (texto.length() > 500) {
+            texto = texto.substring(0, 450).trim() + "...";
+        }
+
+        if (!texto.contains("?")) {
+            texto = texto + " O que mais vocÃƒÂª quer saber?";
+        }
+
         return texto;
     }
-
 
     private String normalizarTomConversacional(String texto, String perguntaNormalizada, Map<String, Object> dados) {
         Map<String, Object> clientes = mapa(dados.get("clientes"));
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
         int scoreCalculado = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
 
-        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olÃ¡|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
-                ? "OlÃ¡! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
+        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
+                ? "OlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
                 : "Vou te mostrar isso de forma simples:";
 
         String clientesEmRisco = String.valueOf(clientes.getOrDefault("at_risk", 0));
         String pendente = String.format("R$ %.2f", numero(financeiro.get("pendente")));
 
         String corpo = String.format(
-                "Seu score estÃ¡ em %s/100, com %s clientes em risco e %s em pendÃªncias financeiras.",
+                "Seu score estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ em %s/100, com %s clientes em risco e %s em pendÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªncias financeiras.",
                 scoreCalculado,
                 clientesEmRisco,
                 pendente
         );
 
-        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenÃ§Ã£o primeiro?";
+        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o primeiro?";
         return saudacao + "\n" + corpo + "\n" + fechamento;
     }
 
@@ -607,7 +670,7 @@ public class InsightsService {
             );
         }
         return String.format(
-                "Pelo que eu estou vendo, sua empresa está com score %s/100. Os principais pontos de atenção são clientes em risco (%s) e pendências financeiras (R$ %.2f). Quer que eu detalhe algum ponto primeiro?",
+                "Pelo que eu estou vendo, sua empresa estÃƒÂ¡ com score %s/100. Os principais pontos de atenÃƒÂ§ÃƒÂ£o sÃƒÂ£o clientes em risco (%s) e pendÃƒÂªncias financeiras (R$ %.2f). Quer que eu detalhe algum ponto primeiro?",
                 construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral(),
                 clientes.getOrDefault("at_risk", 0),
                 numero(financeiro.get("pendente"))

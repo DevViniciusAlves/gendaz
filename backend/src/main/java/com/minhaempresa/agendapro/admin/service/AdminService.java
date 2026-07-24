@@ -94,7 +94,7 @@ public class AdminService {
         List<AssinaturaEntity> assinaturas = empresaRepository.findAll().stream()
                 .map(empresa -> assinaturaService.buscarAtualPorEmpresa(empresa.getId()).orElse(null))
                 .filter(Objects::nonNull)
-                .toList();
+                .collect(java.util.stream.Collectors.toList());
         YearMonth mesAtual = YearMonth.now();
         BigDecimal faturamentoTotal = pagamentos.stream()
                 .filter(this::pagamentoConfirmado)
