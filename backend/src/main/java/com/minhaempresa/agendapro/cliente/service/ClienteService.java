@@ -22,13 +22,17 @@ import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ClienteService {
     private final ClienteRepository clienteRepository;
     private final EmpresaService empresaService;
@@ -46,22 +50,45 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponse salvar(SalvarClienteRequest request) {
-        EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
-        String nome = sanitizacaoService.textoObrigatorio(request.nome());
-        String telefone = sanitizacaoService.telefone(request.telefone());
-        String email = sanitizacaoService.email(request.email());
-        validarCamposObrigatorios(nome, telefone, email);
-        validarDuplicidade(empresa.getId(), telefone, email, null);
-        ClienteEntity cliente = ClienteEntity.builder()
-                .nome(nome)
-                .telefone(telefone)
-                .email(email)
-                .observacoes(sanitizacaoService.texto(request.observacoes()))
-                .empresa(empresa)
-                .build();
-        ClienteEntity salvo = clienteRepository.save(cliente);
-        auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", salvo.getNome(), null, null);
-        return mapper.toResponse(salvo);
+        Map<String, Object> contextoInicio = new LinkedHashMap<>();
+        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("nome", request.nome());
+        contextoInicio.put("telefone", request.telefone());
+        contextoInicio.put("email", request.email());
+        log.debug("[cliente-debug] inicio criacao cliente {}", contextoInicio);
+        try {
+            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            String nome = sanitizacaoService.textoObrigatorio(request.nome());
+            String telefone = sanitizacaoService.telefone(request.telefone());
+            String email = sanitizacaoService.email(request.email());
+            validarCamposObrigatorios(nome, telefone, email);
+            validarDuplicidade(empresa.getId(), telefone, email, null);
+            ClienteEntity cliente = ClienteEntity.builder()
+                    .nome(nome)
+                    .telefone(telefone)
+                    .email(email)
+                    .observacoes(sanitizacaoService.texto(request.observacoes()))
+                    .empresa(empresa)
+                    .build();
+            ClienteEntity salvo = clienteRepository.save(cliente);
+            Map<String, Object> contextoSucesso = new LinkedHashMap<>();
+            contextoSucesso.put("clienteId", salvo.getId());
+            contextoSucesso.put("empresaId", empresa.getId());
+            contextoSucesso.put("nome", salvo.getNome());
+            contextoSucesso.put("telefone", salvo.getTelefone());
+            contextoSucesso.put("email", salvo.getEmail());
+            log.info("[cliente-debug] cliente criado com sucesso {}", contextoSucesso);
+            auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", salvo.getNome(), null, null);
+            return mapper.toResponse(salvo);
+        } catch (Exception e) {
+            Map<String, Object> contexto = new LinkedHashMap<>();
+            contexto.put("empresaId", request.empresaId());
+            contexto.put("nome", request.nome());
+            contexto.put("telefone", request.telefone());
+            contexto.put("email", request.email());
+            log.error("[cliente-debug] erro ao criar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)

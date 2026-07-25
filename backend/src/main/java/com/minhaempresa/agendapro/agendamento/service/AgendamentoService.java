@@ -33,7 +33,9 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,40 +65,91 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse criar(CriarAgendamentoRequest request) {
-        EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
-        ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
-        ProfissionalEntity profissional = request.profissionalId() == null
-                ? profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)
-                : profissionalService.buscarEntidade(request.profissionalId());
-        LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
-        validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
-        validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
-        validarConflitoHorario(profissional.getId(), request.data(), request.horaInicio(), horaFim, null);
-        AgendamentoEntity agendamento = AgendamentoEntity.builder()
-                .cliente(cliente)
-                .servico(servico)
-                .profissional(profissional)
-                .empresa(empresa)
-                .data(request.data())
-                .horaInicio(request.horaInicio())
-                .horaFim(horaFim)
-                .status(StatusAgendamento.PENDENTE)
-                .protocolo(gerarProtocoloSeNecessario(null))
-                .observacoes(sanitizacaoService.texto(request.observacoes()))
-                .build();
-        AgendamentoEntity salvo = salvarAgendamentoComProtocolo(agendamento);
+        Map<String, Object> contextoInicio = new LinkedHashMap<>();
+        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("clienteId", request.clienteId());
+        contextoInicio.put("servicoId", request.servicoId());
+        contextoInicio.put("profissionalId", request.profissionalId());
+        contextoInicio.put("data", request.data());
+        contextoInicio.put("horaInicio", request.horaInicio());
+        contextoInicio.put("observacoes", request.observacoes());
+        log.debug("[agendamento-debug] inicio criacao agendamento {}", contextoInicio);
         try {
-            criarPagamentoPendente(salvo, cliente, empresa, servico);
+            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+            ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
+            ProfissionalEntity profissional = request.profissionalId() == null
+                    ? profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)
+                    : profissionalService.buscarEntidade(request.profissionalId());
+            LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
+            validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
+            validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
+            validarConflitoHorario(profissional.getId(), request.data(), request.horaInicio(), horaFim, null);
+            AgendamentoEntity agendamento = AgendamentoEntity.builder()
+                    .cliente(cliente)
+                    .servico(servico)
+                    .profissional(profissional)
+                    .empresa(empresa)
+                    .data(request.data())
+                    .horaInicio(request.horaInicio())
+                    .horaFim(horaFim)
+                    .status(StatusAgendamento.PENDENTE)
+                    .protocolo(gerarProtocoloSeNecessario(null))
+                    .observacoes(sanitizacaoService.texto(request.observacoes()))
+                    .build();
+            AgendamentoEntity salvo = salvarAgendamentoComProtocolo(agendamento);
+            Map<String, Object> contextoSucesso = new LinkedHashMap<>();
+            contextoSucesso.put("agendamentoId", salvo.getId());
+            contextoSucesso.put("protocolo", salvo.getProtocolo());
+            contextoSucesso.put("empresaId", empresa.getId());
+            contextoSucesso.put("clienteId", cliente.getId());
+            contextoSucesso.put("clienteNome", cliente.getNome());
+            contextoSucesso.put("servicoId", servico.getId());
+            contextoSucesso.put("servicoNome", servico.getNome());
+            contextoSucesso.put("profissionalId", profissional.getId());
+            contextoSucesso.put("profissionalNome", profissional.getNome());
+            contextoSucesso.put("data", salvo.getData());
+            contextoSucesso.put("horaInicio", salvo.getHoraInicio());
+            contextoSucesso.put("horaFim", salvo.getHoraFim());
+            contextoSucesso.put("status", salvo.getStatus());
+            log.info("[agendamento-debug] agendamento salvo com sucesso {}", contextoSucesso);
+            try {
+                criarPagamentoPendente(salvo, cliente, empresa, servico);
+            } catch (Exception e) {
+                Map<String, Object> contextoPagamentoErro = new LinkedHashMap<>();
+                contextoPagamentoErro.put("agendamentoId", salvo.getId());
+                contextoPagamentoErro.put("protocolo", salvo.getProtocolo());
+                contextoPagamentoErro.put("empresaId", empresa.getId());
+                contextoPagamentoErro.put("clienteId", cliente.getId());
+                contextoPagamentoErro.put("servicoId", servico.getId());
+                contextoPagamentoErro.put("profissionalId", profissional.getId());
+                log.warn("[agendamento-debug] falha ao criar pagamento pendente. mensagem='{}' contexto={}", e.getMessage(), contextoPagamentoErro, e);
+            }
+            try {
+                resendEmailService.enviarEmailNovoAgendamento(empresa, salvo);
+            } catch (Exception e) {
+                Map<String, Object> contextoEmailErro = new LinkedHashMap<>();
+                contextoEmailErro.put("agendamentoId", salvo.getId());
+                contextoEmailErro.put("protocolo", salvo.getProtocolo());
+                contextoEmailErro.put("empresaId", empresa.getId());
+                contextoEmailErro.put("clienteId", cliente.getId());
+                contextoEmailErro.put("servicoId", servico.getId());
+                contextoEmailErro.put("profissionalId", profissional.getId());
+                log.error("[agendamento-debug] falha ao enviar email. mensagem='{}' contexto={}", e.getMessage(), contextoEmailErro, e);
+            }
+            return mapper.toResponse(salvo);
         } catch (Exception e) {
-            log.warn("Falha ao criar pagamento pendente do agendamento protocolo {}: {}", salvo.getProtocolo(), e.getMessage(), e);
+            Map<String, Object> contextoErro = new LinkedHashMap<>();
+            contextoErro.put("empresaId", request.empresaId());
+            contextoErro.put("clienteId", request.clienteId());
+            contextoErro.put("servicoId", request.servicoId());
+            contextoErro.put("profissionalId", request.profissionalId());
+            contextoErro.put("data", request.data());
+            contextoErro.put("horaInicio", request.horaInicio());
+            contextoErro.put("observacoes", request.observacoes());
+            log.error("[agendamento-debug] erro ao criar agendamento. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            throw e;
         }
-        try {
-            resendEmailService.enviarEmailNovoAgendamento(empresa, salvo);
-        } catch (Exception e) {
-            log.error("Falha ao enviar notificacao por email do agendamento protocolo {}: {}", salvo.getProtocolo(), e.getMessage(), e);
-        }
-        return mapper.toResponse(salvo);
     }
 
     @Transactional(readOnly = true)

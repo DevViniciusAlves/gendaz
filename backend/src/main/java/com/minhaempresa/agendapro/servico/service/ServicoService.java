@@ -13,13 +13,17 @@ import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ServicoService {
     private final ServicoRepository servicoRepository;
     private final EmpresaService empresaService;
@@ -30,18 +34,43 @@ public class ServicoService {
 
     @Transactional
     public ServicoResponse salvar(SalvarServicoRequest request) {
-        EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
-        Integer duracao = request.duracaoMinutos() != null ? request.duracaoMinutos() : 30;
-        java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
-        ServicoEntity servico = ServicoEntity.builder()
-                .nome(sanitizacaoService.textoObrigatorio(request.nome()))
-                .descricao(sanitizacaoService.texto(request.descricao()))
-                .duracaoMinutos(duracao)
-                .valor(val)
-                .status(StatusCadastro.ATIVO)
-                .empresa(empresa)
-                .build();
-        return mapper.toResponse(servicoRepository.save(servico));
+        Map<String, Object> contextoInicio = new LinkedHashMap<>();
+        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("nome", request.nome());
+        contextoInicio.put("duracaoMinutos", request.duracaoMinutos());
+        contextoInicio.put("valor", request.valor());
+        contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
+        log.debug("[servico-debug] inicio criacao servico {}", contextoInicio);
+        try {
+            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            Integer duracao = request.duracaoMinutos() != null ? request.duracaoMinutos() : 30;
+            java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
+            ServicoEntity servico = ServicoEntity.builder()
+                    .nome(sanitizacaoService.textoObrigatorio(request.nome()))
+                    .descricao(sanitizacaoService.texto(request.descricao()))
+                    .duracaoMinutos(duracao)
+                    .valor(val)
+                    .status(StatusCadastro.ATIVO)
+                    .empresa(empresa)
+                    .build();
+            ServicoEntity salvo = servicoRepository.save(servico);
+            Map<String, Object> contextoSucesso = new LinkedHashMap<>();
+            contextoSucesso.put("servicoId", salvo.getId());
+            contextoSucesso.put("empresaId", empresa.getId());
+            contextoSucesso.put("nome", salvo.getNome());
+            contextoSucesso.put("duracaoMinutos", salvo.getDuracaoMinutos());
+            contextoSucesso.put("valor", salvo.getValor());
+            log.info("[servico-debug] servico criado com sucesso {}", contextoSucesso);
+            return mapper.toResponse(salvo);
+        } catch (Exception e) {
+            Map<String, Object> contextoErro = new LinkedHashMap<>();
+            contextoErro.put("empresaId", request.empresaId());
+            contextoErro.put("nome", request.nome());
+            contextoErro.put("duracaoMinutos", request.duracaoMinutos());
+            contextoErro.put("valor", request.valor());
+            log.error("[servico-debug] erro ao criar servico. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)

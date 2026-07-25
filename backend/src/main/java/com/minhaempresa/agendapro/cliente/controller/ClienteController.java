@@ -9,23 +9,39 @@ import com.minhaempresa.agendapro.cliente.service.ClienteBulkService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/clientes")
 @RequiredArgsConstructor
+@Slf4j
 public class ClienteController {
     private final ClienteService clienteService;
     private final ClienteBulkService clienteBulkService;
 
     @PostMapping
     public ResponseEntity<?> criar(@Valid @RequestBody SalvarClienteRequest request) {
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("nome", request.nome());
+        contexto.put("telefone", request.telefone());
+        contexto.put("email", request.email());
+        log.debug("[cliente-debug] clique em criar cliente {}", contexto);
         try {
-            return ResponseEntity.ok(clienteService.salvar(request));
+            var response = clienteService.salvar(request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("clienteId", response.id());
+            retorno.put("nome", response.nome());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[cliente-debug] resposta criar cliente sucesso {}", retorno);
+            return ResponseEntity.ok(response);
         } catch (BusinessException e) {
+            log.error("[cliente-debug] erro no clique criar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
             return ResponseEntity.badRequest().body(Map.of(
                     "erro", "TELEFONE_INVALIDO",
                     "mensagem", e.getMessage()
@@ -50,9 +66,23 @@ public class ClienteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody SalvarClienteRequest request) {
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("clienteId", id);
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("nome", request.nome());
+        contexto.put("telefone", request.telefone());
+        contexto.put("email", request.email());
+        log.debug("[cliente-debug] clique em atualizar cliente {}", contexto);
         try {
-            return ResponseEntity.ok(clienteService.atualizar(id, request));
+            ClienteResponse response = clienteService.atualizar(id, request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("clienteId", response.id());
+            retorno.put("nome", response.nome());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[cliente-debug] resposta atualizar cliente sucesso {}", retorno);
+            return ResponseEntity.ok(response);
         } catch (BusinessException e) {
+            log.error("[cliente-debug] erro no clique atualizar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
             return ResponseEntity.badRequest().body(Map.of(
                     "erro", "TELEFONE_INVALIDO",
                     "mensagem", e.getMessage()

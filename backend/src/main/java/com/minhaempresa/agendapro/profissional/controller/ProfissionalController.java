@@ -6,19 +6,40 @@ import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/profissionais")
 @RequiredArgsConstructor
+@Slf4j
 public class ProfissionalController {
     private final ProfissionalService profissionalService;
 
     @PostMapping
     public ResponseEntity<ProfissionalResponse> criar(@Valid @RequestBody SalvarProfissionalRequest request) {
-        return ResponseEntity.ok(profissionalService.salvar(request));
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("nome", request.nome());
+        contexto.put("especialidade", request.especialidade());
+        contexto.put("telefone", request.telefone());
+        log.debug("[profissional-debug] clique em criar profissional {}", contexto);
+        try {
+            ProfissionalResponse response = profissionalService.salvar(request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("profissionalId", response.id());
+            retorno.put("nome", response.nome());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[profissional-debug] resposta criar profissional sucesso {}", retorno);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[profissional-debug] erro no clique criar profissional. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            throw e;
+        }
     }
 
     @GetMapping("/empresa/{empresaId}")
@@ -28,7 +49,25 @@ public class ProfissionalController {
 
     @PutMapping("/{id}")
     public ResponseEntity<ProfissionalResponse> atualizar(@PathVariable Long id, @Valid @RequestBody SalvarProfissionalRequest request) {
-        return ResponseEntity.ok(profissionalService.atualizar(id, request));
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("profissionalId", id);
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("nome", request.nome());
+        contexto.put("especialidade", request.especialidade());
+        contexto.put("telefone", request.telefone());
+        log.debug("[profissional-debug] clique em atualizar profissional {}", contexto);
+        try {
+            ProfissionalResponse response = profissionalService.atualizar(id, request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("profissionalId", response.id());
+            retorno.put("nome", response.nome());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[profissional-debug] resposta atualizar profissional sucesso {}", retorno);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[profissional-debug] erro no clique atualizar profissional. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            throw e;
+        }
     }
 
     @PatchMapping("/{id}/ativar")

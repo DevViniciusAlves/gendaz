@@ -12,13 +12,17 @@ import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfissionalService {
     private final ProfissionalRepository profissionalRepository;
     private final EmpresaService empresaService;
@@ -27,15 +31,42 @@ public class ProfissionalService {
 
     @Transactional
     public ProfissionalResponse salvar(SalvarProfissionalRequest request) {
-        EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
-        ProfissionalEntity profissional = ProfissionalEntity.builder()
-                .nome(sanitizacaoService.textoObrigatorio(request.nome()))
-                .especialidade(sanitizacaoService.texto(request.especialidade()))
-                .telefone(sanitizacaoService.telefone(request.telefone()))
-                .status(StatusCadastro.ATIVO)
-                .empresa(empresa)
-                .build();
-        return mapper.toResponse(profissionalRepository.save(profissional));
+        Map<String, Object> contextoInicio = new LinkedHashMap<>();
+        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("nome", request.nome());
+        contextoInicio.put("especialidade", request.especialidade());
+        contextoInicio.put("telefone", request.telefone());
+        contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
+        contextoInicio.put("sistema", false);
+        log.debug("[profissional-debug] inicio criacao profissional {}", contextoInicio);
+        try {
+            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            ProfissionalEntity profissional = ProfissionalEntity.builder()
+                    .nome(sanitizacaoService.textoObrigatorio(request.nome()))
+                    .especialidade(sanitizacaoService.texto(request.especialidade()))
+                    .telefone(sanitizacaoService.telefone(request.telefone()))
+                    .status(StatusCadastro.ATIVO)
+                    .empresa(empresa)
+                    .build();
+            ProfissionalEntity salvo = profissionalRepository.save(profissional);
+            Map<String, Object> contextoSucesso = new LinkedHashMap<>();
+            contextoSucesso.put("profissionalId", salvo.getId());
+            contextoSucesso.put("empresaId", empresa.getId());
+            contextoSucesso.put("nome", salvo.getNome());
+            contextoSucesso.put("especialidade", salvo.getEspecialidade());
+            contextoSucesso.put("telefone", salvo.getTelefone());
+            contextoSucesso.put("sistema", salvo.isSistema());
+            log.info("[profissional-debug] profissional criado com sucesso {}", contextoSucesso);
+            return mapper.toResponse(salvo);
+        } catch (Exception e) {
+            Map<String, Object> contextoErro = new LinkedHashMap<>();
+            contextoErro.put("empresaId", request.empresaId());
+            contextoErro.put("nome", request.nome());
+            contextoErro.put("especialidade", request.especialidade());
+            contextoErro.put("telefone", request.telefone());
+            log.error("[profissional-debug] erro ao criar profissional. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            throw e;
+        }
     }
 
     @Transactional(readOnly = true)

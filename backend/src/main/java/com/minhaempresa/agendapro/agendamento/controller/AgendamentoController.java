@@ -10,8 +10,11 @@ import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoBulkService;
 import jakarta.validation.Valid;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,13 +22,35 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/agendamentos")
 @RequiredArgsConstructor
+@Slf4j
 public class AgendamentoController {
     private final AgendamentoService agendamentoService;
     private final AgendamentoBulkService agendamentoBulkService;
 
     @PostMapping
     public ResponseEntity<AgendamentoResponse> criar(@Valid @RequestBody CriarAgendamentoRequest request) {
-        return ResponseEntity.ok(agendamentoService.criar(request));
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("clienteId", request.clienteId());
+        contexto.put("servicoId", request.servicoId());
+        contexto.put("profissionalId", request.profissionalId());
+        contexto.put("data", request.data());
+        contexto.put("horaInicio", request.horaInicio());
+        contexto.put("observacoes", request.observacoes());
+        log.debug("[agendamento-debug] clique em criar agendamento {}", contexto);
+        try {
+            AgendamentoResponse response = agendamentoService.criar(request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("agendamentoId", response.id());
+            retorno.put("protocolo", response.protocolo());
+            retorno.put("status", response.status());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[agendamento-debug] resposta criar agendamento sucesso {}", retorno);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[agendamento-debug] erro no clique criar agendamento. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            throw e;
+        }
     }
 
     @GetMapping("/empresa/{empresaId}")
@@ -50,7 +75,30 @@ public class AgendamentoController {
 
     @PutMapping("/{id}")
     public ResponseEntity<AgendamentoResponse> atualizar(@PathVariable Long id, @Valid @RequestBody AtualizarAgendamentoRequest request) {
-        return ResponseEntity.ok(agendamentoService.atualizar(id, request));
+        Map<String, Object> contexto = new LinkedHashMap<>();
+        contexto.put("agendamentoId", id);
+        contexto.put("empresaId", request.empresaId());
+        contexto.put("clienteId", request.clienteId());
+        contexto.put("servicoId", request.servicoId());
+        contexto.put("profissionalId", request.profissionalId());
+        contexto.put("data", request.data());
+        contexto.put("horaInicio", request.horaInicio());
+        contexto.put("status", request.status());
+        contexto.put("observacoes", request.observacoes());
+        log.debug("[agendamento-debug] clique em atualizar agendamento {}", contexto);
+        try {
+            AgendamentoResponse response = agendamentoService.atualizar(id, request);
+            Map<String, Object> retorno = new LinkedHashMap<>();
+            retorno.put("agendamentoId", response.id());
+            retorno.put("protocolo", response.protocolo());
+            retorno.put("status", response.status());
+            retorno.put("empresaId", request.empresaId());
+            log.info("[agendamento-debug] resposta atualizar agendamento sucesso {}", retorno);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("[agendamento-debug] erro no clique atualizar agendamento. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            throw e;
+        }
     }
 
     @PatchMapping("/{id}/confirmar")
