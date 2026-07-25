@@ -11,6 +11,7 @@ public class CrmDtos {
             String email,
             String segment,
             int diasSemAgendar,
+            java.time.LocalDate ultimoAgendamentoData,
             double totalGasto,
             int agendamentos,
             int padraoFrequencia,

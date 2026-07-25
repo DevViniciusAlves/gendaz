@@ -7,7 +7,7 @@ import SendMessageModal from './crm/SendMessageModal.jsx'
 import ContactHistoryModal from './crm/ContactHistoryModal.jsx'
 import Pagination from '../components/Pagination.jsx'
 
-const CLIENTES_POR_PAGINA = 5
+const CLIENTES_POR_PAGINA = 4
 
 export default function Crm() {
   const { clientes, loading, error, filtros, atualizarFiltros, limparFiltros } = useCrmData()

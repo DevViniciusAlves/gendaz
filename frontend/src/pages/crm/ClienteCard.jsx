@@ -2,12 +2,12 @@ import { Mail, Phone } from 'lucide-react'
 import { useState } from 'react'
 
 const SEGMENTO_COLORS = {
-  at_risk: { bg: 'var(--surface-soft)', text: 'var(--text)', dot: 'var(--text)' },
-  regular: { bg: 'var(--surface-soft)', text: 'var(--text)', dot: 'var(--muted)' },
-  novo: { bg: 'var(--surface-soft)', text: 'var(--text)', dot: 'var(--muted)' },
+  at_risk: { bg: '#fee2e2', text: '#dc2626', dot: '#dc2626' },
+  regular: { bg: '#ffedd5', text: '#ea580c', dot: '#ea580c' },
+  novo: { bg: '#dcfce7', text: '#16a34a', dot: '#16a34a' },
 }
 
-const SEGMENTO_LABELS = { at_risk: 'At-risk', regular: 'Regular', novo: 'Novo' }
+const SEGMENTO_LABELS = { at_risk: 'Alto Risco', regular: 'Regular', novo: 'Novo' }
 
 function formatCurrency(valor) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor || 0)
@@ -16,7 +16,7 @@ function formatCurrency(valor) {
 function formatarData(data) {
   if (!data) return '-'
   const d = new Date(data)
-  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
 export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico }) {
@@ -89,8 +89,8 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         padding: '7px 0',
       }}>
         <div style={{ textAlign: 'center' }}>
-          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{cliente.diasSemAgendar}d</div>
-          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Inativo há</div>
+          <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{formatarData(cliente.ultimoAgendamentoData)}</div>
+          <div style={{ color: 'var(--muted)', fontSize: 10 }}>Último agendamento</div>
         </div>
         <div style={{ textAlign: 'center' }}>
           <div style={{ color: 'var(--text)', fontWeight: 700, fontSize: 10 }}>{formatCurrency(cliente.totalGasto)}</div>
@@ -114,27 +114,27 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
 
       <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
         {[
-          { label: 'Resgate', template: 'resgate' },
-          { label: 'Reconexao', template: 'reconexao' },
-          { label: 'Promo', template: 'promocao' },
+          { label: 'Resgate', template: 'resgate', color: '#16a34a' },
+          { label: 'Reconexao', template: 'reconexao', color: '#dc2626' },
+          { label: 'Promoções', template: 'promocao', color: '#075ae0' },
         ].map((btn) => (
           <button
             key={btn.template}
             onClick={() => onEnviarMensagem?.(cliente, btn.template)}
             style={{
               padding: '3px 8px',
-              border: '1px solid var(--text)',
+              border: `1px solid ${btn.color}`,
               borderRadius: 4,
-              background: 'var(--text)',
-              color: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
+              background: btn.color,
+              color: '#fff',
               fontSize: 10,
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.15s',
               height: 24,
             }}
-            onMouseEnter={(e) => { e.target.style.background = 'var(--text)'; e.target.style.color = 'var(--surface-solid, var(--surface-strong, var(--surface)))'; e.target.style.transform = 'scale(1.02)' }}
-            onMouseLeave={(e) => { e.target.style.background = 'var(--text)'; e.target.style.color = 'var(--surface-solid, var(--surface-strong, var(--surface)))'; e.target.style.transform = 'scale(1)' }}
+            onMouseEnter={(e) => { e.target.style.opacity = '0.9'; e.target.style.transform = 'scale(1.02)' }}
+            onMouseLeave={(e) => { e.target.style.opacity = '1'; e.target.style.transform = 'scale(1)' }}
           >
             {btn.label}
           </button>

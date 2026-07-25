@@ -2,9 +2,9 @@ import { Search } from 'lucide-react'
 
 const SEGMENTO_OPTIONS = [
   { value: 'todos', label: 'Todos', cor: '' },
-  { value: 'at_risk', label: 'At-risk', cor: 'var(--text)' },
-  { value: 'regular', label: 'Regular', cor: 'var(--muted)' },
-  { value: 'novo', label: 'Novo', cor: 'var(--muted)' },
+  { value: 'at_risk', label: 'Alto Risco', cor: '#ef4444' },
+  { value: 'regular', label: 'Regular', cor: '#f59e0b' },
+  { value: 'novo', label: 'Novo', cor: '#22c55e' },
 ]
 
 const ORDENACAO_OPTIONS = [
@@ -65,7 +65,7 @@ export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
                 value={opt.value}
                 checked={filtros.segment === opt.value}
                 onChange={() => onFiltroChange({ segment: opt.value })}
-                style={{ accentColor: 'var(--text)', width: 14, height: 14, cursor: 'pointer' }}
+                style={{ accentColor: opt.cor || 'var(--text)', width: 14, height: 14, cursor: 'pointer' }}
               />
               {opt.cor && <span style={{ width: 7, height: 7, borderRadius: '50%', background: opt.cor, flexShrink: 0 }} />}
               {opt.label}

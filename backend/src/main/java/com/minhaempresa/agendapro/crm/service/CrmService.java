@@ -52,6 +52,7 @@ public class CrmService {
                             .sum();
 
                     int diasSemAgendar = calcularDiasSemAgendar(agendamentos);
+                    LocalDate ultimoAgendamentoData = calcularUltimoAgendamentoData(agendamentos);
                     int padraoFrequencia = calcularPadraoFrequencia(agendamentos);
 
                     String seg = calcularSegmento(totalGasto, totalAgendamentos, diasSemAgendar, cliente);
@@ -70,6 +71,7 @@ public class CrmService {
                             cliente.getEmail() != null ? cliente.getEmail() : "",
                             seg,
                             diasSemAgendar,
+                            ultimoAgendamentoData,
                             totalGasto,
                             totalAgendamentos,
                             padraoFrequencia,
@@ -147,6 +149,11 @@ public class CrmService {
 
     @Transactional(readOnly = true)
     public List<HistoricoContatoResponse> historicoContatos(Long empresaId, Long clienteId) {
+        ClienteEntity cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new BusinessException("Cliente nao encontrado."));
+        if (cliente.getEmpresa() == null || !Objects.equals(cliente.getEmpresa().getId(), empresaId)) {
+            throw new BusinessException("Empresa nao foi encontrada");
+        }
         List<CrmContatoEntity> contatos = crmContatoRepository.findByClienteIdOrderByDataCriacaoDesc(clienteId);
         return contatos.stream().map(c -> new HistoricoContatoResponse(
                 c.getId(),
@@ -180,6 +187,14 @@ public class CrmService {
         if (ultimo.isEmpty()) return 9999;
         int dias = (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
         return Math.max(0, dias);
+    }
+
+    private LocalDate calcularUltimoAgendamentoData(List<AgendamentoEntity> agendamentos) {
+        return agendamentos.stream()
+                .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
+                .max(Comparator.comparing(AgendamentoEntity::getData))
+                .map(AgendamentoEntity::getData)
+                .orElse(null);
     }
 
     private int calcularPadraoFrequencia(List<AgendamentoEntity> agendamentos) {

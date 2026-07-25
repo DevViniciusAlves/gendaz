@@ -45,6 +45,11 @@ export async function enviarMensagemCrm(clienteId, payload) {
 }
 
 export async function buscarHistoricoContatos(clienteId) {
-  const { data } = await api.get(`/crm/clientes/${clienteId}/historico-contatos`)
+  const empresaId = obterEmpresaIdUsuario()
+  const { data } = await api.get(`/crm/clientes/${clienteId}/historico-contatos`, {
+    params: {
+      empresaId: empresaId || '',
+    },
+  })
   return data
 }

@@ -59,9 +59,12 @@ public class CrmController {
 
     @GetMapping("/clientes/{clienteId}/historico-contatos")
     public ResponseEntity<List<HistoricoContatoResponse>> historicoContatos(
-            @PathVariable Long clienteId
+            @PathVariable Long clienteId,
+            @RequestParam(required = false) Long empresaId
     ) {
-        Long empresaId = CompanyContext.getCompanyId();
+        if (empresaId == null) {
+            empresaId = CompanyContext.getCompanyId();
+        }
         if (empresaId == null) {
             return ResponseEntity.badRequest().build();
         }
