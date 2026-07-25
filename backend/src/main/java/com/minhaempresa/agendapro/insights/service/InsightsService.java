@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.insights.service;
+﻿package com.minhaempresa.agendapro.insights.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,7 +61,7 @@ public class InsightsService {
         }
 
         String promptSistema = """
-                VocÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â© um consultor de negÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³cios para empresas de serviÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os. Analise os dados da empresa e devolva JSON puro no formato:
+                VocÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âª ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© um consultor de negÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â³cios para empresas de serviÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§os. Analise os dados da empresa e devolva JSON puro no formato:
                 {
                   "scoreGeral": 0,
                   "alertas": [{"titulo":"","descricao":"","impacto":"","urgencia":"","tipo":"problema"}],
@@ -72,7 +72,7 @@ public class InsightsService {
                 Regras:
                 - Use somente os dados fornecidos.
                 - Seja direto e objetivo.
-                - NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o explique o JSON.
+                - NÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o explique o JSON.
                 """;
         String promptUsuario = montarPromptDados(dados);
         Optional<String> resposta = groqClient.analisar(promptSistema, promptUsuario);
@@ -114,14 +114,14 @@ public class InsightsService {
         validarAcessoEmpresa(empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
         if (pergunta != null && pergunta.trim().toLowerCase().contains("nome")) {
-            return "Meu nome é GendazIA! 👋 Sou o assistente de negócios da plataforma Gendaz.";
+            return "Meu nome Ã© GendazIA! ðŸ‘‹ Sou o assistente de negÃ³cios da plataforma Gendaz.";
         }
 
         String promptSistema = """
-                Você é GendazIA, assistente de negócios da plataforma Gendaz.
-                Responda sempre em português do Brasil.
+                VocÃª Ã© GendazIA, assistente de negÃ³cios da plataforma Gendaz.
+                Responda sempre em portuguÃªs do Brasil.
                 Seja conversacional, humano e direto.
-                Nunca ignore a pergunta do usuário.
+                Nunca ignore a pergunta do usuÃ¡rio.
                 Use os dados fornecidos para contextualizar a resposta.
                 Seja breve.
                 Sempre termine com uma pergunta relevante.
@@ -131,23 +131,23 @@ public class InsightsService {
                 Dados da empresa (ramo: %s):
                 %s
 
-                Pergunta do usuário:
+                Pergunta do usuÃ¡rio:
                 %s
 
-                Responda em português do Brasil de forma natural.
+                Responda em portuguÃªs do Brasil de forma natural.
                 """.formatted(ramoEmpresa, montarPromptDadosConversa(dados), pergunta);
 
         if (historico != null && !historico.isEmpty()) {
             promptUsuario += """
 
-                    Histórico recente da conversa:
+                    HistÃ³rico recente da conversa:
                     %s
                     """.formatted(String.valueOf(historicoParaGroq(historico)));
         }
 
         System.out.println("=== GROQ INPUT ===");
         System.out.println("Pergunta: " + pergunta);
-        System.out.println("Histórico: " + (historico == null ? "vazio" : historico.size() + " mensagens"));
+        System.out.println("HistÃ³rico: " + (historico == null ? "vazio" : historico.size() + " mensagens"));
         System.out.println("Dados formatados:\n" + montarPromptDadosConversa(dados));
         System.out.println("Ramo detectado: " + ramoEmpresa);
         System.out.println("==================");
@@ -342,14 +342,14 @@ public class InsightsService {
         int scoreGeral = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
 
         return """
-                Aqui estÃƒÆ’Ã‚Â¡ um resumo simples da empresa:
+                Aqui estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ um resumo simples da empresa:
                 - Score geral: %d/100
-                - Receita dos ÃƒÆ’Ã‚Âºltimos 30 dias: R$ %.2f
-                - PendÃƒÆ’Ã‚Âªncias financeiras: R$ %.2f
+                - Receita dos ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âºltimos 30 dias: R$ %.2f
+                - PendÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªncias financeiras: R$ %.2f
                 - Total de clientes: %d
                 - Clientes ativos: %d
                 - Clientes em risco: %d
-                - Total de serviÃƒÆ’Ã‚Â§os: %d
+                - Total de serviÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§os: %d
                 - Total de profissionais: %d
 
                 Use esses dados como contexto para responder de forma humana, consultiva e natural.
@@ -368,7 +368,7 @@ public class InsightsService {
 
     private String identificarRamoEmpresa(List<Map<String, Object>> servicos) {
         if (servicos == null || servicos.isEmpty()) {
-            return "Empresa de Serviços";
+            return "Empresa de ServiÃ§os";
         }
 
         String servicosTxt = servicos.stream()
@@ -377,18 +377,18 @@ public class InsightsService {
                 .toLowerCase();
 
         if (servicosTxt.contains("cabelo") || servicosTxt.contains("corte") || servicosTxt.contains("barba")) {
-            return "Salão de Beleza / Barbearia";
+            return "SalÃ£o de Beleza / Barbearia";
         }
         if (servicosTxt.contains("consulta") || servicosTxt.contains("atendimento")) {
-            return "Clínica / Consultório";
+            return "ClÃ­nica / ConsultÃ³rio";
         }
         if (servicosTxt.contains("aula") || servicosTxt.contains("treinamento")) {
             return "Academia / Centro de Treinamento";
         }
-        if (servicosTxt.contains("reparo") || servicosTxt.contains("manutenção")) {
-            return "Serviços Técnicos";
+        if (servicosTxt.contains("reparo") || servicosTxt.contains("manutenÃ§Ã£o")) {
+            return "ServiÃ§os TÃ©cnicos";
         }
-        return "Empresa de Serviços";
+        return "Empresa de ServiÃ§os";
     }
 
     private String serializarDashboard(DashboardResponse dashboard) {
@@ -450,14 +450,25 @@ public class InsightsService {
         String assunto = "Relatorio de Insights - " + empresa.getNomeFantasia();
         String html = """
                 <html>
-                  <body style="font-family: Arial, sans-serif; background: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 640px; margin: 0 auto; background: #fff; border-radius: 12px; padding: 24px;">
-                      <h2 style="margin-top: 0;">Insights semanais</h2>
-                      <p>Score geral: <strong>%s</strong>/100</p>
-                      <p>Impacto potencial: <strong>%s</strong></p>
-                      <p>Alertas: %s</p>
-                      <p>Oportunidades: %s</p>
-                      <p>Acoes: %s</p>
+                  <body style="margin:0; padding:0; background-color:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;">
+                    <div style="max-width:760px; margin:0 auto; padding:36px 20px;">
+                      <div style="background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;">
+                        <div style="padding:36px 36px 28px; text-align:center; background:#ffffff;">
+                          <img src="https://api.gendaz.site/email/gendazpngpreto.png" alt="Gendaz" style="max-width:180px; width:100%; height:auto; display:block; margin:0 auto 16px;" />
+                          <div style="display:inline-block; padding:6px 12px; border-radius:999px; background:#111111; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;">Insights</div>
+                          <h2 style="margin:18px 0 10px; font-size:28px; line-height:1.2; color:#111111;">Insights semanais</h2>
+                          <p style="margin:0 auto; max-width:520px; font-size:16px; line-height:1.7; color:#4b5563;">Resumo automatico da conta.</p>
+                        </div>
+                        <div style="padding:0 36px 28px;">
+                          <div style="background:#f7f7f7; border:1px solid #e5e7eb; border-radius:16px; padding:22px 20px; color:#111111; font-size:14px; line-height:1.8;">
+                            <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">Score geral: <strong>%s</strong>/100</p>
+                            <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">Impacto potencial: <strong>%s</strong></p>
+                            <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">Alertas: %s</p>
+                            <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">Oportunidades: %s</p>
+                            <p style="margin:0; font-size:15px; line-height:1.8; color:#111111;">Acoes: %s</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </body>
                 </html>
@@ -597,7 +608,7 @@ public class InsightsService {
         }
 
         if (!texto.contains("?")) {
-            texto = texto + " O que mais vocÃƒÂª quer saber?";
+            texto = texto + " O que mais vocÃƒÆ’Ã‚Âª quer saber?";
         }
 
         return texto;
@@ -608,21 +619,21 @@ public class InsightsService {
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
         int scoreCalculado = construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral();
 
-        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
-                ? "OlÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
+        String saudacao = perguntaNormalizada.matches(".*\\b(oi|olÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡|ola|eae|opa|bom dia|boa tarde|boa noite)\\b.*")
+                ? "OlÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡! Tudo bem? Estou aqui pra te ajudar a entender os dados da sua empresa."
                 : "Vou te mostrar isso de forma simples:";
 
         String clientesEmRisco = String.valueOf(clientes.getOrDefault("at_risk", 0));
         String pendente = String.format("R$ %.2f", numero(financeiro.get("pendente")));
 
         String corpo = String.format(
-                "Seu score estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ em %s/100, com %s clientes em risco e %s em pendÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âªncias financeiras.",
+                "Seu score estÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¡ em %s/100, com %s clientes em risco e %s em pendÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Âªncias financeiras.",
                 scoreCalculado,
                 clientesEmRisco,
                 pendente
         );
 
-        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o primeiro?";
+        String fechamento = "Quer que eu detalhe os alertas, as oportunidades ou o que merece atenÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â£o primeiro?";
         return saudacao + "\n" + corpo + "\n" + fechamento;
     }
 
@@ -670,10 +681,11 @@ public class InsightsService {
             );
         }
         return String.format(
-                "Pelo que eu estou vendo, sua empresa estÃƒÂ¡ com score %s/100. Os principais pontos de atenÃƒÂ§ÃƒÂ£o sÃƒÂ£o clientes em risco (%s) e pendÃƒÂªncias financeiras (R$ %.2f). Quer que eu detalhe algum ponto primeiro?",
+                "Pelo que eu estou vendo, sua empresa estÃƒÆ’Ã‚Â¡ com score %s/100. Os principais pontos de atenÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o sÃƒÆ’Ã‚Â£o clientes em risco (%s) e pendÃƒÆ’Ã‚Âªncias financeiras (R$ %.2f). Quer que eu detalhe algum ponto primeiro?",
                 construirDashboardLocal(Long.valueOf(String.valueOf(dados.get("empresaId"))), dados).scoreGeral(),
                 clientes.getOrDefault("at_risk", 0),
                 numero(financeiro.get("pendente"))
         );
     }
 }
+

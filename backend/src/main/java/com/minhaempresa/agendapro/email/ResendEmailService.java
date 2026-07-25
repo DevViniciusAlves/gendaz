@@ -1,4 +1,4 @@
-package com.minhaempresa.agendapro.email;
+﻿package com.minhaempresa.agendapro.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ResendEmailService {
     private static final URI RESEND_URI = URI.create("https://api.resend.com/emails");
+    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendazpngpreto.png";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -55,7 +56,7 @@ public class ResendEmailService {
             return false;
         }
         try {
-            String assunto = "Bem-vindo(a) ao " + safe(nomeEmpresa, "Gendaz") + "!";
+            String assunto = "Bem-vindo ao " + safe(nomeEmpresa, "Gendaz") + "!";
             String html = montarHtmlBoasVindas(safe(nomeCliente, "cliente"), safe(nomeEmpresa, "Gendaz"));
             return enviarEmail(emailCliente, assunto, html);
         } catch (Exception e) {
@@ -101,7 +102,7 @@ public class ResendEmailService {
             return false;
         }
         try {
-            String assunto = "Seu código de acesso ao Meu Gendaz";
+            String assunto = "Seu codigo de acesso ao Meu Gendaz";
             String html = montarHtmlCodigoMeuGendaz(safe(nomeCliente, "cliente"), safe(codigo, "000000"));
             return enviarEmail(emailCliente, assunto, html);
         } catch (Exception e) {
@@ -151,44 +152,43 @@ public class ResendEmailService {
     }
 
     private String montarLinkRecuperacao(String token) {
-        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.replaceAll("/+$", "");
-        return base + "/redefinir-senha?token=" + token;
+        return montarUrlBase() + "/redefinir-senha?token=" + token;
+    }
+
+    private String montarUrlBase() {
+        return frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.replaceAll("/+$", "");
     }
 
     private String montarHtmlBoasVindas(String nomeCliente, String nomeEmpresa) {
-        return """
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-                      <h2 style="margin-top: 0;">Bem-vindo(a), %s!</h2>
-                      <p>Agora você faz parte da %s.</p>
-                      <p>Você já pode acessar sua conta e começar a usar a plataforma.</p>
-                      <p style="margin-top: 24px;">Atenciosamente,<br><strong>Equipe %s</strong></p>
-                    </div>
-                  </body>
-                </html>
-                """.formatted(nomeCliente, nomeEmpresa, fromName);
+        String corpo = """
+                <p style=\"margin:0 0 10px;\">Agora voce faz parte da <strong>%s</strong>.</p>
+                <p style=\"margin:0;\">Voce ja pode acessar sua conta e comecar a usar a plataforma.</p>
+                """.formatted(nomeEmpresa);
+        return montarEmailPadrao(
+                "Gendaz",
+                "Bem-vindo, %s!".formatted(nomeCliente),
+                "Seu acesso foi confirmado com sucesso.",
+                corpo,
+                montarUrlBase(),
+                "Acessar o painel",
+                "Este e um e-mail automatico da Gendaz. Se preferir, responda diretamente por este canal."
+        );
     }
 
     private String montarHtmlRecuperacao(String nomeCliente, String linkRecuperacao) {
-        return """
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-                      <h2 style="margin-top: 0;">Recuperação de senha</h2>
-                      <p>Olá %s,</p>
-                      <p>Recebemos uma solicitação para redefinir sua senha. Clique no botão abaixo para continuar:</p>
-                      <p style="margin: 28px 0;">
-                        <a href="%s" style="display: inline-block; background: #0ea5e9; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px;">
-                          Redefinir senha
-                        </a>
-                      </p>
-                      <p style="color: #6b7280; font-size: 12px;">Se você não solicitou isso, pode ignorar este e-mail.</p>
-                      <p style="margin-top: 24px;">Atenciosamente,<br><strong>Equipe %s</strong></p>
-                    </div>
-                  </body>
-                </html>
-                """.formatted(nomeCliente, linkRecuperacao, fromName);
+        String corpo = """
+                <p style=\"margin:0 0 10px;\">Recebemos uma solicitacao para redefinir sua senha.</p>
+                <p style=\"margin:0;\">Clique no botao abaixo para continuar com a redefinicao.</p>
+                """;
+        return montarEmailPadrao(
+                "Gendaz",
+                "Recuperacao de senha",
+                "Ola %s,".formatted(nomeCliente),
+                corpo,
+                linkRecuperacao,
+                "Redefinir senha",
+                "Se voce nao solicitou isso, pode ignorar este e-mail."
+        );
     }
 
     private String montarHtmlNovoAgendamento(AgendamentoEntity agendamento) {
@@ -199,71 +199,68 @@ public class ResendEmailService {
         String hora = agendamento.getHoraInicio() != null ? agendamento.getHoraInicio().format(DateTimeFormatter.ofPattern("HH:mm")) : "-";
         String protocolo = safe(agendamento.getProtocolo(), "N/A");
 
-        return """
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-                      <h2 style="margin-top: 0;">Novo agendamento recebido</h2>
-                      <p>Ol&aacute;, um novo agendamento foi realizado. Confira os detalhes:</p>
-                      <table style="width: 100%%; border-collapse: collapse; margin: 20px 0;">
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">Cliente</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">E-mail</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">Telefone</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">Data</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">Hor&aacute;rio</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb; color: #6b7280; font-weight: bold;">Protocolo</td>
-                          <td style="padding: 10px; border-bottom: 1px solid #e5e7eb;"><strong>%s</strong></td>
-                        </tr>
-                      </table>
-                      <p style="color: #6b7280; font-size: 12px;">Este &eacute; um e-mail autom&aacute;tico. N&atilde;o responda a esta mensagem.</p>
-                      <p>Atenciosamente,<br><strong>Equipe %s</strong></p>
-                    </div>
-                  </body>
-                </html>
-                """.formatted(nomeCliente, emailCliente, telefoneCliente, data, hora, protocolo, fromName);
+        String corpo = """
+                <table style=\"width:100%%; border-collapse:collapse; margin:0; color:#111111;\">
+                  <tr>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb; color:#6b7280; font-weight:700; width:40%%;\">Cliente</td>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb; color:#6b7280; font-weight:700;\">E-mail</td>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb; color:#6b7280; font-weight:700;\">Telefone</td>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb; color:#6b7280; font-weight:700;\">Data</td>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb; color:#6b7280; font-weight:700;\">Horario</td>
+                    <td style=\"padding:10px 0; border-bottom:1px solid #e5e7eb;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:10px 0; color:#6b7280; font-weight:700;\">Protocolo</td>
+                    <td style=\"padding:10px 0;\"><strong>%s</strong></td>
+                  </tr>
+                </table>
+                """.formatted(nomeCliente, emailCliente, telefoneCliente, data, hora, protocolo);
+        return montarEmailPadrao(
+                "Gendaz",
+                "Novo agendamento recebido",
+                "Um novo agendamento foi realizado. Confira os detalhes abaixo.",
+                corpo,
+                montarUrlBase() + "/sistema/agenda",
+                "Abrir agenda",
+                "Este e um e-mail automatico. Nao responda a esta mensagem."
+        );
     }
 
     private String montarHtmlCodigoMeuGendaz(String nomeCliente, String codigo) {
-        return """
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px; color: #111111;">
-                      <h2 style="margin-top: 0;">Meu Gendaz</h2>
-                      <p>Olá %s,</p>
-                      <p>Seu código de acesso é:</p>
-                      <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; margin: 24px 0; padding: 16px 20px; background: #111111; color: #ffffff; border-radius: 12px; text-align: center;">
-                        %s
-                      </div>
-                      <p>Este código expira em 10 minutos.</p>
-                      <p>Se você não solicitou este acesso, ignore este e-mail.</p>
-                      <p style="margin-top: 24px;">Atenciosamente,<br><strong>Equipe %s</strong></p>
-                    </div>
-                  </body>
-                </html>
-                """.formatted(nomeCliente, codigo, fromName);
+        String corpo = """
+                <p style=\"margin:0 0 10px;\">Seu codigo de acesso e:</p>
+                <div style=\"font-size:32px; font-weight:800; letter-spacing:6px; margin:24px 0; padding:16px 20px; background:#111111; color:#ffffff; border-radius:12px; text-align:center;\">%s</div>
+                <p style=\"margin:0;\">Este codigo expira em 10 minutos.</p>
+                <p style=\"margin:10px 0 0;\">Se voce nao solicitou este acesso, ignore este e-mail.</p>
+                """.formatted(codigo);
+        return montarEmailPadrao(
+                "Gendaz",
+                "Meu Gendaz",
+                "Ola %s,".formatted(nomeCliente),
+                corpo,
+                montarUrlBase() + "/meu-gendaz",
+                "Abrir Meu Gendaz",
+                "Este e um e-mail automatico da Gendaz. Se preferir, responda diretamente por este canal."
+        );
     }
 
     public boolean sendNewCustomerNotification(String nomeCliente, String emailCliente, String telefoneCliente,
                                                 String nomeEmpresa, String plano, String dataCadastro,
                                                 Long empresaId, String cpfCnpj, Long usuarioId) {
         try {
-            String assunto = "\uD83C\uDF89 Novo cliente cadastrado na Gendaz";
+            String assunto = "Novo cliente cadastrado na Gendaz";
             String html = montarHtmlNovoCliente(nomeCliente, emailCliente, telefoneCliente, nomeEmpresa,
                     plano, dataCadastro, empresaId, cpfCnpj, usuarioId);
             return enviarEmail(adminNotificationEmail, assunto, html);
@@ -276,72 +273,55 @@ public class ResendEmailService {
     private String montarHtmlNovoCliente(String nomeCliente, String emailCliente, String telefoneCliente,
                                           String nomeEmpresa, String plano, String dataCadastro,
                                           Long empresaId, String cpfCnpj, Long usuarioId) {
-        String dataFormatada = dataCadastro != null ? dataCadastro.substring(0, 10) : "-";
+        String dataFormatada = dataCadastro != null && dataCadastro.length() >= 10 ? dataCadastro.substring(0, 10) : "-";
         String horaFormatada = dataCadastro != null && dataCadastro.length() > 11 ? dataCadastro.substring(11) : "-";
 
-        return """
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-                      <h2 style="margin-top: 0; color: #1a1a2e;">\uD83C\uDF89 Novo cliente cadastrado na Gendaz</h2>
-                      <p style="color: #374151;">Ol&aacute; Vinicius,</p>
-                      <p style="color: #374151;">A Gendaz acaba de receber um novo cliente.</p>
-                      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-                      <p style="font-weight: bold; color: #1a1a2e; font-size: 14px; margin-bottom: 8px;">Dados da Empresa</p>
-                      <table style="width: 100%%; border-collapse: collapse; margin: 0 0 16px 0;">
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold; width: 40%%;">Nome da empresa:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Plano:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">ID da empresa:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%d</td>
-                        </tr>
-                      </table>
-                      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-                      <p style="font-weight: bold; color: #1a1a2e; font-size: 14px; margin-bottom: 8px;">Respons&aacute;vel</p>
-                      <table style="width: 100%%; border-collapse: collapse; margin: 0 0 16px 0;">
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold; width: 40%%;">Nome:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">E-mail:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Telefone:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">CPF/CNPJ:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">ID do usu&aacute;rio:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%d</td>
-                        </tr>
-                      </table>
-                      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-                      <table style="width: 100%%; border-collapse: collapse; margin: 0 0 16px 0;">
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold; width: 40%%;">Data de cadastro:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 8px 0; color: #6b7280; font-weight: bold;">Hor&aacute;rio:</td>
-                          <td style="padding: 8px 0; color: #1a1a2e;">%s</td>
-                        </tr>
-                      </table>
-                      <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;">
-                      <p style="color: #9ca3af; font-size: 12px; text-align: center;">Mensagem autom&aacute;tica enviada pela Gendaz.</p>
-                    </div>
-                  </body>
-                </html>
+        String corpo = """
+                <table style=\"width:100%%; border-collapse:collapse; margin:0; color:#111111;\">
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700; width:40%%;\">Nome da empresa:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">Plano:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">ID da empresa:</td>
+                    <td style=\"padding:8px 0;\">%d</td>
+                  </tr>
+                </table>
+                <hr style=\"border:none; border-top:1px solid #e5e7eb; margin:20px 0;\">
+                <table style=\"width:100%%; border-collapse:collapse; margin:0; color:#111111;\">
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700; width:40%%;\">Nome:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">E-mail:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">Telefone:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">CPF/CNPJ:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">ID do usuario:</td>
+                    <td style=\"padding:8px 0;\">%d</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">Data de cadastro:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                  <tr>
+                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">Horario:</td>
+                    <td style=\"padding:8px 0;\">%s</td>
+                  </tr>
+                </table>
                 """.formatted(
                         safe(nomeEmpresa, "Nao informado"),
                         safe(plano, "Nao informado"),
@@ -354,6 +334,57 @@ public class ResendEmailService {
                         safe(dataFormatada, "-"),
                         safe(horaFormatada, "-")
                 );
+        return montarEmailPadrao(
+                "Gendaz",
+                "Novo cliente cadastrado",
+                "A Gendaz acabou de receber um novo cliente.",
+                corpo,
+                montarUrlBase() + "/sistema/clientes",
+                "Abrir clientes",
+                "Mensagem automatica enviada pela Gendaz."
+        );
+    }
+
+    private String montarEmailPadrao(String badge, String titulo, String subtitulo, String corpo, String ctaUrl, String ctaTexto, String rodape) {
+        return """
+                <html>
+                  <body style=\"margin:0; padding:0; background:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
+                    <div style=\"max-width:760px; margin:0 auto; padding:36px 20px;\">
+                      <div style=\"background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;\">
+                        <div style=\"padding:36px 36px 28px; text-align:center; background:#ffffff;\">
+                          <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:180px; width:100%%; height:auto; display:block; margin:0 auto 16px;\" />
+                          <div style=\"display:inline-block; padding:6px 12px; border-radius:999px; background:#111111; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;\">%s</div>
+                          <h1 style=\"margin:18px 0 10px; font-size:28px; line-height:1.2; color:#111111;\">%s</h1>
+                          <p style=\"margin:0 auto; max-width:520px; font-size:16px; line-height:1.7; color:#4b5563;\">%s</p>
+                        </div>
+
+                        <div style=\"padding:0 36px 28px;\">
+                          <div style=\"background:#f7f7f7; border:1px solid #e5e7eb; border-radius:16px; padding:22px 20px; color:#111111; font-size:14px; line-height:1.8;\">
+                            %s
+                          </div>
+
+                          <div style=\"text-align:center; margin-top:24px;\">
+                            <a href=\"%s\" style=\"display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">%s</a>
+                          </div>
+                        </div>
+
+                        <div style=\"padding:0 36px 30px; text-align:center;\">
+                          <p style=\"margin:0; font-size:12px; line-height:1.6; color:#6b7280;\">%s</p>
+                        </div>
+                      </div>
+                    </div>
+                  </body>
+                </html>
+                """.formatted(
+                EMAIL_LOGO_URL,
+                safe(badge, "Gendaz"),
+                safe(titulo, "Gendaz"),
+                safe(subtitulo, ""),
+                corpo,
+                safe(ctaUrl, montarUrlBase()),
+                safe(ctaTexto, "Abrir"),
+                safe(rodape, "Este e um e-mail automatico da Gendaz.")
+        );
     }
 
     private String safe(String value, String fallback) {
