@@ -88,23 +88,30 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
         </div>
       </header>
 
-      <section className="crm-card-status">
-        <div className="crm-card-status-row">
-          <span className="crm-card-status-title">Inativo {cliente.diasSemAgendar} dias</span>
-          <span className="crm-card-risk" style={{ color: corRisco(cliente.scoreRisco), borderColor: `${corRisco(cliente.scoreRisco)}33` }}>
-            {cliente.scoreRisco}% RISCO
-          </span>
-        </div>
-      </section>
-
       <section className="crm-card-metrics">
         <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{formatCurrency(cliente.totalGasto)}</div>
-          <div className="crm-card-metric-label">Gasto</div>
+          <div className="crm-card-metric-value">{`Inativo ${cliente.diasSemAgendar} dias`}</div>
+          <div className="crm-card-metric-label">
+            <span
+              className="crm-card-risk"
+              style={{
+                color: corRisco(cliente.scoreRisco),
+                borderColor: `${corRisco(cliente.scoreRisco)}33`,
+                display: 'inline-flex',
+                marginTop: 4,
+              }}
+            >
+              {`${cliente.scoreRisco}% RISCO`}
+            </span>
+          </div>
         </div>
         <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{formatCurrency(cliente.gastoMedio)}</div>
-          <div className="crm-card-metric-label">Gasto médio</div>
+          <div className="crm-card-metric-value">{formatCurrency(cliente.totalGasto)}</div>
+          <div className="crm-card-metric-label">
+            Gasto total
+            <span style={{ margin: '0 6px', opacity: 0.7 }}>|</span>
+            Gasto médio: {formatCurrency(cliente.gastoMedio)}
+          </div>
         </div>
         <div className="crm-card-metric">
           <div className="crm-card-metric-value">{cliente.padraoFrequencia}d</div>
