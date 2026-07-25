@@ -26,6 +26,19 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<PagamentoEntity> findByEmpresaIdAndStatusIn(Long empresaId, List<StatusPagamento> statuses);
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     java.util.Optional<PagamentoEntity> findByAgendamento_Id(Long agendamentoId);
+
+    @Query("""
+            select coalesce(sum(p.valor), 0)
+            from PagamentoEntity p
+            where p.empresa.id = :empresaId
+              and p.cliente.id = :clienteId
+              and p.status in :statuses
+            """)
+    BigDecimal somarValorByEmpresaIdAndClienteIdAndStatusIn(
+            @Param("empresaId") Long empresaId,
+            @Param("clienteId") Long clienteId,
+            @Param("statuses") List<StatusPagamento> statuses);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM PagamentoEntity p WHERE p.agendamento.id = :agendamentoId")

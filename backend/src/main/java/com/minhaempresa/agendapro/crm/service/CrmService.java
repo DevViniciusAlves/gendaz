@@ -9,6 +9,8 @@ import com.minhaempresa.agendapro.crm.dto.CrmDtos.*;
 import com.minhaempresa.agendapro.crm.entity.CrmContatoEntity;
 import com.minhaempresa.agendapro.crm.repository.CrmContatoRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
+import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
+import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CrmService {
     private final ClienteRepository clienteRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final PagamentoRepository pagamentoRepository;
     private final CrmContatoRepository crmContatoRepository;
     private final ResendEmailService resendEmailService;
 
@@ -47,13 +50,19 @@ public class CrmService {
                             .collect(Collectors.toList());
 
                     int totalAgendamentos = agendamentosNoPeriodo.size();
-                    double totalGasto = agendamentosNoPeriodo.stream()
-                            .mapToDouble(a -> a.getServico() != null ? a.getServico().getValor().doubleValue() : 0.0)
-                            .sum();
+                    double totalGasto = pagamentoRepository
+                            .somarValorByEmpresaIdAndClienteIdAndStatusIn(
+                                    empresaId,
+                                    cliente.getId(),
+                                    List.of(StatusPagamento.PAGO, StatusPagamento.PAYMENT_APPROVED)
+                            )
+                            .doubleValue();
+                    double gastoMedio = totalAgendamentos > 0 ? totalGasto / totalAgendamentos : 0.0;
 
                     int diasSemAgendar = calcularDiasSemAgendar(agendamentos);
                     LocalDate ultimoAgendamentoData = calcularUltimoAgendamentoData(agendamentos);
                     int padraoFrequencia = calcularPadraoFrequencia(agendamentos);
+                    int scoreRisco = calcularScoreRisco(totalGasto, totalAgendamentos, diasSemAgendar, padraoFrequencia, cliente);
 
                     String seg = calcularSegmento(totalGasto, totalAgendamentos, diasSemAgendar, cliente);
 
@@ -73,8 +82,10 @@ public class CrmService {
                             diasSemAgendar,
                             ultimoAgendamentoData,
                             totalGasto,
+                            gastoMedio,
                             totalAgendamentos,
                             padraoFrequencia,
+                            scoreRisco,
                             ultimaMsg
                     );
                 })
@@ -215,9 +226,32 @@ public class CrmService {
     private String calcularSegmento(double totalGasto, int agendamentos, int diasSemAgendar, ClienteEntity cliente) {
         if (agendamentos <= 2) return "novo";
         if (cliente.getDataCriacao() != null
-                && ChronoUnit.DAYS.between(cliente.getDataCriacao(), LocalDate.now()) < 30) return "novo";
+                && ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now()) < 30) return "novo";
         if (diasSemAgendar > 30) return "at_risk";
         return "regular";
+    }
+
+    private int calcularScoreRisco(double totalGasto, int agendamentos, int diasSemAgendar, int padraoFrequencia, ClienteEntity cliente) {
+        if (agendamentos <= 0) {
+            return 87;
+        }
+        if (diasSemAgendar > 60) {
+            return 87;
+        }
+        if (diasSemAgendar > 30) {
+            return 72;
+        }
+        if (diasSemAgendar > padraoFrequencia) {
+            return 58;
+        }
+        if (totalGasto <= 0) {
+            return 46;
+        }
+        if (cliente.getDataCriacao() != null
+                && ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now()) < 30) {
+            return 24;
+        }
+        return 34;
     }
 
     private String montarAssunto(String template, String nome) {

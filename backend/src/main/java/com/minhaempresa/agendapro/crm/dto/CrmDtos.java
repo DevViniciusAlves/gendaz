@@ -13,8 +13,10 @@ public class CrmDtos {
             int diasSemAgendar,
             java.time.LocalDate ultimoAgendamentoData,
             double totalGasto,
+            double gastoMedio,
             int agendamentos,
             int padraoFrequencia,
+            int scoreRisco,
             CrmUltimaMensagem ultimaMensagem
     ) {}
 

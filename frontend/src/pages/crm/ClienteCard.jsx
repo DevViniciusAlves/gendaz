@@ -59,6 +59,9 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
   const seg = SEGMENTO_COLORS[cliente.segment] || SEGMENTO_COLORS.regular
   const iniciais = (cliente.nome || 'CL').substring(0, 2).toUpperCase()
   const ultimaAcao = formatarAcao(cliente.ultimaMensagem)
+  const scoreRisco = Number.isFinite(Number(cliente.scoreRisco)) ? Number(cliente.scoreRisco) : 0
+  const gastoMedio = Number.isFinite(Number(cliente.gastoMedio)) ? Number(cliente.gastoMedio) : 0
+  const totalGasto = Number.isFinite(Number(cliente.totalGasto)) ? Number(cliente.totalGasto) : 0
 
   return (
     <article className="crm-card">
@@ -90,36 +93,32 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
 
       <section className="crm-card-metrics">
         <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{`Inativo ${cliente.diasSemAgendar} dias`}</div>
+          <div className="crm-card-metric-value">{`Inativo ${cliente.diasSemAgendar ?? 0} dias`}</div>
           <div className="crm-card-metric-label">
             <span
               className="crm-card-risk"
               style={{
-                color: corRisco(cliente.scoreRisco),
-                borderColor: `${corRisco(cliente.scoreRisco)}33`,
+                color: corRisco(scoreRisco),
+                borderColor: `${corRisco(scoreRisco)}33`,
                 display: 'inline-flex',
                 marginTop: 4,
               }}
             >
-              {`${cliente.scoreRisco}% RISCO`}
+              {`${scoreRisco}% RISCO`}
             </span>
           </div>
         </div>
         <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{formatCurrency(cliente.totalGasto)}</div>
+          <div className="crm-card-metric-value">{formatCurrency(totalGasto)}</div>
           <div className="crm-card-metric-label">
             Gasto total
             <span style={{ margin: '0 6px', opacity: 0.7 }}>|</span>
-            Gasto médio: {formatCurrency(cliente.gastoMedio)}
+            Gasto médio: {formatCurrency(gastoMedio)}
           </div>
         </div>
         <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{cliente.padraoFrequencia}d</div>
+          <div className="crm-card-metric-value">{`${cliente.padraoFrequencia ?? 0}d`}</div>
           <div className="crm-card-metric-label">Frequência</div>
-        </div>
-        <div className="crm-card-metric">
-          <div className="crm-card-metric-value">{cliente.visitas90d} em 90d</div>
-          <div className="crm-card-metric-label">Últimas visitas</div>
         </div>
       </section>
 
