@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Query;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 
 public interface ServicoRepository extends JpaRepository<ServicoEntity, Long> {
     interface ServicoContextView {
@@ -17,6 +18,9 @@ public interface ServicoRepository extends JpaRepository<ServicoEntity, Long> {
 
     @EntityGraph(attributePaths = {"empresa"})
     List<ServicoEntity> findByEmpresaId(Long empresaId);
+
+    @EntityGraph(attributePaths = {"empresa"})
+    List<ServicoEntity> findByEmpresaIdAndStatusOrderByIdAsc(Long empresaId, StatusCadastro status);
 
     long countByEmpresaId(Long empresaId);
 

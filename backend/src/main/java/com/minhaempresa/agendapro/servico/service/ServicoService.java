@@ -56,7 +56,7 @@ public class ServicoService {
                     .empresa(empresa)
                     .build();
             ServicoEntity salvo = servicoRepository.save(servico);
-            ramoDeteccaoService.detectarRamoAposServicoNovo(empresa.getId(), salvo.getNome());
+            ramoDeteccaoService.sincronizarRamoDaEmpresa(empresa.getId());
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("servicoId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
@@ -92,14 +92,18 @@ public class ServicoService {
         servico.setDescricao(sanitizacaoService.texto(request.descricao()));
         servico.setDuracaoMinutos(duracao);
         servico.setValor(val);
-        return mapper.toResponse(servicoRepository.save(servico));
+        ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
+        ramoDeteccaoService.sincronizarRamoDaEmpresa(servico.getEmpresa().getId());
+        return response;
     }
 
     @Transactional
     public ServicoResponse alterarStatus(Long id, StatusCadastro status) {
         ServicoEntity servico = buscarEntidade(id);
         servico.setStatus(status);
-        return mapper.toResponse(servicoRepository.save(servico));
+        ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
+        ramoDeteccaoService.sincronizarRamoDaEmpresa(servico.getEmpresa().getId());
+        return response;
     }
 
     @Transactional
@@ -114,7 +118,7 @@ public class ServicoService {
         servicoRepository.flush();
         servicoRepository.delete(servico);
         servicoRepository.flush();
-        ramoDeteccaoService.limparRamoSeSemServicos(empresaIdResolvido);
+        ramoDeteccaoService.sincronizarRamoDaEmpresa(empresaIdResolvido);
         return mapper.toResponse(servico);
     }
 

@@ -5,12 +5,14 @@ import com.minhaempresa.agendapro.empresa.enums.RamoEmpresa;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import com.minhaempresa.agendapro.servico.repository.ServicoRepository;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import java.text.Normalizer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Collection;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -106,17 +108,24 @@ public class RamoDeteccaoService {
     }
 
     @Transactional
-    public void detectarRamoAposServicoNovo(Long empresaId, String nomeServico) {
+    public EmpresaEntity sincronizarRamoDaEmpresa(Long empresaId) {
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
 
-        if (empresa.getRamo() != null) {
-            return;
+        List<ServicoEntity> servicosAtivos = servicoRepository.findByEmpresaIdAndStatusOrderByIdAsc(empresaId, StatusCadastro.ATIVO);
+        if (servicosAtivos.isEmpty()) {
+            empresa.setRamo(null);
+            return empresaRepository.save(empresa);
         }
 
-        RamoEmpresa ramo = detectar(nomeServico);
+        RamoEmpresa ramo = detectar(servicosAtivos.stream().map(ServicoEntity::getNome).toList());
         empresa.setRamo(ramo != null ? ramo : RamoEmpresa.OUTRO);
-        empresaRepository.save(empresa);
+        return empresaRepository.save(empresa);
+    }
+
+    @Transactional
+    public void detectarRamoAposServicoNovo(Long empresaId, String nomeServico) {
+        sincronizarRamoDaEmpresa(empresaId);
     }
 
     @Transactional
@@ -131,16 +140,26 @@ public class RamoDeteccaoService {
     }
 
     public RamoEmpresa detectar(String nomeServico) {
-        String nomeNormalizado = normalizar(nomeServico);
-        if (nomeNormalizado.isBlank()) {
+        return detectar(List.of(nomeServico));
+    }
+
+    public RamoEmpresa detectar(Collection<String> nomesServico) {
+        if (nomesServico == null || nomesServico.isEmpty()) {
             return null;
         }
 
-        for (Map.Entry<RamoEmpresa, List<String>> entry : PALAVRAS_CHAVE.entrySet()) {
-            for (String palavraChave : entry.getValue()) {
-                String chaveNormalizada = normalizar(palavraChave);
-                if (!chaveNormalizada.isBlank() && nomeNormalizado.contains(chaveNormalizada)) {
-                    return entry.getKey();
+        for (String nomeServico : nomesServico) {
+            String nomeNormalizado = normalizar(nomeServico);
+            if (nomeNormalizado.isBlank()) {
+                continue;
+            }
+
+            for (Map.Entry<RamoEmpresa, List<String>> entry : PALAVRAS_CHAVE.entrySet()) {
+                for (String palavraChave : entry.getValue()) {
+                    String chaveNormalizada = normalizar(palavraChave);
+                    if (!chaveNormalizada.isBlank() && nomeNormalizado.contains(chaveNormalizada)) {
+                        return entry.getKey();
+                    }
                 }
             }
         }
