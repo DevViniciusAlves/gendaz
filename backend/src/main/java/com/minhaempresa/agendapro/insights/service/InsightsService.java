@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.insights.service;
+package com.minhaempresa.agendapro.insights.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;

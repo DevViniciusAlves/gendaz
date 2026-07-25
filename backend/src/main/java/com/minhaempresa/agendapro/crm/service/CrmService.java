@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.crm.service;
+package com.minhaempresa.agendapro.crm.service;
 
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento;

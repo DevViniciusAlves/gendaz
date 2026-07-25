@@ -1,4 +1,4 @@
-﻿package com.minhaempresa.agendapro.email;
+package com.minhaempresa.agendapro.email;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
