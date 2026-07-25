@@ -235,25 +235,58 @@ public class CrmService {
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
         String mensagemPadrao = switch (template) {
-            case "resgate" -> "Oi " + nomeSafe + "! Ta muito tempo sem nos ver. Que tal agendar um horario essa semana? Estamos de portas abertas pra voce!";
-            case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?";
+            case "resgate" -> "Oi " + nomeSafe + "! Sentimos sua falta e queremos te receber novamente. Que tal voltar para um novo atendimento?";
+            case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
             case "promocao" -> nomeSafe + ", preparamos uma oferta especial so pra voce! Aproveite e agende seu proximo atendimento com desconto.";
             case "lembrete" -> nomeSafe + ", lembrete: voce tem um compromisso agendado. Se precisar remarcar, esta tudo bem!";
             default -> "Entre em contato conosco para mais informacoes.";
         };
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
+        String logoUrl = "https://api.gendaz.site/email/gendaz-logo-green.png";
+        String siteUrl = "https://gendaz.site";
+        String ctaUrl = siteUrl + "/sistema/crm";
+        String titulo = "resgate".equals(template) ? "Estamos com saudade de voce" : "Queremos falar com voce novamente";
+        String subtitulo = "resgate".equals(template)
+                ? "Seu ultimo contato foi ha algum tempo. Volte quando quiser para continuar seu atendimento."
+                : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
+        String botaoTexto = "resgate".equals(template) ? "Voltar para o site" : "Acessar o site";
 
         return """
                 <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 24px;">
-                    <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 32px;">
-                      <h2 style="margin-top: 0;">Mensagem</h2>
-                      <p>%s</p>
-                      <p style="color: #6b7280; font-size: 12px; margin-top: 24px;">Este e um e-mail automatico.</p>
+                  <body style="margin:0; padding:0; background-color:#f4f7f5; font-family:Arial, sans-serif; color:#1f2937;">
+                    <div style="max-width:720px; margin:0 auto; padding:32px 20px;">
+                      <div style="background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 12px 40px rgba(15, 23, 42, 0.08);">
+                        <div style="padding:28px 32px 20px; text-align:center; background:linear-gradient(180deg, #f7fbf8 0%%, #ffffff 100%%);">
+                          <img src="%s" alt="Gendaz" style="max-width:180px; width:100%%; height:auto; display:block; margin:0 auto 16px;" />
+                          <div style="display:inline-block; padding:6px 12px; border-radius:999px; background:#e8f6ee; color:#1f7a43; font-size:12px; font-weight:bold; letter-spacing:0.08em; text-transform:uppercase;">Gendaz</div>
+                          <h1 style="margin:18px 0 10px; font-size:28px; line-height:1.2; color:#0f172a;">%s</h1>
+                          <p style="margin:0 auto; max-width:520px; font-size:16px; line-height:1.7; color:#4b5563;">%s</p>
+                        </div>
+
+                        <div style="padding:0 32px 24px;">
+                          <div style="background:#f8fafc; border:1px solid #e5e7eb; border-radius:16px; padding:22px 20px;">
+                            <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111827;">%s</p>
+                            <p style="margin:0; font-size:14px; line-height:1.7; color:#6b7280;">
+                              Você também pode acessar diretamente o site:
+                              <a href="%s" style="color:#128c43; text-decoration:none; font-weight:bold;">%s</a>
+                            </p>
+                          </div>
+
+                          <div style="text-align:center; margin-top:24px;">
+                            <a href="%s" style="display:inline-block; background:#128c43; color:#ffffff; text-decoration:none; font-weight:bold; padding:14px 26px; border-radius:999px; font-size:15px;">
+                              %s
+                            </a>
+                          </div>
+                        </div>
+
+                        <div style="padding:0 32px 28px; text-align:center;">
+                          <p style="margin:0; font-size:12px; line-height:1.6; color:#9ca3af;">Este é um e-mail automático da Gendaz. Se preferir, responda diretamente por este canal.</p>
+                        </div>
+                      </div>
                     </div>
                   </body>
                 </html>
-                """.formatted(textoFinal);
+                """.formatted(logoUrl, titulo, subtitulo, textoFinal, ctaUrl, ctaUrl, ctaUrl, botaoTexto);
     }
 }
