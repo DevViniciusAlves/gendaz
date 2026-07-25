@@ -347,6 +347,18 @@ export default function Configuracoes() {
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>
         </section>
 
+        <section className="panel settings-card">
+          <div className="settings-card-head">
+            <div>
+              <span className="section-kicker">Ramo da empresa</span>
+              <h2>{ramoEmpresa}</h2>
+            </div>
+            <span className="settings-ramo-badge">Automático</span>
+          </div>
+          <p className="settings-card-text">{regraRamo}</p>
+          <small className="settings-card-muted">Campo bloqueado. O sistema atualiza este ramo automaticamente quando os serviços mudam.</small>
+        </section>
+
       </div>
 
       <section className="panel settings-form-panel">
@@ -379,17 +391,6 @@ export default function Configuracoes() {
             </select>
             <small className="field-hint">Usado para lembretes e validações de horário.</small>
           </label>
-          <div className="field field-wide">
-            <span>Ramo da empresa</span>
-            <div className="settings-ramo-box">
-              <div className="settings-ramo-copy">
-                <strong>{ramoEmpresa}</strong>
-                <small>{regraRamo}</small>
-              </div>
-              <span className="settings-ramo-badge">Automático</span>
-            </div>
-            <small className="field-hint">O ramo é detectado automaticamente pelo primeiro serviço criado e fica somente para leitura.</small>
-          </div>
           <Input label="E-mail" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." type="email" maxLength={120} value={empresa?.email || ''} readOnly />
           <div className="settings-form-actions field-wide">
             <Button variant="secondary" type="button" onClick={() => setSolicitacaoAberta((aberta) => !aberta)}>Solicitar alteração</Button>
