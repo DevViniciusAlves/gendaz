@@ -91,19 +91,17 @@ public class RamoDeteccaoService {
         }
 
         Long empresaId = empresa.getId();
+        List<ServicoEntity> servicosAtivos = servicoRepository.findByEmpresaIdAndStatusOrderByIdAsc(empresaId, StatusCadastro.ATIVO);
+        RamoEmpresa ramoCalculado = servicosAtivos.isEmpty()
+                ? null
+                : detectar(servicosAtivos.stream().map(ServicoEntity::getNome).toList());
+        RamoEmpresa ramoFinal = ramoCalculado != null ? ramoCalculado : (servicosAtivos.isEmpty() ? null : RamoEmpresa.OUTRO);
 
-        if (empresa.getRamo() != null) {
+        if (java.util.Objects.equals(empresa.getRamo(), ramoFinal)) {
             return empresa;
         }
 
-        long quantidadeServicos = servicoRepository.countByEmpresaId(empresaId);
-        if (quantidadeServicos <= 0) {
-            return empresa;
-        }
-
-        ServicoEntity primeiroServico = servicoRepository.findFirstByEmpresaIdOrderByIdAsc(empresaId).orElse(null);
-        RamoEmpresa ramo = detectar(primeiroServico != null ? primeiroServico.getNome() : null);
-        empresa.setRamo(ramo != null ? ramo : RamoEmpresa.OUTRO);
+        empresa.setRamo(ramoFinal);
         return empresaRepository.save(empresa);
     }
 

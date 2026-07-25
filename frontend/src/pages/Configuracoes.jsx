@@ -296,10 +296,6 @@ export default function Configuracoes() {
   const recursosPlano = usuario.plano === 'PRO'
     ? ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios']
     : ['Agenda', 'Clientes', 'Serviços']
-  const ramoEmpresa = empresa?.ramoDisplayName || 'Detectando...'
-  const regraRamo = empresa?.ramo
-    ? `Configuração automática: ${empresa.diasRegular ?? '-'} dias (regular) / ${empresa.diasAltoRisco ?? '-'} dias (risco)`
-    : 'Crie um serviço para detectar automaticamente o ramo da empresa.'
   const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
@@ -347,18 +343,6 @@ export default function Configuracoes() {
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>
         </section>
 
-        <section className="panel settings-card">
-          <div className="settings-card-head">
-            <div>
-              <span className="section-kicker">Ramo da empresa</span>
-              <h2>{ramoEmpresa}</h2>
-            </div>
-            <span className="settings-ramo-badge">Automático</span>
-          </div>
-          <p className="settings-card-text">{regraRamo}</p>
-          <small className="settings-card-muted">Campo bloqueado. O sistema atualiza este ramo automaticamente quando os serviços mudam.</small>
-        </section>
-
       </div>
 
       <section className="panel settings-form-panel">
@@ -371,15 +355,6 @@ export default function Configuracoes() {
           {erro && <p className="form-error">{erro}</p>}
           {statusChamado && <p className="success-text">{statusChamado}</p>}
           {erroChamado && <p className="form-error">{erroChamado}</p>}
-        </div>
-
-        <div className="settings-ramo-box">
-          <div className="settings-ramo-copy">
-            <span className="section-kicker">Ramo da empresa</span>
-            <strong>{ramoEmpresa}</strong>
-            <small>{regraRamo}</small>
-          </div>
-          <span className="settings-ramo-badge">Automático</span>
         </div>
 
         <form className="form-grid settings-form-grid" onSubmit={salvar}>
