@@ -1,0 +1,5 @@
+ALTER TABLE empresas
+    ADD COLUMN IF NOT EXISTS ramo VARCHAR(50);
+
+ALTER TABLE empresas
+    ADD COLUMN IF NOT EXISTS ramo_atualizado_em TIMESTAMP;

@@ -296,6 +296,10 @@ export default function Configuracoes() {
   const recursosPlano = usuario.plano === 'PRO'
     ? ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios']
     : ['Agenda', 'Clientes', 'Serviços']
+  const ramoEmpresa = empresa?.ramoDisplayName || 'Detectando...'
+  const regraRamo = empresa?.ramo
+    ? `Configuração automática: ${empresa.diasRegular ?? '-'} dias (regular) / ${empresa.diasAltoRisco ?? '-'} dias (risco)`
+    : 'Crie um serviço para detectar automaticamente o ramo da empresa.'
   const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
@@ -375,6 +379,17 @@ export default function Configuracoes() {
             </select>
             <small className="field-hint">Usado para lembretes e validações de horário.</small>
           </label>
+          <div className="field field-wide">
+            <span>Ramo da empresa</span>
+            <div className="settings-ramo-box">
+              <div className="settings-ramo-copy">
+                <strong>{ramoEmpresa}</strong>
+                <small>{regraRamo}</small>
+              </div>
+              <span className="settings-ramo-badge">Automático</span>
+            </div>
+            <small className="field-hint">O ramo é detectado automaticamente pelo primeiro serviço criado e fica somente para leitura.</small>
+          </div>
           <Input label="E-mail" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." type="email" maxLength={120} value={empresa?.email || ''} readOnly />
           <div className="settings-form-actions field-wide">
             <Button variant="secondary" type="button" onClick={() => setSolicitacaoAberta((aberta) => !aberta)}>Solicitar alteração</Button>

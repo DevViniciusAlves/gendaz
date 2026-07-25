@@ -18,6 +18,10 @@ public interface ServicoRepository extends JpaRepository<ServicoEntity, Long> {
     @EntityGraph(attributePaths = {"empresa"})
     List<ServicoEntity> findByEmpresaId(Long empresaId);
 
+    long countByEmpresaId(Long empresaId);
+
+    java.util.Optional<ServicoEntity> findFirstByEmpresaIdOrderByIdAsc(Long empresaId);
+
     @Query("""
             select s.id as id,
                    s.nome as nome,

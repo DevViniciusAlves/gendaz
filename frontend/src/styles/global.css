@@ -1923,6 +1923,44 @@ tbody tr:hover { background: #fffaf5; }
 .settings-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .settings-card-text { margin: 0; font-size: 16px; font-weight: 700; }
 .settings-card-muted { color: var(--muted); }
+.settings-ramo-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-soft);
+}
+.settings-ramo-copy {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.settings-ramo-copy strong {
+  font-size: 16px;
+  color: var(--text);
+}
+.settings-ramo-copy small {
+  color: var(--muted);
+  line-height: 1.35;
+}
+.settings-ramo-badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--success-rgb), 0.22);
+  background: rgba(var(--success-rgb), 0.10);
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
 .settings-meta-list { display: grid; gap: 12px; }
 .settings-meta-list div { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--line); }
 .settings-meta-list span { color: var(--muted); font-size: 12px; }

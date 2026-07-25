@@ -1,9 +1,11 @@
 package com.minhaempresa.agendapro.empresa.entity;
 
+import com.minhaempresa.agendapro.empresa.enums.RamoEmpresa;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.shared.enums.TimezoneEnum;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import lombok.*;
 
 @Getter
@@ -39,6 +41,13 @@ public class EmpresaEntity {
     @Column(name = "timezone", nullable = false, length = 60)
     private String timezone;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "ramo", length = 50)
+    private RamoEmpresa ramo;
+
+    @Column(name = "ramo_atualizado_em")
+    private LocalDateTime ramoAtualizadoEm;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 
@@ -54,5 +63,13 @@ public class EmpresaEntity {
     @PreUpdate
     void preUpdate() {
         dataAtualizacao = LocalDateTime.now();
+    }
+
+    public void setRamo(RamoEmpresa ramo) {
+        if (Objects.equals(this.ramo, ramo)) {
+            return;
+        }
+        this.ramo = ramo;
+        this.ramoAtualizadoEm = LocalDateTime.now();
     }
 }

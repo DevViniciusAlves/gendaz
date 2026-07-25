@@ -1,5 +1,6 @@
 package com.minhaempresa.agendapro.empresa.dto;
 
+import com.minhaempresa.agendapro.empresa.enums.RamoEmpresa;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -34,6 +35,11 @@ public final class EmpresaDtos {
             String email,
             StatusEmpresa status,
             String timezone,
+            RamoEmpresa ramo,
+            String ramoDisplayName,
+            Integer diasRegular,
+            Integer diasAltoRisco,
+            LocalDateTime ramoAtualizadoEm,
             LocalDateTime dataCriacao,
             LocalDateTime dataAtualizacao
     ) {}

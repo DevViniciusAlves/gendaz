@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final SanitizacaoService sanitizacaoService;
+    private final RamoDeteccaoService ramoDeteccaoService;
     private final EmpresaMapper mapper = new EmpresaMapper();
 
     @Transactional
@@ -42,9 +43,11 @@ public class EmpresaService {
         return mapper.toResponse(empresaRepository.save(empresa));
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public EmpresaResponse buscarPorId(Long id) {
-        return mapper.toResponse(buscarEntidade(id));
+        EmpresaEntity empresa = buscarEntidade(id);
+        empresa = ramoDeteccaoService.sincronizarRamoSeNecessario(empresa);
+        return mapper.toResponse(empresa);
     }
 
     @Transactional

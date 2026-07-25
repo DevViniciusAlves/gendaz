@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.servico.service;
 import com.minhaempresa.agendapro.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.service.EmpresaService;
+import com.minhaempresa.agendapro.empresa.service.RamoDeteccaoService;
 import com.minhaempresa.agendapro.servico.dto.ServicoDtos.SalvarServicoRequest;
 import com.minhaempresa.agendapro.servico.dto.ServicoDtos.ServicoResponse;
 import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ServicoService {
     private final ServicoRepository servicoRepository;
     private final EmpresaService empresaService;
+    private final RamoDeteccaoService ramoDeteccaoService;
     private final AgendamentoRepository agendamentoRepository;
     private final PagamentoRepository pagamentoRepository;
     private final SanitizacaoService sanitizacaoService;
@@ -54,6 +56,7 @@ public class ServicoService {
                     .empresa(empresa)
                     .build();
             ServicoEntity salvo = servicoRepository.save(servico);
+            ramoDeteccaoService.detectarRamoAposServicoNovo(empresa.getId(), salvo.getNome());
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("servicoId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
@@ -103,6 +106,7 @@ public class ServicoService {
     public ServicoResponse excluirOuInativar(Long id, Long empresaId) {
         ServicoEntity servico = buscarEntidade(id);
         validarEmpresa(servico, empresaId);
+        Long empresaIdResolvido = servico.getEmpresa().getId();
         agendamentoRepository.findByServicoId(id).forEach(agendamento -> {
             pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
             agendamentoRepository.delete(agendamento);
@@ -110,6 +114,7 @@ public class ServicoService {
         servicoRepository.flush();
         servicoRepository.delete(servico);
         servicoRepository.flush();
+        ramoDeteccaoService.limparRamoSeSemServicos(empresaIdResolvido);
         return mapper.toResponse(servico);
     }
 

@@ -11,6 +11,11 @@ export const initialData = {
     documento: '12.345.678/0001-90',
     telefone: '(65) 99999-0000',
     email: 'contato@agendapro.com',
+    ramo: 'BARBERSHOP',
+    ramoDisplayName: 'Barbershop',
+    diasRegular: 20,
+    diasAltoRisco: 60,
+    ramoAtualizadoEm: '2026-07-24T10:00:00',
   },
   usuarios: demoUsers.map(({ senha, ...usuario }) => usuario),
   equipe: [
