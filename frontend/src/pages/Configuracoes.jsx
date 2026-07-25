@@ -373,6 +373,15 @@ export default function Configuracoes() {
           {erroChamado && <p className="form-error">{erroChamado}</p>}
         </div>
 
+        <div className="settings-ramo-box">
+          <div className="settings-ramo-copy">
+            <span className="section-kicker">Ramo da empresa</span>
+            <strong>{ramoEmpresa}</strong>
+            <small>{regraRamo}</small>
+          </div>
+          <span className="settings-ramo-badge">Automático</span>
+        </div>
+
         <form className="form-grid settings-form-grid" onSubmit={salvar}>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
