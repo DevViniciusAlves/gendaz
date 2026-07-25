@@ -51,6 +51,9 @@ public class AgendamentoEntity {
     @Column(nullable = false)
     private StatusAgendamento status;
 
+    @Column(name = "confirmacao_pagamento_dono_2_enviada", nullable = false)
+    private boolean confirmacaoPagamentoDono2Enviada = false;
+
     @Column(length = 6, unique = true)
     private String protocolo;
 
