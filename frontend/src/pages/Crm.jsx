@@ -6,8 +6,9 @@ import ClienteCard from './crm/ClienteCard.jsx'
 import SendMessageModal from './crm/SendMessageModal.jsx'
 import ContactHistoryModal from './crm/ContactHistoryModal.jsx'
 import Pagination from '../components/Pagination.jsx'
+import './crm/crm.css'
 
-const CLIENTES_POR_PAGINA = 4
+const CLIENTES_POR_PAGINA = 6
 
 export default function Crm() {
   const { clientes, loading, error, filtros, atualizarFiltros, limparFiltros } = useCrmData()
