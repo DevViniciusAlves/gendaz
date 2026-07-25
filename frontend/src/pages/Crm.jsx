@@ -6,6 +6,7 @@ import ClienteCard from './crm/ClienteCard.jsx'
 import SendMessageModal from './crm/SendMessageModal.jsx'
 import ContactHistoryModal from './crm/ContactHistoryModal.jsx'
 import Pagination from '../components/Pagination.jsx'
+import './crm/crm.css'
 
 const CLIENTES_POR_PAGINA = 4
 
@@ -39,25 +40,21 @@ export default function Crm() {
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+      <div className="crm-layout">
         <CrmFilters
           filtros={filtros}
           onFiltroChange={atualizarFiltros}
           onLimpar={limparFiltros}
         />
 
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div className="crm-content">
           {loading ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="crm-cards-grid">
               {[1, 2, 3].map((i) => (
                 <div
                   key={i}
                   className="animate-pulse"
-                  style={{
-                    height: 160,
-                    background: 'var(--surface-soft)',
-                    borderRadius: 10,
-                  }}
+                  style={{ minHeight: 220, background: 'var(--surface-soft)', borderRadius: 12 }}
                 />
               ))}
             </div>
@@ -85,7 +82,8 @@ export default function Crm() {
               <div style={{ fontSize: 12 }}>Comece adicionando clientes na aba 'Clientes'</div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <div className="crm-results">
+              <div className="crm-cards-grid">
               {clientesPaginados.map((cliente) => (
                 <ClienteCard
                   key={cliente.id}
@@ -94,6 +92,7 @@ export default function Crm() {
                   onVerHistorico={handleVerHistorico}
                 />
               ))}
+              </div>
               <Pagination
                 page={paginaAtual}
                 totalPages={totalPaginas}
