@@ -86,7 +86,11 @@ public class AgendamentoService {
                 .observacoes(sanitizacaoService.texto(request.observacoes()))
                 .build();
         AgendamentoEntity salvo = salvarAgendamentoComProtocolo(agendamento);
-        criarPagamentoPendente(salvo, cliente, empresa, servico);
+        try {
+            criarPagamentoPendente(salvo, cliente, empresa, servico);
+        } catch (Exception e) {
+            log.warn("Falha ao criar pagamento pendente do agendamento protocolo {}: {}", salvo.getProtocolo(), e.getMessage(), e);
+        }
         try {
             resendEmailService.enviarEmailNovoAgendamento(empresa, salvo);
         } catch (Exception e) {
