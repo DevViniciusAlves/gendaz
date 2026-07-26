@@ -42,6 +42,7 @@ async function tentarRefreshSessao(config) {
   try {
     console.log('[auth-debug] iniciando refresh token', { url })
     await api.post('/auth/refresh', null, {
+      skipRefreshRetry: true,
       headers: {
         'X-Usuario-Id': usuario.id,
         'X-Usuario-Perfil': usuario.perfil || '',
@@ -69,6 +70,9 @@ async function tentarRefreshSessao(config) {
         },
       }))
       return true
+    }
+    if (error.response?.status === 401) {
+      window.dispatchEvent(new Event('agendeasy:session-expired'))
     }
     console.warn('[auth-debug] refresh token falhou', {
       url,
@@ -111,6 +115,11 @@ api.interceptors.response.use(
     }
 
     if (originalRequest?.skipUsuarioHeader) {
+      return Promise.reject(error)
+    }
+
+    if (originalRequest?.skipRefreshRetry) {
+      window.dispatchEvent(new Event('agendeasy:session-expired'))
       return Promise.reject(error)
     }
 

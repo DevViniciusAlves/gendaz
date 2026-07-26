@@ -113,7 +113,7 @@ function montarFormularioInicial(dados) {
 export default function Agenda() {
   const [data, , { loading, reload }] = useLocalData('agenda')
   const { refreshTrigger } = useContext(RefreshContext)
-  const { usuario } = useAuth()
+  const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = data.servicos.filter((item) => item.status !== 'INATIVO')
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && data.profissionais.length > 0
@@ -465,10 +465,11 @@ export default function Agenda() {
     setAcaoId(agendamento.id)
     setErroAcao('')
     try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.iniciarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
     } finally {
       setAcaoId(null)
     }
@@ -479,10 +480,11 @@ export default function Agenda() {
     setAcaoId(agendamento.id)
     setErroAcao('')
     try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.pausarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
     } finally {
       setAcaoId(null)
     }
@@ -493,10 +495,11 @@ export default function Agenda() {
     setAcaoId(agendamento.id)
     setErroAcao('')
     try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.finalizarAgendamento(agendamento.id)
       await reload(true)
     } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
     } finally {
       setAcaoId(null)
     }

@@ -77,6 +77,83 @@ export function AuthProvider({ children }) {
   const refreshEmAndamentoRef = useRef(null)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
 
+  async function renovarAoRetomarAba({ ignorarThrottle = false } = {}) {
+    if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return true
+    if (contaInativa(usuario)) return true
+    const agora = Date.now()
+    if (!ignorarThrottle && agora - ultimaRenovacaoBemSucedidaRef.current < 10_000) return true
+    if (refreshEmAndamentoRef.current) {
+      return refreshEmAndamentoRef.current
+    }
+
+    const promessa = (async () => {
+      try {
+        const refresh = await appApi.refreshSession()
+        const updated = normalizarUsuarioSessao(
+          refresh?.usuario
+            ? {
+                ...refresh.usuario,
+                assinatura: refresh.assinatura,
+                statusConta: refresh.statusConta,
+              }
+            : null,
+          usuario,
+        )
+        salvarUsuarioSessao(updated)
+        setUsuario(updated)
+        ultimaRenovacaoBemSucedidaRef.current = Date.now()
+        return true
+      } catch (error) {
+        const statusConta = error?.response?.data?.statusConta
+        const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
+        if (statusConta === 'ACCOUNT_INACTIVE'
+          || mensagem.includes('conta inativa')
+          || mensagem.includes('periodo gratuito terminou')
+          || mensagem.includes('mensalidade')) {
+          const atualizado = normalizarUsuarioSessao(
+            {
+              ...usuario,
+              statusConta: 'ACCOUNT_INACTIVE',
+            },
+            usuario,
+          )
+          salvarUsuarioSessao(atualizado)
+          setUsuario(atualizado)
+          throw new Error('Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.')
+        }
+        if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
+          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessÃ£o continua ativa.')
+          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local', {
+            status: error.response?.status,
+            mensagem,
+          })
+          return true
+        }
+        if (error?.response?.status === 401) {
+          window.dispatchEvent(new Event('agendeasy:session-expired'))
+          throw new Error('Sua sessÃ£o expirou. Por favor, recarregue a página.')
+        }
+        if (!erroTemporarioAutenticacao(error)) {
+          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal', {
+            status: error.response?.status,
+            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
+          })
+        } else {
+          console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario', {
+            status: error.response?.status,
+            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
+          })
+        }
+        throw error
+      } finally {
+        refreshEmAndamentoRef.current = null
+      }
+    })()
+
+    refreshEmAndamentoRef.current = promessa
+    return promessa
+  }
+
   useEffect(() => {
     let mounted = true
 
@@ -430,6 +507,7 @@ export function AuthProvider({ children }) {
     logout,
     atualizarUsuario,
     atualizarPlanoAtual,
+    renovarAoRetomarAba,
     getPagamentoPendente,
     limparPagamentoPendente,
     adminUsuario,
