@@ -434,11 +434,14 @@ export default function Agenda() {
     setErroAcao('')
     try {
       await appApi.confirmarAgendamento(id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
-    } finally {
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoId(null)
+      setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
     }
   }
 
