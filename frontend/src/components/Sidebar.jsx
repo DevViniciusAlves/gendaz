@@ -7,12 +7,12 @@ import logoSidebar from '../assets/logos/gendaz-logo-branco.png'
 
 const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home },
-  { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays },
+  { key: 'agenda',        to: '/sistema/agenda',        label: 'Agendamentos',   icon: CalendarDays },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users },
+  { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
+  { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
   { key: 'crm',           to: '/sistema/crm',           label: 'CRM',            icon: MessageCircle },
   { key: 'insights',      to: '/sistema/insights',      label: 'Insights',       icon: Sparkles },
-  { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
-  { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3 },
   { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
   { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
