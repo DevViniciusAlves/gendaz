@@ -417,11 +417,14 @@ export default function Agenda() {
     setErroAcao('')
     try {
       await appApi.cancelarAgendamento(id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
-    } finally {
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoId(null)
+      setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
     }
   }
 
@@ -445,17 +448,26 @@ export default function Agenda() {
     setErroAcao('')
     try {
       await appApi.excluirAgendamento(id)
+      setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
     } catch (error) {
       const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || error.message || '')
       const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento nao encontrado') || mensagem.toLowerCase().includes('agendamento não encontrado')
       if (!jaNaoExiste) {
+        setAcaoId(null)
         setErroAcao(mensagem || 'Não foi possível excluir o agendamento.')
         return
       }
-    } finally {
-      await reload(true)
-      setConfirmacao(null)
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } finally {
+      setConfirmacao(null)
       setConfirmandoAcao(false)
     }
   }
@@ -467,11 +479,14 @@ export default function Agenda() {
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.iniciarAgendamento(agendamento.id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
-    } finally {
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoId(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
     }
   }
 
@@ -482,11 +497,14 @@ export default function Agenda() {
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.pausarAgendamento(agendamento.id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
-    } finally {
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoId(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
     }
   }
 
@@ -497,11 +515,14 @@ export default function Agenda() {
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.finalizarAgendamento(agendamento.id)
-      await reload(true)
-    } catch (error) {
-      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
-    } finally {
       setAcaoId(null)
+      reload(true).catch((error) => {
+        console.error(error)
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoId(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
     }
   }
 
