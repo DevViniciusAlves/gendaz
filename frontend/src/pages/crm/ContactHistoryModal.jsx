@@ -37,13 +37,13 @@ export default function ContactHistoryModal({ open, onClose, cliente }) {
           </button>
         </div>
 
-        <div style={{ padding: '0 24px 24px', background: 'var(--surface-solid, var(--surface-strong, var(--surface)))' }}>
+        <div style={{ padding: '0 24px 24px', background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
           {loading ? (
             <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>Carregando...</div>
           ) : contatos.length === 0 ? (
             <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>Nenhum contato registrado.</div>
           ) : (
-            <div style={{ overflowX: 'auto' }}>
+            <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(80vh - 140px)', paddingRight: 4 }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--line)' }}>
