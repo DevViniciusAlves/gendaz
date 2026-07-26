@@ -120,6 +120,7 @@ export default function Configuracoes() {
   const [statusHorario, setStatusHorario] = useState('')
   const [erroHorario, setErroHorario] = useState('')
   const [salvandoHorario, setSalvandoHorario] = useState(false)
+  const ramoEmpresa = empresa?.ramoDisplayName || (empresa?.ramo ? empresa.ramo.replaceAll('_', ' ') : 'Não identificado')
 
   useEffect(() => {
     setEmpresa({
@@ -358,6 +359,14 @@ export default function Configuracoes() {
         </div>
 
         <form className="form-grid settings-form-grid" onSubmit={salvar}>
+          <div className="settings-ramo-box field-wide">
+            <div className="settings-ramo-copy">
+              <span className="section-kicker">Ramo da empresa</span>
+              <strong>{ramoEmpresa}</strong>
+              <small>Atualização automática conforme os serviços mudam.</small>
+            </div>
+            <span className="settings-ramo-badge">Automático</span>
+          </div>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
           <Input label="Telefone" helper={empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : 'Use codigo da cidade + numero.'} inputMode="numeric" maxLength={19} neutralLimit value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })} />
