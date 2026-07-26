@@ -744,7 +744,11 @@ export default function Agenda() {
                 setConfirmandoAcao(true)
                 const acao = confirmacao?.acao
                 setConfirmacao(null)
-                if (acao) await acao()
+                try {
+                  if (acao) await acao()
+                } finally {
+                  setConfirmandoAcao(false)
+                }
               }}
             >
               {confirmacao?.acaoLabel || 'Confirmar'}
