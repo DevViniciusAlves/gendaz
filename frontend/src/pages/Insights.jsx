@@ -231,48 +231,52 @@ export default function Insights() {
               </div>
               {chatAberto && (
                 <>
-                  <div className="insights-sidebar-block">
-                    <span className="insights-label">Sugestões rápidas</span>
-                    <div className="insights-suggestions">
-                      {[
-                        'Como aumentar meu faturamento?',
-                        'Quais clientes devo recuperar?',
-                        'Qual serviço devo divulgar?',
-                        'Como reduzir cancelamentos?',
-                        'O que fazer esta semana?',
-                      ].map((texto) => (
-                        <button
-                          key={texto}
-                          type="button"
-                          className="insights-suggestion"
-                          onClick={() => {
-                            window.dispatchEvent(new CustomEvent('agendapro:insights-suggestion', { detail: { pergunta: texto } }))
-                          }}
-                        >
-                          <Target size={14} />
-                          <span>{texto}</span>
-                        </button>
-                      ))}
+                  <div className="insights-sidebar-layout">
+                    <div className="insights-sidebar-chat">
+                      <InsightsChat onEnviar={analisar} historico={historico} />
                     </div>
-                  </div>
 
-                  <div className="insights-sidebar-block">
-                    <span className="insights-label">Simulações</span>
-                    <div className="insights-simulations">
-                      {simulacoes.map((item) => (
-                        <article key={item.pergunta} className="insights-simulation">
-                          <div>
-                            <strong>{item.pergunta}</strong>
-                            <p>{item.impacto}</p>
-                          </div>
-                          <Clock size={14} />
-                        </article>
-                      ))}
+                    <div className="insights-sidebar-stack">
+                      <div className="insights-sidebar-block">
+                        <span className="insights-label">Sugestões rápidas</span>
+                        <div className="insights-suggestions">
+                          {[
+                            'Como aumentar meu faturamento?',
+                            'Quais clientes devo recuperar?',
+                            'Qual serviço devo divulgar?',
+                            'Como reduzir cancelamentos?',
+                            'O que fazer esta semana?',
+                          ].map((texto) => (
+                            <button
+                              key={texto}
+                              type="button"
+                              className="insights-suggestion"
+                              onClick={() => {
+                                window.dispatchEvent(new CustomEvent('agendapro:insights-suggestion', { detail: { pergunta: texto } }))
+                              }}
+                            >
+                              <Target size={14} />
+                              <span>{texto}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="insights-sidebar-block">
+                        <span className="insights-label">Simulações</span>
+                        <div className="insights-simulations">
+                          {simulacoes.map((item) => (
+                            <article key={item.pergunta} className="insights-simulation">
+                              <div>
+                                <strong>{item.pergunta}</strong>
+                                <p>{item.impacto}</p>
+                              </div>
+                              <Clock size={14} />
+                            </article>
+                          ))}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="insights-sidebar-chat">
-                    <InsightsChat onEnviar={analisar} historico={historico} />
                   </div>
                 </>
               )}
