@@ -313,8 +313,8 @@
 
 .insights-sidebar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.8fr) minmax(240px, 0.8fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 2.2fr) minmax(200px, 0.65fr);
+  gap: 16px;
   align-items: start;
 }
 
@@ -325,15 +325,19 @@
 }
 
 .insights-sidebar-chat .insights-chat {
-  min-height: 540px;
+  min-height: 560px;
   gap: 10px;
   min-width: 0;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
-  min-height: 380px;
+  min-height: 400px;
   max-height: none;
   flex: 1 1 auto;
+}
+
+.insights-sidebar-chat .insights-chat__bubble {
+  max-width: 100%;
 }
 
 .insights-sidebar-chat .insights-chat__bubble {
@@ -415,7 +419,7 @@
   font-size: 11px;
   cursor: pointer;
   width: 100%;
-  min-height: 42px;
+  min-height: 40px;
 }
 
 .insights-simulation {
@@ -424,7 +428,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 12px 14px;
-  min-height: 54px;
+  min-height: 50px;
 }
 
 .insights-simulation p {
@@ -584,17 +588,17 @@
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 1.55fr) minmax(200px, 0.75fr);
+    grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.7fr);
     gap: 10px;
   }
 
   .insights-sidebar-chat .insights-chat {
-    min-height: 450px;
+    min-height: 470px;
     gap: 8px;
   }
 
   .insights-sidebar-chat .insights-chat__messages {
-    min-height: 280px;
+    min-height: 300px;
   }
 
   .insights-sidebar-chat .insights-chat__bubble {
