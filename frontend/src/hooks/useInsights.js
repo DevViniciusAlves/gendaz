@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import { appApi } from '../api/appApi.js'
+import { analisarPerguntaInsightsComHistorico } from '../api/insightsApi.js'
 import { useLocalData } from './useLocalData.js'
 
 function normalizarDashboard(data) {
@@ -16,7 +16,7 @@ export function useInsights() {
   }, [data])
 
   const analisar = useCallback(async (pergunta, historicoChat = []) => {
-    const resposta = await appApi.analisarPerguntaInsightsComHistorico(pergunta, historicoChat)
+    const resposta = await analisarPerguntaInsightsComHistorico(pergunta, historicoChat)
     await reload(true)
     return resposta
   }, [reload])

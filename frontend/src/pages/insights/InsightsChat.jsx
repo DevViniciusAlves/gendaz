@@ -57,6 +57,17 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
   }, [mensagens])
 
   useEffect(() => {
+    function aplicarSugestao(evento) {
+      const pergunta = normalizarTexto(evento?.detail?.pergunta)
+      if (!pergunta) return
+      setEntrada(pergunta)
+    }
+
+    window.addEventListener('agendapro:insights-suggestion', aplicarSugestao)
+    return () => window.removeEventListener('agendapro:insights-suggestion', aplicarSugestao)
+  }, [])
+
+  useEffect(() => {
     const mensagensHistorico = []
 
     historico

@@ -311,6 +311,26 @@
   gap: 12px;
 }
 
+.insights-sidebar-chat .insights-chat {
+  min-height: 520px;
+  gap: 10px;
+}
+
+.insights-sidebar-chat .insights-chat__messages {
+  min-height: 340px;
+  max-height: none;
+  flex: 1 1 auto;
+}
+
+.insights-sidebar-chat .insights-chat__bubble {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.insights-sidebar-chat .chat-input {
+  font-size: 11px;
+}
+
 .insights-sidebar-head {
   display: flex;
   align-items: flex-start;

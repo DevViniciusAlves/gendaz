@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import Button from '../components/Button.jsx'
 import { useInsights } from '../hooks/useInsights.js'
+import InsightsChat from './insights/InsightsChat.jsx'
 import './insights/styles.css'
 
 function formatCurrency(valor) {
@@ -60,9 +61,6 @@ function insightPrincipal(item) {
 export default function Insights() {
   const { dashboard, historico, loading, error, recarregar, analisar } = useInsights()
   const [chatAberto, setChatAberto] = useState(true)
-  const [perguntaRapida, setPerguntaRapida] = useState('')
-  const [respostaPergunta, setRespostaPergunta] = useState('')
-  const [respondendoPergunta, setRespondendoPergunta] = useState(false)
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas)
@@ -90,36 +88,6 @@ export default function Insights() {
     'Seu objetivo é vender mais ou fidelizar?',
     'Qual serviço você quer divulgar esta semana?',
   ]
-
-  async function enviarPerguntaRapida() {
-    const pergunta = perguntaRapida.trim()
-    if (!pergunta || respondendoPergunta) return
-    setRespondendoPergunta(true)
-    setRespostaPergunta('')
-    try {
-      const resposta = await analisar(pergunta, [])
-      setRespostaPergunta(resposta?.resposta || resposta || 'Sem resposta no momento.')
-      setPerguntaRapida('')
-    } catch (err) {
-      setRespostaPergunta(err?.response?.data?.mensagem || err?.message || 'Não foi possível processar agora.')
-    } finally {
-      setRespondendoPergunta(false)
-    }
-  }
-
-  async function responderPerguntaDia(resposta) {
-    if (!resposta || respondendoPergunta) return
-    setRespondendoPergunta(true)
-    try {
-      const prompt = `Pergunta do dia respondida pelo usuário: ${resposta}. Contextualize a próxima recomendação.`
-      const retorno = await analisar(prompt, [])
-      setRespostaPergunta(retorno?.resposta || retorno || 'Resposta registrada.')
-    } catch (err) {
-      setRespostaPergunta(err?.response?.data?.mensagem || err?.message || 'Falha ao registrar resposta.')
-    } finally {
-      setRespondendoPergunta(false)
-    }
-  }
 
   return (
     <section className="page insights-page insights-page--new">
@@ -255,7 +223,7 @@ export default function Insights() {
               <div className="insights-sidebar-head">
                 <div>
                   <div className="section-kicker">IA Gendaz</div>
-                  <h2>Pergunta rápida</h2>
+                  <h2>Chat IA</h2>
                 </div>
                 <button type="button" className="icon-btn" onClick={() => setChatAberto((value) => !value)} aria-label="Abrir ou fechar chat">
                   <HelpCircle size={18} />
@@ -263,20 +231,6 @@ export default function Insights() {
               </div>
               {chatAberto && (
                 <>
-                  <div className="insights-quick-input">
-                    <input
-                      value={perguntaRapida}
-                      onChange={(e) => setPerguntaRapida(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') enviarPerguntaRapida()
-                      }}
-                      placeholder="Digite sua pergunta..."
-                    />
-                    <button type="button" className="icon-btn insights-send" onClick={enviarPerguntaRapida} disabled={respondendoPergunta || !perguntaRapida.trim()}>
-                      <Send size={16} />
-                    </button>
-                  </div>
-
                   <div className="insights-sidebar-block">
                     <span className="insights-label">Sugestões rápidas</span>
                     <div className="insights-suggestions">
@@ -287,7 +241,14 @@ export default function Insights() {
                         'Como reduzir cancelamentos?',
                         'O que fazer esta semana?',
                       ].map((texto) => (
-                        <button key={texto} type="button" className="insights-suggestion" onClick={() => setPerguntaRapida(texto)}>
+                        <button
+                          key={texto}
+                          type="button"
+                          className="insights-suggestion"
+                          onClick={() => {
+                            window.dispatchEvent(new CustomEvent('agendapro:insights-suggestion', { detail: { pergunta: texto } }))
+                          }}
+                        >
                           <Target size={14} />
                           <span>{texto}</span>
                         </button>
@@ -310,24 +271,9 @@ export default function Insights() {
                     </div>
                   </div>
 
-                  <div className="insights-sidebar-block">
-                    <span className="insights-label">Pergunta do dia</span>
-                    <div className="insights-day-question">
-                      <p>{perguntasDoDia[0]}</p>
-                      <div className="insights-day-actions">
-                        <button type="button" className="insights-answer" onClick={() => responderPerguntaDia('Sim')}>Sim</button>
-                        <button type="button" className="insights-answer" onClick={() => responderPerguntaDia('Não')}>Não</button>
-                      </div>
-                      <small>Sua resposta ajuda a IA a te conhecer melhor.</small>
-                    </div>
+                  <div className="insights-sidebar-chat">
+                    <InsightsChat onEnviar={analisar} historico={historico} />
                   </div>
-
-                  {respostaPergunta && (
-                    <div className="insights-sidebar-block insights-sidebar-response">
-                      <span className="insights-label">Resposta da IA</span>
-                      <p>{respostaPergunta}</p>
-                    </div>
-                  )}
                 </>
               )}
             </section>
