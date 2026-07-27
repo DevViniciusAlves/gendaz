@@ -160,9 +160,18 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
     setCarregando(true)
     try {
       const resposta = await onEnviar(pergunta, historicoParaEnviar)
+      const textoResposta = normalizarTexto(resposta?.resposta || resposta || 'Sem resposta.')
+      setMensagens((current) => [
+        ...current,
+        {
+          id: `bot-${Date.now()}`,
+          origem: 'bot',
+          texto: textoResposta,
+        },
+      ])
       envioPendenteRef.current = {
         pergunta: pergunta.toLowerCase(),
-        resposta: normalizarTexto(resposta?.resposta || resposta || 'Sem resposta.').toLowerCase(),
+        resposta: textoResposta.toLowerCase(),
       }
     } catch (error) {
       envioPendenteRef.current = null

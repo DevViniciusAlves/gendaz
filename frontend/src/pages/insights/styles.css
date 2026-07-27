@@ -313,8 +313,8 @@
 
 .insights-sidebar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 2.2fr) minmax(200px, 0.65fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 2.8fr) minmax(170px, 0.45fr);
+  gap: 18px;
   align-items: start;
 }
 
@@ -328,12 +328,14 @@
   min-height: 560px;
   gap: 10px;
   min-width: 0;
+  width: 100%;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
   min-height: 400px;
   max-height: none;
   flex: 1 1 auto;
+  width: 100%;
 }
 
 .insights-sidebar-chat .insights-chat__bubble {
@@ -397,7 +399,7 @@
 .insights-simulations {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .insights-suggestion,
@@ -588,8 +590,8 @@
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 1.8fr) minmax(180px, 0.7fr);
-    gap: 10px;
+    grid-template-columns: minmax(0, 2.2fr) minmax(160px, 0.55fr);
+    gap: 12px;
   }
 
   .insights-sidebar-chat .insights-chat {

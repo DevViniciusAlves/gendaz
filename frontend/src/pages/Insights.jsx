@@ -66,21 +66,72 @@ export default function Insights() {
   const alertas = safeArray(dashboard?.alertas)
   const oportunidades = safeArray(dashboard?.oportunidades)
   const recomendacoes = safeArray(dashboard?.acoes)
+  const nomeEmpresa = dashboard?.empresaNome || 'Sua empresa'
+  const impactoTotal = dashboard?.impactoTotal || 'Sem impacto calculado'
+  const dataAnalise = dashboard?.geradoEm
+    ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+    : null
 
   const principais = useMemo(() => {
-    const candidatos = [
-      { grupo: 'Clientes', icon: Users, titulo: 'Poucos clientes novos', descricao: 'A IA detectou baixa entrada de novos clientes nos últimos 30 dias.', tag: 'Clientes' },
-      { grupo: 'Agenda', icon: Calendar, titulo: 'Demanda concentrada', descricao: 'Alguns dias estão acima da média e podem aceitar mais horários.', tag: 'Agenda' },
-      { grupo: 'Financeiro', icon: TrendingUp, titulo: 'Pagamentos em atraso', descricao: 'Há valores pendentes que podem afetar o fluxo de caixa.', tag: 'Financeiro' },
-      { grupo: 'Serviços', icon: Wrench, titulo: 'Portfólio pouco distribuído', descricao: 'Alguns serviços ainda representam pouca participação nas vendas.', tag: 'Serviços' },
-    ]
-    return candidatos.slice(0, 4)
-  }, [])
+    const principaisDaEmpresa = []
+
+    if (alertas[0]) {
+      principaisDaEmpresa.push({
+        icon: AlertCircle,
+        tag: nomeCategoria(alertas[0], 'Alertas'),
+        titulo: alertas[0].titulo || 'Alerta principal',
+        descricao: alertas[0].descricao || alertas[0].impacto || 'Sem descrição detalhada.',
+        impacto: alertas[0].impacto || alertas[0].urgencia || 'Alto impacto',
+      })
+    }
+
+    if (alertas[1]) {
+      principaisDaEmpresa.push({
+        icon: Calendar,
+        tag: nomeCategoria(alertas[1], 'Agenda'),
+        titulo: alertas[1].titulo || 'Agenda',
+        descricao: alertas[1].descricao || alertas[1].impacto || 'Sem descrição detalhada.',
+        impacto: alertas[1].impacto || alertas[1].urgencia || 'Médio impacto',
+      })
+    }
+
+    if (oportunidades[0]) {
+      principaisDaEmpresa.push({
+        icon: TrendingUp,
+        tag: nomeCategoria(oportunidades[0], 'Oportunidade'),
+        titulo: oportunidades[0].titulo || 'Oportunidade',
+        descricao: oportunidades[0].descricao || oportunidades[0].impacto || 'Sem descrição detalhada.',
+        impacto: oportunidades[0].impacto || oportunidades[0].urgencia || 'Médio impacto',
+      })
+    }
+
+    if (recomendacoes[0]) {
+      principaisDaEmpresa.push({
+        icon: Wrench,
+        tag: nomeCategoria(recomendacoes[0], 'Ação'),
+        titulo: recomendacoes[0].descricao || 'Ação recomendada',
+        descricao: recomendacoes[0].impactoEstimado || recomendacoes[0].urgencia || 'Sem descrição detalhada.',
+        impacto: recomendacoes[0].urgencia || 'Alta prioridade',
+      })
+    }
+
+    while (principaisDaEmpresa.length < 4) {
+      principaisDaEmpresa.push({
+        icon: Users,
+        tag: 'Empresa',
+        titulo: 'Dados da empresa sincronizados',
+        descricao: 'A análise está lendo os dados reais vinculados à sua conta.',
+        impacto: 'Dados atualizados',
+      })
+    }
+
+    return principaisDaEmpresa.slice(0, 4)
+  }, [alertas, oportunidades, recomendacoes, nomeEmpresa])
 
   const simulacoes = [
-    { pergunta: 'E se eu abrir sábado?', impacto: '+16 atendimentos/mês' },
-    { pergunta: 'E se eu aumentar 10% o preço?', impacto: '+R$ 1.300/mês' },
-    { pergunta: 'E se eu contratar mais um profissional?', impacto: '+38% capacidade' },
+    { pergunta: `E se eu ampliar horários na ${nomeEmpresa}?`, impacto: 'Impacto estimado com base na ocupação atual' },
+    { pergunta: 'E se eu subir 10% o preço?', impacto: 'Simulação sobre o faturamento atual' },
+    { pergunta: 'E se eu atuar nos clientes inativos?', impacto: 'Simulação sobre recorrência e reativação' },
   ]
 
   const perguntasDoDia = [
@@ -116,6 +167,9 @@ export default function Insights() {
                 <span className="insights-label">Resumo inteligente</span>
                 <h2>{dashboard?.empresaNome ? `Olá, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
                 <p>{resumoTexto(dashboard)}</p>
+                <small className="insights-summary-panel__meta">
+                  {dataAnalise ? `Análise de ${dataAnalise}` : 'Análise sincronizada com a empresa vinculada'}
+                </small>
                 <Button variant="secondary" onClick={() => setChatAberto(true)}>
                   Ver análise completa
                 </Button>
@@ -124,7 +178,7 @@ export default function Insights() {
                 <span className="insights-label">Saúde da empresa</span>
                 <div className="insights-health-score">{score}/100</div>
                 <strong>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</strong>
-                <small>{score >= 70 ? 'Melhorou desde a última análise' : 'Exige atenção imediata'}</small>
+                <small>{impactoTotal}</small>
               </div>
             </section>
 
@@ -210,7 +264,7 @@ export default function Insights() {
                       <span>{item.dataCriacao ? new Date(item.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase() : 'RECENTE'}</span>
                     </div>
                     <strong>{item.pergunta || item.tipo || 'Recomendação'}</strong>
-                    <p>{item.resposta || 'Concluído'}</p>
+                    <p>{item.resposta || item.tipo || 'Concluído'}</p>
                   </article>
                 ))}
                 {historico.length === 0 && <p className="insights-empty">Sem histórico ainda.</p>}
