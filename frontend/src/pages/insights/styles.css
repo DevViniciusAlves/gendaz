@@ -313,8 +313,8 @@
 
 .insights-sidebar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.8fr) minmax(240px, 0.8fr);
+  gap: 14px;
   align-items: start;
 }
 
@@ -327,6 +327,7 @@
 .insights-sidebar-chat .insights-chat {
   min-height: 540px;
   gap: 10px;
+  min-width: 0;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
@@ -583,7 +584,7 @@
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.95fr);
+    grid-template-columns: minmax(0, 1.55fr) minmax(200px, 0.75fr);
     gap: 10px;
   }
 
