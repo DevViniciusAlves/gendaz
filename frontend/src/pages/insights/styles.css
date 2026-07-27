@@ -313,8 +313,8 @@
 
 .insights-sidebar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(220px, 0.9fr);
-  gap: 10px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(260px, 1fr);
+  gap: 12px;
   align-items: start;
 }
 
@@ -325,12 +325,12 @@
 }
 
 .insights-sidebar-chat .insights-chat {
-  min-height: 520px;
+  min-height: 540px;
   gap: 10px;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
-  min-height: 360px;
+  min-height: 380px;
   max-height: none;
   flex: 1 1 auto;
 }
@@ -413,6 +413,8 @@
   border-radius: 12px;
   font-size: 11px;
   cursor: pointer;
+  width: 100%;
+  min-height: 42px;
 }
 
 .insights-simulation {
@@ -420,7 +422,8 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
+  padding: 12px 14px;
+  min-height: 54px;
 }
 
 .insights-simulation p {
@@ -580,17 +583,17 @@
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 1.15fr) minmax(200px, 0.85fr);
-    gap: 8px;
+    grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.95fr);
+    gap: 10px;
   }
 
   .insights-sidebar-chat .insights-chat {
-    min-height: 430px;
+    min-height: 450px;
     gap: 8px;
   }
 
   .insights-sidebar-chat .insights-chat__messages {
-    min-height: 260px;
+    min-height: 280px;
   }
 
   .insights-sidebar-chat .insights-chat__bubble {
