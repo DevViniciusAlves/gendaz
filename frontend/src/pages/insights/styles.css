@@ -439,6 +439,160 @@
   padding: 14px;
 }
 
+@media (max-width: 1400px), (max-height: 820px) {
+  .insights-page--new {
+    gap: 14px;
+  }
+
+  .insights-hero {
+    gap: 12px;
+  }
+
+  .insights-layout {
+    gap: 10px;
+    grid-template-columns: minmax(0, 2.05fr) minmax(310px, 0.95fr);
+  }
+
+  .insights-main,
+  .insights-sidebar {
+    gap: 10px;
+  }
+
+  .insights-summary-panel {
+    grid-template-columns: 64px minmax(0, 1fr) 190px;
+    gap: 12px;
+  }
+
+  .insights-summary-panel__icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .insights-summary-panel__content {
+    gap: 8px;
+  }
+
+  .insights-summary-panel__content h2 {
+    font-size: 15px;
+  }
+
+  .insights-summary-panel__content p {
+    line-height: 1.45;
+  }
+
+  .insights-health-card {
+    min-width: 160px;
+    padding: 12px 14px;
+    gap: 4px;
+  }
+
+  .insights-health-score {
+    font-size: 34px;
+  }
+
+  .insights-section {
+    padding: 14px;
+  }
+
+  .insights-principais-grid {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .insights-mini-card {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .insights-mini-card h3,
+  .insights-list-item__content strong,
+  .insights-action-row__content strong,
+  .insights-history-item strong,
+  .insights-simulation strong {
+    font-size: 12px;
+  }
+
+  .insights-mini-card p,
+  .insights-list-item__content p,
+  .insights-action-row__content p,
+  .insights-history-item p,
+  .insights-simulation p,
+  .insights-day-question p,
+  .insights-sidebar-response p {
+    font-size: 10px;
+    line-height: 1.42;
+  }
+
+  .insights-duo-grid {
+    gap: 10px;
+  }
+
+  .insights-list,
+  .insights-action-list,
+  .insights-history {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .insights-list-item,
+  .insights-action-row,
+  .insights-history-item,
+  .insights-simulation,
+  .insights-day-question,
+  .insights-sidebar-response {
+    border-radius: 14px;
+  }
+
+  .insights-list-item,
+  .insights-action-row {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .insights-list-item__icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .insights-link-row {
+    margin-top: 10px;
+  }
+
+  .insights-history-item {
+    padding: 12px;
+  }
+
+  .insights-sidebar-card {
+    gap: 10px;
+  }
+
+  .insights-sidebar-chat .insights-chat {
+    min-height: 420px;
+    gap: 8px;
+  }
+
+  .insights-sidebar-chat .insights-chat__messages {
+    min-height: 250px;
+  }
+
+  .insights-sidebar-chat .insights-chat__bubble {
+    font-size: 10px;
+  }
+
+  .insights-sidebar-chat .chat-input {
+    font-size: 10px;
+    padding: 8px 10px;
+  }
+
+  .insights-chat__form {
+    gap: 6px;
+  }
+
+  .insights-chat__messages {
+    gap: 8px;
+  }
+}
+
 .insights-summary-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
