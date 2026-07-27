@@ -32,6 +32,43 @@ public class InsightsController {
         return ResponseEntity.ok(dashboard);
     }
 
+    @GetMapping("/resumo")
+    public ResponseEntity<?> resumo(
+            @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        return dashboard(periodo, empresaId);
+    }
+
+    @GetMapping("/principais")
+    public ResponseEntity<?> principais(
+            @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        ResponseEntity<?> response = dashboard(periodo, empresaId);
+        if (!response.getStatusCode().is2xxSuccessful() || !(response.getBody() instanceof DashboardResponse dashboard)) {
+            return response;
+        }
+        return ResponseEntity.ok(Map.of(
+                "scoreGeral", dashboard.scoreGeral(),
+                "alertas", dashboard.alertas(),
+                "oportunidades", dashboard.oportunidades(),
+                "acoes", dashboard.acoes()
+        ));
+    }
+
+    @GetMapping("/oportunidades")
+    public ResponseEntity<?> oportunidades(
+            @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        ResponseEntity<?> response = dashboard(periodo, empresaId);
+        if (!response.getStatusCode().is2xxSuccessful() || !(response.getBody() instanceof DashboardResponse dashboard)) {
+            return response;
+        }
+        return ResponseEntity.ok(dashboard.oportunidades());
+    }
+
     @PostMapping("/analisar")
     public ResponseEntity<?> analisar(
             @Valid @RequestBody InsightsRequest request,
@@ -45,6 +82,14 @@ public class InsightsController {
         insightsService.salvarAnalise(empresaId, "pergunta", request.pergunta(), respostaChat);
         InsightsResponse resposta = new InsightsResponse(true, respostaChat, java.time.LocalDateTime.now(java.time.ZoneId.of("America/Cuiaba")));
         return ResponseEntity.ok(resposta);
+    }
+
+    @PostMapping("/chat")
+    public ResponseEntity<?> chat(
+            @Valid @RequestBody InsightsRequest request,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        return analisar(request, empresaId);
     }
 
     @GetMapping("/{id}")

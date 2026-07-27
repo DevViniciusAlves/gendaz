@@ -1,48 +1,32 @@
-import { useCallback, useEffect, useState } from 'react'
-import { analisarPerguntaInsightsComHistorico, buscarDashboardInsights, buscarHistoricoInsights } from '../api/insightsApi.js'
+import { useCallback, useMemo } from 'react'
+import { appApi } from '../api/appApi.js'
+import { useLocalData } from './useLocalData.js'
+
+function normalizarDashboard(data) {
+  return data?.dashboard || data?.dashboardResumo || null
+}
 
 export function useInsights() {
-  const [dashboard, setDashboard] = useState(null)
-  const [historico, setHistorico] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const [data, , { loading, error, reload }] = useLocalData('insights')
 
-  const carregar = useCallback(async (periodo = 30) => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [dashboardData, historicoData] = await Promise.all([
-        buscarDashboardInsights(periodo),
-        buscarHistoricoInsights().catch(() => []),
-      ])
-      setDashboard(dashboardData)
-      setHistorico(Array.isArray(historicoData) ? historicoData : [])
-    } catch (err) {
-      setError(err?.response?.data?.mensagem || err?.message || 'Não foi possível carregar Insights.')
-      setDashboard(null)
-      setHistorico([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    carregar(30)
-  }, [carregar])
+  const dashboard = useMemo(() => normalizarDashboard(data), [data])
+  const historico = useMemo(() => {
+    if (Array.isArray(data?.historico)) return data.historico
+    return data?.mensagens || []
+  }, [data])
 
   const analisar = useCallback(async (pergunta, historicoChat = []) => {
-    const resposta = await analisarPerguntaInsightsComHistorico(pergunta, historicoChat)
-    const historicoAtualizado = await buscarHistoricoInsights().catch(() => historico)
-    setHistorico(Array.isArray(historicoAtualizado) ? historicoAtualizado : historico)
+    const resposta = await appApi.analisarPerguntaInsightsComHistorico(pergunta, historicoChat)
+    await reload(true)
     return resposta
-  }, [historico])
+  }, [reload])
 
   return {
     dashboard,
     historico,
     loading,
     error,
-    recarregar: carregar,
+    recarregar: reload,
     analisar,
   }
 }

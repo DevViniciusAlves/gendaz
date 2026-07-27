@@ -158,6 +158,7 @@ function criarBaseLocal(scope, usuario) {
   if (scope === 'notasFiscais') return { ...base, notasFiscais: data.notasFiscais, clientes: data.clientes, empresa: data.empresa }
   if (scope === 'usuarios') return { ...base, equipe: data.equipe, empresa: data.empresa }
   if (scope === 'planos') return { ...base, planos: data.planos, empresa: data.empresa }
+  if (scope === 'insights') return { ...base, empresa: data.empresa, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, pagamentos: data.pagamentos, financeiro: data.financeiro, dashboardResumo: data.dashboardResumo, mensagens: data.mensagens }
   return data
 }
 
@@ -253,6 +254,19 @@ export const appApi = {
             pagamentosRecentes: dashboardResumo?.pagamentosRecentes || [],
           },
           dashboardResumo,
+          mensagens: [],
+        }
+      },
+      insights: async () => {
+        const [dashboard, historico] = await Promise.all([
+          api.get(`/insights/resumo?empresaId=${empresaId}&periodo=30`).then((response) => response.data),
+          api.get(`/insights/historico?empresaId=${empresaId}`).then((response) => response.data).catch(() => []),
+        ])
+        return {
+          empresa: empresaResumo,
+          dashboardResumo: null,
+          dashboard,
+          historico,
           mensagens: [],
         }
       },
