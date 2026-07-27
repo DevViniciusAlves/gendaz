@@ -3,7 +3,7 @@ import { analisarPerguntaInsightsComHistorico } from '../api/insightsApi.js'
 import { useLocalData } from './useLocalData.js'
 
 function normalizarDashboard(data) {
-  return data?.dashboard || data?.dashboardResumo || null
+  return data?.dashboard || data?.dashboardResumo || data?.resumo || null
 }
 
 export function useInsights() {

@@ -158,7 +158,7 @@ function criarBaseLocal(scope, usuario) {
   if (scope === 'notasFiscais') return { ...base, notasFiscais: data.notasFiscais, clientes: data.clientes, empresa: data.empresa }
   if (scope === 'usuarios') return { ...base, equipe: data.equipe, empresa: data.empresa }
   if (scope === 'planos') return { ...base, planos: data.planos, empresa: data.empresa }
-  if (scope === 'insights') return { ...base, empresa: data.empresa, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, pagamentos: data.pagamentos, financeiro: data.financeiro, dashboardResumo: data.dashboardResumo, mensagens: data.mensagens }
+  if (scope === 'insights') return { ...base, empresa: data.empresa, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, pagamentos: data.pagamentos, financeiro: data.financeiro, dashboardResumo: data.dashboardResumo, dashboard: data.dashboard, historico: data.historico, mensagens: data.mensagens }
   return data
 }
 
@@ -264,7 +264,7 @@ export const appApi = {
         ])
         return {
           empresa: empresaResumo,
-          dashboardResumo: null,
+          dashboardResumo: dashboard,
           dashboard,
           historico,
           mensagens: [],
