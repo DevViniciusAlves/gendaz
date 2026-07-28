@@ -168,7 +168,7 @@ export const appApi = {
   async carregarDados(scope = 'full') {
     const empresaId = empresaIdAtual()
     const estaImpersonando = Boolean(localStorage.getItem('agendeasy_admin_impersonation'))
-    if (!empresaId) {
+    if (!empresaId && scope !== 'insights') {
       return criarBaseLocal(scope, null)
     }
 
@@ -178,15 +178,17 @@ export const appApi = {
       return { ...local, __remote: true }
     }
 
-    const [empresaResumo, assinaturaAtual] = await Promise.all([
-      api.get(`/empresas/${empresaId}`).then((response) => response.data),
-      api.get(`/pagamentos/planos/empresa/${empresaId}/atual`)
-        .then((response) => response.data)
-        .catch((error) => {
-          if (error.response?.status === 404) return null
-          throw error
-        }),
-    ])
+    const [empresaResumo, assinaturaAtual] = empresaId
+      ? await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/pagamentos/planos/empresa/${empresaId}/atual`)
+            .then((response) => response.data)
+            .catch((error) => {
+              if (error.response?.status === 404) return null
+              throw error
+            }),
+        ])
+      : [null, null]
 
     if (!estaImpersonando && (assinaturaAtual?.status === 'EXPIRADA' || ['INATIVA', 'BLOQUEADA', 'PENDENTE_PAGAMENTO'].includes(empresaResumo?.status))) {
       window.dispatchEvent(new Event('agendeasy:account-inactive'))
@@ -258,9 +260,11 @@ export const appApi = {
         }
       },
       insights: async () => {
+        const queryResumo = empresaId ? `?empresaId=${empresaId}&periodo=30` : '?periodo=30'
+        const queryHistorico = empresaId ? `?empresaId=${empresaId}` : ''
         const [dashboard, historico] = await Promise.all([
-          api.get(`/insights/resumo?empresaId=${empresaId}&periodo=30`).then((response) => response.data),
-          api.get(`/insights/historico?empresaId=${empresaId}`).then((response) => response.data).catch(() => []),
+          api.get(`/insights/resumo${queryResumo}`).then((response) => response.data),
+          api.get(`/insights/historico${queryHistorico}`).then((response) => response.data).catch(() => []),
         ])
         return {
           empresa: empresaResumo,
