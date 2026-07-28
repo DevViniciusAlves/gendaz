@@ -2167,7 +2167,15 @@ tbody tr:hover { background: #fffaf5; }
 .settings-link-btn { text-decoration: none; width: 100%; }
 .settings-form-panel { display: grid; gap: 18px; }
 .settings-form-head { align-items: flex-start; margin-bottom: 0; }
-.settings-form-grid { align-items: end; }
+.settings-form-grid {
+  align-items: start;
+}
+.settings-form-grid > .field {
+  min-width: 0;
+}
+.settings-form-grid > .field:nth-child(3) {
+  grid-column: 1 / -1;
+}
 .settings-form-actions { display: flex; justify-content: flex-start; padding-top: 4px; }
 
 .first-steps-card { display: grid; gap: 10px; padding: 18px; }

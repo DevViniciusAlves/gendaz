@@ -97,7 +97,7 @@ function adicionarDiasIso(iso, dias) {
 }
 
 function primeiroId(lista) {
-  return lista[0]?.id || ''
+  return lista[0]?.id ?? ''
 }
 
 function montarFormularioInicial(dados) {
@@ -206,6 +206,41 @@ export default function Agenda() {
   const paginaAtual = Math.min(pagina, totalPaginas)
   const agendamentosPaginados = useMemo(() => agendamentosOrdenados.slice((paginaAtual - 1) * itensPorPagina, paginaAtual * itensPorPagina), [agendamentosOrdenados, paginaAtual])
   const selectedCount = selecionados.length
+
+  useEffect(() => {
+    if (!modalCriar) return
+    const servicosAtivosAtuais = data.servicos.filter((item) => item.status !== 'INATIVO')
+    const clientePadrao = primeiroId(data.clientes)
+    const servicoPadrao = primeiroId(servicosAtivosAtuais)
+    const profissionalPadrao = primeiroId(data.profissionais) || PROFISSIONAL_AUTOMATICO_VALUE
+
+    setForm((current) => {
+      let atualizou = false
+      const proximo = { ...current }
+
+      if (!String(proximo.clienteId ?? '').trim() && clientePadrao) {
+        proximo.clienteId = clientePadrao
+        atualizou = true
+      }
+
+      if (!String(proximo.servicoId ?? '').trim() && servicoPadrao) {
+        proximo.servicoId = servicoPadrao
+        atualizou = true
+      }
+
+      if (temProfissionais) {
+        if (!String(proximo.profissionalId ?? '').trim()) {
+          proximo.profissionalId = profissionalPadrao
+          atualizou = true
+        }
+      } else if (proximo.profissionalId !== null) {
+        proximo.profissionalId = null
+        atualizou = true
+      }
+
+      return atualizou ? proximo : current
+    })
+  }, [data.clientes, data.profissionais, data.servicos, modalCriar, temProfissionais])
 
   function limparSelecao() {
     setSelecionando(false)
@@ -707,7 +742,7 @@ export default function Agenda() {
             </label>
           )}
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
-          <Input label="Hora" type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
+          <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
           <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>

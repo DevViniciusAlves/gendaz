@@ -174,9 +174,8 @@ export default function Dashboard() {
   const receitaConfirmadaBase = data.pagamentos
     .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
     .reduce((sum, p) => sum + Number(p.valor || 0), 0)
-  const pendenteCobrancaBase = data.pagamentos
-    .filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
-    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
+  const pagamentosPendentesBase = data.pagamentos.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
+  const pendenteCobrancaBase = pagamentosPendentesBase.reduce((sum, p) => sum + Number(p.valor || 0), 0)
 
   const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
   const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
@@ -220,7 +219,13 @@ export default function Dashboard() {
 
   const metrics = [
     { key: 'agenda', icon: CalendarDays, label: 'Agendamentos hoje', value: agendamentosHoje, detail: agendamentosHoje === 0 ? 'nenhum hoje' : 'na agenda de hoje' },
-    { key: 'clientes', icon: UserPlus, label: 'Clientes cadastrados', value: totalClientes, detail: totalClientes === 0 ? 'nenhum cadastrado' : 'base ativa' },
+    {
+      key: 'pendencias',
+      icon: CreditCard,
+      label: 'Pendente de pagamento',
+      value: pagamentosPendentesBase.length,
+      detail: pendenteCobrancaBase === 0 ? 'nenhum pendente' : currency(pendenteCobrancaBase),
+    },
     { key: 'servicos', icon: Wrench, label: 'Servicos ativos', value: servicosAtivos, detail: servicosAtivos === 0 ? 'nenhum cadastrado' : 'no catalogo' },
   ]
 
@@ -228,7 +233,7 @@ export default function Dashboard() {
   const nomeEmpresa = usuario?.empresaNome || data.empresa?.nomeFantasia || resumoDashboard?.empresaNome || 'sua empresa'
   if (canFinanceiro) {
     metrics.push(
-      { key: 'financeiro', icon: CreditCard, label: 'Receita confirmada', value: receitaTotal === 0 ? 'R$ 0,00' : currency(receitaTotal), detail: receitaTotal === 0 ? 'nenhum recebimento' : 'pagamentos confirmados' },
+      { key: 'financeiro', icon: CreditCard, label: 'Receita total do mes', value: receitaTotal === 0 ? 'R$ 0,00' : currency(receitaTotal), detail: receitaTotal === 0 ? 'nenhum valor no mes' : 'valor total do mes' },
       { key: 'pendentes', icon: CreditCard, label: 'Pendente de cobranca', value: totalPendente === 0 ? 0 : totalPendente, detail: totalPendente === 0 ? 'nenhum pendente' : currency(totalPendente) },
     )
   }
