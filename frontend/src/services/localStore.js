@@ -7,7 +7,7 @@ const DATA_VERSION = 4
 export const PLANOS = {
   BASICO: {
     nome: 'Plano Basico',
-    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'servicos', 'configuracoes'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'servicos', 'financeiro', 'relatorios', 'configuracoes'],
   },
   PRO: {
     nome: 'Plano Pro',
