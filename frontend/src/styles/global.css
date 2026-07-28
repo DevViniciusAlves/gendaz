@@ -13864,6 +13864,263 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+@media (max-width: 1400px) {
+  .app-shell {
+    grid-template-columns: clamp(208px, 17vw, 240px) minmax(0, 1fr) !important;
+  }
+
+  .app-shell .sidebar {
+    padding: 18px 12px !important;
+  }
+
+  .app-shell .sidebar-logo-wrapper {
+    min-height: 112px !important;
+    padding: 14px 8px 14px !important;
+  }
+
+  .app-shell .sidebar nav {
+    gap: 3px !important;
+    margin-top: 12px !important;
+  }
+
+  .app-shell .sidebar a {
+    min-height: 38px !important;
+    padding: 0 10px !important;
+    font-size: 13px !important;
+  }
+
+  .app-shell .topbar {
+    min-height: 68px !important;
+    padding: 0 20px !important;
+  }
+
+  .app-shell .content {
+    padding: 20px !important;
+  }
+
+  .app-shell .page {
+    gap: 18px !important;
+  }
+
+  .app-shell .page-title h1 {
+    font-size: 26px !important;
+  }
+
+  .app-shell .dashboard-hero {
+    min-height: 152px !important;
+    padding: 22px !important;
+  }
+
+  .app-shell .dashboard-hero h1 {
+    font-size: 32px !important;
+  }
+
+  .app-shell .panel {
+    padding: 18px !important;
+  }
+
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .metric-grid {
+    gap: 12px !important;
+  }
+
+  .app-shell .operation-metrics article,
+  .app-shell .delivery-stats article,
+  .app-shell .metric-card {
+    min-height: 112px !important;
+    padding: 16px !important;
+  }
+
+  .app-shell .operation-metrics strong,
+  .app-shell .delivery-stats strong,
+  .app-shell .metric-card strong {
+    font-size: 22px !important;
+  }
+
+  .app-shell .dashboard-grid {
+    grid-template-columns: minmax(0, 1.95fr) minmax(280px, 0.85fr) !important;
+    gap: 14px !important;
+  }
+
+  .app-shell .panel h2,
+  .app-shell .plan-card h2 {
+    font-size: 16px !important;
+  }
+
+  .app-shell .btn {
+    min-height: 32px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+
+  .app-shell .icon-btn {
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .app-shell .table-wrap,
+  .app-shell .search-shell,
+  .app-shell .filters,
+  .app-shell .delivery-search,
+  .app-shell .report-filters {
+    padding: 14px !important;
+  }
+
+  .app-shell .chat-layout {
+    grid-template-columns: 250px minmax(0, 1fr) 250px !important;
+  }
+
+  .gendaz-shell {
+    grid-template-columns: 208px minmax(0, 1fr) !important;
+  }
+
+  .gendaz-sidebar {
+    padding: 16px 10px !important;
+  }
+
+  .gendaz-main {
+    padding: 18px !important;
+  }
+
+  .gendaz-grid {
+    gap: 12px !important;
+  }
+
+  .gendaz-grid--two {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .gendaz-card,
+  .gendaz-panel,
+  .gendaz-auth__card,
+  .gendaz-chat {
+    padding: 16px !important;
+  }
+
+  .gendaz-card {
+    min-height: 112px !important;
+  }
+
+  .gendaz-panel__head h2 {
+    font-size: 16px !important;
+  }
+
+  .gendaz-btn,
+  .gendaz-fab {
+    min-height: 36px !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+  }
+
+  .gendaz-table__row {
+    gap: 10px !important;
+  }
+
+  .gendaz-dashboard-grid {
+    gap: 14px !important;
+  }
+}
+
+@media (max-width: 1280px) {
+  .app-shell {
+    grid-template-columns: 200px minmax(0, 1fr) !important;
+  }
+
+  .app-shell .sidebar {
+    padding: 16px 10px !important;
+  }
+
+  .app-shell .sidebar .sidebar-logo {
+    max-width: 180px !important;
+    transform: scale(1.06) !important;
+  }
+
+  .app-shell .sidebar a {
+    min-height: 36px !important;
+    padding: 0 9px !important;
+    font-size: 12px !important;
+  }
+
+  .app-shell .content {
+    padding: 16px !important;
+  }
+
+  .app-shell .page {
+    gap: 16px !important;
+  }
+
+  .app-shell .page-title h1 {
+    font-size: 24px !important;
+  }
+
+  .app-shell .dashboard-grid {
+    grid-template-columns: minmax(0, 1.88fr) minmax(260px, 0.82fr) !important;
+  }
+
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .metric-grid {
+    gap: 10px !important;
+  }
+
+  .app-shell .operation-metrics article,
+  .app-shell .delivery-stats article,
+  .app-shell .metric-card {
+    min-height: 104px !important;
+    padding: 14px !important;
+  }
+
+  .app-shell .operation-metrics strong,
+  .app-shell .delivery-stats strong,
+  .app-shell .metric-card strong {
+    font-size: 20px !important;
+  }
+
+  .app-shell .panel {
+    padding: 16px !important;
+  }
+
+  .app-shell .panel h2,
+  .app-shell .plan-card h2 {
+    font-size: 15px !important;
+  }
+
+  .gendaz-shell {
+    grid-template-columns: 200px minmax(0, 1fr) !important;
+  }
+
+  .gendaz-main {
+    padding: 16px !important;
+  }
+
+  .gendaz-grid {
+    gap: 10px !important;
+  }
+
+  .gendaz-card,
+  .gendaz-panel,
+  .gendaz-auth__card,
+  .gendaz-chat {
+    padding: 14px !important;
+  }
+
+  .gendaz-card {
+    min-height: 104px !important;
+  }
+
+  .gendaz-btn,
+  .gendaz-fab {
+    min-height: 34px !important;
+    padding: 0 10px !important;
+    font-size: 12px !important;
+  }
+
+  .gendaz-table__row {
+    gap: 8px !important;
+  }
+}
+
 
 
 
