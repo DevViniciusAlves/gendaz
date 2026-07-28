@@ -10,8 +10,14 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency, PLANOS, todayIso } from '../services/localStore.js'
 
-function buildReceitaDias(pagamentos, dias = 30) {
+function diasDoMesAtual() {
   const hoje = new Date(`${todayIso()}T12:00:00`)
+  return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
+}
+
+function buildReceitaMes(pagamentos) {
+  const hoje = new Date(`${todayIso()}T12:00:00`)
+  const dias = diasDoMesAtual()
   const mapaReceita = {}
 
   pagamentos.forEach((p) => {
@@ -19,13 +25,15 @@ function buildReceitaDias(pagamentos, dias = 30) {
     const confirmado = ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(status)
     if (!confirmado || !p.dataPagamento) return
     const dia = String(p.dataPagamento).slice(0, 10)
+    if (!dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
     mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
   })
 
   const resultado = []
-  for (let i = dias - 1; i >= 0; i--) {
-    const data = new Date(hoje)
-    data.setDate(data.getDate() - i)
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0, 0)
+  for (let i = 0; i < dias; i++) {
+    const data = new Date(inicioMes)
+    data.setDate(data.getDate() + i)
     const iso = data.toISOString().slice(0, 10)
     const label = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
     resultado.push({ iso, label, valor: mapaReceita[iso] || 0 })
@@ -41,22 +49,50 @@ function normalizarReceitaDias(dados) {
   }))
 }
 
-function GraficoBarras({ dados }) {
+function suavizarPontos(pontos, largura, altura) {
+  if (pontos.length < 2) return ''
+  const curvas = [`M ${pontos[0].x} ${pontos[0].y}`]
+  for (let i = 0; i < pontos.length - 1; i++) {
+    const atual = pontos[i]
+    const proximo = pontos[i + 1]
+    const pontoMeio = (atual.x + proximo.x) / 2
+    curvas.push(`C ${pontoMeio} ${atual.y}, ${pontoMeio} ${proximo.y}, ${proximo.x} ${proximo.y}`)
+  }
+  return curvas.join(' ')
+}
+
+function GraficoArea({ dados }) {
   const [tooltip, setTooltip] = useState(null)
-  const maxValor = Math.max(...dados.map((d) => d.valor), 1)
   const temDados = dados.some((d) => d.valor > 0)
   const width = 760
   const height = 240
-  const pLeft = 64
-  const pRight = 16
+  const pLeft = 24
+  const pRight = 18
   const pTop = 16
-  const pBottom = 36
+  const pBottom = 28
   const chartW = width - pLeft - pRight
   const chartH = height - pTop - pBottom
-  const barCount = dados.length
-  const barGap = 3
-  const barW = Math.max(4, (chartW - barGap * (barCount - 1)) / barCount)
+  const maxValor = Math.max(...dados.map((d) => d.valor), 1)
   const gridFracs = [0, 0.25, 0.5, 0.75, 1]
+
+  const pontos = dados.map((d, index) => {
+    const x = pLeft + (chartW * (dados.length > 1 ? index / (dados.length - 1) : 0))
+    const y = pTop + chartH - ((d.valor || 0) / maxValor) * chartH
+    return { ...d, x, y }
+  })
+
+  const linha = suavizarPontos(pontos, width, height)
+  const areaBase = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linha} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
+  const linhaSecundaria = suavizarPontos(
+    pontos.map((p, index) => ({
+      ...p,
+      y: p.y + Math.min(26, 10 + (index % 4) * 4),
+    })),
+    width,
+    height,
+  )
+  const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
+  const grade = { dark: 'rgba(255,255,255,0.08)', light: 'rgba(17,24,39,0.10)' }
 
   if (!temDados) {
     return (
@@ -69,7 +105,7 @@ function GraficoBarras({ dados }) {
   }
 
   return (
-    <div className="bar-chart-shell">
+    <div className="area-chart-shell">
       <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafico de receita por dia" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
         {gridFracs.map((frac) => {
           const y = pTop + chartH * (1 - frac)
@@ -84,31 +120,44 @@ function GraficoBarras({ dados }) {
           )
         })}
 
-        {dados.map((d, i) => {
-          const barH = d.valor > 0 ? Math.max(3, (d.valor / maxValor) * chartH) : 2
-          const x = pLeft + i * (barW + barGap)
-          const y = pTop + chartH - barH
-          const isHovered = tooltip?.index === i
-          const hasValue = d.valor > 0
+        <defs>
+          <linearGradient id="areaPrimary" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.78" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.18" />
+          </linearGradient>
+          <linearGradient id="areaSecondary" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.48" />
+            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.08" />
+          </linearGradient>
+        </defs>
 
+        <path d={areaSecundaria} fill="url(#areaSecondary)" opacity={0.7} />
+        <path d={areaBase} fill="url(#areaPrimary)" opacity={0.92} />
+        <path d={linha} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+
+        {pontos.map((p, index) => {
+          const hasValue = p.valor > 0
+          const isHovered = tooltip?.index === index
           return (
-            <g key={d.iso}>
-              <rect
-                x={x}
-                y={y}
-                width={barW}
-                height={barH}
-                rx={3}
-                style={{ fill: isHovered ? 'var(--primary)' : hasValue ? 'var(--primary)' : 'var(--dashboard-chart-empty-bar)', cursor: hasValue ? 'pointer' : 'default', transition: 'fill 0.14s, opacity 0.14s', opacity: isHovered ? 1 : hasValue ? 0.85 : 0.6 }}
+            <g key={p.iso}>
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={isHovered ? 5.5 : 4}
+                fill={isHovered ? 'var(--primary)' : 'rgba(255,255,255,0.92)'}
+                stroke="var(--primary)"
+                strokeWidth={1.8}
+                opacity={hasValue ? 1 : 0.45}
                 onMouseEnter={() => {
                   if (!hasValue) return
-                  setTooltip({ index: i, x: x + barW / 2, y, valor: d.valor, label: d.label })
+                  setTooltip({ index, x: p.x, y: p.y, valor: p.valor, label: p.label })
                 }}
                 onMouseLeave={() => setTooltip(null)}
+                style={{ cursor: hasValue ? 'pointer' : 'default' }}
               />
-              {i % 5 === 0 && (
-                <text x={x + barW / 2} y={height - 6} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-text)">
-                  {d.label}
+              {index % 5 === 0 && (
+                <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-text)">
+                  {p.label}
                 </text>
               )}
             </g>
@@ -116,13 +165,13 @@ function GraficoBarras({ dados }) {
         })}
 
         {tooltip && (() => {
-          const tx = Math.min(Math.max(tooltip.x, pLeft + 44), width - pRight - 44)
-          const ty = Math.max(tooltip.y - 50, pTop)
+          const tx = Math.min(Math.max(tooltip.x, pLeft + 48), width - pRight - 48)
+          const ty = Math.max(tooltip.y - 54, pTop)
           return (
             <g style={{ pointerEvents: 'none' }}>
-              <rect x={tx - 46} y={ty} width={92} height={36} rx={7} fill="var(--dashboard-chart-tooltip-bg)" opacity={0.96} />
-              <text x={tx} y={ty + 13} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-tooltip-muted)">{tooltip.label}</text>
-              <text x={tx} y={ty + 28} textAnchor="middle" fontSize={12} fill="var(--dashboard-chart-tooltip-text)" fontWeight={700}>
+              <rect x={tx - 52} y={ty} width={104} height={38} rx={8} fill="var(--dashboard-chart-tooltip-bg)" opacity={0.96} />
+              <text x={tx} y={ty + 14} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-tooltip-muted)">{tooltip.label}</text>
+              <text x={tx} y={ty + 29} textAnchor="middle" fontSize={12} fill="var(--dashboard-chart-tooltip-text)" fontWeight={700}>
                 {currency(tooltip.valor)}
               </text>
             </g>
@@ -166,6 +215,7 @@ export default function Dashboard() {
   const hoje = todayIso()
   const hojeDate = new Date(`${hoje}T12:00:00`)
   const dataExtenso = hojeDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
+  const mesAtual = hojeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
 
   const agendamentosHojeBase = agendamentosVisiveis.filter((a) => a.data === hoje).length
   const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
@@ -200,7 +250,7 @@ export default function Dashboard() {
 
   const receitaDias = resumoDashboard?.receitaPorDia?.length
     ? normalizarReceitaDias(resumoDashboard.receitaPorDia)
-    : buildReceitaDias(data.pagamentos, 30)
+    : buildReceitaMes(data.pagamentos)
 
   const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
     ? resumoDashboard.proximosAgendamentos
@@ -212,10 +262,45 @@ export default function Dashboard() {
   const servicosTop = resumoDashboard?.servicosMaisAgendados?.length
     ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, item.quantidade])
     : Object.entries(servicoCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5)
+  const profissionalCountFallback = {}
+  ;(data.agendamentos || []).forEach((a) => {
+    if (a.status === 'CANCELADO') return
+    const nomeProfissional = a.profissionalNome || 'Profissional'
+    profissionalCountFallback[nomeProfissional] = (profissionalCountFallback[nomeProfissional] || 0) + 1
+  })
+  const profissionaisTop = resumoDashboard?.profissionaisMaisAgendados?.length
+    ? resumoDashboard.profissionaisMaisAgendados.map((item) => [item.nome, item.quantidade])
+    : Object.entries(profissionalCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5)
   const receitaServicoTop = resumoDashboard?.servicosMaisAgendados?.length
     ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, Number(item.valor || 0)]).filter(([, valor]) => valor > 0)
     : Object.entries(receitaServicoFallback).sort((a, b) => b[1] - a[1]).slice(0, 4)
   const receitaServicoMax = receitaServicoTop[0]?.[1] || 1
+  const clientesEmRiscoFallback = (data.clientes || [])
+    .filter((cliente) => {
+      const score = Number(cliente.scoreRisco)
+      const diasSemAgendar = Number(cliente.diasSemAgendar)
+      return score >= 75 || diasSemAgendar >= 60
+    })
+    .sort((a, b) => Number(b.scoreRisco || 0) - Number(a.scoreRisco || 0) || Number(b.diasSemAgendar || 0) - Number(a.diasSemAgendar || 0))
+    .slice(0, 2)
+  const clientesEmRiscoTop = resumoDashboard?.clientesEmRisco?.length
+    ? resumoDashboard.clientesEmRisco.slice(0, 2)
+    : clientesEmRiscoFallback
+  const pagamentosPendentesTop = [...(resumoDashboard?.pagamentosPendentes || pagamentosPendentesBase)]
+    .filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
+    .sort((a, b) => {
+      const dataA = String(a.dataPagamento || a.data || '')
+      const dataB = String(b.dataPagamento || b.data || '')
+      return dataB.localeCompare(dataA)
+    })
+    .slice(0, 2)
+  const ultimosAtendimentos = [...data.agendamentos]
+    .sort((a, b) => {
+      const dataA = `${a.data || ''} ${a.horaInicio || ''}`
+      const dataB = `${b.data || ''} ${b.horaInicio || ''}`
+      return dataB.localeCompare(dataA)
+    })
+    .slice(0, 3)
 
   const metrics = [
     { key: 'agenda', icon: CalendarDays, label: 'Agendamentos hoje', value: agendamentosHoje, detail: agendamentosHoje === 0 ? 'nenhum hoje' : 'na agenda de hoje' },
@@ -314,14 +399,14 @@ export default function Dashboard() {
               <div className="panel-head">
                 <div>
                   <span className="section-kicker">Financeiro</span>
-                  <h2>Receita por Dia</h2>
+                  <h2>Receita do mes</h2>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <TrendingUp size={16} color="var(--primary)" />
-                  <small style={{ color: 'var(--muted)', fontSize: 13 }}>Mes atual</small>
+                  <small style={{ color: 'var(--muted)', fontSize: 13 }}>{mesAtual}</small>
                 </div>
               </div>
-              <GraficoBarras dados={receitaDias} />
+              <GraficoArea dados={receitaDias} />
             </ScrollReveal>
           )}
 
@@ -360,18 +445,18 @@ export default function Dashboard() {
               <ScrollReveal className="panel" delay={60}>
                 <div className="panel-head">
                   <div>
-                    <span className="section-kicker">Servicos</span>
-                    <h2>Mais agendados</h2>
+                    <span className="section-kicker">Profissionais</span>
+                    <h2>Mais escolhido</h2>
                   </div>
                 </div>
-                {servicosTop.length === 0 ? (
+                {profissionaisTop.length === 0 ? (
                   <div className="dash-empty-state">
                     <Wrench size={28} color="var(--primary)" />
-                    <p>Nenhum agendamento ainda.</p>
+                    <p>Nenhum profissional agendado ainda.</p>
                   </div>
                 ) : (
                   <div className="ranking">
-                    {servicosTop.map(([nome, qtd]) => (
+                    {profissionaisTop.map(([nome, qtd]) => (
                       <div key={nome} className="dashboard-ranking-item dashboard-service-item">
                         <strong>{nome}</strong>
                         <small>{qtd} agendamento{qtd !== 1 ? 's' : ''}</small>
@@ -386,32 +471,34 @@ export default function Dashboard() {
                   <div className="panel-head">
                     <div>
                       <span className="section-kicker">Desempenho</span>
-                      <h2>Receita por servico</h2>
+                      <h2>Clientes em risco</h2>
                     </div>
                   </div>
-                  {receitaServicoTop.length === 0 ? (
+                  {clientesEmRiscoTop.length === 0 ? (
                     <div className="dash-empty-state">
                       <BarChart2 size={28} color="var(--primary)" />
-                      <p>Nenhuma receita registrada.</p>
+                      <p>Não existe clientes em risco.</p>
                     </div>
                   ) : (
-                    <div className="servico-desempenho">
-                      {receitaServicoTop.map(([nome, valor]) => (
-                        <div key={nome} className="servico-desempenho-item">
-                          <div className="servico-desempenho-label">
-                            <span>{nome}</span>
-                            <strong>{currency(valor)}</strong>
+                    <div className="ranking">
+                      {clientesEmRiscoTop.map((cliente) => {
+                        const score = Number(cliente.scoreRisco || 0)
+                        const dias = Number(cliente.diasSemAgendar || 0)
+                        return (
+                          <div key={cliente.id} className="dashboard-ranking-item dashboard-service-item">
+                            <div>
+                              <strong>{cliente.nome}</strong>
+                              <small>{dias} dias sem agendar</small>
+                            </div>
+                            <strong style={{ color: 'var(--warning)', whiteSpace: 'nowrap' }}>{score}% risco</strong>
                           </div>
-                          <div className="servico-desempenho-bar">
-                            <div
-                              className="servico-desempenho-fill"
-                              style={{ width: `${Math.round((valor / receitaServicoMax) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      ))}
+                        )
+                      })}
                     </div>
                   )}
+                  <Link className="inline-link" to="/sistema/crm?segment=at_risk">
+                    Ver todos
+                  </Link>
                 </ScrollReveal>
               )}
 
@@ -424,9 +511,9 @@ export default function Dashboard() {
                     </div>
                     <CreditCard size={18} color="var(--primary)" />
                   </div>
-                  {resumoDashboard?.pagamentosPendentes?.length ? (
+                  {pagamentosPendentesTop.length ? (
                     <div className="ranking">
-                      {resumoDashboard.pagamentosPendentes.slice(0, 4).map((p) => (
+                      {pagamentosPendentesTop.map((p) => (
                         <div key={p.id} className="dashboard-ranking-item dashboard-payment-item">
                           <div className="dashboard-payment-copy">
                             <strong>{p.clienteNome || 'Cliente'}</strong>
@@ -442,6 +529,9 @@ export default function Dashboard() {
                       <p>Nenhum pendente. ðŸŽ‰</p>
                     </div>
                   )}
+                  <Link className="inline-link" to="/sistema/financeiro">
+                    Ver todos
+                  </Link>
                 </ScrollReveal>
               )}
             </div>
@@ -471,7 +561,7 @@ export default function Dashboard() {
                   { key: 'profissionalNome', label: 'PROFISSIONAL' },
                   { key: 'horaInicio', label: 'HORARIO' },
                 ]}
-                rows={data.agendamentos}
+                rows={ultimosAtendimentos}
               />
             )}
           </ScrollReveal>
@@ -480,6 +570,7 @@ export default function Dashboard() {
     </section>
   )
 }
+
 
 
 

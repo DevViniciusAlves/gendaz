@@ -4715,6 +4715,7 @@ tbody tr:hover { background: #fffaf5; }
 .receita-chart-panel {
   min-height: 0;
 }
+.area-chart-shell,
 .bar-chart-shell {
   height: 260px;
   width: 100%;
@@ -4726,12 +4727,14 @@ tbody tr:hover { background: #fffaf5; }
   --dashboard-chart-tooltip-text: #ffffff;
   --dashboard-chart-tooltip-muted: rgba(255, 255, 255, 0.78);
 }
+.area-chart-shell svg,
 .bar-chart-shell svg {
   display: block;
   width: 100%;
   height: 100%;
 }
 
+:root[data-theme='dark'] .area-chart-shell,
 :root[data-theme='dark'] .bar-chart-shell {
   --dashboard-chart-text: rgba(226, 233, 247, 0.68);
   --dashboard-chart-grid: rgba(255, 255, 255, 0.08);
