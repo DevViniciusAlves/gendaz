@@ -54,6 +54,17 @@ public class ResendEmailService {
                 .build();
     }
 
+    public ResendEmailService(
+            ObjectMapper objectMapper,
+            String apiKey,
+            String fromEmail,
+            String fromName,
+            String frontendUrl,
+            String adminNotificationEmail
+    ) {
+        this(objectMapper, null, apiKey, fromEmail, fromName, frontendUrl, adminNotificationEmail);
+    }
+
     public boolean enviarBoasVindas(String emailCliente, String nomeCliente, String nomeEmpresa) {
         if (emailCliente == null || emailCliente.isBlank()) {
             log.warn("[resend] email do cliente vazio, boas-vindas ignorado");
@@ -120,7 +131,7 @@ public class ResendEmailService {
     }
 
     private boolean enviarEmail(String destinatario, String assunto, String html) {
-        auditService.contarExecucao("ResendEmailService#enviarEmail");
+        contarExecucao("ResendEmailService#enviarEmail");
         if (apiKey.isBlank()) {
             log.warn("[resend] RESEND_API_KEY ausente; email nao enviado");
             return false;
@@ -144,17 +155,17 @@ public class ResendEmailService {
 
             long inicio = System.currentTimeMillis();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            auditService.registrarHttp(
+            registrarHttp(
                     "Resend",
-                    auditService.sanitizarBaseUrl(RESEND_URI.toString()),
+                    RESEND_URI.toString(),
                     "POST",
-                    auditService.origem("ResendEmailService", "enviarEmail"),
-                    auditService.bytesUtf8(body),
-                    auditService.headersBytes(Map.of(
+                    auditServiceOrNull().origem("ResendEmailService", "enviarEmail"),
+                    body,
+                    Map.of(
                             "Authorization", "Bearer " + apiKey,
                             "Content-Type", "application/json"
-                    )),
-                    auditService.bytesUtf8(response.body()),
+                    ),
+                    response.body(),
                     System.currentTimeMillis() - inicio,
                     response.statusCode()
             );
@@ -170,6 +181,45 @@ public class ResendEmailService {
             return false;
         }
     }
+
+    private void contarExecucao(String chave) {
+        if (auditService != null) {
+            auditService.contarExecucao(chave);
+        }
+    }
+
+    private void registrarHttp(
+            String integracao,
+            String urlBase,
+            String metodoHttp,
+            String origem,
+            String bodyEnviado,
+            Map<String, String> headers,
+            String bodyRecebido,
+            long duracaoMs,
+            int statusHttp
+    ) {
+        if (auditService == null) {
+            return;
+        }
+        auditService.registrarHttp(
+                integracao,
+                auditService.sanitizarBaseUrl(urlBase),
+                metodoHttp,
+                origem,
+                auditService.bytesUtf8(bodyEnviado),
+                auditService.headersBytes(headers),
+                auditService.bytesUtf8(bodyRecebido),
+                duracaoMs,
+                statusHttp
+        );
+    }
+
+    private OutboundTrafficAuditService auditServiceOrNull() {
+        return auditService == null ? NOOP_AUDIT_SERVICE : auditService;
+    }
+
+    private static final OutboundTrafficAuditService NOOP_AUDIT_SERVICE = new OutboundTrafficAuditService(false, 600000L);
 
     private String montarLinkRecuperacao(String token) {
         return montarUrlBase() + "/redefinir-senha?token=" + token;
