@@ -310,19 +310,22 @@
   flex-direction: column;
   gap: 12px;
   height: 100%;
+  min-height: 680px;
 }
 
 .insights-sidebar-layout {
   display: grid;
-  grid-template-columns: minmax(0, 3.4fr) minmax(150px, 0.35fr);
-  gap: 16px;
-  align-items: start;
+  grid-template-columns: minmax(0, 2.4fr) minmax(140px, 0.6fr);
+  gap: 12px;
+  align-items: stretch;
 }
 
 .insights-sidebar-stack {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  min-height: 680px;
+  overflow-y: auto;
 }
 
 .insights-sidebar-chat .insights-chat {
@@ -335,7 +338,7 @@
 }
 
 .insights-sidebar-chat .insights-chat__messages {
-  min-height: 0;
+  min-height: 420px;
   max-height: none;
   flex: 1 1 auto;
   width: 100%;
@@ -449,19 +452,26 @@
 
   .insights-sidebar-card {
     gap: 10px;
+    min-height: 620px;
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 3.2fr) minmax(140px, 0.38fr);
-    gap: 12px;
+    grid-template-columns: minmax(0, 2.2fr) minmax(140px, 0.8fr);
+    gap: 10px;
+    align-items: stretch;
   }
 
   .insights-sidebar-chat .insights-chat {
-    max-height: 360px;
+    min-height: 0;
+    height: 100%;
+    max-height: none;
+    gap: 8px;
   }
 
   .insights-sidebar-chat .insights-chat__messages {
-    max-height: 240px;
+    min-height: 380px;
+    max-height: none;
+    flex: 1 1 auto;
   }
 }
 
@@ -552,25 +562,25 @@
 .insights-suggestion {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border: 0.5px solid var(--border);
   background: var(--surface-soft);
   color: var(--text);
-  padding: 10px 12px;
+  padding: 8px 10px;
   border-radius: 12px;
   font-size: 11px;
   cursor: pointer;
   width: 100%;
-  min-height: 40px;
+  min-height: 36px;
 }
 
 .insights-simulation {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 12px 14px;
-  min-height: 50px;
+  gap: 10px;
+  padding: 10px 12px;
+  min-height: 44px;
 }
 
 .insights-simulation p {
@@ -728,10 +738,11 @@
   .insights-sidebar-card {
     gap: 10px;
     height: 100%;
+    min-height: 620px;
   }
 
   .insights-sidebar-layout {
-    grid-template-columns: minmax(0, 2.8fr) minmax(140px, 0.4fr);
+    grid-template-columns: minmax(0, 2.2fr) minmax(140px, 0.8fr);
     gap: 10px;
     align-items: stretch;
   }
@@ -744,7 +755,7 @@
   }
 
   .insights-sidebar-chat .insights-chat__messages {
-    min-height: 0;
+    min-height: 380px;
     max-height: none;
     flex: 1 1 auto;
   }
