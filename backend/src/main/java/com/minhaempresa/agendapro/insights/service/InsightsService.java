@@ -15,6 +15,7 @@ import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsResponse;
 import com.minhaempresa.agendapro.insights.entity.InsightEntity;
 import com.minhaempresa.agendapro.insights.repository.InsightRepository;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.agendapro.shared.audit.OutboundTrafficAuditService;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
@@ -47,6 +48,7 @@ public class InsightsService {
     private final UsuarioRepository usuarioRepository;
     private final PagamentoRepository pagamentoRepository;
     private final ResendEmailService resendEmailService;
+    private final OutboundTrafficAuditService auditService;
     private final ObjectMapper objectMapper;
 
     @Value("${app.timezone:America/Cuiaba}")
@@ -54,6 +56,7 @@ public class InsightsService {
 
     @Transactional(readOnly = true)
     public DashboardResponse gerarDashboard(Long empresaId, Integer periodo) {
+        auditService.contarExecucao("InsightsService#gerarDashboard");
         Map<String, Object> dados = analyzer.coletarDados(empresaId, periodo);
         DashboardResponse local = construirDashboardLocal(empresaId, dados);
         if (!groqClient.disponivel()) {
@@ -111,6 +114,7 @@ public class InsightsService {
 
     @Transactional(readOnly = true)
     public String analisarPergunta(Long empresaId, String pergunta, List<ChatMessageRequest> historico) {
+        auditService.contarExecucao("InsightsService#analisarPergunta");
         validarAcessoEmpresa(empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
         if (pergunta != null && pergunta.trim().toLowerCase().contains("nome")) {
@@ -145,13 +149,6 @@ public class InsightsService {
                     """.formatted(String.valueOf(historicoParaGroq(historico)));
         }
 
-        System.out.println("=== GROQ INPUT ===");
-        System.out.println("Pergunta: " + pergunta);
-        System.out.println("HistÃ³rico: " + (historico == null ? "vazio" : historico.size() + " mensagens"));
-        System.out.println("Dados formatados:\n" + montarPromptDadosConversa(dados));
-        System.out.println("Ramo detectado: " + ramoEmpresa);
-        System.out.println("==================");
-
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
         if (resposta.isEmpty()) {
             return "Desculpa, tive um problema ao processar sua pergunta. Tente novamente.";
@@ -160,6 +157,7 @@ public class InsightsService {
     }
     @Transactional
     public InsightsResponse analisarERegistrar(Long empresaId, String pergunta) {
+        auditService.contarExecucao("InsightsService#analisarERegistrar");
         String resposta = analisarPergunta(empresaId, pergunta, List.of());
         salvarAnalise(empresaId, "pergunta", pergunta, resposta);
         return new InsightsResponse(true, resposta, LocalDateTime.now(ZoneId.of(appTimezone)));
@@ -192,6 +190,7 @@ public class InsightsService {
     @Transactional
     @Scheduled(cron = "0 0 8 ? * MON", zone = "${app.timezone:America/Cuiaba}")
     public void analisarEmpresasAgendado() {
+        auditService.contarExecucao("InsightsService#analisarEmpresasAgendado");
         List<EmpresaEntity> empresas = empresaRepository.findAll();
         for (EmpresaEntity empresa : empresas) {
             try {

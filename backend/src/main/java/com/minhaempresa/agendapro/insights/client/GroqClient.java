@@ -2,6 +2,7 @@ package com.minhaempresa.agendapro.insights.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.minhaempresa.agendapro.shared.audit.OutboundTrafficAuditService;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -9,6 +10,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -25,15 +27,18 @@ public class GroqClient {
 
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
+    private final OutboundTrafficAuditService auditService;
     private final String apiKey;
     private final String model;
 
     public GroqClient(
             ObjectMapper objectMapper,
+            OutboundTrafficAuditService auditService,
             @Value("${groq.api-key:${GROQ_API_KEY:}}") String apiKey,
             @Value("${groq.model:llama-3.3-70b-versatile}") String model
     ) {
         this.objectMapper = objectMapper;
+        this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.model = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
         this.httpClient = HttpClient.newBuilder()
@@ -46,6 +51,7 @@ public class GroqClient {
     }
 
     public Optional<String> analisar(String systemPrompt, String userPrompt) {
+        auditService.contarExecucao("GroqClient#analisar");
         if (!disponivel()) {
             return Optional.empty();
         }
@@ -69,9 +75,25 @@ public class GroqClient {
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
 
+            Instant inicio = Instant.now();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            auditService.registrarHttp(
+                    "Groq",
+                    auditService.sanitizarBaseUrl(GROQ_URI.toString()),
+                    "POST",
+                    auditService.origem("GroqClient", "analisar"),
+                    auditService.bytesUtf8(body),
+                    auditService.headersBytes(Map.of(
+                            "Authorization", "Bearer " + apiKey,
+                            "Content-Type", "application/json"
+                    )),
+                    auditService.bytesUtf8(response.body()),
+                    Duration.between(inicio, Instant.now()).toMillis(),
+                    response.statusCode()
+            );
+
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                log.warn("[insights-groq] resposta nao-sucedida status={} body={}", response.statusCode(), response.body());
+                log.warn("[insights-groq] resposta nao-sucedida status={}", response.statusCode());
                 return Optional.empty();
             }
 
@@ -89,15 +111,7 @@ public class GroqClient {
     }
 
     public Optional<String> conversar(String systemPrompt, List<Map<String, String>> historico, String userPrompt) {
-        System.out.println("\n========== GROQ DEBUG ==========");
-        System.out.println("[GROQ] disponivel(): " + disponivel());
-        System.out.println("[GROQ] API Key setada? " + (apiKey != null && !apiKey.isBlank()));
-        System.out.println("[GROQ] Model: " + model);
-        System.out.println("[GROQ] System prompt length: " + (systemPrompt == null ? 0 : systemPrompt.length()));
-        System.out.println("[GROQ] User prompt: " + userPrompt);
-        System.out.println("[GROQ] Histórico size: " + (historico == null ? 0 : historico.size()));
-        System.out.println("================================\n");
-
+        auditService.contarExecucao("GroqClient#conversar");
         if (!disponivel()) {
             return Optional.empty();
         }
@@ -119,28 +133,36 @@ public class GroqClient {
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
 
+            Instant inicio = Instant.now();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-            System.out.println("[GROQ-RESPONSE] Status: " + response.statusCode());
-            System.out.println("[GROQ-RESPONSE] Body: " + response.body());
+            auditService.registrarHttp(
+                    "Groq",
+                    auditService.sanitizarBaseUrl(GROQ_URI.toString()),
+                    "POST",
+                    auditService.origem("GroqClient", "conversar"),
+                    auditService.bytesUtf8(body),
+                    auditService.headersBytes(Map.of(
+                            "Authorization", "Bearer " + apiKey,
+                            "Content-Type", "application/json"
+                    )),
+                    auditService.bytesUtf8(response.body()),
+                    Duration.between(inicio, Instant.now()).toMillis(),
+                    response.statusCode()
+            );
+
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
-                log.warn("[insights-groq] resposta nao-sucedida status={} body={}", response.statusCode(), response.body());
+                log.warn("[insights-groq] resposta nao-sucedida status={}", response.statusCode());
                 return Optional.empty();
             }
 
             JsonNode root = objectMapper.readTree(response.body());
             JsonNode contentNode = root.path("choices").path(0).path("message").path("content");
             String content = contentNode.isTextual() ? contentNode.asText() : null;
-            Optional<String> resultado = Optional.ofNullable(content);
-            System.out.println("[GROQ-RESULT] Retornando: " + (resultado.isPresent() ? "SIM" : "VAZIO"));
-            return resultado;
+            return Optional.ofNullable(content);
         } catch (IOException e) {
-            System.out.println("[GROQ-ERROR] " + e.getMessage());
-            e.printStackTrace();
             log.warn("[insights-groq] falha ao serializar ou ler resposta: {}", e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
-            System.out.println("[GROQ-ERROR] " + e.getMessage());
-            e.printStackTrace();
             log.warn("[insights-groq] falha ao conversar: {}", e.getMessage(), e);
             return Optional.empty();
         }

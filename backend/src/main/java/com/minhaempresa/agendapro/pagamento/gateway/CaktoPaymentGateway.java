@@ -6,6 +6,7 @@ import com.minhaempresa.agendapro.pagamento.entity.PagamentoPlanoEntity;
 import com.minhaempresa.agendapro.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.audit.OutboundTrafficAuditService;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
@@ -41,6 +42,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
 
     private final PaymentGatewayProperties properties;
     private final ObjectMapper objectMapper;
+    private final OutboundTrafficAuditService auditService;
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
             .build();
@@ -90,6 +92,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
 
     @Override
     public Optional<PaymentGatewayWebhook> consultarPagamentoPlano(PagamentoPlanoEntity pagamento) {
+        auditService.contarExecucao("CaktoPaymentGateway#consultarPagamentoPlano");
         validarCredenciaisApi();
         String token = obterAccessToken();
 
@@ -152,6 +155,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
     }
 
     private synchronized String obterAccessToken() {
+        auditService.contarExecucao("CaktoPaymentGateway#obterAccessToken");
         if (accessToken != null && Instant.now().isBefore(accessTokenExpiresAt.minusSeconds(30))) {
             return accessToken;
         }
@@ -166,7 +170,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
                 .build();
 
         try {
-            Map<String, Object> json = executarJson(request);
+            Map<String, Object> json = executarJson(request, body, "CaktoPaymentGateway#obterAccessToken");
             String token = texto(json, "access_token", "accessToken", "token");
             if (token == null || token.isBlank()) {
                 throw new BusinessException("Cakto nao retornou token para consulta automatica.");
@@ -183,6 +187,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
     }
 
     private PaymentGatewayResponse criarPagamentoPixAuto(String token, PagamentoPlanoEntity pagamento) {
+        auditService.contarExecucao("CaktoPaymentGateway#criarPagamentoPixAuto");
         String offerId = primeiroNaoVazio(pagamento.getCaktoOfferId(), properties.getCaktoOfferProId());
         if (offerId == null || offerId.isBlank()) {
             throw new BusinessException("Oferta da Cakto nao configurada para o plano Pro.");
@@ -211,6 +216,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
                 "docNumber", docNumber
         ));
         body.put("items", List.of(Map.of("offerId", offerId)));
+        String bodyJson = safeToJson(body);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(CAKTO_API_BASE_URL + "/public_api/payments/"))
@@ -218,12 +224,12 @@ public class CaktoPaymentGateway implements PaymentGateway {
                 .header("Authorization", "Bearer " + token)
                 .header("Content-Type", "application/json")
                 .header("X-Idempotency-Key", pagamento.getPaymentReference())
-                .POST(HttpRequest.BodyPublishers.ofString(safeToJson(body)))
+                .POST(HttpRequest.BodyPublishers.ofString(bodyJson))
                 .build();
 
         Map<String, Object> response;
         try {
-            response = executarJson(request);
+            response = executarJson(request, bodyJson, "CaktoPaymentGateway#criarPagamentoPixAuto");
         } catch (IOException ex) {
             throw new BusinessException("Nao foi possivel ler a resposta da Cakto.");
         } catch (InterruptedException ex) {
@@ -276,8 +282,24 @@ public class CaktoPaymentGateway implements PaymentGateway {
         );
     }
 
-    private Map<String, Object> executarJson(HttpRequest request) throws IOException, InterruptedException {
+    private Map<String, Object> executarJson(HttpRequest request, String bodyEnviado, String origem) throws IOException, InterruptedException {
+        long inicio = System.currentTimeMillis();
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        auditService.registrarHttp(
+                "Cakto",
+                auditService.sanitizarBaseUrl(request.uri().toString()),
+                request.method(),
+                auditService.origem("CaktoPaymentGateway", origem.contains("#") ? origem.substring(origem.indexOf('#') + 1) : origem),
+                auditService.bytesUtf8(bodyEnviado),
+                auditService.headersBytes(request.headers().map().entrySet().stream()
+                        .collect(java.util.stream.Collectors.toMap(
+                                Map.Entry::getKey,
+                                entry -> String.join(";", entry.getValue())
+                        ))),
+                auditService.bytesUtf8(response.body()),
+                System.currentTimeMillis() - inicio,
+                response.statusCode()
+        );
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             throw new BusinessException("Cakto recusou solicitacao.");
         }
@@ -310,6 +332,7 @@ public class CaktoPaymentGateway implements PaymentGateway {
 
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> consultarPedidos(String token, Map<String, String> filtros) {
+        auditService.contarExecucao("CaktoPaymentGateway#consultarPedidos");
         StringBuilder url = new StringBuilder(CAKTO_API_BASE_URL + "/public_api/orders/");
         if (!filtros.isEmpty()) {
             url.append("?");
@@ -330,7 +353,23 @@ public class CaktoPaymentGateway implements PaymentGateway {
                 .GET()
                 .build();
         try {
+            long inicio = System.currentTimeMillis();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            auditService.registrarHttp(
+                    "Cakto",
+                    auditService.sanitizarBaseUrl(request.uri().toString()),
+                    "GET",
+                    auditService.origem("CaktoPaymentGateway", "consultarPedidos"),
+                    0L,
+                    auditService.headersBytes(request.headers().map().entrySet().stream()
+                            .collect(java.util.stream.Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    entry -> String.join(";", entry.getValue())
+                            ))),
+                    auditService.bytesUtf8(response.body()),
+                    System.currentTimeMillis() - inicio,
+                    response.statusCode()
+            );
             if (response.statusCode() < 200 || response.statusCode() >= 300) {
                 log.warn("Consulta Cakto retornou status {} para filtros {}", response.statusCode(), filtros.keySet());
                 return List.of();

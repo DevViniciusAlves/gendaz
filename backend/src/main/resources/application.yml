@@ -21,6 +21,9 @@ server:
 app:
   frontend-url: ${FRONTEND_URL:https://gendaz.site}
   admin-notification-email: ${ADMIN_NOTIFICATION_EMAIL:viniciushf0360@gmail.com}
+  outbound-audit:
+    enabled: ${OUTBOUND_AUDIT_ENABLED:false}
+    summary-interval-ms: ${OUTBOUND_AUDIT_SUMMARY_INTERVAL_MS:600000}
 
 payment:
   provider: ${PAYMENT_PROVIDER:local}

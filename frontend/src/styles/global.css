@@ -1233,6 +1233,206 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: 14px;
 }
 
+@media (max-width: 1400px) {
+  body {
+    min-width: 0;
+  }
+
+  .app-shell {
+    grid-template-columns: clamp(208px, 17vw, 240px) minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 18px 12px;
+  }
+
+  .sidebar-logo-wrapper {
+    min-height: 112px;
+    padding: 14px 8px 14px;
+  }
+
+  .sidebar nav {
+    gap: 3px;
+    margin-top: 12px;
+  }
+
+  .sidebar a {
+    min-height: 38px;
+    padding: 0 10px;
+    font-size: 13px;
+  }
+
+  .sidebar a.active {
+    padding-left: 7px;
+  }
+
+  .topbar {
+    min-height: 68px;
+    padding: 0 20px;
+  }
+
+  .topbar strong {
+    font-size: 18px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+
+  .page {
+    gap: 18px;
+  }
+
+  .page-title h1 {
+    font-size: 26px;
+  }
+
+  .dashboard-hero {
+    min-height: 152px;
+    padding: 22px;
+  }
+
+  .dashboard-hero h1 {
+    max-width: 760px;
+    font-size: 32px;
+  }
+
+  .panel {
+    padding: 18px;
+  }
+
+  .operation-metrics,
+  .delivery-stats,
+  .metric-grid {
+    gap: 12px;
+  }
+
+  .operation-metrics article,
+  .delivery-stats article,
+  .metric-card {
+    min-height: 112px;
+    padding: 16px;
+  }
+
+  .operation-metrics strong,
+  .delivery-stats strong,
+  .metric-card strong {
+    font-size: 22px;
+  }
+
+  .dashboard-grid {
+    gap: 14px;
+    grid-template-columns: minmax(0, 1.95fr) minmax(280px, 0.85fr);
+  }
+
+  .panel-head {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .performance-panel {
+    min-height: 380px;
+  }
+
+  .chart-shell {
+    height: 280px;
+  }
+
+  .btn {
+    min-height: 32px;
+    padding-inline: 12px;
+    font-size: 13px;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .table-wrap,
+  .search-shell,
+  .filters,
+  .delivery-search,
+  .report-filters {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .app-shell {
+    grid-template-columns: 200px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    padding: 16px 10px;
+  }
+
+  .sidebar .sidebar-logo {
+    max-width: 180px;
+    transform: scale(1.06);
+  }
+
+  .sidebar a {
+    min-height: 36px;
+    padding: 0 9px;
+    font-size: 12px;
+  }
+
+  .content {
+    padding: 16px;
+  }
+
+  .page {
+    gap: 16px;
+  }
+
+  .page-title h1 {
+    font-size: 24px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: minmax(0, 1.88fr) minmax(260px, 0.82fr);
+  }
+
+  .operation-metrics,
+  .delivery-stats,
+  .metric-grid {
+    gap: 10px;
+  }
+
+  .operation-metrics article,
+  .delivery-stats article,
+  .metric-card {
+    min-height: 104px;
+    padding: 14px;
+  }
+
+  .operation-metrics span,
+  .operation-metrics small,
+  .delivery-stats span,
+  .metric-card span,
+  .metric-card small {
+    font-size: 12px;
+  }
+
+  .operation-metrics strong,
+  .delivery-stats strong,
+  .metric-card strong {
+    font-size: 20px;
+  }
+
+  .panel {
+    padding: 16px;
+  }
+
+  .panel h2,
+  .conversation-list h2,
+  .client-panel h2,
+  .plan-card h2 {
+    font-size: 16px;
+  }
+}
+
 /* ============================================================
    ABSOLUTE FINAL OVERRIDES - must stay last
    ============================================================ */

@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.email;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.agendapro.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.shared.audit.OutboundTrafficAuditService;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -24,6 +25,7 @@ public class ResendEmailService {
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
+    private final OutboundTrafficAuditService auditService;
     private final String apiKey;
     private final String fromEmail;
     private final String fromName;
@@ -32,6 +34,7 @@ public class ResendEmailService {
 
     public ResendEmailService(
             ObjectMapper objectMapper,
+            OutboundTrafficAuditService auditService,
             @Value("${resend.api-key:}") String apiKey,
             @Value("${resend.from-email:no-reply@gendaz.site}") String fromEmail,
             @Value("${resend.from-name:Gendaz}") String fromName,
@@ -39,6 +42,7 @@ public class ResendEmailService {
             @Value("${app.admin-notification-email:viniciushf0360@gmail.com}") String adminNotificationEmail
     ) {
         this.objectMapper = objectMapper;
+        this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.fromEmail = fromEmail == null ? "no-reply@gendaz.site" : fromEmail.trim();
         this.fromName = fromName == null ? "Gendaz" : fromName.trim();
@@ -91,7 +95,7 @@ public class ResendEmailService {
             String html = montarHtmlNovoAgendamento(agendamento);
             return enviarEmail(empresa.getEmail(), assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email novo agendamento protocolo {}: {}", agendamento.getProtocolo(), e.getMessage(), e);
+            log.error("[resend] erro ao montar email novo agendamento: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -116,8 +120,9 @@ public class ResendEmailService {
     }
 
     private boolean enviarEmail(String destinatario, String assunto, String html) {
+        auditService.contarExecucao("ResendEmailService#enviarEmail");
         if (apiKey.isBlank()) {
-            log.warn("[resend] RESEND_API_KEY ausente; email nao enviado para {}", destinatario);
+            log.warn("[resend] RESEND_API_KEY ausente; email nao enviado");
             return false;
         }
 
@@ -137,16 +142,31 @@ public class ResendEmailService {
                     .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                     .build();
 
+            long inicio = System.currentTimeMillis();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            auditService.registrarHttp(
+                    "Resend",
+                    auditService.sanitizarBaseUrl(RESEND_URI.toString()),
+                    "POST",
+                    auditService.origem("ResendEmailService", "enviarEmail"),
+                    auditService.bytesUtf8(body),
+                    auditService.headersBytes(Map.of(
+                            "Authorization", "Bearer " + apiKey,
+                            "Content-Type", "application/json"
+                    )),
+                    auditService.bytesUtf8(response.body()),
+                    System.currentTimeMillis() - inicio,
+                    response.statusCode()
+            );
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                log.info("[resend] email enviado para {}", destinatario);
+                log.info("[resend] email enviado com sucesso");
                 return true;
             }
 
-            log.warn("[resend] resposta nao-sucedida status={} body={}", response.statusCode(), response.body());
+            log.warn("[resend] resposta nao-sucedida status={}", response.statusCode());
             return false;
         } catch (Exception e) {
-            log.error("[resend] falha ao enviar email para {}: {}", destinatario, e.getMessage(), e);
+            log.error("[resend] falha ao enviar email: {}", e.getMessage(), e);
             return false;
         }
     }

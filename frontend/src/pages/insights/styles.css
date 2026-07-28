@@ -352,6 +352,143 @@
   font-size: 11px;
 }
 
+@media (max-width: 1400px) {
+  .insights-page {
+    gap: 14px;
+  }
+
+  .insights-page--new {
+    gap: 16px;
+  }
+
+  .insights-layout {
+    grid-template-columns: minmax(0, 1.92fr) minmax(300px, 0.88fr);
+    gap: 10px;
+  }
+
+  .insights-main,
+  .insights-sidebar {
+    gap: 10px;
+  }
+
+  .insights-summary-panel {
+    grid-template-columns: 64px minmax(0, 1fr) 210px;
+    gap: 12px;
+  }
+
+  .insights-summary-panel__icon {
+    width: 64px;
+    height: 64px;
+  }
+
+  .insights-summary-panel__content {
+    gap: 8px;
+  }
+
+  .insights-summary-panel__content h2 {
+    font-size: 15px;
+  }
+
+  .insights-summary-panel__content p {
+    font-size: 10px;
+  }
+
+  .insights-health-card {
+    padding: 12px 14px;
+    min-width: 0;
+  }
+
+  .insights-health-score {
+    font-size: 36px;
+  }
+
+  .insights-section {
+    padding: 14px;
+  }
+
+  .insights-principais-grid {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .insights-mini-card {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .insights-mini-card h3 {
+    font-size: 12px;
+  }
+
+  .insights-mini-card p {
+    font-size: 10px;
+  }
+
+  .insights-duo-grid {
+    gap: 10px;
+  }
+
+  .insights-list,
+  .insights-action-list,
+  .insights-history {
+    gap: 10px;
+    margin-top: 10px;
+  }
+
+  .insights-list-item,
+  .insights-action-row {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .insights-history {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .insights-sidebar-card {
+    gap: 10px;
+  }
+
+  .insights-sidebar-layout {
+    grid-template-columns: minmax(0, 3.2fr) minmax(140px, 0.38fr);
+    gap: 12px;
+  }
+
+  .insights-sidebar-chat .insights-chat {
+    max-height: 360px;
+  }
+
+  .insights-sidebar-chat .insights-chat__messages {
+    max-height: 240px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .insights-layout {
+    grid-template-columns: minmax(0, 1.82fr) minmax(280px, 0.82fr);
+  }
+
+  .insights-summary-panel {
+    grid-template-columns: 60px minmax(0, 1fr) 190px;
+  }
+
+  .insights-principais-grid {
+    gap: 8px;
+  }
+
+  .insights-mini-card {
+    padding: 12px;
+  }
+
+  .insights-history {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .insights-sidebar-layout {
+    grid-template-columns: minmax(0, 2.9fr) minmax(130px, 0.42fr);
+  }
+}
+
 .insights-sidebar-head {
   display: flex;
   align-items: flex-start;

@@ -38,3 +38,6 @@ app:
   frontend-url: ${FRONTEND_URL}
   jwt-secret: ${JWT_SECRET}
   timezone: ${APP_TIMEZONE:America/Cuiaba}
+  outbound-audit:
+    enabled: ${OUTBOUND_AUDIT_ENABLED:false}
+    summary-interval-ms: ${OUTBOUND_AUDIT_SUMMARY_INTERVAL_MS:600000}
