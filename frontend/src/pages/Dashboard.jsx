@@ -449,7 +449,7 @@ export default function Dashboard() {
           <div className="operation-metrics">
             {metrics.map(({ key, icon: Icon, label, value, detail }) => (
               <ScrollReveal key={key} delay={0}>
-                <article className={`dashboard-summary-card ${key === 'agenda' ? 'dashboard-summary-card--agenda' : ''} ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
+                <article className={`dashboard-summary-card ${key === 'agenda' ? 'dashboard-summary-card--agenda' : ''} ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'pendentes' ? 'dashboard-summary-card--pendentes' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
                   <Icon size={24} />
                   <div>
                     <span>{label}</span>

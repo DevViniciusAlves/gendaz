@@ -682,17 +682,27 @@ button { cursor: pointer; }
 
 .delivery-mini {
   display: grid;
-  grid-template-columns: 58px 1fr auto;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 12px;
-  min-height: 64px;
-  padding: 12px;
-  margin-top: 10px;
+  gap: 10px;
+  min-height: 52px;
+  padding: 8px 10px;
+  margin-top: 8px;
   border: 1px solid var(--line);
   border-radius: 10px;
   background: var(--surface-muted);
 }
-.delivery-mini small, .stacked small { display: block; margin-top: 4px; color: var(--muted); }
+.delivery-mini strong { font-size: 14px; line-height: 1.1; }
+.delivery-mini small, .stacked small { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; line-height: 1.1; }
+.delivery-mini .dash-mini-hora { display: grid; gap: 2px; }
+.delivery-mini > div:nth-child(2) { min-width: 0; }
+.delivery-mini > div:nth-child(2) span,
+.delivery-mini > div:nth-child(2) small {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 .btn, .icon-btn {
   display: inline-flex;
@@ -1822,6 +1832,11 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .content .dashboard-summary-card.dashboard-summary-card--financeiro {
   background: #2c8a48 !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.app-shell .content .dashboard-summary-card.dashboard-summary-card--pendentes {
+  background: #d61c35 !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
