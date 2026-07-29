@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+const LIMITE_CHECKOUT_MS = 15 * 60 * 1000
+
 function parseData(valor) {
   if (!valor) return null
   const data = valor instanceof Date ? valor : new Date(valor)
@@ -12,8 +14,25 @@ export function useCheckoutTimer(pagamento) {
 
   useEffect(() => {
     const dataExpiracao = parseData(pagamento?.dataExpiracao)
+    const dataCriacao = parseData(pagamento?.dataCriacao)
 
-    if (!pagamento?.checkoutUrl || !dataExpiracao) {
+    if (!pagamento?.checkoutUrl) {
+      setExpirou(true)
+      setTempoRestante(null)
+      return
+    }
+
+    let expiracaoCalculada = dataExpiracao?.getTime() || null
+    const criacaoCalculada = dataCriacao?.getTime() || null
+
+    if (criacaoCalculada) {
+      const expiracaoMaxima = criacaoCalculada + LIMITE_CHECKOUT_MS
+      if (!expiracaoCalculada || expiracaoCalculada > expiracaoMaxima) {
+        expiracaoCalculada = expiracaoMaxima
+      }
+    }
+
+    if (!expiracaoCalculada) {
       setExpirou(true)
       setTempoRestante(null)
       return
@@ -21,7 +40,7 @@ export function useCheckoutTimer(pagamento) {
 
     const calcularTempo = () => {
       const agora = new Date().getTime()
-      const expiracao = dataExpiracao.getTime()
+      const expiracao = expiracaoCalculada
       const resto = expiracao - agora
 
       if (resto <= 0) {
@@ -45,7 +64,7 @@ export function useCheckoutTimer(pagamento) {
     }, 1000)
 
     return () => clearInterval(intervalo)
-  }, [pagamento?.checkoutUrl, pagamento?.dataExpiracao])
+  }, [pagamento?.checkoutUrl, pagamento?.dataExpiracao, pagamento?.dataCriacao])
 
   const minutos = tempoRestante ? Math.max(0, Math.floor(tempoRestante / 1000 / 60)) : 0
   const segundos = tempoRestante ? Math.max(0, Math.floor((tempoRestante / 1000) % 60)) : 0

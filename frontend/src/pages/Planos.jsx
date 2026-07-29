@@ -86,12 +86,24 @@ export default function Planos() {
   const checkoutAtivoPlano = checkoutAtivo(pagamentoPlano)
   const checkoutExpiradoPlano = checkoutExpirado(pagamentoPlano)
   const timerPlano = useCheckoutTimer(pagamentoPlano)
+  const statusPagamentoPlano = pagamentoPlano?.status === 'PAYMENT_PENDING'
+    ? 'Pagamento não realizado'
+    : statusPagamentoTexto[pagamentoPlano?.status] || pagamentoPlano?.status
 
   useEffect(() => {
     if (!usuario?.empresaId) return
     atualizarPlanoAtual().catch(() => null)
     appApi.listarPagamentosPlano(usuario.empresaId)
-      .then((pagamentos) => setPagamentoPlano(pagamentos?.[0] || usuario?.pagamentoPlano || null))
+      .then((pagamentos) => {
+        const lista = Array.isArray(pagamentos) ? pagamentos : []
+        const planoAtual = String(usuario?.plano || usuario?.pagamentoPlano?.planoNome || usuario?.pagamentoPlano?.plano || '').toUpperCase()
+        const pendenteMesmoPlano = lista.find((item) => {
+          const planoItem = String(item?.planoNome || item?.plano || '').toUpperCase()
+          return item?.status === 'PAYMENT_PENDING' && planoItem === planoAtual
+        })
+        const pendenteRecente = lista.find((item) => item?.status === 'PAYMENT_PENDING')
+        setPagamentoPlano(pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null)
+      })
       .catch(() => null)
   }, [usuario?.empresaId])
 
@@ -232,15 +244,17 @@ export default function Planos() {
             </div>
           </div>
 
-          {pagamentoPlano && (
-            <div className="plan-payment-status">
-              <div>
-                <span>Status do pagamento</span>
-                <strong>{statusPagamentoTexto[pagamentoPlano.status] || pagamentoPlano.status}</strong>
-              </div>
-              <StatusBadge status={pagamentoPlano.status} />
-              {['PIX_AUTO', 'PIX'].includes(pagamentoPlano.metodoPagamento) && (
-                <div className="plan-pix-box">
+              {pagamentoPlano && (
+                <div className="plan-payment-status">
+                  <div>
+                    <span>Status do pagamento</span>
+                    <strong>{statusPagamentoPlano}</strong>
+                  </div>
+                  {pagamentoPlano.status !== 'PAYMENT_PENDING' && (
+                    <StatusBadge status={pagamentoPlano.status} />
+                  )}
+                  {['PIX_AUTO', 'PIX'].includes(pagamentoPlano.metodoPagamento) && (
+                    <div className="plan-pix-box">
                   {pagamentoPlano.pixQrCodeBase64 ? (
                     <img className="pix-qr-image large" src={`data:image/png;base64,${pagamentoPlano.pixQrCodeBase64}`} alt="QR Code PIX" />
                   ) : qrDataUrl ? (
@@ -253,11 +267,11 @@ export default function Planos() {
                       <Copy size={16} /> {copiado ? 'Codigo copiado' : 'Copiar codigo PIX'}
                     </button>
                   )}
-                  <small>Apos a aprovacao, sua conta Pro pode levar ate 15 minutos para ser liberada.</small>
+                  <small>Apos a aprovacao, sua conta Pro pode levar ate 30 minutos para ser liberada.</small>
                 </div>
               )}
               {pagamentoPlano.metodoPagamento === 'CREDIT_CARD' && (
-                <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 15 minutos para ser liberada.</small>
+                <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 30 minutos para ser liberada.</small>
               )}
               {checkoutAtivoPlano && (
                 <div className="checkout-container">
