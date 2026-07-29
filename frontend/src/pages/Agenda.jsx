@@ -97,6 +97,7 @@ export default function Agenda() {
   const [acaoId, setAcaoId] = useState(null)
   const [confirmacao, setConfirmacao] = useState(null)
   const [confirmandoAcao, setConfirmandoAcao] = useState(false)
+  const [finalizacaoPagamento, setFinalizacaoPagamento] = useState(null)
   const [selecionando, setSelecionando] = useState(false)
   const [selecionados, setSelecionados] = useState([])
   const [bulkModal, setBulkModal] = useState(null)
@@ -494,14 +495,15 @@ export default function Agenda() {
     }
   }
 
-  async function finalizarAtendimentoDireto(agendamento) {
+  async function finalizarAtendimentoDireto(agendamento, pagamentoRealizado = true) {
     if (acaoId) return
     setAcaoId(agendamento.id)
     setErroAcao('')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
-      await appApi.finalizarAgendamento(agendamento.id)
+      await appApi.finalizarAgendamento(agendamento.id, pagamentoRealizado)
       setAcaoId(null)
+      setFinalizacaoPagamento(null)
       reload(true).catch((error) => {
         console.error(error)
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
@@ -637,12 +639,7 @@ export default function Agenda() {
               acao: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
             })}
-            onFinalizar={(ag) => setConfirmacao({
-              titulo: 'Finalizar atendimento',
-              descricao: 'Tem certeza que deseja finalizar este atendimento?',
-              acao: () => finalizarAtendimentoDireto(ag),
-              acaoLabel: 'Finalizar',
-            })}
+            onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
@@ -703,6 +700,29 @@ export default function Agenda() {
             <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correçÃµes'}</Button>
           </form>
         )}
+      </Modal>
+      <Modal title="Finalizar atendimento" open={Boolean(finalizacaoPagamento)} onClose={() => setFinalizacaoPagamento(null)}>
+        <div className="form-grid">
+          <p className="panel-description">O pagamento foi realizado?</p>
+          <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+            <Button variant="secondary" type="button" onClick={() => setFinalizacaoPagamento(null)}>Voltar</Button>
+            <Button
+              type="button"
+              disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+              onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true)}
+            >
+              Sim
+            </Button>
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+              onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
+            >
+              Não
+            </Button>
+          </div>
+        </div>
       </Modal>
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>
         <div className="form-grid">

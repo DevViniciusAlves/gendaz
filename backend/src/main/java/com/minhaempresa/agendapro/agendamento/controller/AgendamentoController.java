@@ -5,6 +5,7 @@ import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AcaoEmMassaAge
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AcaoEmMassaResponse;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.AtualizarAgendamentoRequest;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.CriarAgendamentoRequest;
+import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.FinalizarAgendamentoRequest;
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.RemarcarAgendamentoRequest;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoBulkService;
@@ -112,8 +113,9 @@ public class AgendamentoController {
     }
 
     @PatchMapping("/{id}/finalizar")
-    public ResponseEntity<AgendamentoResponse> finalizar(@PathVariable Long id) {
-        return ResponseEntity.ok(agendamentoService.finalizar(id));
+    public ResponseEntity<AgendamentoResponse> finalizar(@PathVariable Long id, @RequestBody(required = false) FinalizarAgendamentoRequest request) {
+        Boolean pagamentoRealizado = request == null ? null : request.pagamentoRealizado();
+        return ResponseEntity.ok(agendamentoService.finalizar(id, pagamentoRealizado));
     }
 
     @PatchMapping("/{id}/iniciar")

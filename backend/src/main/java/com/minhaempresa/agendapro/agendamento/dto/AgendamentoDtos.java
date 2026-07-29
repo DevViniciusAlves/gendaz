@@ -23,6 +23,8 @@ public final class AgendamentoDtos {
 
     public record RemarcarAgendamentoRequest(@NotNull LocalDate data, @NotNull LocalTime horaInicio) {}
 
+    public record FinalizarAgendamentoRequest(Boolean pagamentoRealizado) {}
+
     public record AtualizarAgendamentoRequest(
             @NotNull Long clienteId,
             @NotNull Long servicoId,

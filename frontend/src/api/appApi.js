@@ -580,10 +580,10 @@ export const appApi = {
     })
   },
 
-  finalizarAgendamento(id) {
-    return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`).then((response) => response.data), {
+  finalizarAgendamento(id, pagamentoRealizado = true) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`, { pagamentoRealizado }).then((response) => response.data), {
       loading: 'Finalizando agendamento... aguarde',
-      success: 'Agendamento finalizado com sucesso.',
+      success: pagamentoRealizado ? 'Agendamento finalizado e pagamento aprovado.' : 'Agendamento finalizado com pagamento pendente.',
       error: 'Não foi possível finalizar o agendamento.',
     })
   },

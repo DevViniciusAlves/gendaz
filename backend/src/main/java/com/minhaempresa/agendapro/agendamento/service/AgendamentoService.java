@@ -29,6 +29,7 @@ import com.minhaempresa.agendapro.shared.ConflictException;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.enums.TimezoneEnum;
+import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -270,8 +271,16 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public AgendamentoResponse finalizar(Long id) {
-        return alterarStatus(id, StatusAgendamento.FINALIZADO);
+    public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado) {
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        agendamento.setStatus(StatusAgendamento.FINALIZADO);
+        pagamentoRepository.findByAgendamento_Id(id).ifPresentOrElse(pagamento -> {
+            boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
+            pagamento.setStatus(pago ? StatusPagamento.PAGO : StatusPagamento.PENDENTE);
+            pagamento.setDataPagamento(pago ? LocalDateTime.now(ZoneId.of(appTimezone)) : null);
+            pagamentoRepository.save(pagamento);
+        }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
+        return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
     @Transactional
