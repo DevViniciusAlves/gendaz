@@ -1826,7 +1826,12 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .app-shell .content .dashboard-summary-card.dashboard-summary-card--pendencias {
-  background: #c93030 !important;
+  background: #d1621d !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.app-shell .content .dashboard-summary-card.dashboard-summary-card--agenda {
+  background: #4c76b5 !important;
   border-color: rgba(255, 255, 255, 0.18) !important;
 }
 
@@ -4748,6 +4753,92 @@ tbody tr:hover { background: #fffaf5; }
   height: 100%;
 }
 
+.receita-chart-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.receita-chart-periodo {
+  display: grid;
+  justify-items: end;
+  gap: 4px;
+  text-align: right;
+}
+
+.receita-chart-periodo-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.receita-chart-periodo-head small {
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: capitalize;
+}
+
+.receita-chart-periodo span {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.receita-chart-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.receita-chart-stats article {
+  display: grid;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.receita-chart-stats span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.receita-chart-stats strong {
+  color: var(--text);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.receita-chart-stats small {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+@media (max-width: 1200px) {
+  .receita-chart-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .receita-chart-periodo {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .receita-chart-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
 :root[data-theme='dark'] .area-chart-shell,
 :root[data-theme='dark'] .bar-chart-shell {
   --dashboard-chart-text: rgba(226, 233, 247, 0.68);
@@ -6648,11 +6739,11 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .dashboard-page .operation-metrics,
 .app-shell .dashboard-page .metric-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   align-items: stretch;
   width: 100%;
-  max-width: 1320px;
+  max-width: none;
   margin: 0 auto;
 }
 
@@ -7109,11 +7200,11 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .dashboard-page .operation-metrics,
 .app-shell .dashboard-page .metric-grid {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
   align-items: stretch;
   width: 100%;
-  max-width: 1320px;
+  max-width: none;
   margin: 0 auto;
 }
 

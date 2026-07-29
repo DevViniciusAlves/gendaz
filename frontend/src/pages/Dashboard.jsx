@@ -10,9 +10,33 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency, PLANOS, todayIso } from '../services/localStore.js'
 
+const STATUS_PAGAMENTO_CONFIRMADO = new Set([
+  'PAGO',
+  'PAGA',
+  'CONFIRMADO',
+  'CONFIRMADA',
+  'APROVADO',
+  'APPROVED',
+  'PAID',
+  'PAYMENT_APPROVED',
+  'PURCHASE_APPROVED',
+])
+
 function diasDoMesAtual() {
   const hoje = new Date(`${todayIso()}T12:00:00`)
   return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
+}
+
+function normalizarStatusPagamento(status) {
+  return String(status || '').toUpperCase()
+}
+
+function pagamentoConfirmado(status) {
+  return STATUS_PAGAMENTO_CONFIRMADO.has(normalizarStatusPagamento(status))
+}
+
+function extrairDataReceita(pagamento) {
+  return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
 }
 
 function buildReceitaMes(pagamentos) {
@@ -21,10 +45,9 @@ function buildReceitaMes(pagamentos) {
   const mapaReceita = {}
 
   pagamentos.forEach((p) => {
-    const status = String(p.status || '').toUpperCase()
-    const confirmado = ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(status)
-    if (!confirmado || !p.dataPagamento) return
-    const dia = String(p.dataPagamento).slice(0, 10)
+    if (!pagamentoConfirmado(p.status)) return
+    const dia = extrairDataReceita(p)
+    if (!dia) return
     if (!dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
     mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
   })
@@ -47,6 +70,45 @@ function normalizarReceitaDias(dados) {
     label: item.label || String(item.data || '').slice(8, 10) || '',
     valor: Number(item.valor || 0),
   }))
+}
+
+function combinarReceitaMensal(base, alternativa) {
+  const mapa = new Map()
+  ;(alternativa || []).forEach((item) => {
+    if (!item?.iso) return
+    mapa.set(item.iso, { ...item, valor: Number(item.valor || 0) })
+  })
+  ;(base || []).forEach((item) => {
+    if (!item?.iso) return
+    const atual = mapa.get(item.iso)
+    const valorBase = Number(item.valor || 0)
+    const valorAtual = Number(atual?.valor || 0)
+    if (!atual || valorBase >= valorAtual) {
+      mapa.set(item.iso, { ...item, valor: valorBase })
+    }
+  })
+
+  const referencia = (base || []).length >= (alternativa || []).length ? base : alternativa
+  return (referencia || []).map((item) => mapa.get(item.iso) || { ...item, valor: Number(item.valor || 0) })
+}
+
+function resumirReceitaMensal(dados) {
+  const positivos = (dados || []).filter((item) => Number(item.valor || 0) > 0)
+  const total = (dados || []).reduce((soma, item) => soma + Number(item.valor || 0), 0)
+  const melhorDia = positivos.reduce((melhor, item) => {
+    if (!melhor || Number(item.valor || 0) > Number(melhor.valor || 0)) return item
+    return melhor
+  }, null)
+  const diasComReceita = positivos.length
+  const mediaDiariaComReceita = diasComReceita > 0 ? total / diasComReceita : 0
+  const mediaPorDiaDoMes = (dados || []).length > 0 ? total / (dados || []).length : 0
+  return {
+    total,
+    diasComReceita,
+    mediaDiariaComReceita,
+    mediaPorDiaDoMes,
+    melhorDia,
+  }
 }
 
 function suavizarPontos(pontos, largura, altura) {
@@ -98,8 +160,8 @@ function GraficoArea({ dados }) {
     return (
       <div className="bar-chart-empty">
         <BarChart2 size={40} color="var(--primary)" />
-        <p>Nenhuma receita registrada nos ultimos 30 dias.</p>
-        <small>Os valores aparecerao aqui conforme os pagamentos forem confirmados.</small>
+        <p>Nenhuma receita registrada neste mes.</p>
+        <small>Os valores aparecerao aqui conforme os pagamentos confirmados entrarem no periodo.</small>
       </div>
     )
   }
@@ -248,9 +310,15 @@ export default function Dashboard() {
     receitaServicoFallback[a.servicoNome] = (receitaServicoFallback[a.servicoNome] || 0) + Number(servico.valor || 0)
   })
 
-  const receitaDias = resumoDashboard?.receitaPorDia?.length
+  const receitaDiasResumo = resumoDashboard?.receitaPorDia?.length
     ? normalizarReceitaDias(resumoDashboard.receitaPorDia)
-    : buildReceitaMes(data.pagamentos)
+    : []
+  const receitaDiasBase = buildReceitaMes(data.pagamentos)
+  const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
+  const receitaResumo = resumirReceitaMensal(receitaDias)
+  const melhorDiaReceita = receitaResumo.melhorDia
+    ? new Date(`${receitaResumo.melhorDia.iso}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    : null
 
   const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
     ? resumoDashboard.proximosAgendamentos
@@ -381,7 +449,7 @@ export default function Dashboard() {
           <div className="operation-metrics">
             {metrics.map(({ key, icon: Icon, label, value, detail }, index) => (
               <ScrollReveal key={key} delay={index * 60}>
-                <article className={`dashboard-summary-card ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
+                <article className={`dashboard-summary-card ${key === 'agenda' ? 'dashboard-summary-card--agenda' : ''} ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
                   <Icon size={24} />
                   <div>
                     <span>{label}</span>
@@ -399,13 +467,39 @@ export default function Dashboard() {
                 <div>
                   <span className="section-kicker">Financeiro</span>
                   <h2>Receita do mes</h2>
+                  <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <TrendingUp size={16} color="var(--primary)" />
-                  <small style={{ color: 'var(--muted)', fontSize: 13 }}>{mesAtual}</small>
+                <div className="receita-chart-periodo">
+                  <div className="receita-chart-periodo-head">
+                    <TrendingUp size={16} color="var(--primary)" />
+                    <small>{mesAtual}</small>
+                  </div>
+                  <span>{receitaResumo.diasComReceita} dia{receitaResumo.diasComReceita !== 1 ? 's' : ''} com receita registrada</span>
                 </div>
               </div>
               <GraficoArea dados={receitaDias} />
+              <div className="receita-chart-stats">
+                <article>
+                  <span>Total do mês</span>
+                  <strong>{currency(receitaResumo.total)}</strong>
+                  <small>{receitaResumo.total === 0 ? 'Nenhuma receita confirmada neste mês.' : 'Somente pagamentos confirmados.'}</small>
+                </article>
+                <article>
+                  <span>Média por dia</span>
+                  <strong>{currency(receitaResumo.mediaDiariaComReceita)}</strong>
+                  <small>{receitaResumo.diasComReceita > 0 ? `${receitaResumo.diasComReceita} dia${receitaResumo.diasComReceita !== 1 ? 's' : ''} com movimento` : 'Sem dias com receita confirmada.'}</small>
+                </article>
+                <article>
+                  <span>Melhor dia</span>
+                  <strong>{melhorDiaReceita || '--/--'}</strong>
+                  <small>{receitaResumo.melhorDia ? currency(receitaResumo.melhorDia.valor) : 'Sem pico identificado.'}</small>
+                </article>
+                <article>
+                  <span>Média do mês</span>
+                  <strong>{currency(receitaResumo.mediaPorDiaDoMes)}</strong>
+                  <small>Distribuída pelos dias do mês atual.</small>
+                </article>
+              </div>
             </ScrollReveal>
           )}
 

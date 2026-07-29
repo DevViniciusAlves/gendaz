@@ -83,11 +83,11 @@ public class DashboardService {
 
         Long empresaId = empresa.getId();
         LocalDate hoje = LocalDate.now();
-        LocalDate inicioPeriodoDia = hoje.minusDays(29);
+        LocalDate inicioPeriodoDia = hoje.withDayOfMonth(1);
         LocalDateTime inicioPeriodo = inicioPeriodoDia.atStartOfDay();
-        LocalDateTime fimPeriodo = hoje.atTime(LocalTime.MAX);
+        LocalDateTime fimPeriodo = hoje.withDayOfMonth(hoje.lengthOfMonth()).atTime(LocalTime.MAX);
         log.info("[dashboard-debug] empresaId={}", empresaId);
-        log.info("[dashboard-debug] periodo inicio={} fim={}", inicioPeriodo, fimPeriodo);
+        log.info("[dashboard-debug] periodo mensal inicio={} fim={}", inicioPeriodo, fimPeriodo);
 
         long agendamentosHoje = agendamentoRepository.countByEmpresaIdAndData(empresaId, hoje);
         long conversasAbertas = conversaRepository.countAbertasByEmpresaId(empresaId);
@@ -210,7 +210,8 @@ public class DashboardService {
 
         List<DashboardReceitaDiaItem> resultado = new ArrayList<>();
         LocalDate dataInicial = inicio.toLocalDate();
-        for (int i = 0; i < 30; i++) {
+        int diasDoMes = inicio.toLocalDate().lengthOfMonth();
+        for (int i = 0; i < diasDoMes; i++) {
             LocalDate data = dataInicial.plusDays(i);
             resultado.add(new DashboardReceitaDiaItem(
                     data.toString(),
