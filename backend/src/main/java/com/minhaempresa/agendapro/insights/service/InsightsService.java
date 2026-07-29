@@ -201,15 +201,15 @@ public class InsightsService {
         List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
         List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
 
-        List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receita30, receita60, servicos, profissionais);
-        List<InsightItem> principais = montarInsightsPrincipais(dados);
-        List<InsightItem> oportunidades = new ArrayList<>();
-        List<InsightAction> acoes = new ArrayList<>();
-
         double pendente = numero(financeiro.get("pendente"));
         long atRisk = longo(clientes.get("at_risk"));
         double receita30 = numero(financeiro.get("receita_30d"));
         double receita60 = numero(financeiro.get("receita_60d"));
+
+        List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receita30, receita60, servicos, profissionais);
+        List<InsightItem> principais = montarInsightsPrincipais(dados);
+        List<InsightItem> oportunidades = new ArrayList<>();
+        List<InsightAction> acoes = new ArrayList<>();
 
         if (pendente > 0) {
             oportunidades.add(new InsightItem("Cobrança ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperável no financeiro.", formatarMoeda(pendente), "Alta"));
