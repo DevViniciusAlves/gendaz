@@ -8,40 +8,40 @@ function parseData(valor) {
   return Number.isNaN(data.getTime()) ? null : data
 }
 
+function normalizarInicioCheckout(pagamento) {
+  const inicioLocal = pagamento?.checkoutSolicitadoEm
+  if (inicioLocal) {
+    const dataInicio = parseData(inicioLocal)
+    if (dataInicio) return dataInicio.getTime()
+  }
+
+  const dataCriacao = parseData(pagamento?.dataCriacao)
+  return dataCriacao?.getTime() || null
+}
+
 export function useCheckoutTimer(pagamento) {
   const [tempoRestante, setTempoRestante] = useState(null)
   const [expirou, setExpirou] = useState(false)
 
   useEffect(() => {
-    const dataExpiracao = parseData(pagamento?.dataExpiracao)
-    const dataCriacao = parseData(pagamento?.dataCriacao)
-
     if (!pagamento?.checkoutUrl) {
       setExpirou(true)
       setTempoRestante(null)
       return
     }
 
-    let expiracaoCalculada = dataExpiracao?.getTime() || null
-    const criacaoCalculada = dataCriacao?.getTime() || null
-
-    if (criacaoCalculada) {
-      const expiracaoMaxima = criacaoCalculada + LIMITE_CHECKOUT_MS
-      if (!expiracaoCalculada || expiracaoCalculada > expiracaoMaxima) {
-        expiracaoCalculada = expiracaoMaxima
-      }
-    }
-
-    if (!expiracaoCalculada) {
+    const inicioCheckout = normalizarInicioCheckout(pagamento)
+    if (!inicioCheckout) {
       setExpirou(true)
       setTempoRestante(null)
       return
     }
 
+    const expiracaoCalculada = inicioCheckout + LIMITE_CHECKOUT_MS
+
     const calcularTempo = () => {
-      const agora = new Date().getTime()
-      const expiracao = expiracaoCalculada
-      const resto = expiracao - agora
+      const agora = Date.now()
+      const resto = expiracaoCalculada - agora
 
       if (resto <= 0) {
         setTempoRestante(0)
@@ -58,13 +58,11 @@ export function useCheckoutTimer(pagamento) {
 
     const intervalo = setInterval(() => {
       const expirado = calcularTempo()
-      if (expirado) {
-        clearInterval(intervalo)
-      }
+      if (expirado) clearInterval(intervalo)
     }, 1000)
 
     return () => clearInterval(intervalo)
-  }, [pagamento?.checkoutUrl, pagamento?.dataExpiracao, pagamento?.dataCriacao])
+  }, [pagamento?.checkoutUrl, pagamento?.dataCriacao, pagamento?.checkoutSolicitadoEm])
 
   const minutos = tempoRestante ? Math.max(0, Math.floor(tempoRestante / 1000 / 60)) : 0
   const segundos = tempoRestante ? Math.max(0, Math.floor((tempoRestante / 1000) % 60)) : 0

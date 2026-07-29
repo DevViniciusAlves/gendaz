@@ -14215,3 +14215,67 @@ tbody tr:hover { background: #fffaf5; }
 
 
 
+
+.app-shell .content .plan-payment-panel {
+  background: #1a1a1a !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    0 18px 50px rgba(0, 0, 0, 0.28),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset !important;
+}
+
+.app-shell .content .plan-payment-panel .panel-head h2 {
+  color: #ffffff !important;
+}
+
+.app-shell .content .plan-payment-status--checkout {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #141414 !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.plan-payment-status-head span,
+.plan-payment-note {
+  color: rgba(255, 255, 255, 0.68) !important;
+}
+
+.plan-payment-note {
+  margin: 0;
+  font-size: 14px;
+}
+
+.plan-payment-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.plan-payment-actions .checkout-timer {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.74);
+}
+
+@media (max-width: 780px) {
+  .plan-payment-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .plan-payment-actions .checkout-timer {
+    text-align: center;
+  }
+}
+
+.plan-payment-helper {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}

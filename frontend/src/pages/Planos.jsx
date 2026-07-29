@@ -1,14 +1,11 @@
-﻿import { Check, Copy, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
-import QRCode from 'qrcode'
+import { Check, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import ScrollReveal from '../components/ScrollReveal.jsx'
-import StatusBadge from '../components/StatusBadge.jsx'
 import { appApi } from '../api/appApi.js'
+import ScrollReveal from '../components/ScrollReveal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { checkoutAtivo } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -17,7 +14,13 @@ const planosBase = [
     subtitulo: 'Agenda simples',
     extra: '7 dias gratis',
     descricao: 'Para organizar conversas, agenda, clientes e servicos no mesmo painel.',
-    beneficios: ['Agenda com atendimento organizado', 'Cadastro de clientes pelo painel', 'Cadastro de até 4 serviços', 'Confirmação de consulta automatizada', 'Cancelamento e remarcação automatizados'],
+    beneficios: [
+      'Agenda com atendimento organizado',
+      'Cadastro de clientes pelo painel',
+      'Cadastro de ate 4 servicos',
+      'Confirmacao de consulta automatizada',
+      'Cancelamento e remarcacao automatizados',
+    ],
     indicadoPara: ['Clinicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
     naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatorios'],
     cta: 'Comecar no Basico',
@@ -26,10 +29,17 @@ const planosBase = [
   {
     codigo: 'PRO',
     nome: 'Plano Pro',
-    subtitulo: 'Gestão com financeiro simples',
-    descricao: 'Para acompanhar agenda, profissionais, pagamentos e indicadores em um só lugar.',
-    beneficios: ['Tudo que o Básico oferece', 'Até 3 usuários por conta', 'CRM automatizado para relacionamento', 'Insights para apoiar a gestão', 'Profissionais ilimitados', 'Serviços ilimitados'],
-    indicadoPara: ['Equipes de atendimento', 'Serviços com cobrança recorrente', 'Operação com acompanhamento diário'],
+    subtitulo: 'Gestao com financeiro simples',
+    descricao: 'Para acompanhar agenda, profissionais, pagamentos e indicadores em um so lugar.',
+    beneficios: [
+      'Tudo que o Basico oferece',
+      'Ate 3 usuarios por conta',
+      'CRM automatizado para relacionamento',
+      'Insights para apoiar a gestao',
+      'Profissionais ilimitados',
+      'Servicos ilimitados',
+    ],
+    indicadoPara: ['Equipes de atendimento', 'Servicos com cobranca recorrente', 'Operacao com acompanhamento diario'],
     cta: 'Assinar Pro',
     precoFallback: 89.00,
     destaque: true,
@@ -37,7 +47,7 @@ const planosBase = [
 ]
 
 const statusPagamentoTexto = {
-  PAYMENT_PENDING: 'Aguardando pagamento',
+  PAYMENT_PENDING: 'Pagamento nao realizado',
   PAYMENT_APPROVED: 'Pagamento aprovado',
   PAYMENT_REJECTED: 'Pagamento recusado',
   PAYMENT_CANCELED: 'Pagamento cancelado',
@@ -52,29 +62,16 @@ function formatarPreco(valor) {
   }) + '/mes'
 }
 
-async function gerarQrCodeDataUrl(texto) {
-  if (!texto) return null
-  return QRCode.toDataURL(texto, {
-    errorCorrectionLevel: 'M',
-    margin: 1,
-    width: 320,
-    color: {
-      dark: '#111111',
-      light: '#FFFFFF',
-    },
-  })
-}
-
 export default function Planos() {
   const navigate = useNavigate()
   const [data] = useLocalData('planos')
   const { usuario, atualizarPlanoAtual, atualizarUsuario } = useAuth()
-  const [metodoPagamento, setMetodoPagamento] = useState('PIX')
+  const [metodoPagamento] = useState('PIX')
   const [pagamentoPlano, setPagamentoPlano] = useState(() => usuario?.pagamentoPlano || null)
+  const [checkoutSolicitado, setCheckoutSolicitado] = useState(false)
+  const [checkoutSolicitadoEm, setCheckoutSolicitadoEm] = useState(null)
   const [carregando, setCarregando] = useState(false)
-  const [copiado, setCopiado] = useState(false)
   const [erro, setErro] = useState('')
-  const [qrDataUrl, setQrDataUrl] = useState('')
 
   const planos = useMemo(() => planosBase.map((plano) => {
     const planoApi = data.planos?.find((item) => String(item.nome).toUpperCase() === plano.codigo)
@@ -83,11 +80,14 @@ export default function Planos() {
       preco: formatarPreco(planoApi?.valorMensal ?? plano.precoFallback),
     }
   }), [data.planos])
-  const checkoutAtivoPlano = checkoutAtivo(pagamentoPlano)
-  const timerPlano = useCheckoutTimer(pagamentoPlano)
-  const checkoutValidoPlano = checkoutAtivoPlano && !timerPlano.expirou
+
+  const pagamentoCheckoutPlano = checkoutSolicitadoEm && pagamentoPlano
+    ? { ...pagamentoPlano, dataCriacao: checkoutSolicitadoEm }
+    : null
+  const timerPlano = useCheckoutTimer(checkoutSolicitado ? pagamentoCheckoutPlano : null)
+  const checkoutValidoPlano = checkoutSolicitado && Boolean(pagamentoPlano?.checkoutUrl) && !timerPlano.expirou
   const statusPagamentoPlano = pagamentoPlano?.status === 'PAYMENT_PENDING'
-    ? 'Pagamento não realizado'
+    ? statusPagamentoTexto.PAYMENT_PENDING
     : statusPagamentoTexto[pagamentoPlano?.status] || pagamentoPlano?.status
 
   useEffect(() => {
@@ -103,26 +103,11 @@ export default function Planos() {
         })
         const pendenteRecente = lista.find((item) => item?.status === 'PAYMENT_PENDING')
         setPagamentoPlano(pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null)
+        setCheckoutSolicitado(false)
+        setCheckoutSolicitadoEm(null)
       })
       .catch(() => null)
-  }, [usuario?.empresaId])
-
-  useEffect(() => {
-    let ativo = true
-    async function gerarQr() {
-      const copia = pagamentoPlano?.pixCopiaECola
-      if (!copia || pagamentoPlano?.pixQrCodeBase64) {
-        setQrDataUrl('')
-        return
-      }
-      const url = await gerarQrCodeDataUrl(copia)
-      if (ativo) setQrDataUrl(url || '')
-    }
-    gerarQr().catch(() => null)
-    return () => {
-      ativo = false
-    }
-  }, [pagamentoPlano?.pixCopiaECola, pagamentoPlano?.pixQrCodeBase64])
+  }, [usuario?.empresaId, usuario?.pagamentoPlano, usuario?.plano, atualizarPlanoAtual])
 
   async function iniciarPagamentoPro() {
     if (!usuario) {
@@ -146,6 +131,8 @@ export default function Planos() {
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
       setPagamentoPlano(pagamento)
+      setCheckoutSolicitadoEm(new Date().toISOString())
+      setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
       setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
@@ -176,6 +163,8 @@ export default function Planos() {
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
       setPagamentoPlano(pagamento)
+      setCheckoutSolicitadoEm(new Date().toISOString())
+      setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
       setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
@@ -194,6 +183,8 @@ export default function Planos() {
       setPagamentoPlano(pagamento)
       atualizarUsuario({ pagamentoPlano: pagamento })
       if (resultado.statusVerificacao === 'APPROVED') {
+        setCheckoutSolicitado(false)
+        setCheckoutSolicitadoEm(null)
         await atualizarPlanoAtual()
       } else if (resultado.mensagem) {
         setErro(resultado.mensagem)
@@ -203,13 +194,6 @@ export default function Planos() {
     } finally {
       setCarregando(false)
     }
-  }
-
-  async function copiarPix() {
-    if (!pagamentoPlano?.pixCopiaECola) return
-    await navigator.clipboard.writeText(pagamentoPlano.pixCopiaECola)
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2500)
   }
 
   function handlePlanClick(plano) {
@@ -244,47 +228,25 @@ export default function Planos() {
             </div>
           </div>
 
-              {pagamentoPlano && (
-                <div className="plan-payment-status">
-                  <div>
-                    <span>Status do pagamento</span>
-                    <strong>{statusPagamentoPlano}</strong>
-                  </div>
-                  {pagamentoPlano.status !== 'PAYMENT_PENDING' && (
-                    <StatusBadge status={pagamentoPlano.status} />
-                  )}
-              {['PIX_AUTO', 'PIX'].includes(pagamentoPlano.metodoPagamento) && (
-                <div className="plan-pix-box">
-                  {pagamentoPlano.pixQrCodeBase64 ? (
-                    <img className="pix-qr-image large" src={`data:image/png;base64,${pagamentoPlano.pixQrCodeBase64}`} alt="QR Code PIX" />
-                  ) : qrDataUrl ? (
-                    <img className="pix-qr-image large" src={qrDataUrl} alt="QR Code PIX" />
-                  ) : null}
-                  <small>{pagamentoPlano.pixCopiaECola || 'PIX ainda nao retornou o codigo copia e cola. Tente gerar novamente.'}</small>
-                  {pagamentoPlano.pixCopiaECola && (
-                    <button type="button" className="btn btn-secondary" onClick={copiarPix}>
-                      <Copy size={16} /> {copiado ? 'Codigo copiado' : 'Copiar codigo PIX'}
-                    </button>
-                  )}
-                  <small>Apos a aprovacao, sua conta Pro pode levar ate 30 minutos para ser liberada.</small>
+          {checkoutValidoPlano && (
+            <div className="plan-payment-status plan-payment-status--checkout">
+              <div className="plan-payment-status-head">
+                <div>
+                  <span>Status do pagamento</span>
+                  <strong>{statusPagamentoPlano}</strong>
                 </div>
-              )}
-              {pagamentoPlano.metodoPagamento === 'CREDIT_CARD' && (
-                <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 30 minutos para ser liberada.</small>
-              )}
-              {checkoutValidoPlano && (
-                <div className="checkout-container">
-                  <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary">
-                    <ExternalLink size={16} /> Abrir checkout seguro
-                  </a>
-                  {timerPlano.tempoRestante !== null && (
-                    <span className="checkout-timer">Expira em: {timerPlano.formatado}</span>
-                  )}
-                </div>
-              )}
-              <button type="button" className="btn btn-secondary" onClick={atualizarStatusPagamento} disabled={carregando}>
-                <RefreshCw size={16} /> Ja paguei, verificar
-              </button>
+              </div>
+              <p className="plan-payment-note">Faça o pagamento pelo checkout abaixo.</p>
+              <div className="plan-payment-actions">
+                <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary">
+                  <ExternalLink size={16} /> Abrir checkout seguro
+                </a>
+                <span className="checkout-timer">Expira em: {timerPlano.formatado}</span>
+                <button type="button" className="btn btn-secondary" onClick={atualizarStatusPagamento} disabled={carregando}>
+                  <RefreshCw size={16} /> Já paguei, verificar
+                </button>
+              </div>
+              <small className="plan-payment-helper">Após a aprovação, sua conta Pro pode levar até 30 minutos para ser liberada.</small>
             </div>
           )}
 
@@ -313,10 +275,10 @@ export default function Planos() {
               <p className="plan-description">{plano.descricao}</p>
 
               <div className="plan-section">
-                <h3>BenefÃ­cios</h3>
+                <h3>Beneficios</h3>
                 <div className="plan-list">
                   {plano.beneficios.map((item) => (
-                    <strong key={item} className={item === 'Tudo do BÃ¡sico' ? 'plan-list-tudo-basico' : ''}>
+                    <strong key={item}>
                       <Check size={16} />{item}
                     </strong>
                   ))}
@@ -352,4 +314,3 @@ export default function Planos() {
     </section>
   )
 }
-
