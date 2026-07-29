@@ -67,7 +67,8 @@ export default function Booking() {
   const [salvando, setSalvando] = useState(false)
 
   const profissionais = booking?.profissionais || []
-  const exigeProfissional = profissionais.length > 0
+  const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
+  const exigeProfissional = profissionaisAtivos.length > 0
   const servicoSelecionado = useMemo(
     () => (booking?.servicos || []).find((servico) => String(servico.id) === String(servicoId)) || null,
     [booking?.servicos, servicoId],
@@ -85,7 +86,8 @@ export default function Booking() {
         const response = await appApi.carregarBooking(slugOuEmpresaId)
         setBooking(response)
         setServicoId(response.servicos?.[0]?.id ? String(response.servicos[0].id) : '')
-        setProfissionalId(response.profissionais?.[0]?.id ? String(response.profissionais[0].id) : '')
+        const profissionalInicial = (response.profissionais || []).find((profissional) => profissional.status === 'ATIVO')
+        setProfissionalId(profissionalInicial?.id ? String(profissionalInicial.id) : '')
       } catch (error) {
         setErro(error.response?.data?.mensagem || 'Agendamento indisponível no momento.')
       } finally {
@@ -143,7 +145,8 @@ export default function Booking() {
     setErro('')
     setSucesso('')
     setServicoId(booking?.servicos?.[0]?.id ? String(booking.servicos[0].id) : '')
-    setProfissionalId(booking?.profissionais?.[0]?.id ? String(booking.profissionais[0].id) : '')
+    const profissionalInicial = (booking?.profissionais || []).find((profissional) => profissional.status === 'ATIVO')
+    setProfissionalId(profissionalInicial?.id ? String(profissionalInicial.id) : '')
     setData(hoje)
     setHoraInicio('')
     setBusca('')
@@ -390,7 +393,7 @@ export default function Booking() {
                     required
                   >
                     <option value="">Selecione</option>
-                    {profissionais.map((profissional) => (
+                    {profissionaisAtivos.map((profissional) => (
                       <option key={profissional.id} value={profissional.id}>
                         {profissional.nome}
                       </option>

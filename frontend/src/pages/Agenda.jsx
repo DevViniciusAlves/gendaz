@@ -63,12 +63,17 @@ function primeiroId(lista) {
   return lista[0]?.id ?? ''
 }
 
+function profissionaisAtivos(lista) {
+  return (lista || []).filter((item) => item?.status === 'ATIVO')
+}
+
 function montarFormularioInicial(dados) {
+  const ativos = profissionaisAtivos(dados.profissionais)
   return {
     ...novoFormulario,
     clienteId: primeiroId(dados.clientes),
     servicoId: primeiroId(dados.servicos),
-    profissionalId: primeiroId(dados.profissionais) || PROFISSIONAL_AUTOMATICO_VALUE,
+    profissionalId: primeiroId(ativos) || PROFISSIONAL_AUTOMATICO_VALUE,
     data: todayIso(),
   }
 }
@@ -78,8 +83,9 @@ export default function Agenda() {
   const { refreshTrigger } = useContext(RefreshContext)
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = data.servicos.filter((item) => item.status !== 'INATIVO')
+  const profissionaisAtivosLista = useMemo(() => profissionaisAtivos(data.profissionais), [data.profissionais])
   const planoEhPro = usuario?.plano === 'PRO'
-  const temProfissionais = planoEhPro && data.profissionais.length > 0
+  const temProfissionais = planoEhPro && profissionaisAtivosLista.length > 0
   const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
   const [dataFiltro, setDataFiltro] = useState('')
   const [profissionalId, setProfissionalId] = useState('todos')
@@ -132,7 +138,7 @@ export default function Agenda() {
 
   const clientesPorId = useMemo(() => new Map(data.clientes.map((cliente) => [cliente.id, cliente])), [data.clientes])
   const servicosPorId = useMemo(() => new Map(data.servicos.map((servico) => [servico.id, servico])), [data.servicos])
-  const profissionaisPorId = useMemo(() => new Map(data.profissionais.map((profissional) => [profissional.id, profissional])), [data.profissionais])
+  const profissionaisPorId = useMemo(() => new Map(profissionaisAtivosLista.map((profissional) => [profissional.id, profissional])), [profissionaisAtivosLista])
 
   const filtradosEnriquecidos = filtrados.map((item) => {
     const cliente = clientesPorId.get(item.clienteId)
@@ -161,7 +167,7 @@ export default function Agenda() {
     const servicosAtivosAtuais = data.servicos.filter((item) => item.status !== 'INATIVO')
     const clientePadrao = primeiroId(data.clientes)
     const servicoPadrao = primeiroId(servicosAtivosAtuais)
-    const profissionalPadrao = primeiroId(data.profissionais) || PROFISSIONAL_AUTOMATICO_VALUE
+    const profissionalPadrao = primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE
 
     setForm((current) => {
       let atualizou = false
@@ -189,7 +195,7 @@ export default function Agenda() {
 
       return atualizou ? proximo : current
     })
-  }, [data.clientes, data.profissionais, data.servicos, modalCriar, temProfissionais])
+  }, [data.clientes, data.servicos, modalCriar, profissionaisAtivosLista, temProfissionais])
 
   function limparSelecao() {
     setSelecionando(false)
@@ -290,7 +296,7 @@ export default function Agenda() {
     setForm({
       ...montarFormularioInicial(data),
       servicoId: primeiroId(servicosAtivos),
-      profissionalId: temProfissionais ? primeiroId(data.profissionais) || PROFISSIONAL_AUTOMATICO_VALUE : null,
+      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE : null,
     })
     setErroCriar('')
     setModalCriar(true)
@@ -577,8 +583,8 @@ export default function Agenda() {
           />
         </label>
         <select value={profissionalId} onChange={(e) => setProfissionalId(e.target.value)}>
-          <option value="todos">Todos os profissionais</option>
-          {data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                  <option value="todos">Todos os profissionais</option>
+          {profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
         </select>
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
@@ -672,7 +678,7 @@ export default function Agenda() {
                   profissionalId: e.target.value === PROFISSIONAL_AUTOMATICO_VALUE ? PROFISSIONAL_AUTOMATICO_VALUE : Number(e.target.value),
                 })}
               >
-                {data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                {profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
               </select>
             </label>
           )}
@@ -690,7 +696,7 @@ export default function Agenda() {
             <label className="field"><span>Cliente</span><select value={edicao.clienteId} onChange={(e) => setEdicao({ ...edicao, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             <label className="field"><span>Serviço</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{data.servicos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             {temProfissionais && (
-              <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+              <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
             <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />

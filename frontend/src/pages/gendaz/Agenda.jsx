@@ -72,9 +72,9 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Profissional *</span>
             <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value })} required>
               <option value="">Selecione um profissional</option>
-              {profissionais.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
+              {profissionaisAtivos.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
             </select>
-            {profissionais.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível.</small>}
+            {profissionaisAtivos.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível.</small>}
           </label>
           <label>
             <span>Data *</span>
@@ -233,7 +233,8 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
 }
 
 export default function Agenda() {
-  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro } = useContext(ClienteGendazContext)
+  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro, profissionais } = useContext(ClienteGendazContext)
+  const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [showNovo, setShowNovo] = useState(false)
   const [modalReagendar, setModalReagendar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)

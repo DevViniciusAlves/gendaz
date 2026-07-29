@@ -294,9 +294,6 @@ export default function Configuracoes() {
   }
 
   const planoAtivo = PLANOS[usuario.plano]
-  const recursosPlano = usuario.plano === 'PRO'
-    ? ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios']
-    : ['Agenda', 'Clientes', 'Serviços']
   const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
@@ -334,9 +331,6 @@ export default function Configuracoes() {
               <span className="section-kicker">Plano ativo</span>
               <h2>{planoAtivo?.nome || usuario.plano}</h2>
             </div>
-          </div>
-          <div className="tag-list">
-            {recursosPlano.map((item) => <span key={item}>{item}</span>)}
           </div>
           {usuario.assinatura?.status === 'TESTE' && (
             <small className="settings-card-muted">{usuario.assinatura.diasRestantesTeste} dias restantes do teste grátis.</small>
