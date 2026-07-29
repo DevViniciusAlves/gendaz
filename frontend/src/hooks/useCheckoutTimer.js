@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 function parseData(valor) {
   if (!valor) return null
@@ -8,40 +8,55 @@ function parseData(valor) {
 
 export function useCheckoutTimer(pagamento) {
   const [tempoRestante, setTempoRestante] = useState(null)
-
-  const dataExpiracao = useMemo(() => parseData(pagamento?.dataExpiracao), [pagamento?.dataExpiracao])
+  const [expirou, setExpirou] = useState(false)
 
   useEffect(() => {
+    const dataExpiracao = parseData(pagamento?.dataExpiracao)
+
     if (!pagamento?.checkoutUrl || !dataExpiracao) {
+      setExpirou(true)
       setTempoRestante(null)
-      return undefined
+      return
     }
 
-    const calcular = () => {
-      const restante = dataExpiracao.getTime() - Date.now()
-      setTempoRestante(Math.max(0, restante))
-      return restante <= 0
+    const calcularTempo = () => {
+      const agora = new Date().getTime()
+      const expiracao = dataExpiracao.getTime()
+      const resto = expiracao - agora
+
+      if (resto <= 0) {
+        setTempoRestante(0)
+        setExpirou(true)
+        return true
+      }
+
+      setTempoRestante(resto)
+      setExpirou(false)
+      return false
     }
 
-    calcular()
+    calcularTempo()
+
     const intervalo = setInterval(() => {
-      if (calcular()) {
+      const expirado = calcularTempo()
+      if (expirado) {
         clearInterval(intervalo)
       }
     }, 1000)
 
     return () => clearInterval(intervalo)
-  }, [pagamento?.checkoutUrl, dataExpiracao])
+  }, [pagamento?.checkoutUrl, pagamento?.dataExpiracao])
 
-  const expirou = tempoRestante !== null && tempoRestante <= 0
-  const minutos = tempoRestante !== null ? Math.floor(tempoRestante / 60000) : 0
-  const segundos = tempoRestante !== null ? Math.floor((tempoRestante % 60000) / 1000) : 0
+  const minutos = tempoRestante ? Math.max(0, Math.floor(tempoRestante / 1000 / 60)) : 0
+  const segundos = tempoRestante ? Math.max(0, Math.floor((tempoRestante / 1000) % 60)) : 0
 
   return {
     tempoRestante,
     minutos,
     segundos,
     expirou,
-    formatado: `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`,
+    formatado: tempoRestante !== null
+      ? `${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`
+      : '--:--',
   }
 }
