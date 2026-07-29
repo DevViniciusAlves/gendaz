@@ -160,6 +160,9 @@ public class InsightsService {
                 Analise os dados agregados reais desta empresa e devolva JSON puro no formato abaixo.
                 Estrutura esperada:
                 {
+                  "alertas": [
+                    {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"alerta"}
+                  ],
                   "principais": [
                     {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"acao"}
                   ],
@@ -198,6 +201,7 @@ public class InsightsService {
         List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
         List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
 
+        List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receita30, receita60, servicos, profissionais);
         List<InsightItem> principais = montarInsightsPrincipais(dados);
         List<InsightItem> oportunidades = new ArrayList<>();
         List<InsightAction> acoes = new ArrayList<>();
@@ -227,6 +231,9 @@ public class InsightsService {
         if (groq.containsKey("principais")) {
             principais = limitarItens(parsePrincipais(groq.get("principais")), 4, principais);
         }
+        if (groq.containsKey("alertas")) {
+            alertas = limitarItens(parsePrincipais(groq.get("alertas")), 4, alertas);
+        }
         if (groq.containsKey("oportunidades")) {
             oportunidades = limitarOportunidades(groq.get("oportunidades"), oportunidades);
         }
@@ -241,6 +248,7 @@ public class InsightsService {
                 stringValor(dados.get("empresaNome")),
                 score,
                 principais,
+                alertas,
                 oportunidades.size() > 3 ? oportunidades.subList(0, 3) : oportunidades,
                 acoes.size() > 4 ? acoes.subList(0, 4) : acoes,
                 impactoTotal,
@@ -294,7 +302,7 @@ public class InsightsService {
     private String responderLocalmente(String pergunta, Map<String, Object> dados) {
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
         Map<String, Object> clientes = mapa(dados.get("clientes"));
-        return "Score local: " + calcularScore(longo(clientes.get("at_risk")), numero(financeiro.get("pendente")), numero(financeiro.get("receita_30d")), numero(financeiro.get("receita_60d"))) + "/100.";
+        return "Score local: " + calcularScore((int) longo(clientes.get("at_risk")), numero(financeiro.get("pendente")), numero(financeiro.get("receita_30d")), numero(financeiro.get("receita_60d"))) + "/100.";
     }
 
     private void validarAcessoEmpresa(Long empresaId) {
@@ -347,6 +355,64 @@ public class InsightsService {
         itens.add(montarPrincipalFinanceiro(pendente, receita30, receita60, perdaFinanceira));
         itens.add(montarPrincipalClienteRisco(atRisk, clienteEmRisco));
         return itens;
+    }
+
+    private List<InsightItem> montarAlertasReais(double pendente, long atRisk, double receita30, double receita60, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais) {
+        List<InsightItem> alertas = new ArrayList<>();
+
+        if (pendente > 0) {
+            alertas.add(new InsightItem(
+                    "Cobrança pendente",
+                    "Existem pagamentos em aberto que ainda exigem acompanhamento.",
+                    formatarMoeda(pendente),
+                    "Alta",
+                    "alerta"
+            ));
+        }
+
+        if (atRisk > 0) {
+            alertas.add(new InsightItem(
+                    "Clientes em risco",
+                    "Clientes sem retorno recente devem ser reativados antes de virar churn.",
+                    atRisk + " clientes",
+                    "Alta",
+                    "alerta"
+            ));
+        }
+
+        long servicosSemMovimento = servicos.stream().filter(servico -> longo(servico.get("vendas_30d")) <= 0).count();
+        long profissionaisSemMovimento = profissionais.stream().filter(profissional -> longo(profissional.get("agendamentos_30d")) <= 0).count();
+        if (servicosSemMovimento > 0 || profissionaisSemMovimento > 0) {
+            alertas.add(new InsightItem(
+                    "Movimento abaixo do ideal",
+                    "Há serviços ou profissionais sem movimentação relevante no período.",
+                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviços",
+                    "Média",
+                    "alerta"
+            ));
+        }
+
+        if (receita60 > 0 && receita30 < receita60) {
+            alertas.add(new InsightItem(
+                    "Receita em queda",
+                    "O faturamento recente ficou abaixo do período comparado.",
+                    "Comparação 30d vs 60d",
+                    "Média",
+                    "alerta"
+            ));
+        }
+
+        if (alertas.isEmpty()) {
+            alertas.add(new InsightItem(
+                    "Operação estável",
+                    "Nenhum alerta crítico foi encontrado na análise atual.",
+                    "Dados sincronizados com a empresa vinculada.",
+                    "Baixa",
+                    "alerta"
+            ));
+        }
+
+        return alertas.size() > 4 ? alertas.subList(0, 4) : alertas;
     }
 
     private InsightItem montarPrincipalAcao(double pendente, long atRisk, long servicosSemMovimento, long profissionaisSemMovimento, boolean quedaReceita) {
