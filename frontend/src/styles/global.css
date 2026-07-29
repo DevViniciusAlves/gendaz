@@ -14230,6 +14230,8 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .content .plan-payment-status--checkout {
   display: grid;
+  grid-template-columns: 1fr;
+  align-items: stretch;
   gap: 14px;
   padding: 16px;
   border-radius: 16px;
@@ -14252,6 +14254,8 @@ tbody tr:hover { background: #fffaf5; }
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
+  justify-content: flex-start;
+  width: 100%;
 }
 
 .plan-payment-actions .checkout-timer {

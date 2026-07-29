@@ -8,15 +8,15 @@ function parseData(valor) {
   return Number.isNaN(data.getTime()) ? null : data
 }
 
-function normalizarInicioCheckout(pagamento) {
+function normalizarInicioCheckout(pagamento, agoraMs = Date.now()) {
   const inicioLocal = pagamento?.checkoutSolicitadoEm
   if (inicioLocal) {
     const dataInicio = parseData(inicioLocal)
-    if (dataInicio) return dataInicio.getTime()
+    if (dataInicio) return Math.min(dataInicio.getTime(), agoraMs)
   }
 
   const dataCriacao = parseData(pagamento?.dataCriacao)
-  return dataCriacao?.getTime() || null
+  return dataCriacao ? Math.min(dataCriacao.getTime(), agoraMs) : null
 }
 
 export function useCheckoutTimer(pagamento) {
