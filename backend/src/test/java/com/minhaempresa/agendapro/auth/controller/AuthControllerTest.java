@@ -50,10 +50,9 @@ class AuthControllerTest {
     @Test
     void deveRenovarSessaoComCookie() throws Exception {
         UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@agendapro.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", null, null, null, null, null, LocalDateTime.now(), null);
-        when(authService.refresh(any(), any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
+        when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .header("X-Usuario-Id", "1")
                         .cookie(new jakarta.servlet.http.Cookie("agendapro_session", "sessao-antiga")))
                 .andExpect(cookie().exists("agendapro_session"))
                 .andExpect(status().isOk());
