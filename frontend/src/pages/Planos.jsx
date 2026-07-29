@@ -6,6 +6,7 @@ import ScrollReveal from '../components/ScrollReveal.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
@@ -84,6 +85,7 @@ export default function Planos() {
   }), [data.planos])
   const checkoutAtivoPlano = checkoutAtivo(pagamentoPlano)
   const checkoutExpiradoPlano = checkoutExpirado(pagamentoPlano)
+  const timerPlano = useCheckoutTimer(pagamentoPlano)
 
   useEffect(() => {
     if (!usuario?.empresaId) return
@@ -258,7 +260,14 @@ export default function Planos() {
                 <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 15 minutos para ser liberada.</small>
               )}
               {checkoutAtivoPlano && (
-                <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary"><ExternalLink size={16} /> Abrir checkout seguro</a>
+                <div className="checkout-container">
+                  <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary">
+                    <ExternalLink size={16} /> Abrir checkout seguro
+                  </a>
+                  {timerPlano.tempoRestante !== null && (
+                    <span className="checkout-timer">Expira em: {timerPlano.formatado}</span>
+                  )}
+                </div>
               )}
               {pagamentoPlano?.checkoutUrl && checkoutExpiradoPlano && (
                 <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>

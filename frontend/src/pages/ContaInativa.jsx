@@ -6,6 +6,7 @@ import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoGendaz from '../assets/logos/gendaz-logo-branco.png'
+import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const statusView = {
@@ -83,6 +84,7 @@ export default function ContaInativa() {
     : pagamentoDoPlanoSelecionado?.valor ?? pagamento?.valor ?? valoresPlanos.BASICO ?? null
   const checkoutAtivoAtual = checkoutAtivo(pagamento)
   const checkoutExpiradoAtual = checkoutExpirado(pagamento)
+  const timerCheckout = useCheckoutTimer(pagamento)
 
   const formularioPadrao = useMemo(() => ({
     customerName: usuario?.nome || usuario?.nomeResponsavel || '',
@@ -364,9 +366,14 @@ export default function ContaInativa() {
           </Button>
 
           {checkoutAtivoAtual && (
-            <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout}>
-              Abrir checkout
-            </Button>
+            <div className="checkout-container">
+              <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout}>
+                Abrir checkout
+              </Button>
+              {timerCheckout.tempoRestante !== null && (
+                <span className="checkout-timer">Expira em: {timerCheckout.formatado}</span>
+              )}
+            </div>
           )}
           {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
             <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>

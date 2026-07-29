@@ -11508,6 +11508,21 @@ tbody tr:hover { background: #fffaf5; }
   margin: -4px 0 0;
 }
 
+.checkout-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.checkout-timer {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
 .app-shell .content .plan-card .recommended-badge,
 .app-shell .content .plan-card .btn-primary,
 .app-shell .content .plan-card .btn-primary *,

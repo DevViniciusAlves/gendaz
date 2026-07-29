@@ -6,6 +6,7 @@ import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoWhite from '../assets/logos/gendaz-logo-branco.png'
+import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const statusView = {
@@ -56,6 +57,7 @@ export default function PagamentoPendente() {
   const precisaNovaCobranca = ['PAYMENT_REJECTED', 'PAYMENT_CANCELED', 'PAYMENT_EXPIRED'].includes(status)
   const checkoutAtivoAtual = checkoutAtivo(pagamento)
   const checkoutExpiradoAtual = checkoutExpirado(pagamento)
+  const timerCheckout = useCheckoutTimer(pagamento)
 
   const formularioPadrao = useMemo(() => ({
     customerName: usuarioPendente?.nome || pendente?.assinatura?.responsavel || '',
@@ -262,9 +264,16 @@ export default function PagamentoPendente() {
             </label>
           </div>
 
-          <Button type="button" onClick={abrirCheckout} disabled={!checkoutAtivoAtual || aprovado}>
-            <LockKeyhole size={20} /> Ir para pagamento
-          </Button>
+          {checkoutAtivoAtual && (
+            <div className="checkout-container">
+              <Button type="button" onClick={abrirCheckout} disabled={aprovado}>
+                <LockKeyhole size={20} /> Ir para pagamento
+              </Button>
+              {timerCheckout.tempoRestante !== null && (
+                <span className="checkout-timer">Expira em: {timerCheckout.formatado}</span>
+              )}
+            </div>
+          )}
 
           {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
             <small className="plan-checkout-expired-note">Checkout expirado. Gere uma nova cobrança para continuar.</small>
