@@ -156,6 +156,11 @@ function GraficoArea({ dados }) {
   const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
   const grade = { dark: 'rgba(255,255,255,0.08)', light: 'rgba(17,24,39,0.10)' }
 
+  function formatarEixo(valor) {
+    if (!valor || valor <= 0) return 'R$ 0,00'
+    return currency(valor)
+  }
+
   if (!temDados) {
     return (
       <div className="bar-chart-empty">
@@ -176,7 +181,7 @@ function GraficoArea({ dados }) {
             <g key={frac}>
               <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="var(--dashboard-chart-grid)" strokeWidth={1} />
               <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="var(--dashboard-chart-text)">
-                {val === 0 ? 'R$ 0' : `R$ ${(val / 1000).toFixed(val >= 1000 ? 1 : 0)}${val >= 1000 ? 'k' : ''}`}
+                {formatarEixo(val)}
               </text>
             </g>
           )
@@ -315,11 +320,6 @@ export default function Dashboard() {
     : []
   const receitaDiasBase = buildReceitaMes(data.pagamentos)
   const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
-  const receitaResumo = resumirReceitaMensal(receitaDias)
-  const melhorDiaReceita = receitaResumo.melhorDia
-    ? new Date(`${receitaResumo.melhorDia.iso}T12:00:00`).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    : null
-
   const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
     ? resumoDashboard.proximosAgendamentos
     : data.agendamentos
@@ -447,8 +447,8 @@ export default function Dashboard() {
           )}
 
           <div className="operation-metrics">
-            {metrics.map(({ key, icon: Icon, label, value, detail }, index) => (
-              <ScrollReveal key={key} delay={index * 60}>
+            {metrics.map(({ key, icon: Icon, label, value, detail }) => (
+              <ScrollReveal key={key} delay={0}>
                 <article className={`dashboard-summary-card ${key === 'agenda' ? 'dashboard-summary-card--agenda' : ''} ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
                   <Icon size={24} />
                   <div>
@@ -474,32 +474,9 @@ export default function Dashboard() {
                     <TrendingUp size={16} color="var(--primary)" />
                     <small>{mesAtual}</small>
                   </div>
-                  <span>{receitaResumo.diasComReceita} dia{receitaResumo.diasComReceita !== 1 ? 's' : ''} com receita registrada</span>
                 </div>
               </div>
               <GraficoArea dados={receitaDias} />
-              <div className="receita-chart-stats">
-                <article>
-                  <span>Total do mês</span>
-                  <strong>{currency(receitaResumo.total)}</strong>
-                  <small>{receitaResumo.total === 0 ? 'Nenhuma receita confirmada neste mês.' : 'Somente pagamentos confirmados.'}</small>
-                </article>
-                <article>
-                  <span>Média por dia</span>
-                  <strong>{currency(receitaResumo.mediaDiariaComReceita)}</strong>
-                  <small>{receitaResumo.diasComReceita > 0 ? `${receitaResumo.diasComReceita} dia${receitaResumo.diasComReceita !== 1 ? 's' : ''} com movimento` : 'Sem dias com receita confirmada.'}</small>
-                </article>
-                <article>
-                  <span>Melhor dia</span>
-                  <strong>{melhorDiaReceita || '--/--'}</strong>
-                  <small>{receitaResumo.melhorDia ? currency(receitaResumo.melhorDia.valor) : 'Sem pico identificado.'}</small>
-                </article>
-                <article>
-                  <span>Média do mês</span>
-                  <strong>{currency(receitaResumo.mediaPorDiaDoMes)}</strong>
-                  <small>Distribuída pelos dias do mês atual.</small>
-                </article>
-              </div>
             </ScrollReveal>
           )}
 
@@ -535,7 +512,7 @@ export default function Dashboard() {
             </ScrollReveal>
 
             <div className="dashboard-side-cards">
-              <ScrollReveal className="panel" delay={60}>
+              <ScrollReveal className="panel" delay={0}>
                 <div className="panel-head">
                   <div>
                     <span className="section-kicker">Profissionais</span>
@@ -560,7 +537,7 @@ export default function Dashboard() {
               </ScrollReveal>
 
               {canFinanceiro && (
-                <ScrollReveal className="panel" delay={90}>
+                <ScrollReveal className="panel" delay={0}>
                   <div className="panel-head">
                     <div>
                       <span className="section-kicker">Desempenho</span>
@@ -596,7 +573,7 @@ export default function Dashboard() {
               )}
 
               {canFinanceiro && (
-                <ScrollReveal className="panel" delay={120}>
+                <ScrollReveal className="panel" delay={0}>
                   <div className="panel-head">
                     <div>
                       <span className="section-kicker">Pagamentos</span>
@@ -630,7 +607,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <ScrollReveal className="panel" delay={80}>
+          <ScrollReveal className="panel" delay={0}>
             <div className="panel-head">
               <div>
                 <span className="section-kicker">Agenda</span>
