@@ -11501,6 +11501,37 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: 14px;
 }
 
+.app-shell .content .plan-checkout-expired-note {
+  color: var(--muted) !important;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: -4px 0 0;
+}
+
+.app-shell .content .plan-card .recommended-badge,
+.app-shell .content .plan-card .btn-primary,
+.app-shell .content .plan-card .btn-primary *,
+.app-shell .content .plan-card .btn-primary:disabled,
+.app-shell .content .plan-card .btn-primary:disabled *,
+.app-shell .content .plan-card .btn-primary:disabled svg {
+  color: #000000 !important;
+  -webkit-text-fill-color: #000000 !important;
+}
+
+.app-shell .content .plan-card .recommended-badge {
+  background: #ffffff !important;
+  border: 1px solid rgba(17, 17, 17, 0.10) !important;
+}
+
+.app-shell .content .plan-card .btn-primary {
+  background: #ffffff !important;
+  border-color: rgba(17, 17, 17, 0.12) !important;
+}
+
+.app-shell .content .plan-card .btn-primary svg {
+  color: #000000 !important;
+}
+
 /* ============================================================
    ABSOLUTE FINAL OVERRIDES - must stay last
    ============================================================ */

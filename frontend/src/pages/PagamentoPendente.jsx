@@ -6,6 +6,7 @@ import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoWhite from '../assets/logos/gendaz-logo-branco.png'
+import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const statusView = {
   PAYMENT_PENDING: { label: 'Aguardando pagamento', tone: 'pending' },
@@ -53,6 +54,8 @@ export default function PagamentoPendente() {
   const statusAtual = statusView[status] || statusView.PAYMENT_PENDING
   const aprovado = status === 'PAYMENT_APPROVED'
   const precisaNovaCobranca = ['PAYMENT_REJECTED', 'PAYMENT_CANCELED', 'PAYMENT_EXPIRED'].includes(status)
+  const checkoutAtivoAtual = checkoutAtivo(pagamento)
+  const checkoutExpiradoAtual = checkoutExpirado(pagamento)
 
   const formularioPadrao = useMemo(() => ({
     customerName: usuarioPendente?.nome || pendente?.assinatura?.responsavel || '',
@@ -94,9 +97,9 @@ export default function PagamentoPendente() {
   }
 
   function abrirCheckout() {
-    if (!pagamento?.checkoutUrl) {
+    if (!checkoutAtivoAtual) {
       setTipoMensagem('error')
-      setMensagem('Checkout não encontrado. Gere uma nova cobrança para continuar.')
+      setMensagem('Checkout expirado ou indisponível. Gere uma nova cobrança para continuar.')
       return
     }
     window.open(pagamento.checkoutUrl, '_blank', 'noopener,noreferrer')
@@ -259,15 +262,19 @@ export default function PagamentoPendente() {
             </label>
           </div>
 
-          <Button type="button" onClick={abrirCheckout} disabled={!pagamento?.checkoutUrl || aprovado}>
+          <Button type="button" onClick={abrirCheckout} disabled={!checkoutAtivoAtual || aprovado}>
             <LockKeyhole size={20} /> Ir para pagamento
           </Button>
+
+          {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
+            <small className="plan-checkout-expired-note">Checkout expirado. Gere uma nova cobrança para continuar.</small>
+          )}
 
           <Button type="button" variant="secondary" onClick={verificarStatus} disabled={carregando}>
             <RefreshCw size={20} /> {carregando ? 'Verificando...' : 'Já paguei, verificar'}
           </Button>
 
-          {!pagamento?.checkoutUrl && (
+          {checkoutExpiradoAtual && (
             <Button type="button" variant="secondary" onClick={gerarCheckout} disabled={gerando}>
               <RefreshCw size={20} /> {gerando ? 'Gerando...' : 'Gerar nova cobrança'}
             </Button>

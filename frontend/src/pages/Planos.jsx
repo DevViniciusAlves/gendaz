@@ -1,4 +1,4 @@
-import { Check, Copy, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
+﻿import { Check, Copy, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
 import QRCode from 'qrcode'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
+import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -15,7 +16,7 @@ const planosBase = [
     subtitulo: 'Agenda simples',
     extra: '7 dias gratis',
     descricao: 'Para organizar conversas, agenda, clientes e servicos no mesmo painel.',
-    beneficios: ['Agenda organizada', 'Cadastro de clientes', 'Cadastro de servicos', 'Confirmacao de consulta', 'Cancelamento e remarcacao'],
+    beneficios: ['Agenda com atendimento organizado', 'Cadastro de clientes pelo painel', 'Cadastro de até 4 serviços', 'Confirmação de consulta automatizada', 'Cancelamento e remarcação automatizados'],
     indicadoPara: ['Clinicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
     naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatorios'],
     cta: 'Comecar no Basico',
@@ -26,7 +27,7 @@ const planosBase = [
     nome: 'Plano Pro',
     subtitulo: 'Gestão com financeiro simples',
     descricao: 'Para acompanhar agenda, profissionais, pagamentos e indicadores em um só lugar.',
-    beneficios: ['Tudo do Básico', 'Profissionais', 'Financeiro mensal', 'Pagamentos pendentes', 'Agenda por profissional', 'Relatórios operacionais'],
+    beneficios: ['Tudo que o Básico oferece', 'Até 3 usuários por conta', 'CRM automatizado para relacionamento', 'Insights para apoiar a gestão', 'Profissionais ilimitados', 'Serviços ilimitados'],
     indicadoPara: ['Equipes de atendimento', 'Serviços com cobrança recorrente', 'Operação com acompanhamento diário'],
     cta: 'Assinar Pro',
     precoFallback: 89.00,
@@ -81,6 +82,8 @@ export default function Planos() {
       preco: formatarPreco(planoApi?.valorMensal ?? plano.precoFallback),
     }
   }), [data.planos])
+  const checkoutAtivoPlano = checkoutAtivo(pagamentoPlano)
+  const checkoutExpiradoPlano = checkoutExpirado(pagamentoPlano)
 
   useEffect(() => {
     if (!usuario?.empresaId) return
@@ -254,8 +257,11 @@ export default function Planos() {
               {pagamentoPlano.metodoPagamento === 'CREDIT_CARD' && (
                 <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 15 minutos para ser liberada.</small>
               )}
-              {pagamentoPlano.checkoutUrl && (
+              {checkoutAtivoPlano && (
                 <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary"><ExternalLink size={16} /> Abrir checkout seguro</a>
+              )}
+              {pagamentoPlano?.checkoutUrl && checkoutExpiradoPlano && (
+                <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>
               )}
               <button type="button" className="btn btn-secondary" onClick={atualizarStatusPagamento} disabled={carregando}>
                 <RefreshCw size={16} /> Ja paguei, verificar
@@ -288,10 +294,10 @@ export default function Planos() {
               <p className="plan-description">{plano.descricao}</p>
 
               <div className="plan-section">
-                <h3>Benefícios</h3>
+                <h3>BenefÃ­cios</h3>
                 <div className="plan-list">
                   {plano.beneficios.map((item) => (
-                    <strong key={item} className={item === 'Tudo do Básico' ? 'plan-list-tudo-basico' : ''}>
+                    <strong key={item} className={item === 'Tudo do BÃ¡sico' ? 'plan-list-tudo-basico' : ''}>
                       <Check size={16} />{item}
                     </strong>
                   ))}
@@ -327,3 +333,4 @@ export default function Planos() {
     </section>
   )
 }
+
