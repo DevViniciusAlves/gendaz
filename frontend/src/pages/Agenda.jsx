@@ -59,43 +59,6 @@ function formatarIsoLocal(data) {
   return data.toISOString().slice(0, 10)
 }
 
-function inicioSemanaIso(iso) {
-  const data = criarDataLocal(iso)
-  if (!data) return iso
-  const diaSemana = data.getDay() || 7
-  data.setDate(data.getDate() - diaSemana + 1)
-  return formatarIsoLocal(data)
-}
-
-function fimSemanaIso(iso) {
-  const data = criarDataLocal(iso)
-  if (!data) return iso
-  const diaSemana = data.getDay() || 7
-  data.setDate(data.getDate() + (7 - diaSemana))
-  return formatarIsoLocal(data)
-}
-
-function inicioMesIso(iso) {
-  const data = criarDataLocal(iso)
-  if (!data) return iso
-  data.setDate(1)
-  return formatarIsoLocal(data)
-}
-
-function fimMesIso(iso) {
-  const data = criarDataLocal(iso)
-  if (!data) return iso
-  data.setMonth(data.getMonth() + 1, 0)
-  return formatarIsoLocal(data)
-}
-
-function adicionarDiasIso(iso, dias) {
-  const data = criarDataLocal(iso)
-  if (!data) return iso
-  data.setDate(data.getDate() + dias)
-  return formatarIsoLocal(data)
-}
-
 function primeiroId(lista) {
   return lista[0]?.id ?? ''
 }
@@ -118,9 +81,7 @@ export default function Agenda() {
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && data.profissionais.length > 0
   const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
-  const hoje = todayIso()
-  const [filtroPeriodo, setFiltroPeriodo] = useState('TODOS')
-  const [dataFiltro, setDataFiltro] = useState(hoje)
+  const [dataFiltro, setDataFiltro] = useState('')
   const [profissionalId, setProfissionalId] = useState('todos')
   const [status, setStatus] = useState('todos')
   const [busca, setBusca] = useState('')
@@ -142,7 +103,7 @@ export default function Agenda() {
   const [bulkExecutando, setBulkExecutando] = useState(false)
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
-  const itensPorPagina = 12
+  const itensPorPagina = 9
 
   useEffect(() => {
     reload(true)
@@ -151,24 +112,11 @@ export default function Agenda() {
   const termoBusca = busca.trim().toLowerCase()
 
   const filtrosData = useMemo(() => {
-    if (filtroPeriodo === 'HOJE') {
-      return { inicio: hoje, fim: hoje }
+    if (!dataFiltro) {
+      return { inicio: null, fim: null }
     }
-    if (filtroPeriodo === 'AMANHA') {
-      const amanha = adicionarDiasIso(hoje, 1)
-      return { inicio: amanha, fim: amanha }
-    }
-    if (filtroPeriodo === 'SEMANA') {
-      return { inicio: inicioSemanaIso(hoje), fim: fimSemanaIso(hoje) }
-    }
-    if (filtroPeriodo === 'MES') {
-      return { inicio: inicioMesIso(hoje), fim: fimMesIso(hoje) }
-    }
-    if (filtroPeriodo === 'DATA') {
-      return { inicio: dataFiltro, fim: dataFiltro }
-    }
-    return { inicio: null, fim: null }
-  }, [dataFiltro, filtroPeriodo, hoje])
+    return { inicio: dataFiltro, fim: dataFiltro }
+  }, [dataFiltro])
 
   const filtrados = useMemo(() => data.agendamentos.filter((item) => {
     const matchesPeriodo = !filtrosData.inicio || !filtrosData.fim
@@ -615,26 +563,17 @@ export default function Agenda() {
       ) : (
         <>
       <div className="filters">
-        <select
-          value={filtroPeriodo}
-          onChange={(e) => {
-            const valor = e.target.value
-            setFiltroPeriodo(valor)
-            if (valor === 'DATA') {
-              setDataFiltro(hoje)
-            }
-          }}
-        >
-          <option value="TODOS">Todos os agendamentos</option>
-          <option value="HOJE">Hoje</option>
-          <option value="AMANHA">Amanhã</option>
-          <option value="SEMANA">Esta semana</option>
-          <option value="MES">Este mês</option>
-          <option value="DATA">Data específica</option>
-        </select>
-        {filtroPeriodo === 'DATA' && (
-          <input type="date" min={todayIso()} max={limiteDataMaxima()} value={dataFiltro} onChange={(e) => setDataFiltro(e.target.value)} />
-        )}
+        <label className="field agenda-date-filter">
+          <span>Filtrar por dia</span>
+          <input
+            type="date"
+            value={dataFiltro}
+            onChange={(e) => {
+              setDataFiltro(e.target.value)
+              setPagina(1)
+            }}
+          />
+        </label>
         <select value={profissionalId} onChange={(e) => setProfissionalId(e.target.value)}>
           <option value="todos">Todos os profissionais</option>
           {data.profissionais.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
@@ -642,7 +581,6 @@ export default function Agenda() {
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
           <option value="PENDENTE">Pendente</option>
-          <option value="CONFIRMADO">Confirmado</option>
           <option value="EM_ATENDIMENTO">Em atendimento</option>
           <option value="PAUSADO">Pausado</option>
           <option value="CANCELADO">Cancelado</option>
@@ -652,11 +590,11 @@ export default function Agenda() {
           type="button"
           className="btn btn-secondary"
           onClick={() => {
-            setFiltroPeriodo('TODOS')
-            setDataFiltro(hoje)
+            setDataFiltro('')
+            setPagina(1)
           }}
         >
-          Todos
+          Todos os dias
         </button>
       </div>
 
