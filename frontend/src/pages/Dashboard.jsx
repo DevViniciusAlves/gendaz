@@ -257,7 +257,7 @@ export default function Dashboard() {
     : data.agendamentos
         .filter((a) => a.data >= hoje && (a.status === 'CONFIRMADO' || a.status === 'PENDENTE'))
         .sort((a, b) => (a.data + a.horaInicio).localeCompare(b.data + b.horaInicio))
-        .slice(0, 5)
+        .slice(0, 3)
 
   const servicosTop = resumoDashboard?.servicosMaisAgendados?.length
     ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, item.quantidade])
@@ -311,7 +311,6 @@ export default function Dashboard() {
       value: pagamentosPendentesBase.length,
       detail: pendenteCobrancaBase === 0 ? 'nenhum pendente' : currency(pendenteCobrancaBase),
     },
-    { key: 'servicos', icon: Wrench, label: 'Servicos ativos', value: servicosAtivos, detail: servicosAtivos === 0 ? 'nenhum cadastrado' : 'no catalogo' },
   ]
 
   const nomeUsuario = usuario?.nome || 'Usuario'
@@ -382,7 +381,7 @@ export default function Dashboard() {
           <div className="operation-metrics">
             {metrics.map(({ key, icon: Icon, label, value, detail }, index) => (
               <ScrollReveal key={key} delay={index * 60}>
-                <article className="dashboard-summary-card">
+                <article className={`dashboard-summary-card ${key === 'pendencias' ? 'dashboard-summary-card--pendencias' : ''} ${key === 'financeiro' ? 'dashboard-summary-card--financeiro' : ''}`}>
                   <Icon size={24} />
                   <div>
                     <span>{label}</span>
