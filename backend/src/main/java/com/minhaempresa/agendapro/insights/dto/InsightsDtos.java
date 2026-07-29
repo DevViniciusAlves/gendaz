@@ -22,6 +22,23 @@ public final class InsightsDtos {
             String tipo
     ) {}
 
+    public record InsightOpportunity(
+            String titulo,
+            String descricao,
+            String motivo,
+            String impactoEstimado,
+            String prioridade
+    ) {}
+
+    public record InsightRecommendedAction(
+            String titulo,
+            String descricao,
+            String motivo,
+            String impactoEstimado,
+            String prioridade,
+            String status
+    ) {}
+
     public record InsightAction(
             String descricao,
             String urgencia,
@@ -32,11 +49,25 @@ public final class InsightsDtos {
             Long empresaId,
             String empresaNome,
             Integer scoreGeral,
+            List<InsightItem> principais,
             List<InsightItem> alertas,
             List<InsightItem> oportunidades,
             List<InsightAction> acoes,
             String impactoTotal,
             LocalDateTime geradoEm
+    ) {}
+
+    public record InsightAnalysisResponse(
+            Long empresaId,
+            String empresaNome,
+            Integer scoreGeral,
+            List<InsightItem> principais,
+            List<InsightOpportunity> oportunidades,
+            List<InsightRecommendedAction> acoes,
+            String impactoTotal,
+            LocalDateTime geradoEm,
+            LocalDateTime validoAte,
+            String origem
     ) {}
 
     public record InsightsResponse(

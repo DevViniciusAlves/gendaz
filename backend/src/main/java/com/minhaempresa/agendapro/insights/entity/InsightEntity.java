@@ -37,6 +37,16 @@ public class InsightEntity {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String resposta;
 
+    @Column(columnDefinition = "TEXT")
+    private String payloadJson;
+
+    @Column(length = 24)
+    private String origem;
+
+    private LocalDateTime dataReferencia;
+
+    private LocalDateTime dataExpiracao;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 }

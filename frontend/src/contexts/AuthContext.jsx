@@ -150,11 +150,11 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     async function validarSessaoInicial() {
-      if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) {
+      if (adminUsuario) {
         if (mounted) setAuthLoading(false)
         return
       }
-      if (contaInativa(usuario)) {
+      if (usuario?.perfil === 'SUPER_ADMIN') {
         if (mounted) setAuthLoading(false)
         return
       }
@@ -173,6 +173,7 @@ export function AuthProvider({ children }) {
         )
         salvarUsuarioSessao(updated)
         setUsuario(updated)
+        ultimaRenovacaoBemSucedidaRef.current = Date.now()
       } catch (error) {
         if (!mounted) return
         const status = error.response?.status
@@ -224,7 +225,7 @@ export function AuthProvider({ children }) {
     return () => {
       mounted = false
     }
-  }, [adminUsuario, usuario?.id, usuario?.perfil])
+  }, [adminUsuario])
 
   useEffect(() => {
     function marcarContaIndisponivel() {

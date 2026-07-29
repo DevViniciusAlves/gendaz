@@ -1,7 +1,7 @@
-import { Check, Clock3, Copy, CreditCard, Info, LockKeyhole, RefreshCw, User } from 'lucide-react'
+import { Check, Clock3, Copy, CreditCard, Info, LockKeyhole, RefreshCw } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -58,21 +58,6 @@ export default function PagamentoPendente() {
   const checkoutAtivoAtual = checkoutAtivo(pagamento)
   const checkoutExpiradoAtual = checkoutExpirado(pagamento)
   const timerCheckout = useCheckoutTimer(pagamento)
-
-  const formularioPadrao = useMemo(() => ({
-    customerName: usuarioPendente?.nome || pendente?.assinatura?.responsavel || '',
-    customerEmail: usuarioPendente?.email || pendente?.email || '',
-    customerPhone: usuarioPendente?.telefone || pagamento?.customerPhone || '',
-    customerDocType: usuarioPendente?.documento ? 'cpf' : '',
-    customerDocNumber: usuarioPendente?.documento || '',
-    antifraudProfilingAttemptReference: usuarioPendente?.id ? `agendeasy-${usuarioPendente.id}` : '',
-  }), [pendente, pagamento, usuarioPendente])
-
-  const [form, setForm] = useState(formularioPadrao)
-
-  useEffect(() => {
-    setForm(formularioPadrao)
-  }, [formularioPadrao])
 
   useEffect(() => {
     let ativo = true
@@ -150,7 +135,6 @@ export default function PagamentoPendente() {
         empresaId,
         metodoPagamento: 'PIX_AUTO',
         plano: pendente?.assinatura?.planoNome || 'PRO',
-        ...form,
       })
       registrarInicioCheckout(novoPagamento)
       const atualizado = { ...pendente, pagamentoPlano: novoPagamento }
@@ -225,45 +209,12 @@ export default function PagamentoPendente() {
           <em>{statusAtual.label}</em>
         </div>
 
-        <div className="payment-checkout-card">
+          <div className="payment-checkout-card">
           <CreditCard size={38} />
           <div>
             <strong>Pagamento</strong>
             <h2>Checkout seguro da Cakto</h2>
-            <p>Clique no botão abaixo para abrir o pagamento.</p>
-          </div>
-
-          <div className="payment-client-grid">
-            <label>
-              <span>Nome</span>
-              <input type="text" value={form.customerName} onChange={(e) => setForm((atual) => ({ ...atual, customerName: e.target.value }))} />
-            </label>
-            <label>
-              <span>E-mail</span>
-              <input type="email" value={form.customerEmail} onChange={(e) => setForm((atual) => ({ ...atual, customerEmail: e.target.value }))} />
-            </label>
-            <label>
-              <span>Telefone</span>
-              <input type="text" value={form.customerPhone} onChange={(e) => setForm((atual) => ({ ...atual, customerPhone: e.target.value }))} />
-            </label>
-            <label>
-              <span>Documento</span>
-              <input type="text" value={form.customerDocNumber} onChange={(e) => setForm((atual) => ({ ...atual, customerDocNumber: e.target.value }))} />
-            </label>
-          </div>
-          <div className="payment-client-grid single-row">
-            <label>
-              <span>Tipo do documento</span>
-              <select value={form.customerDocType} onChange={(e) => setForm((atual) => ({ ...atual, customerDocType: e.target.value }))}>
-                <option value="">Selecione</option>
-                <option value="cpf">CPF</option>
-                <option value="cnpj">CNPJ</option>
-              </select>
-            </label>
-            <label>
-              <span>Antifraude</span>
-              <input type="text" value={form.antifraudProfilingAttemptReference} onChange={(e) => setForm((atual) => ({ ...atual, antifraudProfilingAttemptReference: e.target.value }))} />
-            </label>
+            <p>Finalize o pagamento direto no checkout da Cakto. Os dados da conta já seguem vinculados pela sessão.</p>
           </div>
 
           {checkoutAtivoAtual && (

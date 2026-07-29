@@ -52,3 +52,13 @@ export function buscarHistoricoInsights() {
     },
   }).then((response) => response.data)
 }
+
+export function recalcularInsights(periodo = 30) {
+  const empresaId = obterEmpresaIdUsuario()
+  return api.post('/insights/recalcular', null, {
+    params: {
+      periodo,
+      empresaId: empresaId || undefined,
+    },
+  }).then((response) => response.data)
+}

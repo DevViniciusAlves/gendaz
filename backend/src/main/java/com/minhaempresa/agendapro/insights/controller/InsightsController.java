@@ -40,6 +40,19 @@ public class InsightsController {
         return dashboard(periodo, empresaId);
     }
 
+    @PostMapping("/recalcular")
+    public ResponseEntity<?> recalcular(
+            @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
+            @RequestParam(value = "empresaId", required = false) Long empresaId
+    ) {
+        empresaId = resolverEmpresaId(empresaId);
+        if (empresaId == null) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
+        }
+        DashboardResponse dashboard = insightsService.recalcularDashboard(empresaId, periodo);
+        return ResponseEntity.ok(dashboard);
+    }
+
     @GetMapping("/principais")
     public ResponseEntity<?> principais(
             @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
