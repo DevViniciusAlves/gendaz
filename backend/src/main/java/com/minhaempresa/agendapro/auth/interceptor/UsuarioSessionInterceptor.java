@@ -41,51 +41,52 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-        try {
-            if ("OPTIONS".equalsIgnoreCase(request.getMethod()) || deveIgnorar(request.getRequestURI())) {
-                return true;
-            }
-
-            String usuarioIdHeader = request.getHeader("X-Usuario-Id");
-            String sessao = CookieHelper.lerCookie(request, "agendapro_session").orElse(null);
-
-            if (isAdminSession(request)) {
-                if (usuarioIdHeader != null && !usuarioIdHeader.isBlank()) {
-                    try {
-                        usuarioRepository.findById(Long.valueOf(usuarioIdHeader)).ifPresent(this::registrarEmpresaAtual);
-                    } catch (NumberFormatException ignored) {
-                    }
-                } else if (sessao != null && !sessao.isBlank()) {
-                    usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
-                }
-                return true;
-            }
-
-            if (usuarioIdHeader == null || usuarioIdHeader.isBlank()) {
-                if (sessao != null && !sessao.isBlank()) {
-                    usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
-                }
-                return true;
-            }
-
-            try {
-                Long usuarioId = Long.valueOf(usuarioIdHeader);
-                usuarioRepository.findById(usuarioId).ifPresent(this::registrarEmpresaAtual);
-                if (usuarioSessionService.sessaoValida(usuarioId, sessao)) {
-                    return true;
-                }
-            } catch (NumberFormatException ignored) {
-                return true;
-            }
-
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-            response.getWriter().write("{\"mensagem\":\"Sessão inválida ou expirada. Faça login novamente.\"}");
-            return false;
-        } finally {
-            CompanyContext.clear();
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod()) || deveIgnorar(request.getRequestURI())) {
+            return true;
         }
+
+        String usuarioIdHeader = request.getHeader("X-Usuario-Id");
+        String sessao = CookieHelper.lerCookie(request, "agendapro_session").orElse(null);
+
+        if (isAdminSession(request)) {
+            if (usuarioIdHeader != null && !usuarioIdHeader.isBlank()) {
+                try {
+                    usuarioRepository.findById(Long.valueOf(usuarioIdHeader)).ifPresent(this::registrarEmpresaAtual);
+                } catch (NumberFormatException ignored) {
+                }
+            } else if (sessao != null && !sessao.isBlank()) {
+                usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
+            }
+            return true;
+        }
+
+        if (usuarioIdHeader == null || usuarioIdHeader.isBlank()) {
+            if (sessao != null && !sessao.isBlank()) {
+                usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
+            }
+            return true;
+        }
+
+        try {
+            Long usuarioId = Long.valueOf(usuarioIdHeader);
+            usuarioRepository.findById(usuarioId).ifPresent(this::registrarEmpresaAtual);
+            if (usuarioSessionService.sessaoValida(usuarioId, sessao)) {
+                return true;
+            }
+        } catch (NumberFormatException ignored) {
+            return true;
+        }
+
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
+        response.getWriter().write("{\"mensagem\":\"Sessão inválida ou expirada. Faça login novamente.\"}");
+        return false;
+    }
+
+    @Override
+    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+        CompanyContext.clear();
     }
 
     private boolean isAdminSession(HttpServletRequest request) {
@@ -111,3 +112,8 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
         return ROTAS_PUBLICAS.stream().anyMatch(uri::startsWith);
     }
 }
+
+
+
+
+

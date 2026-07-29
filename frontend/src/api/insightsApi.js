@@ -3,7 +3,7 @@ import api, { getSessionUser } from './axiosConfig.js'
 function obterEmpresaIdUsuario() {
   const usuarioCache = getSessionUser()
   if (usuarioCache) {
-    return usuarioCache?.empresaId || usuarioCache?.empresa?.id || usuarioCache?.id || null
+    return usuarioCache?.empresaId || usuarioCache?.empresa?.id || null
   }
 
   const usuarioJson = localStorage.getItem('agendapro_usuario')
@@ -11,7 +11,7 @@ function obterEmpresaIdUsuario() {
 
   try {
     const usuario = JSON.parse(usuarioJson)
-    return usuario?.empresaId || usuario?.empresa?.id || usuario?.id || null
+    return usuario?.empresaId || usuario?.empresa?.id || null
   } catch (error) {
     console.warn('[insights-api] erro ao ler usuario para empresaId', error)
     return null

@@ -5,9 +5,13 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000
 const CACHE_PREFIX = 'agendapro_scope_cache_'
 const POLLING_INTERVAL_MS = 30000
+
+function ttlDoEscopo(scope) {
+  if (scope === 'insights') return 60 * 1000
+  return 24 * 60 * 60 * 1000
+}
 
 function chaveCache(scope) {
   const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
@@ -37,8 +41,8 @@ function lerCacheSession(cacheKey) {
   }
 }
 
-function cacheValido(cache) {
-  return Boolean(cache && Date.now() - cache.time < CACHE_TTL_MS)
+function cacheValido(cache, scope) {
+  return Boolean(cache && Date.now() - cache.time < ttlDoEscopo(scope))
 }
 
 function cacheDoEscopo(scope) {
@@ -57,7 +61,7 @@ function salvarCache(scope, payload) {
 async function carregarComCache(scope, force = false) {
   const cacheKey = chaveCache(scope)
   const cached = cacheDoEscopo(scope)
-  if (!force && cacheValido(cached)) {
+  if (!force && cacheValido(cached, scope)) {
     cacheLocal.set(cacheKey, cached)
     return cached.data
   }
@@ -86,14 +90,14 @@ export function useLocalData(scope = 'full') {
   const [data, setStateData] = useState(() => {
     if (modoDemo) return getData()
     const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
-    if (cacheValido(cacheInicial)) {
+    if (cacheValido(cacheInicial, scope)) {
       cacheLocal.set(chaveCache(scope), cacheInicial)
       return cacheInicial.data
     }
     return emptyData(usuario)
   })
-  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial)))
-  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial))
+  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial, scope)))
+  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, scope))
   const [error, setError] = useState(null)
 
   async function reload(force = false) {
@@ -105,7 +109,7 @@ export function useLocalData(scope = 'full') {
 
     const cacheKey = chaveCache(scope)
     const cached = cacheDoEscopo(scope)
-    if (!force && cacheValido(cached)) {
+    if (!force && cacheValido(cached, scope)) {
       cacheLocal.set(cacheKey, cached)
       setStateData(cached.data)
       setError(null)
