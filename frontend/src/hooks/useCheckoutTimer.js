@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { getInicioCheckout, getInicioCheckoutMs, registrarInicioCheckout } from '../utils/checkoutUtils.js'
 
 const LIMITE_CHECKOUT_MS = 15 * 60 * 1000
 
@@ -9,10 +10,9 @@ function parseData(valor) {
 }
 
 function normalizarInicioCheckout(pagamento, agoraMs = Date.now()) {
-  const inicioLocal = pagamento?.checkoutSolicitadoEm
-  if (inicioLocal) {
-    const dataInicio = parseData(inicioLocal)
-    if (dataInicio) return Math.min(dataInicio.getTime(), agoraMs)
+  const inicioPersistido = getInicioCheckoutMs(pagamento)
+  if (inicioPersistido) {
+    return Math.min(inicioPersistido, agoraMs)
   }
 
   const dataCriacao = parseData(pagamento?.dataCriacao)
@@ -35,6 +35,9 @@ export function useCheckoutTimer(pagamento) {
       setExpirou(true)
       setTempoRestante(null)
       return
+    }
+    if (!getInicioCheckout(pagamento)) {
+      registrarInicioCheckout(pagamento, new Date(inicioCheckout).toISOString())
     }
 
     const expiracaoCalculada = inicioCheckout + LIMITE_CHECKOUT_MS
@@ -62,7 +65,14 @@ export function useCheckoutTimer(pagamento) {
     }, 1000)
 
     return () => clearInterval(intervalo)
-  }, [pagamento?.checkoutUrl, pagamento?.dataCriacao, pagamento?.checkoutSolicitadoEm])
+  }, [
+    pagamento?.checkoutUrl,
+    pagamento?.id,
+    pagamento?.providerPaymentId,
+    pagamento?.paymentReference,
+    pagamento?.dataCriacao,
+    pagamento?.checkoutSolicitadoEm,
+  ])
 
   const minutos = tempoRestante ? Math.max(0, Math.floor(tempoRestante / 1000 / 60)) : 0
   const segundos = tempoRestante ? Math.max(0, Math.floor((tempoRestante / 1000) % 60)) : 0

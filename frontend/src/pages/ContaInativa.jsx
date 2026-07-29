@@ -7,7 +7,7 @@ import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoGendaz from '../assets/logos/gendaz-logo-branco.png'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
-import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
+import { checkoutAtivo, checkoutExpirado, limparInicioCheckout, registrarInicioCheckout } from '../utils/checkoutUtils.js'
 
 const statusView = {
   PAYMENT_PENDING: { label: 'Pagamento pendente', tone: 'pending' },
@@ -195,6 +195,7 @@ export default function ContaInativa() {
         plano: planoSelecionado,
         ...form,
       }, { skipUsuarioHeader: true })
+      registrarInicioCheckout(novoPagamento)
       salvarPagamento(novoPagamento)
       setPagamentosPlano((atual) => {
         const semAtual = atual.filter((item) => String(item.id) !== String(novoPagamento?.id))
@@ -226,6 +227,7 @@ export default function ContaInativa() {
       setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
       setMensagem(resultado.mensagem || 'Status atualizado com sucesso.')
       if (resultado.statusVerificacao === 'APPROVED') {
+        limparInicioCheckout(pagamento)
         atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoAtual })
         setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
       }

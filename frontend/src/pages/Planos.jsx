@@ -6,7 +6,7 @@ import ScrollReveal from '../components/ScrollReveal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { checkoutExpirado } from '../utils/checkoutUtils.js'
+import { checkoutExpirado, getInicioCheckout, limparInicioCheckout, registrarInicioCheckout } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -82,8 +82,8 @@ export default function Planos() {
     }
   }), [data.planos])
 
-  const pagamentoCheckoutPlano = checkoutSolicitadoEm && pagamentoPlano
-    ? { ...pagamentoPlano, dataCriacao: checkoutSolicitadoEm }
+  const pagamentoCheckoutPlano = pagamentoPlano
+    ? { ...pagamentoPlano, checkoutSolicitadoEm: checkoutSolicitadoEm || getInicioCheckout(pagamentoPlano) }
     : null
   const timerPlano = useCheckoutTimer(checkoutSolicitado ? pagamentoCheckoutPlano : null)
   const checkoutValidoPlano = checkoutSolicitado && Boolean(pagamentoPlano?.checkoutUrl) && !timerPlano.expirou
@@ -105,18 +105,11 @@ export default function Planos() {
         const pendenteRecente = lista.find((item) => item?.status === 'PAYMENT_PENDING')
         const pagamentoAtual = pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null
         const checkoutAindaValido = Boolean(pagamentoAtual?.checkoutUrl) && !checkoutExpirado(pagamentoAtual)
+        const inicioCheckout = checkoutAindaValido ? registrarInicioCheckout(pagamentoAtual, getInicioCheckout(pagamentoAtual) || new Date().toISOString()) : null
 
         setPagamentoPlano(pagamentoAtual)
         setCheckoutSolicitado((atual) => checkoutAindaValido || atual)
-        setCheckoutSolicitadoEm((atual) => (
-          checkoutAindaValido
-            ? (pagamentoAtual?.checkoutSolicitadoEm
-              || pagamentoAtual?.dataCriacao
-              || pagamentoAtual?.createdAt
-              || atual
-              || new Date().toISOString())
-            : null
-        ))
+        setCheckoutSolicitadoEm(checkoutAindaValido ? inicioCheckout : null)
       })
       .catch(() => null)
   }, [usuario?.empresaId, usuario?.pagamentoPlano, usuario?.plano, atualizarPlanoAtual])
@@ -142,8 +135,9 @@ export default function Planos() {
         customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
+      const inicioCheckout = registrarInicioCheckout(pagamento)
       setPagamentoPlano(pagamento)
-      setCheckoutSolicitadoEm(new Date().toISOString())
+      setCheckoutSolicitadoEm(inicioCheckout)
       setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
@@ -174,8 +168,9 @@ export default function Planos() {
         customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
+      const inicioCheckout = registrarInicioCheckout(pagamento)
       setPagamentoPlano(pagamento)
-      setCheckoutSolicitadoEm(new Date().toISOString())
+      setCheckoutSolicitadoEm(inicioCheckout)
       setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
@@ -195,6 +190,7 @@ export default function Planos() {
       setPagamentoPlano(pagamento)
       atualizarUsuario({ pagamentoPlano: pagamento })
       if (resultado.statusVerificacao === 'APPROVED') {
+        limparInicioCheckout(pagamento)
         setCheckoutSolicitado(false)
         setCheckoutSolicitadoEm(null)
         await atualizarPlanoAtual()
