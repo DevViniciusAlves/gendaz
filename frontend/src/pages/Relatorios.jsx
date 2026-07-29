@@ -38,8 +38,18 @@ export default function Relatorios() {
   const totalPaginasCancelados = Math.max(1, Math.ceil(cancelados.length / itensPorPagina))
   const paginaConsultasAtual = Math.min(paginaConsultas, totalPaginasConsultas)
   const paginaCanceladosAtual = Math.min(paginaCancelados, totalPaginasCancelados)
-  const consultasPaginadas = useMemo(() => consultas.slice((paginaConsultasAtual - 1) * itensPorPagina, paginaConsultasAtual * itensPorPagina), [consultas, paginaConsultasAtual])
-  const canceladosPaginados = useMemo(() => cancelados.slice((paginaCanceladosAtual - 1) * itensPorPagina, paginaCanceladosAtual * itensPorPagina), [cancelados, paginaCanceladosAtual])
+  const consultasOrdenadas = useMemo(() => [...consultas].sort((a, b) => {
+    const chaveA = `${a.data || ''} ${a.horaInicio || ''}`
+    const chaveB = `${b.data || ''} ${b.horaInicio || ''}`
+    return chaveB.localeCompare(chaveA)
+  }), [consultas])
+  const canceladosOrdenados = useMemo(() => [...cancelados].sort((a, b) => {
+    const chaveA = `${a.data || ''} ${a.horaInicio || ''}`
+    const chaveB = `${b.data || ''} ${b.horaInicio || ''}`
+    return chaveB.localeCompare(chaveA)
+  }), [cancelados])
+  const consultasPaginadas = useMemo(() => consultasOrdenadas.slice((paginaConsultasAtual - 1) * itensPorPagina, paginaConsultasAtual * itensPorPagina), [consultasOrdenadas, paginaConsultasAtual])
+  const canceladosPaginados = useMemo(() => canceladosOrdenados.slice((paginaCanceladosAtual - 1) * itensPorPagina, paginaCanceladosAtual * itensPorPagina), [canceladosOrdenados, paginaCanceladosAtual])
 
   async function recarregar() {
     if (recarregando) return
