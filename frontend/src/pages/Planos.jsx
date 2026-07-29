@@ -6,6 +6,7 @@ import ScrollReveal from '../components/ScrollReveal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
+import { checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -102,9 +103,20 @@ export default function Planos() {
           return item?.status === 'PAYMENT_PENDING' && planoItem === planoAtual
         })
         const pendenteRecente = lista.find((item) => item?.status === 'PAYMENT_PENDING')
-        setPagamentoPlano(pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null)
-        setCheckoutSolicitado(false)
-        setCheckoutSolicitadoEm(null)
+        const pagamentoAtual = pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null
+        const checkoutAindaValido = Boolean(pagamentoAtual?.checkoutUrl) && !checkoutExpirado(pagamentoAtual)
+
+        setPagamentoPlano(pagamentoAtual)
+        setCheckoutSolicitado((atual) => checkoutAindaValido || atual)
+        setCheckoutSolicitadoEm((atual) => (
+          checkoutAindaValido
+            ? (pagamentoAtual?.checkoutSolicitadoEm
+              || pagamentoAtual?.dataCriacao
+              || pagamentoAtual?.createdAt
+              || atual
+              || new Date().toISOString())
+            : null
+        ))
       })
       .catch(() => null)
   }, [usuario?.empresaId, usuario?.pagamentoPlano, usuario?.plano, atualizarPlanoAtual])
