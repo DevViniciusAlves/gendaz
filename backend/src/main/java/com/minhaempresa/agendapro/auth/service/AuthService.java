@@ -290,11 +290,11 @@ public class AuthService {
     }
 
     @Transactional
-    public RefreshResponse refresh(Long usuarioId, String sessionToken) {
-        if (usuarioId == null) {
-            throw new BusinessException("Usuário não autenticado.");
+    public RefreshResponse refresh(String sessionToken) {
+        if (sessionToken == null || sessionToken.isBlank()) {
+            throw new BusinessException("Sessão não encontrada.");
         }
-        UsuarioEntity usuario = buscarUsuarioAutenticado(usuarioId);
+        UsuarioEntity usuario = buscarUsuarioAutenticado(null, sessionToken);
         String novaSessao = usuarioSessionService.renovarSessao(usuario);
         AssinaturaResponse assinatura = usuario.getEmpresa() == null
                 ? null
@@ -302,7 +302,8 @@ public class AuthService {
         PagamentoPlanoResponse pagamentoPlano = usuario.getEmpresa() == null
                 ? null
                 : pagamentoService.buscarUltimoPagamentoPlanoPendente(usuario.getEmpresa().getId()).orElse(null);
-        return new RefreshResponse("Sessao renovada com sucesso.", mapper.toResponse(usuario), assinatura, pagamentoPlano, "ACTIVE", novaSessao);
+        String statusConta = calcularStatusConta(usuario, assinatura);
+        return new RefreshResponse("Sessao renovada com sucesso.", mapper.toResponse(usuario), assinatura, pagamentoPlano, statusConta, novaSessao);
     }
 
     @Transactional(readOnly = true)
@@ -325,23 +326,42 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId, String sessionToken) {
+        if (sessionToken != null && !sessionToken.isBlank()) {
+            UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
+                    .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+            if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
+                throw new BusinessException("Sessão inválida para o usuário informado.");
+            }
+            if (usuario.getStatus() != StatusUsuario.ATIVO) {
+                throw new BusinessException("Usuário inativo.");
+            }
+            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                    && usuario.getEmpresa() != null
+                    && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+                throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
+            }
+            return usuario;
+        }
         if (usuarioId != null) {
             return buscarUsuarioAutenticado(usuarioId);
         }
-        if (sessionToken == null || sessionToken.isBlank()) {
-            throw new BusinessException("Usuário autenticado obrigatório.");
+        throw new BusinessException("Usuário autenticado obrigatório.");
+    }
+
+    private String calcularStatusConta(UsuarioEntity usuario, AssinaturaResponse assinatura) {
+        if (usuario.getEmpresa() == null) {
+            return "ACTIVE";
         }
-        UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
-                .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
-        if (usuario.getStatus() != StatusUsuario.ATIVO) {
-            throw new BusinessException("Usuário inativo.");
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
+            return "ACCOUNT_PENDING_PAYMENT";
         }
-        if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
-                && usuario.getEmpresa() != null
-                && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
-            throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
+        if (assinatura != null && assinatura.status() == StatusAssinatura.EXPIRADA) {
+            return "ACCOUNT_INACTIVE";
         }
-        return usuario;
+        if (usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+            return "ACCOUNT_INACTIVE";
+        }
+        return "ACTIVE";
     }
 
     private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario, String documento) {

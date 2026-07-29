@@ -1,13 +1,13 @@
-﻿import api, { modoDemo } from './axiosConfig.js'
+import api, { getSessionUser, modoDemo } from './axiosConfig.js'
 import { emptyData, getData } from '../services/localStore.js'
 
 function empresaIdAtual() {
-  const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = getSessionUser()
   return usuario?.empresaId || null
 }
 
 function usuarioAtual() {
-  return JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  return getSessionUser()
 }
 
 function usuarioHeaders() {
@@ -173,7 +173,7 @@ export const appApi = {
     }
 
     if (modoDemo) {
-      const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+      const usuario = getSessionUser()
       const local = criarBaseLocal(scope, usuario)
       return { ...local, __remote: true }
     }
@@ -438,8 +438,8 @@ export const appApi = {
     return response.data
   },
 
-  async refreshSession() {
-    const response = await api.post('/auth/refresh')
+  async refreshSession(options = {}) {
+    const response = await api.post('/auth/refresh', null, { skipUsuarioHeader: true, ...options })
     return response.data
   },
 
@@ -453,6 +453,7 @@ export const appApi = {
 
   logout() {
     return api.post('/auth/logout', null, {
+      skipUsuarioHeader: true,
       headers: usuarioHeaders(),
     }).then((response) => response.data)
   },

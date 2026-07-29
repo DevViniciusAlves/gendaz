@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
-import { modoDemo } from '../api/axiosConfig.js'
+import { getSessionUser, modoDemo } from '../api/axiosConfig.js'
 import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
@@ -10,7 +10,7 @@ const CACHE_PREFIX = 'agendapro_scope_cache_'
 const POLLING_INTERVAL_MS = 30000
 
 function chaveCache(scope) {
-  const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
   return `${scope}:${usuario?.empresaId || 'local'}:${usuario?.id || 'anon'}`
 }
 
@@ -85,7 +85,7 @@ export function useLocalData(scope = 'full') {
   const cacheInicial = !modoDemo ? cacheDoEscopo(scope) : null
   const [data, setStateData] = useState(() => {
     if (modoDemo) return getData()
-    const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+    const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
     if (cacheValido(cacheInicial)) {
       cacheLocal.set(chaveCache(scope), cacheInicial)
       return cacheInicial.data

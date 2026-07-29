@@ -1,6 +1,11 @@
-import api from './axiosConfig.js'
+import api, { getSessionUser } from './axiosConfig.js'
 
 function obterEmpresaIdUsuario() {
+  const usuarioCache = getSessionUser()
+  if (usuarioCache) {
+    return usuarioCache?.empresaId || usuarioCache?.empresa?.id || usuarioCache?.id || null
+  }
+
   const usuarioJson = localStorage.getItem('agendapro_usuario')
   if (!usuarioJson) return null
 

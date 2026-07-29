@@ -13,6 +13,15 @@ const api = axios.create({
 
 let isRefreshing = false
 let failedQueue = []
+let sessionUser = null
+
+export function setSessionUser(usuario) {
+  sessionUser = usuario || null
+}
+
+export function getSessionUser() {
+  return sessionUser
+}
 
 function processQueue(error, token = null) {
   failedQueue.forEach(({ resolve, reject }) => {
@@ -26,14 +35,14 @@ api.interceptors.request.use((config) => {
   if (config?.skipUsuarioHeader) {
     return config
   }
-  const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = sessionUser || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
   if (usuario?.id) config.headers['X-Usuario-Id'] = usuario.id
   if (usuario?.perfil) config.headers['X-Usuario-Perfil'] = usuario.perfil
   return config
 })
 
 async function tentarRefreshSessao(config) {
-  const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = sessionUser || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
   const url = String(config?.url || '')
   if (!usuario?.id || config?._retry || url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout')) {
     return false

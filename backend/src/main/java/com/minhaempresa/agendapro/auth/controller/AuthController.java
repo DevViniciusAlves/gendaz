@@ -106,12 +106,11 @@ public class AuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<RefreshResponse> refresh(
-            @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest http,
             HttpServletResponse response
     ) {
         String sessionToken = CookieHelper.lerCookie(http, "agendapro_session").orElse(null);
-        RefreshResponse refresh = authService.refresh(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken);
+        RefreshResponse refresh = authService.refresh(sessionToken);
         if (refresh.sessionToken() != null) {
             adicionarCookie(http, response, "agendapro_session", refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }

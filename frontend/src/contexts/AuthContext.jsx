@@ -1,7 +1,8 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
-import { clearLocalData, PLANOS, updateCurrentUser } from '../services/localStore.js'
+import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
+import { getSessionUser, setSessionUser } from '../api/axiosConfig.js'
 
 const AuthContext = createContext(null)
 const PENDING_PAYMENT_KEY = 'agendeasy_pagamento_pendente'
@@ -9,6 +10,7 @@ const IMPERSONATION_KEY = 'agendeasy_admin_impersonation'
 
 function limparSessaoUsuario() {
   localStorage.removeItem('agendapro_usuario')
+  setSessionUser(null)
 }
 
 function limparSessaoAdmin() {
@@ -17,6 +19,7 @@ function limparSessaoAdmin() {
 
 function salvarUsuarioSessao(usuario) {
   localStorage.setItem('agendapro_usuario', JSON.stringify(usuario))
+  setSessionUser(usuario)
   return usuario
 }
 
@@ -25,7 +28,7 @@ function normalizarUsuarioSessao(usuarioBase, fallbackAtual) {
   if (!usuario) return null
   return {
     ...usuario,
-    plano: usuario?.plano || fallbackAtual?.plano || 'BASICO',
+    plano: usuario?.plano || fallbackAtual?.plano || null,
     assinatura: usuario?.assinatura || fallbackAtual?.assinatura || null,
     statusConta: usuario?.statusConta || fallbackAtual?.statusConta || 'ACTIVE',
   }
@@ -57,19 +60,8 @@ function emitirToast(type, message) {
 }
 
 export function AuthProvider({ children }) {
-  const [authLoading, setAuthLoading] = useState(() => Boolean(localStorage.getItem('agendapro_usuario')))
-  const [usuario, setUsuario] = useState(() => {
-    const saved = localStorage.getItem('agendapro_usuario')
-    if (!saved) return null
-
-    const parsed = JSON.parse(saved)
-    if (parsed?.perfil === 'SUPER_ADMIN' || !PLANOS[parsed?.plano]) {
-      limparSessaoUsuario()
-      return null
-    }
-
-    return parsed
-  })
+  const [authLoading, setAuthLoading] = useState(true)
+  const [usuario, setUsuario] = useState(() => getSessionUser())
   const [impersonation, setImpersonation] = useState(() => JSON.parse(localStorage.getItem(IMPERSONATION_KEY) || 'null'))
   const [adminUsuario, setAdminUsuario] = useState(() => {
     return JSON.parse(localStorage.getItem('agendeasy_admin_user') || 'null')
@@ -88,7 +80,7 @@ export function AuthProvider({ children }) {
 
     const promessa = (async () => {
       try {
-        const refresh = await appApi.refreshSession()
+        const refresh = await appApi.refreshSession({ skipUsuarioHeader: true })
         const updated = normalizarUsuarioSessao(
           refresh?.usuario
             ? {
@@ -167,7 +159,7 @@ export function AuthProvider({ children }) {
         return
       }
       try {
-        const refresh = await appApi.refreshSession()
+        const refresh = await appApi.refreshSession({ skipUsuarioHeader: true })
         if (!mounted) return
         const updated = normalizarUsuarioSessao(
           refresh?.usuario
@@ -255,7 +247,7 @@ export function AuthProvider({ children }) {
       }
       const promessa = (async () => {
       try {
-        const refresh = await appApi.refreshSession()
+        const refresh = await appApi.refreshSession({ skipUsuarioHeader: true })
         const updated = normalizarUsuarioSessao(
           refresh?.usuario
             ? {
@@ -362,7 +354,7 @@ export function AuthProvider({ children }) {
     if (response.statusConta === 'ACCOUNT_INACTIVE') {
       const userInativo = {
         ...response.usuario,
-        plano: response.assinatura?.planoNome || response.usuario?.plano || 'BASICO',
+        plano: response.assinatura?.planoNome || response.usuario?.plano || null,
         assinatura: response.assinatura,
         statusConta: 'ACCOUNT_INACTIVE',
       }
@@ -373,7 +365,7 @@ export function AuthProvider({ children }) {
       return userInativo
     }
     const user = response.usuario
-    const plano = response.assinatura?.planoNome || user.plano || 'BASICO'
+    const plano = response.assinatura?.planoNome || user.plano || null
     const usuarioComPlano = { ...user, plano, assinatura: response.assinatura, statusConta: response.statusConta || 'ACTIVE' }
     clearLocalData()
     localStorage.removeItem(PENDING_PAYMENT_KEY)
@@ -402,7 +394,7 @@ export function AuthProvider({ children }) {
     const user = response.usuario
     const usuarioComPlano = {
       ...user,
-      plano: response.assinatura?.planoNome || 'BASICO',
+      plano: response.assinatura?.planoNome || user.plano || null,
       assinatura: response.assinatura,
       pagamentoPlano: response.pagamentoPlano,
       statusConta: response.statusConta || 'ACTIVE',
@@ -422,12 +414,16 @@ export function AuthProvider({ children }) {
       : assinatura?.status === 'ATIVA' || assinatura?.status === 'TESTE'
         ? 'ACTIVE'
         : usuario.statusConta
-    const updated = updateCurrentUser({
+    const updated = normalizarUsuarioSessao({
+      ...usuario,
       plano: assinatura?.planoNome || usuario.plano,
       assinatura,
       statusConta,
-    })
-    if (updated) setUsuario(updated)
+    }, usuario)
+    if (updated) {
+      salvarUsuarioSessao(updated)
+      setUsuario(updated)
+    }
     return assinatura
   }
 
@@ -459,7 +455,7 @@ export function AuthProvider({ children }) {
       nome: payload?.usuarioNome || adminAtual?.nome || 'Super Admin',
       email: payload?.usuarioEmail || adminAtual?.email,
       perfil: 'DONO',
-      plano: payload?.plano || payload?.planoNome || 'BASICO',
+      plano: payload?.plano || payload?.planoNome || null,
       empresaId: payload.empresaId,
       empresaNome: payload.empresa,
       impersonadoPorAdmin: true,
