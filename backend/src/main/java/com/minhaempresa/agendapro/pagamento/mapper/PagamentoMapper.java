@@ -8,9 +8,15 @@ import com.minhaempresa.agendapro.pagamento.entity.PagamentoPlanoEntity;
 public class PagamentoMapper {
     public PagamentoResponse toResponse(PagamentoEntity pagamento) {
         Long agendamentoId = pagamento.getAgendamento() == null ? null : pagamento.getAgendamento().getId();
+        String protocolo = pagamento.getAgendamento() == null ? null : pagamento.getAgendamento().getProtocolo();
+        String servicoNome = pagamento.getAgendamento() == null || pagamento.getAgendamento().getServico() == null
+                ? null
+                : pagamento.getAgendamento().getServico().getNome();
         return new PagamentoResponse(
                 pagamento.getId(),
                 agendamentoId,
+                protocolo,
+                servicoNome,
                 pagamento.getCliente().getId(),
                 pagamento.getCliente().getNome(),
                 pagamento.getEmpresa().getId(),

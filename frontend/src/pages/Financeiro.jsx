@@ -61,6 +61,7 @@ export default function Financeiro() {
   const [statusPagamento, setStatusPagamento] = useState('todos')
   const [periodoPagamento, setPeriodoPagamento] = useState('')
   const [metodoPagamento, setMetodoPagamento] = useState('todos')
+  const [protocoloPagamento, setProtocoloPagamento] = useState('')
   const [paginaPagamento, setPaginaPagamento] = useState(1)
   const [selecionandoPagamentos, setSelecionandoPagamentos] = useState(false)
   const [pagamentosSelecionados, setPagamentosSelecionados] = useState([])
@@ -90,10 +91,13 @@ export default function Financeiro() {
         const matchesMetodo = metodoPagamento === 'todos'
           || item.metodoPagamento === metodoPagamento
           || (metodoPagamento === 'PIX' && item.metodoPagamento === 'PIX_AUTO')
-        return matchesStatus && matchesPeriodo && matchesMetodo
+        const textoProtocolo = String(item.protocolo || item.agendamento?.protocolo || '').toLowerCase()
+        const matchesProtocolo = !protocoloPagamento.trim()
+          || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
+        return matchesStatus && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
       .sort(ordenarMaisRecente)
-  }, [data.pagamentos, metodoPagamento, periodoPagamento, statusPagamento])
+  }, [data.pagamentos, metodoPagamento, periodoPagamento, protocoloPagamento, statusPagamento])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)
@@ -262,6 +266,14 @@ export default function Financeiro() {
             <option value="CANCELADO">Cancelado</option>
           </select>
           <input
+            type="text"
+            value={protocoloPagamento}
+            onChange={(e) => setProtocoloPagamento(e.target.value)}
+            placeholder="Protocolo"
+            aria-label="Filtrar por protocolo"
+            maxLength={20}
+          />
+          <input
             type="month"
             value={periodoPagamento}
             onChange={(e) => setPeriodoPagamento(e.target.value)}
@@ -330,8 +342,9 @@ export default function Financeiro() {
                 </div>
               ),
             },
+            { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
+            { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
             { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
-            { key: 'metodoPagamento', label: 'METODO', render: (row) => metodoLegivel(row.metodoPagamento || row.metodo) },
             { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
             {
               key: 'acao',

@@ -84,6 +84,8 @@ public final class PagamentoDtos {
     public record PagamentoResponse(
             Long id,
             Long agendamentoId,
+            String protocolo,
+            String servicoNome,
             Long clienteId,
             String clienteNome,
             Long empresaId,
