@@ -8,7 +8,7 @@ import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
+import { checkoutAtivo } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -84,8 +84,8 @@ export default function Planos() {
     }
   }), [data.planos])
   const checkoutAtivoPlano = checkoutAtivo(pagamentoPlano)
-  const checkoutExpiradoPlano = checkoutExpirado(pagamentoPlano)
   const timerPlano = useCheckoutTimer(pagamentoPlano)
+  const checkoutValidoPlano = checkoutAtivoPlano && !timerPlano.expirou
   const statusPagamentoPlano = pagamentoPlano?.status === 'PAYMENT_PENDING'
     ? 'Pagamento não realizado'
     : statusPagamentoTexto[pagamentoPlano?.status] || pagamentoPlano?.status
@@ -253,15 +253,14 @@ export default function Planos() {
                   {pagamentoPlano.status !== 'PAYMENT_PENDING' && (
                     <StatusBadge status={pagamentoPlano.status} />
                   )}
-                  {['PIX_AUTO', 'PIX'].includes(pagamentoPlano.metodoPagamento) && (
-                    <div className="plan-pix-box">
+              {['PIX_AUTO', 'PIX'].includes(pagamentoPlano.metodoPagamento) && (
+                <div className="plan-pix-box">
                   {pagamentoPlano.pixQrCodeBase64 ? (
                     <img className="pix-qr-image large" src={`data:image/png;base64,${pagamentoPlano.pixQrCodeBase64}`} alt="QR Code PIX" />
                   ) : qrDataUrl ? (
                     <img className="pix-qr-image large" src={qrDataUrl} alt="QR Code PIX" />
                   ) : null}
                   <small>{pagamentoPlano.pixCopiaECola || 'PIX ainda nao retornou o codigo copia e cola. Tente gerar novamente.'}</small>
-                  {pagamentoPlano.dataExpiracao && <small>Vencimento: {new Date(pagamentoPlano.dataExpiracao).toLocaleString('pt-BR')}</small>}
                   {pagamentoPlano.pixCopiaECola && (
                     <button type="button" className="btn btn-secondary" onClick={copiarPix}>
                       <Copy size={16} /> {copiado ? 'Codigo copiado' : 'Copiar codigo PIX'}
@@ -273,7 +272,7 @@ export default function Planos() {
               {pagamentoPlano.metodoPagamento === 'CREDIT_CARD' && (
                 <small>Finalize no checkout seguro da Cakto. Apos a aprovacao, sua conta Pro pode levar ate 30 minutos para ser liberada.</small>
               )}
-              {checkoutAtivoPlano && (
+              {checkoutValidoPlano && (
                 <div className="checkout-container">
                   <a href={pagamentoPlano.checkoutUrl} target="_blank" rel="noreferrer" className="btn btn-primary">
                     <ExternalLink size={16} /> Abrir checkout seguro
@@ -282,9 +281,6 @@ export default function Planos() {
                     <span className="checkout-timer">Expira em: {timerPlano.formatado}</span>
                   )}
                 </div>
-              )}
-              {pagamentoPlano?.checkoutUrl && checkoutExpiradoPlano && (
-                <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>
               )}
               <button type="button" className="btn btn-secondary" onClick={atualizarStatusPagamento} disabled={carregando}>
                 <RefreshCw size={16} /> Ja paguei, verificar
