@@ -41,7 +41,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 370px;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
   width: 100%;
 }
 
@@ -50,6 +50,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-height: 0;
 }
 
 .insights-summary-panel,
@@ -141,6 +142,23 @@
   color: var(--muted);
   font-size: 10px;
   line-height: 1.35;
+}
+
+.insights-meta-button {
+  margin-top: 2px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  width: fit-content;
+}
+
+.insights-meta-button:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .insights-change-risk-row {
@@ -530,8 +548,8 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  height: auto;
-  min-height: auto;
+  height: 100%;
+  min-height: 100%;
   max-height: none;
   overflow: visible;
   padding: 14px;
@@ -544,12 +562,14 @@
   flex-direction: column;
   gap: 16px;
   min-height: 0;
+  flex: 1 1 auto;
 }
 
 .insights-sidebar-stack {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-top: auto;
 }
 
 .insights-sidebar-chat .insights-chat {
@@ -750,6 +770,54 @@
   color: var(--muted);
 }
 
+.insights-meta-modal {
+  width: min(560px, 96vw);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.insights-meta-form {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.insights-meta-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insights-meta-form span {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.insights-meta-form input {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  padding: 10px 12px;
+  outline: none;
+  font-size: 13px;
+}
+
+.insights-meta-form input:focus {
+  border-color: rgba(66, 245, 105, 0.35);
+  box-shadow: 0 0 0 2px rgba(66, 245, 105, 0.08);
+}
+
+.insights-meta-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
 .insights-panel {
   padding: 16px;
 }
@@ -797,6 +865,7 @@
 @media (max-width: 1180px) {
   .insights-layout {
     grid-template-columns: 1fr;
+    align-items: start;
   }
 
   .insights-summary-panel,
@@ -807,6 +876,8 @@
 
   .insights-sidebar-card {
     position: static;
+    height: auto;
+    min-height: auto;
   }
 }
 

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
+  Clock,
   HelpCircle,
   Sparkles,
   Target,
@@ -38,7 +39,7 @@ function iconPorTipo(tipo) {
   if (valor.includes('cliente')) return Users
   if (valor.includes('finance')) return TrendingUp
   if (valor.includes('agenda') || valor.includes('ocios')) return Calendar
-  if (valor.includes('acao') || valor.includes('ação')) return Wrench
+  if (valor.includes('acao') || valor.includes('açao') || valor.includes('ação')) return Wrench
   return AlertCircle
 }
 
@@ -56,6 +57,15 @@ function resumoTexto(dashboard) {
 function getMetaMensal(dashboard) {
   const valor = dashboard?.metaMes || dashboard?.metaMensal || dashboard?.financeiro?.metaMes
   return valor ? formatCurrency(valor) : 'Sem meta'
+}
+
+function getReceitaMensal(dashboard) {
+  const valor = dashboard?.financeiro?.totalRecebidoMes || dashboard?.receitaMensal || dashboard?.financeiro?.receitaMes
+  return valor ? formatCurrency(valor) : 'Sem receita'
+}
+
+function getNomeMesAtual() {
+  return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())
 }
 
 function getTendencia(dashboard) {
@@ -83,20 +93,30 @@ export default function Insights() {
   const [chatAberto, setChatAberto] = useState(true)
   const [analiseAberta, setAnaliseAberta] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
+  const [metaAberta, setMetaAberta] = useState(false)
+  const [metaSalva, setMetaSalva] = useState(() => {
+    try {
+      const raw = localStorage.getItem('agendapro_insights_meta')
+      return raw ? JSON.parse(raw) : null
+    } catch {
+      return null
+    }
+  })
+  const [novaMeta, setNovaMeta] = useState({ titulo: '', quantidade: '', tempo: '' })
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas)
   const oportunidades = safeArray(dashboard?.oportunidades)
   const recomendacoes = safeArray(dashboard?.acoes)
   const principais = safeArray(dashboard?.principais).slice(0, 3)
-  const nomeEmpresa = dashboard?.empresaNome || 'Sua empresa'
   const impactoTotal = dashboard?.impactoTotal || 'Sem impacto calculado'
   const dataAnalise = dashboard?.geradoEm
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
   const tendencia = getTendencia(dashboard)
   const variacaoTendencia = getVariacaoTendencia(dashboard)
-  const metaMensal = getMetaMensal(dashboard)
+  const receitaMensal = getReceitaMensal(dashboard)
+  const mesAtual = getNomeMesAtual()
   const riscoAtual = getRisco(score)
   const riscoAtivos = score >= 70 ? 8 : score >= 45 ? 5 : 2
   const riscoDescricao = score >= 70
@@ -129,6 +149,29 @@ export default function Insights() {
     } finally {
       setSincronizando(false)
     }
+  }
+
+  function abrirMeta() {
+    setNovaMeta({
+      titulo: metaSalva?.titulo || '',
+      quantidade: metaSalva?.quantidade || '',
+      tempo: metaSalva?.tempo || '',
+    })
+    setMetaAberta(true)
+  }
+
+  function salvarMeta() {
+    const meta = {
+      titulo: String(novaMeta.titulo || '').trim(),
+      quantidade: String(novaMeta.quantidade || '').trim(),
+      tempo: String(novaMeta.tempo || '').trim(),
+    }
+
+    if (!meta.titulo || !meta.quantidade || !meta.tempo) return
+
+    setMetaSalva(meta)
+    localStorage.setItem('agendapro_insights_meta', JSON.stringify(meta))
+    setMetaAberta(false)
   }
 
   return (
@@ -177,10 +220,10 @@ export default function Insights() {
                   <small>em relação aos últimos 30 dias</small>
                 </article>
                 <article className="insights-summary-metric">
-                  <span className="insights-label">Meta do mês</span>
-                  <div className="insights-summary-metric__value">{metaMensal}</div>
-                  <strong>{dashboard?.metaMes ? 'Meta em andamento' : 'Sem meta'}</strong>
-                  <small>{impactoTotal}</small>
+                  <span className="insights-label">Receita mensal</span>
+                  <div className="insights-summary-metric__value">{receitaMensal}</div>
+                  <strong>{`Mês atual: ${mesAtual}`}</strong>
+                  <small>{dashboard?.financeiro?.totalRecebidoMes ? 'Receita consolidada do mês' : 'Sem receita registrada'}</small>
                 </article>
               </div>
             </section>
@@ -340,7 +383,6 @@ export default function Insights() {
                 </div>
               </section>
             </div>
-
           </div>
 
           <aside className="insights-sidebar">
@@ -423,23 +465,61 @@ export default function Insights() {
                 <p>{historico.length > 0 ? 'Recomendações registradas' : 'Sem histórico ainda.'}</p>
               </div>
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="insights-detail-grid insights-detail-grid--secondary">
+      {metaAberta && (
+        <div className="insights-modal-backdrop" role="presentation" onClick={() => setMetaAberta(false)}>
+          <div className="panel insights-meta-modal" role="dialog" aria-modal="true" aria-label="Adicionar meta" onClick={(event) => event.stopPropagation()}>
+            <div className="insights-modal__head">
               <div>
-                <span>Alertas</span>
-                <strong>{alertas.length}</strong>
-                <p>{alertas[0]?.titulo || 'Nenhum alerta principal encontrado.'}</p>
+                <div className="section-kicker">Meta do mês</div>
+                <h2>Adicionar meta</h2>
+                <p>Defina título, quantidade e tempo para acompanhar melhor a meta.</p>
               </div>
-              <div>
-                <span>Oportunidades</span>
-                <strong>{oportunidades.length}</strong>
-                <p>{oportunidades[0]?.titulo || 'Nenhuma oportunidade principal encontrada.'}</p>
-              </div>
-              <div>
-                <span>Ações recomendadas</span>
-                <strong>{recomendacoes.length}</strong>
-                <p>{recomendacoes[0]?.descricao || 'Nenhuma ação registrada.'}</p>
-              </div>
+              <Button variant="secondary" onClick={() => setMetaAberta(false)}>
+                Fechar
+              </Button>
+            </div>
+
+            <div className="insights-meta-form">
+              <label>
+                <span>Título da meta</span>
+                <input
+                  type="text"
+                  value={novaMeta.titulo}
+                  onChange={(event) => setNovaMeta((current) => ({ ...current, titulo: event.target.value }))}
+                  placeholder="Ex: Faturar R$ 20.000"
+                />
+              </label>
+              <label>
+                <span>Quantidade</span>
+                <input
+                  type="text"
+                  value={novaMeta.quantidade}
+                  onChange={(event) => setNovaMeta((current) => ({ ...current, quantidade: event.target.value }))}
+                  placeholder="Ex: 20 agendamentos"
+                />
+              </label>
+              <label>
+                <span>Tempo</span>
+                <input
+                  type="text"
+                  value={novaMeta.tempo}
+                  onChange={(event) => setNovaMeta((current) => ({ ...current, tempo: event.target.value }))}
+                  placeholder="Ex: 30 dias"
+                />
+              </label>
+            </div>
+
+            <div className="insights-meta-actions">
+              <Button variant="secondary" onClick={() => setMetaAberta(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={salvarMeta} disabled={!String(novaMeta.titulo).trim() || !String(novaMeta.quantidade).trim() || !String(novaMeta.tempo).trim()}>
+                Salvar meta
+              </Button>
             </div>
           </div>
         </div>
