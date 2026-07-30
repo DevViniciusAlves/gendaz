@@ -139,16 +139,25 @@ export function useLocalData(scope = 'full') {
 
   useEffect(() => {
     reload(true)
+
     function reloadFromEvent() {
       reload(true)
     }
-    const timer = setInterval(() => {
-      reload(true)
-    }, POLLING_INTERVAL_MS)
+
     window.addEventListener('agendapro:data-changed', reloadFromEvent)
+    window.addEventListener('agendapro:session-changed', reloadFromEvent)
+
+    let timer = null
+    if (scope !== 'insights') {
+      timer = setInterval(() => {
+        reload(true)
+      }, POLLING_INTERVAL_MS)
+    }
+
     return () => {
-      clearInterval(timer)
+      if (timer) clearInterval(timer)
       window.removeEventListener('agendapro:data-changed', reloadFromEvent)
+      window.removeEventListener('agendapro:session-changed', reloadFromEvent)
     }
   }, [scope])
 

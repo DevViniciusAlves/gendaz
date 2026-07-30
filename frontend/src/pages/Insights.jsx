@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
@@ -31,7 +31,7 @@ function formatCurrency(valor) {
 function badgeImpacto(item) {
   const texto = String(item?.urgencia || item?.impacto || '').toLowerCase()
   if (texto.includes('alta') || texto.includes('urg')) return 'Alto impacto'
-  if (texto.includes('mÃ©dio') || texto.includes('medio') || texto.includes('m')) return 'MÃ©dio impacto'
+  if (texto.includes('médio') || texto.includes('medio')) return 'Médio impacto'
   return 'Baixo impacto'
 }
 
@@ -54,15 +54,16 @@ function resumoTexto(dashboard) {
   const oportunidades = safeArray(dashboard?.oportunidades).length
   const acoes = safeArray(dashboard?.acoes).length
 
-  if (!dashboard) return 'Carregando consultoria inteligente...'
+  if (!dashboard) return 'Carregando análise real da empresa...'
 
-  return `Analisei sua empresa nos Ãºltimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendaÃ§Ãµes prioritÃ¡rias.`
+  return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
 }
 
 export default function Insights() {
   const { dashboard, historico, loading, error, recarregar, analisar } = useInsights()
   const [chatAberto, setChatAberto] = useState(true)
   const [analiseAberta, setAnaliseAberta] = useState(false)
+  const [sincronizando, setSincronizando] = useState(false)
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas)
@@ -70,25 +71,40 @@ export default function Insights() {
   const recomendacoes = safeArray(dashboard?.acoes)
   const nomeEmpresa = dashboard?.empresaNome || 'Sua empresa'
   const impactoTotal = dashboard?.impactoTotal || 'Sem impacto calculado'
-  const vazioRealOportunidades = !loading && !error && oportunidades.length === 0
-  const vazioRealAcoes = !loading && !error && recomendacoes.length === 0
   const dataAnalise = dashboard?.geradoEm
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
-
   const principais = safeArray(dashboard?.principais)
 
+  async function handleSincronizarDados() {
+    if (sincronizando) return
+
+    try {
+      setSincronizando(true)
+      await recarregar(30)
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: {
+          type: 'success',
+          message: 'Dados sincronizados com sucesso.',
+        },
+      }))
+    } catch (err) {
+      console.error('[insights] erro ao sincronizar dados', err)
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: {
+          type: 'error',
+          message: err?.response?.data?.mensagem || err?.message || 'Não foi possível sincronizar os dados.',
+        },
+      }))
+    } finally {
+      setSincronizando(false)
+    }
+  }
 
   const simulacoes = [
-    { pergunta: `E se eu ampliar horÃ¡rios na ${nomeEmpresa}?`, impacto: 'Impacto estimado com base na ocupaÃ§Ã£o atual' },
-    { pergunta: 'E se eu subir 10% o preÃ§o?', impacto: 'SimulaÃ§Ã£o sobre o faturamento atual' },
-    { pergunta: 'E se eu atuar nos clientes inativos?', impacto: 'SimulaÃ§Ã£o sobre recorrÃªncia e reativaÃ§Ã£o' },
-  ]
-
-  const perguntasDoDia = [
-    'VocÃª costuma recusar clientes por falta de horÃ¡rio?',
-    'Seu objetivo Ã© vender mais ou fidelizar?',
-    'Qual serviÃ§o vocÃª quer divulgar esta semana?',
+    { pergunta: `E se eu ampliar horários na ${nomeEmpresa}?`, impacto: 'Impacto estimado com base na ocupação atual' },
+    { pergunta: 'E se eu subir 10% o preço?', impacto: 'Simulação sobre o faturamento atual' },
+    { pergunta: 'E se eu atuar nos clientes inativos?', impacto: 'Simulação sobre recorrência e reativação' },
   ]
 
   return (
@@ -97,14 +113,14 @@ export default function Insights() {
         <div>
           <span className="section-kicker">Consultoria IA</span>
           <h1>Insights</h1>
-          <p>A IA analisa os dados da sua empresa e recomenda aÃ§Ãµes para crescer.</p>
+          <p>A IA analisa os dados da sua empresa e recomenda ações para crescer.</p>
         </div>
-        <Button variant="secondary" icon={Sparkles} onClick={() => recarregar(30)}>
-          Recarregar
+        <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
+          {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
         </Button>
       </div>
 
-      {loading && <div className="panel insights-panel">Carregando anÃ¡lise real da empresa...</div>}
+      {loading && <div className="panel insights-panel">Carregando análise real da empresa...</div>}
       {error && <div className="panel insights-panel insights-error">{String(error?.response?.data?.mensagem || error?.message || error)}</div>}
 
       {!loading && !error && (
@@ -116,19 +132,19 @@ export default function Insights() {
               </div>
               <div className="insights-summary-panel__content">
                 <span className="insights-label">Resumo inteligente</span>
-                <h2>{dashboard?.empresaNome ? `OlÃ¡, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
+                <h2>{dashboard?.empresaNome ? `Olá, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
                 <p>{resumoTexto(dashboard)}</p>
                 <small className="insights-summary-panel__meta">
-                  {dataAnalise ? `AnÃ¡lise de ${dataAnalise}` : 'AnÃ¡lise sincronizada com a empresa vinculada'}
+                  {dataAnalise ? `Última sincronização: ${dataAnalise}` : 'Aguardando sincronização da empresa vinculada'}
                 </small>
                 <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
-                  Ver anÃ¡lise completa
+                  Ver análise completa
                 </Button>
               </div>
               <div className="insights-health-card">
-                <span className="insights-label">SaÃºde da empresa</span>
+                <span className="insights-label">Saúde da empresa</span>
                 <div className="insights-health-score">{score}/100</div>
-                <strong>{score >= 70 ? 'Empresa saudÃ¡vel' : score >= 45 ? 'AtenÃ§Ã£o necessÃ¡ria' : 'Empresa em risco'}</strong>
+                <strong>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</strong>
                 <small>{impactoTotal}</small>
               </div>
             </section>
@@ -165,24 +181,24 @@ export default function Insights() {
                       </div>
                       <div className="insights-list-item__content">
                         <strong>{item.titulo || item.descricao || 'Oportunidade'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descriÃ§Ã£o'}</p>
+                        <p>{item.descricao || item.impacto || 'Sem descrição'}</p>
                       </div>
                       <div className="insights-list-item__meta">
                         <small>Impacto estimado</small>
-                        <strong>{formatCurrency(item.impacto)}</strong>
+                        <strong>{formatCurrency(item.impacto || item.impactoEstimado)}</strong>
                       </div>
                     </article>
                   ))}
-                  {vazioRealOportunidades && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
+                  {oportunidades.length === 0 && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
                 </div>
                 <div className="insights-link-row">
                   <span>Ver todos oportunidades</span>
-                  <span>â†’</span>
+                  <span>→</span>
                 </div>
               </section>
 
               <section className="panel insights-section">
-                <div className="section-kicker">AÃ§Ãµes recomendadas pela IA</div>
+                <div className="section-kicker">Ações recomendadas pela IA</div>
                 <div className="insights-action-list">
                   {recomendacoes.slice(0, 4).map((acao, index) => (
                     <div key={`${acao.descricao || index}`} className="insights-action-row">
@@ -192,22 +208,22 @@ export default function Insights() {
                       </label>
                       <div className="insights-action-row__content">
                         <strong>{acao.descricao}</strong>
-                        <p>{acao.impactoEstimado || acao.urgencia || 'AÃ§Ã£o sugerida'}</p>
+                        <p>{acao.impactoEstimado || acao.urgencia || 'Ação sugerida'}</p>
                       </div>
                       <Button variant="secondary" className="insights-execute">Executar</Button>
                     </div>
                   ))}
-                  {vazioRealAcoes && <p className="insights-empty">Nenhuma aÃ§Ã£o prioritÃ¡ria no momento.</p>}
+                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
                 </div>
                 <div className="insights-link-row">
                   <span>Ver plano completo</span>
-                  <span>â†’</span>
+                  <span>→</span>
                 </div>
               </section>
             </div>
 
             <section className="panel insights-section">
-              <div className="section-kicker">HistÃ³rico de recomendaÃ§Ãµes</div>
+              <div className="section-kicker">Histórico de recomendações</div>
               <div className="insights-history">
                 {(historico || []).slice(0, 4).map((item, index) => (
                   <article key={item.id || `${index}`} className="insights-history-item">
@@ -215,11 +231,11 @@ export default function Insights() {
                       <CheckCircle size={18} />
                       <span>{item.dataCriacao ? new Date(item.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase() : 'RECENTE'}</span>
                     </div>
-                    <strong>{item.pergunta || item.tipo || 'RecomendaÃ§Ã£o'}</strong>
-                    <p>{item.resposta || item.tipo || 'ConcluÃ­do'}</p>
+                    <strong>{item.pergunta || item.tipo || 'Recomendação'}</strong>
+                    <p>{item.resposta || item.tipo || 'Concluído'}</p>
                   </article>
                 ))}
-                {historico.length === 0 && <p className="insights-empty">Sem histÃ³rico ainda.</p>}
+                {historico.length === 0 && <p className="insights-empty">Sem histórico ainda.</p>}
               </div>
             </section>
           </div>
@@ -243,12 +259,12 @@ export default function Insights() {
 
                   <div className="insights-sidebar-stack">
                     <div className="insights-sidebar-block">
-                      <span className="insights-label">SugestÃµes rÃ¡pidas</span>
+                      <span className="insights-label">Sugestões rápidas</span>
                       <div className="insights-suggestions">
                         {[
                           'Como aumentar meu faturamento?',
                           'Quais clientes devo recuperar?',
-                          'Qual serviÃ§o devo divulgar?',
+                          'Qual serviço devo divulgar?',
                           'Como reduzir cancelamentos?',
                           'O que fazer esta semana?',
                         ].map((texto) => (
@@ -268,7 +284,7 @@ export default function Insights() {
                     </div>
 
                     <div className="insights-sidebar-block">
-                      <span className="insights-label">SimulaÃ§Ãµes</span>
+                      <span className="insights-label">Simulações</span>
                       <div className="insights-simulations">
                         {simulacoes.map((item) => (
                           <article key={item.pergunta} className="insights-simulation">
@@ -291,10 +307,10 @@ export default function Insights() {
 
       {analiseAberta && (
         <div className="insights-modal-backdrop" role="presentation" onClick={() => setAnaliseAberta(false)}>
-          <div className="panel insights-modal" role="dialog" aria-modal="true" aria-label="AnÃ¡lise completa" onClick={(event) => event.stopPropagation()}>
+          <div className="panel insights-modal" role="dialog" aria-modal="true" aria-label="Análise completa" onClick={(event) => event.stopPropagation()}>
             <div className="insights-modal__head">
               <div>
-                <div className="section-kicker">AnÃ¡lise completa</div>
+                <div className="section-kicker">Análise completa</div>
                 <h2>{dashboard?.empresaNome || 'Empresa vinculada'}</h2>
                 <p>{resumoTexto(dashboard)}</p>
               </div>
@@ -305,9 +321,9 @@ export default function Insights() {
 
             <div className="insights-detail-grid">
               <div>
-                <span>SaÃºde da empresa</span>
+                <span>Saúde da empresa</span>
                 <strong>{score}/100</strong>
-                <p>{score >= 70 ? 'Empresa saudÃ¡vel' : score >= 45 ? 'AtenÃ§Ã£o necessÃ¡ria' : 'Empresa em risco'}</p>
+                <p>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</p>
               </div>
               <div>
                 <span>Impacto total</span>
@@ -315,9 +331,9 @@ export default function Insights() {
                 <p>Baseado nos dados reais sincronizados.</p>
               </div>
               <div>
-                <span>HistÃ³rico</span>
+                <span>Histórico</span>
                 <strong>{historico.length}</strong>
-                <p>{historico.length > 0 ? 'RecomendaÃ§Ãµes registradas' : 'Sem histÃ³rico ainda.'}</p>
+                <p>{historico.length > 0 ? 'Recomendações registradas' : 'Sem histórico ainda.'}</p>
               </div>
             </div>
 
@@ -333,9 +349,9 @@ export default function Insights() {
                 <p>{oportunidades[0]?.titulo || 'Nenhuma oportunidade principal encontrada.'}</p>
               </div>
               <div>
-                <span>AÃ§Ãµes recomendadas</span>
+                <span>Ações recomendadas</span>
                 <strong>{recomendacoes.length}</strong>
-                <p>{recomendacoes[0]?.descricao || 'Nenhuma aÃ§Ã£o registrada.'}</p>
+                <p>{recomendacoes[0]?.descricao || 'Nenhuma ação registrada.'}</p>
               </div>
             </div>
 
@@ -350,7 +366,7 @@ export default function Insights() {
                       </div>
                       <div className="insights-list-item__content">
                         <strong>{item.titulo || 'Alerta'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descriÃ§Ã£o detalhada.'}</p>
+                        <p>{item.descricao || item.impacto || 'Sem descrição detalhada.'}</p>
                       </div>
                       <div className="insights-list-item__meta">
                         <small>{item.urgencia || 'Impacto'}</small>
@@ -372,7 +388,7 @@ export default function Insights() {
                       </div>
                       <div className="insights-list-item__content">
                         <strong>{item.titulo || 'Oportunidade'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descriÃ§Ã£o detalhada.'}</p>
+                        <p>{item.descricao || item.impacto || 'Sem descrição detalhada.'}</p>
                       </div>
                       <div className="insights-list-item__meta">
                         <small>Impacto</small>
@@ -380,12 +396,12 @@ export default function Insights() {
                       </div>
                     </article>
                   ))}
-                  {vazioRealOportunidades && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
+                  {oportunidades.length === 0 && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
                 </div>
               </section>
 
               <section className="panel insights-section">
-                <div className="section-kicker">AÃ§Ãµes recomendadas</div>
+                <div className="section-kicker">Ações recomendadas</div>
                 <div className="insights-action-list">
                   {recomendacoes.slice(0, 4).map((item, index) => (
                     <div key={`${item.descricao || index}`} className="insights-action-row">
@@ -393,18 +409,18 @@ export default function Insights() {
                         <Wrench size={18} />
                       </div>
                       <div className="insights-action-row__content">
-                        <strong>{item.descricao || 'AÃ§Ã£o recomendada'}</strong>
-                        <p>{item.impactoEstimado || item.urgencia || 'AÃ§Ã£o sugerida com base nos dados.'}</p>
+                        <strong>{item.descricao || 'Ação recomendada'}</strong>
+                        <p>{item.impactoEstimado || item.urgencia || 'Ação sugerida com base nos dados.'}</p>
                       </div>
                     </div>
                   ))}
-                  {vazioRealAcoes && <p className="insights-empty">Nenhuma aÃ§Ã£o prioritÃ¡ria no momento.</p>}
+                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
                 </div>
               </section>
             </div>
 
             <section className="panel insights-section" style={{ marginTop: 12 }}>
-              <div className="section-kicker">HistÃ³rico</div>
+              <div className="section-kicker">Histórico</div>
               <div className="insights-history">
                 {historico.slice(0, 4).map((item, index) => (
                   <article key={item.id || `${index}`} className="insights-history-item">
@@ -412,11 +428,11 @@ export default function Insights() {
                       <CheckCircle size={18} />
                       <span>{item.dataCriacao ? new Date(item.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase() : 'RECENTE'}</span>
                     </div>
-                    <strong>{item.pergunta || item.tipo || 'RecomendaÃ§Ã£o'}</strong>
-                    <p>{item.resposta || item.tipo || 'ConcluÃ­do'}</p>
+                    <strong>{item.pergunta || item.tipo || 'Recomendação'}</strong>
+                    <p>{item.resposta || item.tipo || 'Concluído'}</p>
                   </article>
                 ))}
-                {historico.length === 0 && <p className="insights-empty">Sem histÃ³rico ainda.</p>}
+                {historico.length === 0 && <p className="insights-empty">Sem histórico ainda.</p>}
               </div>
             </section>
           </div>
@@ -425,4 +441,3 @@ export default function Insights() {
     </section>
   )
 }
-

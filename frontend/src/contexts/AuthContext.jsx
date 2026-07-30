@@ -16,8 +16,14 @@ function limparSessaoAdmin() {
   localStorage.removeItem('agendeasy_admin_user')
 }
 
+function emitirMudancaSessao() {
+  if (typeof window === 'undefined') return
+  window.dispatchEvent(new Event('agendapro:session-changed'))
+}
+
 function salvarUsuarioSessao(usuario) {
   setSessionUser(usuario)
+  emitirMudancaSessao()
   return usuario
 }
 
@@ -517,4 +523,6 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+
+
 
