@@ -1,16 +1,9 @@
 import api from './axiosConfig.js'
+import { getSessionUser } from './axiosConfig.js'
 
 function obterEmpresaIdUsuario() {
-  const usuarioJson = localStorage.getItem('agendapro_usuario')
-  if (!usuarioJson) return null
-
-  try {
-    const usuario = JSON.parse(usuarioJson)
-    return usuario.empresa?.id || usuario.empresaId || usuario.id || null
-  } catch (e) {
-    console.warn('Erro ao parsear usuario:', e)
-    return null
-  }
+  const usuario = getSessionUser()
+  return usuario?.empresa?.id || usuario?.empresaId || usuario?.id || null
 }
 
 export async function buscarClientesCrm(filtros = {}, options = {}) {
@@ -32,7 +25,7 @@ export async function buscarClientesCrm(filtros = {}, options = {}) {
 
 export async function enviarMensagemCrm(clienteId, payload) {
   const empresaId = obterEmpresaIdUsuario()
-  const usuario = JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = getSessionUser()
   const { data } = await api.post(`/crm/clientes/${clienteId}/enviar-mensagem`, payload, {
     params: {
       empresaId: empresaId || '',

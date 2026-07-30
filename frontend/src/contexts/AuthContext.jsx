@@ -9,7 +9,6 @@ const PENDING_PAYMENT_KEY = 'agendeasy_pagamento_pendente'
 const IMPERSONATION_KEY = 'agendeasy_admin_impersonation'
 
 function limparSessaoUsuario() {
-  localStorage.removeItem('agendapro_usuario')
   setSessionUser(null)
 }
 
@@ -18,7 +17,6 @@ function limparSessaoAdmin() {
 }
 
 function salvarUsuarioSessao(usuario) {
-  localStorage.setItem('agendapro_usuario', JSON.stringify(usuario))
   setSessionUser(usuario)
   return usuario
 }
@@ -463,7 +461,6 @@ export function AuthProvider({ children }) {
     }
     clearLocalData()
     localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(impersonationData))
-    localStorage.setItem('agendapro_usuario', JSON.stringify(usuarioImpersonado))
     setImpersonation(impersonationData)
     setUsuario(usuarioImpersonado)
   }

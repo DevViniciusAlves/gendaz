@@ -5,17 +5,7 @@ function obterEmpresaIdUsuario() {
   if (usuarioCache) {
     return usuarioCache?.empresaId || usuarioCache?.empresa?.id || null
   }
-
-  const usuarioJson = localStorage.getItem('agendapro_usuario')
-  if (!usuarioJson) return null
-
-  try {
-    const usuario = JSON.parse(usuarioJson)
-    return usuario?.empresaId || usuario?.empresa?.id || null
-  } catch (error) {
-    console.warn('[insights-api] erro ao ler usuario para empresaId', error)
-    return null
-  }
+  return null
 }
 
 export function buscarDashboardInsights(periodo = 30) {

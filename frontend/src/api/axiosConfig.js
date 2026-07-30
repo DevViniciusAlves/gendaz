@@ -35,14 +35,14 @@ api.interceptors.request.use((config) => {
   if (config?.skipUsuarioHeader) {
     return config
   }
-  const usuario = sessionUser || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = sessionUser
   if (usuario?.id) config.headers['X-Usuario-Id'] = usuario.id
   if (usuario?.perfil) config.headers['X-Usuario-Perfil'] = usuario.perfil
   return config
 })
 
 async function tentarRefreshSessao(config) {
-  const usuario = sessionUser || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = sessionUser
   const url = String(config?.url || '')
   if (!usuario?.id || config?._retry || url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout')) {
     return false

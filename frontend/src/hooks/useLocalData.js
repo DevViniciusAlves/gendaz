@@ -14,7 +14,7 @@ function ttlDoEscopo(scope) {
 }
 
 function chaveCache(scope) {
-  const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+  const usuario = getSessionUser()
   return `${scope}:${usuario?.empresaId || 'local'}:${usuario?.id || 'anon'}`
 }
 
@@ -89,7 +89,7 @@ export function useLocalData(scope = 'full') {
   const cacheInicial = !modoDemo ? cacheDoEscopo(scope) : null
   const [data, setStateData] = useState(() => {
     if (modoDemo) return getData()
-    const usuario = getSessionUser() || JSON.parse(localStorage.getItem('agendapro_usuario') || 'null')
+    const usuario = getSessionUser()
     if (cacheValido(cacheInicial, scope)) {
       cacheLocal.set(chaveCache(scope), cacheInicial)
       return cacheInicial.data
