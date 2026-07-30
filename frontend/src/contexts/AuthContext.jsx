@@ -21,6 +21,14 @@ function emitirMudancaSessao() {
   window.dispatchEvent(new Event('agendapro:session-changed'))
 }
 
+function resolverPlano(usuario, fallbackAtual) {
+  return usuario?.plano
+    || usuario?.assinatura?.planoNome
+    || usuario?.assinatura?.plano?.nome
+    || fallbackAtual?.plano
+    || null
+}
+
 function salvarUsuarioSessao(usuario) {
   setSessionUser(usuario)
   emitirMudancaSessao()
@@ -32,7 +40,7 @@ function normalizarUsuarioSessao(usuarioBase, fallbackAtual) {
   if (!usuario) return null
   return {
     ...usuario,
-    plano: usuario?.plano || fallbackAtual?.plano || null,
+    plano: resolverPlano(usuario, fallbackAtual),
     assinatura: usuario?.assinatura || fallbackAtual?.assinatura || null,
     statusConta: usuario?.statusConta || fallbackAtual?.statusConta || 'ACTIVE',
   }
