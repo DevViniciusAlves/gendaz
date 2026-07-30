@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { MessageCircle, CalendarCheck, Users, LayoutDashboard } from 'lucide-react'
+import { MessageCircle, CalendarCheck, Users, LayoutDashboard, MessagesSquare } from 'lucide-react'
 
 const STEPS = [
   // {
@@ -34,8 +34,19 @@ const STEPS = [
     },
   },
   {
-    id: 'painel',
+    id: 'crm',
     num: '04',
+    icon: MessagesSquare,
+    heading: 'CRM para acompanhar cada conversa',
+    body: 'Registre interações, acompanhe o histórico e mantenha o relacionamento com clientes sempre organizado.',
+    visual: {
+      label: 'CRM ativo',
+      detail: 'Conversas e oportunidades centralizadas',
+    },
+  },
+  {
+    id: 'painel',
+    num: '05',
     icon: LayoutDashboard,
     heading: 'Tudo em um só painel',
     body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne agenda, clientes e pagamentos com simplicidade.',

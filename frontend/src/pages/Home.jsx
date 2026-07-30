@@ -8,7 +8,6 @@ import {
   LifeBuoy,
   MessageCircle,
   ShieldCheck,
-  Sparkles,
   UserPlus,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -90,16 +89,6 @@ export default function Home() {
           transition={{ duration: 0.6 }}
           className="hero-new-inner"
         >
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-          >
-            <span className="hero-new-badge">
-              <Sparkles size={14} />
-            </span>
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
