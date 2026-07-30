@@ -222,22 +222,6 @@ export default function Insights() {
               </section>
             </div>
 
-            <section className="panel insights-section">
-              <div className="section-kicker">Histórico de recomendações</div>
-              <div className="insights-history">
-                {(historico || []).slice(0, 4).map((item, index) => (
-                  <article key={item.id || `${index}`} className="insights-history-item">
-                    <div className="insights-history-item__date">
-                      <CheckCircle size={18} />
-                      <span>{item.dataCriacao ? new Date(item.dataCriacao).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }).toUpperCase() : 'RECENTE'}</span>
-                    </div>
-                    <strong>{item.pergunta || item.tipo || 'Recomendação'}</strong>
-                    <p>{item.resposta || item.tipo || 'Concluído'}</p>
-                  </article>
-                ))}
-                {historico.length === 0 && <p className="insights-empty">Sem histórico ainda.</p>}
-              </div>
-            </section>
           </div>
 
           <aside className="insights-sidebar">

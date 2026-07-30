@@ -166,9 +166,21 @@ public class InsightsService {
                   "principais": [
                     {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"acao"}
                   ],
-                  "oportunidades": [],
-                  "acoes": []
+                  "oportunidades": [
+                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média"}
+                  ],
+                  "acoes": [
+                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média", "status":"Pendente"}
+                  ]
                 }
+
+                Regras:
+                - Retorne no máximo 3 oportunidades.
+                - Retorne no máximo 4 ações.
+                - Se houver pendências, devolva ações para cobrança e recuperação.
+                - Se houver clientes inativos, devolva ações de reativação.
+                - Se houver serviço sem venda ou profissional ocioso, devolva ações práticas.
+                - Se a Groq não conseguir estimar impacto, use "Impacto não estimado".
 
                 Dados:
                 %s
@@ -219,7 +231,7 @@ public class InsightsService {
             acoes.add(new InsightAction("Reativar clientes em risco", "Alta", atRisk + " contatos"));
         }
         if (servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) == 0)) {
-            oportunidades.add(new InsightItem("Divulgar serviço sem venda", "Há serviço sem conversão no período.", "Usar dados reais do catálogo.", "Impacto n\u00e3o estimado", "Média"));
+            oportunidades.add(new InsightItem("Divulgar serviço sem venda", "Há serviço sem conversão no período.", "O catálogo da empresa mostra um serviço sem movimento recente.", "Impacto não estimado", "Média"));
         }
         if (profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) == 0)) {
             oportunidades.add(new InsightItem("Redistribuir agenda", "Profissional com baixa ocupação pode absorver demanda.", "Baseado no movimento real.", "Impacto n\u00e3o estimado", "Média"));
@@ -239,6 +251,16 @@ public class InsightsService {
         }
         if (groq.containsKey("acoes")) {
             acoes = limitarAcoes(groq.get("acoes"), acoes);
+        }
+        if (groq.containsKey("acoes_recomendadas")) {
+            acoes = limitarAcoes(groq.get("acoes_recomendadas"), acoes);
+        }
+        if (groq.containsKey("recomendacoes")) {
+            acoes = limitarAcoes(groq.get("recomendacoes"), acoes);
+        }
+
+        if (acoes.isEmpty()) {
+            acoes = montarAcoesReais(pendente, atRisk, servicos, profissionais, receita30, receita60);
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
@@ -548,10 +570,72 @@ public class InsightsService {
         List<InsightAction> itens = new ArrayList<>();
         for (Object item : lista) {
             if (item instanceof Map<?, ?> mapa) {
-                itens.add(new InsightAction(stringValor(mapa.get("descricao")), stringValor(mapa.get("prioridade")), stringValor(mapa.get("impactoEstimado"))));
+                String descricao = primeiroNaoVazio(mapa, "descricao", "titulo", "texto");
+                String urgencia = primeiroNaoVazio(mapa, "prioridade", "urgencia", "status");
+                String impacto = primeiroNaoVazio(mapa, "impactoEstimado", "impacto", "valor", "resposta");
+                itens.add(new InsightAction(descricao, urgencia, impacto));
             }
         }
         return itens.isEmpty() ? fallback : itens.size() > 4 ? itens.subList(0, 4) : itens;
+    }
+
+    private List<InsightAction> montarAcoesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
+        List<InsightAction> acoes = new ArrayList<>();
+        if (pendente > 0) {
+            acoes.add(new InsightAction(
+                    "Cobrar pagamentos pendentes",
+                    "Alta",
+                    formatarMoeda(pendente)
+            ));
+        }
+        if (atRisk > 0) {
+            acoes.add(new InsightAction(
+                    "Reativar clientes em risco",
+                    "Alta",
+                    atRisk + " contatos"
+            ));
+        }
+        boolean servicoSemVenda = servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) <= 0);
+        boolean profissionalOcioso = profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) <= 0);
+        if (servicoSemVenda) {
+            acoes.add(new InsightAction(
+                    "Divulgar serviço sem venda",
+                    "Média",
+                    "Criar campanha para o serviço com menor movimento"
+            ));
+        }
+        if (profissionalOcioso) {
+            acoes.add(new InsightAction(
+                    "Redistribuir agenda",
+                    "Média",
+                    "Aproveitar profissionais com baixa ocupação"
+            ));
+        }
+        if (acoes.isEmpty() && receita60 > 0 && receita30 < receita60) {
+            acoes.add(new InsightAction(
+                    "Recuperar receita perdida",
+                    "Média",
+                    "Rodar campanha de reativação para recuperar faturamento"
+            ));
+        }
+        if (acoes.isEmpty()) {
+            acoes.add(new InsightAction(
+                    "Manter monitoramento ativo",
+                    "Baixa",
+                    "Nenhuma ação crítica no momento, acompanhar a operação"
+            ));
+        }
+        return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
+    }
+
+    private String primeiroNaoVazio(Map<?, ?> mapa, String... chaves) {
+        for (String chave : chaves) {
+            Object valor = mapa.get(chave);
+            if (valor != null && !String.valueOf(valor).isBlank()) {
+                return String.valueOf(valor);
+            }
+        }
+        return "";
     }
 
     private int calcularScore(int atRisk, double pendente, double receita30, double receita60) {
