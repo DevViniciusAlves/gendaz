@@ -39,17 +39,17 @@ function iconPorTipo(tipo) {
   if (valor.includes('cliente')) return Users
   if (valor.includes('finance')) return TrendingUp
   if (valor.includes('agenda') || valor.includes('ocios')) return Calendar
-  if (valor.includes('acao')) return Wrench
+  if (valor.includes('acao') || valor.includes('ação')) return Wrench
   return AlertCircle
 }
 
 function resumoTexto(dashboard) {
+  if (!dashboard) return 'Carregando análise real da empresa...'
+
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas).length
   const oportunidades = safeArray(dashboard?.oportunidades).length
   const acoes = safeArray(dashboard?.acoes).length
-
-  if (!dashboard) return 'Carregando análise real da empresa...'
 
   return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
 }
@@ -65,6 +65,18 @@ function getTendencia(dashboard) {
 
 function getVariacaoTendencia(dashboard) {
   return dashboard?.variacao || dashboard?.comparativo?.variacao || null
+}
+
+function getStatusScore(score) {
+  if (score >= 70) return 'Muito saudável'
+  if (score >= 45) return 'Saudável'
+  return 'Em risco'
+}
+
+function getRisco(score) {
+  if (score >= 70) return 'Baixo'
+  if (score >= 45) return 'Médio'
+  return 'Alto'
 }
 
 export default function Insights() {
@@ -83,7 +95,11 @@ export default function Insights() {
   const dataAnalise = dashboard?.geradoEm
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
-  const riscoAtual = score >= 70 ? 'Baixo' : score >= 45 ? 'Médio' : 'Alto'
+  const tendencia = getTendencia(dashboard)
+  const variacaoTendencia = getVariacaoTendencia(dashboard)
+  const metaMensal = getMetaMensal(dashboard)
+  const riscoAtual = getRisco(score)
+  const riscoAtivos = score >= 70 ? 8 : score >= 45 ? 5 : 2
   const riscoDescricao = score >= 70
     ? 'Acompanhe os pontos de atenção para manter sua empresa saudável.'
     : score >= 45
@@ -158,18 +174,18 @@ export default function Insights() {
                 <article className="insights-summary-metric">
                   <span className="insights-label">Índice Gendaz</span>
                   <div className="insights-summary-metric__value">{score}/100</div>
-                  <strong>{score >= 70 ? 'Muito saudável' : score >= 45 ? 'Saudável' : 'Em risco'}</strong>
-                  <small>{score ? `+${Math.max(0, Math.round(score / 10))} pontos vs mês anterior` : 'Sem comparação disponível'}</small>
+                  <strong>{getStatusScore(score)}</strong>
+                  <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparação disponível'}</small>
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Tendência</span>
-                  <div className="insights-summary-metric__value">{getTendencia(dashboard) || 'Sem tendência'}</div>
-                  <strong>{getVariacaoTendencia(dashboard) || 'Dados insuficientes para comparar'}</strong>
+                  <div className="insights-summary-metric__value">{tendencia || 'Sem tendência'}</div>
+                  <strong>{variacaoTendencia || 'Dados insuficientes'}</strong>
                   <small>em relação aos últimos 30 dias</small>
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Meta do mês</span>
-                  <div className="insights-summary-metric__value">{getMetaMensal(dashboard)}</div>
+                  <div className="insights-summary-metric__value">{metaMensal}</div>
                   <strong>{dashboard?.metaMes ? 'Meta em andamento' : 'Sem meta'}</strong>
                   <small>{impactoTotal}</small>
                 </article>
@@ -204,7 +220,7 @@ export default function Insights() {
                 <strong>{riscoAtual}</strong>
                 <div className="insights-risk-bars" aria-hidden="true">
                   {Array.from({ length: 10 }).map((_, index) => (
-                    <span key={index} className={index < (score >= 70 ? 8 : score >= 45 ? 5 : 2) ? 'is-active' : ''} />
+                    <span key={index} className={index < riscoAtivos ? 'is-active' : ''} />
                   ))}
                 </div>
                 <p>{riscoDescricao}</p>
@@ -444,7 +460,7 @@ export default function Insights() {
               </div>
             </div>
 
-            <div className="insights-detail-grid" style={{ marginTop: 12 }}>
+            <div className="insights-detail-grid insights-detail-grid--secondary">
               <div>
                 <span>Alertas</span>
                 <strong>{alertas.length}</strong>
