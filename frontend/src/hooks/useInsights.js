@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { analisarPerguntaInsightsComHistorico, recalcularInsights } from '../api/insightsApi.js'
 import { useLocalData } from './useLocalData.js'
+import { persistirCacheLocal } from './useLocalData.js'
 
 function normalizarDashboard(data) {
   return data?.dashboard || data?.dashboardResumo || data?.resumo || null
@@ -27,8 +28,9 @@ export function useInsights() {
     const resposta = await recalcularInsights(periodo)
     if (resposta) {
       setDashboardAtual(resposta)
+      persistirCacheLocal('insights', resposta)
     }
-    await reload(true)
+    await reload(false)
     return resposta
   }, [reload])
 

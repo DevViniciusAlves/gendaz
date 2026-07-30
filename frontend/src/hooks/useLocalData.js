@@ -9,7 +9,7 @@ const CACHE_PREFIX = 'agendapro_scope_cache_'
 const POLLING_INTERVAL_MS = 30000
 
 function ttlDoEscopo(scope) {
-  if (scope === 'insights') return 60 * 1000
+  if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
   return 24 * 60 * 60 * 1000
 }
 
@@ -56,6 +56,10 @@ function salvarCache(scope, payload) {
   cacheLocal.set(cacheKey, entry)
   salvarCacheSession(cacheKey, payload)
   return payload
+}
+
+export function persistirCacheLocal(scope, payload) {
+  return salvarCache(scope, payload)
 }
 
 async function carregarComCache(scope, force = false) {
@@ -138,7 +142,7 @@ export function useLocalData(scope = 'full') {
   }
 
   useEffect(() => {
-    reload(true)
+    reload(scope === 'insights' ? false : true)
 
     function reloadFromEvent() {
       reload(true)

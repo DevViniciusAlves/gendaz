@@ -11795,9 +11795,40 @@ tbody tr:hover { background: #fffaf5; }
 /* ============================================================
    Landing page typography
    ============================================================ */
+@font-face {
+  font-family: 'Faktum';
+  src: url('/fonts/Faktum-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 .marketing-page,
 .marketing-page * {
-  font-family: 'Faktum Medium', 'Faktum', sans-serif !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.marketing-page h1,
+.marketing-page h2,
+.marketing-page h3,
+.marketing-page h4,
+.marketing-page h5,
+.marketing-page h6,
+.marketing-page p,
+.marketing-page span,
+.marketing-page small,
+.marketing-page strong,
+.marketing-page b,
+.marketing-page a,
+.marketing-page button,
+.marketing-page input,
+.marketing-page textarea,
+.marketing-page label,
+.marketing-page li,
+.marketing-page div {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
 }
 
 /* ============================================================

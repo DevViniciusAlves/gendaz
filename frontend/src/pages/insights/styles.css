@@ -152,7 +152,7 @@
 .insights-changes-card,
 .insights-risk-card {
   padding: 16px;
-  min-height: 118px;
+  min-height: 138px;
 }
 
 .insights-change-grid {
@@ -164,13 +164,14 @@
 
 .insights-change-card {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  padding: 14px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 10px 12px;
+  align-items: start;
+  padding: 14px 14px 12px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.025);
+  min-height: 128px;
 }
 
 .insights-change-card__icon {
@@ -194,7 +195,9 @@
   margin: 4px 0 0;
   color: var(--muted);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .insights-change-card strong {
@@ -202,6 +205,8 @@
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.12em;
+  grid-column: 2;
+  margin-top: 4px;
 }
 
 .insights-risk-card {
@@ -476,16 +481,18 @@
 
 .insights-highlight-card {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
-  gap: 12px;
-  padding: 12px;
-  align-items: center;
-  min-height: 132px;
+  grid-template-columns: 40px minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px 12px;
+  align-items: start;
+  min-height: 0;
+  max-width: 240px;
+  justify-self: center;
 }
 
 .insights-highlight-card__icon {
-  width: 46px;
-  height: 46px;
+  width: 40px;
+  height: 40px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -497,13 +504,13 @@
 .insights-highlight-card__content {
   display: flex;
   flex-direction: column;
-  gap: 9px;
+  gap: 8px;
 }
 
 .insights-highlight-card__meta {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .insights-highlight-card__meta small {
@@ -516,7 +523,7 @@
 
 .insights-highlight-card__meta strong {
   color: var(--primary);
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .insights-sidebar-card {
@@ -547,26 +554,35 @@
 
 .insights-sidebar-chat .insights-chat {
   width: 100%;
-  min-height: 460px;
-  max-height: 560px;
+  min-height: 420px;
+  max-height: 520px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
   flex: 1 1 auto;
-  min-height: 305px;
+  min-height: 275px;
   overflow-y: auto;
+  overflow-x: hidden;
+  min-width: 0;
+  padding-right: 4px;
+  gap: 8px;
 }
 
 .insights-sidebar-chat .insights-chat__bubble {
   max-width: 100%;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: 10px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .insights-sidebar-chat .chat-input {
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .insights-sidebar-chat .insights-chat__form {
@@ -579,6 +595,12 @@
 .insights-sidebar-chat .insights-chat__form .chat-input {
   flex: 1 1 auto;
   min-width: 0;
+  font-size: 10px;
+  padding: 9px 10px;
+}
+
+.insights-sidebar-chat .insights-chat__message {
+  min-width: 0;
 }
 
 .insights-sidebar-chat .insights-chat__form .btn-send {
@@ -587,6 +609,18 @@
   height: 38px;
   padding: 0;
   flex: 0 0 38px;
+}
+
+.insights-sidebar-chat .insights-chat__head h3 {
+  font-size: 14px;
+}
+
+.insights-sidebar-chat .insights-chat__head p {
+  font-size: 11px;
+}
+
+.insights-sidebar-chat .insights-chat__typing {
+  font-size: 10px;
 }
 
 .insights-sidebar-head {
