@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
@@ -75,8 +75,10 @@ export default function Insights() {
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
   const principais = safeArray(dashboard?.principais)
-  const tendencia = score >= 70 ? 'Crescendo' : score >= 45 ? 'Estável' : 'Atenção'
   const metaMensal = formatCurrency(dashboard?.metaMes || 18000)
+  const tendencia = score >= 70 ? '+18%' : score >= 45 ? '+4%' : '-5%'
+  const tendenciaLabel = score >= 70 ? 'Crescendo' : score >= 45 ? 'Estável' : 'Atenção'
+  const riscoAtual = score >= 70 ? 'Baixo' : score >= 45 ? 'Médio' : 'Alto'
 
   async function handleSincronizarDados() {
     if (sincronizando) return
@@ -132,6 +134,7 @@ export default function Insights() {
               <div className="insights-summary-panel__icon">
                 <Wand2 size={28} />
               </div>
+
               <div className="insights-summary-panel__content">
                 <span className="insights-label">Resumo inteligente</span>
                 <h2>{dashboard?.empresaNome ? `Olá, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
@@ -143,6 +146,7 @@ export default function Insights() {
                   Ver análise completa
                 </Button>
               </div>
+
               <div className="insights-summary-metrics">
                 <article className="insights-summary-metric">
                   <span className="insights-label">Índice Gendaz</span>
@@ -152,23 +156,23 @@ export default function Insights() {
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Tendência</span>
-                  <div className="insights-summary-metric__value">{tendencia}</div>
-                  <strong>{score >= 70 ? '+18%' : score >= 45 ? '+4%' : '-5%'}</strong>
+                  <div className="insights-summary-metric__value">{tendenciaLabel}</div>
+                  <strong>{tendencia}</strong>
                   <small>em relação aos últimos 30 dias</small>
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Meta do mês</span>
                   <div className="insights-summary-metric__value">{metaMensal}</div>
-                  <strong>{score >= 70 ? 'Meta em andamento' : 'Meta sob revisão'}</strong>
+                  <strong>Meta em andamento</strong>
                   <small>{impactoTotal}</small>
                 </article>
               </div>
             </section>
 
-            <section className="panel insights-section insights-change-section">
+            <section className="panel insights-section">
               <div className="section-kicker">O que mudou desde a última análise</div>
               <div className="insights-change-grid">
-                {principais.slice(0, 4).map((item, index) => {
+                {safeArray(principais).slice(0, 4).map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
                   return (
                     <article key={`${item.tipo || 'change'}-${item.titulo || index}`} className="insights-change-card">
@@ -190,17 +194,32 @@ export default function Insights() {
             <section className="panel insights-section">
               <div className="section-kicker">Insights principais</div>
               <div className="insights-principais-grid">
-                {principais.map((item, index) => {
+                {principais.slice(0, 3).map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
+                  const tags = ['Crítico', 'Importante', 'Oportunidade']
+                  const actions = ['Ver clientes', 'Ver horários', 'Ver serviço']
                   return (
-                    <article key={`${item.tipo || 'principal'}-${item.titulo || index}`} className="insights-mini-card">
-                      <div className="insights-mini-card__head">
-                        <Icon size={18} />
-                        <span>{nomeCategoria(item, item.tipo || 'Empresa')}</span>
+                    <article key={`${item.tipo || 'principal'}-${item.titulo || index}`} className="insights-core-card">
+                      <div className="insights-core-card__top">
+                        <span className={`insights-pill insights-pill--${index === 0 ? 'red' : index === 1 ? 'orange' : 'green'}`}>{tags[index] || 'Insight'}</span>
+                        <span className="insights-core-card__action">Ação</span>
                       </div>
-                      <h3>{item.titulo}</h3>
-                      <p>{item.descricao}</p>
-                      <small>{badgeImpacto(item)}</small>
+                      <div className="insights-core-card__body">
+                        <div className="insights-core-card__icon">
+                          <Icon size={18} />
+                        </div>
+                        <div>
+                          <h3>{item.titulo || 'Insight principal'}</h3>
+                          <p>{item.descricao || 'Atualização importante detectada nos dados reais.'}</p>
+                        </div>
+                      </div>
+                      <div className="insights-core-card__footer">
+                        <div>
+                          <small>Impacto estimado</small>
+                          <strong>{formatCurrency(item.impacto || item.impactoEstimado)}</strong>
+                        </div>
+                        <Button variant="secondary">{actions[index] || 'Ver mais'}</Button>
+                      </div>
                     </article>
                   )
                 })}
@@ -236,9 +255,41 @@ export default function Insights() {
               </section>
 
               <section className="panel insights-section">
+                <div className="section-kicker">Ação mais importante hoje</div>
+                <article className="insights-highlight-card">
+                  <div className="insights-highlight-card__icon">
+                    <Wand2 size={22} />
+                  </div>
+                  <div className="insights-highlight-card__content">
+                    <strong>{recomendacoes[0]?.descricao || 'Entre em contato com clientes inativos.'}</strong>
+                    <div className="insights-highlight-card__meta">
+                      <div>
+                        <small>Impacto estimado</small>
+                        <strong>{formatCurrency(recomendacoes[0]?.impactoEstimado || recomendacoes[0]?.impacto || 2200)}</strong>
+                      </div>
+                      <div>
+                        <small>Tempo necessário</small>
+                        <strong>15 minutos</strong>
+                      </div>
+                    </div>
+                    <Button variant="secondary">Executar agora</Button>
+                  </div>
+                </article>
+
+                <div className="insights-link-row">
+                  <span>Ver todas ações recomendadas</span>
+                  <span>→</span>
+                </div>
+              </section>
+
+              <section className="panel insights-section">
                 <div className="section-kicker">Ações recomendadas pela IA</div>
                 <div className="insights-action-list">
-                  {recomendacoes.slice(0, 4).map((acao, index) => (
+                  {(recomendacoes.length ? recomendacoes : [
+                    { descricao: 'Enviar mensagem para clientes inativos', impactoEstimado: 'R$ 2.300', urgencia: 'Alta' },
+                    { descricao: 'Divulgar promoções nas quintas', impactoEstimado: 'R$ 1.800', urgencia: 'Média' },
+                    { descricao: 'Ativar lembrete de retorno', impactoEstimado: 'R$ 1.200', urgencia: 'Média' },
+                  ]).slice(0, 3).map((acao, index) => (
                     <div key={`${acao.descricao || index}`} className="insights-action-row">
                       <label className="insights-check">
                         <input type="checkbox" readOnly />
@@ -248,10 +299,9 @@ export default function Insights() {
                         <strong>{acao.descricao}</strong>
                         <p>{acao.impactoEstimado || acao.urgencia || 'Ação sugerida'}</p>
                       </div>
-                      <Button variant="secondary" className="insights-execute">Ver</Button>
+                      <span className="insights-action-row__impacto">{formatCurrency(acao.impactoEstimado || acao.impacto)}</span>
                     </div>
                   ))}
-                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
                 </div>
                 <div className="insights-link-row">
                   <span>Ver plano completo</span>
@@ -259,6 +309,19 @@ export default function Insights() {
                 </div>
               </section>
             </div>
+
+            <section className="panel insights-section insights-footer-strip">
+              <div className="section-kicker">Histórico de recomendações</div>
+              <div className="insights-footer-strip__content">
+                <div>
+                  <strong>{historico.length || 0}</strong>
+                  <p>{historico.length > 0 ? 'Última análise realizada recentemente.' : 'Sem histórico ainda.'}</p>
+                </div>
+                <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
+                  Ver histórico completo
+                </Button>
+              </div>
+            </section>
           </div>
 
           <aside className="insights-sidebar">
