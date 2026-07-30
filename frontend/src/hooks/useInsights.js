@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { analisarPerguntaInsightsComHistorico, recalcularInsights } from '../api/insightsApi.js'
 import { useLocalData } from './useLocalData.js'
 
@@ -8,8 +8,10 @@ function normalizarDashboard(data) {
 
 export function useInsights() {
   const [data, , { loading, error, reload }] = useLocalData('insights')
+  const [dashboardAtual, setDashboardAtual] = useState(null)
 
-  const dashboard = useMemo(() => normalizarDashboard(data), [data])
+  const dashboardBase = useMemo(() => normalizarDashboard(data), [data])
+  const dashboard = dashboardAtual || dashboardBase
   const historico = useMemo(() => {
     if (Array.isArray(data?.historico)) return data.historico
     return data?.mensagens || []
@@ -23,6 +25,9 @@ export function useInsights() {
 
   const recarregar = useCallback(async (periodo = 30) => {
     const resposta = await recalcularInsights(periodo)
+    if (resposta) {
+      setDashboardAtual(resposta)
+    }
     await reload(true)
     return resposta
   }, [reload])
