@@ -17,7 +17,7 @@ spring:
   jpa:
     database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:none}
+      ddl-auto: ${JPA_DDL_AUTO:create}
     show-sql: false
     open-in-view: false
     properties:
