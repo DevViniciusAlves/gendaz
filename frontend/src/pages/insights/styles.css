@@ -535,27 +535,27 @@
 .insights-sidebar-layout {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
   min-height: 0;
 }
 
 .insights-sidebar-stack {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .insights-sidebar-chat .insights-chat {
   width: 100%;
-  min-height: 300px;
-  max-height: 380px;
+  min-height: 460px;
+  max-height: 560px;
   display: flex;
   flex-direction: column;
 }
 
 .insights-sidebar-chat .insights-chat__messages {
   flex: 1 1 auto;
-  min-height: 145px;
+  min-height: 305px;
   overflow-y: auto;
 }
 
@@ -567,6 +567,26 @@
 
 .insights-sidebar-chat .chat-input {
   font-size: 11px;
+}
+
+.insights-sidebar-chat .insights-chat__form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.insights-sidebar-chat .insights-chat__form .chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.insights-sidebar-chat .insights-chat__form .btn-send {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  padding: 0;
+  flex: 0 0 38px;
 }
 
 .insights-sidebar-head {
@@ -588,15 +608,13 @@
   gap: 10px;
 }
 
-.insights-suggestions,
-.insights-simulations {
+.insights-suggestions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
-.insights-suggestion,
-.insights-simulation {
+.insights-suggestion {
   width: 100%;
   text-align: left;
 }
@@ -624,31 +642,8 @@
   min-height: 44px;
 }
 
-.insights-footer-strip {
-  padding: 16px;
-  min-height: 76px;
-}
-
-.insights-footer-strip__content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
 .insights-detail-grid--secondary {
   margin-top: 12px;
-}
-
-.insights-footer-strip__content strong {
-  display: block;
-  font-size: 15px;
-}
-
-.insights-footer-strip__content p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 11px;
 }
 
 .insights-detail-grid {

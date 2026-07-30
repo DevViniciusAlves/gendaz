@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
-  Clock,
   HelpCircle,
   Sparkles,
   Target,
@@ -131,12 +130,6 @@ export default function Insights() {
       setSincronizando(false)
     }
   }
-
-  const simulacoes = [
-    { pergunta: `E se eu ampliar horários na ${nomeEmpresa}?`, impacto: 'Impacto estimado com base na ocupação atual' },
-    { pergunta: 'E se eu subir 10% o preço?', impacto: 'Simulação sobre o faturamento atual' },
-    { pergunta: 'E se eu atuar nos clientes inativos?', impacto: 'Simulação sobre recorrência e reativação' },
-  ]
 
   return (
     <section className="page insights-page insights-page--new">
@@ -348,18 +341,6 @@ export default function Insights() {
               </section>
             </div>
 
-            <section className="panel insights-section insights-footer-strip">
-              <div className="section-kicker">Histórico</div>
-              <div className="insights-footer-strip__content">
-                <div>
-                  <strong>{historico.length}</strong>
-                  <p>{historico.length > 0 ? 'Última análise realizada recentemente.' : 'Sem histórico ainda.'}</p>
-                </div>
-                <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
-                  Ver histórico completo
-                </Button>
-              </div>
-            </section>
           </div>
 
           <aside className="insights-sidebar">
@@ -388,8 +369,6 @@ export default function Insights() {
                           'Como aumentar meu faturamento?',
                           'Quais clientes devo recuperar?',
                           'Qual serviço devo divulgar?',
-                          'Como reduzir cancelamentos?',
-                          'O que fazer esta semana?',
                         ].map((texto) => (
                           <button
                             key={texto}
@@ -402,21 +381,6 @@ export default function Insights() {
                             <Target size={14} />
                             <span>{texto}</span>
                           </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="insights-sidebar-block">
-                      <span className="insights-label">Simulações</span>
-                      <div className="insights-simulations">
-                        {simulacoes.map((item) => (
-                          <article key={item.pergunta} className="insights-simulation">
-                            <div>
-                              <strong>{item.pergunta}</strong>
-                              <p>{item.impacto}</p>
-                            </div>
-                            <Clock size={14} />
-                          </article>
                         ))}
                       </div>
                     </div>

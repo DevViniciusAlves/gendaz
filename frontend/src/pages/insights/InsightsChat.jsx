@@ -12,36 +12,6 @@ function criarChaveHistorico(item) {
   ].join('::')
 }
 
-function mapearHistorico(historico) {
-  if (!Array.isArray(historico) || historico.length === 0) return []
-
-  return historico
-    .slice()
-    .reverse()
-    .flatMap((item, index) => {
-      const chave = item?.id ?? `hist-${index}`
-      const mensagens = []
-
-      if (item?.pergunta) {
-        mensagens.push({
-          id: `hist-user-${chave}`,
-          origem: 'user',
-          texto: item.pergunta,
-        })
-      }
-
-      if (item?.resposta) {
-        mensagens.push({
-          id: `hist-assistant-${chave}`,
-          origem: 'bot',
-          texto: item.resposta,
-        })
-      }
-
-      return mensagens
-    })
-}
-
 export default function InsightsChat({ onEnviar, historico = [] }) {
   const [mensagens, setMensagens] = useState([
     { id: 'boas-vindas', origem: 'bot', texto: 'Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.' },
@@ -75,9 +45,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
       .reverse()
       .forEach((item, index) => {
         const chave = criarChaveHistorico(item)
-        if (historicoProcessadoRef.current.has(chave)) {
-          return
-        }
+        if (historicoProcessadoRef.current.has(chave)) return
 
         const pergunta = normalizarTexto(item?.pergunta)
         const resposta = normalizarTexto(item?.resposta)
