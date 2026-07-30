@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
-  CheckCircle,
   Clock,
   HelpCircle,
   Sparkles,
@@ -35,10 +34,6 @@ function badgeImpacto(item) {
   return 'Baixo impacto'
 }
 
-function nomeCategoria(item, fallback) {
-  return String(item?.tipo || fallback || 'Empresa').toUpperCase()
-}
-
 function iconPorTipo(tipo) {
   const valor = String(tipo || '').toLowerCase()
   if (valor.includes('cliente')) return Users
@@ -59,6 +54,19 @@ function resumoTexto(dashboard) {
   return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
 }
 
+function getMetaMensal(dashboard) {
+  const valor = dashboard?.metaMes || dashboard?.metaMensal || dashboard?.financeiro?.metaMes
+  return valor ? formatCurrency(valor) : 'Sem meta'
+}
+
+function getTendencia(dashboard) {
+  return dashboard?.tendencia || dashboard?.comparativo?.tendencia || null
+}
+
+function getVariacaoTendencia(dashboard) {
+  return dashboard?.variacao || dashboard?.comparativo?.variacao || null
+}
+
 export default function Insights() {
   const { dashboard, historico, loading, error, recarregar, analisar } = useInsights()
   const [chatAberto, setChatAberto] = useState(true)
@@ -69,16 +77,19 @@ export default function Insights() {
   const alertas = safeArray(dashboard?.alertas)
   const oportunidades = safeArray(dashboard?.oportunidades)
   const recomendacoes = safeArray(dashboard?.acoes)
+  const principais = safeArray(dashboard?.principais).slice(0, 3)
   const nomeEmpresa = dashboard?.empresaNome || 'Sua empresa'
   const impactoTotal = dashboard?.impactoTotal || 'Sem impacto calculado'
   const dataAnalise = dashboard?.geradoEm
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
-  const principais = safeArray(dashboard?.principais)
-  const metaMensal = formatCurrency(dashboard?.metaMes || 18000)
-  const tendencia = score >= 70 ? '+18%' : score >= 45 ? '+4%' : '-5%'
-  const tendenciaLabel = score >= 70 ? 'Crescendo' : score >= 45 ? 'Estável' : 'Atenção'
   const riscoAtual = score >= 70 ? 'Baixo' : score >= 45 ? 'Médio' : 'Alto'
+  const riscoDescricao = score >= 70
+    ? 'Acompanhe os pontos de atenção para manter sua empresa saudável.'
+    : score >= 45
+      ? 'Há sinais de atenção. Revise os principais pontos identificados.'
+      : 'O cenário exige ação imediata para reduzir riscos.'
+  const acaoPrincipal = dashboard?.acaoPrioritaria || recomendacoes[0] || null
 
   async function handleSincronizarDados() {
     if (sincronizando) return
@@ -113,7 +124,7 @@ export default function Insights() {
 
   return (
     <section className="page insights-page insights-page--new">
-      <div className="page-title insights-hero">
+      <header className="page-title insights-hero">
         <div>
           <span className="section-kicker">Consultoria IA</span>
           <h1>Insights</h1>
@@ -122,7 +133,7 @@ export default function Insights() {
         <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
           {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
         </Button>
-      </div>
+      </header>
 
       {loading && <div className="panel insights-panel">Carregando análise real da empresa...</div>}
       {error && <div className="panel insights-panel insights-error">{String(error?.response?.data?.mensagem || error?.message || error)}</div>}
@@ -131,10 +142,6 @@ export default function Insights() {
         <div className="insights-layout">
           <div className="insights-main">
             <section className="panel insights-summary-panel">
-              <div className="insights-summary-panel__icon">
-                <Wand2 size={28} />
-              </div>
-
               <div className="insights-summary-panel__content">
                 <span className="insights-label">Resumo inteligente</span>
                 <h2>{dashboard?.empresaNome ? `Olá, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
@@ -152,49 +159,62 @@ export default function Insights() {
                   <span className="insights-label">Índice Gendaz</span>
                   <div className="insights-summary-metric__value">{score}/100</div>
                   <strong>{score >= 70 ? 'Muito saudável' : score >= 45 ? 'Saudável' : 'Em risco'}</strong>
-                  <small>{score >= 70 ? '+8 pontos vs mês anterior' : impactoTotal}</small>
+                  <small>{score ? `+${Math.max(0, Math.round(score / 10))} pontos vs mês anterior` : 'Sem comparação disponível'}</small>
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Tendência</span>
-                  <div className="insights-summary-metric__value">{tendenciaLabel}</div>
-                  <strong>{tendencia}</strong>
+                  <div className="insights-summary-metric__value">{getTendencia(dashboard) || 'Sem tendência'}</div>
+                  <strong>{getVariacaoTendencia(dashboard) || 'Dados insuficientes para comparar'}</strong>
                   <small>em relação aos últimos 30 dias</small>
                 </article>
                 <article className="insights-summary-metric">
                   <span className="insights-label">Meta do mês</span>
-                  <div className="insights-summary-metric__value">{metaMensal}</div>
-                  <strong>Meta em andamento</strong>
+                  <div className="insights-summary-metric__value">{getMetaMensal(dashboard)}</div>
+                  <strong>{dashboard?.metaMes ? 'Meta em andamento' : 'Sem meta'}</strong>
                   <small>{impactoTotal}</small>
                 </article>
               </div>
             </section>
 
-            <section className="panel insights-section">
-              <div className="section-kicker">O que mudou desde a última análise</div>
-              <div className="insights-change-grid">
-                {safeArray(principais).slice(0, 4).map((item, index) => {
-                  const Icon = iconPorTipo(item.tipo)
-                  return (
-                    <article key={`${item.tipo || 'change'}-${item.titulo || index}`} className="insights-change-card">
-                      <div className="insights-change-card__icon">
-                        <Icon size={16} />
-                      </div>
-                      <div className="insights-change-card__content">
-                        <span>{item.titulo || item.tipo || 'Mudança'}</span>
-                        <p>{item.descricao || 'Atualização detectada nos dados da empresa.'}</p>
-                      </div>
-                      <strong>{badgeImpacto(item)}</strong>
-                    </article>
-                  )
-                })}
-                {principais.length === 0 && <p className="insights-empty">Nenhuma mudança relevante detectada.</p>}
-              </div>
-            </section>
+            <div className="insights-change-risk-row">
+              <section className="panel insights-changes-card">
+                <div className="section-kicker">O que mudou desde a última análise</div>
+                <div className="insights-change-grid">
+                  {principais.slice(0, 4).map((item, index) => {
+                    const Icon = iconPorTipo(item.tipo)
+                    return (
+                      <article key={`${item.tipo || 'change'}-${item.titulo || index}`} className="insights-change-card">
+                        <div className="insights-change-card__icon">
+                          <Icon size={16} />
+                        </div>
+                        <div className="insights-change-card__content">
+                          <span>{item.titulo || item.tipo || 'Mudança'}</span>
+                          <p>{item.descricao || 'Atualização detectada nos dados da empresa.'}</p>
+                        </div>
+                        <strong>{badgeImpacto(item)}</strong>
+                      </article>
+                    )
+                  })}
+                  {principais.length === 0 && <p className="insights-empty">Nenhuma mudança relevante detectada.</p>}
+                </div>
+              </section>
 
-            <section className="panel insights-section">
+              <section className="panel insights-risk-card">
+                <div className="section-kicker">Risco atual</div>
+                <strong>{riscoAtual}</strong>
+                <div className="insights-risk-bars" aria-hidden="true">
+                  {Array.from({ length: 10 }).map((_, index) => (
+                    <span key={index} className={index < (score >= 70 ? 8 : score >= 45 ? 5 : 2) ? 'is-active' : ''} />
+                  ))}
+                </div>
+                <p>{riscoDescricao}</p>
+              </section>
+            </div>
+
+            <section className="panel insights-section insights-primary-panel">
               <div className="section-kicker">Insights principais</div>
               <div className="insights-principais-grid">
-                {principais.slice(0, 3).map((item, index) => {
+                {principais.length > 0 ? principais.map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
                   const tags = ['Crítico', 'Importante', 'Oportunidade']
                   const actions = ['Ver clientes', 'Ver horários', 'Ver serviço']
@@ -222,12 +242,13 @@ export default function Insights() {
                       </div>
                     </article>
                   )
-                })}
-                {principais.length === 0 && <p className="insights-empty">Sem insights principais disponíveis no momento.</p>}
+                }) : (
+                  <p className="insights-empty">Sem insights principais disponíveis no momento.</p>
+                )}
               </div>
             </section>
 
-            <div className="insights-duo-grid">
+            <div className="insights-bottom-grid">
               <section className="panel insights-section">
                 <div className="section-kicker">Oportunidades para crescer</div>
                 <div className="insights-list">
@@ -256,26 +277,30 @@ export default function Insights() {
 
               <section className="panel insights-section">
                 <div className="section-kicker">Ação mais importante hoje</div>
-                <article className="insights-highlight-card">
-                  <div className="insights-highlight-card__icon">
-                    <Wand2 size={22} />
-                  </div>
-                  <div className="insights-highlight-card__content">
-                    <strong>{recomendacoes[0]?.descricao || 'Entre em contato com clientes inativos.'}</strong>
-                    <div className="insights-highlight-card__meta">
-                      <div>
-                        <small>Impacto estimado</small>
-                        <strong>{formatCurrency(recomendacoes[0]?.impactoEstimado || recomendacoes[0]?.impacto || 2200)}</strong>
-                      </div>
-                      <div>
-                        <small>Tempo necessário</small>
-                        <strong>15 minutos</strong>
-                      </div>
+                {acaoPrincipal ? (
+                  <article className="insights-highlight-card">
+                    <div className="insights-highlight-card__icon">
+                      <Wand2 size={22} />
                     </div>
-                    <Button variant="secondary">Executar agora</Button>
-                  </div>
-                </article>
-
+                    <div className="insights-highlight-card__content">
+                      <strong>{acaoPrincipal.descricao || acaoPrincipal.titulo || 'Ação prioritária'}</strong>
+                      <p>{acaoPrincipal.impactoEstimado || acaoPrincipal.impacto || acaoPrincipal.urgencia || 'Ação sugerida com base nos dados.'}</p>
+                      <div className="insights-highlight-card__meta">
+                        <div>
+                          <small>Impacto estimado</small>
+                          <strong>{formatCurrency(acaoPrincipal.impactoEstimado || acaoPrincipal.impacto)}</strong>
+                        </div>
+                        <div>
+                          <small>Tempo necessário</small>
+                          <strong>{acaoPrincipal.tempoNecessario || 'Dados insuficientes'}</strong>
+                        </div>
+                      </div>
+                      <Button variant="secondary">Executar agora</Button>
+                    </div>
+                  </article>
+                ) : (
+                  <p className="insights-empty">Nenhuma ação prioritária no momento.</p>
+                )}
                 <div className="insights-link-row">
                   <span>Ver todas ações recomendadas</span>
                   <span>→</span>
@@ -285,11 +310,7 @@ export default function Insights() {
               <section className="panel insights-section">
                 <div className="section-kicker">Ações recomendadas pela IA</div>
                 <div className="insights-action-list">
-                  {(recomendacoes.length ? recomendacoes : [
-                    { descricao: 'Enviar mensagem para clientes inativos', impactoEstimado: 'R$ 2.300', urgencia: 'Alta' },
-                    { descricao: 'Divulgar promoções nas quintas', impactoEstimado: 'R$ 1.800', urgencia: 'Média' },
-                    { descricao: 'Ativar lembrete de retorno', impactoEstimado: 'R$ 1.200', urgencia: 'Média' },
-                  ]).slice(0, 3).map((acao, index) => (
+                  {recomendacoes.slice(0, 3).map((acao, index) => (
                     <div key={`${acao.descricao || index}`} className="insights-action-row">
                       <label className="insights-check">
                         <input type="checkbox" readOnly />
@@ -302,6 +323,7 @@ export default function Insights() {
                       <span className="insights-action-row__impacto">{formatCurrency(acao.impactoEstimado || acao.impacto)}</span>
                     </div>
                   ))}
+                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
                 </div>
                 <div className="insights-link-row">
                   <span>Ver plano completo</span>
@@ -311,10 +333,10 @@ export default function Insights() {
             </div>
 
             <section className="panel insights-section insights-footer-strip">
-              <div className="section-kicker">Histórico de recomendações</div>
+              <div className="section-kicker">Histórico</div>
               <div className="insights-footer-strip__content">
                 <div>
-                  <strong>{historico.length || 0}</strong>
+                  <strong>{historico.length}</strong>
                   <p>{historico.length > 0 ? 'Última análise realizada recentemente.' : 'Sem histórico ainda.'}</p>
                 </div>
                 <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
@@ -335,6 +357,7 @@ export default function Insights() {
                   <HelpCircle size={18} />
                 </button>
               </div>
+
               {chatAberto && (
                 <div className="insights-sidebar-layout">
                   <div className="insights-sidebar-chat">
@@ -437,70 +460,6 @@ export default function Insights() {
                 <strong>{recomendacoes.length}</strong>
                 <p>{recomendacoes[0]?.descricao || 'Nenhuma ação registrada.'}</p>
               </div>
-            </div>
-
-            <div className="insights-summary-grid" style={{ marginTop: 12 }}>
-              <section className="panel insights-section">
-                <div className="section-kicker">Alertas</div>
-                <div className="insights-list">
-                  {alertas.slice(0, 3).map((item, index) => (
-                    <article key={`${item.titulo || item.descricao || index}`} className="insights-list-item">
-                      <div className="insights-list-item__icon">
-                        <AlertCircle size={18} />
-                      </div>
-                      <div className="insights-list-item__content">
-                        <strong>{item.titulo || 'Alerta'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descrição detalhada.'}</p>
-                      </div>
-                      <div className="insights-list-item__meta">
-                        <small>{item.urgencia || 'Impacto'}</small>
-                        <strong>{item.impacto || '-'}</strong>
-                      </div>
-                    </article>
-                  ))}
-                  {alertas.length === 0 && <p className="insights-empty">Sem alertas no momento.</p>}
-                </div>
-              </section>
-
-              <section className="panel insights-section">
-                <div className="section-kicker">Oportunidades</div>
-                <div className="insights-list">
-                  {oportunidades.slice(0, 3).map((item, index) => (
-                    <article key={`${item.titulo || item.descricao || index}`} className="insights-list-item insights-list-item--oportunidade">
-                      <div className="insights-list-item__icon">
-                        <TrendingUp size={18} />
-                      </div>
-                      <div className="insights-list-item__content">
-                        <strong>{item.titulo || 'Oportunidade'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descrição detalhada.'}</p>
-                      </div>
-                      <div className="insights-list-item__meta">
-                        <small>Impacto</small>
-                        <strong>{item.impacto || '-'}</strong>
-                      </div>
-                    </article>
-                  ))}
-                  {oportunidades.length === 0 && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
-                </div>
-              </section>
-
-              <section className="panel insights-section">
-                <div className="section-kicker">Ações recomendadas</div>
-                <div className="insights-action-list">
-                  {recomendacoes.slice(0, 4).map((item, index) => (
-                    <div key={`${item.descricao || index}`} className="insights-action-row">
-                      <div className="insights-list-item__icon">
-                        <Wrench size={18} />
-                      </div>
-                      <div className="insights-action-row__content">
-                        <strong>{item.descricao || 'Ação recomendada'}</strong>
-                        <p>{item.impactoEstimado || item.urgencia || 'Ação sugerida com base nos dados.'}</p>
-                      </div>
-                    </div>
-                  ))}
-                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
-                </div>
-              </section>
             </div>
           </div>
         </div>
