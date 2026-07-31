@@ -14330,3 +14330,106 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 13px;
   line-height: 1.5;
 }
+
+/* =============================================
+   Neutralize decorative green accents
+   Keep semantic status greens (confirmado/finalizado) intact.
+   ============================================= */
+.login-screen .btn-primary,
+.criar-conta-screen .btn-primary,
+.login-screen button[type="submit"],
+.criar-conta-screen button[type="submit"] {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.18) !important;
+}
+
+.login-screen .btn-primary:hover,
+.criar-conta-screen .btn-primary:hover,
+.login-screen button[type="submit"]:hover,
+.criar-conta-screen button[type="submit"]:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.login-screen .inline-link,
+.criar-conta-screen .inline-link,
+.login-screen .secondary-link,
+.criar-conta-screen .secondary-link,
+.login-screen .login-helper a,
+.criar-conta-screen .login-helper a {
+  color: #ffffff !important;
+}
+
+.login-screen .inline-link:hover,
+.criar-conta-screen .inline-link:hover,
+.login-screen .secondary-link:hover,
+.criar-conta-screen .secondary-link:hover,
+.login-screen .login-helper a:hover,
+.criar-conta-screen .login-helper a:hover {
+  color: #e5e7eb !important;
+}
+
+.legal-header .secondary-link:hover,
+.legal-footer-actions .primary-link:hover,
+.legal-footer-actions .secondary-link:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.gendaz-sidebar__link.is-active {
+  border-left: 3px solid #d1d5db;
+}
+
+.gendaz-btn--primary,
+.gendaz-fab {
+  background: #ffffff !important;
+  color: #111827 !important;
+}
+
+.gendaz-btn--primary:hover,
+.gendaz-fab:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.gendaz-desconto {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}
+
+.gendaz-btn-contato:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+}
+
+.gendaz-modal__form input:focus,
+.gendaz-modal__form select:focus,
+.gendaz-modal__form textarea:focus {
+  border-color: #d1d5db !important;
+  box-shadow: 0 0 0 3px rgba(209, 213, 219, 0.18) !important;
+}
+
+.gendaz-checkbox input[type="checkbox"] {
+  accent-color: #ffffff;
+}
+
+.pricing-section .pricing-cta-pro,
+.pricing-section .pricing-cta-basic {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  box-shadow: none !important;
+}
+
+.pricing-section .pricing-cta:hover,
+.pricing-section .pricing-cta:focus-visible {
+  filter: none !important;
+}
+
+.pricing-section .pricing-cta-pro:hover,
+.pricing-section .pricing-cta-basic:hover {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+}

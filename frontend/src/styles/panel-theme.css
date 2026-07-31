@@ -308,8 +308,8 @@
 }
 
 .app-shell .theme-toggle-menu:hover {
-  background: rgba(var(--primary-rgb), 0.10);
-  color: var(--brand-green);
+  background: rgba(255, 255, 255, 0.10);
+  color: #ffffff;
 }
 
 :root[data-theme='light'] .app-shell {
@@ -374,8 +374,8 @@
 :root[data-theme='light'] .app-shell .topbar-link:hover,
 :root[data-theme='light'] .app-shell .account-panel a:hover,
 :root[data-theme='light'] .app-shell .account-panel button:hover {
-  color: var(--brand-green) !important;
-  -webkit-text-fill-color: var(--brand-green) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
 :root[data-theme='light'] .app-shell .metric-card,
@@ -483,7 +483,7 @@
 :root[data-theme='light'] .app-shell .topbar-link:hover,
 :root[data-theme='light'] .app-shell .account-panel a:hover,
 :root[data-theme='light'] .app-shell .account-panel button:hover {
-  color: var(--brand-green) !important;
+  color: var(--panel-text-primary) !important;
 }
 
 :root[data-theme='light'] .app-shell .metric-card small,
@@ -1020,8 +1020,8 @@
 :root[data-theme='light'] .app-shell .content .section-kicker,
 :root[data-theme='light'] .app-shell .content .plan-price,
 :root[data-theme='light'] .app-shell .content .success-text {
-  color: var(--brand-green) !important;
-  -webkit-text-fill-color: var(--brand-green) !important;
+  color: var(--panel-text-primary) !important;
+  -webkit-text-fill-color: var(--panel-text-primary) !important;
 }
 
 :root[data-theme='light'] .app-shell .tag-list span,
@@ -1041,7 +1041,7 @@
 }
 
 :root[data-theme='light'] .app-shell .schedule-day-toggle input[type='checkbox'] {
-  accent-color: var(--brand-green);
+  accent-color: var(--panel-text-primary);
 }
 
 :root[data-theme='light'] .app-shell .content input,

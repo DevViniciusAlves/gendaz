@@ -330,7 +330,7 @@ public class AuthService {
             UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
                     .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
             if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
-                throw new BusinessException("Sessão inválida para o usuário informado.");
+                log.debug("Header X-Usuario-Id divergente da sessão. Mantendo cookie como fonte de verdade. header={}, sessao={}", usuarioId, usuario.getId());
             }
             if (usuario.getStatus() != StatusUsuario.ATIVO) {
                 throw new BusinessException("Usuário inativo.");

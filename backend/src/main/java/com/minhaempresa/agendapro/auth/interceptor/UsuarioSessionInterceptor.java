@@ -1,7 +1,6 @@
 package com.minhaempresa.agendapro.auth.interceptor;
 
 import com.minhaempresa.agendapro.admin.service.AdminService;
-import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.shared.CookieHelper;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
@@ -9,10 +8,9 @@ import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -35,7 +33,6 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/meu-gendaz/horarios-disponiveis"
     );
 
-    private final UsuarioSessionService usuarioSessionService;
     private final UsuarioRepository usuarioRepository;
     private final AdminService adminService;
 
@@ -60,28 +57,25 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        if (usuarioIdHeader == null || usuarioIdHeader.isBlank()) {
-            if (sessao != null && !sessao.isBlank()) {
-                usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
+        if (sessao != null && !sessao.isBlank()) {
+            Optional<UsuarioEntity> usuarioDaSessao = usuarioRepository.findBySessaoAtiva(sessao);
+            if (usuarioDaSessao.isPresent()) {
+                registrarEmpresaAtual(usuarioDaSessao.get());
+                return true;
             }
+        }
+
+        if (usuarioIdHeader == null || usuarioIdHeader.isBlank()) {
             return true;
         }
 
         try {
             Long usuarioId = Long.valueOf(usuarioIdHeader);
             usuarioRepository.findById(usuarioId).ifPresent(this::registrarEmpresaAtual);
-            if (usuarioSessionService.sessaoValida(usuarioId, sessao)) {
-                return true;
-            }
+            return true;
         } catch (NumberFormatException ignored) {
             return true;
         }
-
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-        response.getWriter().write("{\"mensagem\":\"Sessão inválida ou expirada. Faça login novamente.\"}");
-        return false;
     }
 
     @Override
@@ -112,8 +106,3 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
         return ROTAS_PUBLICAS.stream().anyMatch(uri::startsWith);
     }
 }
-
-
-
-
-

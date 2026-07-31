@@ -142,7 +142,13 @@ export function useLocalData(scope = 'full') {
   }
 
   useEffect(() => {
-    reload(scope === 'insights' ? false : true)
+    const usuarioAtual = getSessionUser()
+    if (usuarioAtual?.id && usuarioAtual?.empresaId) {
+      reload(scope === 'insights' ? false : true)
+    } else {
+      setStateData(emptyData(usuarioAtual))
+      setLoading(false)
+    }
 
     function reloadFromEvent() {
       reload(true)

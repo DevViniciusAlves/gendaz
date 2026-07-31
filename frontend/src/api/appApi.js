@@ -168,7 +168,7 @@ export const appApi = {
   async carregarDados(scope = 'full') {
     const empresaId = empresaIdAtual()
     const estaImpersonando = Boolean(getSessionUser()?.impersonadoPorAdmin)
-    if (!empresaId && scope !== 'insights') {
+    if (!empresaId) {
       return criarBaseLocal(scope, null)
     }
 

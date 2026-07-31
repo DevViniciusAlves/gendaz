@@ -3,7 +3,7 @@ import { Mail, Phone } from 'lucide-react'
 const SEGMENTO_COLORS = {
   at_risk: { bg: '#fee2e2', text: '#dc2626', dot: '#dc2626' },
   regular: { bg: '#ffedd5', text: '#ea580c', dot: '#ea580c' },
-  novo: { bg: '#dcfce7', text: '#16a34a', dot: '#16a34a' },
+  novo: { bg: '#e5e7eb', text: '#111827', dot: '#111827' },
 }
 
 const SEGMENTO_LABELS = { at_risk: 'Alto Risco', regular: 'Regular', novo: 'Novo' }
@@ -44,7 +44,7 @@ function tempoRelativo(data) {
 function corRisco(score) {
   if (score >= 75) return '#dc2626'
   if (score >= 45) return '#f59e0b'
-  return '#16a34a'
+  return '#111827'
 }
 
 function formatarAcao(ultimaMensagem) {
@@ -142,7 +142,7 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
       <footer className="crm-card-footer">
         <div className="crm-card-buttons">
           {[
-            { label: 'Resgatar', template: 'resgate', color: '#16a34a' },
+            { label: 'Resgatar', template: 'resgate', color: '#d1d5db' },
             { label: 'Reconexão', template: 'reconexao', color: '#dc2626' },
             { label: 'Promoções', template: 'promocao', color: '#075ae0' },
           ].map((btn) => (
