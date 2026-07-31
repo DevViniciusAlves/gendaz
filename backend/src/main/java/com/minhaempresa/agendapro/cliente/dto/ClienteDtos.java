@@ -1,6 +1,7 @@
 package com.minhaempresa.agendapro.cliente.dto;
 
 import com.minhaempresa.agendapro.shared.TelefoneInternacional;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Email;
@@ -26,6 +27,7 @@ public final class ClienteDtos {
             String telefone,
             String email,
             String observacoes,
+            StatusCadastro status,
             Long empresaId,
             LocalDateTime dataCriacao,
             LocalDateTime dataAtualizacao

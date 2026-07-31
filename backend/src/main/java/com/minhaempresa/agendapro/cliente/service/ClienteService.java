@@ -21,6 +21,7 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -68,6 +69,7 @@ public class ClienteService {
                     .telefone(telefone)
                     .email(email)
                     .observacoes(sanitizacaoService.texto(request.observacoes()))
+                    .status(StatusCadastro.ATIVO)
                     .empresa(empresa)
                     .build();
             ClienteEntity salvo = clienteRepository.save(cliente);
@@ -154,6 +156,26 @@ public class ClienteService {
         pagamentoRepository.deleteByClienteId(id);
         clienteRepository.delete(cliente);
         auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", cliente.getNome(), null, null);
+    }
+
+    @Transactional
+    public ClienteResponse alterarStatus(Long id, Long empresaId, StatusCadastro status) {
+        ClienteEntity cliente = buscarEntidade(id);
+        validarEmpresa(cliente, empresaId);
+        cliente.setStatus(status == null ? StatusCadastro.ATIVO : status);
+        ClienteEntity salvo = clienteRepository.save(cliente);
+        auditService.registrar(
+                "CLIENTE_STATUS_ALTERADO",
+                "INFO",
+                null,
+                null,
+                cliente.getEmpresa(),
+                "Status do cliente alterado",
+                cliente.getNome() + " -> " + salvo.getStatus().name(),
+                null,
+                null
+        );
+        return mapper.toResponse(salvo);
     }
 
     @Transactional(readOnly = true)

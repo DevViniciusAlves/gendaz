@@ -47,7 +47,7 @@ export default function Clientes() {
     return data.clientes
       .map((cliente) => ({
         ...cliente,
-        status: localStorage.getItem(`cliente_status_${cliente.id}`) || 'ATIVO',
+        status: cliente.status || 'ATIVO',
       }))
       .filter((cliente) => `${cliente.nome} ${cliente.telefone} ${cliente.email || ''}`.toLowerCase().includes(busca.toLowerCase()))
   }, [data.clientes, busca])
@@ -100,16 +100,14 @@ export default function Clientes() {
 
   async function executarBulk() {
     if (!bulkModal || bulkExecutando) return
-    setBulkExecutando(true)
-    setErro('')
-    try {
-      if (bulkModal.acao === 'DESATIVAR') {
-        selecionados.forEach((id) => {
-          localStorage.setItem(`cliente_status_${id}`, 'INATIVO')
-        })
-        await reload(true)
-      } else {
-        await appApi.excluirClientesEmMassa(selecionados)
+      setBulkExecutando(true)
+      setErro('')
+      try {
+        if (bulkModal.acao === 'DESATIVAR') {
+          await Promise.all(selecionados.map((id) => appApi.desativarCliente(id)))
+          await reload(true)
+        } else {
+          await appApi.excluirClientesEmMassa(selecionados)
         await reload(true)
         window.dispatchEvent(new Event('agendapro:data-changed'))
       }
@@ -141,9 +139,10 @@ export default function Clientes() {
   }
 
   function ativarDesativar(cliente) {
-    const novoStatus = cliente.status === 'ATIVO' ? 'INATIVO' : 'ATIVO'
-    localStorage.setItem(`cliente_status_${cliente.id}`, novoStatus)
-    reload(true)
+    const acao = cliente.status === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
+    acao.then(() => reload(true)).catch((error) => {
+      setErro(error.response?.data?.mensagem || 'Não foi possível alterar o status do cliente.')
+    })
   }
 
   async function recarregar() {

@@ -11,6 +11,7 @@ public class ClienteMapper {
                 cliente.getTelefone(),
                 cliente.getEmail(),
                 cliente.getObservacoes(),
+                cliente.getStatus(),
                 cliente.getEmpresa().getId(),
                 cliente.getDataCriacao(),
                 cliente.getDataAtualizacao()

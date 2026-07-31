@@ -19,6 +19,7 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,23 +63,9 @@ public class ClienteBulkService {
                     throw new ResourceNotFoundException("Cliente nao encontrado.");
                 }
 
-                for (AgendamentoEntity agendamento : agendamentoRepository.findByClienteId(id)) {
-                    pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
-                    agendamentoRepository.delete(agendamento);
-                }
-
-                for (ConversaEntity conversa : conversaRepository.findByClienteId(id)) {
-                    mensagemRepository.deleteByConversaId(conversa.getId());
-                    conversaRepository.delete(conversa);
-                }
-
-                crmContatoRepository.deleteByClienteId(id);
-                entregaRepository.deleteByClienteId(id);
-                notificacaoRepository.deleteByClienteId(id);
-                notaFiscalRepository.deleteByClienteId(id);
-                pagamentoRepository.deleteByClienteId(id);
-                clienteRepository.delete(cliente);
-                auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido em massa", cliente.getNome(), null, null);
+                cliente.setStatus(StatusCadastro.INATIVO);
+                clienteRepository.save(cliente);
+                auditService.registrar("CLIENTE_STATUS_ALTERADO", "INFO", null, null, cliente.getEmpresa(), "Cliente desativado em massa", cliente.getNome(), null, null);
                 processados++;
             } catch (RuntimeException ex) {
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));

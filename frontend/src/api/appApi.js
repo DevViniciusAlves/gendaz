@@ -503,11 +503,27 @@ export const appApi = {
     })
   },
 
+  ativarCliente(id) {
+    return comNotificacao(() => api.patch(`/clientes/${id}/ativar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
+      loading: 'Ativando cliente... aguarde',
+      success: 'Cliente ativado com sucesso.',
+      error: 'Não foi possível ativar o cliente.',
+    })
+  },
+
+  desativarCliente(id) {
+    return comNotificacao(() => api.patch(`/clientes/${id}/desativar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
+      loading: 'Desativando cliente... aguarde',
+      success: 'Cliente desativado com sucesso.',
+      error: 'Não foi possível desativar o cliente.',
+    })
+  },
+
   excluirClientesEmMassa(ids) {
-    return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'EXCLUIR', empresaId: empresaIdAtual() }).then((response) => response.data), {
-      loading: 'Excluindo clientes... aguarde',
-      success: 'Clientes excluídos com sucesso.',
-      error: 'Não foi possível excluir os clientes.',
+    return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'DESATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
+      loading: 'Desativando clientes... aguarde',
+      success: 'Clientes desativados com sucesso.',
+      error: 'Não foi possível desativar os clientes.',
     })
   },
 

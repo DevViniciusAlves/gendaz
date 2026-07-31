@@ -2,6 +2,7 @@ package com.minhaempresa.agendapro.cliente.entity;
 
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
@@ -37,6 +38,10 @@ public class ClienteEntity {
     @Column(length = 1000)
     private String observacoes;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatusCadastro status;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id")
     private EmpresaEntity empresa;
@@ -65,6 +70,7 @@ public class ClienteEntity {
     @PrePersist
     void prePersist() {
         dataCriacao = LocalDateTime.now();
+        status = status == null ? StatusCadastro.ATIVO : status;
         validarTelefone();
     }
 

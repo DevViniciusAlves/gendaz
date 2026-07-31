@@ -1,0 +1,6 @@
+ALTER TABLE clientes
+    ADD COLUMN IF NOT EXISTS status VARCHAR(16) NOT NULL DEFAULT 'ATIVO';
+
+UPDATE clientes
+SET status = 'ATIVO'
+WHERE status IS NULL;

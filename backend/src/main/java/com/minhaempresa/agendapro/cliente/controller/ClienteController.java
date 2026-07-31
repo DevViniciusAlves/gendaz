@@ -7,6 +7,7 @@ import com.minhaempresa.agendapro.cliente.dto.ClienteDtos.SalvarClienteRequest;
 import com.minhaempresa.agendapro.cliente.service.ClienteService;
 import com.minhaempresa.agendapro.cliente.service.ClienteBulkService;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -94,6 +95,16 @@ public class ClienteController {
     public ResponseEntity<Void> excluir(@PathVariable Long id, @RequestParam Long empresaId) {
         clienteService.excluir(id, empresaId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<ClienteResponse> ativar(@PathVariable Long id, @RequestParam Long empresaId) {
+        return ResponseEntity.ok(clienteService.alterarStatus(id, empresaId, StatusCadastro.ATIVO));
+    }
+
+    @PatchMapping("/{id}/desativar")
+    public ResponseEntity<ClienteResponse> desativar(@PathVariable Long id, @RequestParam Long empresaId) {
+        return ResponseEntity.ok(clienteService.alterarStatus(id, empresaId, StatusCadastro.INATIVO));
     }
 
     @PostMapping("/acoes-em-massa")
