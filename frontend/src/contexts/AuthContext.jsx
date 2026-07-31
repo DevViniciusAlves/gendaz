@@ -393,7 +393,6 @@ export function AuthProvider({ children }) {
     const plano = response.assinatura?.planoNome || user.plano || null
     const usuarioComPlano = { ...user, plano, assinatura: response.assinatura, statusConta: response.statusConta || 'ACTIVE' }
     clearLocalData()
-    localStorage.removeItem(PENDING_PAYMENT_KEY)
     salvarUsuarioSessao(usuarioComPlano)
     setUsuario(usuarioComPlano)
     return usuarioComPlano
