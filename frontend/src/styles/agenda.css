@@ -118,15 +118,15 @@
 }
 
 .agenda-card-badge-confirmado {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-  color: #10B981 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 .agenda-card-badge-em_atendimento {
-  background-color: rgba(107, 255, 171, 0.15) !important;
-  color: #6bffab !important;
-  border: 1px solid rgba(107, 255, 171, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 .agenda-card-badge-pausado {
@@ -136,9 +136,9 @@
 }
 
 .agenda-card-badge-finalizado {
-  background-color: rgba(16, 185, 129, 0.12) !important;
-  color: #10B981 !important;
-  border: 1px solid rgba(16, 185, 129, 0.3) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: #FFFFFF !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
 }
 
 .agenda-card-badge-cancelado {
@@ -288,12 +288,12 @@
 }
 
 .agenda-card-botao-finalizar {
-  background-color: #6bffab !important;
+  background-color: #d1d1d1 !important;
   color: #000000 !important;
 }
 
 .agenda-card-botao-finalizar:hover {
-  background-color: #5ae89a !important;
+  background-color: #bdbdbd !important;
 }
 
 .agenda-card-botoes-duplos {

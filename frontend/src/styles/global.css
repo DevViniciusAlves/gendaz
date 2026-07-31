@@ -5852,6 +5852,9 @@ tbody tr:hover { background: #fffaf5; }
 .payment-page .btn-primary:hover,
 .payment-page .btn:not(.btn-secondary):not(.btn-ghost):hover {
   transform: translateY(-1px);
+  background: #e5e7eb !important;
+  color: #111827 !important;
+  border-color: rgba(255, 255, 255, 0.20) !important;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
@@ -12022,7 +12025,7 @@ tbody tr:hover { background: #fffaf5; }
 .login-input-icon-left {
   position: absolute;
   left: 14px;
-  color: rgba(15, 17, 21, 0.55);
+  color: rgba(255, 255, 255, 0.72);
   pointer-events: none;
 }
 
@@ -12031,7 +12034,7 @@ tbody tr:hover { background: #fffaf5; }
   right: 12px;
   background: rgba(15, 17, 21, 0.04);
   border: none;
-  color: rgba(15, 17, 21, 0.55);
+  color: rgba(255, 255, 255, 0.72);
   border-radius: 999px;
   cursor: pointer;
   padding: 4px;
@@ -12043,7 +12046,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .login-eye-btn:hover {
   background: rgba(15, 17, 21, 0.08);
-  color: #0f1115;
+  color: #ffffff;
 }
 
 .login-error-v2 {
@@ -12068,7 +12071,8 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .login-submit-v2:hover {
-  background: #36d354;
+  background: #e5e7eb;
+  color: #111827;
   transform: translateY(-1px);
 }
 
@@ -12091,7 +12095,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .login-link-v2:hover {
-  color: var(--color-primary);
+  color: #ffffff;
 }
 
 .login-helper-v2 {
@@ -12157,6 +12161,7 @@ tbody tr:hover { background: #fffaf5; }
 .cc-plan-switch-v2:hover {
   background: rgba(255, 255, 255, 0.12);
   border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .cc-plan-free-v2 {
