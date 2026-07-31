@@ -4,7 +4,7 @@
 
 - Frontend: `https://gendaz.site`
 - API: `https://api.gendaz.site`
-- Banco: PostgreSQL Neon
+- Banco: PostgreSQL Render DB
 
 ## Backend no Render
 
@@ -19,9 +19,9 @@ Variaveis no Render:
 ```env
 SPRING_PROFILES_ACTIVE=prod
 PORT=8080
-SPRING_DATASOURCE_URL=jdbc:postgresql://ep-square-boat-atit1jp-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
-SPRING_DATASOURCE_USERNAME=neondb_owner
-SPRING_DATASOURCE_PASSWORD=SUA_SENHA_DO_NEON
+DATABASE_URL=postgres://usuario:senha@hostname-do-render-db:5432/nome_do_banco?sslmode=require
+DATABASE_USERNAME=usuario
+DATABASE_PASSWORD=sua_senha_do_render_db
 JWT_SECRET=troque-este-segredo
 FRONTEND_URL=https://gendaz.site
 JPA_DDL_AUTO=update
@@ -51,18 +51,18 @@ https://api.gendaz.site/api/pagamentos/planos/webhook/cakto
 
 O Plano Pro esta temporariamente em `R$ 0,10` para teste. Para voltar ao valor real, altere `PlanoBootstrap.VALOR_PRO_TESTE` e crie uma nova migration atualizando `planos.valor_mensal` para `110.00`.
 
-## Banco Neon
+## Banco Render DB
 
-1. Crie um banco PostgreSQL no Neon.
-2. Copie o host, usuario e senha.
-3. Monte a `SPRING_DATASOURCE_URL` no formato JDBC.
-4. Use `sslmode=require` na URL.
+1. Crie um banco PostgreSQL no Render.
+2. Copie a URL interna ou externa fornecida pelo Render.
+3. Prefira usar `DATABASE_URL` no formato nativo do Render.
+4. Se necessario, tambem funciona com `SPRING_DATASOURCE_URL` em formato JDBC.
 5. Nao coloque credenciais reais no codigo.
 
 Exemplo:
 
 ```env
-SPRING_DATASOURCE_URL=jdbc:postgresql://ep-square-boat-atit1jp-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+DATABASE_URL=postgres://usuario:senha@hostname-do-render-db:5432/nome_do_banco?sslmode=require
 ```
 
 ## Frontend na Cloudflare Pages
@@ -114,5 +114,5 @@ A senha sempre e salva com BCrypt e nunca deve ser colocada no codigo.
 
 - `backend/.env.example` e `frontend/.env.example` trazem apenas exemplos seguros.
 - O seed de demo fica bloqueado por `APP_SEED_TEST_DATA=false` e so roda quando essa flag estiver ligada manualmente em desenvolvimento.
-- O profile `prod` deve apontar para Neon no Render.
+- O profile `prod` pode apontar para `DATABASE_URL` ou `SPRING_DATASOURCE_URL`; o backend normaliza ambos.
 

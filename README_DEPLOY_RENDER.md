@@ -1,6 +1,6 @@
 # Deploy do backend AgendEasy no Render com Docker
 
-Este guia configura o backend Spring Boot da pasta `backend/` como Web Service no Render usando Runtime Docker e banco PostgreSQL Neon.
+Este guia configura o backend Spring Boot da pasta `backend/` como Web Service no Render usando Runtime Docker e banco PostgreSQL do Render.
 
 ## 1. Criar o servico
 
@@ -24,7 +24,7 @@ Cadastre estas variaveis no Render. Nao coloque valores reais no codigo.
 ```env
 SPRING_PROFILES_ACTIVE=prod
 PORT=8080
-SPRING_DATASOURCE_URL=jdbc:postgresql://example-neon-host.neon.tech:5432/example_database?sslmode=require
+DATABASE_URL=postgres://usuario:senha@hostname-do-render-db:5432/nome_do_banco?sslmode=require
 DATABASE_USERNAME=example_user
 DATABASE_PASSWORD=example_password
 JWT_SECRET=replace-with-render-secret-value
@@ -38,15 +38,15 @@ PAYMENT_CANCEL_URL=https://example.pages.dev/sistema/planos
 APP_SEED_TEST_DATA=false
 ```
 
-## 3. Neon PostgreSQL
+## 3. Render PostgreSQL
 
-Use a URL em formato JDBC:
+Use a URL fornecida pelo Render.
 
 ```text
-jdbc:postgresql://HOST_DO_NEON:5432/NOME_DO_BANCO?sslmode=require
+postgres://USUARIO:SENHA@HOST_DO_RENDER_DB:5432/NOME_DO_BANCO?sslmode=require
 ```
 
-O parametro `sslmode=require` e importante para conexoes com Neon.
+O parametro `sslmode=require` e importante para conexoes com o Render.
 
 ## 4. Deploy
 
@@ -71,7 +71,7 @@ VITE_MODO_DEMO=false
 ## 6. Seguranca
 
 - Nao commite `.env` real.
-- Nao coloque senha Neon no repositorio.
+- Nao coloque senha do Render DB no repositorio.
 - Nao coloque tokens sensiveis no codigo.
 - Nao use JWT secret real em arquivo versionado.
 - Use `backend/.env.example` apenas como modelo seguro.

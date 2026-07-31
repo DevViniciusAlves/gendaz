@@ -4,7 +4,7 @@
 Definir o minimo operacional para backup, restore e recuperacao apos incidente.
 
 ## 1. Banco de dados
-- Manter backup automatizado do PostgreSQL/Neon com retencao definida pelo ambiente de producao.
+- Manter backup automatizado do PostgreSQL do Render com retencao definida pelo ambiente de producao.
 - Testar restauracao em ambiente separado antes de confiar no backup.
 - Garantir que as variaveis do banco estejam fora do Git.
 
