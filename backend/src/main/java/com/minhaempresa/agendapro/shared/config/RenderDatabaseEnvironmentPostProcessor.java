@@ -18,6 +18,7 @@ public class RenderDatabaseEnvironmentPostProcessor implements EnvironmentPostPr
     public void postProcessEnvironment(ConfigurableEnvironment environment, SpringApplication application) {
         Map<String, Object> overrides = new LinkedHashMap<>();
 
+        String urlSource = datasourceUrlSource(environment);
         String rawUrl = firstNonBlank(
                 environment.getProperty("SPRING_DATASOURCE_URL"),
                 environment.getProperty("JDBC_DATABASE_URL"),
@@ -25,10 +26,12 @@ public class RenderDatabaseEnvironmentPostProcessor implements EnvironmentPostPr
         );
 
         if (!StringUtils.hasText(rawUrl)) {
+            urlSource = "PG* variables";
             rawUrl = buildJdbcUrlFromPgVars(environment);
         }
 
         String normalizedUrl = normalizeJdbcUrl(rawUrl);
+        logDatasourceTarget(urlSource, normalizedUrl);
         if (StringUtils.hasText(normalizedUrl) && isBlank(environment, "spring.datasource.url")) {
             overrides.put("spring.datasource.url", normalizedUrl);
         }
@@ -110,6 +113,64 @@ public class RenderDatabaseEnvironmentPostProcessor implements EnvironmentPostPr
             builder.append("?sslmode=require");
         }
         return builder.toString();
+    }
+
+    private String datasourceUrlSource(ConfigurableEnvironment environment) {
+        if (StringUtils.hasText(environment.getProperty("SPRING_DATASOURCE_URL"))) {
+            return "SPRING_DATASOURCE_URL";
+        }
+        if (StringUtils.hasText(environment.getProperty("JDBC_DATABASE_URL"))) {
+            return "JDBC_DATABASE_URL";
+        }
+        if (StringUtils.hasText(environment.getProperty("DATABASE_URL"))) {
+            return "DATABASE_URL";
+        }
+        return "none";
+    }
+
+    private void logDatasourceTarget(String source, String jdbcUrl) {
+        if (!StringUtils.hasText(jdbcUrl)) {
+            System.out.println("[database-config] datasource nao configurado por variavel de ambiente.");
+            return;
+        }
+        try {
+            String uriValue = jdbcUrl.startsWith("jdbc:") ? jdbcUrl.substring("jdbc:".length()) : jdbcUrl;
+            URI uri = URI.create(uriValue);
+            String database = StringUtils.hasText(uri.getPath()) ? uri.getPath().replaceFirst("^/", "") : "";
+            String query = uri.getQuery();
+            String sslmode = "not-set";
+            boolean userInUrl = false;
+            boolean passwordInUrl = false;
+            if (StringUtils.hasText(query)) {
+                for (String param : query.split("&")) {
+                    String lowerParam = param.toLowerCase(Locale.ROOT);
+                    if (lowerParam.startsWith("sslmode=")) {
+                        sslmode = param.substring("sslmode=".length());
+                    }
+                    if (lowerParam.startsWith("user=")) {
+                        userInUrl = true;
+                    }
+                    if (lowerParam.startsWith("password=")) {
+                        passwordInUrl = true;
+                    }
+                }
+            }
+            int port = uri.getPort() > 0 ? uri.getPort() : 5432;
+            System.out.printf(
+                    "[database-config] source=%s host=%s port=%d database=%s sslmode=%s userInUrl=%s passwordInUrl=%s preferIPv4Stack=%s preferIPv6Addresses=%s%n",
+                    source,
+                    uri.getHost(),
+                    port,
+                    database,
+                    sslmode,
+                    userInUrl,
+                    passwordInUrl,
+                    System.getProperty("java.net.preferIPv4Stack"),
+                    System.getProperty("java.net.preferIPv6Addresses")
+            );
+        } catch (RuntimeException ex) {
+            System.out.printf("[database-config] falha ao sanitizar datasource source=%s error=%s%n", source, ex.getClass().getSimpleName());
+        }
     }
 
     private String normalizeJdbcUrl(String rawUrl) {

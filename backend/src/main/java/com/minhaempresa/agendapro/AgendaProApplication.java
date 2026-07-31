@@ -10,6 +10,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableCaching
 public class AgendaProApplication {
     public static void main(String[] args) {
+        System.setProperty("java.net.preferIPv4Stack", "true");
+        System.setProperty("java.net.preferIPv6Addresses", "false");
         SpringApplication.run(AgendaProApplication.class, args);
     }
 }

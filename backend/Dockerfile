@@ -13,4 +13,4 @@ COPY --from=build /app/target/agendapro-0.0.1-SNAPSHOT.jar /app/app.jar
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java ${JAVA_OPTS:--Xmx350m -Xms150m -XX:+UseG1GC -XX:MaxGCPauseMillis=200} -jar /app/app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Djava.net.preferIPv4Stack=true -Djava.net.preferIPv6Addresses=false ${JAVA_OPTS:--Xmx350m -Xms150m -XX:+UseG1GC -XX:MaxGCPauseMillis=200} -jar /app/app.jar"]
