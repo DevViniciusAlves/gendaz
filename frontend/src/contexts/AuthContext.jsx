@@ -5,15 +5,16 @@ import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
 import { getSessionUser, setSessionUser } from '../api/axiosConfig.js'
 
 const AuthContext = createContext(null)
-const PENDING_PAYMENT_KEY = 'agendeasy_pagamento_pendente'
-const IMPERSONATION_KEY = 'agendeasy_admin_impersonation'
+let pendingPaymentMemory = null
+let adminUsuarioMemory = null
+let impersonationMemory = null
 
 function limparSessaoUsuario() {
   setSessionUser(null)
 }
 
 function limparSessaoAdmin() {
-  localStorage.removeItem('agendeasy_admin_user')
+  adminUsuarioMemory = null
 }
 
 function emitirMudancaSessao() {
@@ -74,10 +75,8 @@ function emitirToast(type, message) {
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [usuario, setUsuario] = useState(() => getSessionUser())
-  const [impersonation, setImpersonation] = useState(() => JSON.parse(localStorage.getItem(IMPERSONATION_KEY) || 'null'))
-  const [adminUsuario, setAdminUsuario] = useState(() => {
-    return JSON.parse(localStorage.getItem('agendeasy_admin_user') || 'null')
-  })
+  const [impersonation, setImpersonation] = useState(() => impersonationMemory)
+  const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const refreshEmAndamentoRef = useRef(null)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
 
@@ -162,6 +161,19 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     async function validarSessaoInicial() {
+      if (!adminUsuario) {
+        try {
+          const adminRefresh = await adminApi.refresh()
+          if (adminRefresh?.admin?.perfil === 'SUPER_ADMIN') {
+            adminUsuarioMemory = adminRefresh.admin
+            if (mounted) setAdminUsuario(adminRefresh.admin)
+            if (mounted) setAuthLoading(false)
+            return
+          }
+        } catch {
+          // cai para o fluxo normal
+        }
+      }
       if (adminUsuario) {
         if (mounted) setAuthLoading(false)
         return
@@ -346,7 +358,7 @@ export function AuthProvider({ children }) {
       }
       clearLocalData()
       limparSessaoUsuario()
-      localStorage.removeItem(PENDING_PAYMENT_KEY)
+      pendingPaymentMemory = null
       setUsuario(null)
       const adminResponse = await adminApi.login(email, senha)
       setAdminUsuario(adminResponse.admin)
@@ -361,7 +373,7 @@ export function AuthProvider({ children }) {
         mensagem: response.mensagem,
         statusConta: response.statusConta,
       }
-      localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(pending))
+      pendingPaymentMemory = pending
       return { pendingPayment: true, ...pending }
     }
     if (response.statusConta === 'ACCOUNT_INACTIVE') {
@@ -372,7 +384,7 @@ export function AuthProvider({ children }) {
         statusConta: 'ACCOUNT_INACTIVE',
       }
       clearLocalData()
-      localStorage.removeItem(PENDING_PAYMENT_KEY)
+      pendingPaymentMemory = null
       salvarUsuarioSessao(userInativo)
       setUsuario(userInativo)
       return userInativo
@@ -400,7 +412,7 @@ export function AuthProvider({ children }) {
       }
       clearLocalData()
       limparSessaoUsuario()
-      localStorage.setItem(PENDING_PAYMENT_KEY, JSON.stringify(pending))
+      pendingPaymentMemory = pending
       setUsuario(null)
       return { pendingPayment: true, ...pending }
     }
@@ -413,7 +425,7 @@ export function AuthProvider({ children }) {
       statusConta: response.statusConta || 'ACTIVE',
     }
     clearLocalData()
-    localStorage.removeItem(PENDING_PAYMENT_KEY)
+    pendingPaymentMemory = null
     salvarUsuarioSessao(usuarioComPlano)
     setUsuario(usuarioComPlano)
     return usuarioComPlano
@@ -461,7 +473,7 @@ export function AuthProvider({ children }) {
   }
 
   function iniciarImpersonacao(payload) {
-    const adminAtual = JSON.parse(localStorage.getItem('agendeasy_admin_user') || 'null')
+    const adminAtual = adminUsuarioMemory
     const impersonationData = { ...payload, admin: adminAtual }
     const usuarioImpersonado = {
       id: payload?.usuarioId || payload?.empresaId,
@@ -474,7 +486,7 @@ export function AuthProvider({ children }) {
       impersonadoPorAdmin: true,
     }
     clearLocalData()
-    localStorage.setItem(IMPERSONATION_KEY, JSON.stringify(impersonationData))
+    impersonationMemory = impersonationData
     setImpersonation(impersonationData)
     setUsuario(usuarioImpersonado)
   }
@@ -487,7 +499,7 @@ export function AuthProvider({ children }) {
         // ignora erro da API — limpeza deve acontecer mesmo assim
       }
     }
-    localStorage.removeItem(IMPERSONATION_KEY)
+    impersonationMemory = null
     limparSessaoUsuario()
     clearLocalData()
     setImpersonation(null)
@@ -495,11 +507,11 @@ export function AuthProvider({ children }) {
   }
 
   function getPagamentoPendente() {
-    return JSON.parse(localStorage.getItem(PENDING_PAYMENT_KEY) || 'null')
+    return pendingPaymentMemory
   }
 
   function limparPagamentoPendente() {
-    localStorage.removeItem(PENDING_PAYMENT_KEY)
+    pendingPaymentMemory = null
   }
 
   function atualizarUsuario(partial) {

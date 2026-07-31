@@ -12,14 +12,16 @@ export const adminApi = {
     return api.get('/admin/access')
   },
 
+  refresh() {
+    return api.get('/admin/auth/refresh').then((response) => response.data)
+  },
+
   async login(email, senha) {
-    localStorage.removeItem('agendeasy_admin_user')
     try {
       const response = await api.post('/admin/auth/login', { email: email.trim().toLowerCase(), senha })
       if (response.data?.admin?.perfil !== 'SUPER_ADMIN') {
         throw new Error('Resposta admin invalida.')
       }
-      localStorage.setItem('agendeasy_admin_user', JSON.stringify(response.data.admin))
       return response.data
     } catch (error) {
       const mensagem = error.response ? extrairMensagemErro(error) : (error.message || 'Nao foi possivel entrar no painel admin.')
@@ -28,7 +30,6 @@ export const adminApi = {
   },
 
   logout() {
-    localStorage.removeItem('agendeasy_admin_user')
     return api.post('/admin/auth/logout').then((response) => response.data)
   },
 

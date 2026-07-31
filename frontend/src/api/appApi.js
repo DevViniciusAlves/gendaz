@@ -167,7 +167,7 @@ export const appApi = {
 
   async carregarDados(scope = 'full') {
     const empresaId = empresaIdAtual()
-    const estaImpersonando = Boolean(localStorage.getItem('agendeasy_admin_impersonation'))
+    const estaImpersonando = Boolean(getSessionUser()?.impersonadoPorAdmin)
     if (!empresaId && scope !== 'insights') {
       return criarBaseLocal(scope, null)
     }

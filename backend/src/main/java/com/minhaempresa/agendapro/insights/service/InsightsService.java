@@ -13,6 +13,7 @@ import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightItem;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsResponse;
 import com.minhaempresa.agendapro.insights.entity.InsightEntity;
 import com.minhaempresa.agendapro.insights.repository.InsightRepository;
+import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -329,11 +330,11 @@ public class InsightsService {
 
     private void validarAcessoEmpresa(Long empresaId) {
         if (empresaId == null) {
-            throw new IllegalArgumentException("Empresa nao identificada.");
+            throw new BusinessException("Empresa nao identificada.");
         }
         Long empresaContexto = CompanyContext.getCompanyId();
         if (empresaContexto != null && !empresaContexto.equals(empresaId)) {
-            throw new SecurityException("Acesso negado.");
+            throw new BusinessException("Acesso negado para esta empresa.");
         }
     }
 

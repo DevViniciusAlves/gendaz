@@ -29,6 +29,12 @@ public class AdminController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/auth/refresh")
+    public ResponseEntity<AdminLoginResponse> refresh(HttpServletRequest http) {
+        UsuarioEntity admin = adminService.refresh(tokenAdmin(http));
+        return ResponseEntity.ok(new AdminLoginResponse(null, new AdminUsuarioResponse(admin.getId(), admin.getNome(), admin.getEmail(), admin.getPerfil().name())));
+    }
+
     @PostMapping("/auth/login")
     public ResponseEntity<AdminLoginResponse> login(@Valid @RequestBody AdminLoginRequest request, HttpServletRequest http, HttpServletResponse response) {
         AdminLoginResponse login = adminService.login(request, ip(http), userAgent(http));

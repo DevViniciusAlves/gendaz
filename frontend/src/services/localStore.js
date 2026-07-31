@@ -1,8 +1,8 @@
-﻿import { initialData } from '../data/mockData.js'
+import { initialData } from '../data/mockData.js'
 
-const KEY = 'agendapro_data'
-const USER_KEY = 'agendapro_usuario'
 const DATA_VERSION = 4
+let memoryData = structuredClone(initialData)
+let memoryUser = null
 
 export const PLANOS = {
   BASICO: {
@@ -55,32 +55,36 @@ export function emptyData(usuario = null) {
 }
 
 export function getData() {
-  const saved = localStorage.getItem(KEY)
-  if (saved) {
-    const parsed = JSON.parse(saved)
-    if (parsed.__version === DATA_VERSION) return parsed
-  }
-  localStorage.setItem(KEY, JSON.stringify(initialData))
-  return structuredClone(initialData)
+  if (memoryData?.__version === DATA_VERSION) return memoryData
+  memoryData = structuredClone(initialData)
+  return memoryData
 }
 
 export function clearLocalData() {
-  localStorage.removeItem(KEY)
+  memoryData = structuredClone(initialData)
   window.dispatchEvent(new Event('agendapro:data-changed'))
 }
 
 export function setData(data) {
-  localStorage.setItem(KEY, JSON.stringify(data))
+  memoryData = data
   window.dispatchEvent(new Event('agendapro:data-changed'))
 }
 
 export function updateCurrentUser(partial) {
-  const current = JSON.parse(localStorage.getItem(USER_KEY) || 'null')
+  const current = memoryUser
   if (!current) return null
 
   const updated = { ...current, ...partial }
-  localStorage.setItem(USER_KEY, JSON.stringify(updated))
+  memoryUser = updated
   return updated
+}
+
+export function setCurrentUser(usuario) {
+  memoryUser = usuario || null
+}
+
+export function getCurrentUser() {
+  return memoryUser
 }
 
 export function nextId(items) {
@@ -96,6 +100,3 @@ export function todayIso() {
   const timezoneOffset = hoje.getTimezoneOffset() * 60000
   return new Date(hoje.getTime() - timezoneOffset).toISOString().slice(0, 10)
 }
-
-
-

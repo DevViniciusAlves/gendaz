@@ -5,6 +5,7 @@ import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightHistoryRespon
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsRequest;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsResponse;
 import com.minhaempresa.agendapro.insights.service.InsightsService;
+import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import jakarta.validation.Valid;
 import java.util.List;
@@ -126,6 +127,13 @@ public class InsightsController {
     }
 
     private Long resolverEmpresaId(Long empresaId) {
-        return empresaId != null ? empresaId : CompanyContext.getCompanyId();
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null) {
+            if (empresaId != null && !empresaContexto.equals(empresaId)) {
+                throw new BusinessException("Empresa da sessão nao corresponde ao Insights solicitado.");
+            }
+            return empresaContexto;
+        }
+        return empresaId;
     }
 }

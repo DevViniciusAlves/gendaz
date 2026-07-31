@@ -88,6 +88,11 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
+    public UsuarioEntity refresh(String token) {
+        return exigirAdmin(token);
+    }
+
+    @Transactional(readOnly = true)
     public AdminDashboardResponse dashboard(String token) {
         exigirAdmin(token);
         List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findAll();
