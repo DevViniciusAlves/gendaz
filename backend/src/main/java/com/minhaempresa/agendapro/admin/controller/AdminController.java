@@ -6,6 +6,7 @@ import com.minhaempresa.agendapro.admin.service.AdminService;
 import com.minhaempresa.agendapro.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.agendapro.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.agendapro.profissional.dto.ProfissionalDtos.SalvarProfissionalRequest;
+import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
