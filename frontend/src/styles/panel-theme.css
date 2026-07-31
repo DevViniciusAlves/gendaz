@@ -308,8 +308,8 @@
 }
 
 .app-shell .theme-toggle-menu:hover {
-  background: rgba(255, 255, 255, 0.10);
-  color: #ffffff;
+  background: rgba(var(--primary-rgb), 0.10);
+  color: var(--brand-green);
 }
 
 :root[data-theme='light'] .app-shell {
@@ -374,8 +374,8 @@
 :root[data-theme='light'] .app-shell .topbar-link:hover,
 :root[data-theme='light'] .app-shell .account-panel a:hover,
 :root[data-theme='light'] .app-shell .account-panel button:hover {
-  color: var(--panel-text-primary) !important;
-  -webkit-text-fill-color: var(--panel-text-primary) !important;
+  color: var(--brand-green) !important;
+  -webkit-text-fill-color: var(--brand-green) !important;
 }
 
 :root[data-theme='light'] .app-shell .metric-card,
