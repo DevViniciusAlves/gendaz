@@ -5481,19 +5481,22 @@ tbody tr:hover { background: #fffaf5; }
   background: var(--bg);
   color: #ffffff;
   color-scheme: dark;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
 }
 
 .payment-page,
-.payment-page * {
-  font-family: 'Poppins', sans-serif;
+.payment-page *,
+.payment-page *::before,
+.payment-page *::after {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
 }
 
 .payment-page p,
 .payment-page small,
 .payment-page em {
-  font-weight: 300;
+  font-weight: 500 !important;
 }
 
 .payment-page label,
@@ -5502,7 +5505,7 @@ tbody tr:hover { background: #fffaf5; }
 .payment-page select,
 .payment-page textarea,
 .payment-page button {
-  font-weight: 500;
+  font-weight: 500 !important;
 }
 .payment-pro-card {
   width: min(760px, 100%);
@@ -11797,7 +11800,10 @@ tbody tr:hover { background: #fffaf5; }
    ============================================================ */
 @font-face {
   font-family: 'Faktum';
-  src: url('/fonts/Faktum-Medium.woff2') format('woff2');
+  src:
+    local('Faktum Medium'),
+    local('Faktum'),
+    url('/fonts/Faktum-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
@@ -11895,6 +11901,15 @@ tbody tr:hover { background: #fffaf5; }
   align-items: center;
   justify-content: center;
   padding: 24px;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.login-screen-v2 *,
+.login-screen-v2 *::before,
+.login-screen-v2 *::after {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
 }
 
 .login-card-v2 {
