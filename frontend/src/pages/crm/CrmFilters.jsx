@@ -4,7 +4,7 @@ const SEGMENTO_OPTIONS = [
   { value: 'todos', label: 'Todos', cor: '' },
   { value: 'at_risk', label: 'Alto Risco', cor: '#ef4444' },
   { value: 'regular', label: 'Regular', cor: '#f59e0b' },
-  { value: 'novo', label: 'Novo', cor: '#d1d5db' },
+  { value: 'novo', label: 'Novo', cor: '#4bab3a' },
 ]
 
 const ORDENACAO_OPTIONS = [

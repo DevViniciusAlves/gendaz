@@ -3,7 +3,7 @@ import { Mail, Phone } from 'lucide-react'
 const SEGMENTO_COLORS = {
   at_risk: { bg: '#fee2e2', text: '#dc2626', dot: '#dc2626' },
   regular: { bg: '#ffedd5', text: '#ea580c', dot: '#ea580c' },
-  novo: { bg: '#e5e7eb', text: '#111827', dot: '#111827' },
+  novo: { bg: 'rgba(75, 171, 58, 0.12)', text: '#4bab3a', dot: '#4bab3a' },
 }
 
 const SEGMENTO_LABELS = { at_risk: 'Alto Risco', regular: 'Regular', novo: 'Novo' }
@@ -142,7 +142,7 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
       <footer className="crm-card-footer">
         <div className="crm-card-buttons">
           {[
-            { label: 'Resgatar', template: 'resgate', color: '#d1d5db' },
+            { label: 'Resgatar', template: 'resgate', color: '#4bab3a' },
             { label: 'Reconexão', template: 'reconexao', color: '#dc2626' },
             { label: 'Promoções', template: 'promocao', color: '#075ae0' },
           ].map((btn) => (
