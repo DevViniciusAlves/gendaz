@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -156,18 +157,22 @@ public class MeuGendazAuthService {
             return java.util.Optional.empty();
         }
 
-        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email).orElseGet(() ->
-                usuarioRepository.save(UsuarioEntity.builder()
-                        .nome(cliente.getNome())
-                        .email(cliente.getEmail())
-                        .senha(hashUsuarioTemporario(cliente.getEmail(), empresa.getId()))
-                        .perfil(PerfilUsuario.ATENDENTE)
-                        .status(StatusUsuario.ATIVO)
-                        .aceitouTermos(true)
-                        .empresa(empresa)
-                        .build())
-        );
-        return java.util.Optional.of(usuario);
+        try {
+            UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email).orElseGet(() ->
+                    usuarioRepository.save(UsuarioEntity.builder()
+                            .nome(cliente.getNome())
+                            .email(cliente.getEmail())
+                            .senha(hashUsuarioTemporario(cliente.getEmail(), empresa.getId()))
+                            .perfil(PerfilUsuario.ATENDENTE)
+                            .status(StatusUsuario.ATIVO)
+                            .aceitouTermos(true)
+                            .empresa(empresa)
+                            .build())
+            );
+            return java.util.Optional.of(usuario);
+        } catch (DataIntegrityViolationException ex) {
+            return usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email);
+        }
     }
 
     private String normalizarSlug(String slug) {
