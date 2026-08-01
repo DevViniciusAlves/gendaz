@@ -46,7 +46,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AdminService {
     private final UsuarioRepository usuarioRepository;
@@ -69,6 +68,66 @@ public class AdminService {
 
     @Value("${PAYMENT_PROVIDER:local}")
     private String paymentProvider;
+
+    public AdminService(
+            UsuarioRepository usuarioRepository,
+            EmpresaRepository empresaRepository,
+            PagamentoPlanoRepository pagamentoPlanoRepository,
+            AssinaturaRepository assinaturaRepository,
+            AdminImpersonationSessionRepository impersonationSessionRepository,
+            ChamadoRepository chamadoRepository,
+            AssinaturaService assinaturaService,
+            PlanoService planoService,
+            AdminAuditService auditService,
+            PasswordService passwordService,
+            PagamentoService pagamentoService,
+            UsuarioSessionService usuarioSessionService,
+            ProfissionalService profissionalService
+    ) {
+        this.usuarioRepository = usuarioRepository;
+        this.empresaRepository = empresaRepository;
+        this.pagamentoPlanoRepository = pagamentoPlanoRepository;
+        this.assinaturaRepository = assinaturaRepository;
+        this.impersonationSessionRepository = impersonationSessionRepository;
+        this.chamadoRepository = chamadoRepository;
+        this.assinaturaService = assinaturaService;
+        this.planoService = planoService;
+        this.auditService = auditService;
+        this.passwordService = passwordService;
+        this.pagamentoService = pagamentoService;
+        this.usuarioSessionService = usuarioSessionService;
+        this.profissionalService = profissionalService;
+    }
+
+    public AdminService(
+            UsuarioRepository usuarioRepository,
+            EmpresaRepository empresaRepository,
+            PagamentoPlanoRepository pagamentoPlanoRepository,
+            AdminImpersonationSessionRepository impersonationSessionRepository,
+            ChamadoRepository chamadoRepository,
+            AssinaturaService assinaturaService,
+            AdminAuditService auditService,
+            PasswordService passwordService,
+            PagamentoService pagamentoService,
+            UsuarioSessionService usuarioSessionService,
+            ProfissionalService profissionalService
+    ) {
+        this(
+                usuarioRepository,
+                empresaRepository,
+                pagamentoPlanoRepository,
+                null,
+                impersonationSessionRepository,
+                chamadoRepository,
+                assinaturaService,
+                null,
+                auditService,
+                passwordService,
+                pagamentoService,
+                usuarioSessionService,
+                profissionalService
+        );
+    }
 
     @Transactional
     public AdminLoginResponse login(AdminLoginRequest request, String ip, String userAgent) {
