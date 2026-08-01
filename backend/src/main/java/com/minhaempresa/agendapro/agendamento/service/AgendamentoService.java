@@ -326,6 +326,21 @@ public class AgendamentoService {
     }
 
     @Transactional
+    public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request, Long empresaId) {
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        validarEmpresa(agendamento, empresaId);
+        LocalTime horaFim = request.horaInicio().plusMinutes(agendamento.getServico().getDuracaoMinutos());
+        validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
+        validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
+        agendamento.setData(request.data());
+        agendamento.setHoraInicio(request.horaInicio());
+        agendamento.setHoraFim(horaFim);
+        validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
+        agendamento.setStatus(StatusAgendamento.PENDENTE);
+        return mapper.toResponse(agendamentoRepository.save(agendamento));
+    }
+
+    @Transactional
     public AgendamentoResponse atualizar(Long id, AtualizarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());

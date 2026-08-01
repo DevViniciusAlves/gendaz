@@ -254,12 +254,13 @@ public class MeuGendazController {
     @PatchMapping("/agendamentos/{id}/reagendar")
     public ResponseEntity<?> reagendar(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
-            findUserFromSession(request);
+            UsuarioEntity user = findUserFromSession(request);
+            Long empresaId = getEmpresaId(user);
             RemarcarAgendamentoRequest req = new RemarcarAgendamentoRequest(
                     java.time.LocalDate.parse(body.get("novaData")),
                     java.time.LocalTime.parse(body.get("novaHora"))
             );
-            AgendamentoResponse response = agendamentoService.remarcar(id, req);
+            AgendamentoResponse response = agendamentoService.remarcar(id, req, empresaId);
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
@@ -272,8 +273,8 @@ public class MeuGendazController {
     @DeleteMapping("/agendamentos/{id}/cancelar")
     public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body, HttpServletRequest request) {
         try {
-            findUserFromSession(request);
-            agendamentoService.cancelar(id, null);
+            UsuarioEntity user = findUserFromSession(request);
+            agendamentoService.cancelar(id, getEmpresaId(user));
             return ResponseEntity.ok(Map.of("mensagem", "Agendamento cancelado com sucesso."));
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
@@ -450,3 +451,4 @@ public class MeuGendazController {
         }
     }
 }
+
