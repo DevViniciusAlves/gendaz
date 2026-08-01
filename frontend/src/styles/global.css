@@ -12859,12 +12859,28 @@ tbody tr:hover { background: #fffaf5; }
 /* ============================================================
    Meu Gendaz - portal do cliente
    ============================================================ */
+.gendaz-shell,
+.gendaz-auth {
+  --gendaz-bg: #080808;
+  --gendaz-surface: #111111;
+  --gendaz-surface-2: #171717;
+  --gendaz-surface-3: #1d1d1d;
+  --gendaz-border: rgba(255, 255, 255, 0.10);
+  --gendaz-border-strong: rgba(255, 255, 255, 0.18);
+  --gendaz-text: #f5f5f5;
+  --gendaz-muted: rgba(245, 245, 245, 0.68);
+  --gendaz-soft: rgba(255, 255, 255, 0.05);
+  --gendaz-soft-hover: rgba(255, 255, 255, 0.08);
+  --gendaz-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --gendaz-shadow-hover: 0 24px 56px rgba(0, 0, 0, 0.48);
+}
+
 .gendaz-shell {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 264px minmax(0, 1fr);
-  background: #0d0c0c;
-  color: #ffffff;
+  background: var(--gendaz-bg);
+  color: var(--gendaz-text);
 }
 
 .gendaz-sidebar {
@@ -12873,10 +12889,10 @@ tbody tr:hover { background: #fffaf5; }
   height: 100vh;
   padding: 22px 14px;
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.16), transparent 34%),
-    linear-gradient(180deg, #292929 0%, #292929 100%);
-  border-right: 0;
-  color: #ffffff;
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 34%),
+    linear-gradient(180deg, #121212 0%, #0d0d0d 100%);
+  border-right: 1px solid var(--gendaz-border);
+  color: var(--gendaz-text);
 }
 
 .gendaz-sidebar__brand strong,
@@ -12893,7 +12909,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-panel span,
 .gendaz-panel small,
 .gendaz-auth__card p {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--gendaz-muted);
   font-size: 13px;
 }
 
@@ -12949,15 +12965,15 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-sidebar__link:hover {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.09);
+  color: var(--gendaz-text);
+  background: var(--gendaz-soft-hover);
   transform: translateX(2px);
 }
 
 .gendaz-sidebar__link.is-active {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.12);
-  border-left: 3px solid #42f569;
+  color: var(--gendaz-text);
+  background: rgba(255, 255, 255, 0.10);
+  border-left: 3px solid rgba(255, 255, 255, 0.72);
   padding-left: 9px;
   font-weight: 800;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
@@ -12995,7 +13011,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-page__header p {
-  color: rgba(255, 255, 255, 0.68);
+  color: var(--gendaz-muted);
   font-size: 13px;
 }
 
@@ -13021,20 +13037,18 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-panel,
 .gendaz-auth__card,
 .gendaz-chat {
-  background: rgba(18, 20, 28, 0.92);
-  backdrop-filter: blur(18px) saturate(120%);
-  -webkit-backdrop-filter: blur(18px) saturate(120%);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  border: 1px solid var(--gendaz-border);
+  border-radius: 14px;
   padding: 20px;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .gendaz-card:hover,
 .gendaz-panel:hover {
   transform: translateY(-2px);
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.42);
+  box-shadow: var(--gendaz-shadow-hover);
 }
 
 .gendaz-card,
@@ -13046,7 +13060,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-card strong,
 .gendaz-panel strong {
-  color: #ffffff;
+  color: var(--gendaz-text);
 }
 
 .gendaz-panel__head {
@@ -13097,13 +13111,14 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ffffff;
+  background: var(--gendaz-soft);
+  color: var(--gendaz-text);
+  border: 1px solid var(--gendaz-border);
 }
 
 .gendaz-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42);
 }
 
 .gendaz-btn:disabled {
@@ -13115,24 +13130,25 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-btn--primary,
 .gendaz-fab {
-  background: #42f569;
-  color: #000000;
+  background: #f5f5f5;
+  color: #0a0a0a;
+  border: 1px solid #f5f5f5;
 }
 
 .gendaz-btn--primary:hover {
-  background: #35d455;
-  box-shadow: 0 8px 24px rgba(66, 245, 105, 0.2);
+  background: #ffffff;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.14);
 }
 
 .gendaz-btn--ghost {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--gendaz-border);
 }
 
 .gendaz-btn--voltar {
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--color-text-secondary);
+  border: 1px solid var(--gendaz-border);
+  color: var(--gendaz-muted);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -13140,9 +13156,9 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn--voltar:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: var(--color-accent);
-  color: var(--color-text);
+  background: var(--gendaz-soft-hover);
+  border-color: var(--gendaz-border-strong);
+  color: var(--gendaz-text);
 }
 
 .gendaz-table {
@@ -13151,11 +13167,11 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-table__row {
-  background: rgba(18, 20, 28, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  border: 1px solid var(--gendaz-border);
+  border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .gendaz-chat__messages {
@@ -13171,13 +13187,13 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-chat__message--ia {
-  background: rgba(18, 20, 28, 0.92);
-  color: #ffffff;
+  background: var(--gendaz-surface-2);
+  color: var(--gendaz-text);
 }
 
 .gendaz-chat__message--cliente {
   margin-left: auto;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--gendaz-soft-hover);
 }
 
 .gendaz-chat__form {
@@ -13190,17 +13206,17 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-auth__form input {
   min-height: 48px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  border: 1px solid var(--gendaz-border);
+  background: var(--gendaz-soft);
+  color: var(--gendaz-text);
   padding: 0 14px;
   transition: border-color .16s ease, box-shadow .16s ease;
 }
 
 .gendaz-chat__form input:focus,
 .gendaz-auth__form input:focus {
-  border-color: #42f569;
-  box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
+  border-color: var(--gendaz-border-strong);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-toggle {
@@ -13222,7 +13238,7 @@ tbody tr:hover { background: #fffaf5; }
   width: 16px;
   height: 16px;
   min-width: 16px;
-  accent-color: #42f569;
+  accent-color: #f5f5f5;
   cursor: pointer;
 }
 
@@ -13266,7 +13282,7 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #0d0c0c;
+  background: var(--gendaz-bg);
 }
 
 .gendaz-auth__card {
@@ -13307,7 +13323,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-sidebar__link.is-active {
   color: #ffffff;
   background: rgba(255, 255, 255, 0.12);
-  border-left: 3px solid #42f569;
+  border-left: 3px solid rgba(255, 255, 255, 0.72);
   padding-left: 9px;
 }
 
@@ -13339,19 +13355,19 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   gap: 8px;
   min-height: 136px;
-  background: rgba(18, 20, 28, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  border: 1px solid var(--gendaz-border);
+  border-radius: 14px;
   padding: 20px;
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .gendaz-card--highlight {
-  background: rgba(25, 27, 36, 0.95);
+  background: linear-gradient(180deg, var(--gendaz-surface-3) 0%, var(--gendaz-surface-2) 100%);
 }
 
 .gendaz-card--agendamento {
-  border-left: 3px solid var(--color-accent, #42f569);
+  border-left: 3px solid rgba(255, 255, 255, 0.72);
 }
 
 .gendaz-card__top {
@@ -13365,7 +13381,7 @@ tbody tr:hover { background: #fffaf5; }
   display: flex;
   align-items: center;
   gap: 8px;
-  color: var(--color-text-secondary, rgba(255,255,255,0.7));
+  color: var(--gendaz-muted);
   font-size: 13px;
   font-weight: 500;
 }
@@ -13427,7 +13443,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-empty-state svg {
-  color: var(--color-accent, #42f569);
+  color: rgba(255, 255, 255, 0.72);
   opacity: 0.5;
 }
 
@@ -13440,7 +13456,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-empty-state p {
   font-size: 14px;
-  color: var(--color-text-secondary, rgba(255,255,255,0.7));
+  color: rgba(255, 255, 255, 0.7);
   margin: 0;
 }
 
@@ -13473,8 +13489,8 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-desconto {
-  background: var(--color-accent, #42f569);
-  color: #000;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
   padding: 2px 8px;
   border-radius: 6px;
   font-size: 11px;
@@ -13506,16 +13522,16 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn-contato:hover {
-  background: var(--color-accent, #42f569);
-  color: #000;
-  border-color: var(--color-accent, #42f569);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* HISTORICO */
 .gendaz-link-mais {
   background: none;
   border: none;
-  color: var(--color-accent, #42f569);
+  color: rgba(255, 255, 255, 0.82);
   cursor: pointer;
   font-size: 12px;
   font-weight: 600;
@@ -13536,7 +13552,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-mini-card__data strong {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.58);
 }
 
 .gendaz-mini-card__servico {
@@ -13548,27 +13564,27 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-mini-card__profissional {
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.58);
   margin: 0;
 }
 
 .gendaz-mini-card__valor {
   font-size: 13px;
   font-weight: 600;
-  color: var(--color-accent, #42f569);
+  color: #ffffff;
 }
 
 .gendaz-vazio {
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.48);
   font-size: 13px;
   padding: 20px;
 }
 
 /* ACAO RAPIDA */
 .gendaz-card--acao-rapida {
-  background: linear-gradient(135deg, rgba(66, 245, 105, 0.1), rgba(66, 245, 105, 0.03));
-  border: 1px solid rgba(66, 245, 105, 0.3);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-acao-content {
@@ -13587,7 +13603,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-acao-content p {
   font-size: 13px;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.68);
   margin: 4px 0 0 0;
 }
 
@@ -13635,9 +13651,9 @@ tbody tr:hover { background: #fffaf5; }
   gap: 6px;
   padding: 14px 16px;
   border-radius: 12px;
-  background: rgba(18, 20, 28, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  border: 1px solid var(--gendaz-border);
+  box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .gendaz-page__header--hero {
@@ -13646,9 +13662,9 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-auth__error {
   margin: 12px 0 0;
-  color: #fca5a5;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.2);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   padding: 12px 14px;
   border-radius: 10px;
 }
@@ -13683,17 +13699,17 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-erro {
   padding: 16px;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  color: #fca5a5;
+  color: #ffffff;
   text-align: center;
 }
 
 .gendaz-vazio {
   padding: 32px 24px;
   text-align: center;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.48);
   font-size: 14px;
 }
 
@@ -13721,30 +13737,30 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-status--confirmado,
 .gendaz-status--confirmada {
-  background: rgba(14, 159, 110, 0.15);
-  color: #34d399;
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f5;
 }
 
 .gendaz-status--pendente {
-  background: rgba(217, 119, 6, 0.15);
-  color: #fbbf24;
+  background: rgba(255, 255, 255, 0.06);
+  color: #e5e7eb;
 }
 
 .gendaz-status--cancelado,
 .gendaz-status--cancelada {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
+  background: rgba(255, 255, 255, 0.05);
+  color: #d1d5db;
 }
 
 .gendaz-status--concluido,
 .gendaz-status--concluida {
-  background: rgba(37, 99, 235, 0.15);
-  color: #60a5fa;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
 }
 
 .gendaz-desconto {
-  background: rgba(14, 159, 110, 0.15);
-  color: #34d399;
+  background: rgba(255, 255, 255, 0.9);
+  color: #111111;
   padding: 2px 8px;
   border-radius: 8px;
   font-size: 12px;
@@ -13752,15 +13768,15 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-texto-aviso {
-  color: #fbbf24;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 .gendaz-texto-ok {
-  color: #34d399;
+  color: #ffffff;
 }
 
 .gendaz-texto-erro {
-  color: #ef4444;
+  color: rgba(255, 255, 255, 0.72);
   font-size: 0.8rem;
   margin-top: 4px;
   display: block;
@@ -13779,10 +13795,10 @@ tbody tr:hover { background: #fffaf5; }
   align-items: flex-start;
   padding: 16px;
   margin-bottom: 20px;
-  background: rgba(251, 191, 36, 0.08);
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 12px;
-  color: #fbbf24;
+  color: #ffffff;
 }
 
 .gendaz-alerta-aviso strong {
@@ -13793,7 +13809,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-alerta-aviso p {
   margin: 0;
   font-size: 13px;
-  color: rgba(251, 191, 36, 0.7);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .gendaz-info-row-inline {
@@ -13817,13 +13833,13 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn--danger {
-  background: rgba(220, 38, 38, 0.15);
-  color: #f87171;
-  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-btn--danger:hover {
-  background: rgba(220, 38, 38, 0.25);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-btn--small {
@@ -13846,11 +13862,11 @@ tbody tr:hover { background: #fffaf5; }
   width: min(520px, 90vw);
   max-height: 90vh;
   overflow-y: auto;
-  background: rgba(18, 20, 28, 0.95);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 12px;
+  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  border: 1px solid var(--gendaz-border);
+  border-radius: 14px;
   padding: 24px;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.52);
+  box-shadow: var(--gendaz-shadow-hover);
 }
 
 .gendaz-modal__head {
@@ -13884,8 +13900,8 @@ tbody tr:hover { background: #fffaf5; }
   width: 100%;
   padding: 10px 14px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--gendaz-border);
+  background: var(--gendaz-soft);
   color: #ffffff;
   font-size: 14px;
   transition: border-color .16s ease, box-shadow .16s ease;
@@ -13894,8 +13910,8 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-modal__form input:focus,
 .gendaz-modal__form select:focus,
 .gendaz-modal__form textarea:focus {
-  border-color: #42f569;
-  box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
+  border-color: var(--gendaz-border-strong);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-modal__form textarea {
@@ -13920,10 +13936,10 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-chat__acao {
   margin-top: 6px;
   padding: 6px 10px;
-  background: rgba(37, 99, 235, 0.1);
+  background: rgba(255, 255, 255, 0.06);
   border-radius: 8px;
   font-size: 12px;
-  color: #60a5fa;
+  color: rgba(255, 255, 255, 0.82);
 }
 
 .gendaz-chat__message--loading {
