@@ -142,7 +142,7 @@ export default function Gendaz() {
   const { slug } = useParams()
   if (!slug) return null
   return (
-    <ClienteGendazProvider>
+    <ClienteGendazProvider slug={slug}>
       <GendazContent slug={slug} />
     </ClienteGendazProvider>
   )
@@ -150,13 +150,6 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
-
-  useEffect(() => {
-    clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
-    return () => {
-      delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
-    }
-  }, [slug])
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados()

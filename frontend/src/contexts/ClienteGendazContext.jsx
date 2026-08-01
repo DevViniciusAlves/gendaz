@@ -3,7 +3,7 @@ import clienteApi from '../api/clienteApi.js'
 
 export const ClienteGendazContext = createContext()
 
-export function ClienteGendazProvider({ children }) {
+export function ClienteGendazProvider({ children, slug }) {
   const [cliente, setCliente] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
@@ -108,8 +108,13 @@ export function ClienteGendazProvider({ children }) {
   }, [limparEstadoSessao])
 
   useEffect(() => {
+    if (!slug) return undefined
+    clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
     void sincronizarDados({ exigirSessao: false })
-  }, [sincronizarDados])
+    return () => {
+      delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
+    }
+  }, [slug, sincronizarDados])
 
   useEffect(() => {
     const lidarComLogout = () => {

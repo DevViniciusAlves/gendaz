@@ -92,24 +92,9 @@ public class MeuGendazController {
         return user.getEmpresa().getId();
     }
 
-    private ClienteEntity findOrCreateCliente(UsuarioEntity user) {
+    private ClienteEntity findClienteExistente(UsuarioEntity user) {
         Long empresaId = getEmpresaId(user);
-        return clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail())
-                .orElseGet(() -> clienteRepository.save(ClienteEntity.builder()
-                        .nome(user.getNome())
-                        .email(user.getEmail())
-                        .telefone(obterTelefoneValidoParaCliente(user))
-                        .empresa(user.getEmpresa())
-                        .build()));
-    }
-
-    private String obterTelefoneValidoParaCliente(UsuarioEntity user) {
-        Long empresaId = getEmpresaId(user);
-        String telefone = sanitizacaoService.telefone(user.getEmpresa() != null ? user.getEmpresa().getTelefone() : null);
-        if (telefone == null || clienteRepository.existsByEmpresaIdAndTelefone(empresaId, telefone)) {
-            throw new BusinessException("Complete seu perfil com um telefone valido antes de continuar.");
-        }
-        return telefone;
+        return clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail()).orElse(null);
     }
 
     @GetMapping("/empresa/{slug}")
@@ -202,7 +187,10 @@ public class MeuGendazController {
         try {
             UsuarioEntity user = findUserFromSession(request);
             Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findOrCreateCliente(user);
+            ClienteEntity cliente = findClienteExistente(user);
+            if (cliente == null) {
+                return ResponseEntity.ok(List.of());
+            }
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
@@ -223,7 +211,15 @@ public class MeuGendazController {
         try {
             UsuarioEntity user = findUserFromSession(request);
             Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findOrCreateCliente(user);
+            ClienteEntity cliente = findClienteExistente(user);
+            if (cliente == null) {
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("agendamentos", List.of());
+                result.put("total", 0);
+                result.put("pagina", pagina);
+                result.put("totalPaginas", 0);
+                return ResponseEntity.ok(result);
+            }
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
@@ -249,7 +245,10 @@ public class MeuGendazController {
         try {
             UsuarioEntity user = findUserFromSession(request);
             Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findOrCreateCliente(user);
+            ClienteEntity cliente = findClienteExistente(user);
+            if (cliente == null) {
+                throw new BusinessException("Complete seu cadastro antes de criar um agendamento.");
+            }
             CriarAgendamentoRequest agendamentoRequest = new CriarAgendamentoRequest(
                     cliente.getId(),
                     Long.valueOf(body.get("servicoId").toString()),
@@ -327,7 +326,17 @@ public class MeuGendazController {
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
-            ClienteEntity cliente = findOrCreateCliente(user);
+            ClienteEntity cliente = findClienteExistente(user);
+            if (cliente == null) {
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("proximoAgendamento", null);
+                result.put("ultimosAtendimentos", List.of());
+                result.put("totalAgendamentos", 0);
+                result.put("agendamentosFuturos", 0);
+                result.put("promocoes", List.of());
+                result.put("notificacoes", List.of());
+                return ResponseEntity.ok(result);
+            }
             List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(user), cliente.getId());
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
