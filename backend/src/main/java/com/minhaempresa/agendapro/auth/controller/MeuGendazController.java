@@ -397,9 +397,6 @@ public class MeuGendazController {
             if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
                 erros.add("Email invalido.");
             }
-            if (!email.equals(user.getEmail()) && usuarioRepository.findByEmail(email).isPresent()) {
-                erros.add("Este email ja esta cadastrado em nossa plataforma.");
-            }
             if (telefone == null || telefone.isBlank()) {
                 erros.add("Telefone e obrigatorio.");
             }

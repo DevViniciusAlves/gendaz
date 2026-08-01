@@ -40,13 +40,13 @@ public class UsuarioService {
         if (request.perfil() == PerfilUsuario.SUPER_ADMIN) {
             throw new BusinessException("SUPER_ADMIN so pode ser criado pelo bootstrap seguro.");
         }
-        if (usuarioRepository.existsByEmail(request.email())) {
-            throw new ConflictException("Ja existe usuario com este e-mail.");
-        }
         if (request.empresaId() == null) {
             throw new BusinessException("empresaId e obrigatorio para este perfil.");
         }
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+        if (usuarioRepository.existsByEmpresaIdAndEmail(empresa.getId(), request.email())) {
+            throw new ConflictException("Ja existe usuario com este e-mail nesta empresa.");
+        }
         UsuarioEntity usuario = UsuarioEntity.builder()
                 .nome(sanitizacaoService.textoObrigatorio(request.nome()))
                 .email(sanitizacaoService.email(request.email()))

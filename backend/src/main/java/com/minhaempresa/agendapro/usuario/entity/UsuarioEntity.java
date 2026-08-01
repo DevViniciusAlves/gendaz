@@ -13,7 +13,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "usuarios")
+@Table(
+        name = "usuarios",
+        uniqueConstraints = @UniqueConstraint(name = "uk_usuario_empresa_email", columnNames = {"empresa_id", "email"})
+)
 public class UsuarioEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +25,7 @@ public class UsuarioEntity {
     @Column(nullable = false)
     private String nome;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)

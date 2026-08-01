@@ -20,9 +20,13 @@ public final class AuthDtos {
             String recaptchaToken
     ) {}
 
-    public record MeuGendazSolicitarCodigoRequest(@Email @NotBlank @Size(max = 120) String email) {}
+    public record MeuGendazSolicitarCodigoRequest(
+            @NotBlank @Size(max = 120) String slug,
+            @Email @NotBlank @Size(max = 120) String email
+    ) {}
 
     public record MeuGendazValidarCodigoRequest(
+            @NotBlank @Size(max = 120) String slug,
             @Email @NotBlank @Size(max = 120) String email,
             @NotBlank @Size(min = 6, max = 6) String codigo
     ) {}

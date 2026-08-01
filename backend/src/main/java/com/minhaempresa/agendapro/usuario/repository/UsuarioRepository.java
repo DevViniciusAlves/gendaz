@@ -13,6 +13,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     Optional<UsuarioEntity> findByEmail(String email);
+    Optional<UsuarioEntity> findByEmpresaIdAndEmail(Long empresaId, String email);
+    Optional<UsuarioEntity> findByEmpresaAndEmail(com.minhaempresa.agendapro.empresa.entity.EmpresaEntity empresa, String email);
     Optional<UsuarioEntity> findFirstByPerfil(PerfilUsuario perfil);
     List<UsuarioEntity> findByEmpresaId(Long empresaId);
     List<UsuarioEntity> findByEmpresaIdAndPerfil(Long empresaId, PerfilUsuario perfil);
@@ -22,4 +24,5 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     @Query("select u from UsuarioEntity u where u.id = :id")
     Optional<UsuarioEntity> findByIdForUpdate(@Param("id") Long id);
     boolean existsByEmail(String email);
+    boolean existsByEmpresaIdAndEmail(Long empresaId, String email);
 }

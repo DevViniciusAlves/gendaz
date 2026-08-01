@@ -5,7 +5,7 @@ import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
 
-function GendazAuthGate({ onLogin }) {
+function GendazAuthGate({ slug, onLogin }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
@@ -29,7 +29,7 @@ function GendazAuthGate({ onLogin }) {
     if (!email.trim()) return
     setCarregando(true)
     try {
-      await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { email: email.trim() })
+      await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { slug, email: email.trim() })
       setEtapa('codigo')
       setReenviarEm(30)
       setTentativas(0)
@@ -52,6 +52,7 @@ function GendazAuthGate({ onLogin }) {
     setCarregando(true)
     try {
       const response = await clienteApi.post('/meu-gendaz/auth/validar-codigo', {
+        slug,
         email: email.trim(),
         codigo: codigo.trim(),
       })
@@ -146,12 +147,12 @@ export default function Gendaz() {
   if (!slug) return null
   return (
     <ClienteGendazProvider>
-      <GendazContent />
+      <GendazContent slug={slug} />
     </ClienteGendazProvider>
   )
 }
 
-function GendazContent() {
+function GendazContent({ slug }) {
   const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
 
   const handleLogin = useCallback(async () => {
@@ -166,5 +167,5 @@ function GendazContent() {
     )
   }
 
-  return cliente ? <GendazLayout /> : <GendazAuthGate onLogin={handleLogin} />
+  return cliente ? <GendazLayout /> : <GendazAuthGate slug={slug} onLogin={handleLogin} />
 }

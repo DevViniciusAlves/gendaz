@@ -29,7 +29,7 @@ public class MeuGendazAuthController {
             @Valid @RequestBody MeuGendazSolicitarCodigoRequest request,
             HttpServletRequest http
     ) {
-        MeuGendazCodigoResponse response = authService.solicitarCodigo(request.email(), getClientIp(http));
+        MeuGendazCodigoResponse response = authService.solicitarCodigo(request.slug(), request.email(), getClientIp(http));
         return ResponseEntity.ok(response);
     }
 
@@ -39,16 +39,21 @@ public class MeuGendazAuthController {
             HttpServletRequest http,
             HttpServletResponse response
     ) {
-        MeuGendazAuthResponse auth = authService.validarCodigo(request.email(), request.codigo());
-        adicionarCookie(http, response, "meu_gendaz_session", auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
+        String cookiePath = "/meu-gendaz/" + request.slug().trim().toLowerCase();
+        adicionarCookie(http, response, "meu_gendaz_session", auth.sessionToken(), SESSION_COOKIE_MAX_AGE, cookiePath);
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
     }
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
+        adicionarCookie(request, response, nome, valor, maxAge, "/");
+    }
+
+    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge, String path) {
         ResponseCookie cookie = ResponseCookie.from(nome, valor)
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
-                .path("/")
+                .path(path)
                 .sameSite("None")
                 .maxAge(Duration.ofSeconds(maxAge))
                 .build();

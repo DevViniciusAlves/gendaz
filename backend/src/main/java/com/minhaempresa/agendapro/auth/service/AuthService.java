@@ -366,10 +366,6 @@ public class AuthService {
 
     private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario, String documento) {
         validarCadastro(request);
-        if (usuarioRepository.existsByEmail(email)) {
-            log.warn("Cadastro bloqueado por e-mail duplicado para {}", mascararEmail(email));
-            throw new ConflictException("Ja existe uma conta com este e-mail.");
-        }
         if (empresaRepository.existsByTelefone(telefone)) {
             throw new ConflictException("Este numero ja esta cadastrado.");
         }
