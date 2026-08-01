@@ -8,6 +8,7 @@ import com.minhaempresa.agendapro.admin.dto.AdminDtos.AdminLoginRequest;
 import com.minhaempresa.agendapro.admin.repository.AdminImpersonationSessionRepository;
 import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
+import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
@@ -26,6 +27,7 @@ class AdminServiceTest {
     private final UsuarioRepository usuarioRepository = mock(UsuarioRepository.class);
     private final EmpresaRepository empresaRepository = mock(EmpresaRepository.class);
     private final PagamentoPlanoRepository pagamentoPlanoRepository = mock(PagamentoPlanoRepository.class);
+    private final AssinaturaRepository assinaturaRepository = mock(AssinaturaRepository.class);
     private final AdminImpersonationSessionRepository impersonationRepository = mock(AdminImpersonationSessionRepository.class);
     private final ChamadoRepository chamadoRepository = mock(ChamadoRepository.class);
     private final AssinaturaService assinaturaService = mock(AssinaturaService.class);
@@ -38,6 +40,7 @@ class AdminServiceTest {
             usuarioRepository,
             empresaRepository,
             pagamentoPlanoRepository,
+            assinaturaRepository,
             impersonationRepository,
             chamadoRepository,
             assinaturaService,
