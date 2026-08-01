@@ -40,24 +40,28 @@ public class MeuGendazAuthController {
             HttpServletResponse response
     ) {
         MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
-        String cookiePath = "/meu-gendaz/" + request.slug().trim().toLowerCase();
-        adicionarCookie(http, response, "meu_gendaz_session", auth.sessionToken(), SESSION_COOKIE_MAX_AGE, cookiePath);
+        String cookieName = nomeCookie(request.slug());
+        adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
     }
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        adicionarCookie(request, response, nome, valor, maxAge, "/");
-    }
-
-    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge, String path) {
         ResponseCookie cookie = ResponseCookie.from(nome, valor)
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
-                .path(path)
+                .path("/")
                 .sameSite("None")
                 .maxAge(Duration.ofSeconds(maxAge))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
+    }
+
+    private String nomeCookie(String slug) {
+        String normalizado = slug == null ? "" : slug.trim().toLowerCase();
+        if (normalizado.isBlank()) {
+            throw new IllegalArgumentException("Slug da empresa invalido.");
+        }
+        return "meu_gendaz_session_" + normalizado;
     }
 
     private boolean deveUsarSecure(HttpServletRequest request) {

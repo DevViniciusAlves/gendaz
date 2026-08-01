@@ -18,9 +18,7 @@ function GendazAuthGate({ slug, onLogin }) {
 
   useEffect(() => {
     if (!reenviarEm) return undefined
-    const timer = setInterval(() => {
-      setReenviarEm((atual) => (atual <= 1 ? 0 : atual - 1))
-    }, 1000)
+    const timer = setInterval(() => setReenviarEm((atual) => (atual <= 1 ? 0 : atual - 1)), 1000)
     return () => clearInterval(timer)
   }, [reenviarEm])
 
@@ -35,7 +33,7 @@ function GendazAuthGate({ slug, onLogin }) {
       setTentativas(0)
       setCodigo('')
     } catch (error) {
-      const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Não foi possível enviar o código.'
+      const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Nao foi possivel enviar o codigo.'
       if (mensagem.toLowerCase().includes('30')) setReenviarEm(30)
       if (mensagem.toLowerCase().includes('120')) setReenviarEm(120)
       if (mensagem.toLowerCase().includes('bloque')) setBloqueado(true)
@@ -56,16 +54,14 @@ function GendazAuthGate({ slug, onLogin }) {
         email: email.trim(),
         codigo: codigo.trim(),
       })
-
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
-        console.log('✅ Login bem-sucedido. Cookie HttpOnly configurado pelo backend.')
         await onLogin()
-        navigate('dashboard', { replace: true })
+        navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
       } else {
-        setErro(response.data?.mensagem || 'Não foi possível realizar login.')
+        setErro(response.data?.mensagem || 'Nao foi possivel realizar login.')
       }
     } catch (error) {
-      const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Código inválido.'
+      const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Codigo invalido.'
       setErro(mensagem)
       setTentativas((atual) => {
         const next = atual + 1
@@ -87,7 +83,7 @@ function GendazAuthGate({ slug, onLogin }) {
       <section className="gendaz-auth__card">
         <span className="gendaz-kicker">Meu gendaz</span>
         <h1>Entrar sem senha</h1>
-        <p>Use seu e-mail cadastrado para receber um código de acesso.</p>
+        <p>Use seu e-mail cadastrado para receber um codigo de acesso.</p>
 
         {erro && <p className="gendaz-auth__error">{erro}</p>}
 
@@ -110,7 +106,7 @@ function GendazAuthGate({ slug, onLogin }) {
         ) : (
           <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
             <label>
-              <span>Digite o código enviado para seu e-mail</span>
+              <span>Digite o codigo enviado para seu e-mail</span>
               <input
                 value={codigo}
                 onChange={(event) => setCodigo(event.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -132,7 +128,7 @@ function GendazAuthGate({ slug, onLogin }) {
               <ArrowLeft size={16} /> Voltar
             </button>
             <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => void reenviarCodigo()} disabled={reenviarEm > 0 || bloqueado}>
-              {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar código'}
+              {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar codigo'}
             </button>
             <small>Tentativas restantes: {Math.max(0, 5 - tentativas)}</small>
           </form>
@@ -155,6 +151,13 @@ export default function Gendaz() {
 function GendazContent({ slug }) {
   const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
 
+  useEffect(() => {
+    clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
+    return () => {
+      delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
+    }
+  }, [slug])
+
   const handleLogin = useCallback(async () => {
     await sincronizarDados()
   }, [sincronizarDados])
@@ -162,7 +165,7 @@ function GendazContent({ slug }) {
   if (carregando) {
     return (
       <main className="gendaz-loading">
-        <p>Carregando sessão...</p>
+        <p>Carregando sessao...</p>
       </main>
     )
   }

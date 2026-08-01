@@ -2,12 +2,16 @@ package com.minhaempresa.agendapro.auth.service;
 
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazAuthResponse;
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazCodigoResponse;
+import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
+import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
+import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
+import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -30,6 +34,7 @@ public class MeuGendazAuthService {
     private static final Duration SESSAO_DURACAO = Duration.ofDays(90);
 
     private final UsuarioRepository usuarioRepository;
+    private final ClienteRepository clienteRepository;
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
     private final UsuarioSessionService usuarioSessionService;
@@ -140,12 +145,29 @@ public class MeuGendazAuthService {
     }
 
     private UsuarioEntity buscarCliente(EmpresaEntity empresa, String email) {
-        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email)
+        return usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email)
+                .or(() -> criarUsuarioAcessoCliente(empresa, email))
                 .orElseThrow(() -> new BusinessException("E-mail não encontrado."));
-        if (usuario.getEmpresa() == null || !empresa.getId().equals(usuario.getEmpresa().getId())) {
-            throw new BusinessException("Este acesso é exclusivo para clientes cadastrados.");
+    }
+
+    private java.util.Optional<UsuarioEntity> criarUsuarioAcessoCliente(EmpresaEntity empresa, String email) {
+        ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmail(empresa.getId(), email).orElse(null);
+        if (cliente == null) {
+            return java.util.Optional.empty();
         }
-        return usuario;
+
+        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email).orElseGet(() ->
+                usuarioRepository.save(UsuarioEntity.builder()
+                        .nome(cliente.getNome())
+                        .email(cliente.getEmail())
+                        .senha(hashUsuarioTemporario(cliente.getEmail(), empresa.getId()))
+                        .perfil(PerfilUsuario.ATENDENTE)
+                        .status(StatusUsuario.ATIVO)
+                        .aceitouTermos(true)
+                        .empresa(empresa)
+                        .build())
+        );
+        return java.util.Optional.of(usuario);
     }
 
     private String normalizarSlug(String slug) {
@@ -171,6 +193,10 @@ public class MeuGendazAuthService {
 
     private String hashCodigo(String codigo, String email, Long empresaId) {
         return Integer.toHexString((codigo + ":" + email + ":" + empresaId).hashCode());
+    }
+
+    private String hashUsuarioTemporario(String email, Long empresaId) {
+        return Integer.toHexString(("meu-gendaz:" + email + ":" + empresaId).hashCode());
     }
 
     private String mascararEmail(String email) {

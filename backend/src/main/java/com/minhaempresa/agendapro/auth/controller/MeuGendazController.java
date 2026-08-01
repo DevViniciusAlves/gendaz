@@ -7,30 +7,43 @@ import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
 import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
-import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
+import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
-import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.shared.CookieHelper;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.PathVariable;
 
 @RestController
 @RequestMapping("/api/meu-gendaz")
 @RequiredArgsConstructor
 @Slf4j
 public class MeuGendazController {
-
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final ClienteRepository clienteRepository;
@@ -40,27 +53,41 @@ public class MeuGendazController {
     private final UsuarioSessionService usuarioSessionService;
     private final SanitizacaoService sanitizacaoService;
 
-    private UsuarioEntity findUserFromSession(HttpServletRequest request) {
-        // Tenta cookie primeiro
-        String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+    private String slugAtual(HttpServletRequest request) {
+        String slug = request.getHeader("X-Meu-Gendaz-Slug");
+        if (slug == null || slug.isBlank()) {
+            throw new SessaoExpiradaException("Slug da empresa nao informado.");
+        }
+        return slug.trim().toLowerCase();
+    }
 
-        // Se não, tenta header
+    private String nomeCookie(String slug) {
+        return "meu_gendaz_session_" + slug;
+    }
+
+    private UsuarioEntity findUserFromSession(HttpServletRequest request) {
+        String slug = slugAtual(request);
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
         if (session == null || session.isBlank()) {
             session = request.getHeader("X-Session-Token");
         }
-
         if (session == null || session.isBlank()) {
-            throw new SessaoExpiradaException("Sessão não encontrada. Faça login novamente.");
+            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }
-
         Optional<UsuarioEntity> user = usuarioRepository.findBySessaoAtiva(session);
-
-        return user.orElseThrow(() -> new SessaoExpiradaException("Sessão inválida. Faça login novamente."));
+        UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+        if (usuario.getEmpresa() == null || usuario.getEmpresa().getAgendamentoSlug() == null) {
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
+        }
+        if (!usuario.getEmpresa().getAgendamentoSlug().trim().equalsIgnoreCase(slug)) {
+            throw new SessaoExpiradaException("Sessao invalida para esta loja.");
+        }
+        return usuario;
     }
 
     private Long getEmpresaId(UsuarioEntity user) {
         if (user.getEmpresa() == null) {
-            throw new BusinessException("Empresa não encontrada para este usuário.");
+            throw new BusinessException("Empresa nao encontrada para este usuario.");
         }
         return user.getEmpresa().getId();
     }
@@ -85,12 +112,11 @@ public class MeuGendazController {
         return telefone;
     }
 
-    // === EMPRESA INFO BY SLUG ===
     @GetMapping("/empresa/{slug}")
     public ResponseEntity<?> empresaPorSlug(@PathVariable String slug) {
         Optional<EmpresaEntity> empresa = empresaRepository.findByAgendamentoSlug(slug);
         if (empresa.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("mensagem", "Empresa não encontrada."));
+            return ResponseEntity.status(404).body(Map.of("mensagem", "Empresa nao encontrada."));
         }
         EmpresaEntity e = empresa.get();
         Map<String, Object> result = new LinkedHashMap<>();
@@ -101,7 +127,6 @@ public class MeuGendazController {
         return ResponseEntity.ok(result);
     }
 
-    // === PROFILE ===
     @GetMapping("/perfil")
     public ResponseEntity<?> perfil(HttpServletRequest request) {
         try {
@@ -124,7 +149,6 @@ public class MeuGendazController {
         }
     }
 
-    // === SERVICES ===
     @GetMapping("/servicos")
     public ResponseEntity<?> servicos(HttpServletRequest request) {
         try {
@@ -136,7 +160,6 @@ public class MeuGendazController {
         }
     }
 
-    // === PROFESSIONALS ===
     @GetMapping("/profissionais")
     public ResponseEntity<?> profissionais(HttpServletRequest request) {
         try {
@@ -148,7 +171,6 @@ public class MeuGendazController {
         }
     }
 
-    // === AVAILABLE TIME SLOTS ===
     @GetMapping("/horarios-disponiveis")
     public ResponseEntity<?> horariosDisponiveis(
             @RequestParam Long servicoId,
@@ -171,11 +193,10 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.status(400).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados inválidos."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos."));
         }
     }
 
-    // === UPCOMING APPOINTMENTS ===
     @GetMapping("/agendamentos/proximos")
     public ResponseEntity<?> agendamentosProximos(HttpServletRequest request) {
         try {
@@ -193,7 +214,6 @@ public class MeuGendazController {
         }
     }
 
-    // === HISTORY ===
     @GetMapping("/agendamentos/historico")
     public ResponseEntity<?> historico(
             @RequestParam(defaultValue = "1") int pagina,
@@ -224,14 +244,12 @@ public class MeuGendazController {
         }
     }
 
-    // === CREATE APPOINTMENT ===
     @PostMapping("/agendamentos/criar")
     public ResponseEntity<?> criarAgendamento(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
             Long empresaId = getEmpresaId(user);
             ClienteEntity cliente = findOrCreateCliente(user);
-
             CriarAgendamentoRequest agendamentoRequest = new CriarAgendamentoRequest(
                     cliente.getId(),
                     Long.valueOf(body.get("servicoId").toString()),
@@ -246,11 +264,10 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados inválidos: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos: " + e.getMessage()));
         }
     }
 
-    // === REBOOK ===
     @PatchMapping("/agendamentos/{id}/reagendar")
     public ResponseEntity<?> reagendar(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
@@ -265,11 +282,10 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados inválidos: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos: " + e.getMessage()));
         }
     }
 
-    // === CANCEL ===
     @DeleteMapping("/agendamentos/{id}/cancelar")
     public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body, HttpServletRequest request) {
         try {
@@ -281,11 +297,11 @@ public class MeuGendazController {
         }
     }
 
-    // === LOGOUT ===
     @PostMapping("/auth/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
-            String session = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+            String slug = slugAtual(request);
+            String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session == null || session.isBlank()) {
                 session = request.getHeader("X-Session-Token");
             }
@@ -299,32 +315,29 @@ public class MeuGendazController {
         } catch (Exception e) {
             log.warn("[meu-gendaz] erro no logout: {}", e.getMessage());
         }
-        ResponseCookie clearCookie = ResponseCookie.from("meu_gendaz_session", "")
+        String slug = request.getHeader("X-Meu-Gendaz-Slug");
+        String cookieName = slug == null || slug.isBlank() ? "meu_gendaz_session" : nomeCookie(slug.trim().toLowerCase());
+        ResponseCookie clearCookie = ResponseCookie.from(cookieName, "")
                 .httpOnly(true).secure(true).path("/").sameSite("None").maxAge(Duration.ZERO).build();
         response.addHeader("Set-Cookie", clearCookie.toString());
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
     }
 
-    // === DASHBOARD ===
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
             ClienteEntity cliente = findOrCreateCliente(user);
-
             List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(user), cliente.getId());
-
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
                     .toList();
-
             List<AgendamentoResponse> passados = todos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .limit(5)
                     .toList();
-
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("proximoAgendamento", futuros.isEmpty() ? null : futuros.get(0));
             result.put("ultimosAtendimentos", passados);
@@ -338,7 +351,6 @@ public class MeuGendazController {
         }
     }
 
-    // === PROMOTIONS / COUPONS ===
     @GetMapping("/promocoes")
     public ResponseEntity<?> promocoes(HttpServletRequest request) {
         findUserFromSession(request);
@@ -351,7 +363,6 @@ public class MeuGendazController {
         return ResponseEntity.ok(List.of());
     }
 
-    // === NOTIFICATIONS ===
     @GetMapping("/notificacoes")
     public ResponseEntity<?> notificacoes(HttpServletRequest request) {
         findUserFromSession(request);
@@ -364,14 +375,12 @@ public class MeuGendazController {
         return ResponseEntity.ok(body);
     }
 
-    // === PRIVACY ===
     @PatchMapping("/privacidade")
     public ResponseEntity<?> atualizarPrivacidade(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         findUserFromSession(request);
         return ResponseEntity.ok(body);
     }
 
-    // === UPDATE PROFILE WITH VALIDATION ===
     @PatchMapping("/perfil")
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
@@ -388,7 +397,6 @@ public class MeuGendazController {
             String telefone = sanitizacaoService.telefone(body.get("telefone"));
 
             List<String> erros = new ArrayList<>();
-
             if (nome.length() < 3) {
                 erros.add("Nome deve ter pelo menos 3 caracteres.");
             }
@@ -401,7 +409,6 @@ public class MeuGendazController {
             if (telefone == null || telefone.isBlank()) {
                 erros.add("Telefone e obrigatorio.");
             }
-
             if (telefone != null) {
                 Optional<ClienteEntity> clienteMesmoTelefone = clienteRepository.findFirstByEmpresaIdAndTelefone(empresaId, telefone);
                 if (clienteMesmoTelefone.isPresent() && (cliente == null || !clienteMesmoTelefone.get().getId().equals(cliente.getId()))) {
@@ -451,4 +458,3 @@ public class MeuGendazController {
         }
     }
 }
-
