@@ -802,7 +802,7 @@ export default function AdminDashboard() {
         {aba === 'Pagamentos' && (
           <section className="admin-section">
             <h1>Pagamentos</h1>
-            <div className="admin-filters">
+            <div className="admin-filters admin-filters-payments">
               <label className="search-shell">
                 <input
                   maxLength={120}
@@ -830,7 +830,7 @@ export default function AdminDashboard() {
                 {recarregando === 'Pagamentos' ? 'Recarregando...' : 'Recarregar'}
               </Button>
             </div>
-            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Empresa', 'Vencimento', 'Pagamento', 'External ID', 'Referencia', 'Detalhes', 'Acoes']}>
+            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Empresa', 'Vencimento', 'Pagamento', 'Acoes']}>
               {pagamentosFiltrados.map((item) => (
                 <tr key={item.id}>
                   <td>{item.empresa}</td>
@@ -844,9 +844,6 @@ export default function AdminDashboard() {
                   <td><StatusBadge status={item.statusEmpresa} /></td>
                   <td>{formatarDataHora(item.vencimento)}</td>
                   <td>{formatarDataHora(item.dataPagamento)}</td>
-                  <td>{item.externalPaymentId}</td>
-                  <td>{item.paymentReference || '-'}</td>
-                  <td>{item.detalhes || '-'}</td>
                   <td>{renderAcoesPagamento(item)}</td>
                 </tr>
               ))}

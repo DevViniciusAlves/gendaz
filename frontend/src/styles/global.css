@@ -6342,6 +6342,30 @@ tbody tr:hover { background: #fffaf5; }
   white-space: nowrap;
 }
 
+.admin-filters-payments {
+  display: grid;
+  grid-template-columns: minmax(320px, 1fr) 160px 160px auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.admin-filters-payments .search-shell {
+  min-width: 0;
+}
+
+.admin-filters-payments .search-shell input {
+  min-width: 0;
+}
+
+.admin-filters-payments select {
+  min-width: 0;
+  width: 100%;
+}
+
+.admin-filters-payments .btn {
+  justify-self: end;
+}
+
 .admin-filters input:focus,
 .admin-filters select:focus {
   border-color: var(--color-primary);
