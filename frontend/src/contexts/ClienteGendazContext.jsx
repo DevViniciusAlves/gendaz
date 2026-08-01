@@ -24,7 +24,7 @@ export function ClienteGendazProvider({ children }) {
     setProfissionais([])
   }, [])
 
-  const sincronizarDados = useCallback(async () => {
+  const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
     try {
       setCarregando(true)
       setErro(null)
@@ -42,7 +42,10 @@ export function ClienteGendazProvider({ children }) {
 
       if (houve401) {
         limparEstadoSessao()
-        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        if (exigirSessao) {
+          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        }
+        setCarregando(false)
         return
       }
 
@@ -75,7 +78,10 @@ export function ClienteGendazProvider({ children }) {
 
       if (houve401Complementar) {
         limparEstadoSessao()
-        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        if (exigirSessao) {
+          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        }
+        setCarregando(false)
         return
       }
 
@@ -89,7 +95,10 @@ export function ClienteGendazProvider({ children }) {
     } catch (err) {
       if (err.response?.status === 401) {
         limparEstadoSessao()
-        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        if (exigirSessao) {
+          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+        }
+        setCarregando(false)
         return
       }
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar dados.')
@@ -99,7 +108,7 @@ export function ClienteGendazProvider({ children }) {
   }, [limparEstadoSessao])
 
   useEffect(() => {
-    void sincronizarDados()
+    void sincronizarDados({ exigirSessao: false })
   }, [sincronizarDados])
 
   useEffect(() => {
