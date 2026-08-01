@@ -20,16 +20,24 @@ public class UsuarioSessionService {
     public synchronized String renovarSessao(UsuarioEntity usuario) {
         String sessao = UUID.randomUUID().toString();
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
-                .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
         usuarioBloqueado.setSessaoAtiva(sessao);
         usuarioRepository.save(usuarioBloqueado);
         return sessao;
     }
 
     @Transactional
+    public synchronized String renovarSessao(UsuarioEntity usuario, Long empresaId) {
+        if (usuario == null || empresaId == null || usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
+            throw new BusinessException("Usuario autenticado invalido.");
+        }
+        return renovarSessao(usuario);
+    }
+
+    @Transactional
     public synchronized String obterOuCriarSessao(UsuarioEntity usuario) {
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
-                .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
         if (usuarioBloqueado.getSessaoAtiva() != null && !usuarioBloqueado.getSessaoAtiva().isBlank()) {
             return usuarioBloqueado.getSessaoAtiva();
         }
@@ -63,13 +71,26 @@ public class UsuarioSessionService {
                 .isPresent();
     }
 
+    @Transactional(readOnly = true)
+    public boolean sessaoValida(Long usuarioId, String sessao, Long empresaId) {
+        if (usuarioId == null || sessao == null || sessao.isBlank() || empresaId == null) {
+            return false;
+        }
+        return usuarioRepository.findById(usuarioId)
+                .filter(usuario -> usuario.getEmpresa() != null)
+                .filter(usuario -> empresaId.equals(usuario.getEmpresa().getId()))
+                .filter(usuario -> usuario.getStatus() == StatusUsuario.ATIVO)
+                .filter(usuario -> sessao.equals(usuario.getSessaoAtiva()))
+                .isPresent();
+    }
+
     @Transactional
     public void encerrarSessao(Long usuarioId, String sessao) {
         if (usuarioId == null) {
             return;
         }
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
         if (sessao == null || sessao.equals(usuario.getSessaoAtiva())) {
             usuario.setSessaoAtiva(null);
             usuarioRepository.save(usuario);

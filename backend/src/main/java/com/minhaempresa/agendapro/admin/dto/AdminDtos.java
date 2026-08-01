@@ -91,6 +91,8 @@ public final class AdminDtos {
             @Pattern(regexp = "^$|^[0-9]{11,14}$", message = "Informe um documento valido.") String documento,
             @Pattern(regexp = "^$|^[0-9()+\\-\\s]{10,20}$", message = "Informe um telefone valido.") String telefone,
             @NotBlank @Email @Size(max = 120, message = "Informe um e-mail valido.") String email,
+            Long planoId,
+            Integer diasPlano,
             @NotBlank @Size(min = 8, max = 500, message = "Informe um motivo com pelo menos 8 caracteres.") String motivo
     ) {}
 

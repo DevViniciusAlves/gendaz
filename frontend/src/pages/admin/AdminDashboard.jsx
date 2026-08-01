@@ -10,9 +10,181 @@ import Table from '../../components/Table.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 
 const abas = ['Dashboard', 'Usuarios', 'Pagamentos', 'Aprovar Pagamentos', 'Chamados', 'Logs', 'Configuracoes']
+const STATUS_PAGAMENTO_CONFIRMADO = new Set([
+  'PAGO',
+  'PAGA',
+  'CONFIRMADO',
+  'CONFIRMADA',
+  'APROVADO',
+  'APPROVED',
+  'PAID',
+  'PAYMENT_APPROVED',
+  'PURCHASE_APPROVED',
+])
+
+function todayIso() {
+  const hoje = new Date()
+  const offset = hoje.getTimezoneOffset() * 60000
+  return new Date(hoje.getTime() - offset).toISOString().slice(0, 10)
+}
+
+function statusNormalizado(valor) {
+  return String(valor || '').toUpperCase()
+}
 
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+}
+
+function pagamentoConfirmado(status) {
+  return STATUS_PAGAMENTO_CONFIRMADO.has(statusNormalizado(status))
+}
+
+function extrairDataPagamento(pagamento) {
+  return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
+}
+
+function diasDoMesAtual() {
+  const hoje = new Date(`${todayIso()}T12:00:00`)
+  return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
+}
+
+function buildReceitaMes(pagamentos) {
+  const hoje = new Date(`${todayIso()}T12:00:00`)
+  const dias = diasDoMesAtual()
+  const mapaReceita = {}
+
+  pagamentos.forEach((p) => {
+    if (!pagamentoConfirmado(p.status)) return
+    const dia = extrairDataPagamento(p)
+    if (!dia || !dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
+    mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
+  })
+
+  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0, 0)
+  const resultado = []
+  for (let i = 0; i < dias; i++) {
+    const data = new Date(inicioMes)
+    data.setDate(data.getDate() + i)
+    const iso = data.toISOString().slice(0, 10)
+    const label = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    resultado.push({ iso, label, valor: mapaReceita[iso] || 0 })
+  }
+  return resultado
+}
+
+function suavizarPontos(pontos) {
+  if (pontos.length < 2) return ''
+  const curvas = [`M ${pontos[0].x} ${pontos[0].y}`]
+  for (let i = 0; i < pontos.length - 1; i++) {
+    const atual = pontos[i]
+    const proximo = pontos[i + 1]
+    const pontoMeio = (atual.x + proximo.x) / 2
+    curvas.push(`C ${pontoMeio} ${atual.y}, ${pontoMeio} ${proximo.y}, ${proximo.x} ${proximo.y}`)
+  }
+  return curvas.join(' ')
+}
+
+function GraficoLinha({ dados }) {
+  const [tooltip, setTooltip] = useState(null)
+  const temDados = dados.some((d) => d.valor > 0)
+  const width = 760
+  const height = 240
+  const pLeft = 24
+  const pRight = 18
+  const pTop = 16
+  const pBottom = 28
+  const chartW = width - pLeft - pRight
+  const chartH = height - pTop - pBottom
+  const maxValor = Math.max(...dados.map((d) => d.valor), 1)
+  const gridFracs = [0, 0.25, 0.5, 0.75, 1]
+
+  const pontos = dados.map((d, index) => {
+    const x = pLeft + (chartW * (dados.length > 1 ? index / (dados.length - 1) : 0))
+    const y = pTop + chartH - ((d.valor || 0) / maxValor) * chartH
+    return { ...d, x, y }
+  })
+
+  const linha = suavizarPontos(pontos)
+  const area = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linha} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
+
+  if (!temDados) {
+    return (
+      <div className="admin-bar-chart-empty">
+        <BarChart2 size={40} color="var(--color-primary)" />
+        <p>Nenhum pagamento confirmado neste periodo.</p>
+        <small>Os valores vao aparecer conforme os pagamentos forem entrando.</small>
+      </div>
+    )
+  }
+
+  return (
+    <div className="admin-area-chart-shell">
+      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafico administrativo de receita mensal" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
+        {gridFracs.map((frac) => {
+          const y = pTop + chartH * (1 - frac)
+          const val = maxValor * frac
+          return (
+            <g key={frac}>
+              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
+              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="rgba(255,255,255,0.55)">
+                {moeda(val)}
+              </text>
+            </g>
+          )
+        })}
+        <defs>
+          <linearGradient id="adminAreaFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.72" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.10" />
+          </linearGradient>
+        </defs>
+        <path d={area} fill="url(#adminAreaFill)" opacity={0.9} />
+        <path d={linha} fill="none" stroke="var(--color-primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        {pontos.map((p, index) => {
+          const hasValue = p.valor > 0
+          const isHovered = tooltip?.index === index
+          return (
+            <g key={p.iso}>
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={isHovered ? 5.5 : 4}
+                fill={isHovered ? 'var(--color-primary)' : 'rgba(255,255,255,0.92)'}
+                stroke="var(--color-primary)"
+                strokeWidth={1.8}
+                opacity={hasValue ? 1 : 0.45}
+                onMouseEnter={() => {
+                  if (!hasValue) return
+                  setTooltip({ index, x: p.x, y: p.y, valor: p.valor, label: p.label })
+                }}
+                onMouseLeave={() => setTooltip(null)}
+                style={{ cursor: hasValue ? 'pointer' : 'default' }}
+              />
+              {index % 5 === 0 && (
+                <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.55)">
+                  {p.label}
+                </text>
+              )}
+            </g>
+          )
+        })}
+        {tooltip && (() => {
+          const tx = Math.min(Math.max(tooltip.x, pLeft + 48), width - pRight - 48)
+          const ty = Math.max(tooltip.y - 54, pTop)
+          return (
+            <g style={{ pointerEvents: 'none' }}>
+              <rect x={tx - 52} y={ty} width={104} height={38} rx={8} fill="#111111" opacity={0.96} />
+              <text x={tx} y={ty + 14} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.62)">{tooltip.label}</text>
+              <text x={tx} y={ty + 29} textAnchor="middle" fontSize={12} fill="#ffffff" fontWeight={700}>
+                {moeda(tooltip.valor)}
+              </text>
+            </g>
+          )
+        })()}
+      </svg>
+    </div>
+  )
 }
 
 function acaoModalTitulo(modal) {
@@ -73,10 +245,12 @@ export default function AdminDashboard() {
   const [logs, setLogs] = useState([])
   const [chamados, setChamados] = useState([])
   const [config, setConfig] = useState(null)
+  const [planos, setPlanos] = useState([])
   const [modal, setModal] = useState(null)
   const [motivo, setMotivo] = useState('')
   const [transacaoId, setTransacaoId] = useState('')
   const [empresaEdicao, setEmpresaEdicao] = useState({ nomeFantasia: '', documento: '', telefone: '', email: '' })
+  const [assinaturaEdicao, setAssinaturaEdicao] = useState({ planoId: '', diasPlano: 30 })
   const [chamadoEdicao, setChamadoEdicao] = useState({ status: 'EM_ANALISE', resposta: '' })
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
@@ -104,13 +278,14 @@ export default function AdminDashboard() {
   }, [erro])
 
   async function carregarAdmin() {
-    const [dashboardData, usuariosData, pagamentosData, chamadosData, logsData, configData] = await Promise.all([
+    const [dashboardData, usuariosData, pagamentosData, chamadosData, logsData, configData, planosData] = await Promise.all([
       adminApi.dashboard(),
       adminApi.usuarios(),
       adminApi.pagamentos(),
       adminApi.chamados(),
       adminApi.logs(),
       adminApi.configuracoes(),
+      adminApi.planos(),
     ])
     setDashboard(dashboardData)
     setUsuarios(usuariosData)
@@ -119,6 +294,7 @@ export default function AdminDashboard() {
     setChamados(chamadosData)
     setLogs(logsData)
     setConfig(configData)
+    setPlanos(planosData)
   }
 
   useEffect(() => {
@@ -175,6 +351,25 @@ export default function AdminDashboard() {
     ['Novos cadastros', dashboard.novosCadastros],
   ] : [], [dashboard])
 
+  const contasAtivas = dashboard?.assinaturasAtivas || 0
+  const contasCanceladas = dashboard?.empresasVencidas || 0
+  const contasTeste = dashboard?.empresasTesteGratis || 0
+  const contasAtivasPct = Math.round((contasAtivas / Math.max(contasAtivas + contasCanceladas + contasTeste, 1)) * 100)
+  const receitaMensalGrafico = buildReceitaMes(pagamentos)
+  const pagamentosConfirmadosLista = pagamentos.filter((item) => pagamentoConfirmado(item.status))
+  const pagamentosPendentesLista = pagamentos.filter((item) => statusNormalizado(item.status) === 'PENDENTE')
+  const pagamentoMaisRecente = [...pagamentos]
+    .sort((a, b) => String(b.dataPagamento || b.dataCriacao || b.data || '').localeCompare(String(a.dataPagamento || a.dataCriacao || a.data || '')))
+    .slice(0, 5)
+  const planoResumo = useMemo(() => {
+    const mapa = {}
+    ;(usuarios || []).forEach((item) => {
+      const plano = rotuloPlano(item.plano)
+      mapa[plano] = (mapa[plano] || 0) + 1
+    })
+    return Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 4)
+  }, [usuarios])
+
   const pagamentosFiltrados = useMemo(() => pagamentos.filter((item) => (
     contemTermo(item, pesquisaPagamento, ['empresa', 'responsavel', 'email', 'telefone', 'plano', 'status', 'gateway', 'externalPaymentId', 'paymentReference'])
   )), [pagamentos, pesquisaPagamento])
@@ -203,6 +398,10 @@ export default function AdminDashboard() {
       documento: item?.documento || '',
       telefone: item?.telefone || '',
       email: item?.emailEmpresa || item?.email || '',
+    })
+    setAssinaturaEdicao({
+      planoId: item?.planoId || '',
+      diasPlano: 30,
     })
     setChamadoEdicao({
       status: item?.status || 'EM_ANALISE',
@@ -312,6 +511,8 @@ export default function AdminDashboard() {
         documento: String(empresaEdicao.documento || '').replace(/\D/g, ''),
         telefone: String(empresaEdicao.telefone || '').replace(/[^\d()+\-\s]/g, '').trim(),
         email: empresaEdicao.email.trim().toLowerCase(),
+        planoId: assinaturaEdicao.planoId ? Number(assinaturaEdicao.planoId) : null,
+        diasPlano: assinaturaEdicao.diasPlano ? Number(assinaturaEdicao.diasPlano) : null,
         motivo: motivo.trim(),
       }
       const empresaAtualizada = await adminApi.atualizarEmpresa(modal.empresaId, {
@@ -400,12 +601,35 @@ export default function AdminDashboard() {
               <div>
                 <span className="section-kicker">Super Admin</span>
                 <h1>Dashboard administrativo</h1>
+                <p>Visao tática da saude do Gendaz com contas, pagamentos e fluxo operacional.</p>
               </div>
               <div className="page-title-actions">
                 <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Dashboard'}>
                   {recarregando === 'Dashboard' ? 'Recarregando...' : 'Recarregar'}
                 </Button>
               </div>
+            </div>
+            <div className="admin-strategy-grid">
+              <article className="admin-strategy-card">
+                <span>Contas ativas</span>
+                <strong>{contasAtivas}</strong>
+                <small>{contasAtivasPct}% da base atual</small>
+              </article>
+              <article className="admin-strategy-card">
+                <span>Contas canceladas</span>
+                <strong>{contasCanceladas}</strong>
+                <small>vencidas ou bloqueadas</small>
+              </article>
+              <article className="admin-strategy-card">
+                <span>Contas em teste</span>
+                <strong>{contasTeste}</strong>
+                <small>periodo gratuito ativo</small>
+              </article>
+              <article className="admin-strategy-card admin-strategy-card--highlight">
+                <span>Total ganho</span>
+                <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
+                <small>{moeda(dashboard?.faturamentoMes)} neste mes</small>
+              </article>
             </div>
             <div className="admin-metrics">
               {metricas.map(([label, value]) => (
@@ -414,6 +638,58 @@ export default function AdminDashboard() {
                   <strong>{value}</strong>
                 </article>
               ))}
+            </div>
+            <div className="admin-panels admin-panels--tactical">
+              <section className="admin-tactical-panel">
+                <div className="panel-head">
+                  <div>
+                    <span className="section-kicker">Financeiro</span>
+                    <h2>Receita dos pagamentos</h2>
+                    <p>Base confirmada por data de pagamento no mes corrente.</p>
+                  </div>
+                </div>
+                <GraficoLinha dados={receitaMensalGrafico} />
+              </section>
+              <section className="admin-tactical-panel">
+                <div className="panel-head">
+                  <div>
+                    <span className="section-kicker">Operacao</span>
+                    <h2>Status geral das contas</h2>
+                    <p>Leitura rapida da saude da base Gendaz.</p>
+                  </div>
+                </div>
+                <div className="admin-status-stack">
+                  <div className="admin-status-row">
+                    <span>Ativas</span>
+                    <strong>{contasAtivas}</strong>
+                  </div>
+                  <div className="admin-status-row">
+                    <span>Canceladas</span>
+                    <strong>{contasCanceladas}</strong>
+                  </div>
+                  <div className="admin-status-row">
+                    <span>Teste</span>
+                    <strong>{contasTeste}</strong>
+                  </div>
+                  <div className="admin-status-row">
+                    <span>Usuarios ativos</span>
+                    <strong>{dashboard?.usuariosAtivos || 0}</strong>
+                  </div>
+                </div>
+                <div className="admin-mini-bars">
+                  {planoResumo.map(([plano, total]) => (
+                    <div key={plano} className="admin-mini-bar">
+                      <div>
+                        <span>{plano}</span>
+                        <strong>{total}</strong>
+                      </div>
+                      <div className="admin-mini-bar-track">
+                        <i style={{ width: `${Math.max(12, (total / Math.max(planoResumo[0]?.[1] || 1, 1)) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
             </div>
             <div className="admin-panels">
               <section>
@@ -433,6 +709,43 @@ export default function AdminDashboard() {
                     <strong>{item.total}</strong>
                   </div>
                 ))}
+              </section>
+              <section>
+                <h2>Pagamentos recentes</h2>
+                {pagamentoMaisRecente.length === 0 ? (
+                  <div className="admin-empty-tactical">Sem pagamentos recentes.</div>
+                ) : (
+                  pagamentoMaisRecente.map((item) => (
+                    <div className="admin-bar" key={`${item.id}-${item.dataPagamento || item.dataCriacao || item.data || ''}`}>
+                      <span>{item.empresa || 'Empresa'}</span>
+                      <strong>{moeda(item.valor)}</strong>
+                    </div>
+                  ))
+                )}
+              </section>
+            </div>
+            <div className="admin-panels">
+              <section>
+                <h2>Pagamentos confirmados</h2>
+                <div className="admin-bar-row">
+                  <span>Confirmados no periodo</span>
+                  <strong>{pagamentosConfirmadosLista.length}</strong>
+                </div>
+                <div className="admin-bar-row">
+                  <span>Pendentes</span>
+                  <strong>{pagamentosPendentesLista.length}</strong>
+                </div>
+              </section>
+              <section>
+                <h2>Resumo pratico</h2>
+                <div className="admin-bar-row">
+                  <span>Total ganho</span>
+                  <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
+                </div>
+                <div className="admin-bar-row">
+                  <span>Faturamento do mes</span>
+                  <strong>{moeda(dashboard?.faturamentoMes)}</strong>
+                </div>
               </section>
             </div>
           </>
@@ -727,6 +1040,32 @@ export default function AdminDashboard() {
                     onChange={(event) => setEmpresaEdicao((atual) => ({ ...atual, email: event.target.value }))}
                     placeholder="E-mail da empresa"
                   />
+                </label>
+                <label className="field">
+                  <span>Plano da conta</span>
+                  <select
+                    value={assinaturaEdicao.planoId}
+                    onChange={(event) => setAssinaturaEdicao((atual) => ({ ...atual, planoId: event.target.value }))}
+                  >
+                    <option value="">Manter plano atual</option>
+                    {planos.map((plano) => (
+                      <option key={plano.id} value={plano.id}>
+                        {plano.nome} - {plano.descricao}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="field">
+                  <span>Dias do plano</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={3650}
+                    value={assinaturaEdicao.diasPlano}
+                    onChange={(event) => setAssinaturaEdicao((atual) => ({ ...atual, diasPlano: event.target.value }))}
+                    placeholder="Ex: 30"
+                  />
+                  <small className="field-hint">Define por quantos dias o plano vai valer a partir de hoje.</small>
                 </label>
               </div>
               <label className="field">

@@ -65,6 +65,10 @@ export const adminApi = {
     return api.get('/admin/chamados').then((response) => response.data)
   },
 
+  planos() {
+    return api.get('/planos').then((response) => response.data)
+  },
+
   impersonar(empresaId, motivo) {
     const payload = motivo ? { motivo } : {}
     return api.post(`/admin/empresas/${empresaId}/impersonar`, payload).then((response) => response.data)

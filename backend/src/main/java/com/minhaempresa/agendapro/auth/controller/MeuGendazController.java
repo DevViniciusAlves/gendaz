@@ -82,6 +82,9 @@ public class MeuGendazController {
         if (!usuario.getEmpresa().getAgendamentoSlug().trim().equalsIgnoreCase(slug)) {
             throw new SessaoExpiradaException("Sessao invalida para esta loja.");
         }
+        if (!usuarioSessionService.sessaoValida(usuario.getId(), session, usuario.getEmpresa().getId())) {
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
+        }
         return usuario;
     }
 

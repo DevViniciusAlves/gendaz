@@ -115,7 +115,7 @@ public class MeuGendazAuthService {
             }
 
             state.usado = true;
-            String sessionToken = usuarioSessionService.renovarSessao(usuario);
+            String sessionToken = usuarioSessionService.renovarSessao(usuario, empresa.getId());
             usuario.setSessaoAtiva(sessionToken);
             usuarioRepository.save(usuario);
             return new MeuGendazAuthResponse("Login realizado com sucesso.", normalizado, sessionToken, "ACTIVE");

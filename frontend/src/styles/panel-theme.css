@@ -14,6 +14,12 @@
   font-weight: 500 !important;
 }
 
+.admin-shell,
+.admin-shell * {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
 /* --- AnimatedBackground: disable gradients/glow --- */
 .app-shell .animated-background,
 .app-shell .bg-sheen,

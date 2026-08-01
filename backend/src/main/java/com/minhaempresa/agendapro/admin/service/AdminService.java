@@ -9,6 +9,7 @@ import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
 import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
+import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
@@ -20,6 +21,8 @@ import com.minhaempresa.agendapro.pagamento.entity.PagamentoPlanoEntity;
 import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.agendapro.pagamento.service.PagamentoService;
+import com.minhaempresa.agendapro.plano.entity.PlanoEntity;
+import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.agendapro.profissional.dto.ProfissionalDtos.SalvarProfissionalRequest;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
@@ -49,9 +52,11 @@ public class AdminService {
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
+    private final AssinaturaRepository assinaturaRepository;
     private final AdminImpersonationSessionRepository impersonationSessionRepository;
     private final ChamadoRepository chamadoRepository;
     private final AssinaturaService assinaturaService;
+    private final PlanoService planoService;
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
     private final PagamentoService pagamentoService;
@@ -333,13 +338,20 @@ public class AdminService {
         empresa.setEmail(email);
         EmpresaEntity salva = empresaRepository.save(empresa);
 
+        boolean alterarAssinatura = request.planoId() != null || request.diasPlano() != null;
+        if (alterarAssinatura) {
+            atualizarPlanoEAjustarPrazo(empresa, request);
+        }
+
         auditService.registrar(
                 "EMPRESA_EDITADA",
                 "SECURITY",
                 admin,
                 null,
                 salva,
-                "Dados basicos da empresa atualizados pelo Super Admin",
+                alterarAssinatura
+                        ? "Dados basicos da empresa e plano atualizados pelo Super Admin"
+                        : "Dados basicos da empresa atualizados pelo Super Admin",
                 request.motivo().trim(),
                 ip,
                 userAgent
@@ -449,6 +461,32 @@ public class AdminService {
         if (motivo == null || motivo.trim().length() < 8) {
             throw new BusinessException("Informe um motivo com pelo menos 8 caracteres.");
         }
+    }
+
+    private void atualizarPlanoEAjustarPrazo(EmpresaEntity empresa, AdminAtualizarEmpresaRequest request) {
+        AssinaturaEntity assinatura = assinaturaService.buscarAtualPorEmpresa(empresa.getId()).orElse(null);
+        PlanoEntity plano = request.planoId() == null ? null : planoService.buscarEntidade(request.planoId());
+        int diasPlano = request.diasPlano() == null ? 30 : request.diasPlano();
+        if (diasPlano < 1) {
+            throw new BusinessException("Informe dias de plano maior ou igual a 1.");
+        }
+
+        if (assinatura == null) {
+            if (plano == null) {
+                throw new BusinessException("Selecione um plano para criar a assinatura.");
+            }
+            assinatura = assinaturaService.ativarPlanoPago(empresa, plano);
+        } else {
+            if (plano != null) {
+                assinatura.setPlano(plano);
+            }
+            assinatura.setStatus(StatusAssinatura.ATIVA);
+        }
+
+        LocalDate hoje = LocalDate.now();
+        assinatura.setDataInicio(hoje);
+        assinatura.setDataFim(hoje.plusDays(diasPlano));
+        assinaturaRepository.save(assinatura);
     }
 
     private String normalizarTextoObrigatorio(String valor) {
