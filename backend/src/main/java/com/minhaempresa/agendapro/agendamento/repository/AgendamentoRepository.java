@@ -26,6 +26,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByClienteId(Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdAndClienteId(Long empresaId, Long clienteId);
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByServicoId(Long servicoId);
     List<AgendamentoHorarioProjection> findByProfissionalIdAndData(Long profissionalId, LocalDate data);
     @Query("""

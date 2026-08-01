@@ -12873,6 +12873,12 @@ tbody tr:hover { background: #fffaf5; }
   --gendaz-soft-hover: rgba(255, 255, 255, 0.08);
   --gendaz-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
   --gendaz-shadow-hover: 0 24px 56px rgba(0, 0, 0, 0.48);
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+}
+
+.gendaz-shell *,
+.gendaz-auth * {
+  font-family: inherit;
 }
 
 .gendaz-shell {

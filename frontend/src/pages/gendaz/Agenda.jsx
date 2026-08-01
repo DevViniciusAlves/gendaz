@@ -5,6 +5,7 @@ import clienteApi from '../../api/clienteApi.js'
 
 function NovoAgendamentoModal({ onFechar, onCriar }) {
   const { servicos, profissionais } = useContext(ClienteGendazContext)
+  const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [horarios, setHorarios] = useState([])
   const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: '', hora: '', observacoes: '' })
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)

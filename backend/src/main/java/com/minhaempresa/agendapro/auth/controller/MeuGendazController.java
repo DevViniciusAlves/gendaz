@@ -67,8 +67,7 @@ public class MeuGendazController {
 
     private ClienteEntity findOrCreateCliente(UsuarioEntity user) {
         Long empresaId = getEmpresaId(user);
-        return clienteRepository
-                .findFirstByEmpresaIdAndEmail(empresaId, user.getEmail())
+        return clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail())
                 .orElseGet(() -> clienteRepository.save(ClienteEntity.builder()
                         .nome(user.getNome())
                         .email(user.getEmail())
@@ -181,8 +180,9 @@ public class MeuGendazController {
     public ResponseEntity<?> agendamentosProximos(HttpServletRequest request) {
         try {
             UsuarioEntity user = findUserFromSession(request);
+            Long empresaId = getEmpresaId(user);
             ClienteEntity cliente = findOrCreateCliente(user);
-            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(cliente.getId());
+            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
@@ -202,8 +202,9 @@ public class MeuGendazController {
     ) {
         try {
             UsuarioEntity user = findUserFromSession(request);
+            Long empresaId = getEmpresaId(user);
             ClienteEntity cliente = findOrCreateCliente(user);
-            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(cliente.getId());
+            List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
@@ -310,7 +311,7 @@ public class MeuGendazController {
             UsuarioEntity user = findUserFromSession(request);
             ClienteEntity cliente = findOrCreateCliente(user);
 
-            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(cliente.getId());
+            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(user), cliente.getId());
 
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))

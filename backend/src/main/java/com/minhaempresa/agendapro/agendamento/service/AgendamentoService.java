@@ -171,6 +171,12 @@ public class AgendamentoService {
     }
 
     @Transactional(readOnly = true)
+    public List<AgendamentoResponse> listarPorCliente(Long empresaId, Long clienteId) {
+        validarEmpresaAtual(empresaId);
+        return agendamentoRepository.findByEmpresaIdAndClienteId(empresaId, clienteId).stream().map(mapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<String> horariosDisponiveis(Long empresaId, Long profissionalId, Long servicoId, LocalDate data) {
         ServicoEntity servico = servicoService.buscarEntidade(servicoId);
         ProfissionalEntity profissional = null;
