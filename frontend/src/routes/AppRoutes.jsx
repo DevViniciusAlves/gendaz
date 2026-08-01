@@ -29,7 +29,6 @@ import Planos from '../pages/Planos.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
 import Suporte from '../pages/Suporte.jsx'
 import Conta from '../pages/Conta.jsx'
-import NotFound from '../pages/NotFound.jsx'
 import Gendaz from '../pages/Gendaz.jsx'
 import GendazDashboard from '../pages/gendaz/Dashboard.jsx'
 import GendazAgenda from '../pages/gendaz/Agenda.jsx'
@@ -137,8 +136,6 @@ export default function AppRoutes() {
         <Route path="suporte" element={<Suporte />} />
         <Route path="conta" element={<Conta />} />
       </Route>
-      <Route path="/not-found" element={<NotFound />} />
-      <Route path="*" element={<Navigate to="/not-found" replace />} />
     </Routes>
   )
 }
