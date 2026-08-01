@@ -110,7 +110,7 @@ export default function AppRoutes() {
       <Route path="/conta-inativa" element={<ContaInativaRoute><ContaInativa /></ContaInativaRoute>} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
-      <Route path="/meu-gendaz/*" element={<Gendaz />}>
+      <Route path="/meu-gendaz/:slug/*" element={<Gendaz />}>
         <Route index element={<GendazDashboard />} />
         <Route path="dashboard" element={<GendazDashboard />} />
         <Route path="agenda" element={<GendazAgenda />} />

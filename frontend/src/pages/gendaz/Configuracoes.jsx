@@ -124,7 +124,7 @@ export default function Configuracoes() {
   async function handleLogout() {
     if (window.confirm('Tem certeza que deseja sair?')) {
       await logout()
-      navigate('/meu-gendaz', { replace: true })
+      navigate('dashboard', { replace: true })
       window.location.reload()
     }
   }

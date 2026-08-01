@@ -71,10 +71,10 @@ export default function Dashboard() {
           </div>
 
           <div className="gendaz-card__actions">
-            <button className="gendaz-btn gendaz-btn--secondary" onClick={() => navigate('/meu-gendaz/agenda')}>
+            <button className="gendaz-btn gendaz-btn--secondary" onClick={() => navigate('agenda')}>
               Reagendar
             </button>
-            <button className="gendaz-btn gendaz-btn--danger" onClick={() => navigate('/meu-gendaz/agenda')}>
+            <button className="gendaz-btn gendaz-btn--danger" onClick={() => navigate('agenda')}>
               Cancelar
             </button>
           </div>
@@ -85,7 +85,7 @@ export default function Dashboard() {
             <Calendar size={48} />
             <h3>Sem agendamentos proximos</h3>
             <p>Voce nao possui agendamentos no momento.</p>
-            <button className="gendaz-btn gendaz-btn--primary" onClick={() => navigate('/meu-gendaz/agenda')}>
+            <button className="gendaz-btn gendaz-btn--primary" onClick={() => navigate('agenda')}>
               <Plus size={16} /> Agendar Agora
             </button>
           </div>
@@ -116,7 +116,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button className="gendaz-btn gendaz-btn--ghost" onClick={() => navigate('/meu-gendaz/beneficios')}>
+              <button className="gendaz-btn gendaz-btn--ghost" onClick={() => navigate('beneficios')}>
                 Ver todos os beneficios <ChevronRight size={16} />
               </button>
             </article>
@@ -131,7 +131,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="gendaz-botoes-contato">
-              <button className="gendaz-btn-contato" onClick={() => navigate('/meu-gendaz/ia')}>
+              <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
                 <Sparkles size={18} />
                 <span>Assistente IA</span>
               </button>
@@ -155,7 +155,7 @@ export default function Dashboard() {
                 <Clock size={18} />
                 <span>Ultimos atendimentos</span>
               </div>
-              <button className="gendaz-link-mais" onClick={() => navigate('/meu-gendaz/historico')}>
+              <button className="gendaz-link-mais" onClick={() => navigate('historico')}>
                 Ver mais <ChevronRight size={14} />
               </button>
             </div>
@@ -215,7 +215,7 @@ export default function Dashboard() {
               <h3>Agende Agora</h3>
               <p>Clique abaixo para fazer seu primeiro agendamento</p>
             </div>
-            <button className="gendaz-btn gendaz-btn--primary gendaz-btn--lg" onClick={() => navigate('/meu-gendaz/agenda')}>
+            <button className="gendaz-btn gendaz-btn--primary gendaz-btn--lg" onClick={() => navigate('agenda')}>
               <Plus size={18} /> Novo Agendamento
             </button>
           </div>

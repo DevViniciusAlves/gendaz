@@ -3,12 +3,12 @@ import { Bot, CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, His
 import logoSidebar from '../../assets/logos/gendaz-logo-branco.png'
 
 const items = [
-  { to: '/meu-gendaz', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/meu-gendaz/agenda', label: 'Agenda', icon: CalendarDays },
-  { to: '/meu-gendaz/historico', label: 'Histórico', icon: History },
-  { to: '/meu-gendaz/ia', label: 'Assistente IA', icon: MessageCircle },
-  { to: '/meu-gendaz/beneficios', label: 'Benefícios', icon: Gift },
-  { to: '/meu-gendaz/configuracoes', label: 'Configurações', icon: Settings2 },
+  { to: '.', label: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: 'agenda', label: 'Agenda', icon: CalendarDays },
+  { to: 'historico', label: 'Histórico', icon: History },
+  { to: 'ia', label: 'Assistente IA', icon: MessageCircle },
+  { to: 'beneficios', label: 'Benefícios', icon: Gift },
+  { to: 'configuracoes', label: 'Configurações', icon: Settings2 },
 ]
 
 export default function Sidebar() {

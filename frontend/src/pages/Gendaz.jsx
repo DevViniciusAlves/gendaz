@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -59,7 +59,7 @@ function GendazAuthGate({ onLogin }) {
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
         console.log('✅ Login bem-sucedido. Cookie HttpOnly configurado pelo backend.')
         await onLogin()
-        navigate('/meu-gendaz/dashboard', { replace: true })
+        navigate('dashboard', { replace: true })
       } else {
         setErro(response.data?.mensagem || 'Não foi possível realizar login.')
       }
@@ -142,6 +142,8 @@ function GendazAuthGate({ onLogin }) {
 }
 
 export default function Gendaz() {
+  const { slug } = useParams()
+  if (!slug) return null
   return (
     <ClienteGendazProvider>
       <GendazContent />

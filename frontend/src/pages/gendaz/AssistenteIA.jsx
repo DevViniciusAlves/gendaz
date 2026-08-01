@@ -71,13 +71,13 @@ export default function AssistenteIA() {
     if (texto.startsWith('Ir para ')) {
       const rota = texto.replace('Ir para ', '').toLowerCase()
       const rotas = {
-        'agenda': '/meu-gendaz/agenda',
-        'histórico': '/meu-gendaz/historico',
-        'benefícios': '/meu-gendaz/beneficios',
-        'beneficios': '/meu-gendaz/beneficios',
-        'configurações': '/meu-gendaz/configuracoes',
-        'configuracoes': '/meu-gendaz/configuracoes',
-        'dashboard': '/meu-gendaz/dashboard',
+        'agenda': 'agenda',
+        'histórico': 'historico',
+        'benefícios': 'beneficios',
+        'beneficios': 'beneficios',
+        'configurações': 'configuracoes',
+        'configuracoes': 'configuracoes',
+        'dashboard': 'dashboard',
       }
       const rotaEncontrada = rotas[rota]
       if (rotaEncontrada) {
@@ -122,7 +122,7 @@ export default function AssistenteIA() {
                 {item.acao && (
                   <div className="gendaz-chat__acao">
                     <Calendar size={14} /> Ação disponível
-                    <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={() => navigate('/meu-gendaz/agenda')}>
+                    <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={() => navigate('agenda')}>
                       <ArrowRight size={14} /> Ir para Agenda
                     </button>
                   </div>
