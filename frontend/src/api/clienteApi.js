@@ -74,7 +74,6 @@ clienteApi.interceptors.response.use(
 
       console.log('[meu-gendaz] 401 recebido - cookie inválido ou expirado', { url })
       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
-      window.location.href = '/meu-gendaz'
     }
 
     if (status === 429) {
