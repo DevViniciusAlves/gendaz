@@ -103,6 +103,37 @@ public class AdminService {
             UsuarioRepository usuarioRepository,
             EmpresaRepository empresaRepository,
             PagamentoPlanoRepository pagamentoPlanoRepository,
+            AssinaturaRepository assinaturaRepository,
+            AdminImpersonationSessionRepository impersonationSessionRepository,
+            ChamadoRepository chamadoRepository,
+            AssinaturaService assinaturaService,
+            AdminAuditService auditService,
+            PasswordService passwordService,
+            PagamentoService pagamentoService,
+            UsuarioSessionService usuarioSessionService,
+            ProfissionalService profissionalService
+    ) {
+        this(
+                usuarioRepository,
+                empresaRepository,
+                pagamentoPlanoRepository,
+                assinaturaRepository,
+                impersonationSessionRepository,
+                chamadoRepository,
+                assinaturaService,
+                null,
+                auditService,
+                passwordService,
+                pagamentoService,
+                usuarioSessionService,
+                profissionalService
+        );
+    }
+
+    public AdminService(
+            UsuarioRepository usuarioRepository,
+            EmpresaRepository empresaRepository,
+            PagamentoPlanoRepository pagamentoPlanoRepository,
             AdminImpersonationSessionRepository impersonationSessionRepository,
             ChamadoRepository chamadoRepository,
             AssinaturaService assinaturaService,
