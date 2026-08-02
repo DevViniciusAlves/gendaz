@@ -444,6 +444,9 @@ export const appApi = {
   },
 
   async refreshSession(options = {}) {
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/meu-gendaz/')) {
+      return { usuario: null, assinatura: null, statusConta: null, sessionToken: null }
+    }
     const response = await api.post('/auth/refresh', null, { skipUsuarioHeader: true, ...options })
     return response.data
   },

@@ -31,6 +31,11 @@ function processQueue(error, token = null) {
   failedQueue = []
 }
 
+function isMeuGendazPath() {
+  if (typeof window === 'undefined') return false
+  return window.location.pathname.startsWith('/meu-gendaz/')
+}
+
 api.interceptors.request.use((config) => {
   if (config?.skipUsuarioHeader) {
     return config
@@ -42,6 +47,9 @@ api.interceptors.request.use((config) => {
 })
 
 async function tentarRefreshSessao(config) {
+  if (isMeuGendazPath()) {
+    return false
+  }
   const usuario = sessionUser
   const url = String(config?.url || '')
   if (!usuario?.id || config?._retry || url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout')) {
@@ -120,6 +128,10 @@ api.interceptors.response.use(
     }
 
     if (status !== 401) {
+      return Promise.reject(error)
+    }
+
+    if (isMeuGendazPath()) {
       return Promise.reject(error)
     }
 
