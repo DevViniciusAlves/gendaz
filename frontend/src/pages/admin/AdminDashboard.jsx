@@ -1,4 +1,4 @@
-import { Ban, CheckCircle2, Eye, LogOut, Pencil, Power, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react'
+import { Ban, BarChart2, CheckCircle2, Eye, LogOut, Pencil, Power, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'

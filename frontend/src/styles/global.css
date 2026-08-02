@@ -13692,6 +13692,21 @@ tbody tr:hover { background: #fffaf5; }
   width: min(520px, 100%);
 }
 
+.gendaz-auth__brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.gendaz-auth__logo {
+  display: block;
+  width: min(320px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.34));
+}
+
 .gendaz-auth__form {
   display: grid;
   gap: 12px;
@@ -13770,7 +13785,120 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-card--agendamento {
+  width: 100%;
+  min-height: auto;
+  padding: 16px 18px;
+  gap: 14px;
   border-left: 3px solid rgba(255, 255, 255, 0.72);
+  justify-self: stretch;
+}
+
+.gendaz-card--agendamento .gendaz-card__top {
+  margin-bottom: 0;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.gendaz-card--agendamento .gendaz-card__body {
+  gap: 6px;
+}
+
+.gendaz-card--agendamento .gendaz-card__actions {
+  margin-top: 4px;
+}
+
+.gendaz-card--agendamento .gendaz-btn {
+  min-height: 38px;
+  padding-inline: 12px;
+}
+
+.gendaz-agenda-proximo {
+  display: grid;
+  gap: 12px;
+  padding: 4px 0 2px;
+}
+
+.gendaz-agenda-proximo__linha {
+  display: grid;
+  gap: 5px;
+}
+
+.gendaz-agenda-proximo__linha > span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gendaz-agenda-proximo__linha > strong {
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.gendaz-agenda-proximo__linha--datahora {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.gendaz-agenda-proximo__linha--datahora > div {
+  display: grid;
+  gap: 5px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gendaz-agenda-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(120px, 0.65fr) minmax(110px, 0.5fr) minmax(130px, 0.6fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.gendaz-agenda-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gendaz-agenda-field span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gendaz-agenda-field strong {
+  font-size: 14px;
+  line-height: 1.35;
+  color: #ffffff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gendaz-agenda-field--status {
+  justify-self: start;
+}
+
+.gendaz-agenda-observacao {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.gendaz-agenda-actions {
+  justify-content: flex-end;
+}
+
+.gendaz-agenda-actions .gendaz-btn {
+  flex: 0 0 auto;
+  min-width: 150px;
 }
 
 .gendaz-card__top {
@@ -13914,7 +14042,7 @@ tbody tr:hover { background: #fffaf5; }
   gap: 12px;
   width: 100%;
   padding: 12px 16px;
-  background: rgba(18, 20, 28, 0.92);
+  background: #171717;
   border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 10px;
   color: #ffffff;
@@ -13925,7 +14053,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn-contato:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: #1d1d1d;
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.18);
 }
@@ -14145,20 +14273,26 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-status--pendente {
-  background: rgba(255, 255, 255, 0.06);
-  color: #e5e7eb;
+  background: #e65212;
+  color: #ffffff;
+  border: 1px solid rgba(230, 82, 18, 0.45);
+  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-status--cancelado,
 .gendaz-status--cancelada {
-  background: rgba(255, 255, 255, 0.05);
-  color: #d1d5db;
+  background: #a32626;
+  color: #ffffff;
+  border: 1px solid rgba(163, 38, 38, 0.45);
+  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-status--concluido,
 .gendaz-status--concluida {
-  background: rgba(255, 255, 255, 0.08);
+  background: #469449;
   color: #ffffff;
+  border: 1px solid rgba(70, 148, 73, 0.45);
+  box-shadow: 0 0 0 1px rgba(70, 148, 73, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-desconto {
@@ -14409,6 +14543,19 @@ tbody tr:hover { background: #fffaf5; }
   .gendaz-table__row,
   .gendaz-table__row--agenda {
     grid-template-columns: 1fr;
+  }
+
+  .gendaz-agenda-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gendaz-agenda-actions {
+    justify-content: stretch;
+  }
+
+  .gendaz-agenda-actions .gendaz-btn {
+    flex: 1;
+    min-width: 0;
   }
 
   .gendaz-modal {

@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect } from 'react'
-import { CalendarPlus, Clock3, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
+import { CalendarPlus, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
 
@@ -267,21 +267,40 @@ export default function Agenda() {
       <div className="gendaz-table">
         {agendamentos && agendamentos.length > 0 ? (
           agendamentos.map((item) => (
-            <article key={item.id} className="gendaz-table__row gendaz-table__row--agenda">
-              <div>
+            <article key={item.id} className="gendaz-card gendaz-card--agendamento">
+              <div className="gendaz-card__top">
                 <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
-                <small>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</small>
-              </div>
-              <div>
-                <span>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : 'Data não definida'}</span>
-                <small><Clock3 size={14} /> {item.horaInicio || item.hora || '—'}</small>
-              </div>
-              <div>
-                <span>Status</span>
                 <strong className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Pendente'}</strong>
               </div>
-              {(item.observacoes || item.observacao) && <small>{item.observacoes || item.observacao}</small>}
-              <div className="gendaz-card__actions">
+
+              <div className="gendaz-agenda-grid">
+                <div className="gendaz-agenda-field">
+                  <span>Serviço</span>
+                  <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
+                </div>
+                <div className="gendaz-agenda-field">
+                  <span>Profissional</span>
+                  <strong>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</strong>
+                </div>
+                <div className="gendaz-agenda-field">
+                  <span>Data</span>
+                  <strong>{item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : 'Data não definida'}</strong>
+                </div>
+                <div className="gendaz-agenda-field">
+                  <span>Horário</span>
+                  <strong>{item.horaInicio || item.hora || '—'}</strong>
+                </div>
+                <div className="gendaz-agenda-field gendaz-agenda-field--status">
+                  <span>Status</span>
+                  <strong className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Pendente'}</strong>
+                </div>
+              </div>
+
+              {(item.observacoes || item.observacao) && (
+                <p className="gendaz-agenda-observacao">{item.observacoes || item.observacao}</p>
+              )}
+
+              <div className="gendaz-card__actions gendaz-agenda-actions">
                 <button className="gendaz-btn" type="button" onClick={() => setModalReagendar(item)}>
                   <RotateCw size={16} /> Reagendar
                 </button>

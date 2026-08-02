@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
-import { Bot, CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, History } from 'lucide-react'
-import logoSidebar from '../../assets/logos/gendaz-logo-branco.png'
+import { CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, History } from 'lucide-react'
+import logoSidebar from '../../assets/logos/meugendazpngpreto.png'
 
 const items = [
   { to: '.', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -26,10 +26,6 @@ export default function Sidebar() {
           </NavLink>
         ))}
       </nav>
-      <div className="gendaz-sidebar__footer">
-        <Bot size={16} />
-        <small>IA sempre disponível</small>
-      </div>
     </aside>
   )
 }

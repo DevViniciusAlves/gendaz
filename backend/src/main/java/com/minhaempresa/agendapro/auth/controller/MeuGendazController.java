@@ -223,7 +223,10 @@ public class MeuGendazController {
             Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
-                    .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
+                    .filter(a -> a.data() != null && (
+                            a.data().isBefore(java.time.LocalDate.now())
+                                    || "FINALIZADO".equalsIgnoreCase(a.status())
+                    ))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .toList();
             int total = passados.size();

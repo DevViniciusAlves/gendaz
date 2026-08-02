@@ -13,8 +13,22 @@ export default function Dashboard() {
     const buscar = async () => {
       try {
         setCarregandoAtendimentos(true)
-        const data = await carregarHistorico(1, 3)
-        setUltimosAtendimentos(data?.agendamentos || data || [])
+        const data = await carregarHistorico(1, 20)
+        const lista = data?.agendamentos || data || []
+        const finalizados = Array.isArray(lista)
+          ? lista
+              .filter((item) => String(item?.status || '').toUpperCase() === 'FINALIZADO')
+              .sort((a, b) => {
+                const dataA = a?.data ? new Date(`${a.data}T12:00:00`).getTime() : 0
+                const dataB = b?.data ? new Date(`${b.data}T12:00:00`).getTime() : 0
+                if (dataA !== dataB) return dataB - dataA
+                const horaA = a?.horaInicio || a?.hora || ''
+                const horaB = b?.horaInicio || b?.hora || ''
+                return String(horaB).localeCompare(String(horaA))
+              })
+              .slice(0, 2)
+          : []
+        setUltimosAtendimentos(finalizados)
       } catch {
         /* silencioso */
       } finally {
@@ -27,16 +41,21 @@ export default function Dashboard() {
   if (carregando) return <div className="gendaz-loading">Carregando dashboard...</div>
   if (erro) return <div className="gendaz-erro">{erro}</div>
 
-  const nome = cliente?.nome || cliente?.empresaNome || 'cliente'
+  const nomeEmpresa = cliente?.empresaNome || cliente?.empresa?.nome || cliente?.empresa?.nomeFantasia || cliente?.empresaNomeFantasia || 'sua empresa'
   const proximo = dashboard?.proximoAgendamento || (agendamentos && agendamentos.length > 0 ? agendamentos[0] : null)
   const promos = dashboard?.promocoes || []
   const notifs = dashboard?.notificacoes || []
+  const textoPadrao = '-----'
+  const servicoProximo = proximo?.servicoNome || proximo?.servico || textoPadrao
+  const profissionalProximo = proximo?.profissionalNome || proximo?.profissional || textoPadrao
+  const dataProximo = proximo?.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : textoPadrao
+  const horaProximo = proximo?.horaInicio || proximo?.hora || textoPadrao
 
   return (
     <section className="gendaz-page gendaz-dashboard">
       <header className="gendaz-page__header gendaz-page__header--hero">
         <span className="gendaz-kicker">Dashboard</span>
-        <h1>Bom te ver novamente, {nome}. </h1>
+        <h1>Bom te ver novamente, {nomeEmpresa} está te esperando.</h1>
         <p>Acompanhe sua agenda, conversas e beneficios em um unico espaco.</p>
       </header>
 
@@ -53,20 +72,24 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="gendaz-card__body">
-            <div className="gendaz-info-row">
-              <Clock size={16} />
-              <span>
-                {proximo.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}
-                {' as '}
-                {proximo.horaInicio || proximo.hora || '—'}
-              </span>
+          <div className="gendaz-agenda-proximo">
+            <div className="gendaz-agenda-proximo__linha">
+              <span>Serviço</span>
+              <strong>{servicoProximo}</strong>
             </div>
-            <div className="gendaz-info-row">
-              <strong>{proximo.servicoNome || proximo.servico || 'Servico'}</strong>
+            <div className="gendaz-agenda-proximo__linha">
+              <span>Profissional</span>
+              <strong>{profissionalProximo}</strong>
             </div>
-            <div className="gendaz-info-row">
-              <span>Com {proximo.profissionalNome || proximo.profissional || 'Profissional'}</span>
+            <div className="gendaz-agenda-proximo__linha gendaz-agenda-proximo__linha--datahora">
+              <div>
+                <span>Data</span>
+                <strong>{dataProximo}</strong>
+              </div>
+              <div>
+                <span>Horário</span>
+                <strong>{horaProximo}</strong>
+              </div>
             </div>
           </div>
 

@@ -4,17 +4,41 @@ import { ArrowLeft } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
+import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
 function GendazAuthGate({ slug, onLogin }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [codigo, setCodigo] = useState('')
   const [etapa, setEtapa] = useState('email')
+  const [nomeEmpresa, setNomeEmpresa] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [reenviarEm, setReenviarEm] = useState(0)
   const [tentativas, setTentativas] = useState(0)
   const [bloqueado, setBloqueado] = useState(false)
+
+  useEffect(() => {
+    let ativo = true
+    async function carregarEmpresa() {
+      try {
+        const { data } = await clienteApi.get(`/meu-gendaz/empresa/${slug}`)
+        if (!ativo) return
+        setNomeEmpresa(data?.nomeFantasia || data?.nome || data?.empresaNome || '')
+      } catch {
+        if (!ativo) return
+        setNomeEmpresa('')
+      }
+    }
+
+    if (slug) {
+      void carregarEmpresa()
+    }
+
+    return () => {
+      ativo = false
+    }
+  }, [slug])
 
   useEffect(() => {
     if (!reenviarEm) return undefined
@@ -81,8 +105,11 @@ function GendazAuthGate({ slug, onLogin }) {
   return (
     <main className="gendaz-auth">
       <section className="gendaz-auth__card">
+        <div className="gendaz-auth__brand">
+          <img src={logoMeuGendaz} alt="Meu Gendaz" className="gendaz-auth__logo" />
+        </div>
         <span className="gendaz-kicker">Meu gendaz</span>
-        <h1>Entrar sem senha</h1>
+        <h1>{nomeEmpresa ? `Entrar em ${nomeEmpresa}` : 'Entrar sem senha'}</h1>
         <p>Use seu e-mail cadastrado para receber um codigo de acesso.</p>
 
         {erro && <p className="gendaz-auth__error">{erro}</p>}

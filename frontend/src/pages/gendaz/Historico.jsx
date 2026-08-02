@@ -10,16 +10,17 @@ export default function Historico() {
   const [pagina, setPagina] = useState(1)
   const [total, setTotal] = useState(0)
   const [totalPaginas, setTotalPaginas] = useState(1)
+  const itensPorPagina = 5
 
   const buscar = useCallback(async (p) => {
     try {
       setCarregando(true)
       setErro(null)
-      const data = await carregarHistorico(p, 10)
+      const data = await carregarHistorico(p, itensPorPagina)
       const lista = data?.agendamentos || data?.historico || (Array.isArray(data) ? data : [])
       setAgendamentos(lista)
       setTotal(data?.total || lista.length || 0)
-      setTotalPaginas(data?.totalPaginas || Math.ceil((data?.total || lista.length || 1) / 10))
+      setTotalPaginas(data?.totalPaginas || Math.ceil((data?.total || lista.length || 1) / itensPorPagina))
     } catch (err) {
       console.error('[Historico] erro:', err)
       if (err.response?.status === 401) {
@@ -31,7 +32,7 @@ export default function Historico() {
     } finally {
       setCarregando(false)
     }
-  }, [carregarHistorico])
+  }, [carregarHistorico, itensPorPagina])
 
   useEffect(() => {
     if (cliente) buscar(pagina)
