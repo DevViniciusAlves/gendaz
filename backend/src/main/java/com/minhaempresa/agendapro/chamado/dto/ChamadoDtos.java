@@ -26,6 +26,7 @@ public final class ChamadoDtos {
             String assunto,
             String mensagem,
             PrioridadeChamado prioridade,
+            String origem,
             Long empresaId,
             String empresa,
             Long usuarioId,

@@ -10,6 +10,7 @@ import com.minhaempresa.agendapro.chamado.service.ChamadoService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
 import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
+import com.minhaempresa.agendapro.cliente.service.ClienteEmailBloqueadoService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsRequest;
@@ -58,6 +59,7 @@ public class MeuGendazController {
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final ClienteRepository clienteRepository;
+    private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
     private final ServicoService servicoService;
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
@@ -110,6 +112,7 @@ public class MeuGendazController {
         }
         UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), usuario.getEmail());
         ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
                 .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
         if (cliente.getEmpresa() == null || !empresa.getId().equals(cliente.getEmpresa().getId())) {
@@ -158,18 +161,30 @@ public class MeuGendazController {
     @GetMapping("/perfil")
     public ResponseEntity<?> perfil(HttpServletRequest request) {
         try {
-            ClienteEntity cliente = findClienteFromSession(request);
-            EmpresaEntity empresa = cliente.getEmpresa();
+            UsuarioEntity usuario = findUserFromSession(request);
+            Optional<ClienteEntity> clienteOpt = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(
+                    usuario.getEmpresa().getId(),
+                    usuario.getEmail()
+            );
+            ClienteEntity cliente = clienteOpt.orElse(null);
+            boolean cadastroPendente = cliente == null;
+            EmpresaEntity empresa = usuario.getEmpresa();
             Map<String, Object> result = new LinkedHashMap<>();
-            result.put("id", cliente.getId());
-            result.put("nome", cliente.getNome());
-            result.put("email", cliente.getEmail());
-            result.put("telefone", cliente.getTelefone());
+            result.put("cadastroPendente", cadastroPendente);
+            result.put("id", cliente != null ? cliente.getId() : usuario.getId());
+            result.put("nome", cliente != null ? cliente.getNome() : usuario.getNome());
+            result.put("email", usuario.getEmail());
+            result.put("telefone", cliente != null ? cliente.getTelefone() : null);
             result.put("empresaId", empresa != null ? empresa.getId() : null);
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
             result.put("empresaTelefone", empresa != null ? empresa.getTelefone() : null);
             result.put("empresaEmail", empresa != null ? empresa.getEmail() : null);
             result.put("empresaSlug", empresa != null ? empresa.getAgendamentoSlug() : null);
+            if (cadastroPendente) {
+                result.put("mensagem", "Complete seu cadastro para continuar.");
+                return ResponseEntity.ok(result);
+            }
+            result.put("cadastroPendente", false);
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -421,7 +436,7 @@ public class MeuGendazController {
                     + "Motivo: " + motivo + "\n\n"
                     + mensagem;
             CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
-            ChamadoResponse chamado = chamadoService.criar(chamadoRequest, usuario.getId());
+            ChamadoResponse chamado = chamadoService.criar(chamadoRequest, usuario.getId(), "MEU_GENDAZ");
             return ResponseEntity.ok(chamado);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -499,11 +514,14 @@ public class MeuGendazController {
     @PatchMapping("/perfil")
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
-            ClienteEntity cliente = findClienteFromSession(request);
-            EmpresaEntity empresa = cliente.getEmpresa();
+            UsuarioEntity usuario = findUserFromSession(request);
+            EmpresaEntity empresa = usuario.getEmpresa();
+            if (empresa == null) {
+                throw new BusinessException("Empresa nao encontrada para este acesso.");
+            }
             Long empresaId = empresa.getId();
             String nome = body.get("nome") == null ? "" : body.get("nome").trim();
-            String email = body.get("email") == null ? "" : body.get("email").trim().toLowerCase();
+            String email = usuario.getEmail() == null ? "" : usuario.getEmail().trim().toLowerCase();
             String telefone = sanitizacaoService.telefone(body.get("telefone"));
 
             List<String> erros = new ArrayList<>();
@@ -536,10 +554,18 @@ public class MeuGendazController {
                 return ResponseEntity.status(400).body(Map.of("mensagem", String.join(" ", erros)));
             }
 
+            Optional<ClienteEntity> clienteExistente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
+            ClienteEntity cliente = clienteExistente.orElseGet(() -> ClienteEntity.builder()
+                    .empresa(empresa)
+                    .email(email)
+                    .build());
+
             cliente.setNome(nome);
-            cliente.setEmail(email);
             cliente.setTelefone(telefone);
             clienteRepository.save(cliente);
+
+            usuario.setNome(nome);
+            usuarioRepository.save(usuario);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("id", cliente.getId());
@@ -548,6 +574,7 @@ public class MeuGendazController {
             result.put("telefone", cliente.getTelefone());
             result.put("empresaId", empresa.getId());
             result.put("empresaNome", empresa.getNomeFantasia());
+            result.put("cadastroPendente", false);
             result.put("mensagem", "Perfil atualizado com sucesso!");
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {

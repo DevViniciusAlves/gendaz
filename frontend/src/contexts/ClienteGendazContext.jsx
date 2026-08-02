@@ -5,6 +5,8 @@ export const ClienteGendazContext = createContext()
 
 export function ClienteGendazProvider({ children, slug }) {
   const [cliente, setCliente] = useState(null)
+  const [perfilPendente, setPerfilPendente] = useState(false)
+  const [perfilAcesso, setPerfilAcesso] = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
   const [agendamentos, setAgendamentos] = useState([])
@@ -16,6 +18,8 @@ export function ClienteGendazProvider({ children, slug }) {
 
   const limparEstadoSessao = useCallback(() => {
     setCliente(null)
+    setPerfilPendente(false)
+    setPerfilAcesso(null)
     setDashboard(null)
     setAgendamentos([])
     setBeneficios({ promocoes: [], cupons: [] })
@@ -29,13 +33,39 @@ export function ClienteGendazProvider({ children, slug }) {
       setCarregando(true)
       setErro(null)
 
-      const [perfilRes, dashboardRes, agendamentosRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/perfil', { skipMeuGendazLogout: !exigirSessao }),
+      const perfilRes = await clienteApi.get('/meu-gendaz/perfil', { skipMeuGendazLogout: !exigirSessao })
+
+      if (perfilRes?.data?.cadastroPendente) {
+        setPerfilPendente(true)
+        setPerfilAcesso(perfilRes.data)
+        setCliente(null)
+        setDashboard(null)
+        setAgendamentos([])
+        setBeneficios({ promocoes: [], cupons: [] })
+        setConfiguracoes(null)
+        setServicos([])
+        setProfissionais([])
+        setCarregando(false)
+        return
+      }
+
+      const dadosPerfil = perfilRes.data
+      setPerfilPendente(false)
+      setPerfilAcesso(dadosPerfil)
+      setCliente(dadosPerfil)
+      setConfiguracoes({
+        notificacoes: { email: true, sms: false, push: true },
+        compartilharHistorico: false,
+      })
+
+      const [dashboardRes, agendamentosRes, servRes, profRes] = await Promise.allSettled([
         clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao }),
         clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao }),
       ])
 
-      const respostas = [perfilRes, dashboardRes, agendamentosRes]
+      const respostas = [dashboardRes, agendamentosRes, servRes, profRes]
       const houve401 = respostas.some((resultado) => (
         resultado.status === 'rejected' && resultado.reason?.response?.status === 401
       ))
@@ -49,15 +79,6 @@ export function ClienteGendazProvider({ children, slug }) {
         return
       }
 
-      if (perfilRes.status === 'fulfilled') {
-        const dados = perfilRes.value.data
-        setCliente(dados)
-        setConfiguracoes({
-          notificacoes: { email: true, sms: false, push: true },
-          compartilharHistorico: false,
-        })
-      }
-
       if (dashboardRes.status === 'fulfilled') {
         setDashboard(dashboardRes.value.data)
       }
@@ -65,24 +86,6 @@ export function ClienteGendazProvider({ children, slug }) {
       if (agendamentosRes.status === 'fulfilled') {
         const data = agendamentosRes.value.data
         setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
-      }
-
-      const [servRes, profRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao }),
-        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao }),
-      ])
-
-      const houve401Complementar = [servRes, profRes].some((resultado) => (
-        resultado.status === 'rejected' && resultado.reason?.response?.status === 401
-      ))
-
-      if (houve401Complementar) {
-        if (exigirSessao) {
-          limparEstadoSessao()
-          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
-        }
-        setCarregando(false)
-        return
       }
 
       if (servRes.status === 'fulfilled') {
@@ -219,7 +222,9 @@ export function ClienteGendazProvider({ children, slug }) {
 
   const atualizarPerfil = useCallback(async (dados) => {
     const { data } = await clienteApi.patch('/meu-gendaz/perfil', dados)
-    setCliente((prev) => ({ ...prev, ...data }))
+    setPerfilPendente(false)
+    setPerfilAcesso(data)
+    setCliente((prev) => ({ ...(prev || {}), ...data }))
     return data
   }, [])
 
@@ -244,6 +249,9 @@ export function ClienteGendazProvider({ children, slug }) {
 
   const value = {
     cliente,
+    cadastroPendente: perfilPendente,
+    perfilPendente,
+    perfilAcesso,
     dashboard,
     agendamentos,
     beneficios,

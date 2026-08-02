@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Bell, LogOut, Shield, UserRound, Loader, AlertCircle } from 'lucide-react'
+import { Bell, LogOut, Shield, UserRound, Loader, AlertCircle, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../../utils/phoneUtils.js'
 
@@ -15,6 +15,7 @@ export default function Configuracoes() {
   const [mensagem, setMensagem] = useState('')
   const [erros, setErros] = useState({})
   const [perfilIncompleto, setPerfilIncompleto] = useState(false)
+  const [abrirLogout, setAbrirLogout] = useState(false)
 
   useEffect(() => {
     if (cliente) {
@@ -122,11 +123,10 @@ export default function Configuracoes() {
   }
 
   async function handleLogout() {
-    if (window.confirm('Tem certeza que deseja sair?')) {
-      await logout()
-      navigate('dashboard', { replace: true })
-      window.location.reload()
-    }
+    setAbrirLogout(false)
+    await logout()
+    navigate('dashboard', { replace: true })
+    window.location.reload()
   }
 
   return (
@@ -222,11 +222,33 @@ export default function Configuracoes() {
         <article className="gendaz-panel">
           <div className="gendaz-panel__head"><LogOut size={18} /><h2>Sair da conta</h2></div>
           <p>Sua sessao pode permanecer salva por longo periodo no mesmo dispositivo.</p>
-          <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={handleLogout}>
+          <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={() => setAbrirLogout(true)}>
             <LogOut size={16} /> Sair
           </button>
         </article>
       </div>
+
+      {abrirLogout && (
+        <div className="gendaz-modal-overlay" onClick={() => setAbrirLogout(false)}>
+          <div className="gendaz-modal gendaz-modal--confirm" onClick={(e) => e.stopPropagation()}>
+            <div className="gendaz-modal__head">
+              <h2>Confirmar saida</h2>
+              <button type="button" className="gendaz-modal__close" onClick={() => setAbrirLogout(false)} aria-label="Fechar">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="gendaz-modal__texto">Tem certeza que deseja sair da sua conta no Meu Gendaz?</p>
+            <div className="gendaz-modal__actions">
+              <button type="button" className="gendaz-btn gendaz-btn--ghost" onClick={() => setAbrirLogout(false)}>
+                Cancelar
+              </button>
+              <button type="button" className="gendaz-btn gendaz-btn--danger" onClick={handleLogout}>
+                <LogOut size={16} /> Sair
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

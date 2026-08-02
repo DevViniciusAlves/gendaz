@@ -2,6 +2,7 @@ package com.minhaempresa.agendapro.auth.service;
 
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazAuthResponse;
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazCodigoResponse;
+import com.minhaempresa.agendapro.cliente.service.ClienteEmailBloqueadoService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
@@ -35,12 +36,14 @@ public class MeuGendazAuthService {
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
     private final UsuarioSessionService usuarioSessionService;
+    private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
     private final SecureRandom secureRandom = new SecureRandom();
     private final Map<String, CodigoLoginState> estados = new ConcurrentHashMap<>();
 
     public MeuGendazCodigoResponse solicitarCodigo(String slug, String email, String ip) {
         EmpresaEntity empresa = buscarEmpresa(slug);
         String normalizado = normalizarEmail(email);
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
         UsuarioEntity usuario = buscarUsuarioAcesso(empresa, normalizado);
         CodigoLoginState state = estados.computeIfAbsent(chaveEstado(empresa.getId(), normalizado), key -> new CodigoLoginState());
         synchronized (state) {
@@ -87,6 +90,7 @@ public class MeuGendazAuthService {
     public MeuGendazAuthResponse validarCodigo(String slug, String email, String codigo) {
         EmpresaEntity empresa = buscarEmpresa(slug);
         String normalizado = normalizarEmail(email);
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
         UsuarioEntity usuario = buscarUsuarioAcesso(empresa, normalizado);
         CodigoLoginState state = estados.get(chaveEstado(empresa.getId(), normalizado));
         if (state == null) {

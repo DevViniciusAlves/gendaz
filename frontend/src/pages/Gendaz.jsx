@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
+import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
 function GendazAuthGate({ slug, onLogin }) {
@@ -110,7 +111,7 @@ function GendazAuthGate({ slug, onLogin }) {
         </div>
         <span className="gendaz-kicker">Meu gendaz</span>
         <h1>{nomeEmpresa ? `Entrar em ${nomeEmpresa}` : 'Entrar sem senha'}</h1>
-        <p>Use seu e-mail cadastrado para receber um codigo de acesso.</p>
+        <p>Use qualquer e-mail para receber um codigo de acesso.</p>
 
         {erro && <p className="gendaz-auth__error">{erro}</p>}
 
@@ -130,8 +131,8 @@ function GendazAuthGate({ slug, onLogin }) {
               {carregando ? 'Enviando...' : 'Continuar'}
             </button>
           </form>
-        ) : (
-          <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
+      ) : (
+        <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
             <label>
               <span>Digite o codigo enviado para seu e-mail</span>
               <input
@@ -158,8 +159,128 @@ function GendazAuthGate({ slug, onLogin }) {
               {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar codigo'}
             </button>
             <small>Tentativas restantes: {Math.max(0, 5 - tentativas)}</small>
-          </form>
-        )}
+        </form>
+      )}
+    </section>
+  </main>
+  )
+}
+
+function GendazCadastroGate({ slug }) {
+  const navigate = useNavigate()
+  const { perfilAcesso, atualizarPerfil, sincronizarDados, logout } = useContext(ClienteGendazContext)
+  const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
+  const [salvando, setSalvando] = useState(false)
+  const [erro, setErro] = useState('')
+
+  useEffect(() => {
+    setNome(perfilAcesso?.nome || '')
+    setTelefone(aplicarMascara(perfilAcesso?.telefone || ''))
+  }, [perfilAcesso])
+
+  async function sair() {
+    await logout()
+    navigate('/login', { replace: true })
+  }
+
+  async function entrar(event) {
+    event.preventDefault()
+    setErro('')
+
+    const nomeLimpo = nome.trim()
+    const emailLimpo = perfilAcesso?.email?.trim() || ''
+    const telefonePadrao = padronizarTelefone(telefone)
+
+    if (!nomeLimpo || nomeLimpo.length < 3) {
+      setErro('Nome deve ter pelo menos 3 caracteres.')
+      return
+    }
+    if (/^\d+$/.test(nomeLimpo)) {
+      setErro('Nome nao pode conter apenas numeros.')
+      return
+    }
+
+    const erroTelefone = validarTelefone(telefone)
+    if (erroTelefone) {
+      setErro(erroTelefone)
+      return
+    }
+
+    if (!emailLimpo || !emailLimpo.includes('@')) {
+      setErro('E-mail invalido.')
+      return
+    }
+
+    setSalvando(true)
+    try {
+      await atualizarPerfil({
+        nome: nomeLimpo,
+        email: emailLimpo,
+        telefone: telefonePadrao || '',
+      })
+      await sincronizarDados({ exigirSessao: true })
+      navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
+    } catch (error) {
+      setErro(error.response?.data?.mensagem || error.message || 'Nao foi possivel concluir o cadastro.')
+    } finally {
+      setSalvando(false)
+    }
+  }
+
+  return (
+    <main className="gendaz-auth">
+      <section className="gendaz-auth__card">
+        <div className="gendaz-auth__brand">
+          <img src={logoMeuGendaz} alt="Meu Gendaz" className="gendaz-auth__logo" />
+        </div>
+        <span className="gendaz-kicker">Meu gendaz</span>
+        <h1>Complete seu cadastro</h1>
+        <p>Seu acesso foi liberado. Agora complete nome e telefone para continuar.</p>
+
+        {erro && <p className="gendaz-auth__error">{erro}</p>}
+
+        <form className="gendaz-auth__form" onSubmit={entrar}>
+          <label>
+            <span>E-mail</span>
+            <input
+              value={perfilAcesso?.email || ''}
+              readOnly
+              placeholder="voce@exemplo.com"
+              type="email"
+              autoComplete="email"
+            />
+          </label>
+          <label>
+            <span>Nome completo</span>
+            <input
+              value={nome}
+              onChange={(event) => setNome(event.target.value)}
+              placeholder="Seu nome completo"
+              type="text"
+              autoComplete="name"
+            />
+          </label>
+          <label>
+            <span>Telefone</span>
+            <input
+              value={telefone}
+              onChange={(event) => setTelefone(aplicarMascara(event.target.value))}
+              placeholder="65 993360300"
+              type="tel"
+              inputMode="numeric"
+              maxLength={19}
+              autoComplete="tel"
+            />
+          </label>
+          <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+            {salvando ? <><Loader size={16} /> Entrando...</> : 'Entrar'}
+          </button>
+          <button className="gendaz-btn gendaz-btn--voltar" type="button" onClick={() => void sair()} disabled={salvando}>
+            <LogOut size={16} /> Sair
+          </button>
+          <small>O e-mail vem do login. Nome e telefone seguem a regra do sistema.</small>
+        </form>
       </section>
     </main>
   )
@@ -176,7 +297,7 @@ export default function Gendaz() {
 }
 
 function GendazContent({ slug }) {
-  const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
+  const { cliente, cadastroPendente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
@@ -188,6 +309,10 @@ function GendazContent({ slug }) {
         <p>Carregando sessao...</p>
       </main>
     )
+  }
+
+  if (cadastroPendente) {
+    return <GendazCadastroGate slug={slug} />
   }
 
   return cliente ? <GendazLayout /> : <GendazAuthGate slug={slug} onLogin={handleLogin} />

@@ -10,6 +10,7 @@ public class ChamadoMapper {
                 chamado.getAssunto(),
                 chamado.getMensagem(),
                 chamado.getPrioridade(),
+                chamado.getOrigem(),
                 chamado.getEmpresa().getId(),
                 chamado.getEmpresa().getNomeFantasia(),
                 chamado.getUsuario().getId(),

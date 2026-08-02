@@ -13,6 +13,7 @@ import com.minhaempresa.agendapro.conversa.repository.ConversaRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.service.EmpresaService;
 import com.minhaempresa.agendapro.crm.repository.CrmContatoRepository;
+import com.minhaempresa.agendapro.cliente.service.ClienteEmailBloqueadoService;
 import com.minhaempresa.agendapro.entrega.repository.EntregaRepository;
 import com.minhaempresa.agendapro.mensagem.repository.MensagemRepository;
 import com.minhaempresa.agendapro.notafiscal.repository.NotaFiscalRepository;
@@ -45,6 +46,7 @@ public class ClienteService {
     private final EntregaRepository entregaRepository;
     private final NotificacaoRepository notificacaoRepository;
     private final NotaFiscalRepository notaFiscalRepository;
+    private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
     private final SanitizacaoService sanitizacaoService;
     private final AdminAuditService auditService;
     private final ClienteMapper mapper = new ClienteMapper();
@@ -154,6 +156,7 @@ public class ClienteService {
         notificacaoRepository.deleteByClienteId(id);
         notaFiscalRepository.deleteByClienteId(id);
         pagamentoRepository.deleteByClienteId(id);
+        clienteEmailBloqueadoService.bloquear(cliente.getEmpresa(), cliente.getEmail(), "Cliente excluido pelo painel Gendaz");
         clienteRepository.delete(cliente);
         auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", cliente.getNome(), null, null);
     }

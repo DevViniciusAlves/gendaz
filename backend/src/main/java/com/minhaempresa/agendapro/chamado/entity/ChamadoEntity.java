@@ -53,15 +53,30 @@ public class ChamadoEntity {
     @Column(length = 1200)
     private String resposta;
 
+    @Column(nullable = false, length = 20)
+    private String origem;
+
     @PrePersist
     void prePersist() {
         dataCriacao = LocalDateTime.now();
         status = status == null ? StatusChamado.ABERTO : status;
         prioridade = prioridade == null ? PrioridadeChamado.MEDIA : prioridade;
+        origem = normalizarOrigem(origem);
     }
 
     @PreUpdate
     void preUpdate() {
         dataAtualizacao = LocalDateTime.now();
+    }
+
+    private String normalizarOrigem(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return "PAINEL";
+        }
+        String normalizado = valor.trim().toUpperCase();
+        return switch (normalizado) {
+            case "MEU_GENDAZ", "MEUGENDAZ", "MEU GANDAZ" -> "MEU_GENDAZ";
+            default -> "PAINEL";
+        };
     }
 }

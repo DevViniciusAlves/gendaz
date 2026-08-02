@@ -22,6 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ChamadoService {
+    private static final String ORIGEM_PAINEL = "PAINEL";
+    private static final String ORIGEM_MEU_GENDAZ = "MEU_GENDAZ";
+
     private final ChamadoRepository chamadoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AdminAuditService auditService;
@@ -29,20 +32,37 @@ public class ChamadoService {
 
     @Transactional
     public ChamadoResponse criar(CriarChamadoRequest request, Long usuarioId) {
+        return criar(request, usuarioId, ORIGEM_PAINEL);
+    }
+
+    @Transactional
+    public ChamadoResponse criar(CriarChamadoRequest request, Long usuarioId, String origem) {
         UsuarioEntity usuario = buscarUsuario(usuarioId);
         EmpresaEntity empresa = usuario.getEmpresa();
         if (empresa == null) {
             throw new BusinessException("Usuario sem empresa nao pode abrir chamado.");
         }
+        String origemNormalizada = normalizarOrigem(origem);
         ChamadoEntity chamado = chamadoRepository.save(ChamadoEntity.builder()
                 .assunto(request.assunto().trim())
                 .mensagem(request.mensagem().trim())
                 .prioridade(request.prioridade())
+                .origem(origemNormalizada)
                 .empresa(empresa)
                 .usuario(usuario)
                 .status(StatusChamado.ABERTO)
                 .build());
-        auditService.registrar("CHAMADO_CRIADO", "INFO", null, usuario, empresa, "Chamado aberto pelo painel", request.assunto().trim(), null, null);
+        auditService.registrar(
+                "CHAMADO_CRIADO",
+                "INFO",
+                null,
+                usuario,
+                empresa,
+                "Chamado aberto pelo " + ("MEU_GENDAZ".equals(origemNormalizada) ? "Meu Gendaz" : "painel"),
+                request.assunto().trim(),
+                null,
+                null
+        );
         return mapper.toResponse(chamado);
     }
 
@@ -54,13 +74,18 @@ public class ChamadoService {
                 throw new BusinessException("Acesso nao autorizado aos chamados desta empresa.");
             }
         }
-        return chamadoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream().map(mapper::toResponse).toList();
+        return chamadoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId)
+                .stream()
+                .filter(this::ehChamadoPainel)
+                .map(mapper::toResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
     public List<ChamadoResponse> listarPorEmpresaEUsuario(Long empresaId, Long usuarioId) {
         return chamadoRepository.findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(empresaId, usuarioId)
                 .stream()
+                .filter(this::ehChamadoMeuGendaz)
                 .map(mapper::toResponse)
                 .toList();
     }
@@ -100,5 +125,42 @@ public class ChamadoService {
     private UsuarioEntity buscarUsuario(Long usuarioId) {
         return usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+    }
+
+    private String normalizarOrigem(String origem) {
+        if (origem == null || origem.isBlank()) {
+            return ORIGEM_PAINEL;
+        }
+        String normalizada = origem.trim().toUpperCase();
+        if (ORIGEM_MEU_GENDAZ.equals(normalizada)) {
+            return ORIGEM_MEU_GENDAZ;
+        }
+        return ORIGEM_PAINEL;
+    }
+
+    private boolean ehChamadoPainel(com.minhaempresa.agendapro.chamado.entity.ChamadoEntity chamado) {
+        if (chamado == null) {
+            return false;
+        }
+        String origem = chamado.getOrigem();
+        if (origem != null && !origem.isBlank()) {
+            return ORIGEM_PAINEL.equalsIgnoreCase(origem.trim());
+        }
+        String assunto = chamado.getAssunto() == null ? "" : chamado.getAssunto().trim();
+        String mensagem = chamado.getMensagem() == null ? "" : chamado.getMensagem().trim();
+        return !assunto.startsWith("Meu Gendaz - ") && !mensagem.startsWith("Origem: Meu Gendaz");
+    }
+
+    private boolean ehChamadoMeuGendaz(com.minhaempresa.agendapro.chamado.entity.ChamadoEntity chamado) {
+        if (chamado == null) {
+            return false;
+        }
+        String origem = chamado.getOrigem();
+        if (origem != null && !origem.isBlank()) {
+            return ORIGEM_MEU_GENDAZ.equalsIgnoreCase(origem.trim());
+        }
+        String assunto = chamado.getAssunto() == null ? "" : chamado.getAssunto().trim();
+        String mensagem = chamado.getMensagem() == null ? "" : chamado.getMensagem().trim();
+        return assunto.startsWith("Meu Gendaz - ") || mensagem.startsWith("Origem: Meu Gendaz");
     }
 }
