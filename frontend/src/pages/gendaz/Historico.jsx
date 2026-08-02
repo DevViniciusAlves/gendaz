@@ -1,5 +1,5 @@
 import { useContext, useState, useEffect, useCallback } from 'react'
-import { Loader, ChevronLeft, ChevronRight, Calendar, Clock } from 'lucide-react'
+import { Loader, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 
 export default function Historico() {
@@ -59,26 +59,52 @@ export default function Historico() {
       {agendamentos.length > 0 ? (
         <>
           <div className="gendaz-table">
-            {agendamentos.map((item) => (
-              <article key={item.id} className="gendaz-table__row">
-                <div>
-                  <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Servico'}</strong>
-                  <small>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</small>
-                </div>
-                <div>
-                  <span className="gendaz-info-row-inline">
-                    <Calendar size={14} />
-                    {item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '—'}
-                    {(item.horaInicio || item.hora) && <><Clock size={14} /> {item.horaInicio || item.hora}</>}
-                  </span>
-                </div>
-                <div>
-                  <span className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Finalizado'}</span>
-                </div>
-                {item.valor && <div><strong>R$ {Number(item.valor).toFixed(2)}</strong></div>}
-                {(item.observacoes || item.observacao) && <small>{item.observacoes || item.observacao}</small>}
-              </article>
-            ))}
+            {agendamentos.map((item) => {
+              const status = String(item.status || 'FINALIZADO').toLowerCase()
+              const servico = item.servicoNome || item.servico || item.servico?.nome || '-----'
+              const profissional = item.profissionalNome || item.profissional || item.profissional?.nome || '-----'
+              const data = item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '-----'
+              const hora = item.horaInicio || item.hora || '-----'
+              const valor = item.valor ? `R$ ${Number(item.valor).toFixed(2)}` : '-----'
+
+              return (
+                <article key={item.id} className="gendaz-card gendaz-card--historico-item">
+                  <div className="gendaz-historico-grid">
+                    <div className="gendaz-historico-field">
+                      <span>Serviço</span>
+                      <strong>{servico}</strong>
+                    </div>
+                    <div className="gendaz-historico-field">
+                      <span>Profissional</span>
+                      <strong>{profissional}</strong>
+                    </div>
+                    <div className="gendaz-historico-field gendaz-historico-field--datahora">
+                      <div>
+                        <span>Data</span>
+                        <strong>{data}</strong>
+                      </div>
+                      <div>
+                        <span>Horário</span>
+                        <strong>{hora}</strong>
+                      </div>
+                    </div>
+                    <div className="gendaz-historico-field gendaz-historico-field--status">
+                      <span>Status</span>
+                      <strong className={`gendaz-status gendaz-status--${status}`}>
+                        {item.status || 'Finalizado'}
+                      </strong>
+                    </div>
+                    <div className="gendaz-historico-field gendaz-historico-field--valor">
+                      <span>Valor</span>
+                      <strong>{valor}</strong>
+                    </div>
+                  </div>
+                  {(item.observacoes || item.observacao) && (
+                    <p className="gendaz-historico-observacao">{item.observacoes || item.observacao}</p>
+                  )}
+                </article>
+              )
+            })}
           </div>
 
           {totalPaginas > 1 && (
@@ -96,7 +122,6 @@ export default function Historico() {
       ) : (
         <div className="gendaz-card gendaz-card--empty">
           <div className="gendaz-empty-state">
-            <Calendar size={48} />
             <h3>Sem historico</h3>
             <p>Voce ainda nao possui atendimentos registrados.</p>
           </div>

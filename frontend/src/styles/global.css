@@ -13701,7 +13701,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-auth__logo {
   display: block;
-  width: min(320px, 100%);
+  width: min(230px, 100%);
   height: auto;
   object-fit: contain;
   filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.34));
@@ -13882,7 +13882,9 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-agenda-field--status {
-  justify-self: start;
+  justify-self: center;
+  justify-items: center;
+  text-align: center;
 }
 
 .gendaz-agenda-observacao {
@@ -14105,6 +14107,67 @@ tbody tr:hover { background: #fffaf5; }
   color: #ffffff;
 }
 
+.gendaz-card--historico-item {
+  width: 100%;
+  min-height: auto;
+  padding: 16px 18px;
+  gap: 12px;
+}
+
+.gendaz-historico-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(220px, 1.1fr) minmax(120px, 0.6fr) minmax(120px, 0.6fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.gendaz-historico-field {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.gendaz-historico-field span {
+  color: rgba(255, 255, 255, 0.58);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gendaz-historico-field strong {
+  color: #ffffff;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.gendaz-historico-field--datahora {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gendaz-historico-field--datahora > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gendaz-historico-field--status,
+.gendaz-historico-field--valor {
+  justify-items: center;
+  text-align: center;
+}
+
+.gendaz-historico-observacao {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
 .gendaz-vazio {
   text-align: center;
   color: rgba(255, 255, 255, 0.48);
@@ -14151,6 +14214,14 @@ tbody tr:hover { background: #fffaf5; }
   }
   .gendaz-acao-content .gendaz-btn--lg {
     width: 100%;
+  }
+
+  .gendaz-historico-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gendaz-historico-field--datahora {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -14288,11 +14359,12 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-status--concluido,
-.gendaz-status--concluida {
-  background: #469449;
+.gendaz-status--concluida,
+.gendaz-status--finalizado {
+  background: #4db352;
   color: #ffffff;
-  border: 1px solid rgba(70, 148, 73, 0.45);
-  box-shadow: 0 0 0 1px rgba(70, 148, 73, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(77, 179, 82, 0.45);
+  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-desconto {

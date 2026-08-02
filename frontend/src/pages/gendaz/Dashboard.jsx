@@ -62,21 +62,18 @@ export default function Dashboard() {
       {/* PROXIMO AGENDAMENTO */}
       {proximo ? (
         <article className="gendaz-card gendaz-card--highlight gendaz-card--agendamento">
+          <div className="gendaz-agenda-proximo__title">
+            <strong>{servicoProximo}</strong>
+          </div>
+
           <div className="gendaz-card__top">
             <div className="gendaz-card__icon-title">
               <Calendar size={18} />
               <span>Proximo agendamento</span>
             </div>
-            <span className={`gendaz-status gendaz-status--${(proximo.status || 'confirmado').toLowerCase()}`}>
-              {proximo.status || 'Confirmado'}
-            </span>
           </div>
 
           <div className="gendaz-agenda-proximo">
-            <div className="gendaz-agenda-proximo__linha">
-              <span>Serviço</span>
-              <strong>{servicoProximo}</strong>
-            </div>
             <div className="gendaz-agenda-proximo__linha">
               <span>Profissional</span>
               <strong>{profissionalProximo}</strong>
