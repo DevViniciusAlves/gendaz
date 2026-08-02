@@ -72,6 +72,11 @@ function emitirToast(type, message) {
   }))
 }
 
+function isMeuGendazPath() {
+  if (typeof window === 'undefined') return false
+  return window.location.pathname.startsWith('/meu-gendaz/')
+}
+
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [usuario, setUsuario] = useState(() => getSessionUser())
@@ -161,6 +166,10 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     async function validarSessaoInicial() {
+      if (isMeuGendazPath()) {
+        if (mounted) setAuthLoading(false)
+        return
+      }
       if (!adminUsuario) {
         try {
           const adminRefresh = await adminApi.refresh()
@@ -262,6 +271,7 @@ export function AuthProvider({ children }) {
       logout('refresh_failed')
     }
     async function renovarAoRetomarAba() {
+      if (isMeuGendazPath()) return
       if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return
       if (contaInativa(usuario)) return
       const agora = Date.now()
