@@ -110,22 +110,24 @@ export function ClienteGendazProvider({ children, slug }) {
   useEffect(() => {
     if (!slug) return undefined
     clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
-    void sincronizarDados({ exigirSessao: false })
     return () => {
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
-  }, [slug, sincronizarDados])
+  }, [slug])
 
   useEffect(() => {
     const lidarComLogout = () => {
       limparEstadoSessao()
       setErro(null)
       setCarregando(false)
+      if (slug) {
+        window.location.href = `/meu-gendaz/${slug}`
+      }
     }
 
     window.addEventListener('meu-gendaz:logout', lidarComLogout)
     return () => window.removeEventListener('meu-gendaz:logout', lidarComLogout)
-  }, [limparEstadoSessao])
+  }, [limparEstadoSessao, slug])
 
   useEffect(() => {
     if (!cliente) return undefined

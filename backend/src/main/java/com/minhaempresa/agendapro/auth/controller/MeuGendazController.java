@@ -76,15 +76,8 @@ public class MeuGendazController {
         if (session == null || session.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }
-        Optional<UsuarioEntity> user = usuarioRepository.findBySessaoAtiva(session);
+        Optional<UsuarioEntity> user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session);
         UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        if (usuario.getEmpresa() == null || usuario.getEmpresa().getId() == null) {
-            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
-        }
-        if (!empresa.getId().equals(usuario.getEmpresa().getId())) {
-            log.warn("[meu-gendaz] usuario {} tentou usar sessao de empresa diferente", usuario.getId());
-            throw new SessaoExpiradaException("Sessao invalida para esta loja.");
-        }
         if (!usuarioSessionService.sessaoValida(usuario.getId(), session, usuario.getEmpresa().getId())) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
@@ -311,7 +304,7 @@ public class MeuGendazController {
                 session = request.getHeader("X-Session-Token");
             }
             if (session != null) {
-                UsuarioEntity user = usuarioRepository.findBySessaoAtiva(session).orElse(null);
+                UsuarioEntity user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
                 if (user != null) {
                     user.setSessaoAtiva(null);
                     usuarioRepository.save(user);
