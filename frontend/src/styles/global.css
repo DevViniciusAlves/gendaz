@@ -13483,7 +13483,9 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-chat {
   display: flex;
   flex-direction: column;
-  min-height: 520px;
+  height: min(72vh, 760px);
+  max-height: 760px;
+  min-height: 560px;
 }
 
 .gendaz-card:hover,
@@ -13622,6 +13624,8 @@ tbody tr:hover { background: #fffaf5; }
   gap: 10px;
   margin-bottom: 14px;
   align-content: start;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .gendaz-chat__message {
@@ -13705,6 +13709,18 @@ tbody tr:hover { background: #fffaf5; }
 @media (max-width: 1080px) {
   .gendaz-grid--four {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1080px) {
+  .gendaz-chat {
+    height: auto;
+    max-height: none;
+    min-height: 0;
+  }
+
+  .gendaz-chat__messages {
+    max-height: 520px;
   }
 }
 
@@ -14135,7 +14151,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-btn-contato span,
 .gendaz-btn-contato svg {
-  color: #111111;
+  color: #ffffff;
 }
 
 .gendaz-btn-contato:focus,
@@ -14148,9 +14164,20 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-btn-contato:hover {
-  background: #1d1d1d;
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.18);
+  background: #e5e7eb;
+  color: #111111;
+  border-color: #d1d5db;
+}
+
+.gendaz-btn-contato:hover span,
+.gendaz-btn-contato:hover svg,
+.gendaz-btn-contato:focus span,
+.gendaz-btn-contato:focus svg,
+.gendaz-btn-contato:focus-visible span,
+.gendaz-btn-contato:focus-visible svg,
+.gendaz-btn-contato:active span,
+.gendaz-btn-contato:active svg {
+  color: #111111;
 }
 
 /* HISTORICO */
@@ -14718,7 +14745,9 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-form input[type="text"],
 .gendaz-form input[type="email"],
-.gendaz-form input[type="tel"] {
+.gendaz-form input[type="tel"],
+.gendaz-form select,
+.gendaz-form textarea {
   width: 100%;
   padding: 10px 14px;
   border-radius: 10px;
@@ -14731,9 +14760,38 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-form input[type="text"]:focus,
 .gendaz-form input[type="email"]:focus,
-.gendaz-form input[type="tel"]:focus {
+.gendaz-form input[type="tel"]:focus,
+.gendaz-form select:focus,
+.gendaz-form textarea:focus {
   border-color: #42f569;
   box-shadow: 0 0 0 3px rgba(66, 245, 105, 0.18);
+}
+
+.gendaz-form select option,
+.gendaz-form select optgroup {
+  background: #111111 !important;
+  color: #f5f5f5 !important;
+}
+
+.gendaz-form select option:checked,
+.gendaz-form select option:hover {
+  background: #f5f5f5 !important;
+  color: #111827 !important;
+}
+
+.gendaz-form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.gendaz-form button[type="submit"] {
+  background: #ffffff;
+  color: #111827;
+}
+
+.gendaz-form button[type="submit"]:hover {
+  background: #e5e7eb;
+  color: #111827;
 }
 
 @media (max-width: 1080px) {
@@ -15185,6 +15243,17 @@ tbody tr:hover { background: #fffaf5; }
   color: #111827 !important;
   border-color: #d1d5db !important;
   outline: none !important;
+}
+
+.gendaz-btn-contato:hover span,
+.gendaz-btn-contato:hover svg,
+.gendaz-btn-contato:focus span,
+.gendaz-btn-contato:focus svg,
+.gendaz-btn-contato:focus-visible span,
+.gendaz-btn-contato:focus-visible svg,
+.gendaz-btn-contato:active span,
+.gendaz-btn-contato:active svg {
+  color: #111827 !important;
 }
 
 .gendaz-modal__form input:focus,
