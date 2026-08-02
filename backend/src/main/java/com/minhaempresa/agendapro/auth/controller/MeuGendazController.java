@@ -225,7 +225,7 @@ public class MeuGendazController {
             List<AgendamentoResponse> passados = agendamentos.stream()
                     .filter(a -> a.data() != null && (
                             a.data().isBefore(java.time.LocalDate.now())
-                                    || "FINALIZADO".equalsIgnoreCase(a.status())
+                                    || "FINALIZADO".equalsIgnoreCase(String.valueOf(a.status()))
                     ))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .toList();
