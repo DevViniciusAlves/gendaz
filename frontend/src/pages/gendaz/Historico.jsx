@@ -23,7 +23,6 @@ export default function Historico() {
     } catch (err) {
       console.error('[Historico] erro:', err)
       if (err.response?.status === 401) {
-        localStorage.removeItem('meu-gendaz-auth')
         window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         return
       }

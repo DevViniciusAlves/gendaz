@@ -67,6 +67,8 @@ public class MeuGendazController {
 
     private UsuarioEntity findUserFromSession(HttpServletRequest request) {
         String slug = slugAtual(request);
+        EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
+                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
         if (session == null || session.isBlank()) {
             session = request.getHeader("X-Session-Token");
@@ -76,10 +78,11 @@ public class MeuGendazController {
         }
         Optional<UsuarioEntity> user = usuarioRepository.findBySessaoAtiva(session);
         UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        if (usuario.getEmpresa() == null || usuario.getEmpresa().getAgendamentoSlug() == null) {
+        if (usuario.getEmpresa() == null || usuario.getEmpresa().getId() == null) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
-        if (!usuario.getEmpresa().getAgendamentoSlug().trim().equalsIgnoreCase(slug)) {
+        if (!empresa.getId().equals(usuario.getEmpresa().getId())) {
+            log.warn("[meu-gendaz] usuario {} tentou usar sessao de empresa diferente", usuario.getId());
             throw new SessaoExpiradaException("Sessao invalida para esta loja.");
         }
         if (!usuarioSessionService.sessaoValida(usuario.getId(), session, usuario.getEmpresa().getId())) {

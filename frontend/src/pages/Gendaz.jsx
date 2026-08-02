@@ -152,7 +152,7 @@ function GendazContent({ slug }) {
   const { cliente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
 
   const handleLogin = useCallback(async () => {
-    await sincronizarDados()
+    await sincronizarDados({ exigirSessao: true })
   }, [sincronizarDados])
 
   if (carregando) {

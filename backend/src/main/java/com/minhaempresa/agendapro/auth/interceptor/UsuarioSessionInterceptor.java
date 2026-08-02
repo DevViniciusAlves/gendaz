@@ -28,6 +28,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/pagamentos/planos/webhook/cakto",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
+            "/api/meu-gendaz/",
             "/api/meu-gendaz/servicos",
             "/api/meu-gendaz/profissionais",
             "/api/meu-gendaz/horarios-disponiveis"
