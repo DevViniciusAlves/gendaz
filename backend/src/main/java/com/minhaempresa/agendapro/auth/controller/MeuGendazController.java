@@ -524,6 +524,7 @@ public class MeuGendazController {
             String email = usuario.getEmail() == null ? "" : usuario.getEmail().trim().toLowerCase();
             String telefone = sanitizacaoService.telefone(body.get("telefone"));
 
+            Optional<ClienteEntity> clienteExistente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
             List<String> erros = new ArrayList<>();
             if (nome.length() < 3) {
                 erros.add("Nome deve ter pelo menos 3 caracteres.");
@@ -539,13 +540,13 @@ public class MeuGendazController {
             }
             if (telefone != null) {
                 Optional<ClienteEntity> clienteMesmoTelefone = clienteRepository.findFirstByEmpresaIdAndTelefone(empresaId, telefone);
-                if (clienteMesmoTelefone.isPresent() && (cliente == null || !clienteMesmoTelefone.get().getId().equals(cliente.getId()))) {
+                if (clienteMesmoTelefone.isPresent() && (clienteExistente.isEmpty() || !clienteMesmoTelefone.get().getId().equals(clienteExistente.get().getId()))) {
                     erros.add("Ja existe um cliente com este telefone.");
                 }
             }
             if (!email.isBlank()) {
                 Optional<ClienteEntity> clienteMesmoEmail = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
-                if (clienteMesmoEmail.isPresent() && (cliente == null || !clienteMesmoEmail.get().getId().equals(cliente.getId()))) {
+                if (clienteMesmoEmail.isPresent() && (clienteExistente.isEmpty() || !clienteMesmoEmail.get().getId().equals(clienteExistente.get().getId()))) {
                     erros.add("Ja existe um cliente com este e-mail.");
                 }
             }
@@ -554,7 +555,6 @@ public class MeuGendazController {
                 return ResponseEntity.status(400).body(Map.of("mensagem", String.join(" ", erros)));
             }
 
-            Optional<ClienteEntity> clienteExistente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
             ClienteEntity cliente = clienteExistente.orElseGet(() -> ClienteEntity.builder()
                     .empresa(empresa)
                     .email(email)
