@@ -270,7 +270,6 @@ export default function Agenda() {
             <article key={item.id} className="gendaz-card gendaz-card--agendamento">
               <div className="gendaz-card__top">
                 <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
-                <strong className={`gendaz-status gendaz-status--${(item.status || '').toLowerCase()}`}>{item.status || 'Pendente'}</strong>
               </div>
 
               <div className="gendaz-agenda-grid">
