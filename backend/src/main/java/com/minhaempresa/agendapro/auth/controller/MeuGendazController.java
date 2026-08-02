@@ -84,16 +84,32 @@ public class MeuGendazController {
         return usuario;
     }
 
-    private Long getEmpresaId(UsuarioEntity user) {
-        if (user.getEmpresa() == null) {
-            throw new BusinessException("Empresa nao encontrada para este usuario.");
+    private ClienteEntity findClienteFromSession(HttpServletRequest request) {
+        String slug = slugAtual(request);
+        EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
+                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
+        if (session == null || session.isBlank()) {
+            session = request.getHeader("X-Session-Token");
         }
-        return user.getEmpresa().getId();
+        if (session == null || session.isBlank()) {
+            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
+        }
+        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+        ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmail(empresa.getId(), usuario.getEmail())
+                .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
+        if (cliente.getEmpresa() == null || !empresa.getId().equals(cliente.getEmpresa().getId())) {
+            throw new SessaoExpiradaException("Sessao invalida para esta loja.");
+        }
+        return cliente;
     }
 
-    private ClienteEntity findClienteExistente(UsuarioEntity user) {
-        Long empresaId = getEmpresaId(user);
-        return clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail()).orElse(null);
+    private Long getEmpresaId(ClienteEntity cliente) {
+        if (cliente.getEmpresa() == null) {
+            throw new BusinessException("Empresa nao encontrada para este cliente.");
+        }
+        return cliente.getEmpresa().getId();
     }
 
     @GetMapping("/empresa/{slug}")
@@ -114,14 +130,13 @@ public class MeuGendazController {
     @GetMapping("/perfil")
     public ResponseEntity<?> perfil(HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            EmpresaEntity empresa = user.getEmpresa();
-            ClienteEntity cliente = empresa == null ? null : clienteRepository.findFirstByEmpresaIdAndEmail(empresa.getId(), user.getEmail()).orElse(null);
+            ClienteEntity cliente = findClienteFromSession(request);
+            EmpresaEntity empresa = cliente.getEmpresa();
             Map<String, Object> result = new LinkedHashMap<>();
-            result.put("id", user.getId());
-            result.put("nome", cliente != null ? cliente.getNome() : user.getNome());
-            result.put("email", cliente != null ? cliente.getEmail() : user.getEmail());
-            result.put("telefone", cliente != null ? cliente.getTelefone() : null);
+            result.put("id", cliente.getId());
+            result.put("nome", cliente.getNome());
+            result.put("email", cliente.getEmail());
+            result.put("telefone", cliente.getTelefone());
             result.put("empresaId", empresa != null ? empresa.getId() : null);
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
             result.put("empresaTelefone", empresa != null ? empresa.getTelefone() : null);
@@ -136,8 +151,8 @@ public class MeuGendazController {
     @GetMapping("/servicos")
     public ResponseEntity<?> servicos(HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             return ResponseEntity.ok(servicoService.listarPorEmpresa(empresaId));
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -147,8 +162,8 @@ public class MeuGendazController {
     @GetMapping("/profissionais")
     public ResponseEntity<?> profissionais(HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             return ResponseEntity.ok(profissionalService.listarPorEmpresa(empresaId));
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -163,8 +178,8 @@ public class MeuGendazController {
             HttpServletRequest request
     ) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             java.time.LocalDate dataParsed = java.time.LocalDate.parse(data);
             List<String> horarios = agendamentoService.horariosDisponiveis(empresaId, profissionalId, servicoId, dataParsed);
             List<Map<String, Object>> result = horarios.stream().map(h -> {
@@ -184,12 +199,8 @@ public class MeuGendazController {
     @GetMapping("/agendamentos/proximos")
     public ResponseEntity<?> agendamentosProximos(HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findClienteExistente(user);
-            if (cliente == null) {
-                return ResponseEntity.ok(List.of());
-            }
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
@@ -208,17 +219,8 @@ public class MeuGendazController {
             HttpServletRequest request
     ) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findClienteExistente(user);
-            if (cliente == null) {
-                Map<String, Object> result = new LinkedHashMap<>();
-                result.put("agendamentos", List.of());
-                result.put("total", 0);
-                result.put("pagina", pagina);
-                result.put("totalPaginas", 0);
-                return ResponseEntity.ok(result);
-            }
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
@@ -242,12 +244,8 @@ public class MeuGendazController {
     @PostMapping("/agendamentos/criar")
     public ResponseEntity<?> criarAgendamento(@RequestBody Map<String, Object> body, HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
-            ClienteEntity cliente = findClienteExistente(user);
-            if (cliente == null) {
-                throw new BusinessException("Complete seu cadastro antes de criar um agendamento.");
-            }
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             CriarAgendamentoRequest agendamentoRequest = new CriarAgendamentoRequest(
                     cliente.getId(),
                     Long.valueOf(body.get("servicoId").toString()),
@@ -269,8 +267,8 @@ public class MeuGendazController {
     @PatchMapping("/agendamentos/{id}/reagendar")
     public ResponseEntity<?> reagendar(@PathVariable Long id, @RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            Long empresaId = getEmpresaId(user);
+            ClienteEntity cliente = findClienteFromSession(request);
+            Long empresaId = getEmpresaId(cliente);
             RemarcarAgendamentoRequest req = new RemarcarAgendamentoRequest(
                     java.time.LocalDate.parse(body.get("novaData")),
                     java.time.LocalTime.parse(body.get("novaHora"))
@@ -287,8 +285,8 @@ public class MeuGendazController {
     @DeleteMapping("/agendamentos/{id}/cancelar")
     public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body, HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            agendamentoService.cancelar(id, getEmpresaId(user));
+            ClienteEntity cliente = findClienteFromSession(request);
+            agendamentoService.cancelar(id, getEmpresaId(cliente));
             return ResponseEntity.ok(Map.of("mensagem", "Agendamento cancelado com sucesso."));
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
@@ -326,19 +324,8 @@ public class MeuGendazController {
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            ClienteEntity cliente = findClienteExistente(user);
-            if (cliente == null) {
-                Map<String, Object> result = new LinkedHashMap<>();
-                result.put("proximoAgendamento", null);
-                result.put("ultimosAtendimentos", List.of());
-                result.put("totalAgendamentos", 0);
-                result.put("agendamentosFuturos", 0);
-                result.put("promocoes", List.of());
-                result.put("notificacoes", List.of());
-                return ResponseEntity.ok(result);
-            }
-            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(user), cliente.getId());
+            ClienteEntity cliente = findClienteFromSession(request);
+            List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(cliente), cliente.getId());
             List<AgendamentoResponse> futuros = todos.stream()
                     .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
@@ -363,45 +350,40 @@ public class MeuGendazController {
 
     @GetMapping("/promocoes")
     public ResponseEntity<?> promocoes(HttpServletRequest request) {
-        findUserFromSession(request);
+        findClienteFromSession(request);
         return ResponseEntity.ok(List.of());
     }
 
     @GetMapping("/cupons")
     public ResponseEntity<?> cupons(HttpServletRequest request) {
-        findUserFromSession(request);
+        findClienteFromSession(request);
         return ResponseEntity.ok(List.of());
     }
 
     @GetMapping("/notificacoes")
     public ResponseEntity<?> notificacoes(HttpServletRequest request) {
-        findUserFromSession(request);
+        findClienteFromSession(request);
         return ResponseEntity.ok(List.of());
     }
 
     @PatchMapping("/notificacoes")
     public ResponseEntity<?> atualizarNotificacoes(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        findUserFromSession(request);
+        findClienteFromSession(request);
         return ResponseEntity.ok(body);
     }
 
     @PatchMapping("/privacidade")
     public ResponseEntity<?> atualizarPrivacidade(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        findUserFromSession(request);
+        findClienteFromSession(request);
         return ResponseEntity.ok(body);
     }
 
     @PatchMapping("/perfil")
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
-            UsuarioEntity user = findUserFromSession(request);
-            EmpresaEntity empresa = user.getEmpresa();
-            if (empresa == null) {
-                throw new BusinessException("Empresa nao encontrada para este usuario.");
-            }
-
+            ClienteEntity cliente = findClienteFromSession(request);
+            EmpresaEntity empresa = cliente.getEmpresa();
             Long empresaId = empresa.getId();
-            ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, user.getEmail()).orElse(null);
             String nome = body.get("nome") == null ? "" : body.get("nome").trim();
             String email = body.get("email") == null ? "" : body.get("email").trim().toLowerCase();
             String telefone = sanitizacaoService.telefone(body.get("telefone"));
@@ -436,28 +418,15 @@ public class MeuGendazController {
                 return ResponseEntity.status(400).body(Map.of("mensagem", String.join(" ", erros)));
             }
 
-            user.setNome(nome);
-            user.setEmail(email);
-            usuarioRepository.save(user);
-
-            if (cliente == null) {
-                cliente = ClienteEntity.builder()
-                        .nome(nome)
-                        .email(email)
-                        .telefone(telefone)
-                        .empresa(empresa)
-                        .build();
-            } else {
-                cliente.setNome(nome);
-                cliente.setEmail(email);
-                cliente.setTelefone(telefone);
-            }
+            cliente.setNome(nome);
+            cliente.setEmail(email);
+            cliente.setTelefone(telefone);
             clienteRepository.save(cliente);
 
             Map<String, Object> result = new LinkedHashMap<>();
-            result.put("id", user.getId());
-            result.put("nome", user.getNome());
-            result.put("email", user.getEmail());
+            result.put("id", cliente.getId());
+            result.put("nome", cliente.getNome());
+            result.put("email", cliente.getEmail());
             result.put("telefone", cliente.getTelefone());
             result.put("empresaId", empresa.getId());
             result.put("empresaNome", empresa.getNomeFantasia());
