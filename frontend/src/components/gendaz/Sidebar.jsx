@@ -6,7 +6,7 @@ const items = [
   { to: '.', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: 'agenda', label: 'Agenda', icon: CalendarDays },
   { to: 'historico', label: 'Histórico', icon: History },
-  { to: 'ia', label: 'Assistente IA', icon: MessageCircle },
+  { to: 'ia', label: 'gendazIA', icon: MessageCircle },
   { to: 'beneficios', label: 'Benefícios', icon: Gift },
   { to: 'configuracoes', label: 'Configurações', icon: Settings2 },
 ]

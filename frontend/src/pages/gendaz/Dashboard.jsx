@@ -1,7 +1,7 @@
 ﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing } from 'lucide-react'
+import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing, Wallet } from 'lucide-react'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -46,10 +46,15 @@ export default function Dashboard() {
   const promos = dashboard?.promocoes || []
   const notifs = dashboard?.notificacoes || []
   const textoPadrao = '-----'
+  const totalGasto = Number(dashboard?.totalGasto || 0)
+  const servicoMaisEscolhido = dashboard?.servicoMaisEscolhido || textoPadrao
   const servicoProximo = proximo?.servicoNome || proximo?.servico || textoPadrao
   const profissionalProximo = proximo?.profissionalNome || proximo?.profissional || textoPadrao
   const dataProximo = proximo?.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : textoPadrao
   const horaProximo = proximo?.horaInicio || proximo?.hora || textoPadrao
+  const totalGastoFormatado = totalGasto > 0
+    ? totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    : 'R$ 0,00'
 
   return (
     <section className="gendaz-page gendaz-dashboard">
@@ -115,6 +120,26 @@ export default function Dashboard() {
       {/* GRID 2 COLUNAS */}
       <div className="gendaz-dashboard-grid">
         <div className="gendaz-dashboard-col">
+          {/* RESUMO FINANCEIRO */}
+          <article className="gendaz-card gendaz-card--resumo-financeiro">
+            <div className="gendaz-card__top">
+              <div className="gendaz-card__icon-title">
+                <Wallet size={18} />
+                <span>Resumo financeiro</span>
+              </div>
+            </div>
+            <div className="gendaz-resumo-financeiro">
+              <div className="gendaz-resumo-financeiro__item">
+                <span>Total gasto</span>
+                <strong>{totalGastoFormatado}</strong>
+              </div>
+              <div className="gendaz-resumo-financeiro__item">
+                <span>Serviço mais escolhido</span>
+                <strong>{servicoMaisEscolhido}</strong>
+              </div>
+            </div>
+          </article>
+
           {/* PROMOCOES */}
           {promos.length > 0 && (
             <article className="gendaz-card gendaz-card--promocoes">
@@ -153,18 +178,19 @@ export default function Dashboard() {
             <div className="gendaz-botoes-contato">
               <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
                 <Sparkles size={18} />
-                <span>Assistente IA</span>
+                <span>gendazIA</span>
               </button>
-              <button className="gendaz-btn-contato">
+              <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
                 <MessageCircle size={18} />
-                <span>Mensagem</span>
+                <span>Dúvidas</span>
               </button>
-              <button className="gendaz-btn-contato">
+              <button className="gendaz-btn-contato" onClick={() => navigate('agenda')}>
                 <Phone size={18} />
-                <span>Ligar</span>
+                <span>Agendar</span>
               </button>
             </div>
           </article>
+
         </div>
 
         <div className="gendaz-dashboard-col">

@@ -76,6 +76,13 @@ public final class InsightsDtos {
             LocalDateTime timestamp
     ) {}
 
+    public record MeuGendazIAResponse(
+            String resposta,
+            List<String> sugestoes,
+            String acao,
+            LocalDateTime timestamp
+    ) {}
+
     public record InsightHistoryResponse(
             Long id,
             Long empresaId,

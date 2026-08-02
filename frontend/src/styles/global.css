@@ -13440,6 +13440,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-grid--two {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: stretch;
 }
 
 .gendaz-card,
@@ -13452,6 +13453,12 @@ tbody tr:hover { background: #fffaf5; }
   padding: 20px;
   box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gendaz-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 520px;
 }
 
 .gendaz-card:hover,
@@ -13585,8 +13592,11 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-chat__messages {
   display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 10px;
   margin-bottom: 14px;
+  align-content: start;
 }
 
 .gendaz-chat__message {
@@ -13606,6 +13616,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-chat__form {
+  margin-top: auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
@@ -13861,43 +13872,41 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-agenda-grid {
   display: grid;
   grid-template-columns: minmax(150px, 1fr) minmax(140px, 0.9fr) minmax(110px, 0.55fr) minmax(100px, 0.45fr) minmax(110px, 0.5fr);
-  gap: 8px;
+  gap: 12px;
   align-items: start;
 }
 
 .gendaz-agenda-field {
   display: grid;
-  gap: 3px;
+  gap: 6px;
   min-width: 0;
 }
 
 .gendaz-agenda-field span {
   color: rgba(255, 255, 255, 0.58);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .gendaz-agenda-field strong {
-  font-size: 12px;
-  line-height: 1.35;
+  font-size: 14px;
+  line-height: 1.3;
   color: #ffffff;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .gendaz-agenda-field--status {
-  justify-self: center;
-  justify-items: center;
-  text-align: center;
+  justify-self: end;
+  justify-items: end;
+  text-align: right;
 }
 
-.gendaz-agenda-observacao {
-  margin: 0;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 11px;
-  line-height: 1.55;
+.gendaz-agenda-field--status .gendaz-status {
+  font-size: 12px;
+  padding: 0.45rem 0.9rem;
 }
 
 .gendaz-agenda-actions {
@@ -14013,8 +14022,47 @@ tbody tr:hover { background: #fffaf5; }
   gap: 20px;
 }
 
+.gendaz-card--resumo-financeiro {
+  padding: 14px 16px;
+  min-height: auto;
+}
+
+.gendaz-resumo-financeiro {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.gendaz-resumo-financeiro__item {
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gendaz-resumo-financeiro__item span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gendaz-resumo-financeiro__item strong {
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
 @media (max-width: 1024px) {
   .gendaz-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gendaz-resumo-financeiro {
     grid-template-columns: 1fr;
   }
 }
@@ -14058,6 +14106,20 @@ tbody tr:hover { background: #fffaf5; }
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.gendaz-btn-contato span,
+.gendaz-btn-contato svg {
+  color: #111111;
+}
+
+.gendaz-btn-contato:focus,
+.gendaz-btn-contato:focus-visible,
+.gendaz-btn-contato:active {
+  background: #e5e7eb;
+  color: #111111;
+  border-color: #d1d5db;
+  outline: none;
 }
 
 .gendaz-btn-contato:hover {
@@ -14346,38 +14408,40 @@ tbody tr:hover { background: #fffaf5; }
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .gendaz-status--confirmado,
 .gendaz-status--confirmada {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-status--pendente {
-  background: linear-gradient(180deg, #ff6a1a, #d94f10);
+  background: linear-gradient(180deg, rgba(230, 82, 18, 0.92), rgba(230, 82, 18, 0.72));
   color: #ffffff;
-  border: 1px solid rgba(230, 82, 18, 0.45);
-  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(230, 82, 18, 0.32);
+  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-status--cancelado,
 .gendaz-status--cancelada {
-  background: linear-gradient(180deg, #c73737, #8f1f1f);
+  background: linear-gradient(180deg, rgba(163, 38, 38, 0.92), rgba(163, 38, 38, 0.72));
   color: #ffffff;
-  border: 1px solid rgba(163, 38, 38, 0.45);
-  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(163, 38, 38, 0.32);
+  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .gendaz-status--concluido,
 .gendaz-status--concluida,
 .gendaz-status--finalizado {
-  background: linear-gradient(180deg, #66c86a, #3f9a44);
+  background: linear-gradient(180deg, rgba(77, 179, 82, 0.94), rgba(77, 179, 82, 0.74));
   color: #ffffff;
-  border: 1px solid rgba(77, 179, 82, 0.45);
-  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(77, 179, 82, 0.32);
+  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .gendaz-desconto {
@@ -15064,6 +15128,15 @@ tbody tr:hover { background: #fffaf5; }
   background: #e5e7eb !important;
   color: #111827 !important;
   border-color: #d1d5db !important;
+}
+
+.gendaz-btn-contato:focus,
+.gendaz-btn-contato:focus-visible,
+.gendaz-btn-contato:active {
+  background: #e5e7eb !important;
+  color: #111827 !important;
+  border-color: #d1d5db !important;
+  outline: none !important;
 }
 
 .gendaz-modal__form input:focus,

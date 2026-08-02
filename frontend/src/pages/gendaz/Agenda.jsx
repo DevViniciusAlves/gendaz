@@ -291,10 +291,6 @@ export default function Agenda() {
                 </div>
               </div>
 
-              {(item.observacoes || item.observacao) && (
-                <p className="gendaz-agenda-observacao">{item.observacoes || item.observacao}</p>
-              )}
-
               <div className="gendaz-card__actions gendaz-agenda-actions">
                 <button className="gendaz-btn" type="button" onClick={() => setModalReagendar(item)}>
                   <RotateCw size={16} /> Reagendar

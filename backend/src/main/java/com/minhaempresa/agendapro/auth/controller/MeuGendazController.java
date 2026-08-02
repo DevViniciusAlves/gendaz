@@ -7,6 +7,9 @@ import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
 import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
+import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsRequest;
+import com.minhaempresa.agendapro.insights.dto.InsightsDtos.MeuGendazIAResponse;
+import com.minhaempresa.agendapro.insights.service.InsightsService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
@@ -17,9 +20,11 @@ import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +55,7 @@ public class MeuGendazController {
     private final ServicoService servicoService;
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
+    private final InsightsService insightsService;
     private final UsuarioSessionService usuarioSessionService;
     private final SanitizacaoService sanitizacaoService;
 
@@ -338,17 +344,61 @@ public class MeuGendazController {
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .limit(5)
                     .toList();
+            List<AgendamentoResponse> concluidos = todos.stream()
+                    .filter(a -> a.status() != null && isStatusConcluido(a.status().name()))
+                    .toList();
+            BigDecimal totalGasto = concluidos.stream()
+                    .map(AgendamentoResponse::valor)
+                    .filter(valor -> valor != null)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+            String servicoMaisEscolhido = concluidos.stream()
+                    .map(AgendamentoResponse::servicoNome)
+                    .filter(nome -> nome != null && !nome.isBlank())
+                    .collect(java.util.stream.Collectors.groupingBy(nome -> nome, java.util.stream.Collectors.counting()))
+                    .entrySet().stream()
+                    .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
+                    .map(Map.Entry::getKey)
+                    .findFirst()
+                    .orElse("-----");
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("proximoAgendamento", futuros.isEmpty() ? null : futuros.get(0));
             result.put("ultimosAtendimentos", passados);
             result.put("totalAgendamentos", todos.size());
             result.put("agendamentosFuturos", futuros.size());
+            result.put("totalGasto", totalGasto);
+            result.put("servicoMaisEscolhido", servicoMaisEscolhido);
             result.put("promocoes", List.of());
             result.put("notificacoes", List.of());
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         }
+    }
+
+    @PostMapping("/ia")
+    public ResponseEntity<?> ia(@Valid @RequestBody InsightsRequest request, HttpServletRequest httpRequest) {
+        try {
+            ClienteEntity cliente = findClienteFromSession(httpRequest);
+            Long empresaId = getEmpresaId(cliente);
+            MeuGendazIAResponse resposta = insightsService.responderCliente(empresaId, request.pergunta(), request.historico());
+            return ResponseEntity.ok(resposta);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel processar a IA.", "erro", e.getMessage()));
+        }
+    }
+
+    private boolean isStatusConcluido(String status) {
+        if (status == null) {
+            return false;
+        }
+        String normalizado = status.trim().toUpperCase();
+        return "FINALIZADO".equals(normalizado)
+                || "CONCLUIDO".equals(normalizado)
+                || "CONCLUÍDO".equals(normalizado)
+                || "CONCLUIDA".equals(normalizado)
+                || "CONCLUÍDA".equals(normalizado);
     }
 
     @GetMapping("/promocoes")

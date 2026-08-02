@@ -1,7 +1,8 @@
-﻿import { useContext, useState, useEffect, useRef, useCallback } from 'react'
-import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Bot, Send, Sparkles, Loader, Calendar, ArrowRight } from 'lucide-react'
+import { useContext, useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Bot, Send, Sparkles, Loader, Calendar, ArrowRight } from 'lucide-react'
+import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
+import clienteApi from '../../api/clienteApi.js'
 
 export default function AssistenteIA() {
   const { cliente, agendamentos, dashboard, servicos, profissionais, beneficios } = useContext(ClienteGendazContext)
@@ -17,7 +18,8 @@ export default function AssistenteIA() {
     setMensagens([{
       id: 1,
       origem: 'ia',
-      texto: `Olá, ${nome}!  Sou a assistente virtual da **${empresaNome}**. Posso ajudar com agendamentos, preços, serviços, horários e promoções. Como posso ajudá-lo?`,
+      texto: `Olá, ${nome}! Sou a gendazIA da **${empresaNome}**. Como posso ajudá-lo?`,
+      sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
     }])
   }, [cliente])
 
@@ -36,7 +38,26 @@ export default function AssistenteIA() {
 
     try {
       setCarregando(true)
+      const historicoParaIA = mensagens
+        .slice(-8)
+        .map((item) => ({
+          role: item.origem === 'ia' ? 'assistant' : 'user',
+          content: String(item.texto || '').replace(/\*\*/g, ''),
+        }))
 
+      const { data } = await clienteApi.post('/meu-gendaz/ia', {
+        pergunta: textoUsuario,
+        historico: historicoParaIA,
+      })
+
+      setMensagens((prev) => [...prev, {
+        id: Date.now() + 1,
+        origem: 'ia',
+        texto: data?.resposta || 'Desculpe, não consegui processar sua mensagem.',
+        acao: data?.acao,
+        sugestoes: Array.isArray(data?.sugestoes) ? data.sugestoes : [],
+      }])
+    } catch {
       const intencao = detectarIntencao(textoUsuario)
       const resposta = gerarRespostaLocal(intencao, textoUsuario, {
         cliente,
@@ -47,20 +68,12 @@ export default function AssistenteIA() {
         promos: beneficios?.promocoes || dashboard?.promocoes || [],
       })
 
-      await new Promise((r) => setTimeout(r, 400))
-
       setMensagens((prev) => [...prev, {
         id: Date.now() + 1,
         origem: 'ia',
-        texto: resposta.resposta || 'Desculpe, não consegui processar sua mensagem.',
+        texto: resposta.resposta || 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
         acao: resposta.acao,
         sugestoes: resposta.sugestoes,
-      }])
-    } catch {
-      setMensagens((prev) => [...prev, {
-        id: Date.now() + 1,
-        origem: 'ia',
-        texto: 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
       }])
     } finally {
       setCarregando(false)
@@ -71,13 +84,13 @@ export default function AssistenteIA() {
     if (texto.startsWith('Ir para ')) {
       const rota = texto.replace('Ir para ', '').toLowerCase()
       const rotas = {
-        'agenda': 'agenda',
-        'histórico': 'historico',
-        'benefícios': 'beneficios',
-        'beneficios': 'beneficios',
-        'configurações': 'configuracoes',
-        'configuracoes': 'configuracoes',
-        'dashboard': 'dashboard',
+        agenda: 'agenda',
+        histórico: 'historico',
+        benefícios: 'beneficios',
+        beneficios: 'beneficios',
+        configurações: 'configuracoes',
+        configuracoes: 'configuracoes',
+        dashboard: 'dashboard',
       }
       const rotaEncontrada = rotas[rota]
       if (rotaEncontrada) {
@@ -95,7 +108,7 @@ export default function AssistenteIA() {
   return (
     <section className="gendaz-page">
       <header className="gendaz-page__header">
-        <span className="gendaz-kicker">Assistente IA</span>
+        <span className="gendaz-kicker">gendazIA</span>
         <h1>Converse naturalmente</h1>
         <p>Peça preços, serviços, profissionais, horários, reagendamentos, promoções e lista de espera.</p>
       </header>
@@ -104,7 +117,7 @@ export default function AssistenteIA() {
         <article className="gendaz-chat">
           <div className="gendaz-panel__head">
             <Bot size={18} />
-            <h2>Conversa</h2>
+            <h2>gendazIA</h2>
           </div>
           <div className="gendaz-chat__messages">
             {mensagens.map((item) => (
@@ -156,23 +169,23 @@ export default function AssistenteIA() {
             <h2>Como posso ajudar</h2>
           </div>
           <div className="gendaz-stack">
-            <div className="gendaz-mini-card" style={{cursor: 'pointer'}} onClick={() => handleSugestao('Quero agendar')}>
+            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Quero agendar')}>
               <strong>Agendar</strong>
               <span>Peça para agendar um serviço e escolha data e horário.</span>
             </div>
-            <div className="gendaz-mini-card" style={{cursor: 'pointer'}} onClick={() => handleSugestao('Reagendar')}>
+            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Reagendar')}>
               <strong>Reagendar</strong>
               <span>Mude a data ou hora de um agendamento existente.</span>
             </div>
-            <div className="gendaz-mini-card" style={{cursor: 'pointer'}} onClick={() => handleSugestao('Cancelar')}>
+            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Cancelar')}>
               <strong>Cancelar</strong>
               <span>Cancele um agendamento que não pode comparecer.</span>
             </div>
-            <div className="gendaz-mini-card" style={{cursor: 'pointer'}} onClick={() => handleSugestao('Quais serviços vocês oferecem?')}>
+            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Quais serviços vocês oferecem?')}>
               <strong>Serviços e preços</strong>
               <span>Veja a lista completa de serviços e valores.</span>
             </div>
-            <div className="gendaz-mini-card" style={{cursor: 'pointer'}} onClick={() => handleSugestao('Promoções')}>
+            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Promoções')}>
               <strong>Promoções</strong>
               <span>Confira cupons e descontos disponíveis.</span>
             </div>
@@ -201,7 +214,7 @@ function detectarIntencao(texto) {
 }
 
 function gerarRespostaLocal(intencao, texto, contexto) {
-  const { cliente, agendamentos, servicos, profissionais, promos } = contexto
+  const { cliente, agendamentos, servicos, profissionais, beneficios } = contexto
   const nome = cliente?.nome || 'cliente'
   const empresaNome = cliente?.empresaNome || 'nosso estabelecimento'
 
@@ -210,30 +223,30 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const hora = new Date().getHours()
       const periodo = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
       return {
-        resposta: `${periodo}, ${nome}!  Bem-vindo(a) à **${empresaNome}**. Como posso ajudá-lo?`,
+        resposta: `${periodo}, ${nome}! Como posso ajudá-lo? Posso agendar, reagendar, cancelar, listar serviços ou responder dúvidas.`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviços vocês têm?'],
       }
     }
     case 'sobre': {
       return {
-        resposta: `Sou a assistente virtual da **${empresaNome}**! \n\nPosso ajudar com:\n\n• **Agendar** serviços\n• **Reagendar** compromissos\n• **Cancelar** agendamentos\n• Listar **serviços e preços**\n• Consultar **promoções**\n• Ver **horários disponíveis**\n\nÉ só me dizer o que precisa!`,
+        resposta: `Sou a assistente virtual da **${empresaNome}**. Posso ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções.`,
         sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }
     }
     case 'agradecimento': {
       return {
-        resposta: `Por nada, ${nome}!  Estou sempre aqui quando precisar da **${empresaNome}**.`,
+        resposta: `Por nada, ${nome}. Estou sempre aqui quando precisar da **${empresaNome}**.`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos'],
       }
     }
     case 'listar_servicos': {
       if (!servicos || servicos.length === 0) {
         return {
-          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba **Agenda** para ver todos os serviços disponíveis na **${empresaNome}**.`,
+          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba Agenda para ver todos os serviços disponíveis na **${empresaNome}**.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
-      const lista = servicos.map((s, i) => `${i + 1}. **${s.nome || s.titulo}** — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
+      const lista = servicos.map((s, i) => `${i + 1}. **${s.nome || s.titulo}** — ${Number(s.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`).join('\n')
       return {
         resposta: `Serviços da **${empresaNome}**:\n\n${lista}\n\nQuer agendar algum?`,
         sugestoes: ['Quero agendar', 'Ir para Agenda', 'Ver profissionais'],
@@ -242,14 +255,14 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'listar_profissionais': {
       if (!profissionais || profissionais.length === 0) {
         return {
-          resposta: `${nome}, não consigo listar os profissionais agora. Ao agendar na aba **Agenda**, você poderá escolher o profissional.`,
+          resposta: `${nome}, não consigo listar os profissionais agora. Ao agendar na aba Agenda, você poderá escolher o profissional.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
       const lista = profissionais.map((p, i) => `${i + 1}. **${p.nome}**`).join('\n')
       return {
         resposta: `Equipe da **${empresaNome}**:\n\n${lista}\n\nQuer agendar com algum deles?`,
-        sugestoes: profissionais.slice(0, 3).map(p => `Agendar com ${p.nome}`),
+        sugestoes: profissionais.slice(0, 3).map((p) => `Agendar com ${p.nome}`),
       }
     }
     case 'meus_agendamentos': {
@@ -259,80 +272,54 @@ function gerarRespostaLocal(intencao, texto, contexto) {
           sugestoes: ['Quero agendar', 'Ver serviços'],
         }
       }
-      const lista = agendamentos.map((a, i) =>
-        `${i + 1}. **${a.servicoNome || a.servico || 'Serviço'}** — ${a.data ? new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR') : '?'} às ${a.horaInicio || a.hora || '?'} com ${a.profissionalNome || a.profissional || '?'} [${a.status}]`
-      ).join('\n')
+      const lista = agendamentos.slice(0, 3).map((a) => `${a.servicoNome || a.servico || 'Serviço'} em ${a.data ? new Date(`${a.data}T12:00:00`).toLocaleDateString('pt-BR') : 'data indefinida'}`).join('\n')
       return {
-        resposta: `Seus próximos agendamentos na **${empresaNome}**:\n\n${lista}\n\nPrecisa reagendar ou cancelar algum?`,
-        sugestoes: ['Reagendar', 'Cancelar', 'Ir para Agenda'],
-      }
-    }
-    case 'cancelar': {
-      if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, você não possui agendamentos para cancelar na **${empresaNome}**.` }
-      }
-      return {
-        resposta: `Para cancelar um agendamento na **${empresaNome}**, acesse a aba **Agenda**, clique em "Cancelar" no agendamento desejado e confirme.`,
-        sugestoes: ['Ir para Agenda'],
-        acao: { tipo: 'CANCELAR' },
-      }
-    }
-    case 'reagendar': {
-      if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, você não possui agendamentos para reagendar na **${empresaNome}**.` }
-      }
-      return {
-        resposta: `Para reagendar na **${empresaNome}**, acesse a aba **Agenda**, clique em "Reagendar" e escolha nova data/horário.`,
-        sugestoes: ['Ir para Agenda'],
-        acao: { tipo: 'REAGENDAR' },
-      }
-    }
-    case 'promocoes': {
-      if (!promos || promos.length === 0) {
-        return {
-          resposta: `${nome}, no momento não há promoções ativas na **${empresaNome}**. Acesse a aba **Benefícios** para ficar por dentro!`,
-          sugestoes: ['Ir para Benefícios'],
-        }
-      }
-      const lista = promos.map((p, i) =>
-        `${i + 1}. **${p.titulo}** — ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
-      ).join('\n\n')
-      return {
-        resposta: `Promoções da **${empresaNome}**:\n\n${lista}\n\nQuer agendar aproveitando alguma promoção?`,
-        sugestoes: ['Quero agendar', 'Ir para Benefícios'],
-      }
-    }
-    case 'agendar': {
-      if (!servicos || servicos.length === 0) {
-        return {
-          resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! \n\nAcesse a aba **Agenda** e clique em **"Novo agendamento"**.`,
-          sugestoes: ['Ir para Agenda'],
-          acao: { tipo: 'AGENDAR' },
-        }
-      }
-      const servicosLista = servicos.slice(0, 5).map(s => `• ${s.nome || s.titulo} — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
-      return {
-        resposta: `${nome}, vou te ajudar a agendar na **${empresaNome}**! \n\nServiços disponíveis:\n${servicosLista}\n\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
-        sugestoes: ['Ir para Agenda', ...servicos.slice(0, 2).map(s => `Agendar ${s.nome || s.titulo}`)],
-        acao: { tipo: 'AGENDAR' },
+        resposta: `Seus próximos agendamentos:\n\n${lista}`,
+        sugestoes: ['Ir para Agenda', 'Reagendar'],
       }
     }
     case 'historico': {
       return {
-        resposta: `${nome}, para ver seu histórico de atendimentos na **${empresaNome}**, acesse a aba **Histórico** na sidebar.`,
-        sugestoes: ['Ir para Histórico'],
+        resposta: `Você pode ver seu histórico na aba Histórico. Se quiser, eu também posso te orientar a reagendar ou agendar um novo atendimento.`,
+        sugestoes: ['Ir para Histórico', 'Quero agendar'],
+      }
+    }
+    case 'cancelar': {
+      return {
+        resposta: `Posso te orientar no cancelamento. Abra a aba Agenda, escolha o agendamento e clique em Cancelar.`,
+        sugestoes: ['Ir para Agenda', 'Ver meus agendamentos'],
+      }
+    }
+    case 'reagendar': {
+      return {
+        resposta: `Para reagendar, abra a aba Agenda, selecione o atendimento e escolha uma nova data e horário.`,
+        sugestoes: ['Ir para Agenda', 'Ver meus agendamentos'],
       }
     }
     case 'listar_horarios': {
       return {
-        resposta: `${nome}, os horários dependem do serviço e profissional. Vá na aba **Agenda**, clique em "Novo agendamento" e selecione serviço, profissional e data para ver os horários disponíveis na **${empresaNome}**.`,
-        sugestoes: ['Ir para Agenda', 'Ver meus agendamentos'],
+        resposta: `Os horários disponíveis aparecem na aba Agenda, após selecionar o serviço e, quando necessário, o profissional.`,
+        sugestoes: ['Ir para Agenda', 'Quero agendar'],
+      }
+    }
+    case 'promocoes': {
+      const promos = beneficios?.promocoes || []
+      if (!promos || promos.length === 0) {
+        return {
+          resposta: `No momento não encontrei promoções cadastradas para **${empresaNome}**.`,
+          sugestoes: ['Quero agendar', 'Ver serviços'],
+        }
+      }
+      const lista = promos.map((p) => `${p.titulo || 'Promoção'} - ${p.descricao || ''}`).join('\n')
+      return {
+        resposta: `Promoções disponíveis:\n\n${lista}`,
+        sugestoes: ['Quero agendar', 'Ver serviços'],
       }
     }
     default: {
       return {
-        resposta: `${nome}, posso ajudar com:\n\n• **Agendar** um serviço\n• **Reagendar** compromisso\n• **Cancelar** agendamento\n• **Serviços** e preços da **${empresaNome}**\n• **Promoções** e cupons\n• **Horários** disponíveis\n\nÉ só me dizer o que precisa!`,
-        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Serviços e preços'],
+        resposta: `Posso ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções. Se quiser, me diga o que precisa.`,
+        sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }
     }
   }
