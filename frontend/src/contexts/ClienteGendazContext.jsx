@@ -110,10 +110,11 @@ export function ClienteGendazProvider({ children, slug }) {
   useEffect(() => {
     if (!slug) return undefined
     clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
+    void sincronizarDados({ exigirSessao: false })
     return () => {
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
-  }, [slug])
+  }, [slug, sincronizarDados])
 
   useEffect(() => {
     const lidarComLogout = () => {
