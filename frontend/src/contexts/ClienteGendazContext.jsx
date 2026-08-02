@@ -5,7 +5,7 @@ export const ClienteGendazContext = createContext()
 
 export function ClienteGendazProvider({ children, slug }) {
   const [cliente, setCliente] = useState(null)
-  const [carregando, setCarregando] = useState(true)
+  const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
   const [agendamentos, setAgendamentos] = useState([])
   const [dashboard, setDashboard] = useState(null)
