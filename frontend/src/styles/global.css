@@ -13250,6 +13250,8 @@ tbody tr:hover { background: #fffaf5; }
   --gendaz-shadow-hover: 0 24px 56px rgba(0, 0, 0, 0.48);
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
   font-weight: 500 !important;
+  font-style: normal !important;
+  font-synthesis: none;
 }
 
 .gendaz-shell *,
@@ -13259,7 +13261,9 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-auth *::before,
 .gendaz-auth *::after {
   font-family: inherit !important;
-  font-weight: inherit;
+  font-weight: 500 !important;
+  font-style: normal !important;
+  font-synthesis: none;
 }
 
 .gendaz-shell button,
@@ -13275,7 +13279,9 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-auth optgroup,
 .gendaz-auth option {
   font-family: inherit !important;
-  font-weight: inherit;
+  font-weight: 500 !important;
+  font-style: normal !important;
+  font-synthesis: none;
 }
 
 .gendaz-shell {
@@ -13772,11 +13778,11 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-card {
   display: grid;
   gap: 8px;
-  min-height: 136px;
+  min-height: 118px;
   background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
   border: 1px solid var(--gendaz-border);
   border-radius: 14px;
-  padding: 20px;
+  padding: 16px;
   box-shadow: var(--gendaz-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
@@ -13787,45 +13793,45 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-card--agendamento {
   width: 100%;
   min-height: auto;
-  padding: 16px 18px;
-  gap: 14px;
+  padding: 10px 12px;
+  gap: 8px;
   border-left: 3px solid rgba(255, 255, 255, 0.72);
   justify-self: stretch;
 }
 
 .gendaz-card--agendamento .gendaz-card__top {
   margin-bottom: 0;
-  gap: 12px;
+  gap: 6px;
   align-items: flex-start;
 }
 
 .gendaz-card--agendamento .gendaz-card__body {
-  gap: 6px;
+  gap: 3px;
 }
 
 .gendaz-card--agendamento .gendaz-card__actions {
-  margin-top: 4px;
+  margin-top: 0;
 }
 
 .gendaz-card--agendamento .gendaz-btn {
-  min-height: 38px;
+  min-height: 30px;
   padding-inline: 12px;
 }
 
 .gendaz-agenda-proximo {
   display: grid;
-  gap: 12px;
-  padding: 4px 0 2px;
+  gap: 8px;
+  padding: 0;
 }
 
 .gendaz-agenda-proximo__linha {
   display: grid;
-  gap: 5px;
+  gap: 3px;
 }
 
 .gendaz-agenda-proximo__linha > span {
   color: rgba(255, 255, 255, 0.56);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -13833,48 +13839,48 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-agenda-proximo__linha > strong {
   color: #ffffff;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   line-height: 1.35;
 }
 
 .gendaz-agenda-proximo__linha--datahora {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 8px;
 }
 
 .gendaz-agenda-proximo__linha--datahora > div {
   display: grid;
-  gap: 5px;
-  padding: 12px 14px;
-  border-radius: 12px;
+  gap: 3px;
+  padding: 7px 9px;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .gendaz-agenda-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(120px, 0.65fr) minmax(110px, 0.5fr) minmax(130px, 0.6fr);
-  gap: 14px;
+  grid-template-columns: minmax(150px, 1fr) minmax(140px, 0.9fr) minmax(110px, 0.55fr) minmax(100px, 0.45fr) minmax(110px, 0.5fr);
+  gap: 8px;
   align-items: start;
 }
 
 .gendaz-agenda-field {
   display: grid;
-  gap: 4px;
+  gap: 3px;
   min-width: 0;
 }
 
 .gendaz-agenda-field span {
   color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .gendaz-agenda-field strong {
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.35;
   color: #ffffff;
   overflow: hidden;
@@ -13890,7 +13896,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-agenda-observacao {
   margin: 0;
   color: rgba(255, 255, 255, 0.62);
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.55;
 }
 
@@ -14079,30 +14085,30 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-mini-card--historico {
   grid-template-columns: auto 1fr auto;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
 .gendaz-mini-card__data strong {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.58);
 }
 
 .gendaz-mini-card__servico {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #ffffff;
   margin: 0;
 }
 
 .gendaz-mini-card__profissional {
-  font-size: 12px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.58);
   margin: 0;
 }
 
 .gendaz-mini-card__valor {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: #ffffff;
 }
@@ -14110,14 +14116,14 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-card--historico-item {
   width: 100%;
   min-height: auto;
-  padding: 16px 18px;
-  gap: 12px;
+  padding: 10px 12px;
+  gap: 8px;
 }
 
 .gendaz-historico-grid {
   display: grid;
-  grid-template-columns: minmax(180px, 1.2fr) minmax(160px, 1fr) minmax(220px, 1.1fr) minmax(120px, 0.6fr) minmax(120px, 0.6fr);
-  gap: 16px;
+  grid-template-columns: minmax(150px, 1fr) minmax(140px, 0.9fr) minmax(180px, 0.95fr) minmax(110px, 0.5fr) minmax(110px, 0.5fr);
+  gap: 10px;
   align-items: start;
 }
 
@@ -14129,7 +14135,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-historico-field span {
   color: rgba(255, 255, 255, 0.58);
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -14137,7 +14143,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-historico-field strong {
   color: #ffffff;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1.35;
 }
 
@@ -14149,7 +14155,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-historico-field--datahora > div {
   display: grid;
   gap: 4px;
-  padding: 10px 12px;
+  padding: 7px 9px;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -14164,7 +14170,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-historico-observacao {
   margin: 0;
   color: rgba(255, 255, 255, 0.62);
-  font-size: 13px;
+  font-size: 11px;
   line-height: 1.55;
 }
 
@@ -14329,42 +14335,49 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .gendaz-status {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  padding: 4px 12px;
+  border-radius: 999px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 800;
   text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .gendaz-status--confirmado,
 .gendaz-status--confirmada {
-  background: rgba(255, 255, 255, 0.08);
-  color: #f5f5f5;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .gendaz-status--pendente {
-  background: #e65212;
+  background: linear-gradient(180deg, #ff6a1a, #d94f10);
   color: #ffffff;
   border: 1px solid rgba(230, 82, 18, 0.45);
-  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
 
 .gendaz-status--cancelado,
 .gendaz-status--cancelada {
-  background: #a32626;
+  background: linear-gradient(180deg, #c73737, #8f1f1f);
   color: #ffffff;
   border: 1px solid rgba(163, 38, 38, 0.45);
-  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-status--concluido,
 .gendaz-status--concluida,
 .gendaz-status--finalizado {
-  background: #4db352;
+  background: linear-gradient(180deg, #66c86a, #3f9a44);
   color: #ffffff;
   border: 1px solid rgba(77, 179, 82, 0.45);
-  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .gendaz-desconto {
@@ -14960,6 +14973,17 @@ tbody tr:hover { background: #fffaf5; }
   .plan-payment-actions .checkout-timer {
     text-align: center;
   }
+}
+
+/* ============================================================
+   Meu Gendaz typography lock - Faktum Medium only
+   ============================================================ */
+.gendaz-shell :is(*),
+.gendaz-auth :is(*) {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+  font-synthesis: none !important;
 }
 
 .plan-payment-helper {

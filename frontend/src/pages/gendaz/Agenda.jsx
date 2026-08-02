@@ -268,10 +268,6 @@ export default function Agenda() {
         {agendamentos && agendamentos.length > 0 ? (
           agendamentos.map((item) => (
             <article key={item.id} className="gendaz-card gendaz-card--agendamento">
-              <div className="gendaz-card__top">
-                <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
-              </div>
-
               <div className="gendaz-agenda-grid">
                 <div className="gendaz-agenda-field">
                   <span>Serviço</span>

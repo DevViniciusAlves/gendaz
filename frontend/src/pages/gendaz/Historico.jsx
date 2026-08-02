@@ -65,7 +65,12 @@ export default function Historico() {
               const profissional = item.profissionalNome || item.profissional || item.profissional?.nome || '-----'
               const data = item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '-----'
               const hora = item.horaInicio || item.hora || '-----'
-              const valor = item.valor ? `R$ ${Number(item.valor).toFixed(2)}` : '-----'
+              const valorFonte = item.valor ?? item.valorServico ?? item.servicoValor ?? item.servico?.valor ?? null
+              const valor = valorFonte != null && valorFonte !== ''
+                ? Number(valorFonte).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+                : '-----'
+              const observacao = [item.observacoes, item.observacao]
+                .find((texto) => texto && String(texto).trim().toLowerCase() !== 'criado pelo painel.')
 
               return (
                 <article key={item.id} className="gendaz-card gendaz-card--historico-item">
@@ -99,8 +104,8 @@ export default function Historico() {
                       <strong>{valor}</strong>
                     </div>
                   </div>
-                  {(item.observacoes || item.observacao) && (
-                    <p className="gendaz-historico-observacao">{item.observacoes || item.observacao}</p>
+                  {observacao && (
+                    <p className="gendaz-historico-observacao">{observacao}</p>
                   )}
                 </article>
               )

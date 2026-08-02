@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.agendamento.dto;
 import com.minhaempresa.agendapro.agendamento.enums.StatusAgendamento;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -47,6 +48,7 @@ public final class AgendamentoDtos {
             Long profissionalId,
             String profissionalNome,
             Long empresaId,
+            BigDecimal valor,
             LocalDate data,
             LocalTime horaInicio,
             LocalTime horaFim,

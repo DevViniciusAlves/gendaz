@@ -15,6 +15,7 @@ public class AgendamentoMapper {
                 agendamento.getProfissional().getId(),
                 agendamento.getProfissional().getNome(),
                 agendamento.getEmpresa().getId(),
+                agendamento.getServico() != null ? agendamento.getServico().getValor() : null,
                 agendamento.getData(),
                 agendamento.getHoraInicio(),
                 agendamento.getHoraFim(),
