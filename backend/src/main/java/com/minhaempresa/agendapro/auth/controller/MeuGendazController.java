@@ -299,6 +299,8 @@ public class MeuGendazController {
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         try {
             String slug = slugAtual(request);
+            EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
+                    .orElseThrow(() -> new BusinessException("Loja nao encontrada."));
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session == null || session.isBlank()) {
                 session = request.getHeader("X-Session-Token");
