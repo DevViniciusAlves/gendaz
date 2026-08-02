@@ -13248,12 +13248,34 @@ tbody tr:hover { background: #fffaf5; }
   --gendaz-soft-hover: rgba(255, 255, 255, 0.08);
   --gendaz-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
   --gendaz-shadow-hover: 0 24px 56px rgba(0, 0, 0, 0.48);
-  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
 }
 
 .gendaz-shell *,
-.gendaz-auth * {
-  font-family: inherit;
+.gendaz-auth *,
+.gendaz-shell *::before,
+.gendaz-shell *::after,
+.gendaz-auth *::before,
+.gendaz-auth *::after {
+  font-family: inherit !important;
+  font-weight: inherit;
+}
+
+.gendaz-shell button,
+.gendaz-shell input,
+.gendaz-shell select,
+.gendaz-shell textarea,
+.gendaz-shell optgroup,
+.gendaz-shell option,
+.gendaz-auth button,
+.gendaz-auth input,
+.gendaz-auth select,
+.gendaz-auth textarea,
+.gendaz-auth optgroup,
+.gendaz-auth option {
+  font-family: inherit !important;
+  font-weight: inherit;
 }
 
 .gendaz-shell {
