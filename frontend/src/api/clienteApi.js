@@ -67,8 +67,9 @@ clienteApi.interceptors.response.use(
       const isAuthEndpoint = url.includes('/meu-gendaz/auth/solicitar-codigo')
         || url.includes('/meu-gendaz/auth/validar-codigo')
         || url.includes('/meu-gendaz/auth/logout')
+      const isSilentMeuGendazRequest = Boolean(error.config?.skipMeuGendazLogout)
 
-      if (isAuthEndpoint) {
+      if (isAuthEndpoint || isSilentMeuGendazRequest) {
         return Promise.reject(error)
       }
 

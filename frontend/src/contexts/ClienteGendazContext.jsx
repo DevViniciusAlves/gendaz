@@ -30,9 +30,9 @@ export function ClienteGendazProvider({ children, slug }) {
       setErro(null)
 
       const [perfilRes, dashboardRes, agendamentosRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/perfil'),
-        clienteApi.get('/meu-gendaz/dashboard'),
-        clienteApi.get('/meu-gendaz/agendamentos/proximos'),
+        clienteApi.get('/meu-gendaz/perfil', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao }),
       ])
 
       const respostas = [perfilRes, dashboardRes, agendamentosRes]
@@ -41,8 +41,8 @@ export function ClienteGendazProvider({ children, slug }) {
       ))
 
       if (houve401) {
-        limparEstadoSessao()
         if (exigirSessao) {
+          limparEstadoSessao()
           window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         }
         setCarregando(false)
@@ -68,8 +68,8 @@ export function ClienteGendazProvider({ children, slug }) {
       }
 
       const [servRes, profRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/servicos'),
-        clienteApi.get('/meu-gendaz/profissionais'),
+        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao }),
       ])
 
       const houve401Complementar = [servRes, profRes].some((resultado) => (
@@ -77,8 +77,8 @@ export function ClienteGendazProvider({ children, slug }) {
       ))
 
       if (houve401Complementar) {
-        limparEstadoSessao()
         if (exigirSessao) {
+          limparEstadoSessao()
           window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         }
         setCarregando(false)
@@ -94,8 +94,8 @@ export function ClienteGendazProvider({ children, slug }) {
       }
     } catch (err) {
       if (err.response?.status === 401) {
-        limparEstadoSessao()
         if (exigirSessao) {
+          limparEstadoSessao()
           window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         }
         setCarregando(false)
