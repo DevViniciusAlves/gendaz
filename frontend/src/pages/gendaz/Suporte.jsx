@@ -1,0 +1,233 @@
+import { useContext, useEffect, useMemo, useState } from 'react'
+import { AlertCircle, LifeBuoy, MessageCircle, Send, ShieldAlert, Ticket } from 'lucide-react'
+import clienteApi from '../../api/clienteApi.js'
+import StatusBadge from '../../components/StatusBadge.jsx'
+import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
+
+const TIPOS_OCORRENCIA = [
+  'Dúvida geral',
+  'Problema de acesso',
+  'Agendamento',
+  'Reagendamento',
+  'Cancelamento',
+  'Serviços e preços',
+  'Outros',
+]
+
+function extrairMensagemErro(error) {
+  return error.response?.data?.mensagem
+    || error.response?.data?.message
+    || error.message
+    || 'Não foi possível abrir o chamado.'
+}
+
+function formatarData(data) {
+  if (!data) return '-----'
+  try {
+    return new Date(`${data}T12:00:00`).toLocaleDateString('pt-BR')
+  } catch {
+    return '-----'
+  }
+}
+
+export default function Suporte() {
+  const { cliente } = useContext(ClienteGendazContext)
+  const [tipoOcorrencia, setTipoOcorrencia] = useState(TIPOS_OCORRENCIA[0])
+  const [motivo, setMotivo] = useState('')
+  const [mensagem, setMensagem] = useState('')
+  const [chamados, setChamados] = useState([])
+  const [carregando, setCarregando] = useState(false)
+  const [enviando, setEnviando] = useState(false)
+  const [erro, setErro] = useState('')
+  const [sucesso, setSucesso] = useState('')
+
+  const nomeEmpresa = useMemo(
+    () => cliente?.empresaNome || cliente?.empresa?.nome || cliente?.empresa?.nomeFantasia || 'sua empresa',
+    [cliente],
+  )
+
+  async function carregarChamados() {
+    try {
+      setCarregando(true)
+      const data = await clienteApi.get('/meu-gendaz/suporte').then((response) => response.data)
+      setChamados(Array.isArray(data) ? data : [])
+    } catch {
+      setChamados([])
+    } finally {
+      setCarregando(false)
+    }
+  }
+
+  useEffect(() => {
+    if (cliente) carregarChamados()
+  }, [cliente])
+
+  async function enviarChamado(event) {
+    event.preventDefault()
+    if (enviando) return
+    setErro('')
+    setSucesso('')
+
+    const tipoLimpo = tipoOcorrencia.trim()
+    const motivoLimpo = motivo.trim()
+    const mensagemLimpa = mensagem.trim()
+
+    if (!tipoLimpo || !motivoLimpo || !mensagemLimpa) {
+      setErro('Preencha tipo de ocorrência, motivo e mensagem para enviar o chamado.')
+      return
+    }
+
+    setEnviando(true)
+    try {
+      await clienteApi.post('/meu-gendaz/suporte', {
+        tipoOcorrencia: tipoLimpo,
+        motivo: motivoLimpo,
+        mensagem: mensagemLimpa,
+      })
+      setTipoOcorrencia(TIPOS_OCORRENCIA[0])
+      setMotivo('')
+      setMensagem('')
+      setSucesso('Chamado enviado com sucesso. Nossa equipe vai analisar seu caso.')
+      await carregarChamados()
+    } catch (error) {
+      setErro(extrairMensagemErro(error))
+    } finally {
+      setEnviando(false)
+    }
+  }
+
+  return (
+    <section className="gendaz-page">
+      <header className="gendaz-page__header">
+        <span className="gendaz-kicker">Suporte</span>
+        <h1>Fale com a {nomeEmpresa}</h1>
+        <p>Abra um chamado com o tipo de ocorrência e o motivo para registrar tudo no painel administrativo.</p>
+      </header>
+
+      <div className="gendaz-grid gendaz-grid--two">
+        <article className="gendaz-panel">
+          <div className="gendaz-panel__head">
+            <LifeBuoy size={18} />
+            <h2>Novo chamado</h2>
+          </div>
+
+          <form className="gendaz-form" onSubmit={enviarChamado}>
+            <label>
+              <span>Tipo de ocorrência *</span>
+              <select value={tipoOcorrencia} onChange={(e) => setTipoOcorrencia(e.target.value)} required>
+                {TIPOS_OCORRENCIA.map((tipo) => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+              </select>
+            </label>
+
+            <label>
+              <span>Motivo *</span>
+              <input
+                type="text"
+                value={motivo}
+                onChange={(e) => setMotivo(e.target.value)}
+                placeholder="Ex.: não consigo acessar a conta"
+                maxLength={160}
+                required
+              />
+            </label>
+
+            <label>
+              <span>Mensagem *</span>
+              <textarea
+                rows={6}
+                value={mensagem}
+                onChange={(e) => setMensagem(e.target.value)}
+                placeholder="Explique o que aconteceu e o que você precisa..."
+                maxLength={1200}
+                required
+              />
+            </label>
+
+            {erro && (
+              <div className="gendaz-auth__error">
+                <AlertCircle size={16} />
+                <span>{erro}</span>
+              </div>
+            )}
+            {sucesso && (
+              <div className="gendaz-mensagem gendaz-mensagem--sucesso">
+                {sucesso}
+              </div>
+            )}
+
+            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={enviando}>
+              {enviando ? <><Send size={16} /> Enviando...</> : <><Send size={16} /> Enviar chamado</>}
+            </button>
+          </form>
+        </article>
+
+        <article className="gendaz-panel">
+          <div className="gendaz-panel__head">
+            <ShieldAlert size={18} />
+            <h2>Como o suporte funciona</h2>
+          </div>
+
+          <div className="gendaz-stack">
+            <div className="gendaz-mini-card">
+              <strong>1. Descreva o problema</strong>
+              <span>Informe tipo de ocorrência, motivo e detalhes para agilizar o atendimento.</span>
+            </div>
+            <div className="gendaz-mini-card">
+              <strong>2. Registro no admin</strong>
+              <span>O chamado entra no painel administrativo como suporte do Meu Gendaz.</span>
+            </div>
+            <div className="gendaz-mini-card">
+              <strong>3. Acompanhamento</strong>
+              <span>Você acompanha o status do chamado por esta mesma tela.</span>
+            </div>
+          </div>
+
+          <div className="gendaz-card" style={{ marginTop: 18 }}>
+            <div className="gendaz-card__top">
+              <div className="gendaz-card__icon-title">
+                <MessageCircle size={18} />
+                <span>Resumo</span>
+              </div>
+            </div>
+            <p className="gendaz-vazio" style={{ marginBottom: 0 }}>
+              O chamado fica vinculado à sua conta e à empresa correta.
+            </p>
+          </div>
+        </article>
+      </div>
+
+      <article className="gendaz-panel" style={{ marginTop: 24 }}>
+        <div className="gendaz-panel__head">
+          <Ticket size={18} />
+          <h2>Meus chamados</h2>
+        </div>
+
+        {carregando ? (
+          <p className="gendaz-vazio">Carregando chamados...</p>
+        ) : chamados.length > 0 ? (
+          <div className="gendaz-stack">
+            {chamados.map((item) => (
+              <div key={item.id} className="gendaz-mini-card gendaz-mini-card--historico">
+                <div className="gendaz-mini-card__info">
+                  <p className="gendaz-mini-card__servico">{item.assunto || 'Meu Gendaz'}</p>
+                  <p className="gendaz-mini-card__profissional">
+                    {item.mensagem}
+                  </p>
+                  <small>Aberto em {formatarData(item.dataCriacao)}</small>
+                </div>
+                <div style={{ display: 'grid', justifyItems: 'end', gap: 10 }}>
+                  <StatusBadge status={item.status} />
+                  {item.resposta && <small style={{ maxWidth: 260, textAlign: 'right' }}>{item.resposta}</small>}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="gendaz-vazio">Nenhum chamado enviado ainda.</p>
+        )}
+      </article>
+    </section>
+  )
+}

@@ -6,5 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
     List<ChamadoEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
+    List<ChamadoEntity> findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(Long empresaId, Long usuarioId);
     List<ChamadoEntity> findAllByOrderByDataCriacaoDesc();
 }

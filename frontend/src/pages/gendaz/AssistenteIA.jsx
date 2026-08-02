@@ -9,6 +9,7 @@ export default function AssistenteIA() {
   const [mensagens, setMensagens] = useState([])
   const [inputValue, setInputValue] = useState('')
   const [carregando, setCarregando] = useState(false)
+  const [cardAtivo, setCardAtivo] = useState('Agendar')
   const messagesEndRef = useRef(null)
   const navigate = useNavigate()
 
@@ -18,7 +19,7 @@ export default function AssistenteIA() {
     setMensagens([{
       id: 1,
       origem: 'ia',
-      texto: `Olá, ${nome}! Sou a gendazIA da **${empresaNome}**. Como posso ajudá-lo?`,
+      texto: `Olá, ${nome}! Sou a gendazIA da ${empresaNome}. Como posso ajudá-lo?`,
       sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
     }])
   }, [cliente])
@@ -57,23 +58,14 @@ export default function AssistenteIA() {
         acao: data?.acao,
         sugestoes: Array.isArray(data?.sugestoes) ? data.sugestoes : [],
       }])
-    } catch {
-      const intencao = detectarIntencao(textoUsuario)
-      const resposta = gerarRespostaLocal(intencao, textoUsuario, {
-        cliente,
-        agendamentos,
-        dashboard,
-        servicos: servicos || [],
-        profissionais: profissionais || [],
-        promos: beneficios?.promocoes || dashboard?.promocoes || [],
-      })
-
+    } catch (err) {
       setMensagens((prev) => [...prev, {
         id: Date.now() + 1,
         origem: 'ia',
-        texto: resposta.resposta || 'Desculpe, ocorreu um erro ao processar sua mensagem. Tente novamente.',
-        acao: resposta.acao,
-        sugestoes: resposta.sugestoes,
+        texto: err?.response?.status === 401
+          ? 'Sua sessão do Meu Gendaz expirou. Faça login novamente.'
+          : 'Não consegui obter resposta da gendazIA agora. Verifique se a Groq está configurada no backend.',
+        sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }])
     } finally {
       setCarregando(false)
@@ -168,27 +160,27 @@ export default function AssistenteIA() {
             <Sparkles size={18} />
             <h2>Como posso ajudar</h2>
           </div>
-          <div className="gendaz-stack">
-            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Quero agendar')}>
+                    <div className="gendaz-stack">
+            <button type="button" className={`gendaz-mini-card ${cardAtivo === 'Agendar' ? 'is-active' : ''}`} onClick={() => { setCardAtivo('Agendar'); handleSugestao('Quero agendar') }}>
               <strong>Agendar</strong>
-              <span>Peça para agendar um serviço e escolha data e horário.</span>
-            </div>
-            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Reagendar')}>
+              <span>Pe�a para agendar um servi�o e escolha data e hor�rio.</span>
+            </button>
+            <button type="button" className={`gendaz-mini-card ${cardAtivo === 'Reagendar' ? 'is-active' : ''}`} onClick={() => { setCardAtivo('Reagendar'); handleSugestao('Reagendar') }}>
               <strong>Reagendar</strong>
               <span>Mude a data ou hora de um agendamento existente.</span>
-            </div>
-            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Cancelar')}>
+            </button>
+            <button type="button" className={`gendaz-mini-card ${cardAtivo === 'Cancelar' ? 'is-active' : ''}`} onClick={() => { setCardAtivo('Cancelar'); handleSugestao('Cancelar') }}>
               <strong>Cancelar</strong>
-              <span>Cancele um agendamento que não pode comparecer.</span>
-            </div>
-            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Quais serviços vocês oferecem?')}>
-              <strong>Serviços e preços</strong>
-              <span>Veja a lista completa de serviços e valores.</span>
-            </div>
-            <div className="gendaz-mini-card" style={{ cursor: 'pointer' }} onClick={() => handleSugestao('Promoções')}>
-              <strong>Promoções</strong>
-              <span>Confira cupons e descontos disponíveis.</span>
-            </div>
+              <span>Cancele um agendamento que nao pode comparecer.</span>
+            </button>
+            <button type="button" className={`gendaz-mini-card ${cardAtivo === 'Servi�os e pre�os' ? 'is-active' : ''}`} onClick={() => { setCardAtivo('Servi�os e pre�os'); handleSugestao('Quais servi�os voc�s oferecem?') }}>
+              <strong>Servi�os e pre�os</strong>
+              <span>Veja a lista completa de servi�os e valores.</span>
+            </button>
+            <button type="button" className={`gendaz-mini-card ${cardAtivo === 'Promo��es' ? 'is-active' : ''}`} onClick={() => { setCardAtivo('Promo��es'); handleSugestao('Promo��es') }}>
+              <strong>Promo��es</strong>
+              <span>Confira cupons e descontos dispon�veis.</span>
+            </button>
           </div>
         </article>
       </div>
@@ -229,26 +221,26 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     }
     case 'sobre': {
       return {
-        resposta: `Sou a assistente virtual da **${empresaNome}**. Posso ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções.`,
+        resposta: `Sou a assistente virtual da ${empresaNome}. Posso ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções.`,
         sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }
     }
     case 'agradecimento': {
       return {
-        resposta: `Por nada, ${nome}. Estou sempre aqui quando precisar da **${empresaNome}**.`,
+        resposta: `Por nada, ${nome}. Estou sempre aqui quando precisar da ${empresaNome}.`,
         sugestoes: ['Quero agendar', 'Ver meus agendamentos'],
       }
     }
     case 'listar_servicos': {
       if (!servicos || servicos.length === 0) {
         return {
-          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba Agenda para ver todos os serviços disponíveis na **${empresaNome}**.`,
+          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba Agenda para ver todos os serviços disponíveis na ${empresaNome}.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
       const lista = servicos.map((s, i) => `${i + 1}. **${s.nome || s.titulo}** — ${Number(s.valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}`).join('\n')
       return {
-        resposta: `Serviços da **${empresaNome}**:\n\n${lista}\n\nQuer agendar algum?`,
+        resposta: `Serviços da ${empresaNome}:\n\n${lista}\n\nQuer agendar algum?`,
         sugestoes: ['Quero agendar', 'Ir para Agenda', 'Ver profissionais'],
       }
     }
@@ -261,14 +253,14 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       }
       const lista = profissionais.map((p, i) => `${i + 1}. **${p.nome}**`).join('\n')
       return {
-        resposta: `Equipe da **${empresaNome}**:\n\n${lista}\n\nQuer agendar com algum deles?`,
+        resposta: `Equipe da ${empresaNome}:\n\n${lista}\n\nQuer agendar com algum deles?`,
         sugestoes: profissionais.slice(0, 3).map((p) => `Agendar com ${p.nome}`),
       }
     }
     case 'meus_agendamentos': {
       if (!agendamentos || agendamentos.length === 0) {
         return {
-          resposta: `${nome}, você não possui agendamentos futuros na **${empresaNome}**. Que tal agendar um novo serviço?`,
+          resposta: `${nome}, você não possui agendamentos futuros na ${empresaNome}. Que tal agendar um novo serviço?`,
           sugestoes: ['Quero agendar', 'Ver serviços'],
         }
       }
@@ -306,7 +298,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const promos = beneficios?.promocoes || []
       if (!promos || promos.length === 0) {
         return {
-          resposta: `No momento não encontrei promoções cadastradas para **${empresaNome}**.`,
+          resposta: `No momento não encontrei promoções cadastradas para ${empresaNome}.`,
           sugestoes: ['Quero agendar', 'Ver serviços'],
         }
       }
@@ -324,3 +316,6 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     }
   }
 }
+
+
+

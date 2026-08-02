@@ -34,6 +34,7 @@ import GendazDashboard from '../pages/gendaz/Dashboard.jsx'
 import GendazAgenda from '../pages/gendaz/Agenda.jsx'
 import GendazHistorico from '../pages/gendaz/Historico.jsx'
 import GendazAssistenteIA from '../pages/gendaz/AssistenteIA.jsx'
+import GendazSuporte from '../pages/gendaz/Suporte.jsx'
 import GendazBeneficios from '../pages/gendaz/Beneficios.jsx'
 import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 
@@ -115,6 +116,7 @@ export default function AppRoutes() {
         <Route path="agenda" element={<GendazAgenda />} />
         <Route path="historico" element={<GendazHistorico />} />
         <Route path="ia" element={<GendazAssistenteIA />} />
+        <Route path="suporte" element={<GendazSuporte />} />
         <Route path="beneficios" element={<GendazBeneficios />} />
         <Route path="configuracoes" element={<GendazConfiguracoes />} />
       </Route>

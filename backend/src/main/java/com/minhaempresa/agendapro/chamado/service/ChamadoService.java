@@ -58,6 +58,14 @@ public class ChamadoService {
     }
 
     @Transactional(readOnly = true)
+    public List<ChamadoResponse> listarPorEmpresaEUsuario(Long empresaId, Long usuarioId) {
+        return chamadoRepository.findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(empresaId, usuarioId)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<ChamadoResponse> listarTodos() {
         return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream().map(mapper::toResponse).toList();
     }

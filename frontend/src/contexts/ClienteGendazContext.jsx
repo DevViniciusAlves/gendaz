@@ -205,10 +205,13 @@ export function ClienteGendazProvider({ children, slug }) {
     return { mensagem: 'Cupom registrado.' }
   }, [carregarBeneficios])
 
-  const enviarMensagemIA = useCallback(async (mensagem) => {
-    const intencao = detectarIntencaoLocal(mensagem)
-    return gerarRespostaLocal(intencao, mensagem, { cliente, agendamentos, dashboard, servicos, profissionais, beneficios })
-  }, [cliente, agendamentos, dashboard, servicos, profissionais, beneficios])
+  const enviarMensagemIA = useCallback(async (mensagem, historico = []) => {
+    const { data } = await clienteApi.post('/meu-gendaz/ia', {
+      pergunta: mensagem,
+      historico,
+    })
+    return data
+  }, [])
 
   const carregarPreferenciasIA = useCallback(async () => {
     return { profissionalFavorito: null, servicoFavorito: null, diasPreferidos: [], horarioPreferido: null, frequencia: null }

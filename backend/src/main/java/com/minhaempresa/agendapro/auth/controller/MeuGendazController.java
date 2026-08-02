@@ -2,6 +2,11 @@ package com.minhaempresa.agendapro.auth.controller;
 
 import com.minhaempresa.agendapro.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.agendapro.agendamento.service.AgendamentoService;
+import com.minhaempresa.agendapro.auth.dto.MeuGendazDtos.CriarSuporteRequest;
+import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.CriarChamadoRequest;
+import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.ChamadoResponse;
+import com.minhaempresa.agendapro.chamado.enums.PrioridadeChamado;
+import com.minhaempresa.agendapro.chamado.service.ChamadoService;
 import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
 import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
@@ -56,6 +61,7 @@ public class MeuGendazController {
     private final ServicoService servicoService;
     private final ProfissionalService profissionalService;
     private final AgendamentoService agendamentoService;
+    private final ChamadoService chamadoService;
     private final InsightsService insightsService;
     private final UsuarioSessionService usuarioSessionService;
     private final SanitizacaoService sanitizacaoService;
@@ -110,6 +116,21 @@ public class MeuGendazController {
             throw new SessaoExpiradaException("Sessao invalida para esta loja.");
         }
         return cliente;
+    }
+
+    private UsuarioEntity findUsuarioAcessoFromSession(HttpServletRequest request) {
+        String slug = slugAtual(request);
+        EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
+                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
+        if (session == null || session.isBlank()) {
+            session = request.getHeader("X-Session-Token");
+        }
+        if (session == null || session.isBlank()) {
+            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
+        }
+        return usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
     }
 
     private Long getEmpresaId(ClienteEntity cliente) {
@@ -230,10 +251,7 @@ public class MeuGendazController {
             Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
-                    .filter(a -> a.data() != null && (
-                            a.data().isBefore(java.time.LocalDate.now())
-                                    || "FINALIZADO".equalsIgnoreCase(String.valueOf(a.status()))
-                    ))
+                    .filter(a -> a.status() != null && isStatusHistorico(a.status().name()))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .toList();
             int total = passados.size();
@@ -390,6 +408,42 @@ public class MeuGendazController {
         }
     }
 
+    @PostMapping("/suporte")
+    public ResponseEntity<?> criarSuporte(@Valid @RequestBody CriarSuporteRequest request, HttpServletRequest httpRequest) {
+        try {
+            UsuarioEntity usuario = findUsuarioAcessoFromSession(httpRequest);
+            String tipo = request.tipoOcorrencia().trim();
+            String motivo = request.motivo().trim();
+            String mensagem = request.mensagem().trim();
+            String assunto = "Meu Gendaz - " + tipo + " - " + motivo;
+            String mensagemCompleta = "Origem: Meu Gendaz\n"
+                    + "Tipo de ocorrência: " + tipo + "\n"
+                    + "Motivo: " + motivo + "\n\n"
+                    + mensagem;
+            CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
+            ChamadoResponse chamado = chamadoService.criar(chamadoRequest, usuario.getId());
+            return ResponseEntity.ok(chamado);
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel abrir o chamado.", "erro", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/suporte")
+    public ResponseEntity<?> listarSuporte(HttpServletRequest httpRequest) {
+        try {
+            ClienteEntity cliente = findClienteFromSession(httpRequest);
+            UsuarioEntity usuario = findUsuarioAcessoFromSession(httpRequest);
+            Long empresaId = getEmpresaId(cliente);
+            return ResponseEntity.ok(chamadoService.listarPorEmpresaEUsuario(empresaId, usuario.getId()));
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel carregar os chamados."));
+        }
+    }
+
     private boolean isStatusConcluido(String status) {
         if (status == null) {
             return false;
@@ -400,6 +454,16 @@ public class MeuGendazController {
                 || "CONCLUÍDO".equals(normalizado)
                 || "CONCLUIDA".equals(normalizado)
                 || "CONCLUÍDA".equals(normalizado);
+    }
+
+    private boolean isStatusHistorico(String status) {
+        if (status == null) {
+            return false;
+        }
+        String normalizado = status.trim().toUpperCase();
+        return isStatusConcluido(normalizado)
+                || "PENDENTE".equals(normalizado)
+                || "CANCELADO".equals(normalizado);
     }
 
     @GetMapping("/promocoes")
@@ -491,3 +555,4 @@ public class MeuGendazController {
         }
     }
 }
+

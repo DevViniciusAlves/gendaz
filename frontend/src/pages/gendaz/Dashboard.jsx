@@ -1,7 +1,7 @@
 ﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing, Wallet } from 'lucide-react'
+import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy } from 'lucide-react'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -183,6 +183,10 @@ export default function Dashboard() {
               <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
                 <MessageCircle size={18} />
                 <span>Dúvidas</span>
+              </button>
+              <button className="gendaz-btn-contato" onClick={() => navigate('suporte')}>
+                <LifeBuoy size={18} />
+                <span>Suporte</span>
               </button>
               <button className="gendaz-btn-contato" onClick={() => navigate('agenda')}>
                 <Phone size={18} />
