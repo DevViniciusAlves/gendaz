@@ -14,6 +14,7 @@ import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.agendapro.pagamento.service.PagamentoService;
+import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
@@ -31,6 +32,7 @@ class AdminServiceTest {
     private final AdminImpersonationSessionRepository impersonationRepository = mock(AdminImpersonationSessionRepository.class);
     private final ChamadoRepository chamadoRepository = mock(ChamadoRepository.class);
     private final AssinaturaService assinaturaService = mock(AssinaturaService.class);
+    private final PlanoService planoService = mock(PlanoService.class);
     private final AdminAuditService auditService = mock(AdminAuditService.class);
     private final PasswordService passwordService = new PasswordService();
     private final PagamentoService pagamentoService = mock(PagamentoService.class);
@@ -44,6 +46,7 @@ class AdminServiceTest {
             impersonationRepository,
             chamadoRepository,
             assinaturaService,
+            planoService,
             auditService,
             passwordService,
             pagamentoService,
