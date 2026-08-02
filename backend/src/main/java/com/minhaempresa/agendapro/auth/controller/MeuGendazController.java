@@ -162,13 +162,17 @@ public class MeuGendazController {
     public ResponseEntity<?> perfil(HttpServletRequest request) {
         try {
             UsuarioEntity usuario = findUserFromSession(request);
+            if (usuario.getEmpresa() == null) {
+                throw new SessaoExpiradaException("Empresa nao encontrada para este acesso.");
+            }
+            EmpresaEntity empresa = empresaRepository.findById(usuario.getEmpresa().getId())
+                    .orElseThrow(() -> new SessaoExpiradaException("Empresa nao encontrada para este acesso."));
             Optional<ClienteEntity> clienteOpt = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(
-                    usuario.getEmpresa().getId(),
+                    empresa.getId(),
                     usuario.getEmail()
             );
             ClienteEntity cliente = clienteOpt.orElse(null);
             boolean cadastroPendente = cliente == null;
-            EmpresaEntity empresa = usuario.getEmpresa();
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("cadastroPendente", cadastroPendente);
             result.put("id", cliente != null ? cliente.getId() : usuario.getId());
