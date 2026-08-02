@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -132,16 +133,26 @@ public class MeuGendazAuthService {
     }
 
     private UsuarioEntity buscarUsuarioAcesso(EmpresaEntity empresa, String email) {
-        return usuarioRepository.findByEmpresaIdAndEmail(empresa.getId(), email)
-                .orElseGet(() -> usuarioRepository.save(UsuarioEntity.builder()
-                        .nome(nomePadrao(email))
-                        .email(email)
-                        .senha(hashUsuarioTemporario(email, empresa.getId()))
-                        .perfil(PerfilUsuario.ATENDENTE)
-                        .status(StatusUsuario.ATIVO)
-                        .aceitouTermos(true)
-                        .empresa(empresa)
-                        .build()));
+        return usuarioRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
+                .orElseGet(() -> salvarUsuarioAcesso(empresa, email));
+    }
+
+    private UsuarioEntity salvarUsuarioAcesso(EmpresaEntity empresa, String email) {
+        UsuarioEntity novoUsuario = UsuarioEntity.builder()
+                .nome(nomePadrao(email))
+                .email(email)
+                .senha(hashUsuarioTemporario(email, empresa.getId()))
+                .perfil(PerfilUsuario.ATENDENTE)
+                .status(StatusUsuario.ATIVO)
+                .aceitouTermos(true)
+                .empresa(empresa)
+                .build();
+        try {
+            return usuarioRepository.save(novoUsuario);
+        } catch (DataIntegrityViolationException ex) {
+            return usuarioRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
+                    .orElseThrow(() -> ex);
+        }
     }
 
     private String normalizarSlug(String slug) {

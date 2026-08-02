@@ -97,7 +97,7 @@ public class MeuGendazController {
         }
         UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmail(empresa.getId(), usuario.getEmail())
+        ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
                 .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
         if (cliente.getEmpresa() == null || !empresa.getId().equals(cliente.getEmpresa().getId())) {
             throw new SessaoExpiradaException("Sessao invalida para esta loja.");
@@ -408,7 +408,7 @@ public class MeuGendazController {
                 }
             }
             if (!email.isBlank()) {
-                Optional<ClienteEntity> clienteMesmoEmail = clienteRepository.findFirstByEmpresaIdAndEmail(empresaId, email);
+                Optional<ClienteEntity> clienteMesmoEmail = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
                 if (clienteMesmoEmail.isPresent() && (cliente == null || !clienteMesmoEmail.get().getId().equals(cliente.getId()))) {
                     erros.add("Ja existe um cliente com este e-mail.");
                 }
