@@ -123,7 +123,6 @@ public class AdminController {
             @Valid @RequestBody(required = false) ImpersonarRequest request
     ) {
         ImpersonarResponse impersonacao = adminService.iniciarImpersonacao(tokenAdmin(http), empresaId, request, ip(http), userAgent(http));
-        adicionarCookie(http, response, "agendapro_session", impersonacao.sessionToken(), SESSION_COOKIE_MAX_AGE);
         return ResponseEntity.ok(impersonacao);
     }
 
@@ -189,7 +188,6 @@ public class AdminController {
             @PathVariable Long sessionId
     ) {
         adminService.encerrarImpersonacao(tokenAdmin(http), sessionId, ip(http), userAgent(http));
-        limparCookie(http, response, "agendapro_session");
         return ResponseEntity.noContent().build();
     }
 
@@ -200,7 +198,6 @@ public class AdminController {
             @RequestParam Long sessionId
     ) {
         adminService.encerrarImpersonacao(tokenAdmin(http), sessionId, ip(http), userAgent(http));
-        limparCookie(http, response, "agendapro_session");
         return ResponseEntity.noContent().build();
     }
 

@@ -12,7 +12,6 @@ import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
-import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
@@ -59,7 +58,6 @@ public class AdminService {
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
     private final PagamentoService pagamentoService;
-    private final UsuarioSessionService usuarioSessionService;
     private final ProfissionalService profissionalService;
     private final Map<String, AdminSession> sessions = new ConcurrentHashMap<>();
 
@@ -82,7 +80,6 @@ public class AdminService {
             AdminAuditService auditService,
             PasswordService passwordService,
             PagamentoService pagamentoService,
-            UsuarioSessionService usuarioSessionService,
             ProfissionalService profissionalService
     ) {
         this.usuarioRepository = usuarioRepository;
@@ -96,7 +93,6 @@ public class AdminService {
         this.auditService = auditService;
         this.passwordService = passwordService;
         this.pagamentoService = pagamentoService;
-        this.usuarioSessionService = usuarioSessionService;
         this.profissionalService = profissionalService;
     }
 
@@ -111,7 +107,6 @@ public class AdminService {
             AdminAuditService auditService,
             PasswordService passwordService,
             PagamentoService pagamentoService,
-            UsuarioSessionService usuarioSessionService,
             ProfissionalService profissionalService
     ) {
         this(
@@ -126,7 +121,6 @@ public class AdminService {
                 auditService,
                 passwordService,
                 pagamentoService,
-                usuarioSessionService,
                 profissionalService
         );
     }
@@ -141,7 +135,6 @@ public class AdminService {
             AdminAuditService auditService,
             PasswordService passwordService,
             PagamentoService pagamentoService,
-            UsuarioSessionService usuarioSessionService,
             ProfissionalService profissionalService
     ) {
         this(
@@ -156,7 +149,6 @@ public class AdminService {
                 auditService,
                 passwordService,
                 pagamentoService,
-                usuarioSessionService,
                 profissionalService
         );
     }
@@ -352,7 +344,6 @@ public class AdminService {
                 .findFirst()
                 .orElseGet(() -> usuarioRepository.findByEmpresaId(empresaId).stream().findFirst()
                         .orElseThrow(() -> new ResourceNotFoundException("Usuario da empresa nao encontrado.")));
-        String sessionToken = usuarioSessionService.obterOuCriarSessao(dono);
         AdminImpersonationSessionEntity session = impersonationSessionRepository.save(AdminImpersonationSessionEntity.builder()
                 .admin(admin)
                 .empresa(empresa)
@@ -374,7 +365,6 @@ public class AdminService {
                 dono.getEmail(),
                 empresa.getNomeFantasia(),
                 session.getMotivo(),
-                sessionToken,
                 session.getDataInicio()
         );
     }

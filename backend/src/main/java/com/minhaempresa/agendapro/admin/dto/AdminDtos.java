@@ -144,7 +144,6 @@ public final class AdminDtos {
             String usuarioEmail,
             String empresa,
             String motivo,
-            String sessionToken,
             LocalDateTime dataInicio
     ) {}
 

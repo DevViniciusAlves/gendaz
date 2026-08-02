@@ -236,7 +236,7 @@ function rotuloPlano(valor) {
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { adminUsuario, adminLogout, iniciarImpersonacao } = useAuth()
+  const { adminUsuario, adminLogout, iniciarImpersonacao, impersonation, encerrarImpersonacao } = useAuth()
   const [aba, setAba] = useState('Dashboard')
   const [dashboard, setDashboard] = useState(null)
   const [usuarios, setUsuarios] = useState([])
@@ -437,7 +437,8 @@ export default function AdminDashboard() {
     try {
       const session = await adminApi.impersonar(modal.empresaId, motivo.trim() || null)
       iniciarImpersonacao(session)
-      navigate('/sistema/dashboard', { replace: true })
+      setModal(null)
+      setAviso(`Contexto da empresa ${modal.empresa} carregado no painel admin.`)
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel acessar esta conta agora.'))
     } finally {
@@ -588,6 +589,21 @@ export default function AdminDashboard() {
       </aside>
 
       <section className="admin-content">
+        {impersonation && (
+          <div className="impersonation-banner" style={{ margin: '0 0 16px' }}>
+            <strong>Contexto ativo: {impersonation.empresa}.</strong>
+            <span>Voce continua no painel admin, sem trocar a sessao da empresa.</span>
+            <button
+              type="button"
+              onClick={() => {
+                encerrarImpersonacao()
+                setAviso('Contexto da empresa encerrado.')
+              }}
+            >
+              Encerrar contexto
+            </button>
+          </div>
+        )}
         {(aviso || (!modal && erro)) && (
           <div className={`admin-toast ${aviso ? 'success' : 'error'}`} role="status">
             <span>{aviso || erro}</span>

@@ -462,6 +462,7 @@ export function AuthProvider({ children }) {
   async function adminLogin(email, senha) {
     const response = await adminApi.login(email, senha)
     setAdminUsuario(response.admin)
+    setAuthLoading(false)
     return response.admin
   }
 
@@ -473,36 +474,18 @@ export function AuthProvider({ children }) {
 
   function iniciarImpersonacao(payload) {
     const adminAtual = adminUsuarioMemory
-    const impersonationData = { ...payload, admin: adminAtual }
-    const usuarioImpersonado = {
-      id: payload?.usuarioId || payload?.empresaId,
-      nome: payload?.usuarioNome || adminAtual?.nome || 'Super Admin',
-      email: payload?.usuarioEmail || adminAtual?.email,
-      perfil: 'DONO',
-      plano: payload?.plano || payload?.planoNome || null,
-      empresaId: payload.empresaId,
-      empresaNome: payload.empresa,
-      impersonadoPorAdmin: true,
+    const impersonationData = {
+      ...payload,
+      admin: adminAtual,
+      modoProxy: true,
     }
-    clearLocalData()
     impersonationMemory = impersonationData
     setImpersonation(impersonationData)
-    setUsuario(usuarioImpersonado)
   }
 
   async function encerrarImpersonacao() {
-    if (impersonation?.sessionId) {
-      try {
-        await adminApi.encerrarImpersonacao(impersonation.sessionId)
-      } catch {
-        // ignora erro da API — limpeza deve acontecer mesmo assim
-      }
-    }
     impersonationMemory = null
-    limparSessaoUsuario()
-    clearLocalData()
     setImpersonation(null)
-    setUsuario(null)
   }
 
   function getPagamentoPendente() {
