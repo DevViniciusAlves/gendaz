@@ -1,7 +1,7 @@
 ﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy } from 'lucide-react'
+import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy, Phone } from 'lucide-react'
 
 export default function Dashboard() {
   const navigate = useNavigate()
