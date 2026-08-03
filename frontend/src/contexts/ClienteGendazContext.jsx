@@ -3,18 +3,50 @@ import clienteApi from '../api/clienteApi.js'
 
 export const ClienteGendazContext = createContext()
 
+const STORAGE_PREFIX = 'meu_gendaz_session'
+
+function storageKey(slug) {
+  const normalizado = String(slug || '').trim().toLowerCase()
+  return `${STORAGE_PREFIX}_${normalizado || 'default'}`
+}
+
+function lerSessaoPersistida(slug) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null
+  try {
+    const raw = window.sessionStorage.getItem(storageKey(slug))
+    if (!raw) return null
+    return JSON.parse(raw)
+  } catch {
+    return null
+  }
+}
+
+function salvarSessaoPersistida(slug, dados) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  try {
+    if (!dados) {
+      window.sessionStorage.removeItem(storageKey(slug))
+      return
+    }
+    window.sessionStorage.setItem(storageKey(slug), JSON.stringify(dados))
+  } catch {
+    // cache apenas de conveniência; nao pode quebrar o fluxo principal
+  }
+}
+
 export function ClienteGendazProvider({ children, slug }) {
-  const [cliente, setCliente] = useState(null)
-  const [perfilPendente, setPerfilPendente] = useState(false)
-  const [perfilAcesso, setPerfilAcesso] = useState(null)
+  const cacheInicial = lerSessaoPersistida(slug)
+  const [cliente, setCliente] = useState(cacheInicial?.cliente || null)
+  const [perfilPendente, setPerfilPendente] = useState(Boolean(cacheInicial?.perfilPendente))
+  const [perfilAcesso, setPerfilAcesso] = useState(cacheInicial?.perfilAcesso || null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
-  const [agendamentos, setAgendamentos] = useState([])
-  const [dashboard, setDashboard] = useState(null)
-  const [beneficios, setBeneficios] = useState({ promocoes: [], cupons: [] })
-  const [configuracoes, setConfiguracoes] = useState(null)
-  const [servicos, setServicos] = useState([])
-  const [profissionais, setProfissionais] = useState([])
+  const [agendamentos, setAgendamentos] = useState(cacheInicial?.agendamentos || [])
+  const [dashboard, setDashboard] = useState(cacheInicial?.dashboard || null)
+  const [beneficios, setBeneficios] = useState(cacheInicial?.beneficios || { promocoes: [], cupons: [] })
+  const [configuracoes, setConfiguracoes] = useState(cacheInicial?.configuracoes || null)
+  const [servicos, setServicos] = useState(cacheInicial?.servicos || [])
+  const [profissionais, setProfissionais] = useState(cacheInicial?.profissionais || [])
   const sincronizandoRef = useRef(null)
 
   const limparEstadoSessao = useCallback(() => {
@@ -27,7 +59,8 @@ export function ClienteGendazProvider({ children, slug }) {
     setConfiguracoes(null)
     setServicos([])
     setProfissionais([])
-  }, [])
+    salvarSessaoPersistida(slug, null)
+  }, [slug])
 
   const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
     if (sincronizandoRef.current) {
@@ -51,6 +84,17 @@ export function ClienteGendazProvider({ children, slug }) {
         setConfiguracoes(null)
         setServicos([])
         setProfissionais([])
+        salvarSessaoPersistida(slug, {
+          cliente: null,
+          perfilPendente: true,
+          perfilAcesso: perfilRes.data,
+          dashboard: null,
+          agendamentos: [],
+          beneficios: { promocoes: [], cupons: [] },
+          configuracoes: null,
+          servicos: [],
+          profissionais: [],
+        })
         setCarregando(false)
         return
       }
@@ -101,6 +145,23 @@ export function ClienteGendazProvider({ children, slug }) {
       if (profRes.status === 'fulfilled') {
         setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
       }
+
+      salvarSessaoPersistida(slug, {
+        cliente: dadosPerfil,
+        perfilPendente: false,
+        perfilAcesso: dadosPerfil,
+        dashboard: dashboardRes.status === 'fulfilled' ? dashboardRes.value.data : null,
+        agendamentos: agendamentosRes.status === 'fulfilled'
+          ? (Array.isArray(agendamentosRes.value.data) ? agendamentosRes.value.data : agendamentosRes.value.data?.agendamentos || [])
+          : [],
+        beneficios: beneficios,
+        configuracoes: {
+          notificacoes: { email: true, sms: false, push: true },
+          compartilharHistorico: false,
+        },
+        servicos: servRes.status === 'fulfilled' ? (Array.isArray(servRes.value.data) ? servRes.value.data : []) : [],
+        profissionais: profRes.status === 'fulfilled' ? (Array.isArray(profRes.value.data) ? profRes.value.data : []) : [],
+      })
     } catch (err) {
       if (err.response?.status === 401) {
         if (exigirSessao) {
@@ -122,7 +183,7 @@ export function ClienteGendazProvider({ children, slug }) {
     } finally {
       sincronizandoRef.current = null
     }
-  }, [limparEstadoSessao])
+  }, [limparEstadoSessao, slug])
 
   useEffect(() => {
     if (!slug) return undefined
@@ -132,6 +193,20 @@ export function ClienteGendazProvider({ children, slug }) {
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
   }, [slug, sincronizarDados])
+
+  useEffect(() => {
+    salvarSessaoPersistida(slug, {
+      cliente,
+      perfilPendente,
+      perfilAcesso,
+      dashboard,
+      agendamentos,
+      beneficios,
+      configuracoes,
+      servicos,
+      profissionais,
+    })
+  }, [slug, cliente, perfilPendente, perfilAcesso, dashboard, agendamentos, beneficios, configuracoes, servicos, profissionais])
 
   useEffect(() => {
     const lidarComLogout = () => {
