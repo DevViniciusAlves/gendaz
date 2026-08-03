@@ -13,7 +13,7 @@ import {
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
-import logoWhite from '../assets/logos/gendaz-logo-preto.png'
+import logoWhite from '../assets/logos/gendazpng.png'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 
@@ -57,26 +57,26 @@ export default function Home() {
   }
 
   return (
-    <main className="marketing-page">
+    <main id="inicio" className="marketing-page">
 
       {/* ── Navbar ─────────────────────────────────────── */}
-      <header className="marketing-nav">
-        <div className="marketing-nav-shell">
-          <Link to="/" className="marketing-brand">
-            <img src={logoWhite} alt="gendaz" className="nav-logo" />
+      <header className="marketing-nav-gendo">
+        <div className="marketing-nav-gendo-shell">
+          <Link to="/" className="marketing-brand-gendo">
+            <img src={logoWhite} alt="gendaz" className="nav-logo-gendo" />
           </Link>
-          <div className="marketing-nav-panel">
-          <nav className="marketing-nav-links">
+          
+          <nav className="marketing-nav-links-gendo">
+          <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
           <a href="#solucoes">Soluções</a>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
           </nav>
-          <div className="marketing-actions">
-            <Link to="/login" className="secondary-link nav-login-link">Entrar</Link>
-            <Link to="/criar-conta" className="primary-link nav-signup-link"><UserPlus size={16} />Criar conta</Link>
-          </div>
+          <div className="marketing-actions-gendo">
+            <Link to="/login" className="secondary-link-gendo">Entrar</Link>
+            <Link to="/criar-conta" className="primary-link-gendo"><UserPlus size={16} />Criar conta</Link>
           </div>
         </div>
       </header>
@@ -96,17 +96,22 @@ export default function Home() {
             className="hero-new-title"
           >
             Organize sua agenda com uma Assistente de IA em um só{' '}
-            <span className="hero-new-gradient">PAINEL</span>.
+            <span className="hero-new-gradient">PAINEL</span>
+            <span className="hero-new-gradient hero-new-dot">.</span>
           </motion.h1>
 
-          <motion.p
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
-            className="hero-new-desc"
+            className="hero-new-sequence"
           >
-            Centralize conversas, horários, clientes e pagamentos em uma plataforma simples para o dia a dia.
-          </motion.p>
+            <span className="hero-sequence-item">Cliente</span>
+            <span className="hero-sequence-arrow">→</span>
+            <span className="hero-sequence-item">Agenda</span>
+            <span className="hero-sequence-arrow">→</span>
+            <span className="hero-sequence-finale">O resto é com a Gendaz</span>
+          </motion.div>
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -303,4 +308,6 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
     </main>
   )
 }
+
+
 
