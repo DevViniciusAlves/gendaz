@@ -32,13 +32,13 @@ payment:
   mercado-pago-public-key: ${MERCADO_PAGO_PUBLIC_KEY:}
   cakto-client-id: ${CAKTO_CLIENT_ID:}
   cakto-client-secret: ${CAKTO_CLIENT_SECRET:}
-  cakto-webhook-secret: ${CAKTO_WEBHOOK_SECRET:${PAYMENT_WEBHOOK_SECRET:local-dev-webhook-secret}}
+  cakto-webhook-secret: ${CAKTO_WEBHOOK_SECRET:${PAYMENT_WEBHOOK_SECRET:}}
   cakto-product-basico-id: ${CAKTO_PRODUCT_BASICO_ID:}
   cakto-product-pro-id: ${CAKTO_PRODUCT_PRO_ID:}
   cakto-offer-pro-id: ${CAKTO_OFFER_PRO_ID:}
   cakto-checkout-basico-url: ${CAKTO_CHECKOUT_BASICO_URL:}
   cakto-checkout-pro-url: ${CAKTO_CHECKOUT_PRO_URL:}
-  webhook-secret: ${PAYMENT_WEBHOOK_SECRET:local-dev-webhook-secret}
+  webhook-secret: ${PAYMENT_WEBHOOK_SECRET:}
   success-url: ${PAYMENT_SUCCESS_URL:https://gendaz.site/sistema/planos}
   cancel-url: ${PAYMENT_CANCEL_URL:https://gendaz.site/sistema/planos}
 

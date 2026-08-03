@@ -297,7 +297,7 @@ export default function Gendaz() {
 }
 
 function GendazContent({ slug }) {
-  const { cliente, cadastroPendente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
+  const { cliente, cadastroPendente, carregando, perfilAcesso, sincronizarDados } = useContext(ClienteGendazContext)
   const location = useLocation()
   const ultimaRotaRef = useRef('')
 
@@ -320,7 +320,9 @@ function GendazContent({ slug }) {
     void sincronizarDados({ exigirSessao: Boolean(cliente) })
   }, [location.pathname, cliente, sincronizarDados])
 
-  if (carregando) {
+  const bloqueiaTela = carregando && !cliente && !perfilAcesso && !cadastroPendente
+
+  if (bloqueiaTela) {
     return (
       <main className="gendaz-loading">
         <p>Carregando sessao...</p>

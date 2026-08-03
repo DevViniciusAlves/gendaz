@@ -409,7 +409,7 @@ export default function Agenda() {
       await appApi.cancelarAgendamento(id)
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
@@ -426,7 +426,7 @@ export default function Agenda() {
       await appApi.confirmarAgendamento(id)
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
@@ -443,7 +443,7 @@ export default function Agenda() {
       await appApi.excluirAgendamento(id)
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
@@ -456,7 +456,7 @@ export default function Agenda() {
       }
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } finally {
@@ -474,7 +474,7 @@ export default function Agenda() {
       await appApi.iniciarAgendamento(agendamento.id)
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
@@ -492,7 +492,7 @@ export default function Agenda() {
       await appApi.pausarAgendamento(agendamento.id)
       setAcaoId(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
@@ -511,7 +511,7 @@ export default function Agenda() {
       setAcaoId(null)
       setFinalizacaoPagamento(null)
       reload(true).catch((error) => {
-        console.error(error)
+        console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {

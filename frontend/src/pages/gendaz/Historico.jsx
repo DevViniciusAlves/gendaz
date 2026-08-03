@@ -22,7 +22,7 @@ export default function Historico() {
       setTotal(data?.total || lista.length || 0)
       setTotalPaginas(data?.totalPaginas || Math.ceil((data?.total || lista.length || 1) / itensPorPagina))
     } catch (err) {
-      console.error('[Historico] erro:', err)
+      console.error('[Historico] erro')
       if (err.response?.status === 401) {
         window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         return

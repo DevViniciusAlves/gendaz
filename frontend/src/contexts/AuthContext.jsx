@@ -131,9 +131,7 @@ export function AuthProvider({ children }) {
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
           emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessÃ£o continua ativa.')
-          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local', {
-            status: error.response?.status,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local')
           return true
         }
         if (error?.response?.status === 401) {
@@ -141,13 +139,9 @@ export function AuthProvider({ children }) {
           throw new Error('Sua sessÃ£o expirou. Por favor, recarregue a página.')
         }
         if (!erroTemporarioAutenticacao(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal', {
-            status: error.response?.status,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal')
         } else {
-          console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario', {
-            status: error.response?.status,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario')
         }
         throw error
       } finally {
@@ -232,19 +226,13 @@ export function AuthProvider({ children }) {
           setUsuario(atualizado)
         } else if (status === 401 && mensagemAcessoOutroDispositivo(error)) {
           emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
-          console.warn('[auth-debug] refresh inicial detectou outro dispositivo, mantendo sessao local', {
-            status,
-            mensagem,
-          })
+          console.warn('[auth-debug] refresh inicial detectou outro dispositivo, mantendo sessao local')
         } else if (falhaFatal) {
           limparSessaoUsuario()
           clearLocalData()
           setUsuario(null)
         } else {
-          console.warn('[auth-debug] refresh inicial ignorou erro temporario', {
-            status,
-            mensagem,
-          })
+          console.warn('[auth-debug] refresh inicial ignorou erro temporario')
         }
       } finally {
         if (mounted) setAuthLoading(false)
@@ -313,22 +301,13 @@ export function AuthProvider({ children }) {
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
           emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
-          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local', {
-            status: error.response?.status,
-            mensagem,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local')
           return
         }
         if (!erroTemporarioAutenticacao(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal', {
-            status: error.response?.status,
-            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal')
         } else {
-          console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario', {
-            status: error.response?.status,
-            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
-          })
+          console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario')
         }
       } finally {
         refreshEmAndamentoRef.current = null
@@ -459,7 +438,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout(motivo = 'manual') {
-    console.log('[auth-debug] logout executado', { motivo })
+    console.log('[auth-debug] logout executado')
     appApi.logout().catch(() => {})
     limparSessaoUsuario()
     clearLocalData()

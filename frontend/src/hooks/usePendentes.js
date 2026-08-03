@@ -9,7 +9,7 @@ export function usePendentes() {
       const count = await appApi.contarPagamentosPendentes()
       setPendentes(count)
     } catch (error) {
-      console.error('Erro ao carregar pagamentos pendentes:', error)
+      console.error('Erro ao carregar pagamentos pendentes')
     }
   }, [])
 

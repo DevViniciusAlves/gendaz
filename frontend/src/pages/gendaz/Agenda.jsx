@@ -27,7 +27,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
         })
         setHorarios(Array.isArray(data) ? data : data?.horarios || [])
       } catch (err) {
-        console.error('[Agenda] Erro ao buscar horários:', err)
+        console.error('[Agenda] Erro ao buscar horários')
         setHorarios([])
       } finally {
         setCarregandoHorarios(false)

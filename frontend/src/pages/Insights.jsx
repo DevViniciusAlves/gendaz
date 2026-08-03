@@ -139,7 +139,7 @@ export default function Insights() {
         },
       }))
     } catch (err) {
-      console.error('[insights] erro ao sincronizar dados', err)
+      console.error('[insights] erro ao sincronizar dados')
       window.dispatchEvent(new CustomEvent('agendapro:toast', {
         detail: {
           type: 'error',

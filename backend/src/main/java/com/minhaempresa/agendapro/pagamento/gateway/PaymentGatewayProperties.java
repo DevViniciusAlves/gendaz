@@ -22,7 +22,7 @@ public class PaymentGatewayProperties {
     private String caktoOfferProId = "";
     private String caktoCheckoutBasicoUrl = "";
     private String caktoCheckoutProUrl = "";
-    private String webhookSecret = "local-dev-webhook-secret";
+    private String webhookSecret = "";
     private String successUrl = "https://gendaz.site/sistema/planos";
     private String cancelUrl = "https://gendaz.site/sistema/planos";
 }

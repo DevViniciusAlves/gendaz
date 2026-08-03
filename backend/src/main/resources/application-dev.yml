@@ -18,5 +18,7 @@ app:
   frontend-url: http://localhost:5173
 
 payment:
+  webhook-secret: local-dev-webhook-secret
+  cakto-webhook-secret: local-dev-webhook-secret
   success-url: http://localhost:5173/sistema/planos
   cancel-url: http://localhost:5173/sistema/planos
