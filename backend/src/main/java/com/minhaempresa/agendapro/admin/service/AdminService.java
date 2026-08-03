@@ -13,6 +13,7 @@ import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
+import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
@@ -38,7 +39,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -58,9 +58,9 @@ public class AdminService {
     private final PlanoService planoService;
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
+    private final UsuarioSessionService usuarioSessionService;
     private final PagamentoService pagamentoService;
     private final ProfissionalService profissionalService;
-    private final Map<String, AdminSession> sessions = new ConcurrentHashMap<>();
 
     @Value("${app.frontend-url:https://gendaz.site}")
     private String frontendUrl;
@@ -80,6 +80,7 @@ public class AdminService {
             PlanoService planoService,
             AdminAuditService auditService,
             PasswordService passwordService,
+            UsuarioSessionService usuarioSessionService,
             PagamentoService pagamentoService,
             ProfissionalService profissionalService
     ) {
@@ -93,6 +94,7 @@ public class AdminService {
         this.planoService = planoService;
         this.auditService = auditService;
         this.passwordService = passwordService;
+        this.usuarioSessionService = usuarioSessionService;
         this.pagamentoService = pagamentoService;
         this.profissionalService = profissionalService;
     }
@@ -107,6 +109,7 @@ public class AdminService {
             AssinaturaService assinaturaService,
             AdminAuditService auditService,
             PasswordService passwordService,
+            UsuarioSessionService usuarioSessionService,
             PagamentoService pagamentoService,
             ProfissionalService profissionalService
     ) {
@@ -121,6 +124,7 @@ public class AdminService {
                 null,
                 auditService,
                 passwordService,
+                usuarioSessionService,
                 pagamentoService,
                 profissionalService
         );
@@ -135,6 +139,7 @@ public class AdminService {
             AssinaturaService assinaturaService,
             AdminAuditService auditService,
             PasswordService passwordService,
+            UsuarioSessionService usuarioSessionService,
             PagamentoService pagamentoService,
             ProfissionalService profissionalService
     ) {
@@ -149,6 +154,7 @@ public class AdminService {
                 null,
                 auditService,
                 passwordService,
+                usuarioSessionService,
                 pagamentoService,
                 profissionalService
         );
@@ -162,18 +168,20 @@ public class AdminService {
             auditService.registrar("ADMIN_LOGIN_FAILED", "SECURITY", null, null, null, "Falha de login admin", null, ip, userAgent);
             throw new BusinessException("Credenciais invalidas.");
         }
-        String token = UUID.randomUUID().toString() + UUID.randomUUID();
-        sessions.put(token, new AdminSession(token, admin, LocalDateTime.now()));
+        String token = usuarioSessionService.renovarSessao(admin);
         auditService.registrar("ADMIN_LOGIN_SUCCESS", "SECURITY", admin, admin, null, "Login admin realizado", null, ip, userAgent);
         return new AdminLoginResponse(token, new AdminUsuarioResponse(admin.getId(), admin.getNome(), admin.getEmail(), admin.getPerfil().name()));
     }
 
     public UsuarioEntity exigirAdmin(String token) {
-        AdminSession session = sessions.get(token);
-        if (session == null || session.admin().getPerfil() != PerfilUsuario.SUPER_ADMIN || session.admin().getStatus() != StatusUsuario.ATIVO) {
+        if (token == null || token.isBlank()) {
             throw new BusinessException("Acesso admin nao autorizado.");
         }
-        return session.admin();
+        UsuarioEntity admin = usuarioRepository.findBySessaoAtiva(token).orElse(null);
+        if (admin == null || admin.getPerfil() != PerfilUsuario.SUPER_ADMIN || admin.getStatus() != StatusUsuario.ATIVO) {
+            throw new BusinessException("Acesso admin nao autorizado.");
+        }
+        return admin;
     }
 
     @Transactional(readOnly = true)
