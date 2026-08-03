@@ -303,10 +303,9 @@ export default function AdminDashboard() {
       return
     }
     carregarAdmin().catch(() => {
-      adminLogout()
-      navigate('/admin/login')
+      setErro('Nao foi possivel carregar os dados do painel admin agora. Tente recarregar.')
     })
-  }, [adminUsuario, adminLogout, navigate])
+  }, [adminUsuario, navigate])
 
   useEffect(() => {
     if (!adminUsuario) return

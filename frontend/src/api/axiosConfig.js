@@ -118,6 +118,7 @@ api.interceptors.response.use(
     const status = error.response?.status
     const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || '').toLowerCase()
     const url = String(originalRequest.url || '')
+    const isAdminRequest = url.startsWith('/admin/')
 
     if (mensagem.includes('conta indisponivel')
       || mensagem.includes('conta inativa')
@@ -131,7 +132,7 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    if (isMeuGendazPath()) {
+    if (isMeuGendazPath() || isAdminRequest) {
       return Promise.reject(error)
     }
 
