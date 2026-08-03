@@ -10,6 +10,7 @@ import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
+import com.minhaempresa.agendapro.auth.service.UsuarioSessionService;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.agendapro.pagamento.service.PagamentoService;
@@ -34,6 +35,7 @@ class AdminServiceTest {
     private final PlanoService planoService = mock(PlanoService.class);
     private final AdminAuditService auditService = mock(AdminAuditService.class);
     private final PasswordService passwordService = new PasswordService();
+    private final UsuarioSessionService usuarioSessionService = mock(UsuarioSessionService.class);
     private final PagamentoService pagamentoService = mock(PagamentoService.class);
     private final ProfissionalService profissionalService = mock(ProfissionalService.class);
     private final AdminService adminService = new AdminService(
@@ -47,6 +49,7 @@ class AdminServiceTest {
             planoService,
             auditService,
             passwordService,
+            usuarioSessionService,
             pagamentoService,
             profissionalService
     );
@@ -78,6 +81,7 @@ class AdminServiceTest {
                 .status(StatusUsuario.ATIVO)
                 .build();
         when(usuarioRepository.findByEmail("admin@agendapro.com")).thenReturn(Optional.of(admin));
+        when(usuarioSessionService.renovarSessao(admin)).thenReturn("token-admin");
 
         var response = adminService.login(new AdminLoginRequest("admin@agendapro.com", "SenhaForte123!"), "127.0.0.1", "test");
 
