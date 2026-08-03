@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -298,10 +298,15 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
+  const location = useLocation()
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
   }, [sincronizarDados])
+
+  useEffect(() => {
+    void sincronizarDados({ exigirSessao: Boolean(cliente) })
+  }, [location.pathname, cliente, sincronizarDados])
 
   if (carregando) {
     return (

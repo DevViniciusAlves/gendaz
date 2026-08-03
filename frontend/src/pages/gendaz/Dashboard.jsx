@@ -56,6 +56,10 @@ export default function Dashboard() {
     ? totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     : 'R$ 0,00'
 
+  const telefoneEmpresa = String(cliente?.empresaTelefone || cliente?.empresa?.telefone || '').replace(/\D/g, '')
+  const linkWhatsApp = telefoneEmpresa ? `https://wa.me/55${telefoneEmpresa}` : null
+  const nomeLojaContato = nomeEmpresa
+
   return (
     <section className="gendaz-page gendaz-dashboard">
       <header className="gendaz-page__header gendaz-page__header--hero">
@@ -180,9 +184,17 @@ export default function Dashboard() {
                 <Sparkles size={18} />
                 <span>gendazIA</span>
               </button>
-              <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
+              <button
+                className="gendaz-btn-contato"
+                onClick={() => {
+                  if (linkWhatsApp) {
+                    window.open(linkWhatsApp, '_blank', 'noopener,noreferrer')
+                  }
+                }}
+                disabled={!linkWhatsApp}
+              >
                 <MessageCircle size={18} />
-                <span>Dúvidas</span>
+                <span>Falar com {nomeLojaContato}</span>
               </button>
               <button className="gendaz-btn-contato" onClick={() => navigate('suporte')}>
                 <LifeBuoy size={18} />

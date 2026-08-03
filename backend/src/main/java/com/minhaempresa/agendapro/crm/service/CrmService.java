@@ -19,6 +19,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,9 @@ public class CrmService {
     private final PagamentoRepository pagamentoRepository;
     private final CrmContatoRepository crmContatoRepository;
     private final ResendEmailService resendEmailService;
+
+    @Value("${app.frontend-url:${FRONTEND_URL:https://gendaz.site}}")
+    private String frontendUrl;
 
     @Transactional(readOnly = true)
     public List<CrmClienteResponse> listarClientes(Long empresaId, String segment, String search,
@@ -135,7 +139,12 @@ public class CrmService {
         }
 
         String assunto = montarAssunto(request.template(), cliente.getNome());
-        String html = montarHtml(request.template(), cliente.getNome(), request.customMessage());
+        String html = montarHtml(
+                request.template(),
+                cliente.getNome(),
+                request.customMessage(),
+                cliente.getEmpresa() != null ? cliente.getEmpresa().getAgendamentoSlug() : null
+        );
 
         boolean enviado = resendEmailService.enviarEmailCrm(cliente.getEmail(), assunto, html);
 
@@ -264,7 +273,7 @@ public class CrmService {
         };
     }
 
-    private String montarHtml(String template, String nome, String customMessage) {
+    private String montarHtml(String template, String nome, String customMessage, String slugEmpresa) {
         String nomeSafe = nome != null ? nome : "cliente";
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
@@ -278,13 +287,12 @@ public class CrmService {
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
         String logoUrl = "https://api.gendaz.site/email/gendazpngpreto.png";
-        String siteUrl = "https://gendaz.site";
-        String ctaUrl = siteUrl + "/sistema/crm";
+        String ctaUrl = montarUrlMeuGendaz(slugEmpresa);
         String titulo = "resgate".equals(template) ? "Estamos com saudade de voce" : "Queremos falar com voce novamente";
         String subtitulo = "resgate".equals(template)
                 ? "Seu ultimo contato foi ha algum tempo. Volte quando quiser para continuar seu atendimento."
                 : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
-        String botaoTexto = "resgate".equals(template) ? "Voltar para o site" : "Acessar o site";
+        String botaoTexto = "resgate".equals(template) ? "Voltar para o Meu Gendaz" : "Acessar o Meu Gendaz";
 
         return """
                 <html>
@@ -302,7 +310,7 @@ public class CrmService {
                           <div style=\"background:#f7f7f7; border:1px solid #e5e7eb; border-radius:16px; padding:22px 20px; color:#111111; font-size:14px; line-height:1.8;\">
                             <p style=\"margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;\">%s</p>
                             <p style=\"margin:0; font-size:14px; line-height:1.7; color:#6b7280;\">
-                              Voce tambem pode acessar diretamente o site:
+                              Voce tambem pode acessar diretamente o Meu Gendaz da sua empresa:
                               <a href=\"%s\" style=\"color:#111111; text-decoration:none; font-weight:700;\">%s</a>
                             </p>
                           </div>
@@ -322,5 +330,14 @@ public class CrmService {
                   </body>
                 </html>
                 """.formatted(logoUrl, titulo, subtitulo, textoFinal, ctaUrl, ctaUrl, ctaUrl, botaoTexto);
+    }
+
+    private String montarUrlMeuGendaz(String slugEmpresa) {
+        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
+        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        if (slugEmpresa == null || slugEmpresa.isBlank()) {
+            return baseNormalizada + "/meu-gendaz";
+        }
+        return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
     }
 }

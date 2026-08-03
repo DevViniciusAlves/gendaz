@@ -2272,7 +2272,7 @@ tbody tr:hover { background: #fffaf5; }
   padding: 14px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius-sm);
-  background: rgba(17, 18, 22, 0.96);
+  background: #111111;
   box-shadow:
     0 16px 34px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
@@ -2281,7 +2281,7 @@ tbody tr:hover { background: #fffaf5; }
   width: 180px;
   height: 180px;
   border-radius: 12px;
-  background: var(--bg);
+  background: #111111;
 }
 
 .booking-page {
