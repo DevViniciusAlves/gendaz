@@ -6,7 +6,7 @@ import com.minhaempresa.agendapro.admin.repository.AdminImpersonationSessionRepo
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.AtualizarChamadoRequest;
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.ChamadoResponse;
 import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
-import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
+import com.minhaempresa.agendapro.chamado.repository.AdminChamadoProjection;
 import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
@@ -464,16 +464,15 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<AdminChamadoResponse> chamados(String token) {
         exigirAdmin(token);
-        return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream()
+        return chamadoRepository.listarParaAdmin().stream()
                 .filter(Objects::nonNull)
-                .filter(chamado -> chamado.getEmpresa() != null && chamado.getUsuario() != null && chamado.getStatus() != null)
                 .map(chamado -> new AdminChamadoResponse(
                         chamado.getId(),
                         chamado.getAssunto(),
                         chamado.getMensagem(),
-                        chamado.getEmpresa().getNomeFantasia(),
-                        chamado.getUsuario().getNome(),
-                        chamado.getStatus().name(),
+                        chamado.getEmpresa(),
+                        chamado.getUsuario(),
+                        chamado.getStatus(),
                         chamado.getResposta(),
                         chamado.getDataCriacao(),
                         chamado.getDataAtualizacao()
