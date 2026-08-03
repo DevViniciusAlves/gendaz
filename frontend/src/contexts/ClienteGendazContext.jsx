@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect, useCallback } from 'react'
+import { createContext, useState, useEffect, useCallback, useRef } from 'react'
 import clienteApi from '../api/clienteApi.js'
 
 export const ClienteGendazContext = createContext()
@@ -15,6 +15,7 @@ export function ClienteGendazProvider({ children, slug }) {
   const [configuracoes, setConfiguracoes] = useState(null)
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
+  const sincronizandoRef = useRef(null)
 
   const limparEstadoSessao = useCallback(() => {
     setCliente(null)
@@ -29,6 +30,11 @@ export function ClienteGendazProvider({ children, slug }) {
   }, [])
 
   const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
+    if (sincronizandoRef.current) {
+      return sincronizandoRef.current
+    }
+
+    const promessa = (async () => {
     try {
       setCarregando(true)
       setErro(null)
@@ -107,6 +113,14 @@ export function ClienteGendazProvider({ children, slug }) {
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar dados.')
     } finally {
       setCarregando(false)
+    }
+    })()
+
+    sincronizandoRef.current = promessa
+    try {
+      return await promessa
+    } finally {
+      sincronizandoRef.current = null
     }
   }, [limparEstadoSessao])
 
