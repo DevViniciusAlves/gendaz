@@ -519,7 +519,7 @@ public class MeuGendazController {
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
             UsuarioEntity usuario = findUserFromSession(request);
-            EmpresaEntity empresa = usuario.getEmpresa();
+            EmpresaEntity empresa = usuario.getEmpresa() == null ? null : empresaRepository.findById(usuario.getEmpresa().getId()).orElse(null);
             if (empresa == null) {
                 throw new BusinessException("Empresa nao encontrada para este acesso.");
             }

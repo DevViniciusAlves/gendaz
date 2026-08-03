@@ -266,7 +266,7 @@ function GendazCadastroGate({ slug }) {
             <input
               value={telefone}
               onChange={(event) => setTelefone(aplicarMascara(event.target.value))}
-              placeholder="65 993360300"
+              placeholder="XX XXXXXXXXX"
               type="tel"
               inputMode="numeric"
               maxLength={19}
