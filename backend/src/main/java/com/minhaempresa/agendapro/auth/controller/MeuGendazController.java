@@ -151,10 +151,7 @@ public class MeuGendazController {
         }
         EmpresaEntity e = empresa.get();
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("id", e.getId());
         result.put("nome", e.getNomeFantasia());
-        result.put("telefone", e.getTelefone());
-        result.put("email", e.getEmail());
         return ResponseEntity.ok(result);
     }
 
@@ -179,11 +176,7 @@ public class MeuGendazController {
             result.put("nome", cliente != null ? cliente.getNome() : usuario.getNome());
             result.put("email", usuario.getEmail());
             result.put("telefone", cliente != null ? cliente.getTelefone() : null);
-            result.put("empresaId", empresa != null ? empresa.getId() : null);
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
-            result.put("empresaTelefone", empresa != null ? empresa.getTelefone() : null);
-            result.put("empresaEmail", empresa != null ? empresa.getEmail() : null);
-            result.put("empresaSlug", empresa != null ? empresa.getAgendamentoSlug() : null);
             if (cadastroPendente) {
                 result.put("mensagem", "Complete seu cadastro para continuar.");
                 return ResponseEntity.ok(result);

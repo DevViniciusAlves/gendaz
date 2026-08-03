@@ -57,7 +57,6 @@ async function tentarRefreshSessao(config) {
   }
   config._retry = true
   try {
-    console.log('[auth-debug] iniciando refresh token', { url })
     await api.post('/auth/refresh', null, {
       skipRefreshRetry: true,
       headers: {
@@ -65,7 +64,6 @@ async function tentarRefreshSessao(config) {
         'X-Usuario-Perfil': usuario.perfil || '',
       },
     })
-    console.log('[auth-debug] refresh token OK', { url })
     return true
   } catch (error) {
     const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || '').toLowerCase()
@@ -74,12 +72,7 @@ async function tentarRefreshSessao(config) {
       || mensagem.includes('acessada em outro dispositivo')
       || mensagem.includes('acesso em outro dispositivo')
     )) {
-      console.warn('[auth-debug] refresh com outro dispositivo, mantendo sessao local', {
-        url,
-        status: error.response?.status,
-        data: error.response?.data,
-        message: error.message,
-      })
+      console.warn('[auth-debug] refresh com outro dispositivo, mantendo sessao local', { url })
       window.dispatchEvent(new CustomEvent('agendapro:toast', {
         detail: {
           type: 'warning',
@@ -91,12 +84,7 @@ async function tentarRefreshSessao(config) {
     if (error.response?.status === 401) {
       window.dispatchEvent(new Event('agendeasy:session-expired'))
     }
-    console.warn('[auth-debug] refresh token falhou', {
-      url,
-      status: error.response?.status,
-      data: error.response?.data,
-      message: error.message,
-    })
+    console.warn('[auth-debug] refresh token falhou', { url, status: error.response?.status })
     return false
   }
 }
@@ -145,11 +133,7 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    console.log('[auth-debug] 401 recebido', {
-      url,
-      method: originalRequest.method,
-      vaiTentarRefresh: !originalRequest._retry,
-    })
+    console.log('[auth-debug] 401 recebido', { url, method: originalRequest.method })
 
     if (url.includes('/auth/login') || url.includes('/auth/refresh') || url.includes('/auth/logout')) {
       return Promise.reject(error)
@@ -172,10 +156,7 @@ api.interceptors.response.use(
     try {
       if (await tentarRefreshSessao(originalRequest)) {
         processQueue(null)
-        console.log('[auth-debug] repetindo request original', {
-          url,
-          method: originalRequest.method,
-        })
+        console.log('[auth-debug] repetindo request original', { url, method: originalRequest.method })
         return api.request(originalRequest)
       }
       processQueue(error)

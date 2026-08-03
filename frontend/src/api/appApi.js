@@ -237,7 +237,6 @@ export const appApi = {
           api.get(`/dashboard/resumo?empresaId=${empresaId}`).then((response) => response.data),
         ])
         const dashboardResumo = normalizarResumoDashboard(resumo)
-        console.log('[dashboard-debug] dados recebidos', dashboardResumo)
         return {
           empresa,
           clientesBase,
@@ -266,8 +265,7 @@ export const appApi = {
           api.get(`/insights/resumo${queryResumo}`).then((response) => response.data),
           api.get(`/insights/historico${queryHistorico}`)
             .then((response) => response.data)
-            .catch((error) => {
-              console.error('[insights] erro ao carregar historico', error)
+            .catch(() => {
               return []
             }),
         ])

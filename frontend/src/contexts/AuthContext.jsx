@@ -133,7 +133,6 @@ export function AuthProvider({ children }) {
           emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessÃ£o continua ativa.')
           console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local', {
             status: error.response?.status,
-            mensagem,
           })
           return true
         }
@@ -144,12 +143,10 @@ export function AuthProvider({ children }) {
         if (!erroTemporarioAutenticacao(error)) {
           console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal', {
             status: error.response?.status,
-            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
           })
         } else {
           console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario', {
             status: error.response?.status,
-            mensagem: error.response?.data?.mensagem || error.response?.data?.message || error.message,
           })
         }
         throw error

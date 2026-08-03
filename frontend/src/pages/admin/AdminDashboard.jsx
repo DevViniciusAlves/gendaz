@@ -996,7 +996,7 @@ export default function AdminDashboard() {
             <div><span>Frontend</span><strong>{config?.frontendUrl}</strong></div>
             <div><span>API</span><strong>{config?.apiUrl}</strong></div>
             <div><span>Status</span><strong>{config?.statusSistema}</strong></div>
-            <div><span>Secrets</span><strong>{config?.secrets}</strong></div>
+            <div><span>Secrets</span><strong>Redigido</strong></div>
           </section>
         )}
       </section>

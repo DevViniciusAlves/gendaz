@@ -33,12 +33,6 @@ clienteApi.interceptors.request.use((config) => {
   }
   requestCount++
 
-  if (config.url?.includes('/meu-gendaz/')) {
-    console.log('[meu-gendaz] requisição autenticada via cookie HttpOnly', {
-      url: config.url,
-      method: config.method,
-    })
-  }
   return config
 })
 
@@ -73,7 +67,6 @@ clienteApi.interceptors.response.use(
         return Promise.reject(error)
       }
 
-      console.log('[meu-gendaz] 401 recebido - cookie inválido ou expirado', { url })
       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
     }
 

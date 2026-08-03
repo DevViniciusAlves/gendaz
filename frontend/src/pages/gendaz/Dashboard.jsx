@@ -1,7 +1,7 @@
 ﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, MessageCircle, Phone, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy } from 'lucide-react'
+import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy } from 'lucide-react'
 
 export default function Dashboard() {
   const navigate = useNavigate()
@@ -56,8 +56,6 @@ export default function Dashboard() {
     ? totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     : 'R$ 0,00'
 
-  const telefoneEmpresa = String(cliente?.empresaTelefone || cliente?.empresa?.telefone || '').replace(/\D/g, '')
-  const linkWhatsApp = telefoneEmpresa ? `https://wa.me/55${telefoneEmpresa}` : null
   const nomeLojaContato = nomeEmpresa
 
   return (
@@ -186,12 +184,7 @@ export default function Dashboard() {
               </button>
               <button
                 className="gendaz-btn-contato"
-                onClick={() => {
-                  if (linkWhatsApp) {
-                    window.open(linkWhatsApp, '_blank', 'noopener,noreferrer')
-                  }
-                }}
-                disabled={!linkWhatsApp}
+                onClick={() => navigate('suporte')}
               >
                 <MessageCircle size={18} />
                 <span>Falar com {nomeLojaContato}</span>

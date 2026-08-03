@@ -271,7 +271,6 @@ export default function Dashboard() {
   }
 
   const resumoDashboard = data.dashboardResumo || null
-  console.log('[dashboard-debug] dados recebidos', data)
   const primeirosPassos = resumoDashboard?.primeirosPassos || null
   const clientesAtivos = Array.isArray(data.clientes) ? data.clientes.filter((cliente) => !cliente.excluido) : []
   const agendamentosVisiveis = Array.isArray(data.agendamentos) ? data.agendamentos : []
