@@ -32,6 +32,8 @@ import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import com.minhaempresa.agendapro.usuario.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -70,7 +72,21 @@ public class AuthService {
         String email = normalizarEmail(request.email());
         log.info("Login solicitado para {}", mascararEmail(email));
         try {
-            UsuarioEntity usuario = usuarioService.buscarPorEmail(email);
+            List<UsuarioEntity> usuariosEncontrados = usuarioRepository.findAllByEmailIgnoreCase(email);
+            UsuarioEntity usuario = usuariosEncontrados.stream()
+                    .filter(Objects::nonNull)
+                    .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
+                    .filter(u -> passwordService.matches(request.senha(), u.getSenha()))
+                    .findFirst()
+                    .orElseGet(() -> usuariosEncontrados.stream()
+                            .filter(Objects::nonNull)
+                            .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
+                            .findFirst()
+                            .orElse(null));
+
+            if (usuario == null) {
+                throw new BusinessException("E-mail ou senha invalidos.");
+            }
 
             if (usuario.estaBloqueado()) {
                 long minutosRestantes = java.time.temporal.ChronoUnit.MINUTES
@@ -251,7 +267,7 @@ public class AuthService {
     @Transactional
     public void solicitarRecuperacaoSenha(String email) {
         String normalizado = normalizarEmail(email);
-        usuarioRepository.findByEmail(normalizado).ifPresent(usuario -> {
+        usuarioRepository.findAllByEmailIgnoreCase(normalizado).forEach(usuario -> {
             String token = passwordRecoveryService.solicitarRecuperacao(usuario);
             boolean enviado = resendEmailService.enviarRecuperacaoSenha(
                     usuario.getEmail(),
