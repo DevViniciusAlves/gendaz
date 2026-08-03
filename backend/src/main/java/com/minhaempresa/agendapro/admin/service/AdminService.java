@@ -5,6 +5,7 @@ import com.minhaempresa.agendapro.admin.entity.AdminImpersonationSessionEntity;
 import com.minhaempresa.agendapro.admin.repository.AdminImpersonationSessionRepository;
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.AtualizarChamadoRequest;
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.ChamadoResponse;
+import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
 import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.chamado.repository.AdminChamadoProjection;
 import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
