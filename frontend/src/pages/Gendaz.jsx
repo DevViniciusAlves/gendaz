@@ -317,8 +317,9 @@ function GendazContent({ slug }) {
     if (!location.pathname) return
     if (ultimaRotaRef.current === location.pathname) return
     ultimaRotaRef.current = location.pathname
-    void sincronizarDados({ exigirSessao: Boolean(cliente) })
-  }, [location.pathname, cliente, sincronizarDados])
+    // Sincronizacao passiva: nao derruba a sessao se alguma chamada secundaria falhar.
+    void sincronizarDados({ exigirSessao: false })
+  }, [location.pathname, sincronizarDados])
 
   const bloqueiaTela = carregando && !cliente && !perfilAcesso && !cadastroPendente
 

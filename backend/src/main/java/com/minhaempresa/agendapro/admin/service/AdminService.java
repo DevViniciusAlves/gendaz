@@ -464,17 +464,21 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<AdminChamadoResponse> chamados(String token) {
         exigirAdmin(token);
-        return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream().map(chamado -> new AdminChamadoResponse(
-                chamado.getId(),
-                chamado.getAssunto(),
-                chamado.getMensagem(),
-                chamado.getEmpresa().getNomeFantasia(),
-                chamado.getUsuario().getNome(),
-                chamado.getStatus().name(),
-                chamado.getResposta(),
-                chamado.getDataCriacao(),
-                chamado.getDataAtualizacao()
-        )).toList();
+        return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream()
+                .filter(Objects::nonNull)
+                .filter(chamado -> chamado.getEmpresa() != null && chamado.getUsuario() != null && chamado.getStatus() != null)
+                .map(chamado -> new AdminChamadoResponse(
+                        chamado.getId(),
+                        chamado.getAssunto(),
+                        chamado.getMensagem(),
+                        chamado.getEmpresa().getNomeFantasia(),
+                        chamado.getUsuario().getNome(),
+                        chamado.getStatus().name(),
+                        chamado.getResposta(),
+                        chamado.getDataCriacao(),
+                        chamado.getDataAtualizacao()
+                ))
+                .toList();
     }
 
     @Transactional

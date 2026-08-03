@@ -14,13 +14,44 @@ const api = axios.create({
 let isRefreshing = false
 let failedQueue = []
 let sessionUser = null
+const SESSION_USER_STORAGE_KEY = 'agendapro_session_user'
+
+function lerUsuarioPersistido() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null
+  try {
+    const raw = window.sessionStorage.getItem(SESSION_USER_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function salvarUsuarioPersistido(usuario) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  try {
+    if (usuario) {
+      window.sessionStorage.setItem(SESSION_USER_STORAGE_KEY, JSON.stringify(usuario))
+    } else {
+      window.sessionStorage.removeItem(SESSION_USER_STORAGE_KEY)
+    }
+  } catch {
+    // cache de sessão é apenas fallback; não pode quebrar o fluxo principal
+  }
+}
 
 export function setSessionUser(usuario) {
   sessionUser = usuario || null
+  salvarUsuarioPersistido(sessionUser)
 }
 
 export function getSessionUser() {
-  return sessionUser
+  if (sessionUser) return sessionUser
+  const persistido = lerUsuarioPersistido()
+  if (persistido) {
+    sessionUser = persistido
+    return sessionUser
+  }
+  return null
 }
 
 function processQueue(error, token = null) {
