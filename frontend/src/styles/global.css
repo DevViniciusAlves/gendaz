@@ -14098,6 +14098,32 @@ tbody tr:hover { background: #fffaf5; }
   line-height: 1.35;
 }
 
+.gendaz-resumo-financeiro__item--total-gasto {
+  background: rgba(78, 163, 101, 0.12);
+  border-color: rgba(78, 163, 101, 0.32);
+}
+
+.gendaz-resumo-financeiro__item--total-gasto span {
+  color: rgba(78, 163, 101, 0.78);
+}
+
+.gendaz-resumo-financeiro__item--total-gasto strong {
+  color: #4ea365;
+}
+
+.gendaz-resumo-financeiro__item--servico-mais-escolhido {
+  background: rgba(72, 90, 163, 0.12);
+  border-color: rgba(72, 90, 163, 0.32);
+}
+
+.gendaz-resumo-financeiro__item--servico-mais-escolhido span {
+  color: rgba(72, 90, 163, 0.78);
+}
+
+.gendaz-resumo-financeiro__item--servico-mais-escolhido strong {
+  color: #485aa3;
+}
+
 @media (max-width: 1024px) {
   .gendaz-dashboard-grid {
     grid-template-columns: 1fr;
@@ -14483,40 +14509,43 @@ tbody tr:hover { background: #fffaf5; }
   text-transform: uppercase;
   letter-spacing: 0.02em;
   line-height: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
 
 .gendaz-status--confirmado,
 .gendaz-status--confirmada {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  background: rgba(255, 255, 255, 0.05);
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-status--pendente {
-  background: linear-gradient(180deg, rgba(230, 82, 18, 0.92), rgba(230, 82, 18, 0.72));
-  color: #ffffff;
-  border: 1px solid rgba(230, 82, 18, 0.32);
-  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(230, 82, 18, 0.14);
+  color: #ffb08a;
+  border: 1px solid rgba(230, 82, 18, 0.28);
+  box-shadow: 0 0 0 1px rgba(230, 82, 18, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-status--cancelado,
 .gendaz-status--cancelada {
-  background: linear-gradient(180deg, rgba(163, 38, 38, 0.92), rgba(163, 38, 38, 0.72));
-  color: #ffffff;
-  border: 1px solid rgba(163, 38, 38, 0.32);
-  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(163, 38, 38, 0.14);
+  color: #ff9a9a;
+  border: 1px solid rgba(163, 38, 38, 0.28);
+  box-shadow: 0 0 0 1px rgba(163, 38, 38, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-status--concluido,
 .gendaz-status--concluida,
 .gendaz-status--finalizado {
-  background: linear-gradient(180deg, rgba(77, 179, 82, 0.94), rgba(77, 179, 82, 0.74));
-  color: #ffffff;
-  border: 1px solid rgba(77, 179, 82, 0.32);
-  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  background: rgba(77, 179, 82, 0.14);
+  color: #a8f0af;
+  border: 1px solid rgba(77, 179, 82, 0.28);
+  box-shadow: 0 0 0 1px rgba(77, 179, 82, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .gendaz-desconto {

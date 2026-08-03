@@ -5,6 +5,7 @@ import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.ChamadoResponse;
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.CriarChamadoRequest;
 import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
 import com.minhaempresa.agendapro.chamado.enums.StatusChamado;
+import com.minhaempresa.agendapro.chamado.enums.PrioridadeChamado;
 import com.minhaempresa.agendapro.chamado.mapper.ChamadoMapper;
 import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
@@ -43,10 +44,11 @@ public class ChamadoService {
             throw new BusinessException("Usuario sem empresa nao pode abrir chamado.");
         }
         String origemNormalizada = normalizarOrigem(origem);
+        PrioridadeChamado prioridadeAutomatica = prioridadePorAssunto(request.assunto());
         ChamadoEntity chamado = chamadoRepository.save(ChamadoEntity.builder()
                 .assunto(request.assunto().trim())
                 .mensagem(request.mensagem().trim())
-                .prioridade(request.prioridade())
+                .prioridade(prioridadeAutomatica)
                 .origem(origemNormalizada)
                 .empresa(empresa)
                 .usuario(usuario)
@@ -136,6 +138,19 @@ public class ChamadoService {
             return ORIGEM_MEU_GENDAZ;
         }
         return ORIGEM_PAINEL;
+    }
+
+    private PrioridadeChamado prioridadePorAssunto(String assunto) {
+        if (assunto == null || assunto.isBlank()) {
+            return PrioridadeChamado.MEDIA;
+        }
+        String normalizado = assunto.trim();
+        return switch (normalizado) {
+            case "Dúvidas" -> PrioridadeChamado.BAIXA;
+            case "Pagamentos" -> PrioridadeChamado.ALTA;
+            case "Alteração em conta" -> PrioridadeChamado.MEDIA;
+            default -> PrioridadeChamado.MEDIA;
+        };
     }
 
     private boolean ehChamadoPainel(com.minhaempresa.agendapro.chamado.entity.ChamadoEntity chamado) {

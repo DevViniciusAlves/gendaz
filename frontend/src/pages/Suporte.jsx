@@ -11,6 +11,12 @@ const PRIORIDADE_LABEL = {
   ALTA: 'Alta',
 }
 
+const PRIORIDADE_POR_ASSUNTO = {
+  'Dúvidas': 'BAIXA',
+  'Pagamentos': 'ALTA',
+  'Alteração em conta': 'MEDIA',
+}
+
 const ASSUNTOS_CHAMADO = [
   'Dúvidas',
   'Pagamentos',
@@ -38,6 +44,11 @@ export default function Suporte() {
     if (!usuario?.empresaId) return
     appApi.listarChamadosEmpresa(usuario.empresaId).then(setChamados).catch(() => setChamados([]))
   }, [usuario?.empresaId])
+
+  function atualizarAssunto(valor) {
+    setAssunto(valor)
+    setPrioridade(PRIORIDADE_POR_ASSUNTO[valor] || 'MEDIA')
+  }
 
   async function enviarChamado(event) {
     event.preventDefault()
@@ -103,7 +114,7 @@ export default function Suporte() {
         <form className="support-form-grid" onSubmit={enviarChamado}>
           <label className="field">
             <span>Assunto</span>
-            <select value={assunto} onChange={(e) => setAssunto(e.target.value)} required>
+            <select value={assunto} onChange={(e) => atualizarAssunto(e.target.value)} required>
               <option value="">Selecione o assunto</option>
               {ASSUNTOS_CHAMADO.map((item) => <option key={item} value={item}>{item}</option>)}
             </select>
@@ -114,12 +125,12 @@ export default function Suporte() {
           </label>
           <label className="field">
             <span>Prioridade</span>
-            <select value={prioridade} onChange={(e) => setPrioridade(e.target.value)} required>
+            <select value={prioridade} disabled required>
               <option value="BAIXA">Baixa</option>
               <option value="MEDIA">Media</option>
               <option value="ALTA">Alta</option>
             </select>
-            <small className="field-hint">Escolha conforme o impacto na operação.</small>
+            <small className="field-hint">Definida automaticamente conforme o assunto.</small>
           </label>
           <label className="field field-wide">
             <span>Mensagem</span>

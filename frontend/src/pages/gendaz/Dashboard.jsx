@@ -133,11 +133,11 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="gendaz-resumo-financeiro">
-              <div className="gendaz-resumo-financeiro__item">
+              <div className="gendaz-resumo-financeiro__item gendaz-resumo-financeiro__item--total-gasto">
                 <span>Total gasto</span>
                 <strong>{totalGastoFormatado}</strong>
               </div>
-              <div className="gendaz-resumo-financeiro__item">
+              <div className="gendaz-resumo-financeiro__item gendaz-resumo-financeiro__item--servico-mais-escolhido">
                 <span>Serviço mais escolhido</span>
                 <strong>{servicoMaisEscolhido}</strong>
               </div>

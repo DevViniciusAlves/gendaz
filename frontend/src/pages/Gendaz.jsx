@@ -300,6 +300,14 @@ function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, sincronizarDados } = useContext(ClienteGendazContext)
   const location = useLocation()
 
+  useEffect(() => {
+    const tituloAnterior = document.title
+    document.title = 'Meu Gendaz'
+    return () => {
+      document.title = tituloAnterior
+    }
+  }, [])
+
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
   }, [sincronizarDados])
