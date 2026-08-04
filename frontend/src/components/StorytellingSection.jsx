@@ -49,7 +49,7 @@ const STEPS = [
     num: '04',
     icon: LayoutDashboard,
     heading: 'Financeiro',
-    body: 'Após a confirmação do pagamento, a Gendaz registra automaticamente o serviço e o profissional na aba financeira.',
+    body: 'Após a confirmação do pagamento, a Gendaz registra automaticamente o serviço e o profissional na aba financeiro.',
     visual: {
       label: 'Painel completo',
       detail: 'Operação em tempo real',

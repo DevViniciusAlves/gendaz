@@ -37,6 +37,7 @@ import clinicaEsteticaImage from '../assets/segments/clinica-estetica.png'
 import psicologosTerapeutasImage from '../assets/segments/psicologos-terapeutas.jpg'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
+import TestimonialsSection from '../components/TestimonialsSection.jsx'
 
 
 const features = [
@@ -122,7 +123,6 @@ export default function Home() {
           <nav className="marketing-nav-links-gendo">
           <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
-          <a href="#solucoes">Soluções</a>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
@@ -368,6 +368,8 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           </div>
         </ScrollReveal>
       </section>
+
+      <TestimonialsSection />
 
       {/* Suporte */}
       <section id="suporte" className="marketing-support">
