@@ -218,8 +218,8 @@ public class PromocaoService {
             PromocaoEntity promocao = notificacao.getPromocao();
             ClienteEntity cliente = notificacao.getCliente();
             EmpresaEntity empresa = promocao.getEmpresa();
-            String nomeEmpresa = empresa != null && empresa.getNome() != null && !empresa.getNome().isBlank()
-                    ? empresa.getNome().trim()
+            String nomeEmpresa = empresa != null && empresa.getNomeFantasia() != null && !empresa.getNomeFantasia().isBlank()
+                    ? empresa.getNomeFantasia().trim()
                     : "A empresa";
             String desconto = promocao.getTipo() == TipoPromocao.PERCENTUAL
                     ? promocao.getValor() + "%"
