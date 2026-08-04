@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowRight,
   CalendarCheck,
   Check,
@@ -15,6 +15,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
 import logoWhite from '../assets/logos/gendazpng.png'
+import notebookMockupImage from '../assets/marketing/mockup-notebook.png'
 import salaoBarbeariasImage from '../assets/segments/salao-e-barbearias.jpg'
 import barbeariaImage from '../assets/segments/barbearia.jpg'
 import manicureImage from '../assets/segments/manicure.jpg'
@@ -183,7 +184,7 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.5 }}
             className="hero-new-stats"
           >
-            <p>Centralize reservas, pagamentos, clientes e muito mais em só uma plataforma completa, ágil, intuitiva e que funciona em qualquer situação.</p>
+              <p>Centralize reservas, pagamentos, clientes e muito mais em só uma plataforma completa, ágil, intuitiva e que funciona em qualquer situação.</p>
           </motion.div>
         </motion.div>
       </section>
@@ -203,77 +204,99 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <p>O foco é dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p>
         </div>
       </ScrollReveal>
-
-      <section className="marketing-segments" aria-label="Segmentos de crescimento">
-        <div className="marketing-segments-head">
-          <div>
-            <h2>Segmentos que crescem ao lado da Gendaz.</h2>
-          </div>
-          <div className="marketing-segments-arrows" aria-hidden="true">
-            <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(-1)} aria-label="Anterior">‹</button>
-            <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(1)} aria-label="Próximo">›</button>
-          </div>
-        </div>
-
-        <div className="marketing-segments-marquee">
-          <div className="marketing-segments-track" style={{ '--segment-offset': segmentOffset }}>
-            {[...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments].map((segment, index) => (
-              <article className="marketing-segment-card" key={`${segment.title}-${index}`}>
-                <div className="marketing-segment-image" aria-hidden="true">
-                  {segment.image ? <img src={segment.image} alt="" /> : <span>{String((index % growthSegments.length) + 1).padStart(2, '0')}</span>}
-                </div>
-                <div className="marketing-segment-content">
-                  <span className="marketing-segment-risk" aria-hidden="true" />
-                  <strong>{segment.title}</strong>
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="marketing-showcase-band" aria-label="Destaque do aplicativo">
-        <div className="marketing-showcase-band-inner">
-          <div className="marketing-showcase-copy marketing-showcase-copy-left">
-            <p>Não precisa entender nada de tecnologia, é só deixar a Gendaz trabalhar para você.</p>
-          </div>
-
-          <div className="marketing-showcase-phone" aria-hidden="true">
-            <div className="marketing-showcase-phone-notch" />
-            <div className="marketing-showcase-phone-screen">
-              <div className="marketing-showcase-phone-header">
-                <span className="marketing-showcase-phone-title">Gendaz</span>
+      <ScrollReveal className="bounce-reveal" delay={0} threshold={0.18} rootMargin="0px 0px -10% 0px">
+          <section className="marketing-segments" aria-label="Segmentos de crescimento">
+            <div className="marketing-segments-head">
+              <div>
+              <h2>Segmentos que crescem ao lado da Gendaz.</h2>
               </div>
-              <div className="marketing-showcase-phone-panel marketing-showcase-phone-panel-action-card">
-                <strong>Iniciar atendimento</strong>
-                <small>Atalho visual para começar o próximo fluxo.</small>
-              </div>
-              <div className="marketing-showcase-phone-panel marketing-showcase-phone-panel-floating">
-                <div className="marketing-showcase-panel-row">
-                  <strong>3 de ago. de 2026</strong>
-                  <span>15:30 - 16:00</span>
-                </div>
-                <div className="marketing-showcase-panel-client">
-                  <strong>Vinicius Henrique</strong>
-                  <small>Corte social • PENDENTE</small>
-                </div>
-              </div>
-              <div className="marketing-showcase-phone-panel">
-                <strong>Todos os profissionais</strong>
-                <small>Agenda atualizada em tempo real</small>
-              </div>
-              <div className="marketing-showcase-phone-panel marketing-showcase-phone-action">
-                <strong>Iniciar atendimento</strong>
-                <small>Sem abas espalhadas, sem retrabalho</small>
-              </div>
+            <div className="marketing-segments-arrows" aria-hidden="true">
+              <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(-1)} aria-label="Anterior">‹</button>
+              <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(1)} aria-label="Próximo">›</button>
             </div>
           </div>
 
-          <div className="marketing-showcase-copy marketing-showcase-copy-right">
-            <p>Gerencie sua agenda, clientes e pagamentos em um único painel inteligente. Simples, rápido e seguro.</p>
+          <div className="marketing-segments-marquee">
+            <div className="marketing-segments-track" style={{ '--segment-offset': segmentOffset }}>
+              {[...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments].map((segment, index) => (
+                <article className="marketing-segment-card" key={`${segment.title}-${index}`}>
+                  <div className="marketing-segment-image" aria-hidden="true">
+                    {segment.image ? <img src={segment.image} alt="" /> : <span>{String((index % growthSegments.length) + 1).padStart(2, '0')}</span>}
+                  </div>
+                  <div className="marketing-segment-content">
+                    <span className="marketing-segment-risk" aria-hidden="true" />
+                    <strong>{segment.title}</strong>
+                  </div>
+                </article>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </ScrollReveal>
+
+      <ScrollReveal className="bounce-reveal" delay={80} threshold={0.18} rootMargin="0px 0px -10% 0px">
+        <section className="marketing-showcase-band" aria-label="Destaque do aplicativo">
+          <div className="marketing-showcase-band-inner">
+            <div className="marketing-showcase-copy marketing-showcase-copy-left">
+              <p>Não precisa entender nada de tecnologia, é só deixar a Gendaz trabalhar para você.</p>
+            </div>
+
+            <div className="marketing-showcase-device marketing-showcase-notebook" aria-hidden="true">
+              <div className="marketing-showcase-notebook-screen" aria-hidden="true">
+                <div className="marketing-showcase-dashboard-fake">
+                  <aside className="marketing-showcase-dashboard-sidebar">
+                    <strong className="marketing-showcase-dashboard-logo">gendaz</strong>
+                    <span className="marketing-showcase-dashboard-kicker">Navegacao</span>
+                    {['Dashboard', 'Agendamentos', 'Clientes', 'Profissionais', 'Serviços', 'CRM', 'Insights', 'Financeiro'].map((item, index) => (
+                      <span className={index === 0 ? 'is-active' : ''} key={item}>{item}</span>
+                    ))}
+                  </aside>
+                  <div className="marketing-showcase-dashboard-main">
+                    <div className="marketing-showcase-dashboard-top">
+                      <div>
+                        <span>Operação Gendaz</span>
+                        <strong>Visão geral</strong>
+                      </div>
+                      <em>Plano Pro</em>
+                    </div>
+                    <div className="marketing-showcase-dashboard-hero">
+                      <small>Terça-feira, 04 de agosto</small>
+                      <strong>Olá, Vinicius Henrique.</strong>
+                    </div>
+                    <div className="marketing-showcase-dashboard-metrics">
+                      <span><strong>2</strong>Agendamentos</span>
+                      <span><strong>3</strong>Pendente</span>
+                      <span><strong>R$ 100</strong>Receita</span>
+                      <span><strong>300</strong>Cobrança</span>
+                    </div>
+                    <div className="marketing-showcase-dashboard-chart">
+                      <div className="marketing-showcase-dashboard-chart-head">
+                        <strong>Financeiro</strong>
+                        <small>Agosto 2026</small>
+                      </div>
+                      <div className="marketing-showcase-dashboard-graph">
+                        {Array.from({ length: 18 }).map((_, index) => (
+                          <i style={{ '--bar-height': `${index === 4 ? 70 : index === 5 ? 28 : 8}%` }} key={index} />
+                        ))}
+                      </div>
+                    </div>
+                    <div className="marketing-showcase-dashboard-bottom">
+                      <span><strong>Hoje</strong>2 confirmados</span>
+                      <span><strong>CRM</strong>12 clientes ativos</span>
+                      <span><strong>Fila</strong>3 retornos</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <img className="marketing-showcase-device-image" src={notebookMockupImage} alt="" draggable="false" />
+            </div>
+
+            <div className="marketing-showcase-copy marketing-showcase-copy-right">
+              <p>Gerencie sua agenda, clientes e pagamentos em um único painel inteligente. Simples, rápido e seguro.</p>
+            </div>
+          </div>
+        </section>
+      </ScrollReveal>
 
       {/* Planos */}
       <section id="planos" className="marketing-plans marketing-plans-sale pricing-section">

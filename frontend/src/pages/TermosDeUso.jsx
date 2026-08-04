@@ -6,14 +6,14 @@ const secoes = [
   {
     titulo: '1. Termos de Uso',
     conteudos: [
-      'Estes Termos de Uso regulam a utilização do gendaz, SaaS de agendamentos desenvolvido e operado pela PloyDev.',
+      'Estes Termos de Uso regulam a utilização da Gendaz, SaaS de agendamentos desenvolvido e operado pela PloyDev.',
       'Ao acessar ou utilizar a plataforma, a empresa usuária declara que leu, entendeu e concorda com as regras descritas nesta página.',
     ],
   },
   {
     titulo: '2. Quem somos',
     conteudos: [
-      'O gendaz é uma plataforma online criada para ajudar empresas a organizar agenda, clientes, serviços, profissionais, pagamentos e financeiro em um único sistema.',
+      'A Gendaz é uma plataforma online criada para ajudar empresas a organizar agenda, clientes, serviços, profissionais, pagamentos e financeiro em um único sistema.',
       'A PloyDev é a responsável pela operação técnica da plataforma e pela manutenção do serviço.',
     ],
   },
@@ -27,7 +27,7 @@ const secoes = [
   {
     titulo: '4. Uso da plataforma',
     conteudos: [
-      'O gendaz deve ser utilizado para organizar atividades legítimas da empresa, como atendimento, agenda, clientes, serviços e recebimentos.',
+      'A Gendaz deve ser utilizada para organizar atividades legítimas da empresa, como atendimento, agenda, clientes, serviços e recebimentos.',
       'A empresa é responsável por manter seus dados corretos, atualizar as informações da conta e proteger o acesso dos usuários autorizados.',
     ],
   },
@@ -62,7 +62,7 @@ const secoes = [
   {
     titulo: '9. Dados cadastrados no sistema',
     conteudos: [
-      'Os dados inseridos no gendaz pela empresa devem ser verdadeiros, atualizados e compatíveis com a operação do negócio.',
+      'Os dados inseridos na Gendaz pela empresa devem ser verdadeiros, atualizados e compatíveis com a operação do negócio.',
       'A empresa é a responsável por revisar e excluir, quando necessário, dados indevidos ou desatualizados cadastrados em sua conta.',
     ],
   },
@@ -108,7 +108,7 @@ export default function TermosDeUso() {
             <span className="section-kicker">Legal</span>
             <h1>Termos de Uso</h1>
             <p className="legal-intro">
-              Estes termos explicam como o gendaz deve ser usado por empresas que administram sua própria operação
+              Estes termos explicam como a Gendaz deve ser usada por empresas que administram sua própria operação
               dentro da plataforma.
             </p>
           </div>

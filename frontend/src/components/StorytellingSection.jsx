@@ -13,10 +13,10 @@ const STEPS = [
   // },
   {
     id: 'agenda',
-    num: '02',
+    num: '01',
     icon: CalendarCheck,
-    heading: 'Organize sua agenda',
-    body: 'Acompanhe horários, confirmações, cancelamentos e remarcações com clareza e sem retrabalho.',
+    heading: 'Meu gendaz',
+    body: 'Portal do cliente para agendar, reagendar, cancelar e consultar horários com a Gendaz IA.',
     visual: {
       label: 'Agenda de hoje',
       detail: '6 atendimentos confirmados',
@@ -24,10 +24,10 @@ const STEPS = [
   },
   {
     id: 'clientes',
-    num: '03',
+    num: '02',
     icon: Users,
-    heading: 'Centralize clientes, serviços e pagamentos',
-    body: 'Tenha a base de clientes organizada, serviços cadastrados e controle financeiro acessível a qualquer momento.',
+    heading: 'Agendamento',
+    body: 'Quando um cliente agenda pelo portal, o registro aparece automaticamente na Gendaz para o atendimento.',
     visual: {
       label: 'Clientes ativos',
       detail: '120 registros acompanhados',
@@ -35,10 +35,10 @@ const STEPS = [
   },
   {
     id: 'crm',
-    num: '04',
+    num: '03',
     icon: MessagesSquare,
-    heading: 'CRM para acompanhar cada conversa',
-    body: 'Registre interações, acompanhe o histórico e mantenha o relacionamento com clientes sempre organizado.',
+    heading: 'Atendimento',
+    body: 'Acesse o agendamento, inicie o atendimento e finalize com a confirmação do pagamento.',
     visual: {
       label: 'CRM ativo',
       detail: 'Conversas e oportunidades centralizadas',
@@ -46,10 +46,10 @@ const STEPS = [
   },
   {
     id: 'painel',
-    num: '05',
+    num: '04',
     icon: LayoutDashboard,
-    heading: 'Tudo em um só painel',
-    body: 'Sem abas espalhadas, sem anotações soltas. O gendaz reúne agenda, clientes e pagamentos com simplicidade.',
+    heading: 'Financeiro',
+    body: 'Após a confirmação do pagamento, a Gendaz registra automaticamente o serviço e o profissional na aba financeira.',
     visual: {
       label: 'Painel completo',
       detail: 'Operação em tempo real',
@@ -83,7 +83,7 @@ export default function StorytellingSection() {
         <div className="storytelling-left">
           <div className="storytelling-glow" aria-hidden="true" />
           <div className="storytelling-head">
-            <h2>O caminho da conversa até o agendamento.</h2>
+            <h2>O caminho até o agendamento.</h2>
           </div>
 
           <div className="storytelling-steps storytelling-steps-compact" role="list">
@@ -112,10 +112,6 @@ export default function StorytellingSection() {
             })}
           </div>
 
-          <div className="storytelling-detail panel storytelling-detail-transition" key={STEPS[activeIndex].id} aria-live="polite">
-            <span className="storytelling-detail-label">{STEPS[activeIndex].visual.label}</span>
-            <strong>{STEPS[activeIndex].visual.detail}</strong>
-          </div>
         </div>
       </div>
     </section>

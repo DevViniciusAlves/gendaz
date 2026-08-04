@@ -4,105 +4,101 @@ const contatoEmail = import.meta.env.VITE_CONTATO_EMAIL || 'contato@gendaz.com.b
 
 const secoes = [
   {
-    titulo: '1. Política de Privacidade',
+    titulo: '1. Coleta de dados',
     conteudos: [
-      'Esta Política de Privacidade explica como o gendaz coleta, usa, armazena e protege dados pessoais tratados na plataforma.',
-      'Ao utilizar o sistema, você concorda com as práticas descritas nesta página.',
+      'A Gendaz coleta apenas os dados necessários para operar a plataforma, manter a conta ativa e oferecer as funcionalidades contratadas pela empresa usuária.',
+      'Esses dados podem incluir informações de cadastro da empresa, usuários internos, clientes, agendamentos, pagamentos, preferências de uso e registros técnicos de acesso.',
     ],
   },
   {
-    titulo: '2. Quem somos',
+    titulo: '2. Finalidade do tratamento',
     conteudos: [
-      'O gendaz é um SaaS multiempresa de agendamentos desenvolvido e operado pela PloyDev.',
-      'A plataforma foi criada para ajudar empresas a organizarem agenda, clientes, serviços, profissionais, financeiro e pagamentos em um só lugar.',
+      'Os dados são utilizados para organizar a operação da conta, prestar suporte, melhorar a experiência de uso, cumprir obrigações legais e manter a segurança da plataforma.',
+      'Também podemos usar informações de forma agregada e anonimizada para análises de desempenho e evolução do produto.',
     ],
   },
   {
-    titulo: '3. Quais dados coletamos',
-    itens: [
-      'Dados de cadastro da empresa, como nome fantasia, e-mail, telefone e informações de acesso.',
-      'Dados do usuário responsável pela conta e de usuários autorizados pela empresa.',
-      'Dados inseridos pela própria empresa sobre clientes, serviços, agendamentos, pagamentos e atendimentos.',
-      'Dados técnicos de uso, como registros de acesso, IP, navegador, dispositivo, data e hora de eventos relevantes.',
-    ],
-  },
-  {
-    titulo: '4. Como usamos os dados',
+    titulo: '3. Compartilhamento de dados',
     conteudos: [
-      'Usamos os dados para criar e manter contas, permitir o uso do sistema, registrar agendamentos, organizar pagamentos e oferecer suporte.',
-      'Também podemos usar informações técnicas para segurança, diagnóstico de erros, prevenção a fraude e melhoria da experiência da plataforma.',
+      'Os dados da empresa usuária não são vendidos.',
+      'O compartilhamento pode ocorrer apenas com fornecedores necessários para o funcionamento da plataforma, com meios de pagamento, hospedagem, integrações técnicas ou por exigência legal.',
     ],
   },
   {
-    titulo: '5. Dados de empresas e usuários',
+    titulo: '4. Segurança da informação',
     conteudos: [
-      'Cada empresa é responsável pelos dados que cadastra e administra dentro do gendaz.',
-      'Os dados da empresa e dos usuários autorizados são utilizados para operação da conta, autenticação, suporte e gestão de permissões.',
+      'Adotamos medidas técnicas e administrativas razoáveis para proteger os dados contra acesso não autorizado, perda, alteração ou divulgação indevida.',
+      'A empresa usuária também é responsável por proteger seus acessos, senhas e usuários internos cadastrados na conta.',
     ],
   },
   {
-    titulo: '6. Dados de clientes cadastrados pelas empresas',
+    titulo: '5. Uso de cookies',
     conteudos: [
-      'As empresas podem inserir dados de seus próprios clientes para gerenciar atendimentos, pagamentos e histórico de uso.',
-      'Esses dados pertencem à empresa responsável pelo cadastro e devem ser tratados conforme a legislação aplicável e as práticas internas de cada negócio.',
+      'Podemos utilizar cookies e tecnologias semelhantes para manter a sessão ativa, lembrar preferências e entender como a plataforma está sendo usada.',
+      'O navegador pode ser configurado para bloquear cookies, mas isso pode afetar algumas funcionalidades do sistema.',
     ],
   },
   {
-    titulo: '7. Pagamentos e assinatura',
+    titulo: '6. Dados de clientes da empresa',
     conteudos: [
-      'Os pagamentos e assinaturas podem ser processados por gateways externos, como a Cakto, ou por outros provedores integrados futuramente.',
-      'Informações financeiras necessárias para processar cobrança ficam restritas ao fluxo de pagamento e não são usadas para finalidades indevidas.',
+      'As informações de clientes cadastradas dentro da conta pertencem à operação da empresa usuária, que deve garantir que possui base legal e autorização para inseri-las na plataforma.',
+      'A Gendaz atua como operadora tecnológica nesses casos, seguindo as instruções da empresa titular da conta.',
     ],
   },
   {
-    titulo: '8. Cookies e tecnologias semelhantes',
+    titulo: '7. Armazenamento e retenção',
     conteudos: [
-      'Podemos usar cookies e tecnologias semelhantes para manter sessões, lembrar preferências, medir uso da plataforma e melhorar a navegação.',
-      'Você pode ajustar configurações do navegador para limitar cookies, ciente de que algumas funções podem deixar de funcionar corretamente.',
+      'Os dados permanecem armazenados enquanto a conta estiver ativa ou enquanto forem necessários para cumprir a finalidade informada, obrigações legais ou resguardo de direitos.',
+      'Após a solicitação de exclusão ou encerramento da conta, os dados poderão ser removidos ou anonimizados conforme a legislação aplicável e os prazos técnicos necessários.',
     ],
   },
   {
-    titulo: '9. Compartilhamento de dados',
+    titulo: '8. Direitos do titular',
     conteudos: [
-      'Não vendemos dados pessoais de usuários ou clientes cadastrados na plataforma.',
-      'Podemos compartilhar dados com fornecedores essenciais para operar o sistema, cumprir obrigações legais, atender solicitações técnicas ou proteger a segurança da plataforma.',
+      'Sempre que aplicável, o titular dos dados pode solicitar confirmação, acesso, correção, atualização, anonimização, bloqueio ou eliminação de informações pessoais.',
+      'Essas solicitações devem ser feitas pelo canal oficial de contato informado nesta página.',
     ],
   },
   {
-    titulo: '10. Segurança das informações',
+    titulo: '9. Alterações desta política',
     conteudos: [
-      'Adotamos medidas técnicas e organizacionais para proteger os dados contra acesso não autorizado, uso indevido, perda, alteração ou divulgação indevida.',
-      'O acesso à conta depende das credenciais da empresa e deve ser protegido pelos responsáveis autorizados.',
+      'Esta Política de Privacidade pode ser atualizada a qualquer momento para refletir mudanças técnicas, operacionais ou legais.',
+      'A versão mais recente estará sempre disponível nesta página.',
     ],
   },
   {
-    titulo: '11. Retenção e exclusão de dados',
+    titulo: '10. Responsabilidade da empresa usuária',
     conteudos: [
-      'Mantemos os dados pelo tempo necessário para operar a conta, cumprir obrigações legais, resolver disputas e garantir segurança.',
-      'Quando aplicável, dados podem ser excluídos ou anonimizados mediante solicitação ou conforme regras de retenção do sistema e obrigações legais.',
+      'A empresa que utiliza a Gendaz é responsável pelos dados que cadastra, pela autorização de uso e pela conformidade das informações incluídas em sua conta.',
+      'A plataforma não substitui as obrigações legais, fiscais, contratuais ou regulatórias da empresa usuária.',
     ],
   },
   {
-    titulo: '12. Direitos do usuário',
-    itens: [
-      'Confirmar se tratamos dados relacionados à sua conta.',
-      'Solicitar correção de dados incompletos ou desatualizados.',
-      'Solicitar acesso, limitação ou exclusão quando aplicável.',
-      'Revogar consentimentos que dependam dessa base legal.',
-    ],
-  },
-  {
-    titulo: '13. Alterações nesta política',
+    titulo: '11. Serviços de terceiros',
     conteudos: [
-      'Esta Política de Privacidade pode ser atualizada a qualquer momento para refletir mudanças no sistema, na legislação ou nas práticas de tratamento de dados.',
-      'A versão mais recente sempre estará disponível nesta página.',
+      'Algumas funcionalidades podem depender de serviços de terceiros, como provedores de hospedagem, autenticação, pagamentos ou integrações externas.',
+      'Cada fornecedor pode possuir sua própria política de privacidade e tratamento de dados.',
     ],
   },
   {
-    titulo: '14. Contato',
+    titulo: '12. Menores de idade',
     conteudos: [
-      `Se você tiver dúvidas sobre esta Política de Privacidade ou sobre o tratamento de dados no gendaz, entre em contato pelo e-mail ${contatoEmail}.`,
-      'Se houver necessidade de atendimento adicional, o canal de suporte da plataforma poderá ser usado como ponto de contato complementar.',
+      'A plataforma é destinada ao uso empresarial e não deve ser utilizada para cadastro indevido de dados de menores sem a base legal apropriada.',
+      'Caso isso ocorra, a empresa usuária assume integral responsabilidade pela legitimidade do tratamento.',
+    ],
+  },
+  {
+    titulo: '13. Contato',
+    conteudos: [
+      `Em caso de dúvidas sobre esta Política de Privacidade, entre em contato pelo e-mail ${contatoEmail}.`,
+      'O canal oficial de suporte também pode ser utilizado para solicitações relacionadas aos dados tratados na plataforma.',
+    ],
+  },
+  {
+    titulo: '14. Vigência',
+    conteudos: [
+      'Esta política entra em vigor na data de sua publicação e permanece válida até nova atualização.',
+      'O uso continuado da plataforma após eventuais alterações indica ciência e concordância com a versão vigente.',
     ],
   },
 ]
@@ -117,23 +113,22 @@ export default function PoliticaPrivacidade() {
             <span className="section-kicker">Legal</span>
             <h1>Política de Privacidade</h1>
             <p className="legal-intro">
-              O gendaz respeita a privacidade das empresas e dos usuários que utilizam a plataforma.
-              Esta página resume, de forma clara, como os dados são tratados no sistema.
+              Esta política explica como a Gendaz trata os dados inseridos pelas empresas que utilizam a plataforma.
             </p>
           </div>
 
           <div className="legal-meta">
             <strong>gendaz</strong>
-            <span>PloyDev</span>
-            <small>Última atualização: 22/06/2026</small>
+            <span>gendaz</span>
+            <small>Última atualização: 04/08/2026</small>
           </div>
         </div>
 
         <div className="legal-notice">
-          <strong>Resumo importante</strong>
+          <strong>Antes de continuar</strong>
           <p>
-            O gendaz não vende dados pessoais. Cada empresa é responsável pelos dados que cadastra,
-            inclusive informações de clientes, agendamentos e histórico operacional mantidos dentro da conta.
+            Ao utilizar a plataforma, a empresa confirma que possui autorização para cadastrar e tratar os dados
+            informados na conta, inclusive dados de clientes, usuários internos e demais registros operacionais.
           </p>
         </div>
 
@@ -144,19 +139,12 @@ export default function PoliticaPrivacidade() {
               {secao.conteudos?.map((texto) => (
                 <p key={texto}>{texto}</p>
               ))}
-              {secao.itens ? (
-                <ul>
-                  {secao.itens.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : null}
             </article>
           ))}
         </div>
 
         <div className="legal-footer-actions">
-          <Link to="/" className="primary-link">Voltar para a página inicial</Link>
+          <Link to="/termos-de-uso" className="primary-link">Ver Termos de Uso</Link>
           <a href={`mailto:${contatoEmail}`} className="secondary-link">Falar com o suporte</a>
         </div>
       </section>
