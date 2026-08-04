@@ -14843,9 +14843,13 @@ tbody tr:hover { background: #fffaf5; }
   align-items: center;
   gap: 10px;
   justify-content: center;
+  min-height: 100vh;
   padding: 48px 24px;
   color: rgba(255, 255, 255, 0.68);
   font-size: 14px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 34%),
+    linear-gradient(180deg, #101010 0%, #080808 100%);
 }
 
 .gendaz-erro {

@@ -288,6 +288,22 @@ function GendazCadastroGate({ slug }) {
 
 export default function Gendaz() {
   const { slug } = useParams()
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+
+    const html = document.documentElement
+    const temaAnterior = html.dataset.theme || ''
+    html.dataset.theme = 'dark'
+
+    return () => {
+      if (temaAnterior) {
+        html.dataset.theme = temaAnterior
+      } else {
+        delete html.dataset.theme
+      }
+    }
+  }, [])
+
   if (!slug) return null
   return (
     <ClienteGendazProvider slug={slug}>
