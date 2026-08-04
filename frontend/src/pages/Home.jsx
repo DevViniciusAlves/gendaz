@@ -38,6 +38,7 @@ import psicologosTerapeutasImage from '../assets/segments/psicologos-terapeutas.
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 import TestimonialsSection from '../components/TestimonialsSection.jsx'
+import FeaturesMosaicSection from '../components/FeaturesMosaicSection.jsx'
 
 
 const features = [
@@ -191,6 +192,8 @@ export default function Home() {
 
       {/* Storytelling */}
       <StorytellingSection />
+
+      <FeaturesMosaicSection />
 
       {/* Sobre */}
       <ScrollReveal id="sobre" className="marketing-split" delay={80}>
