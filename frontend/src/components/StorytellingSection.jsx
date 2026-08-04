@@ -83,7 +83,6 @@ export default function StorytellingSection() {
         <div className="storytelling-left">
           <div className="storytelling-glow" aria-hidden="true" />
           <div className="storytelling-head">
-            <span className="section-kicker">Fluxo</span>
             <h2>O caminho da conversa até o agendamento.</h2>
           </div>
 

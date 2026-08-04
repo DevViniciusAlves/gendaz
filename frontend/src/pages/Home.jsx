@@ -1,4 +1,4 @@
-import {
+﻿import {
   ArrowRight,
   CalendarCheck,
   Check,
@@ -11,9 +11,29 @@ import {
   UserPlus,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
 import logoWhite from '../assets/logos/gendazpng.png'
+import salaoBarbeariasImage from '../assets/segments/salao-e-barbearias.jpg'
+import barbeariaImage from '../assets/segments/barbearia.jpg'
+import manicureImage from '../assets/segments/manicure.jpg'
+import depilacaoImage from '../assets/segments/depilacao.jpg'
+import sobrancelhasCiliosImage from '../assets/segments/sobrancelhas-e-cilios.jpg'
+import locacaoQuadraImage from '../assets/segments/locacao-de-quadra.jpg'
+import clinicaOdontologicaImage from '../assets/segments/clinica-odontologica.jpg'
+import personalTrainerImage from '../assets/segments/personal-trainer-2.jpg'
+import consultoriosImage from '../assets/segments/consultorios.jpg'
+import esteticasSpasImage from '../assets/segments/esteticas-e-spas.jpg'
+import yogaPilatesImage from '../assets/segments/yoga-e-pilates.jpg'
+import cursosTutoriaImage from '../assets/segments/cursos-e-tutoria.webp'
+import hospedagensImage from '../assets/segments/hospedagens.jpg'
+import servicosAutomotivosImage from '../assets/segments/servicos-automotivos.jpg'
+import petshopsImage from '../assets/segments/petshops.jpg'
+import estudioFotograficoImage from '../assets/segments/estudio-fotografico.jpg'
+import estudoTatuagemImage from '../assets/segments/estudio-tatuagem.png'
+import clinicaEsteticaImage from '../assets/segments/clinica-estetica.png'
+import psicologosTerapeutasImage from '../assets/segments/psicologos-terapeutas.jpg'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 
@@ -23,6 +43,28 @@ const features = [
   ['02', CalendarCheck, 'Agenda organizada', 'Acompanhe horários, confirmações, cancelamentos e remarcações.'],
   ['03', CreditCard, 'Pagamentos claros', 'Veja recebidos, pendências e acompanhamento financeiro em um só lugar.'],
   ['04', FileText, 'Gestão simples', 'Organize clientes, serviços e profissionais com uma rotina clara no dia a dia.'],
+]
+
+const growthSegments = [
+  { title: 'Salão de Beleza', subtitle: 'Agendamento, CRM, financeiro', badge: 'MVP', image: salaoBarbeariasImage },
+  { title: 'Barbearia', subtitle: 'Agenda, clientes e controle do dia a dia', badge: 'Cortes', image: barbeariaImage },
+  { title: 'Manicure', subtitle: 'Agenda, serviços e retorno de clientes', badge: 'Unhas', image: manicureImage },
+  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage },
+  { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage },
+  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage },
+  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage },
+  { title: 'Personal Trainers', subtitle: 'Aulas, sessoes e planos mensais', badge: 'Academias', image: personalTrainerImage },
+  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage },
+  { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage },
+  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage },
+  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage },
+  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage },
+  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage },
+  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage },
+  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage },
+  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage },
+  { title: 'Clínica de Estética', subtitle: 'Tratamentos, agenda e histórico de clientes', badge: 'Beleza', image: clinicaEsteticaImage },
+  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage },
 ]
 
 const plans = [
@@ -51,15 +93,25 @@ const plans = [
 
 export default function Home() {
   const navigate = useNavigate()
+  const [segmentOffset, setSegmentOffset] = useState(0)
 
   function handlePlanClick(plano) {
     navigate(`/criar-conta?plano=${encodeURIComponent(plano.nome)}&preco=${encodeURIComponent(plano.preco)}`)
   }
 
+  function handleSegmentMove(direction) {
+    setSegmentOffset((current) => {
+      if (direction > 0) {
+        return current + 1
+      }
+      return current > 0 ? current - 1 : 0
+    })
+  }
+
   return (
     <main id="inicio" className="marketing-page">
 
-      {/* ── Navbar ─────────────────────────────────────── */}
+      {/* Navbar */}
       <header className="marketing-nav-gendo">
         <div className="marketing-nav-gendo-shell">
           <Link to="/" className="marketing-brand-gendo">
@@ -81,7 +133,7 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── Hero ───────────────────────────────────────── */}
+      {/* Hero */}
       <section className="hero-section-new">
         <motion.div
           initial={{ opacity: 0 }}
@@ -125,38 +177,24 @@ export default function Home() {
             <a href="#planos" className="secondary-link">Ver planos</a>
           </motion.div>
 
-          {/* ── Stats ──────────────────────────────────── */}
-          <motion.div
+      {/* Stats */}
+                    <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
             className="hero-new-stats"
           >
-            <div>
-              <strong>+500</strong>
-              <span>atendimentos</span>
-            </div>
-            <div className="hero-new-stats-divider" />
-            <div>
-              <strong>98%</strong>
-              <span>confirmações no prazo</span>
-            </div>
-            <div className="hero-new-stats-divider" />
-            <div>
-              <strong>+120</strong>
-              <span>clientes</span>
-            </div>
+            <p>Centralize reservas, pagamentos, clientes e muito mais em só uma plataforma completa, ágil, intuitiva e que funciona em qualquer situação.</p>
           </motion.div>
         </motion.div>
       </section>
 
-      {/* ── Storytelling ───────────────────────────────── */}
+      {/* Storytelling */}
       <StorytellingSection />
 
-      {/* ── Sobre ──────────────────────────────────────── */}
+      {/* Sobre */}
       <ScrollReveal id="sobre" className="marketing-split" delay={80}>
         <div>
-          <span className="section-kicker">Sobre o gendaz</span>
           <h2>Qualidade operacional com uma rotina que respeita o seu tempo.</h2>
         </div>
         <div>
@@ -167,24 +205,31 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </ScrollReveal>
 
-      {/* ── Soluções ───────────────────────────────────── */}
-      <section id="solucoes" className="marketing-solutions solutions-section">
-        <ScrollReveal className="solutions-head solutions-section-head" delay={0}>
+      <section className="marketing-segments" aria-label="Segmentos de crescimento">
+        <div className="marketing-segments-head">
           <div>
-            <span className="section-kicker">Soluções</span>
-            <h2 className="solutions-section-title">Tudo o que o atendimento precisa.</h2>
+            <h2>Segmentos que crescem com a Gendaz.</h2>
           </div>
-          <p className="solutions-section-text">Uma experiência simples para conversar, agendar, acompanhar clientes e receber sem sair do mesmo painel.</p>
-        </ScrollReveal>
-        <div className="solution-grid solutions-section-grid">
-          {features.map(([number, Icon, title, text], index) => (
-            <ScrollReveal className="solution-card solutions-section-card premium-border" delay={index * 90} key={title}>
-              <Icon size={24} />
-              <strong>{number}</strong>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </ScrollReveal>
-          ))}
+          <div className="marketing-segments-arrows" aria-hidden="true">
+            <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(-1)} aria-label="Anterior">‹</button>
+            <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(1)} aria-label="Próximo">›</button>
+          </div>
+        </div>
+
+        <div className="marketing-segments-marquee">
+          <div className="marketing-segments-track" style={{ '--segment-offset': segmentOffset }}>
+            {[...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments].map((segment, index) => (
+              <article className="marketing-segment-card" key={`${segment.title}-${index}`}>
+                <div className="marketing-segment-image" aria-hidden="true">
+                  {segment.image ? <img src={segment.image} alt="" /> : <span>{String((index % growthSegments.length) + 1).padStart(2, '0')}</span>}
+                </div>
+                <div className="marketing-segment-content">
+                  <span className="marketing-segment-risk" aria-hidden="true" />
+                  <strong>{segment.title}</strong>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -231,10 +276,9 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </section>
 
-      {/* ── Planos ─────────────────────────────────────── */}
+      {/* Planos */}
       <section id="planos" className="marketing-plans marketing-plans-sale pricing-section">
         <ScrollReveal className="plans-page-title" delay={0}>
-          <span className="section-kicker">Planos</span>
           <h2 className="pricing-title">Planos do atendimento</h2>
           <p className="pricing-subtitle">Escolha o plano que melhor se encaixa na rotina do seu atendimento.</p>
         </ScrollReveal>
@@ -303,11 +347,10 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </ScrollReveal>
       </section>
 
-      {/* ── Suporte ────────────────────────────────────── */}
+      {/* Suporte */}
       <section id="suporte" className="marketing-support">
         <ScrollReveal className="solutions-head" delay={0}>
           <div>
-            <span className="section-kicker">Suporte</span>
             <h2>Ajuda rápida para começar sem travar.</h2>
           </div>
           <p>Fale com a equipe, tire dúvidas sobre o painel e entenda qual plano faz mais sentido para o seu atendimento.</p>
@@ -331,16 +374,23 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </section>
 
-      {/* ── Contato / CTA ──────────────────────────────── */}
+      {/* Contato / CTA */}
       <ScrollReveal id="contato" className="contact-band premium-border" delay={0}>
         <div>
           <span className="section-kicker">Contato</span>
           <h2>Fale com a equipe e veja como o gendaz funciona na prática.</h2>
         </div>
-        <Link to="/criar-conta" className="primary-link">Criar conta grátis</Link>
+        <a
+          href="https://wa.me/5565993360300"
+          className="primary-link"
+          target="_blank"
+          rel="noreferrer"
+        >
+          Falar com a Gendaz
+        </a>
       </ScrollReveal>
 
-      {/* ── Footer ─────────────────────────────────────── */}
+      {/* Footer */}
       <footer className="marketing-footer">
         <small>gendaz</small>
         <div>
@@ -351,6 +401,8 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
     </main>
   )
 }
+
+
 
 
 

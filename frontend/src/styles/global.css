@@ -3982,9 +3982,8 @@ tbody tr:hover { background: #fffaf5; }
 .marketing-page .contact-band {
   position: relative;
   overflow: hidden;
-  background:
-    linear-gradient(135deg, #ffd04a 0%, #ffb12a 20%, #ff8f00 43%, #ff5e14 72%, #ff3328 100%) !important;
-  background-color: #ff8f00 !important;
+  background: #ff9a42 !important;
+  background-color: #ff9a42 !important;
   border-color: rgba(255, 176, 42, 0.24) !important;
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
@@ -8093,9 +8092,11 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .marketing-page .recommended-badge {
-  background: linear-gradient(90deg, #ffcf92 0%, #ff9c4c 45%, #ff6a00 100%) !important;
+  background: #ffae4a !important;
   color: #151515 !important;
-  box-shadow: 0 10px 22px rgba(255, 126, 34, 0.20) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  filter: none !important;
 }
 
 .support-card h2 {
@@ -11931,7 +11932,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .app-shell .content .plan-card .recommended-badge {
-  background: #ffffff !important;
+  background: #ffae4a !important;
   border: 1px solid rgba(17, 17, 17, 0.10) !important;
 }
 
@@ -12229,37 +12230,20 @@ tbody tr:hover { background: #fffaf5; }
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 32px;
   margin: 32px auto 0;
-  max-width: 600px;
+  max-width: 760px;
   width: 100%;
   text-align: center;
-  font-family: 'Poppins', sans-serif;
-  font-weight: 500;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
 }
 
-.hero-new-stats div {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.hero-new-stats strong {
-  font-size: 28px;
-  font-weight: 800;
-  color: #000000;
-  letter-spacing: -0.02em;
-}
-
-.hero-new-stats span {
-  font-size: 13px;
-  color: #000000;
-}
-
-.hero-new-stats-divider {
-  width: 1px;
-  height: 40px;
-  background: #000000;
+.hero-new-stats p {
+  margin: 0;
+  max-width: 760px;
+  font-size: clamp(1rem, 1.35vw, 1.35rem);
+  line-height: 1.35;
+  color: #111111;
+  letter-spacing: -0.03em;
 }
 
 /* ============================================================
@@ -15635,10 +15619,165 @@ tbody tr:hover { background: #fffaf5; }
   color: #111827 !important;
 }
 
+.marketing-page .marketing-segments {
+  width: 100%;
+  margin: 0;
+  padding: 32px 0 18px;
+  overflow: hidden;
+}
+
+.marketing-page .marketing-segments-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  width: min(1240px, calc(100% - 48px));
+  margin: 0 auto 18px;
+}
+
+.marketing-page .marketing-segments-head h2 {
+  margin: 8px 0 0;
+  color: #ffffff;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  font-size: clamp(1.8rem, 3vw, 2.4rem);
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.marketing-page .marketing-segments .section-kicker {
+  color: #ffb24a !important;
+  -webkit-text-fill-color: #ffb24a !important;
+}
+
+.marketing-page .marketing-segments-arrows {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.marketing-page .marketing-segments-arrow {
+  width: 54px;
+  height: 54px;
+  border-radius: 0;
+  border: 0;
+  background: transparent;
+  color: #ff9b2f;
+  font-size: 34px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  box-shadow: none;
+  text-shadow: none;
+  background: linear-gradient(135deg, #ffd04a 0%, #ff9b2f 45%, #ff5f1c 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+.marketing-page .marketing-segments-marquee {
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  padding: 0;
+}
+
+.marketing-page .marketing-segments-marquee::before,
+.marketing-page .marketing-segments-marquee::after {
+  content: none;
+}
+
+.marketing-page .marketing-segments-track {
+  display: flex;
+  gap: 18px;
+  width: max-content;
+  padding: 0 24px;
+  transform: translateX(calc(var(--segment-offset, 0) * -238px));
+  transition: transform 0.45s ease;
+}
+
+.marketing-page .marketing-segment-card {
+  width: 220px;
+  flex: 0 0 220px;
+  border-radius: 22px;
+  background: #1a1a1a;
+  box-shadow: 0 18px 32px rgba(0, 0, 0, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.marketing-page .marketing-segment-image {
+  height: 118px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 14px;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 28%),
+    linear-gradient(135deg, #242424 0%, #1d1d1d 48%, #171717 100%);
+  position: relative;
+}
+
+.marketing-page .marketing-segment-image img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.marketing-page .marketing-segment-image::after {
+  content: '';
+  position: absolute;
+  inset: auto auto 12px 14px;
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, #8f48ff 0%, #ff7a18 100%);
+  opacity: 0.1;
+}
+
+.marketing-page .marketing-segment-image span {
+  position: relative;
+  z-index: 1;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  font-size: 28px;
+  line-height: 1;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.22);
+}
+
+.marketing-page .marketing-segment-content {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 14px 14px 18px;
+}
+
+.marketing-page .marketing-segment-risk {
+  display: block;
+  width: 44px;
+  height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ffcd66 0%, #ff9b2f 44%, #ff5f1c 100%);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03);
+}
+
+.marketing-page .marketing-segment-content strong {
+  display: block;
+  color: #ffffff;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  font-size: 16px;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
 .marketing-page .marketing-showcase-band {
   position: relative;
   width: 100%;
-  margin: 0;
+  margin: 28px 0 0;
   padding: 0;
   overflow: hidden;
   background:
@@ -15825,6 +15964,25 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 @media (max-width: 980px) {
+  .marketing-page .marketing-depoimentos {
+    padding: 70px 18px 102px;
+  }
+
+  .marketing-page .marketing-depoimentos-grid {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+
+  .marketing-page .marketing-segments {
+    padding-top: 22px;
+  }
+
+  .marketing-page .marketing-segments-head {
+    align-items: flex-start;
+    flex-direction: column;
+    width: min(1240px, calc(100% - 32px));
+  }
+
   .marketing-page .marketing-showcase-band-inner {
     grid-template-columns: 1fr;
     min-height: 0;
@@ -15846,6 +16004,23 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 @media (max-width: 640px) {
+  .marketing-page .marketing-depoimentos {
+    padding: 62px 14px 94px;
+  }
+
+  .marketing-page .marketing-segments {
+    padding-top: 18px;
+  }
+
+  .marketing-page .marketing-segments-head {
+    width: min(1240px, calc(100% - 24px));
+  }
+
+  .marketing-page .marketing-segment-card {
+    width: 198px;
+    flex-basis: 198px;
+  }
+
   .marketing-page .marketing-showcase-band-inner {
     padding: 10px 14px;
     gap: 14px;
@@ -15856,5 +16031,6 @@ tbody tr:hover { background: #fffaf5; }
     margin-bottom: -34px;
   }
 }
+
 
 
