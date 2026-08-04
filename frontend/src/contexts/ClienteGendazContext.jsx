@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect, useCallback, useRef } from 'react'
 import clienteApi from '../api/clienteApi.js'
+import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
@@ -249,8 +250,9 @@ export function ClienteGendazProvider({ children, slug }) {
     const { data } = await clienteApi.post('/meu-gendaz/agendamentos/criar', dados)
     const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
     setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
+    await carregarBeneficios()
     return data
-  }, [])
+  }, [carregarBeneficios])
 
   const reagendar = useCallback(async (agendamentoId, novosDados) => {
     const { data } = await clienteApi.patch(`/meu-gendaz/agendamentos/${agendamentoId}/reagendar`, novosDados)
@@ -282,19 +284,26 @@ export function ClienteGendazProvider({ children, slug }) {
   }, [])
 
   const carregarBeneficios = useCallback(async () => {
-    const [promosRes, cuponsRes] = await Promise.allSettled([
-      clienteApi.get('/meu-gendaz/promocoes'),
-      clienteApi.get('/meu-gendaz/cupons'),
+    const [promosRes, cuponsRes, notifRes] = await Promise.allSettled([
+      meuGendazPromocoesApi.listar(),
+      meuGendazPromocoesApi.usados(),
+      meuGendazPromocoesApi.notificacoes(),
     ])
     setBeneficios({
-      promocoes: promosRes.status === 'fulfilled' ? promosRes.value.data : [],
-      cupons: cuponsRes.status === 'fulfilled' ? cuponsRes.value.data : [],
+      promocoes: promosRes.status === 'fulfilled' ? promosRes.value : [],
+      cupons: cuponsRes.status === 'fulfilled' ? cuponsRes.value : [],
+      notificacoes: notifRes.status === 'fulfilled' ? (notifRes.value?.notificacoes || []) : [],
     })
   }, [])
 
-  const usarCupom = useCallback(async () => {
+  const usarCupom = useCallback(async (cupomCodigo) => {
     await carregarBeneficios()
     return { mensagem: 'Cupom registrado.' }
+  }, [carregarBeneficios])
+
+  const marcarPromocaoLida = useCallback(async (promocaoId) => {
+    await meuGendazPromocoesApi.marcarLida(promocaoId)
+    await carregarBeneficios()
   }, [carregarBeneficios])
 
   const enviarMensagemIA = useCallback(async (mensagem, historico = []) => {
@@ -357,6 +366,7 @@ export function ClienteGendazProvider({ children, slug }) {
     buscarHorarios,
     carregarBeneficios,
     usarCupom,
+    marcarPromocaoLida,
     enviarMensagemIA,
     carregarPreferenciasIA,
     atualizarPerfil,

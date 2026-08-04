@@ -21,6 +21,7 @@ import Agenda from '../pages/Agenda.jsx'
 import Clientes from '../pages/Clientes.jsx'
 import Crm from '../pages/Crm.jsx'
 import Insights from '../pages/Insights.jsx'
+import Promocoes from '../pages/Promocoes.jsx'
 import Servicos from '../pages/Servicos.jsx'
 import Profissionais from '../pages/Profissionais.jsx'
 import Financeiro from '../pages/Financeiro.jsx'
@@ -36,6 +37,7 @@ import GendazHistorico from '../pages/gendaz/Historico.jsx'
 import GendazAssistenteIA from '../pages/gendaz/AssistenteIA.jsx'
 import GendazSuporte from '../pages/gendaz/Suporte.jsx'
 import GendazBeneficios from '../pages/gendaz/Beneficios.jsx'
+import GendazPromocoes from '../pages/gendaz/Promocoes.jsx'
 import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 
 function PrivateRoute({ children }) {
@@ -118,6 +120,7 @@ export default function AppRoutes() {
         <Route path="ia" element={<GendazAssistenteIA />} />
         <Route path="suporte" element={<GendazSuporte />} />
         <Route path="beneficios" element={<GendazBeneficios />} />
+        <Route path="promocoes" element={<GendazPromocoes />} />
         <Route path="configuracoes" element={<GendazConfiguracoes />} />
       </Route>
       <Route path="/dashboard" element={<Navigate to="/sistema/dashboard" replace />} />
@@ -128,6 +131,7 @@ export default function AppRoutes() {
         <Route path="clientes" element={<PlanRoute routeKey="clientes"><Clientes /></PlanRoute>} />
         <Route path="crm" element={<PlanRoute routeKey="crm"><Crm /></PlanRoute>} />
         <Route path="insights" element={<PlanRoute routeKey="insights"><Insights /></PlanRoute>} />
+        <Route path="promocoes" element={<PlanRoute routeKey="promocoes"><Promocoes /></PlanRoute>} />
         <Route path="servicos" element={<PlanRoute routeKey="servicos"><Servicos /></PlanRoute>} />
         <Route path="profissionais" element={<PlanRoute routeKey="profissionais"><Profissionais /></PlanRoute>} />
         <Route path="financeiro" element={<PlanRoute routeKey="financeiro"><Financeiro /></PlanRoute>} />

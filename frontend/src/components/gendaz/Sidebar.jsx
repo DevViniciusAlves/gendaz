@@ -1,5 +1,5 @@
 ﻿import { NavLink } from 'react-router-dom'
-import { CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, History, LifeBuoy } from 'lucide-react'
+import { CalendarDays, Gift, LayoutDashboard, MessageCircle, Settings2, History, LifeBuoy, Ticket } from 'lucide-react'
 import logoSidebar from '../../assets/logos/meugendazpngpreto.png'
 
 const items = [
@@ -7,7 +7,7 @@ const items = [
   { to: 'agenda', label: 'Agenda', icon: CalendarDays },
   { to: 'historico', label: 'Historico', icon: History },
   { to: 'ia', label: 'gendazIA', icon: MessageCircle },
-  { to: 'beneficios', label: 'Beneficios', icon: Gift },
+  { to: 'promocoes', label: 'Promocoes', icon: Ticket },
   { to: 'suporte', label: 'Suporte', icon: LifeBuoy },
   { to: 'configuracoes', label: 'Configuracoes', icon: Settings2 },
 ]

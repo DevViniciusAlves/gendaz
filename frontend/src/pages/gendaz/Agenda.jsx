@@ -9,7 +9,8 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const [horarios, setHorarios] = useState([])
   const hoje = new Date()
   const dataHoje = hoje.toISOString().slice(0, 10)
-  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '' })
+  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
+  const [cupons, setCupons] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
@@ -35,6 +36,18 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
     }
     buscar()
   }, [form.servicoId, form.profissionalId, form.data])
+
+  useEffect(() => {
+    const buscarCupons = async () => {
+      try {
+        const { data } = await clienteApi.get('/meu-gendaz/promocoes')
+        setCupons(Array.isArray(data) ? data : [])
+      } catch {
+        setCupons([])
+      }
+    }
+    buscarCupons()
+  }, [])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -102,6 +115,17 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Observações (opcional)</span>
             <textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Alguma observação..." />
           </label>
+          {cupons.length > 0 && (
+            <label>
+              <span>Cupom (opcional)</span>
+              <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
+                <option value="">Sem cupom</option>
+                {cupons.filter((cupom) => cupom.valida && !cupom.jaUsou).map((cupom) => (
+                  <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao}</option>
+                ))}
+              </select>
+            </label>
+          )}
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Cancelar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--primary" disabled={salvando}>

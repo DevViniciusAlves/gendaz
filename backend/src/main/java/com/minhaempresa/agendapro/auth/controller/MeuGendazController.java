@@ -16,6 +16,7 @@ import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsRequest;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.MeuGendazIAResponse;
 import com.minhaempresa.agendapro.insights.service.InsightsService;
+import com.minhaempresa.agendapro.meugendazpromocao.service.MeuGendazPromocaoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
@@ -65,6 +66,7 @@ public class MeuGendazController {
     private final AgendamentoService agendamentoService;
     private final ChamadoService chamadoService;
     private final InsightsService insightsService;
+    private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final UsuarioSessionService usuarioSessionService;
     private final SanitizacaoService sanitizacaoService;
 
@@ -295,9 +297,15 @@ public class MeuGendazController {
                     java.time.LocalTime.parse(body.get("hora").toString()),
                     body.get("observacoes") != null ? body.get("observacoes").toString() : null
             );
+            var servico = servicoService.buscarEntidade(agendamentoRequest.servicoId());
+            var cupomCodigo = body.get("cupomCodigo") != null ? body.get("cupomCodigo").toString() : null;
+            var promocao = meuGendazPromocaoService.validarCupom(cliente, cliente.getEmpresa(), servico, cupomCodigo);
             AgendamentoResponse response = agendamentoService.criar(agendamentoRequest);
+            meuGendazPromocaoService.registrarUso(cliente, promocao, response.id(), meuGendazPromocaoService.calcularDesconto(servico, promocao));
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos: " + e.getMessage()));
@@ -480,26 +488,46 @@ public class MeuGendazController {
 
     @GetMapping("/promocoes")
     public ResponseEntity<?> promocoes(HttpServletRequest request) {
-        findClienteFromSession(request);
-        return ResponseEntity.ok(List.of());
+        try {
+            ClienteEntity cliente = findClienteFromSession(request);
+            return ResponseEntity.ok(meuGendazPromocaoService.listarPromocoes(cliente));
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
     @GetMapping("/cupons")
     public ResponseEntity<?> cupons(HttpServletRequest request) {
-        findClienteFromSession(request);
-        return ResponseEntity.ok(List.of());
+        try {
+            ClienteEntity cliente = findClienteFromSession(request);
+            return ResponseEntity.ok(meuGendazPromocaoService.listarUsadas(cliente));
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
     @GetMapping("/notificacoes")
     public ResponseEntity<?> notificacoes(HttpServletRequest request) {
-        findClienteFromSession(request);
-        return ResponseEntity.ok(List.of());
+        try {
+            ClienteEntity cliente = findClienteFromSession(request);
+            return ResponseEntity.ok(Map.of(
+                    "totalNotificacoes", meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente).size(),
+                    "notificacoes", meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente)
+            ));
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
-    @PatchMapping("/notificacoes")
-    public ResponseEntity<?> atualizarNotificacoes(@RequestBody Map<String, Object> body, HttpServletRequest request) {
-        findClienteFromSession(request);
-        return ResponseEntity.ok(body);
+    @PatchMapping("/notificacoes/{promocaoId}/lido")
+    public ResponseEntity<?> atualizarNotificacoes(@PathVariable Long promocaoId, HttpServletRequest request) {
+        try {
+            ClienteEntity cliente = findClienteFromSession(request);
+            meuGendazPromocaoService.marcarNotificacaoComoLida(cliente, promocaoId);
+            return ResponseEntity.ok(Map.of("mensagem", "Notificacao marcada como lida."));
+        } catch (BusinessException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
+        }
     }
 
     @PatchMapping("/privacidade")
