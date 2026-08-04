@@ -188,6 +188,49 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </section>
 
+      <section className="marketing-showcase-band" aria-label="Destaque do aplicativo">
+        <div className="marketing-showcase-band-inner">
+          <div className="marketing-showcase-copy marketing-showcase-copy-left">
+            <p>Não precisa entender nada de tecnologia, é só deixar a Gendaz trabalhar para você.</p>
+          </div>
+
+          <div className="marketing-showcase-phone" aria-hidden="true">
+            <div className="marketing-showcase-phone-notch" />
+            <div className="marketing-showcase-phone-screen">
+              <div className="marketing-showcase-phone-header">
+                <span className="marketing-showcase-phone-title">Gendaz</span>
+              </div>
+              <div className="marketing-showcase-phone-panel marketing-showcase-phone-panel-action-card">
+                <strong>Iniciar atendimento</strong>
+                <small>Atalho visual para começar o próximo fluxo.</small>
+              </div>
+              <div className="marketing-showcase-phone-panel marketing-showcase-phone-panel-floating">
+                <div className="marketing-showcase-panel-row">
+                  <strong>3 de ago. de 2026</strong>
+                  <span>15:30 - 16:00</span>
+                </div>
+                <div className="marketing-showcase-panel-client">
+                  <strong>Vinicius Henrique</strong>
+                  <small>Corte social • PENDENTE</small>
+                </div>
+              </div>
+              <div className="marketing-showcase-phone-panel">
+                <strong>Todos os profissionais</strong>
+                <small>Agenda atualizada em tempo real</small>
+              </div>
+              <div className="marketing-showcase-phone-panel marketing-showcase-phone-action">
+                <strong>Iniciar atendimento</strong>
+                <small>Sem abas espalhadas, sem retrabalho</small>
+              </div>
+            </div>
+          </div>
+
+          <div className="marketing-showcase-copy marketing-showcase-copy-right">
+            <p>Gerencie sua agenda, clientes e pagamentos em um único painel inteligente. Simples, rápido e seguro.</p>
+          </div>
+        </div>
+      </section>
+
       {/* ── Planos ─────────────────────────────────────── */}
       <section id="planos" className="marketing-plans marketing-plans-sale pricing-section">
         <ScrollReveal className="plans-page-title" delay={0}>
@@ -299,7 +342,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
 
       {/* ── Footer ─────────────────────────────────────── */}
       <footer className="marketing-footer">
-        <small>gendaz · PloyDev</small>
+        <small>gendaz</small>
         <div>
           <Link to="/termos-de-uso">Termos de Uso</Link>
           <Link to="/politica-de-privacidade">Política de Privacidade</Link>

@@ -3979,6 +3979,32 @@ tbody tr:hover { background: #fffaf5; }
   box-shadow: var(--shadow);
 }
 
+.marketing-page .contact-band {
+  position: relative;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, #ffd04a 0%, #ffb12a 20%, #ff8f00 43%, #ff5e14 72%, #ff3328 100%) !important;
+  background-color: #ff8f00 !important;
+  border-color: rgba(255, 176, 42, 0.24) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+}
+
+.marketing-page .contact-band > * {
+  position: relative;
+  z-index: 1;
+}
+
+.marketing-page .contact-band .section-kicker {
+  color: rgba(0, 0, 0, 0.62) !important;
+  -webkit-text-fill-color: rgba(0, 0, 0, 0.62) !important;
+}
+
+.marketing-page .contact-band h2 {
+  color: #111111 !important;
+}
+
 .contact-band .primary-link {
   background: var(--color-primary) !important;
   color: #121212 !important;
@@ -7999,6 +8025,15 @@ tbody tr:hover { background: #fffaf5; }
   color: var(--color-primary) !important;
 }
 
+.marketing-page .section-kicker {
+  background: linear-gradient(90deg, #ffcc85 0%, #ff9b4a 42%, #ff6a00 100%) !important;
+  -webkit-background-clip: text !important;
+  background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  color: transparent !important;
+  text-shadow: 0 0 18px rgba(255, 132, 39, 0.16) !important;
+}
+
 .storytelling-head h2 {
   color: #ffffff !important;
 }
@@ -8055,6 +8090,12 @@ tbody tr:hover { background: #fffaf5; }
 
 .recommended-badge {
   color: #000000 !important;
+}
+
+.marketing-page .recommended-badge {
+  background: linear-gradient(90deg, #ffcf92 0%, #ff9c4c 45%, #ff6a00 100%) !important;
+  color: #151515 !important;
+  box-shadow: 0 10px 22px rgba(255, 126, 34, 0.20) !important;
 }
 
 .support-card h2 {
@@ -9868,8 +9909,8 @@ tbody tr:hover { background: #fffaf5; }
 
 .marketing-page .marketing-nav-gendo-shell {
   display: grid !important;
-  grid-template-columns: auto 1fr auto !important;
   align-items: center !important;
+  grid-template-columns: auto 1fr auto !important;
   column-gap: 24px !important;
   padding: 0 24px !important;
   min-height: 56px !important;
@@ -15591,6 +15632,200 @@ tbody tr:hover { background: #fffaf5; }
 .pricing-section .pricing-cta-basic:hover {
   background: #e5e7eb !important;
   color: #111827 !important;
+}
+
+.marketing-page .marketing-showcase-band {
+  position: relative;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0) 22%),
+    radial-gradient(circle at 82% 18%, rgba(255, 255, 255, 0.18) 0%, rgba(255, 255, 255, 0) 18%),
+    linear-gradient(90deg, #ff8a1f 0%, #ff7a1a 35%, #ff5b2f 68%, #ff3f62 100%);
+}
+
+.marketing-page .marketing-showcase-band-inner {
+  width: min(1240px, 100%);
+  margin: 0 auto;
+  min-height: 108px;
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(200px, 320px) minmax(280px, 1fr);
+  align-items: center;
+  gap: 18px;
+  padding: 4px 24px;
+}
+
+.marketing-page .marketing-showcase-copy {
+  color: #ffffff;
+  font-weight: 700;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+  font-size: clamp(1.1rem, 1.9vw, 1.55rem);
+}
+
+.marketing-page .marketing-showcase-copy-left {
+  max-width: 380px;
+  justify-self: end;
+  text-align: left;
+}
+
+.marketing-page .marketing-showcase-copy-right {
+  max-width: 400px;
+  justify-self: start;
+  text-align: right;
+}
+
+.marketing-page .marketing-showcase-phone {
+  position: relative;
+  justify-self: center;
+  align-self: end;
+  width: 176px;
+  aspect-ratio: 0.52;
+  height: auto;
+  border-radius: 34px;
+  background: linear-gradient(180deg, #19191c 0%, #0b0b0d 100%);
+  box-shadow:
+    0 22px 50px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  padding: 10px 8px 10px;
+  margin-bottom: -44px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+}
+
+.marketing-page .marketing-showcase-phone-notch {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 66px;
+  height: 9px;
+  border-radius: 999px;
+  background: #0a0a0c;
+}
+
+.marketing-page .marketing-showcase-phone-screen {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 10px;
+  justify-content: flex-start;
+}
+
+.marketing-page .marketing-showcase-phone-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.marketing-page .marketing-showcase-phone-title {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.marketing-page .marketing-showcase-phone-panel {
+  position: relative;
+  padding: 8px 9px;
+  border-radius: 12px;
+  background: #f6f6f7;
+  color: #111111;
+  box-shadow:
+    0 12px 24px rgba(0, 0, 0, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.marketing-page .marketing-showcase-phone-panel strong {
+  display: block;
+  font-size: 11px;
+  line-height: 1.12;
+  color: #111827;
+}
+
+.marketing-page .marketing-showcase-phone-panel small {
+  display: block;
+  margin-top: 1px;
+  color: rgba(17, 17, 17, 0.66);
+  font-size: 9px;
+  line-height: 1.14;
+}
+
+.marketing-page .marketing-showcase-phone-panel-action-card {
+  background: linear-gradient(180deg, #ffffff 0%, #f2f2f4 100%);
+}
+
+.marketing-page .marketing-showcase-phone-panel-floating {
+  transform: translateY(-2px);
+}
+
+.marketing-page .marketing-showcase-panel-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: center;
+}
+
+.marketing-page .marketing-showcase-panel-row span {
+  font-size: 9px;
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.marketing-page .marketing-showcase-panel-client {
+  margin-top: 6px;
+}
+
+.marketing-page .marketing-showcase-phone-action {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.marketing-page .marketing-showcase-phone-action strong,
+.marketing-page .marketing-showcase-phone-action small {
+  color: #ffffff;
+}
+
+.marketing-page .marketing-showcase-phone-action small {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+@media (max-width: 980px) {
+  .marketing-page .marketing-showcase-band-inner {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    padding: 10px 18px;
+    text-align: center;
+  }
+
+  .marketing-page .marketing-showcase-copy-left,
+  .marketing-page .marketing-showcase-copy-right {
+    max-width: 620px;
+    justify-self: center;
+    text-align: center;
+  }
+
+  .marketing-page .marketing-showcase-phone {
+    order: -1;
+    margin-bottom: -36px;
+  }
+}
+
+@media (max-width: 640px) {
+  .marketing-page .marketing-showcase-band-inner {
+    padding: 10px 14px;
+    gap: 14px;
+  }
+
+  .marketing-page .marketing-showcase-phone {
+    width: 164px;
+    margin-bottom: -30px;
+  }
 }
 
 
