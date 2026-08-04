@@ -19,8 +19,10 @@ public class MeuGendazPromocaoService {
     private final MeuGendazPromocaoRepository promocaoRepository;
     private final MeuGendazPromocaoUsoRepository usoRepository;
     private final MeuGendazPromocaoNotificacaoRepository notificacaoRepository;
+    private final MeuGendazPromocaoSyncService syncService;
 
     public List<PromocaoClienteResponse> listarPromocoes(ClienteEntity cliente) {
+        syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
         return promocaoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(cliente.getEmpresa().getId(), com.minhaempresa.agendapro.shared.enums.StatusCadastro.ATIVO)
                 .stream()
@@ -53,8 +55,10 @@ public class MeuGendazPromocaoService {
     }
 
     public List<PromocaoNotificacaoResponse> listarNotificacoesNaoLidas(ClienteEntity cliente) {
+        syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
         return notificacaoRepository.findByClienteIdAndLidoFalseOrderByDataEnvioDesc(cliente.getId()).stream()
+                .filter(notif -> notif.getPromocao() != null && notif.getPromocao().isValida())
                 .map(notif -> new PromocaoNotificacaoResponse(
                         notif.getPromocao().getId(),
                         notif.getPromocao().getCodigo(),
@@ -85,6 +89,7 @@ public class MeuGendazPromocaoService {
         if (cupomCodigo == null || cupomCodigo.isBlank()) {
             return null;
         }
+        syncService.sincronizarEmpresa(empresa.getId());
         MeuGendazPromocaoEntity promocao = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), cupomCodigo.trim())
                 .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
         if (!promocao.isValida()) {
@@ -136,6 +141,7 @@ public class MeuGendazPromocaoService {
     }
 
     private void garantirNotificacoes(ClienteEntity cliente) {
+        syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         List<MeuGendazPromocaoEntity> promocoesAtivas = promocaoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
                 cliente.getEmpresa().getId(),
                 com.minhaempresa.agendapro.shared.enums.StatusCadastro.ATIVO

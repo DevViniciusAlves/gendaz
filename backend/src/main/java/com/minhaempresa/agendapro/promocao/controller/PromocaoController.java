@@ -58,8 +58,8 @@ public class PromocaoController {
     @PostMapping("/{id}/notificar")
     public ResponseEntity<?> notificar(@PathVariable Long id, @RequestBody @Valid PromocaoNotificarRequest request,
                                        @RequestParam(value = "empresaId", required = false) Long empresaId) {
-        promocaoService.notificarClientes(resolverEmpresaId(empresaId), id, request);
-        return ResponseEntity.ok(Map.of("mensagem", "Notificacoes disparadas com sucesso"));
+        String mensagem = promocaoService.notificarClientes(resolverEmpresaId(empresaId), id, request);
+        return ResponseEntity.ok(Map.of("mensagem", mensagem));
     }
 
     @GetMapping("/{id}/uso")

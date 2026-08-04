@@ -14522,14 +14522,101 @@ tbody tr:hover { background: #fffaf5; }
   margin-bottom: 16px;
 }
 
+.gendaz-promocoes {
+  gap: 20px;
+}
+
+.gendaz-promocoes__alerta {
+  gap: 10px;
+}
+
+.gendaz-promocoes__tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border-radius: 18px;
+  border: 1px solid var(--gendaz-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: var(--gendaz-shadow);
+}
+
+.gendaz-promocoes__tabs button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gendaz-muted);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gendaz-promocoes__tabs button span {
+  opacity: 0.8;
+}
+
+.gendaz-promocoes__tabs button:hover {
+  color: var(--gendaz-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.gendaz-promocoes__tabs button.is-active {
+  background: #f5f5f5;
+  color: #111111;
+  box-shadow: 0 10px 28px rgba(255, 255, 255, 0.12);
+}
+
+.gendaz-promocoes__grade {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.gendaz-promocoes__painel {
+  min-height: 100%;
+}
+
+.gendaz-promocoes__painel .gendaz-vazio {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.gendaz-promocoes__item {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055) 0%, rgba(255, 255, 255, 0.03) 100%);
+}
+
+.gendaz-promocoes__meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .gendaz-desconto {
   background: rgba(255, 255, 255, 0.9);
   color: #111111;
   padding: 2px 8px;
-  border-radius: 6px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
+}
+
+.gendaz-desconto--secundario {
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--gendaz-text);
+}
+
+@media (max-width: 1080px) {
+  .gendaz-promocoes__grade {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* CONTATO */

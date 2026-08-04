@@ -32,6 +32,9 @@ public class MeuGendazPromocaoEntity {
     @JoinColumn(name = "empresa_id")
     private EmpresaEntity empresa;
 
+    @Column(name = "promocao_origem_id")
+    private Long promocaoOrigemId;
+
     @Column(nullable = false, length = 80)
     private String codigo;
 
@@ -79,7 +82,9 @@ public class MeuGendazPromocaoEntity {
 
     @PrePersist
     void prePersist() {
-        dataCriacao = LocalDateTime.now();
+        if (dataCriacao == null) {
+            dataCriacao = LocalDateTime.now();
+        }
         status = status == null ? StatusCadastro.ATIVO : status;
         quantidadeUsada = quantidadeUsada == null ? 0 : quantidadeUsada;
         aplicarTodosServicos = aplicarTodosServicos == null || aplicarTodosServicos;

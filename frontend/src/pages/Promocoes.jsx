@@ -36,6 +36,7 @@ export default function Promocoes() {
   const [filtro, setFiltro] = useState('TODOS')
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
+  const [disparando, setDisparando] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [notificarAberto, setNotificarAberto] = useState(false)
   const [usoAberto, setUsoAberto] = useState(false)
@@ -169,10 +170,27 @@ export default function Promocoes() {
   async function enviarNotificacoes(event) {
     event.preventDefault()
     if (!target) return
-    await promocoesApi.notificar(target.id, notificacao, empresaId)
-    setNotificarAberto(false)
-    setTarget(null)
-    await carregar()
+    if (disparando) return
+    setDisparando(true)
+    try {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'loading', message: 'Disparando... aguarde' },
+      }))
+      const response = await promocoesApi.notificar(target.id, notificacao, empresaId)
+      const mensagem = response?.data?.mensagem || 'Notificação enviada com sucesso.'
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'success', message: mensagem },
+      }))
+      setNotificarAberto(false)
+      setTarget(null)
+      await carregar()
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'error', message: error?.response?.data?.message || error?.response?.data?.mensagem || 'Não foi possível disparar a notificação.' },
+      }))
+    } finally {
+      setDisparando(false)
+    }
   }
 
   const clientesFiltrados = clientes.filter((cliente) => {
@@ -554,8 +572,8 @@ export default function Promocoes() {
               )}
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-                <Button type="button" variant="secondary" onClick={() => setNotificarAberto(false)}>Cancelar</Button>
-                <Button type="submit">Disparar</Button>
+                <Button type="button" variant="secondary" onClick={() => setNotificarAberto(false)} disabled={disparando}>Cancelar</Button>
+                <Button type="submit" disabled={disparando}>{disparando ? 'Disparando...' : 'Disparar'}</Button>
               </div>
             </form>
           </div>

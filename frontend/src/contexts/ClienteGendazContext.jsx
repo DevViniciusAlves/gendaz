@@ -259,6 +259,45 @@ export function ClienteGendazProvider({ children, slug }) {
     })
   }, [])
 
+  useEffect(() => {
+    if (!cliente) return undefined
+
+    let ativo = true
+    let timer = null
+
+    const atualizarBeneficios = async () => {
+      if (!ativo) return
+      try {
+        await carregarBeneficios()
+      } catch {
+        /* silencioso */
+      }
+    }
+
+    const lidarFocus = () => {
+      void atualizarBeneficios()
+    }
+
+    const lidarVisibilidade = () => {
+      if (document.visibilityState === 'visible') {
+        void atualizarBeneficios()
+      }
+    }
+
+    window.addEventListener('focus', lidarFocus)
+    document.addEventListener('visibilitychange', lidarVisibilidade)
+    timer = setInterval(() => {
+      void atualizarBeneficios()
+    }, 60 * 1000)
+
+    return () => {
+      ativo = false
+      if (timer) clearInterval(timer)
+      window.removeEventListener('focus', lidarFocus)
+      document.removeEventListener('visibilitychange', lidarVisibilidade)
+    }
+  }, [cliente, carregarBeneficios])
+
   const criarAgendamento = useCallback(async (dados) => {
     const { data } = await clienteApi.post('/meu-gendaz/agendamentos/criar', dados)
     const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
@@ -297,9 +336,11 @@ export function ClienteGendazProvider({ children, slug }) {
   }, [])
 
   const usarCupom = useCallback(async (cupomCodigo) => {
-    await carregarBeneficios()
-    return { mensagem: 'Cupom registrado.' }
-  }, [carregarBeneficios])
+    if (typeof window !== 'undefined' && slug && cupomCodigo) {
+      window.location.href = `/meu-gendaz/${slug}/agenda?cupom=${encodeURIComponent(cupomCodigo)}`
+    }
+    return { mensagem: 'Cupom selecionado.' }
+  }, [slug])
 
   const marcarPromocaoLida = useCallback(async (promocaoId) => {
     await meuGendazPromocoesApi.marcarLida(promocaoId)

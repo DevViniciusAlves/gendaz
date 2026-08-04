@@ -11,6 +11,7 @@ import com.minhaempresa.agendapro.promocao.dto.PromocaoDtos.*;
 import com.minhaempresa.agendapro.promocao.entity.*;
 import com.minhaempresa.agendapro.promocao.enums.TipoPromocao;
 import com.minhaempresa.agendapro.promocao.repository.*;
+import com.minhaempresa.agendapro.meugendazpromocao.service.MeuGendazPromocaoSyncService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
@@ -39,6 +40,7 @@ public class PromocaoService {
     private final ServicoRepository servicoRepository;
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
+    private final MeuGendazPromocaoSyncService meuGendazPromocaoSyncService;
 
     @Transactional(readOnly = true)
     public List<PromocaoResponse> listar(Long empresaId) {
@@ -71,7 +73,9 @@ public class PromocaoService {
             promocao.setServicos(carregarServicos(empresaId, request.servicoIds()));
         }
 
-        return toResponse(promocaoRepository.save(promocao));
+        PromocaoResponse response = toResponse(promocaoRepository.save(promocao));
+        meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, response.id());
+        return response;
     }
 
     @Transactional
@@ -90,7 +94,9 @@ public class PromocaoService {
         promocao.setQuantidadeLimite(request.quantidadeLimite());
         promocao.setAplicarTodosServicos(Boolean.TRUE.equals(request.aplicarTodosServicos()));
         promocao.setServicos(promocao.getAplicarTodosServicos() ? new HashSet<>() : carregarServicos(empresaId, request.servicoIds()));
-        return toResponse(promocaoRepository.save(promocao));
+        PromocaoResponse response = toResponse(promocaoRepository.save(promocao));
+        meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, response.id());
+        return response;
     }
 
     @Transactional
@@ -98,6 +104,7 @@ public class PromocaoService {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         promocao.setStatus(StatusCadastro.INATIVO);
         promocaoRepository.save(promocao);
+        meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
     }
 
     @Transactional
@@ -105,6 +112,7 @@ public class PromocaoService {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         promocao.setStatus(StatusCadastro.ATIVO);
         promocaoRepository.save(promocao);
+        meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
     }
 
     @Transactional
@@ -113,6 +121,7 @@ public class PromocaoService {
         promocaoUsoRepository.deleteAll(promocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(id));
         promocaoNotificacaoRepository.deleteAll(promocaoNotificacaoRepository.findByPromocaoIdOrderByIdDesc(id));
         promocaoRepository.delete(promocao);
+        meuGendazPromocaoSyncService.inativarPromocao(empresaId, id);
         log.info("[promocao] promocao {} excluida da empresa {}", id, empresaId);
     }
 
@@ -147,9 +156,19 @@ public class PromocaoService {
     }
 
     @Transactional
-    public void notificarClientes(Long empresaId, Long id, PromocaoNotificarRequest request) {
+    public String notificarClientes(Long empresaId, Long id, PromocaoNotificarRequest request) {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         List<ClienteEntity> clientes = selecionarClientes(empresaId, request.tipo(), request.clienteIds());
+        String tipoNormalizado = request.tipo() == null ? "" : request.tipo().trim().toUpperCase();
+
+        if (clientes.isEmpty()) {
+            throw new BusinessException(switch (tipoNormalizado) {
+                case "TODOS" -> "Nao ha clientes cadastrados para receber esta promocao.";
+                case "EM_RISCO" -> "Nao ha clientes em risco para receber esta promocao.";
+                case "MANUAL" -> "Nenhum cliente foi selecionado para receber esta promocao.";
+                default -> "Nao foi possivel localizar clientes para esta promocao.";
+            });
+        }
 
         for (ClienteEntity cliente : clientes) {
             PromocaoNotificacaoEntity notificacao = PromocaoNotificacaoEntity.builder()
@@ -163,6 +182,21 @@ public class PromocaoService {
 
         promocao.setDataNotificacao(LocalDateTime.now());
         promocaoRepository.save(promocao);
+        meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
+        return switch (tipoNormalizado) {
+            case "TODOS" -> clientes.size() == 1
+                    ? "Email enviado para 1 cliente."
+                    : "Email enviado para todos os clientes.";
+            case "EM_RISCO" -> clientes.size() == 1
+                    ? "Email enviado para 1 cliente em risco."
+                    : "Email enviado para os clientes em risco.";
+            case "MANUAL" -> clientes.size() == 1
+                    ? "Email enviado para 1 cliente selecionado."
+                    : "Email enviado para os clientes selecionados.";
+            default -> clientes.size() == 1
+                    ? "Notificacao enviada para 1 cliente."
+                    : "Notificacao enviada com sucesso.";
+        };
     }
 
     @Transactional(readOnly = true)
@@ -183,6 +217,10 @@ public class PromocaoService {
         try {
             PromocaoEntity promocao = notificacao.getPromocao();
             ClienteEntity cliente = notificacao.getCliente();
+            EmpresaEntity empresa = promocao.getEmpresa();
+            String nomeEmpresa = empresa != null && empresa.getNome() != null && !empresa.getNome().isBlank()
+                    ? empresa.getNome().trim()
+                    : "A empresa";
             String desconto = promocao.getTipo() == TipoPromocao.PERCENTUAL
                     ? promocao.getValor() + "%"
                     : "R$ " + promocao.getValor();
@@ -193,7 +231,7 @@ public class PromocaoService {
                       <body style="font-family:Arial,Helvetica,sans-serif; color:#111111; background:#f4f4f5; padding:24px;">
                         <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:16px; padding:28px;">
                           <h1 style="margin:0 0 12px;">%s</h1>
-                          <p style="margin:0 0 16px;">Olá %s, temos uma promoção para você.</p>
+                          <p style="margin:0 0 16px;">Olá %s! %s preparou um cupom novo para você. Aproveite antes que acabe.</p>
                           <p style="margin:0 0 8px;"><strong>Cupom:</strong> %s</p>
                           <p style="margin:0 0 8px;"><strong>Desconto:</strong> %s</p>
                           <p style="margin:0 0 8px;"><strong>Válido até:</strong> %s</p>
@@ -203,6 +241,7 @@ public class PromocaoService {
                     """.formatted(
                     promocao.getDescricao(),
                     cliente.getNome(),
+                    nomeEmpresa,
                     promocao.getCodigo(),
                     desconto,
                     promocao.getDataFim().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))

@@ -28,9 +28,9 @@ export default function Beneficios() {
     carregar()
   }, [carregarBeneficios])
 
-  async function handleUsarCupom(cupomId) {
+  async function handleUsarCupom(cupomCodigo) {
     try {
-      await usarCupom(cupomId)
+      await usarCupom(cupomCodigo)
     } catch (err) {
       alert(err.response?.data?.mensagem || err.message || 'Erro ao usar cupom.')
     }
@@ -110,7 +110,7 @@ export default function Beneficios() {
                       {copiado === item.codigo ? 'Copiado!' : 'Copiar'}
                     </button>
                     {item.ativo && (
-                      <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" onClick={() => handleUsarCupom(item.id)}>
+                      <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" onClick={() => handleUsarCupom(item.codigo)}>
                         Usar agora
                       </button>
                     )}

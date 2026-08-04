@@ -1,10 +1,12 @@
 import { useContext, useState, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { CalendarPlus, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
 
 function NovoAgendamentoModal({ onFechar, onCriar }) {
   const { servicos, profissionais } = useContext(ClienteGendazContext)
+  const location = useLocation()
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [horarios, setHorarios] = useState([])
   const hoje = new Date()
@@ -48,6 +50,13 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
     }
     buscarCupons()
   }, [])
+
+  useEffect(() => {
+    const cupomQuery = new URLSearchParams(location.search).get('cupom')
+    if (cupomQuery) {
+      setForm((prev) => ({ ...prev, cupomCodigo: cupomQuery }))
+    }
+  }, [location.search])
 
   async function handleSubmit(e) {
     e.preventDefault()

@@ -46,6 +46,15 @@ public class ClienteEmailBloqueadoService {
         }
     }
 
+    @Transactional
+    public void desbloquear(Long empresaId, String email) {
+        String normalizado = normalizar(email);
+        if (empresaId == null || normalizado.isBlank()) {
+            return;
+        }
+        repository.deleteByEmpresaIdAndEmailIgnoreCase(empresaId, normalizado);
+    }
+
     private String normalizar(String email) {
         return email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
     }

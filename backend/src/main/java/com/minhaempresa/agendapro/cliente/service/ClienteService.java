@@ -75,6 +75,7 @@ public class ClienteService {
                     .empresa(empresa)
                     .build();
             ClienteEntity salvo = clienteRepository.save(cliente);
+            clienteEmailBloqueadoService.desbloquear(empresa.getId(), salvo.getEmail());
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("clienteId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
@@ -132,6 +133,7 @@ public class ClienteService {
         cliente.setEmail(email);
         cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
         ClienteEntity salvo = clienteRepository.save(cliente);
+        clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
         auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", salvo.getNome(), null, null);
         return mapper.toResponse(salvo);
     }
