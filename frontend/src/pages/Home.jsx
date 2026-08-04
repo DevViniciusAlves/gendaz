@@ -1,4 +1,4 @@
-﻿import {
+import {
   ArrowRight,
   CalendarCheck,
   Check,
@@ -147,9 +147,8 @@ export default function Home() {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="hero-new-title"
           >
-            Organize sua agenda com uma Assistente de IA em um só{' '}
-            <span className="hero-new-gradient">PAINEL</span>
-            <span className="hero-new-gradient hero-new-dot">.</span>
+            <span className="hero-line">Foque no <span className="hero-accent">seu atendimento</span> e deixe os</span>
+            <span className="hero-line">agendamentos com <span className="hero-accent">a Gendaz.</span></span>
           </motion.h1>
 
           <motion.div
@@ -161,8 +160,8 @@ export default function Home() {
             <span className="hero-sequence-item">Cliente</span>
             <span className="hero-sequence-arrow">→</span>
             <span className="hero-sequence-item">Agenda</span>
-            <span className="hero-sequence-arrow">→</span>
-            <span className="hero-sequence-finale">O resto é com a Gendaz</span>
+            <span className="hero-sequence-arrow hero-accent">→</span>
+            <span className="hero-sequence-finale hero-accent">O resto é com a Gendaz</span>
           </motion.div>
 
           <motion.div
@@ -208,7 +207,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
       <section className="marketing-segments" aria-label="Segmentos de crescimento">
         <div className="marketing-segments-head">
           <div>
-            <h2>Segmentos que crescem com a Gendaz.</h2>
+            <h2>Segmentos que crescem ao lado da Gendaz.</h2>
           </div>
           <div className="marketing-segments-arrows" aria-hidden="true">
             <button type="button" className="marketing-segments-arrow" onClick={() => handleSegmentMove(-1)} aria-label="Anterior">‹</button>
@@ -295,7 +294,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
               <div className="plan-card-body pricing-card-body">
                   <div className="plan-head">
                     <div>
-                      <h2>{plano.nome}</h2>
+                      <h2 style={{ color: '#ffa95e' }}>{plano.nome}</h2>
                       <p className="plan-subtitle">{plano.subtitulo}</p>
                     </div>
                   {plano.destaque && <ShieldCheck size={20} />}

@@ -267,9 +267,9 @@ export default function Planos() {
           <ScrollReveal className={plano.destaque ? 'plan-card highlight plan-card-sale' : 'plan-card plan-card-sale'} delay={index * 100} key={plano.nome}>
             {plano.destaque && <span className="recommended-badge">Mais recomendado</span>}
             <div className="plan-card-body">
-              <div className="plan-head">
-                <div>
-                  <h2>{plano.nome}</h2>
+                <div className="plan-head">
+                  <div>
+                  <h2 style={{ color: '#ffa95e' }}>{plano.nome}</h2>
                   <p className="plan-subtitle">{plano.subtitulo}</p>
                 </div>
                 {plano.destaque && <ShieldCheck size={20} />}
