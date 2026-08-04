@@ -499,7 +499,7 @@ button { cursor: pointer; }
 }
 
 .user-menu__chevron {
-  color: #ff5e29;
+  color: #fff;
 }
 
 .user-menu small { display: block; color: var(--muted); }
