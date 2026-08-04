@@ -29,7 +29,7 @@ export default function Sidebar() {
       <div className="sidebar-logo-wrapper">
         <img src={logoSidebar} alt="gendaz" className="sidebar-logo" />
       </div>
-      <span className="nav-label">Navegação</span>
+      <span className="nav-label nav-label--accent">Navegação</span>
       <nav>
         {visibleItems.map(({ to, key, label, icon: Icon }) => (
           <NavLink

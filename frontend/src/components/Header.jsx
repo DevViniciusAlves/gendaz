@@ -75,11 +75,11 @@ export default function Header() {
         <div className="topbar-menu" ref={accountRef}>
           <button className="user-menu" onClick={alternarConta} aria-label="Abrir menu da conta">
             <span>{usuario?.nome?.slice(0, 2).toUpperCase()}</span>
-            <div>
+            <div className="user-menu__text">
               <strong>{usuario?.nome}</strong>
               <small>{usuario?.perfil}</small>
             </div>
-            <ChevronDown size={16} />
+            <ChevronDown size={16} className="user-menu__chevron" />
           </button>
           {accountOpen && (
             <div className="dropdown-panel account-panel">

@@ -263,7 +263,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
                       <em>Plano Pro</em>
                     </div>
                     <div className="marketing-showcase-dashboard-hero">
-                      <small>Terça-feira, 04 de agosto</small>
+                      <small className="marketing-showcase-dashboard-date">Terça-feira, 04 de agosto</small>
                       <strong>Olá, Vinicius Henrique.</strong>
                     </div>
                     <div className="marketing-showcase-dashboard-metrics">
@@ -320,10 +320,10 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
               <div className="plan-card-body pricing-card-body">
                   <div className="plan-head">
                     <div>
-                      <h2 style={{ color: '#ffa95e' }}>{plano.nome}</h2>
+                      <h2 style={{ color: '#ff5e29' }}>{plano.nome}</h2>
                       <p className="plan-subtitle">{plano.subtitulo}</p>
                     </div>
-                  {plano.destaque && <ShieldCheck size={20} />}
+                  {plano.destaque && <ShieldCheck size={20} className="plan-head-icon" />}
                 </div>
 
                 <div className="plan-price-block">

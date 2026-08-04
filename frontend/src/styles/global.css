@@ -321,6 +321,10 @@ button { cursor: pointer; }
   color: rgba(255, 255, 255, 0.82);
 }
 
+.sidebar .nav-label--accent {
+  color: #ff5e29;
+}
+
 .sidebar a {
   display: flex;
   align-items: center;
@@ -489,6 +493,15 @@ button { cursor: pointer; }
   color: #fff;
   font-weight: 900;
 }
+
+.user-menu__text strong {
+  color: #ff5e29;
+}
+
+.user-menu__chevron {
+  color: #ff5e29;
+}
+
 .user-menu small { display: block; color: var(--muted); }
 
 .dropdown-panel {
@@ -9526,7 +9539,11 @@ tbody tr:hover { background: #fffaf5; }
 .pricing-section .pricing-card .plan-head h2 {
   font-size: 26px !important;
   line-height: 1.04 !important;
-  color: #ffa95e !important;
+  color: #ff5e29 !important;
+}
+
+.pricing-section .pricing-card .plan-head .plan-head-icon {
+  color: #ff5e29 !important;
 }
 
 .pricing-section .pricing-card .plan-subtitle,
@@ -16602,6 +16619,10 @@ tbody tr:hover { background: #fffaf5; }
   color: rgba(255, 255, 255, 0.52);
   font-size: 4px;
   font-style: normal;
+}
+
+.marketing-page .marketing-showcase-dashboard-date {
+  color: #ff5e29;
 }
 
 .marketing-page .marketing-showcase-dashboard-top strong {
