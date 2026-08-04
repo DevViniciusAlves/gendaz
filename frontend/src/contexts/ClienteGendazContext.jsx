@@ -246,6 +246,19 @@ export function ClienteGendazProvider({ children, slug }) {
     }
   }, [cliente])
 
+  const carregarBeneficios = useCallback(async () => {
+    const [promosRes, cuponsRes, notifRes] = await Promise.allSettled([
+      meuGendazPromocoesApi.listar(),
+      meuGendazPromocoesApi.usados(),
+      meuGendazPromocoesApi.notificacoes(),
+    ])
+    setBeneficios({
+      promocoes: promosRes.status === 'fulfilled' ? promosRes.value : [],
+      cupons: cuponsRes.status === 'fulfilled' ? cuponsRes.value : [],
+      notificacoes: notifRes.status === 'fulfilled' ? (notifRes.value?.notificacoes || []) : [],
+    })
+  }, [])
+
   const criarAgendamento = useCallback(async (dados) => {
     const { data } = await clienteApi.post('/meu-gendaz/agendamentos/criar', dados)
     const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
@@ -281,19 +294,6 @@ export function ClienteGendazProvider({ children, slug }) {
       params: { servicoId, profissionalId, data },
     })
     return horarios
-  }, [])
-
-  const carregarBeneficios = useCallback(async () => {
-    const [promosRes, cuponsRes, notifRes] = await Promise.allSettled([
-      meuGendazPromocoesApi.listar(),
-      meuGendazPromocoesApi.usados(),
-      meuGendazPromocoesApi.notificacoes(),
-    ])
-    setBeneficios({
-      promocoes: promosRes.status === 'fulfilled' ? promosRes.value : [],
-      cupons: cuponsRes.status === 'fulfilled' ? cuponsRes.value : [],
-      notificacoes: notifRes.status === 'fulfilled' ? (notifRes.value?.notificacoes || []) : [],
-    })
   }, [])
 
   const usarCupom = useCallback(async (cupomCodigo) => {

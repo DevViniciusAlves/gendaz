@@ -41,6 +41,13 @@ public class PromocaoController {
         return ResponseEntity.ok(Map.of("mensagem", "Promocao desativada"));
     }
 
+    @PatchMapping("/{id}/ativar")
+    public ResponseEntity<?> ativar(@PathVariable Long id,
+                                    @RequestParam(value = "empresaId", required = false) Long empresaId) {
+        promocaoService.ativar(resolverEmpresaId(empresaId), id);
+        return ResponseEntity.ok(Map.of("mensagem", "Promocao ativada"));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<?> excluir(@PathVariable Long id,
                                      @RequestParam(value = "empresaId", required = false) Long empresaId) {

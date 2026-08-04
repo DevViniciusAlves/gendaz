@@ -142,6 +142,11 @@ export default function Promocoes() {
     await carregar()
   }
 
+  async function ativar(id) {
+    await promocoesApi.ativar(id, empresaId)
+    await carregar()
+  }
+
   async function excluirConfirmado() {
     if (!modalExcluir) return
     await promocoesApi.excluir(modalExcluir.id, empresaId)
@@ -158,7 +163,6 @@ export default function Promocoes() {
   async function abrirNotificar(cupom) {
     setTarget(cupom)
     setNotificacao({ tipo: 'TODOS', clienteIds: [] })
-    setTermoCliente('')
     setNotificarAberto(true)
   }
 
@@ -251,8 +255,12 @@ export default function Promocoes() {
                       <button type="button" className="btn-secondary" onClick={() => abrirNotificar(cupom)}><Megaphone size={14} /> Notificar</button>
                       <button type="button" className="btn-secondary" onClick={() => abrirResumo(cupom)}><Eye size={14} /> Ver uso</button>
                       <button type="button" className="btn-secondary" onClick={() => navigator.clipboard.writeText(cupom.codigo)}><Copy size={14} /> Copiar</button>
-                      <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)}>Desativar</button>
-                      <button type="button" className="btn-danger" onClick={() => setModalExcluir(cupom)}><Trash2 size={14} /> Excluir</button>
+                      {cupom.status === 'ATIVO' ? (
+                        <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)}>Desativar</button>
+                      ) : (
+                        <button type="button" className="btn-secondary" onClick={() => ativar(cupom.id)}>Ativar</button>
+                      )}
+                      <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)}><Trash2 size={14} /> Excluir</button>
                     </div>
                   </td>
                 </tr>
@@ -289,35 +297,60 @@ export default function Promocoes() {
               <div className="form-section">
                 <label className="section-title">Aplicar cupom em</label>
 
-                <div className="radio-group">
-                  <input
-                    id="servicos-todos"
-                    type="radio"
-                    name="servicos"
-                    checked={form.aplicarTodosServicos}
-                    onChange={() => {
-                      setForm((c) => ({ ...c, aplicarTodosServicos: true }))
-                      setServicosSelecionados(new Set())
-                    }}
-                  />
-                  <label htmlFor="servicos-todos">
-                    <span className="radio-label">Todos os serviços</span>
-                    <small>Cupom válido em qualquer serviço</small>
-                  </label>
-                </div>
-
-                <div className="radio-group">
-                  <input
-                    id="servicos-especificos"
-                    type="radio"
-                    name="servicos"
-                    checked={!form.aplicarTodosServicos}
-                    onChange={() => setForm((c) => ({ ...c, aplicarTodosServicos: false }))}
-                  />
-                  <label htmlFor="servicos-especificos">
-                    <span className="radio-label">Serviços específicos</span>
-                    <small>Cupom válido apenas nestes serviços</small>
-                  </label>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {[
+                    {
+                      id: 'servicos-todos',
+                      checked: form.aplicarTodosServicos,
+                      onChange: () => {
+                        setForm((c) => ({ ...c, aplicarTodosServicos: true }))
+                        setServicosSelecionados(new Set())
+                      },
+                      titulo: 'Todos os serviços',
+                      detalhe: 'Cupom válido em qualquer serviço',
+                    },
+                    {
+                      id: 'servicos-especificos',
+                      checked: !form.aplicarTodosServicos,
+                      onChange: () => setForm((c) => ({ ...c, aplicarTodosServicos: false })),
+                      titulo: 'Serviços específicos',
+                      detalhe: 'Cupom válido apenas nestes serviços',
+                    },
+                  ].map((item) => (
+                    <label
+                      key={item.id}
+                      htmlFor={item.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        minHeight: 46,
+                        padding: '8px 10px',
+                        border: '1px solid rgba(255, 255, 255, 0.10)',
+                        borderRadius: 12,
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        id={item.id}
+                        type="radio"
+                        name="servicos"
+                        checked={item.checked}
+                        onChange={item.onChange}
+                        style={{
+                          width: 14,
+                          height: 14,
+                          margin: 0,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
+                        <span className="radio-label" style={{ lineHeight: 1.1 }}>{item.titulo}</span>
+                        <small style={{ lineHeight: 1.1 }}>{item.detalhe}</small>
+                      </span>
+                    </label>
+                  ))}
                 </div>
 
                 {!form.aplicarTodosServicos && (
@@ -329,9 +362,29 @@ export default function Promocoes() {
                       <Search size={16} />
                       <input value={termoServico} onChange={(e) => setTermoServico(e.target.value)} placeholder="Filtrar serviço" />
                     </div>
-                    <div style={{ display: 'grid', gap: 8, maxHeight: 250, overflowY: 'auto' }}>
+                    <div
+                      style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                        gap: 8,
+                        maxHeight: 220,
+                        overflowY: 'auto',
+                        paddingRight: 4,
+                      }}
+                    >
                       {servicosFiltrados.map((servico) => (
-                        <label key={servico.id} className="cliente-item" style={{ margin: 0 }}>
+                        <label
+                          key={servico.id}
+                          className="cliente-item"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 10,
+                            minHeight: 48,
+                            margin: 0,
+                            padding: '8px 10px',
+                          }}
+                        >
                           <input
                             type="checkbox"
                             checked={servicosSelecionados.has(servico.id)}
@@ -341,10 +394,16 @@ export default function Promocoes() {
                               else next.delete(servico.id)
                               setServicosSelecionados(next)
                             }}
+                            style={{
+                              width: 14,
+                              height: 14,
+                              margin: 0,
+                              flexShrink: 0,
+                            }}
                           />
-                          <span style={{ display: 'grid', gap: 2 }}>
-                            <strong>{servico.nome}</strong>
-                            <small>{servico.descricao || 'Sem descrição'}</small>
+                          <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
+                            <strong style={{ fontSize: 13, lineHeight: 1.1 }}>{servico.nome}</strong>
+                            <small style={{ lineHeight: 1.1 }}>{servico.descricao || 'Sem descrição'}</small>
                           </span>
                         </label>
                       ))}
@@ -368,7 +427,7 @@ export default function Promocoes() {
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>Notificar clientes</h2>
-                <p>Escolha a segmentação para disparar a promoção.</p>
+                <p>O disparo será enviado para todos os clientes carregados.</p>
               </div>
               <button type="button" className="icon-btn" onClick={() => setNotificarAberto(false)} aria-label="Fechar">
                 <X size={18} />
@@ -379,46 +438,61 @@ export default function Promocoes() {
               <div className="form-section">
                 <label className="section-title">Segmentação</label>
 
-                <div className="radio-group">
-                  <input
-                    id="notif-todos"
-                    type="radio"
-                    name="segmentacao"
-                    checked={notificacao.tipo === 'TODOS'}
-                    onChange={() => setNotificacao((c) => ({ ...c, tipo: 'TODOS', clienteIds: [] }))}
-                  />
-                  <label htmlFor="notif-todos">
-                    <span className="radio-label">Todos os clientes</span>
-                    <small>{clientes.length} clientes carregados</small>
-                  </label>
-                </div>
-
-                <div className="radio-group">
-                  <input
-                    id="notif-risco"
-                    type="radio"
-                    name="segmentacao"
-                    checked={notificacao.tipo === 'EM_RISCO'}
-                    onChange={() => setNotificacao((c) => ({ ...c, tipo: 'EM_RISCO', clienteIds: [] }))}
-                  />
-                  <label htmlFor="notif-risco">
-                    <span className="radio-label">Clientes em risco</span>
-                    <small>Segmentação do CRM</small>
-                  </label>
-                </div>
-
-                <div className="radio-group">
-                  <input
-                    id="notif-manual"
-                    type="radio"
-                    name="segmentacao"
-                    checked={notificacao.tipo === 'MANUAL'}
-                    onChange={() => setNotificacao((c) => ({ ...c, tipo: 'MANUAL' }))}
-                  />
-                  <label htmlFor="notif-manual">
-                    <span className="radio-label">Seleção manual</span>
-                    <small>Escolha clientes específicos</small>
-                  </label>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {[
+                    {
+                      id: 'notif-todos',
+                      tipo: 'TODOS',
+                      titulo: 'Todos os clientes',
+                      detalhe: `${clientes.length} clientes carregados`,
+                    },
+                    {
+                      id: 'notif-risco',
+                      tipo: 'EM_RISCO',
+                      titulo: 'Clientes em risco',
+                      detalhe: 'Segmentação do CRM',
+                    },
+                    {
+                      id: 'notif-manual',
+                      tipo: 'MANUAL',
+                      titulo: 'Seleção manual',
+                      detalhe: 'Escolha clientes específicos',
+                    },
+                  ].map((item) => (
+                    <label
+                      key={item.id}
+                      htmlFor={item.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        minHeight: 46,
+                        padding: '8px 10px',
+                        border: '1px solid rgba(255, 255, 255, 0.10)',
+                        borderRadius: 12,
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <input
+                        id={item.id}
+                        type="radio"
+                        name="segmentacao"
+                        checked={notificacao.tipo === item.tipo}
+                        onChange={() => setNotificacao((c) => ({ ...c, tipo: item.tipo, clienteIds: [] }))}
+                        style={{
+                          width: 14,
+                          height: 14,
+                          margin: 0,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
+                        <span className="radio-label" style={{ lineHeight: 1.1 }}>{item.titulo}</span>
+                        <small style={{ lineHeight: 1.1 }}>{item.detalhe}</small>
+                      </span>
+                    </label>
+                  ))}
                 </div>
               </div>
 
@@ -429,33 +503,52 @@ export default function Promocoes() {
                     <Search size={16} />
                     <input value={termoCliente} onChange={(e) => setTermoCliente(e.target.value)} placeholder="Filtrar cliente" />
                   </div>
-                  <div className="clientes-lista">
-                    {clientes
-                      .filter((cliente) => {
-                        const termo = termoCliente.toLowerCase()
-                        if (!termo) return true
-                        return String(cliente.nome || '').toLowerCase().includes(termo)
-                          || String(cliente.email || '').toLowerCase().includes(termo)
-                          || String(cliente.telefone || '').toLowerCase().includes(termo)
-                      })
-                      .map((cliente) => (
-                        <label key={cliente.id} className="cliente-item">
-                          <input
-                            type="checkbox"
-                            checked={notificacao.clienteIds.includes(cliente.id)}
-                            onChange={(e) => {
-                              const next = new Set(notificacao.clienteIds)
-                              if (e.target.checked) next.add(cliente.id)
-                              else next.delete(cliente.id)
-                              setNotificacao((c) => ({ ...c, clienteIds: Array.from(next) }))
-                            }}
-                          />
-                          <span style={{ display: 'grid', gap: 2 }}>
-                            <strong>{cliente.nome}</strong>
-                            <small>{cliente.email || cliente.telefone || 'Sem contato'}</small>
-                          </span>
-                        </label>
-                      ))}
+                  <div
+                    className="clientes-lista"
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                      gap: 8,
+                      maxHeight: 220,
+                      overflowY: 'auto',
+                      paddingRight: 4,
+                    }}
+                  >
+                    {clientesFiltrados.map((cliente) => (
+                      <label
+                        key={cliente.id}
+                        className="cliente-item"
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 10,
+                          minHeight: 48,
+                          margin: 0,
+                          padding: '8px 10px',
+                        }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={notificacao.clienteIds.includes(cliente.id)}
+                          onChange={(e) => {
+                            const next = new Set(notificacao.clienteIds)
+                            if (e.target.checked) next.add(cliente.id)
+                            else next.delete(cliente.id)
+                            setNotificacao((c) => ({ ...c, clienteIds: Array.from(next) }))
+                          }}
+                          style={{
+                            width: 14,
+                            height: 14,
+                            margin: 0,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
+                          <strong style={{ fontSize: 13, lineHeight: 1.1 }}>{cliente.nome}</strong>
+                          <small style={{ lineHeight: 1.1 }}>{cliente.email || cliente.telefone || 'Sem contato'}</small>
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 </div>
               )}

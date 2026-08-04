@@ -101,6 +101,13 @@ public class PromocaoService {
     }
 
     @Transactional
+    public void ativar(Long empresaId, Long id) {
+        PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
+        promocao.setStatus(StatusCadastro.ATIVO);
+        promocaoRepository.save(promocao);
+    }
+
+    @Transactional
     public void excluir(Long empresaId, Long id) {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         promocaoUsoRepository.deleteAll(promocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(id));
