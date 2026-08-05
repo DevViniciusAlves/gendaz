@@ -157,7 +157,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
   }
 
   return (
-    <section className="panel insights-chat">
+    <section className="insights-chat">
       <div className="insights-chat__head">
         <h3>Chat IA - Insights</h3>
         <p>Pergunte sobre seu negócio</p>
