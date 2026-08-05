@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -21,6 +22,7 @@ public class MeuGendazPromocaoService {
     private final MeuGendazPromocaoNotificacaoRepository notificacaoRepository;
     private final MeuGendazPromocaoSyncService syncService;
 
+    @Transactional(readOnly = true)
     public List<PromocaoClienteResponse> listarPromocoes(ClienteEntity cliente) {
         syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
@@ -42,6 +44,7 @@ public class MeuGendazPromocaoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<PromocaoUsadaResponse> listarUsadas(ClienteEntity cliente) {
         return usoRepository.findByClienteIdOrderByDataUsoDesc(cliente.getId()).stream()
                 .map(uso -> new PromocaoUsadaResponse(
@@ -54,6 +57,7 @@ public class MeuGendazPromocaoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<PromocaoNotificacaoResponse> listarNotificacoesNaoLidas(ClienteEntity cliente) {
         syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
