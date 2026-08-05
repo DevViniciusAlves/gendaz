@@ -18,6 +18,25 @@ export function ClienteGendazProvider({ children, slug }) {
   const [profissionais, setProfissionais] = useState([])
   const sincronizandoRef = useRef(null)
 
+  function sessionTokenKey() {
+    return `meu_gendaz_session_token_${String(slug || '').trim().toLowerCase()}`
+  }
+
+  function lerTokenSessao() {
+    if (typeof window === 'undefined' || !window.sessionStorage) return ''
+    return window.sessionStorage.getItem(sessionTokenKey()) || ''
+  }
+
+  function salvarTokenSessao(token) {
+    if (typeof window === 'undefined' || !window.sessionStorage) return
+    const key = sessionTokenKey()
+    if (!token) {
+      window.sessionStorage.removeItem(key)
+      return
+    }
+    window.sessionStorage.setItem(key, token)
+  }
+
   const limparEstadoSessao = useCallback(() => {
     setCliente(null)
     setPerfilPendente(false)
@@ -28,6 +47,7 @@ export function ClienteGendazProvider({ children, slug }) {
     setConfiguracoes(null)
     setServicos([])
     setProfissionais([])
+    salvarTokenSessao('')
   }, [slug])
 
   const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
@@ -40,7 +60,16 @@ export function ClienteGendazProvider({ children, slug }) {
       setCarregando(true)
       setErro(null)
 
-      const perfilRes = await clienteApi.get('/meu-gendaz/perfil', { skipMeuGendazLogout: !exigirSessao })
+      const headers = {}
+      const tokenSessao = lerTokenSessao()
+      if (tokenSessao) {
+        headers['X-Session-Token'] = tokenSessao
+      }
+
+      const perfilRes = await clienteApi.get('/meu-gendaz/perfil', {
+        skipMeuGendazLogout: !exigirSessao,
+        headers,
+      })
 
       if (perfilRes?.data?.cadastroPendente) {
         setPerfilPendente(true)
@@ -66,10 +95,10 @@ export function ClienteGendazProvider({ children, slug }) {
       })
 
       const [dashboardRes, agendamentosRes, servRes, profRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao }),
-        clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao }),
-        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao }),
-        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao, headers }),
+        clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao, headers }),
+        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao, headers }),
+        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao, headers }),
       ])
 
       const respostas = [dashboardRes, agendamentosRes, servRes, profRes]
@@ -101,6 +130,10 @@ export function ClienteGendazProvider({ children, slug }) {
 
       if (profRes.status === 'fulfilled') {
         setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
+      }
+
+      if (tokenSessao) {
+        salvarTokenSessao(tokenSessao)
       }
 
       await carregarBeneficios()

@@ -18,6 +18,7 @@ public final class AgendamentoDtos {
             @NotNull Long empresaId,
             @NotNull LocalDate data,
             @NotNull LocalTime horaInicio,
+            String cupomCodigo,
             @Size(max = 300)
             String observacoes
     ) {}

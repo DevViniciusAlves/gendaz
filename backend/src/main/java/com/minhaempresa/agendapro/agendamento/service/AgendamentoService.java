@@ -16,6 +16,7 @@ import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.service.EmpresaService;
 import com.minhaempresa.agendapro.horarioatendimento.entity.HorarioAtendimentoEntity;
 import com.minhaempresa.agendapro.horarioatendimento.service.HorarioAtendimentoService;
+import com.minhaempresa.agendapro.meugendazpromocao.service.MeuGendazPromocaoService;
 import com.minhaempresa.agendapro.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.agendapro.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
@@ -59,6 +60,7 @@ public class AgendamentoService {
     private final AgendaBlockedDayService agendaBlockedDayService;
     private final SanitizacaoService sanitizacaoService;
     private final ResendEmailService resendEmailService;
+    private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final AgendamentoMapper mapper = new AgendamentoMapper();
 
     @Value("${app.timezone:America/Cuiaba}")
@@ -137,6 +139,18 @@ public class AgendamentoService {
                 contextoEmailErro.put("servicoId", servico.getId());
                 contextoEmailErro.put("profissionalId", profissional.getId());
                 log.error("[agendamento-debug] falha ao enviar email. mensagem='{}' contexto={}", e.getMessage(), contextoEmailErro, e);
+            }
+            try {
+                if (request.cupomCodigo() != null && !request.cupomCodigo().isBlank()) {
+                    meuGendazPromocaoService.validarERegistrarUso(cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
+                }
+            } catch (Exception e) {
+                Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
+                contextoCupomErro.put("agendamentoId", salvo.getId());
+                contextoCupomErro.put("protocolo", salvo.getProtocolo());
+                contextoCupomErro.put("cupomCodigo", request.cupomCodigo());
+                log.warn("[agendamento-debug] cupom nao aplicado. mensagem='{}' contexto={}", e.getMessage(), contextoCupomErro, e);
+                throw new BusinessException(e.getMessage());
             }
             return mapper.toResponse(salvo);
         } catch (Exception e) {

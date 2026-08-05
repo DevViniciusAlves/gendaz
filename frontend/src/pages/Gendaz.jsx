@@ -7,6 +7,25 @@ import GendazLayout from '../components/gendaz/GendazLayout.jsx'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
+function sessionTokenKey(slug) {
+  return `meu_gendaz_session_token_${String(slug || '').trim().toLowerCase()}`
+}
+
+function salvarTokenSessao(slug, token) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  const key = sessionTokenKey(slug)
+  if (!token) {
+    window.sessionStorage.removeItem(key)
+    return
+  }
+  window.sessionStorage.setItem(key, token)
+}
+
+function lerTokenSessao(slug) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return ''
+  return window.sessionStorage.getItem(sessionTokenKey(slug)) || ''
+}
+
 function GendazAuthGate({ slug, onLogin }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -80,6 +99,7 @@ function GendazAuthGate({ slug, onLogin }) {
         codigo: codigo.trim(),
       })
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
+        salvarTokenSessao(slug, response.data?.sessionToken || '')
         await onLogin()
         navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
       } else {
@@ -180,6 +200,7 @@ function GendazCadastroGate({ slug }) {
   }, [perfilAcesso])
 
   async function sair() {
+    salvarTokenSessao(slug, '')
     await logout()
     navigate('/login', { replace: true })
   }
@@ -324,6 +345,19 @@ function GendazContent({ slug }) {
       document.title = tituloAnterior
     }
   }, [])
+
+  useEffect(() => {
+    if (!slug) return undefined
+    const token = lerTokenSessao(slug)
+    if (token) {
+      clienteApi.defaults.headers.common['X-Session-Token'] = token
+    } else {
+      delete clienteApi.defaults.headers.common['X-Session-Token']
+    }
+    return () => {
+      delete clienteApi.defaults.headers.common['X-Session-Token']
+    }
+  }, [slug])
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })

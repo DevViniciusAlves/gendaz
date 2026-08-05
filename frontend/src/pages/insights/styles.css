@@ -563,6 +563,7 @@
   max-height: none;
   overflow: hidden;
   padding: 14px;
+  box-sizing: border-box;
 }
 
 .insights-sidebar-layout {
@@ -571,7 +572,8 @@
   justify-content: flex-start !important;
   gap: 16px;
   min-height: 0;
-  flex: 1 1 auto;
+  flex: 1 1 0;
+  overflow: hidden;
 }
 
 .insights-sidebar-stack {
@@ -585,13 +587,14 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start !important;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .insights-sidebar-chat .insights-chat {
   width: 100%;
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -603,10 +606,8 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
-  flex: 1 1 auto;
-  height: clamp(240px, 28vh, 320px);
-  min-height: 240px;
-  max-height: 320px;
+  flex: 1 1 0;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
   min-width: 0;

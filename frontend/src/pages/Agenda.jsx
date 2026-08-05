@@ -271,6 +271,7 @@ export default function Agenda() {
         : null,
       data: payload.data,
       horaInicio: payload.horaInicio,
+      cupomCodigo: payload.cupomCodigo || '',
       status: payload.status,
       observacoes: payload.observacoes,
     }

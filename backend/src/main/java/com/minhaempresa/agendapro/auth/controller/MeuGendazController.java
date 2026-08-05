@@ -295,13 +295,10 @@ public class MeuGendazController {
                     empresaId,
                     java.time.LocalDate.parse(body.get("data").toString()),
                     java.time.LocalTime.parse(body.get("hora").toString()),
+                    body.get("cupomCodigo") != null ? body.get("cupomCodigo").toString() : null,
                     body.get("observacoes") != null ? body.get("observacoes").toString() : null
             );
-            var servico = servicoService.buscarEntidade(agendamentoRequest.servicoId());
-            var cupomCodigo = body.get("cupomCodigo") != null ? body.get("cupomCodigo").toString() : null;
-            var promocao = meuGendazPromocaoService.validarCupom(cliente, cliente.getEmpresa(), servico, cupomCodigo);
             AgendamentoResponse response = agendamentoService.criar(agendamentoRequest);
-            meuGendazPromocaoService.registrarUso(cliente, promocao, response.id(), meuGendazPromocaoService.calcularDesconto(servico, promocao));
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
