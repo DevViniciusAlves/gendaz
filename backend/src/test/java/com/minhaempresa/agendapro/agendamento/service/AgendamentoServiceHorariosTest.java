@@ -181,7 +181,7 @@ class AgendamentoServiceHorariosTest {
 
         var response = agendamentoService.criar(new CriarAgendamentoRequest(
                 clienteId, servicoId, null, empresaId,
-                LocalDate.now().plusDays(1), LocalTime.of(9, 0), "Teste basico"
+                LocalDate.now().plusDays(1), LocalTime.of(9, 0), null, "Teste basico"
         ));
 
         assertNotNull(response);
@@ -216,7 +216,7 @@ class AgendamentoServiceHorariosTest {
 
         var response = agendamentoService.criar(new CriarAgendamentoRequest(
                 clienteId, servicoId, profissionalId, empresaId,
-                LocalDate.now().plusDays(1), LocalTime.of(10, 0), null
+                LocalDate.now().plusDays(1), LocalTime.of(10, 0), null, null
         ));
 
         assertNotNull(response);

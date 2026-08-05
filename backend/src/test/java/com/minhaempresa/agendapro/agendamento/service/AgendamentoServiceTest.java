@@ -65,7 +65,7 @@ class AgendamentoServiceTest {
         });
         when(pagamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var response = agendamentoService.criar(new CriarAgendamentoRequest(1L, 1L, 1L, 1L, LocalDate.now(), LocalTime.of(9, 0), null));
+        var response = agendamentoService.criar(new CriarAgendamentoRequest(1L, 1L, 1L, 1L, LocalDate.now(), LocalTime.of(9, 0), null, null));
 
         assertEquals(LocalTime.of(10, 0), response.horaFim());
         verify(resendEmailService).enviarEmailNovoAgendamento(empresa, agendamentoCaptor.capture());
