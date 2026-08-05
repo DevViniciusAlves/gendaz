@@ -9,4 +9,5 @@ public interface MeuGendazPromocaoNotificacaoRepository extends JpaRepository<Me
     List<MeuGendazPromocaoNotificacaoEntity> findByClienteIdAndLidoFalseOrderByDataEnvioDesc(Long clienteId);
     Optional<MeuGendazPromocaoNotificacaoEntity> findByPromocaoIdAndClienteId(Long promocaoId, Long clienteId);
     boolean existsByPromocaoIdAndClienteId(Long promocaoId, Long clienteId);
+    void deleteByClienteId(Long clienteId);
 }

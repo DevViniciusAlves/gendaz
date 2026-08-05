@@ -7,4 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface PromocaoNotificacaoRepository extends JpaRepository<PromocaoNotificacaoEntity, Long> {
     List<PromocaoNotificacaoEntity> findByPromocaoIdOrderByIdDesc(Long promocaoId);
     long countByPromocaoIdAndStatus(Long promocaoId, String status);
+    void deleteByClienteId(Long clienteId);
 }
