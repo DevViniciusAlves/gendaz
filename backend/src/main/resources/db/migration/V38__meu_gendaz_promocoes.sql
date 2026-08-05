@@ -1,6 +1,7 @@
 create table if not exists meu_gendaz_promocoes (
     id bigserial primary key,
     empresa_id bigint not null references empresas(id) on delete cascade,
+    promocao_origem_id bigint,
     codigo varchar(80) not null,
     descricao varchar(180) not null,
     tipo varchar(20) not null,
@@ -15,6 +16,8 @@ create table if not exists meu_gendaz_promocoes (
     data_notificacao timestamp,
     constraint uk_meu_gendaz_promocoes_empresa_codigo unique (empresa_id, codigo)
 );
+
+create index if not exists idx_meu_gendaz_promocoes_origem on meu_gendaz_promocoes (promocao_origem_id);
 
 create table if not exists meu_gendaz_promocao_servico (
     promocao_id bigint not null references meu_gendaz_promocoes(id) on delete cascade,
