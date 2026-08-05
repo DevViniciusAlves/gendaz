@@ -235,7 +235,7 @@ export default function Booking() {
     return (
       <main className="booking-page">
         <section className="booking-card">
-          <h1>{booking?.nomeFantasia || 'AgendEasy'}</h1>
+          <h1>{booking?.nomeFantasia || 'Gendaz'}</h1>
           <p>{booking?.mensagem || 'Agendamento indisponível no momento.'}</p>
         </section>
       </main>

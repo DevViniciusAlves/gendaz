@@ -1,53 +1,21 @@
-import { createContext, useState, useEffect, useCallback, useRef } from 'react'
+﻿import { createContext, useState, useEffect, useCallback, useRef } from 'react'
 import clienteApi from '../api/clienteApi.js'
 import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
-const STORAGE_PREFIX = 'meu_gendaz_session'
-
-function storageKey(slug) {
-  const normalizado = String(slug || '').trim().toLowerCase()
-  return `${STORAGE_PREFIX}_${normalizado || 'default'}`
-}
-
-function lerSessaoPersistida(slug) {
-  if (typeof window === 'undefined' || !window.sessionStorage) return null
-  try {
-    const raw = window.sessionStorage.getItem(storageKey(slug))
-    if (!raw) return null
-    return JSON.parse(raw)
-  } catch {
-    return null
-  }
-}
-
-function salvarSessaoPersistida(slug, dados) {
-  if (typeof window === 'undefined' || !window.sessionStorage) return
-  try {
-    if (!dados) {
-      window.sessionStorage.removeItem(storageKey(slug))
-      return
-    }
-    window.sessionStorage.setItem(storageKey(slug), JSON.stringify(dados))
-  } catch {
-    // cache apenas de conveniência; nao pode quebrar o fluxo principal
-  }
-}
-
 export function ClienteGendazProvider({ children, slug }) {
-  const cacheInicial = lerSessaoPersistida(slug)
-  const [cliente, setCliente] = useState(cacheInicial?.cliente || null)
-  const [perfilPendente, setPerfilPendente] = useState(Boolean(cacheInicial?.perfilPendente))
-  const [perfilAcesso, setPerfilAcesso] = useState(cacheInicial?.perfilAcesso || null)
+  const [cliente, setCliente] = useState(null)
+  const [perfilPendente, setPerfilPendente] = useState(false)
+  const [perfilAcesso, setPerfilAcesso] = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState(null)
-  const [agendamentos, setAgendamentos] = useState(cacheInicial?.agendamentos || [])
-  const [dashboard, setDashboard] = useState(cacheInicial?.dashboard || null)
-  const [beneficios, setBeneficios] = useState(cacheInicial?.beneficios || { promocoes: [], cupons: [] })
-  const [configuracoes, setConfiguracoes] = useState(cacheInicial?.configuracoes || null)
-  const [servicos, setServicos] = useState(cacheInicial?.servicos || [])
-  const [profissionais, setProfissionais] = useState(cacheInicial?.profissionais || [])
+  const [agendamentos, setAgendamentos] = useState([])
+  const [dashboard, setDashboard] = useState(null)
+  const [beneficios, setBeneficios] = useState({ promocoes: [], cupons: [] })
+  const [configuracoes, setConfiguracoes] = useState(null)
+  const [servicos, setServicos] = useState([])
+  const [profissionais, setProfissionais] = useState([])
   const sincronizandoRef = useRef(null)
 
   const limparEstadoSessao = useCallback(() => {
@@ -60,7 +28,6 @@ export function ClienteGendazProvider({ children, slug }) {
     setConfiguracoes(null)
     setServicos([])
     setProfissionais([])
-    salvarSessaoPersistida(slug, null)
   }, [slug])
 
   const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
@@ -85,17 +52,6 @@ export function ClienteGendazProvider({ children, slug }) {
         setConfiguracoes(null)
         setServicos([])
         setProfissionais([])
-        salvarSessaoPersistida(slug, {
-          cliente: null,
-          perfilPendente: true,
-          perfilAcesso: perfilRes.data,
-          dashboard: null,
-          agendamentos: [],
-          beneficios: { promocoes: [], cupons: [] },
-          configuracoes: null,
-          servicos: [],
-          profissionais: [],
-        })
         setCarregando(false)
         return
       }
@@ -147,23 +103,6 @@ export function ClienteGendazProvider({ children, slug }) {
         setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
       }
 
-      salvarSessaoPersistida(slug, {
-        cliente: dadosPerfil,
-        perfilPendente: false,
-        perfilAcesso: dadosPerfil,
-        dashboard: dashboardRes.status === 'fulfilled' ? dashboardRes.value.data : null,
-        agendamentos: agendamentosRes.status === 'fulfilled'
-          ? (Array.isArray(agendamentosRes.value.data) ? agendamentosRes.value.data : agendamentosRes.value.data?.agendamentos || [])
-          : [],
-        beneficios: beneficios,
-        configuracoes: {
-          notificacoes: { email: true, sms: false, push: true },
-          compartilharHistorico: false,
-        },
-        servicos: servRes.status === 'fulfilled' ? (Array.isArray(servRes.value.data) ? servRes.value.data : []) : [],
-        profissionais: profRes.status === 'fulfilled' ? (Array.isArray(profRes.value.data) ? profRes.value.data : []) : [],
-      })
-
       await carregarBeneficios()
     } catch (err) {
       if (err.response?.status === 401) {
@@ -196,20 +135,6 @@ export function ClienteGendazProvider({ children, slug }) {
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
   }, [slug, sincronizarDados])
-
-  useEffect(() => {
-    salvarSessaoPersistida(slug, {
-      cliente,
-      perfilPendente,
-      perfilAcesso,
-      dashboard,
-      agendamentos,
-      beneficios,
-      configuracoes,
-      servicos,
-      profissionais,
-    })
-  }, [slug, cliente, perfilPendente, perfilAcesso, dashboard, agendamentos, beneficios, configuracoes, servicos, profissionais])
 
   useEffect(() => {
     const lidarComLogout = () => {
@@ -482,14 +407,14 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const hora = new Date().getHours()
       const periodo = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
       return {
-        resposta: `${periodo}, ${nome}!  Como posso ajudá-lo? Posso agendar, reagendar, cancelar, listar serviços ou responder dúvidas.`,
-        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviços vocês têm?'],
+        resposta: `${periodo}, ${nome}!  Como posso ajudÃ¡-lo? Posso agendar, reagendar, cancelar, listar serviÃ§os ou responder dÃºvidas.`,
+        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviÃ§os vocÃªs tÃªm?'],
       }
     }
     case 'sobre': {
       return {
-        resposta: `Sou a assistente virtual do estabelecimento! Posso ajudar com:\n\n• Agendar serviços\n• Reagendar compromissos\n• Cancelar agendamentos\n• Listar serviços e preços\n• Consultar promoções\n\nBasta me dizer o que precisa!`,
-        sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
+        resposta: `Sou a assistente virtual do estabelecimento! Posso ajudar com:\n\nâ€¢ Agendar serviÃ§os\nâ€¢ Reagendar compromissos\nâ€¢ Cancelar agendamentos\nâ€¢ Listar serviÃ§os e preÃ§os\nâ€¢ Consultar promoÃ§Ãµes\n\nBasta me dizer o que precisa!`,
+        sugestoes: ['Quero agendar', 'Ver serviÃ§os', 'Ver promoÃ§Ãµes'],
       }
     }
     case 'agradecimento': {
@@ -498,20 +423,20 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'listar_servicos': {
       if (!servicos || servicos.length === 0) {
         return {
-          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba **Agenda** para ver todos os serviços disponíveis.`,
+          resposta: `${nome}, no momento nÃ£o consigo listar os serviÃ§os. Acesse a aba **Agenda** para ver todos os serviÃ§os disponÃ­veis.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
-      const lista = servicos.map((s, i) => `${i + 1}. ${s.nome || s.titulo} — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
+      const lista = servicos.map((s, i) => `${i + 1}. ${s.nome || s.titulo} â€” R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
       return {
-        resposta: `Serviços disponíveis:\n\n${lista}\n\nQuer agendar algum?`,
+        resposta: `ServiÃ§os disponÃ­veis:\n\n${lista}\n\nQuer agendar algum?`,
         sugestoes: servicos.slice(0, 3).map((s) => `Agendar ${s.nome || s.titulo}`),
       }
     }
     case 'listar_profissionais': {
       if (!profissionais || profissionais.length === 0) {
         return {
-          resposta: `${nome}, não consigo listar os profissionais agora. Ao agendar, você poderá escolher o profissional.`,
+          resposta: `${nome}, nÃ£o consigo listar os profissionais agora. Ao agendar, vocÃª poderÃ¡ escolher o profissional.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
@@ -524,21 +449,21 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'meus_agendamentos': {
       if (!agendamentos || agendamentos.length === 0) {
         return {
-          resposta: `${nome}, você não possui agendamentos futuros. Que tal agendar um novo serviço?`,
-          sugestoes: ['Quero agendar', 'Ver serviços'],
+          resposta: `${nome}, vocÃª nÃ£o possui agendamentos futuros. Que tal agendar um novo serviÃ§o?`,
+          sugestoes: ['Quero agendar', 'Ver serviÃ§os'],
         }
       }
       const lista = agendamentos.map((a, i) =>
-        `${i + 1}. ${a.servicoNome || a.servico || 'Serviço'} — ${a.data ? new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR') : '?'} às ${a.horaInicio || a.hora || '?'} com ${a.profissionalNome || a.profissional || '?'} [${a.status}]`
+        `${i + 1}. ${a.servicoNome || a.servico || 'ServiÃ§o'} â€” ${a.data ? new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR') : '?'} Ã s ${a.horaInicio || a.hora || '?'} com ${a.profissionalNome || a.profissional || '?'} [${a.status}]`
       ).join('\n')
       return {
-        resposta: `Seus próximos agendamentos:\n\n${lista}\n\nPrecisa reagendar ou cancelar algum?`,
+        resposta: `Seus prÃ³ximos agendamentos:\n\n${lista}\n\nPrecisa reagendar ou cancelar algum?`,
         sugestoes: ['Reagendar', 'Cancelar'],
       }
     }
     case 'cancelar': {
       if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, você não possui agendamentos para cancelar.` }
+        return { resposta: `${nome}, vocÃª nÃ£o possui agendamentos para cancelar.` }
       }
       return {
         resposta: `Para cancelar, acesse a aba **Agenda**, clique em "Cancelar" no agendamento desejado e confirme.`,
@@ -547,10 +472,10 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     }
     case 'reagendar': {
       if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, você não possui agendamentos para reagendar.` }
+        return { resposta: `${nome}, vocÃª nÃ£o possui agendamentos para reagendar.` }
       }
       return {
-        resposta: `Para reagendar, acesse a aba **Agenda**, clique em "Reagendar" e escolha nova data/horário.`,
+        resposta: `Para reagendar, acesse a aba **Agenda**, clique em "Reagendar" e escolha nova data/horÃ¡rio.`,
         sugestoes: ['Ir para Agenda'],
       }
     }
@@ -558,41 +483,43 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const promos = beneficios?.promocoes || []
       if (!promos || promos.length === 0) {
         return {
-          resposta: `${nome}, no momento não há promoções ativas. Acesse a aba **Benefícios** para ficar por dentro!`,
-          sugestoes: ['Ir para Benefícios'],
+          resposta: `${nome}, no momento nÃ£o hÃ¡ promoÃ§Ãµes ativas. Acesse a aba **BenefÃ­cios** para ficar por dentro!`,
+          sugestoes: ['Ir para BenefÃ­cios'],
         }
       }
       const lista = promos.map((p, i) =>
-        `${i + 1}. ${p.titulo} — ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
+        `${i + 1}. ${p.titulo} â€” ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
       ).join('\n\n')
       return {
-        resposta: `Promoções disponíveis:\n\n${lista}\n\nQuer agendar aproveitando alguma promoção?`,
-        sugestoes: ['Quero agendar', 'Ir para Benefícios'],
+        resposta: `PromoÃ§Ãµes disponÃ­veis:\n\n${lista}\n\nQuer agendar aproveitando alguma promoÃ§Ã£o?`,
+        sugestoes: ['Quero agendar', 'Ir para BenefÃ­cios'],
       }
     }
     case 'agendar': {
       return {
-        resposta: `${nome}, vou te ajudar a agendar! \n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
-        sugestoes: ['Ir para Agenda', 'Ver serviços'],
+        resposta: `${nome}, vou te ajudar a agendar! \n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviÃ§o, profissional, data e horÃ¡rio\n4. Confirme!\n\nQuer que eu te leve para lÃ¡?`,
+        sugestoes: ['Ir para Agenda', 'Ver serviÃ§os'],
       }
     }
     case 'historico': {
       return {
-        resposta: `${nome}, para ver seu histórico, acesse a aba **Histórico** na sidebar.`,
-        sugestoes: ['Ir para Histórico'],
+        resposta: `${nome}, para ver seu histÃ³rico, acesse a aba **HistÃ³rico** na sidebar.`,
+        sugestoes: ['Ir para HistÃ³rico'],
       }
     }
     case 'listar_horarios': {
       return {
-        resposta: `${nome}, os horários dependem do serviço e profissional. Vá na aba **Agenda**, clique em "Novo agendamento" e selecione serviço, profissional e data para ver os horários disponíveis.`,
+        resposta: `${nome}, os horÃ¡rios dependem do serviÃ§o e profissional. VÃ¡ na aba **Agenda**, clique em "Novo agendamento" e selecione serviÃ§o, profissional e data para ver os horÃ¡rios disponÃ­veis.`,
         sugestoes: ['Ir para Agenda', 'Ver meus agendamentos'],
       }
     }
     default: {
       return {
-        resposta: `${nome}, posso ajudar com:\n\n• **Agendar** um serviço\n• **Reagendar** compromisso\n• **Cancelar** agendamento\n• **Serviços** e preços\n• **Promoções** e cupons\n\nÉ só me dizer o que precisa!`,
-        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Serviços e preços'],
+        resposta: `${nome}, posso ajudar com:\n\nâ€¢ **Agendar** um serviÃ§o\nâ€¢ **Reagendar** compromisso\nâ€¢ **Cancelar** agendamento\nâ€¢ **ServiÃ§os** e preÃ§os\nâ€¢ **PromoÃ§Ãµes** e cupons\n\nÃ‰ sÃ³ me dizer o que precisa!`,
+        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'ServiÃ§os e preÃ§os'],
       }
     }
   }
 }
+
+

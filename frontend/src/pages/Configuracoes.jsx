@@ -515,7 +515,7 @@ export default function Configuracoes() {
 
           <div className="booking-qr-card">
             {qrCodeUrl ? <img src={qrCodeUrl} alt="QR Code do Meu Gendaz" /> : <span>QR Code indisponível</span>}
-            <a className="btn btn-secondary" href={qrCodeUrl} download="agendeasy-qrcode.png" target="_blank" rel="noreferrer">
+            <a className="btn btn-secondary" href={qrCodeUrl} download="gendaz-qrcode.png" target="_blank" rel="noreferrer">
               <Download size={17} />
               <span>Baixar QR Code</span>
             </a>
