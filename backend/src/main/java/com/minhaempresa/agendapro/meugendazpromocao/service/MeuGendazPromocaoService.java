@@ -22,7 +22,7 @@ public class MeuGendazPromocaoService {
     private final MeuGendazPromocaoNotificacaoRepository notificacaoRepository;
     private final MeuGendazPromocaoSyncService syncService;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PromocaoClienteResponse> listarPromocoes(ClienteEntity cliente) {
         syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
@@ -57,7 +57,7 @@ public class MeuGendazPromocaoService {
                 .toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<PromocaoNotificacaoResponse> listarNotificacoesNaoLidas(ClienteEntity cliente) {
         syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         garantirNotificacoes(cliente);
