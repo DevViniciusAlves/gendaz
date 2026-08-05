@@ -116,14 +116,14 @@ export default function Promocoes() {
       </div>
 
       <div className="gendaz-promocoes__grade">
-        <article className="gendaz-panel gendaz-promocoes__painel">
-          <div className="gendaz-panel__head">
-            <Tags size={18} />
-            <h2>Promoções disponíveis</h2>
-          </div>
+        {aba === 'DISPONIVEIS' ? (
+          <article className="gendaz-panel gendaz-promocoes__painel">
+            <div className="gendaz-panel__head">
+              <Tags size={18} />
+              <h2>Promoções disponíveis</h2>
+            </div>
 
-          {aba === 'DISPONIVEIS' ? (
-            disponiveis.length > 0 ? (
+            {disponiveis.length > 0 ? (
               <div className="gendaz-stack">
                 {disponiveis.map((cupom) => (
                   <div className="gendaz-mini-card gendaz-promocoes__item" key={cupom.id}>
@@ -158,20 +158,16 @@ export default function Promocoes() {
               </div>
             ) : (
               <p className="gendaz-vazio">Nenhuma promoção disponível no momento.</p>
-            )
-          ) : (
-            <p className="gendaz-vazio">Troque para a aba “Disponíveis” para ver os cupons ativos.</p>
-          )}
-        </article>
+            )}
+          </article>
+        ) : (
+          <article className="gendaz-panel gendaz-promocoes__painel">
+            <div className="gendaz-panel__head">
+              <Ticket size={18} />
+              <h2>Cupons usados</h2>
+            </div>
 
-        <article className="gendaz-panel gendaz-promocoes__painel">
-          <div className="gendaz-panel__head">
-            <Ticket size={18} />
-            <h2>Cupons usados</h2>
-          </div>
-
-          {aba === 'USADAS' ? (
-            usadas.length > 0 ? (
+            {usadas.length > 0 ? (
               <div className="gendaz-stack">
                 {usadas.map((cupom) => (
                   <div className="gendaz-mini-card gendaz-promocoes__item" key={`${cupom.cupomCodigo}-${cupom.dataUso}`}>
@@ -193,11 +189,9 @@ export default function Promocoes() {
               </div>
             ) : (
               <p className="gendaz-vazio">Você ainda não usou nenhum cupom.</p>
-            )
-          ) : (
-            <p className="gendaz-vazio">Troque para a aba “Já usados” para ver o histórico de uso.</p>
-          )}
-        </article>
+            )}
+          </article>
+        )}
       </div>
     </section>
   )
