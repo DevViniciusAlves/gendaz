@@ -67,6 +67,7 @@ public class MeuGendazPromocaoEntity {
     private Boolean aplicarTodosServicos;
 
     @ManyToMany(fetch = FetchType.LAZY)
+    @Builder.Default
     @JoinTable(
             name = "meu_gendaz_promocao_servico",
             joinColumns = @JoinColumn(name = "promocao_id"),
@@ -88,6 +89,9 @@ public class MeuGendazPromocaoEntity {
         status = status == null ? StatusCadastro.ATIVO : status;
         quantidadeUsada = quantidadeUsada == null ? 0 : quantidadeUsada;
         aplicarTodosServicos = aplicarTodosServicos == null || aplicarTodosServicos;
+        if (servicos == null) {
+            servicos = new HashSet<>();
+        }
     }
 
     public boolean estaAtiva() {

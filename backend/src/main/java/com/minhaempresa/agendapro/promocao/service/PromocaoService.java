@@ -341,7 +341,7 @@ public class PromocaoService {
                 promocao.getQuantidadeUsada(),
                 promocao.getStatus(),
                 promocao.getAplicarTodosServicos(),
-                promocao.getServicos().stream()
+                (promocao.getServicos() == null ? Set.<ServicoEntity>of() : promocao.getServicos()).stream()
                         .map(servico -> new ServicoResumo(servico.getId(), servico.getNome()))
                         .toList(),
                 promocao.getDataCriacao(),
