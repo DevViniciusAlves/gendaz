@@ -18,6 +18,7 @@ const planosBase = [
     beneficios: [
       'Agenda com atendimento organizado',
       'Cadastro de clientes pelo painel',
+      'Aba de promoções e cupons liberada',
       'Cadastro de ate 4 servicos',
       'Confirmacao de consulta automatizada',
       'Cancelamento e remarcacao automatizados',
@@ -39,6 +40,7 @@ const planosBase = [
       'Insights para apoiar a gestao',
       'Profissionais ilimitados',
       'Servicos ilimitados',
+      'Aba de promoções e cupons completa',
     ],
     indicadoPara: ['Equipes de atendimento', 'Servicos com cobranca recorrente', 'Operacao com acompanhamento diario'],
     cta: 'Assinar Pro',
