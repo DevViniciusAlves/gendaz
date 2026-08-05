@@ -110,6 +110,7 @@ public class AgendamentoPublicoService {
                 empresa.getId(),
                 request.data(),
                 request.horaInicio(),
+                request.cupomCodigo(),
                 observacao == null ? "Criado pelo link publico de agendamento." : observacao
         ));
 

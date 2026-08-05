@@ -45,6 +45,7 @@ public final class AgendamentoPublicoDtos {
             Long profissionalId,
             @NotNull LocalDate data,
             @NotNull LocalTime horaInicio,
+            String cupomCodigo,
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String clienteNome,
             @NotBlank @TelefoneInternacional String clienteTelefone,
             @Email @Size(max = 120) String clienteEmail,
