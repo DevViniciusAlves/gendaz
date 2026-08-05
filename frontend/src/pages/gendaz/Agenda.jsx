@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, useMemo } from 'react'
 import { useLocation } from 'react-router-dom'
 import { CalendarPlus, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
@@ -58,6 +58,21 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
     }
   }, [location.search])
 
+  const cuponsAplicaveis = useMemo(() => {
+    if (!form.servicoId) return []
+    return cupons.filter((cupom) => {
+      if (!cupom?.valida || cupom?.jaUsou) return false
+      if (cupom.aplicarTodosServicos) return true
+      return Array.isArray(cupom.servicos) && cupom.servicos.some((servico) => String(servico.id) === String(form.servicoId))
+    })
+  }, [cupons, form.servicoId])
+
+  useEffect(() => {
+    if (!form.cupomCodigo) return
+    if (cuponsAplicaveis.some((cupom) => cupom.codigo === form.cupomCodigo)) return
+    setForm((prev) => ({ ...prev, cupomCodigo: '' }))
+  }, [cuponsAplicaveis, form.cupomCodigo])
+
   async function handleSubmit(e) {
     e.preventDefault()
     setErro('')
@@ -87,7 +102,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
         <form className="gendaz-modal__form" onSubmit={handleSubmit}>
           <label>
             <span>Serviço *</span>
-            <select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: e.target.value })} required>
+            <select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: e.target.value, cupomCodigo: '' })} required>
               <option value="">Selecione um serviço</option>
               {servicos.map((s) => <option key={s.id} value={s.id}>{s.nome || s.titulo || `Serviço ${s.id}`}</option>)}
             </select>
@@ -95,7 +110,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           </label>
           <label>
             <span>Profissional *</span>
-            <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value })} required>
+            <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value, cupomCodigo: '' })} required>
               <option value="">Selecione um profissional</option>
               {profissionaisAtivos.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
             </select>
@@ -124,12 +139,12 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Observações (opcional)</span>
             <textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Alguma observação..." />
           </label>
-          {cupons.length > 0 && (
+          {cuponsAplicaveis.length > 0 && (
             <label>
               <span>Cupom (opcional)</span>
               <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
                 <option value="">Sem cupom</option>
-                {cupons.filter((cupom) => cupom.valida && !cupom.jaUsou).map((cupom) => (
+                {cuponsAplicaveis.map((cupom) => (
                   <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao}</option>
                 ))}
               </select>

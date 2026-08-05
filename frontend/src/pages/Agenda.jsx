@@ -9,6 +9,7 @@ import AgendaCard from '../components/AgendaCard.jsx'
 import Pagination from '../components/Pagination.jsx'
 import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
+import { promocoesApi } from '../api/promocoesApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { todayIso } from '../services/localStore.js'
@@ -94,6 +95,7 @@ export default function Agenda() {
   const [modalCriar, setModalCriar] = useState(false)
   const [modalEditar, setModalEditar] = useState(false)
   const [form, setForm] = useState(novoFormulario)
+  const [promocoes, setPromocoes] = useState([])
   const [edicao, setEdicao] = useState(null)
   const [erroCriar, setErroCriar] = useState('')
   const [erroEditar, setErroEditar] = useState('')
@@ -164,6 +166,10 @@ export default function Agenda() {
 
   useEffect(() => {
     if (!modalCriar) return
+    promocoesApi.listar()
+      .then((lista) => setPromocoes(Array.isArray(lista) ? lista : []))
+      .catch(() => setPromocoes([]))
+
     const servicosAtivosAtuais = data.servicos.filter((item) => item.status !== 'INATIVO')
     const clientePadrao = primeiroId(data.clientes)
     const servicoPadrao = primeiroId(servicosAtivosAtuais)
@@ -196,6 +202,16 @@ export default function Agenda() {
       return atualizou ? proximo : current
     })
   }, [data.clientes, data.servicos, modalCriar, profissionaisAtivosLista, temProfissionais])
+
+  const promocoesAplicaveis = useMemo(() => {
+    const servicoAtual = Number(form.servicoId)
+    if (!servicoAtual) return []
+    return (promocoes || []).filter((cupom) => {
+      if (!cupom?.valida || cupom?.jaUsou) return false
+      if (cupom.aplicarTodosServicos) return true
+      return Array.isArray(cupom.servicos) && cupom.servicos.some((servico) => Number(servico.id) === servicoAtual)
+    })
+  }, [form.servicoId, promocoes])
 
   function limparSelecao() {
     setSelecionando(false)
@@ -298,6 +314,7 @@ export default function Agenda() {
       servicoId: primeiroId(servicosAtivos),
       profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE : null,
     })
+    setPromocoes([])
     setErroCriar('')
     setModalCriar(true)
   }
@@ -667,7 +684,7 @@ export default function Agenda() {
       <Modal title="Criar agendamento" open={modalCriar} onClose={() => setModalCriar(false)}>
         <form className="form-grid" onSubmit={criarAgendamento}>
           <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-          <label className="field"><span>Serviço</span><select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: Number(e.target.value) })}>{servicosAtivos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label className="field"><span>Serviço</span><select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: Number(e.target.value), cupomCodigo: '' })}>{servicosAtivos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           {temProfissionais && (
             <label className="field">
               <span>Profissional</span>
@@ -676,6 +693,7 @@ export default function Agenda() {
                 onChange={(e) => setForm({
                   ...form,
                   profissionalId: e.target.value === PROFISSIONAL_AUTOMATICO_VALUE ? PROFISSIONAL_AUTOMATICO_VALUE : Number(e.target.value),
+                  cupomCodigo: '',
                 })}
               >
                 {profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
@@ -684,6 +702,19 @@ export default function Agenda() {
           )}
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
+          {promocoesAplicaveis.length > 0 && (
+            <label className="field">
+              <span>Cupom</span>
+              <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
+                <option value="">Nenhum cupom</option>
+                {promocoesAplicaveis.map((cupom) => (
+                  <option key={cupom.id} value={cupom.codigo}>
+                    {cupom.codigo} - {cupom.descricao}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>
