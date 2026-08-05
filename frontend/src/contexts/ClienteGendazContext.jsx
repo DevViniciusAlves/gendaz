@@ -163,6 +163,8 @@ export function ClienteGendazProvider({ children, slug }) {
         servicos: servRes.status === 'fulfilled' ? (Array.isArray(servRes.value.data) ? servRes.value.data : []) : [],
         profissionais: profRes.status === 'fulfilled' ? (Array.isArray(profRes.value.data) ? profRes.value.data : []) : [],
       })
+
+      await carregarBeneficios()
     } catch (err) {
       if (err.response?.status === 401) {
         if (exigirSessao) {
@@ -260,6 +262,37 @@ export function ClienteGendazProvider({ children, slug }) {
   }, [])
 
   useEffect(() => {
+    if (typeof window === 'undefined') return undefined
+
+    const lidarAtualizacao = () => {
+      void carregarBeneficios()
+    }
+
+    const lidarStorage = (event) => {
+      if (event.key === 'gendaz-promocoes-refresh') {
+        void carregarBeneficios()
+      }
+    }
+
+    window.addEventListener('gendaz:promocoes-atualizadas', lidarAtualizacao)
+    window.addEventListener('storage', lidarStorage)
+
+    let canal = null
+    if (typeof BroadcastChannel !== 'undefined') {
+      canal = new BroadcastChannel('gendaz-promocoes')
+      canal.onmessage = () => {
+        void carregarBeneficios()
+      }
+    }
+
+    return () => {
+      window.removeEventListener('gendaz:promocoes-atualizadas', lidarAtualizacao)
+      window.removeEventListener('storage', lidarStorage)
+      if (canal) canal.close()
+    }
+  }, [carregarBeneficios])
+
+  useEffect(() => {
     if (!cliente) return undefined
 
     let ativo = true
@@ -288,7 +321,7 @@ export function ClienteGendazProvider({ children, slug }) {
     document.addEventListener('visibilitychange', lidarVisibilidade)
     timer = setInterval(() => {
       void atualizarBeneficios()
-    }, 60 * 1000)
+    }, 15 * 1000)
 
     return () => {
       ativo = false

@@ -28,6 +28,20 @@ function currency(value) {
   return Number(value || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
 
+function sinalizarPromocoesAtualizadas() {
+  try {
+    window.dispatchEvent(new CustomEvent('gendaz:promocoes-atualizadas'))
+    if (typeof BroadcastChannel !== 'undefined') {
+      const canal = new BroadcastChannel('gendaz-promocoes')
+      canal.postMessage({ tipo: 'ATUALIZAR' })
+      canal.close()
+    }
+    window.localStorage.setItem('gendaz-promocoes-refresh', String(Date.now()))
+  } catch {
+    /* ignora */
+  }
+}
+
 export default function Promocoes() {
   const { usuario } = useAuth()
   const [cupons, setCupons] = useState([])
@@ -128,6 +142,7 @@ export default function Promocoes() {
       } else {
         await promocoesApi.criar(payload, empresaId)
       }
+      sinalizarPromocoesAtualizadas()
       setModalAberto(false)
       setEditing(null)
       setForm(emptyForm)
@@ -140,17 +155,20 @@ export default function Promocoes() {
 
   async function desativar(id) {
     await promocoesApi.desativar(id, empresaId)
+    sinalizarPromocoesAtualizadas()
     await carregar()
   }
 
   async function ativar(id) {
     await promocoesApi.ativar(id, empresaId)
+    sinalizarPromocoesAtualizadas()
     await carregar()
   }
 
   async function excluirConfirmado() {
     if (!modalExcluir) return
     await promocoesApi.excluir(modalExcluir.id, empresaId)
+    sinalizarPromocoesAtualizadas()
     setModalExcluir(null)
     await carregar()
   }
@@ -181,6 +199,7 @@ export default function Promocoes() {
       window.dispatchEvent(new CustomEvent('agendapro:toast', {
         detail: { type: 'success', message: mensagem },
       }))
+      sinalizarPromocoesAtualizadas()
       setNotificarAberto(false)
       setTarget(null)
       await carregar()
