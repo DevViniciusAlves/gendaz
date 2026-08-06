@@ -1,3 +1,8 @@
+/* ============================================================
+   Insights — Consultoria IA
+   Layout: main (cards em grid alinhados) + sidebar (chat IA)
+   ============================================================ */
+
 .insights-page {
   display: flex;
   flex-direction: column;
@@ -16,9 +21,10 @@
 
 .insights-hero {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start !important;
-  gap: 10px;
+  flex-direction: row;
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 4px;
   text-align: left;
 }
@@ -33,14 +39,16 @@
 
 .insights-hero p {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
 }
 
+/* ---------- Layout principal ---------- */
+
 .insights-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 370px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 14px;
   align-items: stretch;
   justify-items: stretch;
   width: 100%;
@@ -49,8 +57,9 @@
 .insights-main {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
   min-height: 0;
+  min-width: 0;
 }
 
 .insights-sidebar {
@@ -64,6 +73,8 @@
   align-self: start;
 }
 
+/* ---------- Painéis base ---------- */
+
 .insights-summary-panel,
 .insights-section,
 .insights-sidebar-card {
@@ -74,12 +85,14 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
 }
 
+/* ---------- Resumo inteligente + Índice Gendaz ---------- */
+
 .insights-summary-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.22fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 0.72fr);
+  gap: 14px;
   align-items: stretch;
-  padding: 16px;
+  padding: 18px;
   min-height: 158px;
 }
 
@@ -88,20 +101,21 @@
   flex-direction: column;
   gap: 10px;
   min-width: 0;
+  justify-content: center;
 }
 
 .insights-summary-panel__content h2 {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.25;
 }
 
 .insights-summary-panel__content p {
   margin: 0;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.55;
-  max-width: 58ch;
+  max-width: 62ch;
 }
 
 .insights-summary-panel__meta {
@@ -109,8 +123,15 @@
   font-size: 12px;
 }
 
+.insights-summary-actions {
+  margin-top: 4px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .insights-label {
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--muted);
@@ -118,7 +139,7 @@
 
 .insights-summary-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: 1fr;
   gap: 10px;
   min-width: 0;
 }
@@ -126,56 +147,45 @@
 .insights-summary-metric {
   display: flex;
   flex-direction: column;
-  gap: 7px;
+  justify-content: center;
+  gap: 8px;
   min-width: 0;
   border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 12px;
+  border: 1px solid rgba(66, 245, 105, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(66, 245, 105, 0.08), transparent 55%),
+    rgba(255, 255, 255, 0.03);
+  padding: 16px;
   overflow: hidden;
 }
 
 .insights-summary-metric__value {
-  font-size: clamp(18px, 1.6vw, 28px);
+  font-size: clamp(30px, 3vw, 44px);
   font-weight: 500;
-  line-height: 1.08;
+  line-height: 1.05;
   color: var(--primary);
-  overflow-wrap: anywhere;
+  letter-spacing: -0.03em;
 }
 
 .insights-summary-metric strong {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.25;
 }
 
 .insights-summary-metric small {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   line-height: 1.35;
 }
 
-.insights-meta-button {
-  margin-top: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-  border-radius: 10px;
-  padding: 8px 10px;
-  font-size: 11px;
-  cursor: pointer;
-  width: fit-content;
-}
-
-.insights-meta-button:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  background: rgba(255, 255, 255, 0.05);
-}
+/* ---------- O que mudou + Risco ---------- */
 
 .insights-change-risk-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 250px;
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 14px;
+  align-items: stretch;
 }
 
 .insights-changes-card,
@@ -193,7 +203,7 @@
 
 .insights-change-card {
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-columns: 36px minmax(0, 1fr);
   gap: 10px 12px;
   align-items: start;
   padding: 14px 14px 12px;
@@ -204,8 +214,8 @@
 }
 
 .insights-change-card__icon {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -216,14 +226,14 @@
 
 .insights-change-card__content span {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
 }
 
 .insights-change-card__content p {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   word-break: break-word;
@@ -245,8 +255,15 @@
 }
 
 .insights-risk-card strong {
-  font-size: 18px;
+  font-size: 20px;
   color: var(--primary);
+}
+
+.insights-risk-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .insights-risk-bars {
@@ -265,6 +282,8 @@
 .insights-risk-bars span.is-active {
   background: var(--primary);
 }
+
+/* ---------- Insights principais (3 cards lado a lado) ---------- */
 
 .insights-primary-panel {
   padding: 16px;
@@ -302,7 +321,7 @@
 
 .insights-core-card__action {
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
@@ -333,14 +352,14 @@
 
 .insights-core-card__body {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
 
 .insights-core-card__icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -351,14 +370,14 @@
 
 .insights-core-card h3 {
   margin: 0 0 6px;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.25;
 }
 
 .insights-core-card p {
   margin: 0;
   color: var(--muted);
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
 }
 
@@ -379,14 +398,16 @@
 
 .insights-core-card__footer strong {
   color: var(--primary);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.25;
 }
+
+/* ---------- Grade inferior (3 colunas alinhadas) ---------- */
 
 .insights-bottom-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  gap: 14px;
   align-items: stretch;
 }
 
@@ -410,15 +431,15 @@
 
 .insights-list-item {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr) auto;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 12px 14px;
 }
 
 .insights-list-item__icon {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -431,7 +452,7 @@
 .insights-action-row__content strong,
 .insights-simulation strong {
   display: block;
-  font-size: 11.5px;
+  font-size: 12.5px;
 }
 
 .insights-list-item__content p,
@@ -442,7 +463,7 @@
 .insights-empty {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 11.5px;
   line-height: 1.5;
 }
 
@@ -453,14 +474,14 @@
 .insights-list-item__meta small {
   display: block;
   color: var(--muted);
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
 
 .insights-list-item__meta strong {
   color: var(--text);
-  font-size: 11.5px;
+  font-size: 12.5px;
 }
 
 .insights-link-row {
@@ -503,14 +524,14 @@
 
 .insights-action-row__impacto {
   color: var(--primary);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .insights-highlight-card {
   display: grid;
-  grid-template-columns: 42px minmax(0, 1fr);
+  grid-template-columns: 44px minmax(0, 1fr);
   gap: 14px;
   padding: 16px;
   margin-top: 12px;
@@ -519,8 +540,8 @@
 }
 
 .insights-highlight-card__icon {
-  width: 40px;
-  height: 40px;
+  width: 42px;
+  height: 42px;
   border-radius: 999px;
   display: flex;
   align-items: center;
@@ -551,8 +572,10 @@
 
 .insights-highlight-card__meta strong {
   color: var(--primary);
-  font-size: 12px;
+  font-size: 12.5px;
 }
+
+/* ---------- Sidebar / Chat IA ---------- */
 
 .insights-sidebar-card {
   display: flex;
@@ -563,7 +586,7 @@
   min-height: 0;
   max-height: none;
   overflow: hidden;
-  padding: 14px;
+  padding: 16px;
   box-sizing: border-box;
 }
 
@@ -571,17 +594,10 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-start !important;
-  gap: 16px;
+  gap: 12px;
   min-height: 0;
   flex: 1 1 0;
   overflow: hidden;
-}
-
-.insights-sidebar-stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: auto;
 }
 
 .insights-sidebar-chat {
@@ -618,7 +634,7 @@
 
 .insights-sidebar-chat .insights-chat__bubble {
   max-width: 85%;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -653,8 +669,21 @@
   border-bottom-left-radius: 2px;
 }
 
-.insights-sidebar-chat .chat-input {
-  font-size: 10px;
+.insights-sidebar-chat .insights-chat__suggestions {
+  flex-shrink: 0;
+  padding-top: 10px;
+}
+
+.insights-sidebar-chat .insights-chat__suggestions .insights-suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.insights-sidebar-chat .insights-chat__suggestions .insights-suggestion {
+  min-height: 34px;
+  padding: 6px 10px;
+  font-size: 11px;
 }
 
 .insights-sidebar-chat .insights-chat__form {
@@ -665,45 +694,34 @@
   margin-top: 10px;
 }
 
-.insights-sidebar-chat .insights-chat__suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex-shrink: 0;
-  padding-top: 12px;
-}
-
-.insights-sidebar-chat .insights-chat__suggestions .insights-suggestion {
-  min-height: 32px;
-  padding: 6px 10px;
-  font-size: 10px;
-}
-
 .insights-sidebar-chat .insights-chat__form .chat-input {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 10px;
-  padding: 9px 10px;
+  font-size: 12px;
+  padding: 10px 12px;
 }
 
 .insights-sidebar-chat .insights-chat__form .btn-send {
-  width: 38px;
-  min-width: 38px;
-  height: 38px;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
   padding: 0;
-  flex: 0 0 38px;
+  flex: 0 0 40px;
 }
 
 .insights-sidebar-chat .insights-chat__head h3 {
-  font-size: 14px;
+  font-size: 15px;
+  margin: 0 0 2px;
 }
 
 .insights-sidebar-chat .insights-chat__head p {
-  font-size: 11px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .insights-sidebar-chat .insights-chat__typing {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .insights-sidebar-head {
@@ -715,15 +733,11 @@
 
 .insights-sidebar-head h2 {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
 }
 
-.insights-sidebar-block {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
+/* ---------- Sugestões ---------- */
 
 .insights-suggestions {
   display: flex;
@@ -734,9 +748,6 @@
 .insights-suggestion {
   width: 100%;
   text-align: left;
-}
-
-.insights-suggestion {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -750,6 +761,10 @@
   min-height: 36px;
 }
 
+.insights-suggestion:hover {
+  border-color: rgba(66, 245, 105, 0.3);
+}
+
 .insights-simulation {
   display: flex;
   align-items: center;
@@ -759,43 +774,7 @@
   min-height: 44px;
 }
 
-.insights-detail-grid--secondary {
-  margin-top: 12px;
-}
-
-.insights-detail-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.insights-detail-grid > div {
-  padding: 14px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.insights-detail-grid span {
-  display: block;
-  color: var(--muted);
-  font-size: 10px;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.insights-detail-grid strong {
-  display: block;
-  margin-top: 6px;
-  font-size: 22px;
-  color: var(--primary);
-}
-
-.insights-detail-grid p {
-  margin: 4px 0 0;
-  color: var(--muted);
-  font-size: 11px;
-}
+/* ---------- Modal de análise ---------- */
 
 .insights-modal-backdrop {
   position: fixed;
@@ -833,53 +812,41 @@
   color: var(--muted);
 }
 
-.insights-meta-modal {
-  width: min(560px, 96vw);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.insights-meta-form {
+.insights-detail-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
-.insights-meta-form label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+.insights-detail-grid > div {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
 }
 
-.insights-meta-form span {
+.insights-detail-grid span {
+  display: block;
+  color: var(--muted);
   font-size: 10px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
+}
+
+.insights-detail-grid strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 22px;
+  color: var(--primary);
+}
+
+.insights-detail-grid p {
+  margin: 4px 0 0;
   color: var(--muted);
+  font-size: 11px;
 }
 
-.insights-meta-form input {
-  width: 100%;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--text);
-  padding: 10px 12px;
-  outline: none;
-  font-size: 13px;
-}
-
-.insights-meta-form input:focus {
-  border-color: rgba(66, 245, 105, 0.35);
-  box-shadow: 0 0 0 2px rgba(66, 245, 105, 0.08);
-}
-
-.insights-meta-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
+/* ---------- Estados ---------- */
 
 .insights-panel {
   padding: 16px;
@@ -889,6 +856,8 @@
   color: #ff8b8b;
 }
 
+/* ---------- Responsivo ---------- */
+
 @media (max-width: 1400px) {
   .insights-page--new {
     max-width: none;
@@ -897,23 +866,23 @@
   }
 
   .insights-layout {
-    grid-template-columns: minmax(0, 1fr) 340px;
-    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 12px;
   }
 
   .insights-summary-panel {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr);
-    padding: 14px;
-    gap: 10px;
-    min-height: 148px;
+    grid-template-columns: minmax(0, 1fr) minmax(230px, 0.7fr);
+    padding: 16px;
+    gap: 12px;
   }
 
+  .insights-change-risk-row,
   .insights-bottom-grid {
-    gap: 10px;
+    gap: 12px;
   }
 
   .insights-summary-metric__value {
-    font-size: 20px;
+    font-size: 32px;
   }
 
   .insights-core-card h3 {
@@ -921,7 +890,7 @@
   }
 
   .insights-core-card p {
-    font-size: 11px;
+    font-size: 12px;
   }
 }
 

@@ -46,7 +46,7 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
                         response.setStatus(429);
                         response.setHeader("Retry-After", String.valueOf(Math.max(1, janela.segundosRestantes())));
                         response.setContentType("application/json;charset=UTF-8");
-                        response.getWriter().write("{\"mensagem\":\"Muitas tentativas. Aguarde um momento e tente novamente.\"}");
+                        response.getWriter().write("{\"mensagem\":\"Sistema está carregando. Aguarde um momento.\"}");
                         return;
                     }
                 }

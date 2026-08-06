@@ -309,7 +309,7 @@ public class CrmService {
                 <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">%s</p>
                 <p style="margin:0; font-size:14px; line-height:1.7; color:#6b7280;">
                   Voce tambem pode acessar diretamente o Meu Gendaz da sua empresa:
-                  <a href="%s" style="color:#42f569; text-decoration:none; font-weight:700;">%s</a>
+                  <a href="%s" style="color:#111111; text-decoration:underline; font-weight:700;">%s</a>
                 </p>
                 """.formatted(textoFinal, ctaUrl, ctaUrl);
     }

@@ -141,7 +141,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           </label>
           {cuponsAplicaveis.length > 0 && (
             <label>
-              <span>Cupom (opcional)</span>
+              <span>Adicionar cupom</span>
               <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
                 <option value="">Sem cupom</option>
                 {cuponsAplicaveis.map((cupom) => (

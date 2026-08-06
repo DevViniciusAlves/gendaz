@@ -83,11 +83,13 @@ export function AuthProvider({ children }) {
   const [impersonation, setImpersonation] = useState(() => impersonationMemory)
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const refreshEmAndamentoRef = useRef(null)
+  const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
 
   async function renovarAoRetomarAba({ ignorarThrottle = false } = {}) {
     if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return true
     if (contaInativa(usuario)) return true
+    if (validacaoInicialEmAndamentoRef.current) return true
     const agora = Date.now()
     if (!ignorarThrottle && agora - ultimaRenovacaoBemSucedidaRef.current < 10_000) return true
     if (refreshEmAndamentoRef.current) {
@@ -157,8 +159,10 @@ export function AuthProvider({ children }) {
     let mounted = true
 
     async function validarSessaoInicial() {
+      validacaoInicialEmAndamentoRef.current = true
       if (isMeuGendazPath()) {
         if (mounted) setAuthLoading(false)
+        validacaoInicialEmAndamentoRef.current = false
         return
       }
       if (!adminUsuario) {
@@ -168,6 +172,7 @@ export function AuthProvider({ children }) {
             adminUsuarioMemory = adminRefresh.admin
             if (mounted) setAdminUsuario(adminRefresh.admin)
             if (mounted) setAuthLoading(false)
+            validacaoInicialEmAndamentoRef.current = false
             return
           }
         } catch {
@@ -176,10 +181,12 @@ export function AuthProvider({ children }) {
       }
       if (adminUsuario) {
         if (mounted) setAuthLoading(false)
+        validacaoInicialEmAndamentoRef.current = false
         return
       }
       if (usuario?.perfil === 'SUPER_ADMIN') {
         if (mounted) setAuthLoading(false)
+        validacaoInicialEmAndamentoRef.current = false
         return
       }
       try {
@@ -235,6 +242,7 @@ export function AuthProvider({ children }) {
           console.warn('[auth-debug] refresh inicial ignorou erro temporario')
         }
       } finally {
+        validacaoInicialEmAndamentoRef.current = false
         if (mounted) setAuthLoading(false)
       }
     }
@@ -259,6 +267,7 @@ export function AuthProvider({ children }) {
       if (isMeuGendazPath()) return
       if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return
       if (contaInativa(usuario)) return
+      if (validacaoInicialEmAndamentoRef.current) return
       const agora = Date.now()
       if (agora - ultimaRenovacaoBemSucedidaRef.current < 10_000) return
       if (refreshEmAndamentoRef.current) {

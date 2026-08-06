@@ -206,8 +206,11 @@ export default function Agenda() {
   const promocoesAplicaveis = useMemo(() => {
     const servicoAtual = Number(form.servicoId)
     if (!servicoAtual) return []
+    const agora = new Date()
     return (promocoes || []).filter((cupom) => {
-      if (!cupom?.valida || cupom?.jaUsou) return false
+      if (cupom.status !== 'ATIVO') return false
+      if (cupom.dataFim && new Date(cupom.dataFim) < agora) return false
+      if (cupom.quantidadeLimite != null && (cupom.quantidadeUsada ?? 0) >= cupom.quantidadeLimite) return false
       if (cupom.aplicarTodosServicos) return true
       return Array.isArray(cupom.servicos) && cupom.servicos.some((servico) => Number(servico.id) === servicoAtual)
     })
@@ -705,7 +708,7 @@ export default function Agenda() {
           <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
           {promocoesAplicaveis.length > 0 && (
             <label className="field">
-              <span>Cupom</span>
+              <span>Adicionar cupom</span>
               <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
                 <option value="">Nenhum cupom</option>
                 {promocoesAplicaveis.map((cupom) => (

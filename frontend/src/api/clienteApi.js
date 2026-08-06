@@ -28,7 +28,7 @@ clienteApi.interceptors.request.use((config) => {
     resetTime = now + 60000
   }
   if (requestCount >= MAX_REQUESTS) {
-    emitirToast('error', 'Limite de requisições atingido. Aguarde um momento.')
+    emitirToast('warning', 'Sistema está carregando. Aguarde um momento.')
     return Promise.reject(new Error('RATE_LIMIT_EXCEEDED'))
   }
   requestCount++
@@ -71,7 +71,7 @@ clienteApi.interceptors.response.use(
     }
 
     if (status === 429) {
-      emitirToast('error', 'Muitas requisições. Aguarde um momento e tente novamente.')
+      emitirToast('warning', 'Sistema está carregando. Aguarde um momento.')
     }
 
     return Promise.reject(error)

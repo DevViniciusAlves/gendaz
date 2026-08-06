@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { getSessionUser, modoDemo } from '../api/axiosConfig.js'
 import { emptyData, getData, setData } from '../services/localStore.js'
@@ -104,7 +104,7 @@ export function useLocalData(scope = 'full') {
   const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, scope))
   const [error, setError] = useState(null)
 
-  async function reload(force = false) {
+  const reload = useCallback(async (force = false) => {
     if (modoDemo) {
       setStateData(getData())
       setLoading(false)
@@ -139,7 +139,7 @@ export function useLocalData(scope = 'full') {
         setLoading(false)
       }
     }
-  }
+  }, [scope])
 
   useEffect(() => {
     const usuarioAtual = getSessionUser()
@@ -169,7 +169,7 @@ export function useLocalData(scope = 'full') {
       window.removeEventListener('agendapro:data-changed', reloadFromEvent)
       window.removeEventListener('agendapro:session-changed', reloadFromEvent)
     }
-  }, [scope])
+  }, [scope, reload])
 
   function updateData(updater) {
     if (!modoDemo) return

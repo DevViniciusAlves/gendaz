@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ResendEmailService {
     private static final URI RESEND_URI = URI.create("https://api.resend.com/emails");
-    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendazpngpreto.png";
+    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendaz-logo-navbar.png";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -136,7 +136,7 @@ public class ResendEmailService {
     }
 
     /**
-     * Envia qualquer email usando o template padrao unico (logo Gendaz + CTA verde).
+     * Envia qualquer email usando o template padrao unico (logo Gendaz + CTA preto).
      */
     public boolean enviarComTemplate(
             String email,
@@ -183,10 +183,10 @@ public class ResendEmailService {
             String codigo = safe(cupomCodigo, "-");
             String corpo = """
                     <div style="text-align:center; margin:6px 0 18px;">
-                      <div style="display:inline-block; background:#e8f9ec; border:1px solid #42f569; border-radius:12px; padding:16px 24px; text-align:left;">
-                        <p style="margin:0 0 4px; color:#111111;"><strong>Cupom:</strong> %s</p>
-                        <p style="margin:0 0 4px; color:#111111;"><strong>Desconto:</strong> %s</p>
-                        <p style="margin:0; color:#6b7280;">Valido ate %s</p>
+                      <div style="display:inline-block; background:#111111; border:1px solid #000000; border-radius:12px; padding:16px 24px; text-align:left;">
+                        <p style="margin:0 0 4px; color:#ffffff;"><strong>Cupom:</strong> %s</p>
+                        <p style="margin:0 0 4px; color:#ffffff;"><strong>Desconto:</strong> %s</p>
+                        <p style="margin:0; color:#d4d4d8;">Valido ate %s</p>
                       </div>
                     </div>
                     <p style="margin:0 0 12px;">%s</p>
@@ -245,7 +245,7 @@ public class ResendEmailService {
                     + " as "
                     + (horaInicio != null ? horaInicio.format(DateTimeFormatter.ofPattern("HH:mm")) : "--:--");
             String corpo = """
-                    <div style="background:#e8f9ec; border:1px solid #42f569; border-radius:12px; padding:16px 20px; color:#111111; font-size:14px; line-height:1.8;">
+                    <div style="background:#111111; border:1px solid #000000; border-radius:12px; padding:16px 20px; color:#ffffff; font-size:14px; line-height:1.8;">
                       <p style="margin:0 0 6px;"><strong>Servico:</strong> %s</p>
                       <p style="margin:0 0 6px;"><strong>Profissional:</strong> %s</p>
                       <p style="margin:0 0 6px;"><strong>Data e hora:</strong> %s</p>
@@ -298,7 +298,7 @@ public class ResendEmailService {
                     + " as "
                     + (horaInicio != null ? horaInicio.format(DateTimeFormatter.ofPattern("HH:mm")) : "--:--");
             String corpo = """
-                    <div style="background:#fff7e6; border:1px solid #ffb340; border-radius:12px; padding:16px 20px; color:#111111; font-size:14px; line-height:1.8;">
+                    <div style="background:#111111; border:1px solid #000000; border-radius:12px; padding:16px 20px; color:#ffffff; font-size:14px; line-height:1.8;">
                       <p style="margin:0 0 6px;"><strong>Quando:</strong> %s</p>
                       <p style="margin:0 0 6px;"><strong>Servico:</strong> %s</p>
                       <p style="margin:0;"><strong>Profissional:</strong> %s</p>
@@ -623,8 +623,10 @@ public class ResendEmailService {
                   <body style=\"margin:0; padding:0; background:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
                     <div style=\"max-width:760px; margin:0 auto; padding:36px 20px;\">
                       <div style=\"background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;\">
-                        <div style=\"padding:36px 36px 28px; text-align:center; background:#ffffff;\">
-                          <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:180px; width:100%%; height:auto; display:block; margin:0 auto 16px;\" />
+                        <div style=\"background:#111111; padding:32px 36px; text-align:center;\">
+                          <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:200px; width:100%%; height:auto; display:block; margin:0 auto;\" />
+                        </div>
+                        <div style=\"padding:32px 36px 28px; text-align:center; background:#ffffff;\">
                           <div style=\"display:inline-block; padding:6px 12px; border-radius:999px; background:#111111; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;\">%s</div>
                           <h1 style=\"margin:18px 0 10px; font-size:28px; line-height:1.2; color:#111111;\">%s</h1>
                           <p style=\"margin:0 auto; max-width:520px; font-size:16px; line-height:1.7; color:#4b5563;\">%s</p>
@@ -636,7 +638,7 @@ public class ResendEmailService {
                           </div>
 
                           <div style=\"text-align:center; margin-top:24px;\">
-                            <a href=\"%s\" style=\"display:inline-block; background:#42f569; color:#111111; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">%s</a>
+                            <a href=\"%s\" style=\"display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">%s</a>
                           </div>
                         </div>
 

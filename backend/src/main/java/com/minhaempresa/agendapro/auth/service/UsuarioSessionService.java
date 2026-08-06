@@ -26,6 +26,20 @@ public class UsuarioSessionService {
         return sessao;
     }
 
+    /**
+     * Renova a sessão de forma idempotente: se o token informado ainda é o ativo,
+     * mantém o mesmo token (evita race de rotacao em refreshes concorrentes, ex: F5).
+     * Só gera um novo token quando a sessão informada não é mais a ativa.
+     */
+    @Transactional
+    public synchronized String renovarSessao(UsuarioEntity usuario, String sessionTokenAtual) {
+        if (sessionTokenAtual != null && !sessionTokenAtual.isBlank()
+                && sessionTokenAtual.equals(usuario.getSessaoAtiva())) {
+            return sessionTokenAtual;
+        }
+        return renovarSessao(usuario);
+    }
+
     @Transactional
     public synchronized String renovarSessao(UsuarioEntity usuario, Long empresaId) {
         if (usuario == null || empresaId == null || usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {

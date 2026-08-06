@@ -151,7 +151,7 @@ api.interceptors.response.use(
       if (!isMeuGendazPath()) {
         const msg = error.response?.data?.erro
           || error.response?.data?.mensagem
-          || 'Muitas requisições. Aguarde um momento e tente novamente.'
+          || 'Sistema está carregando. Aguarde um momento.'
         window.dispatchEvent(new CustomEvent('agendapro:toast', {
           detail: { type: 'warning', message: msg },
         }))

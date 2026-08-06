@@ -2,7 +2,6 @@ import { useState } from 'react'
 import {
   AlertCircle,
   Calendar,
-  Clock,
   HelpCircle,
   Sparkles,
   TrendingUp,
@@ -53,28 +52,6 @@ function resumoTexto(dashboard) {
   return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
 }
 
-function getMetaMensal(dashboard) {
-  const valor = dashboard?.metaMes || dashboard?.metaMensal || dashboard?.financeiro?.metaMes
-  return valor ? formatCurrency(valor) : 'Sem meta'
-}
-
-function getReceitaMensal(dashboard) {
-  const valor = dashboard?.financeiro?.totalRecebidoMes || dashboard?.receitaMensal || dashboard?.financeiro?.receitaMes
-  return valor ? formatCurrency(valor) : 'Sem receita'
-}
-
-function getNomeMesAtual() {
-  return new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date())
-}
-
-function getTendencia(dashboard) {
-  return dashboard?.tendencia || dashboard?.comparativo?.tendencia || null
-}
-
-function getVariacaoTendencia(dashboard) {
-  return dashboard?.variacao || dashboard?.comparativo?.variacao || null
-}
-
 function getStatusScore(score) {
   if (score >= 70) return 'Muito saudável'
   if (score >= 45) return 'Saudável'
@@ -92,19 +69,8 @@ export default function Insights() {
   const [chatAberto, setChatAberto] = useState(true)
   const [analiseAberta, setAnaliseAberta] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
-  const [metaAberta, setMetaAberta] = useState(false)
-  const [metaSalva, setMetaSalva] = useState(() => {
-    try {
-      const raw = localStorage.getItem('agendapro_insights_meta')
-      return raw ? JSON.parse(raw) : null
-    } catch {
-      return null
-    }
-  })
-  const [novaMeta, setNovaMeta] = useState({ titulo: '', quantidade: '', tempo: '' })
 
   const score = Number(dashboard?.scoreGeral ?? 0)
-  const alertas = safeArray(dashboard?.alertas)
   const oportunidades = safeArray(dashboard?.oportunidades)
   const recomendacoes = safeArray(dashboard?.acoes)
   const principais = safeArray(dashboard?.principais).slice(0, 3)
@@ -112,10 +78,6 @@ export default function Insights() {
   const dataAnalise = dashboard?.geradoEm
     ? new Date(dashboard.geradoEm).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
     : null
-  const tendencia = getTendencia(dashboard)
-  const variacaoTendencia = getVariacaoTendencia(dashboard)
-  const receitaMensal = getReceitaMensal(dashboard)
-  const mesAtual = getNomeMesAtual()
   const riscoAtual = getRisco(score)
   const riscoAtivos = score >= 70 ? 8 : score >= 45 ? 5 : 2
   const riscoDescricao = score >= 70
@@ -150,29 +112,6 @@ export default function Insights() {
     }
   }
 
-  function abrirMeta() {
-    setNovaMeta({
-      titulo: metaSalva?.titulo || '',
-      quantidade: metaSalva?.quantidade || '',
-      tempo: metaSalva?.tempo || '',
-    })
-    setMetaAberta(true)
-  }
-
-  function salvarMeta() {
-    const meta = {
-      titulo: String(novaMeta.titulo || '').trim(),
-      quantidade: String(novaMeta.quantidade || '').trim(),
-      tempo: String(novaMeta.tempo || '').trim(),
-    }
-
-    if (!meta.titulo || !meta.quantidade || !meta.tempo) return
-
-    setMetaSalva(meta)
-    localStorage.setItem('agendapro_insights_meta', JSON.stringify(meta))
-    setMetaAberta(false)
-  }
-
   return (
     <section className="page insights-page insights-page--new">
       <header className="page-title insights-hero">
@@ -200,9 +139,11 @@ export default function Insights() {
                 <small className="insights-summary-panel__meta">
                   {dataAnalise ? `Última sincronização: ${dataAnalise}` : 'Aguardando sincronização da empresa vinculada'}
                 </small>
-                <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
-                  Ver análise completa
-                </Button>
+                <div className="insights-summary-actions">
+                  <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
+                    Ver análise completa
+                  </Button>
+                </div>
               </div>
 
               <div className="insights-summary-metrics">
@@ -211,18 +152,6 @@ export default function Insights() {
                   <div className="insights-summary-metric__value">{score}/100</div>
                   <strong>{getStatusScore(score)}</strong>
                   <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparação disponível'}</small>
-                </article>
-                <article className="insights-summary-metric">
-                  <span className="insights-label">Tendência</span>
-                  <div className="insights-summary-metric__value">{tendencia || 'Sem tendência'}</div>
-                  <strong>{variacaoTendencia || 'Dados insuficientes'}</strong>
-                  <small>em relação aos últimos 30 dias</small>
-                </article>
-                <article className="insights-summary-metric">
-                  <span className="insights-label">Receita mensal</span>
-                  <div className="insights-summary-metric__value">{receitaMensal}</div>
-                  <strong>{`Mês atual: ${mesAtual}`}</strong>
-                  <small>{dashboard?.financeiro?.totalRecebidoMes ? 'Receita consolidada do mês' : 'Sem receita registrada'}</small>
                 </article>
               </div>
             </section>
@@ -438,62 +367,6 @@ export default function Insights() {
                 <strong>{historico.length}</strong>
                 <p>{historico.length > 0 ? 'Recomendações registradas' : 'Sem histórico ainda.'}</p>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {metaAberta && (
-        <div className="insights-modal-backdrop" role="presentation" onClick={() => setMetaAberta(false)}>
-          <div className="panel insights-meta-modal" role="dialog" aria-modal="true" aria-label="Adicionar meta" onClick={(event) => event.stopPropagation()}>
-            <div className="insights-modal__head">
-              <div>
-                <div className="section-kicker">Meta do mês</div>
-                <h2>Adicionar meta</h2>
-                <p>Defina título, quantidade e tempo para acompanhar melhor a meta.</p>
-              </div>
-              <Button variant="secondary" onClick={() => setMetaAberta(false)}>
-                Fechar
-              </Button>
-            </div>
-
-            <div className="insights-meta-form">
-              <label>
-                <span>Título da meta</span>
-                <input
-                  type="text"
-                  value={novaMeta.titulo}
-                  onChange={(event) => setNovaMeta((current) => ({ ...current, titulo: event.target.value }))}
-                  placeholder="Ex: Faturar R$ 20.000"
-                />
-              </label>
-              <label>
-                <span>Quantidade</span>
-                <input
-                  type="text"
-                  value={novaMeta.quantidade}
-                  onChange={(event) => setNovaMeta((current) => ({ ...current, quantidade: event.target.value }))}
-                  placeholder="Ex: 20 agendamentos"
-                />
-              </label>
-              <label>
-                <span>Tempo</span>
-                <input
-                  type="text"
-                  value={novaMeta.tempo}
-                  onChange={(event) => setNovaMeta((current) => ({ ...current, tempo: event.target.value }))}
-                  placeholder="Ex: 30 dias"
-                />
-              </label>
-            </div>
-
-            <div className="insights-meta-actions">
-              <Button variant="secondary" onClick={() => setMetaAberta(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={salvarMeta} disabled={!String(novaMeta.titulo).trim() || !String(novaMeta.quantidade).trim() || !String(novaMeta.tempo).trim()}>
-                Salvar meta
-              </Button>
             </div>
           </div>
         </div>

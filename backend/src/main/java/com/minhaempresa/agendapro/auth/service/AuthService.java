@@ -311,7 +311,7 @@ public class AuthService {
             throw new BusinessException("Sessão não encontrada.");
         }
         UsuarioEntity usuario = buscarUsuarioAutenticado(null, sessionToken);
-        String novaSessao = usuarioSessionService.renovarSessao(usuario);
+        String novaSessao = usuarioSessionService.renovarSessao(usuario, sessionToken);
         AssinaturaResponse assinatura = usuario.getEmpresa() == null
                 ? null
                 : assinaturaService.buscarAtualResponsePorEmpresa(usuario.getEmpresa().getId());
