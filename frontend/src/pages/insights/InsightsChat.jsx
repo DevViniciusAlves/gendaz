@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Loader, Send, Sparkles } from 'lucide-react'
+import { getSessionUser } from '../../api/axiosConfig.js'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
   'Quais clientes devo recuperar?',
   'Qual serviço devo divulgar?',
 ]
+
+const CHAT_STORAGE_PREFIX = 'agendapro_insights_chat_'
 
 function normalizarTexto(valor) {
   return String(valor ?? '').trim()
@@ -18,13 +21,43 @@ function criarChaveHistorico(item) {
   ].join('::')
 }
 
+function chaveChatSalvo() {
+  const usuario = getSessionUser()
+  return `${CHAT_STORAGE_PREFIX}${usuario?.empresaId || 'local'}_${usuario?.id || 'anon'}`
+}
+
+function carregarChatSalvo() {
+  try {
+    const raw = localStorage.getItem(chaveChatSalvo())
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed?.mensagens)) return null
+    return parsed
+  } catch {
+    return null
+  }
+}
+
 export default function InsightsChat({ onEnviar, historico = [] }) {
-  const [mensagens, setMensagens] = useState([])
+  const [mensagens, setMensagens] = useState(() => carregarChatSalvo()?.mensagens || [])
   const [entrada, setEntrada] = useState('')
   const [carregando, setCarregando] = useState(false)
   const ref = useRef(null)
-  const historicoProcessadoRef = useRef(new Set())
+  const historicoProcessadoRef = useRef(new Set(carregarChatSalvo()?.processadas || []))
   const envioPendenteRef = useRef(null)
+
+  // Persiste o histórico do chat localmente (localStorage) para que ele
+  // sobreviva a troca de aba/navegação e a sair do SaaS.
+  useEffect(() => {
+    try {
+      localStorage.setItem(chaveChatSalvo(), JSON.stringify({
+        mensagens,
+        processadas: Array.from(historicoProcessadoRef.current),
+      }))
+    } catch {
+      // armazenamento indisponível (modo privado/quota) — segue sem persistir
+    }
+  }, [mensagens])
 
   useEffect(() => {
     ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' })
@@ -99,7 +132,11 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
 
     setMensagens((current) => {
       const idsExistentes = new Set(current.map((item) => String(item.id)))
-      const novas = mensagensHistorico.filter((item) => !idsExistentes.has(String(item.id)))
+      const textosExistentes = new Set(current.map((item) => normalizarTexto(item.texto).toLowerCase()))
+      const novas = mensagensHistorico.filter((item) => {
+        if (idsExistentes.has(String(item.id))) return false
+        return !textosExistentes.has(normalizarTexto(item.texto).toLowerCase())
+      })
       return novas.length > 0 ? [...current, ...novas] : current
     })
   }, [historico])

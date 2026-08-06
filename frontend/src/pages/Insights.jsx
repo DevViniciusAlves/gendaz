@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   AlertCircle,
   Calendar,
@@ -41,6 +42,30 @@ function iconPorTipo(tipo) {
   return AlertCircle
 }
 
+function destinoPorTipo(item) {
+  const tipo = String(item?.tipo || '').toLowerCase()
+  const texto = `${item?.titulo || ''} ${item?.descricao || ''}`.toLowerCase()
+
+  if (tipo.includes('cliente') || texto.includes('cliente')) return '/sistema/clientes'
+  if (tipo.includes('finance') || texto.includes('cobran') || texto.includes('pagamento') || texto.includes('receita') || texto.includes('faturamento')) return '/sistema/financeiro'
+  if (tipo.includes('agenda') || tipo.includes('ocios') || texto.includes('agenda') || texto.includes('ocios')) return '/sistema/agenda'
+  if (tipo.includes('servico') || texto.includes('serviço') || texto.includes('servico')) return '/sistema/servicos'
+  if (tipo.includes('acao') || texto.includes('campanha') || texto.includes('promoç')) return '/sistema/promocoes'
+  return '/sistema/dashboard'
+}
+
+function rotuloDestino(destino) {
+  const rotulos = {
+    '/sistema/clientes': 'Ver clientes',
+    '/sistema/financeiro': 'Ver financeiro',
+    '/sistema/agenda': 'Ver horários',
+    '/sistema/servicos': 'Ver serviços',
+    '/sistema/promocoes': 'Ver promoções',
+    '/sistema/dashboard': 'Ver mais',
+  }
+  return rotulos[destino] || 'Ver mais'
+}
+
 function resumoTexto(dashboard) {
   if (!dashboard) return 'Carregando análise real da empresa...'
 
@@ -65,6 +90,7 @@ function getRisco(score) {
 }
 
 export default function Insights() {
+  const navigate = useNavigate()
   const { dashboard, historico, loading, error, recarregar, analisar } = useInsights()
   const [chatAberto, setChatAberto] = useState(true)
   const [analiseAberta, setAnaliseAberta] = useState(false)
@@ -197,7 +223,7 @@ export default function Insights() {
                 {principais.length > 0 ? principais.map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
                   const tags = ['Crítico', 'Importante', 'Oportunidade']
-                  const actions = ['Ver clientes', 'Ver horários', 'Ver serviço']
+                  const destino = destinoPorTipo(item)
                   return (
                     <article key={`${item.tipo || 'principal'}-${item.titulo || index}`} className="insights-core-card">
                       <div className="insights-core-card__top">
@@ -218,7 +244,7 @@ export default function Insights() {
                           <small>Impacto estimado</small>
                           <strong>{formatCurrency(item.impacto || item.impactoEstimado)}</strong>
                         </div>
-                        <Button variant="secondary">{actions[index] || 'Ver mais'}</Button>
+                        <Button variant="secondary" onClick={() => navigate(destino)}>{rotuloDestino(destino)}</Button>
                       </div>
                     </article>
                   )
@@ -249,10 +275,6 @@ export default function Insights() {
                   ))}
                   {oportunidades.length === 0 && <p className="insights-empty">Nenhuma oportunidade relevante detectada agora.</p>}
                 </div>
-                <div className="insights-link-row">
-                  <span>Ver todas oportunidades</span>
-                  <span>→</span>
-                </div>
               </section>
 
               <section className="panel insights-section">
@@ -275,16 +297,11 @@ export default function Insights() {
                           <strong>{acaoPrincipal.tempoNecessario || 'Dados insuficientes'}</strong>
                         </div>
                       </div>
-                      <Button variant="secondary">Executar agora</Button>
                     </div>
                   </article>
                 ) : (
                   <p className="insights-empty">Nenhuma ação prioritária no momento.</p>
                 )}
-                <div className="insights-link-row">
-                  <span>Ver todas ações recomendadas</span>
-                  <span>→</span>
-                </div>
               </section>
 
               <section className="panel insights-section">
@@ -304,10 +321,6 @@ export default function Insights() {
                     </div>
                   ))}
                   {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
-                </div>
-                <div className="insights-link-row">
-                  <span>Ver plano completo</span>
-                  <span>→</span>
                 </div>
               </section>
             </div>
@@ -363,11 +376,52 @@ export default function Insights() {
                 <p>Baseado nos dados reais sincronizados.</p>
               </div>
               <div>
+                <span>Alertas ativos</span>
+                <strong>{safeArray(dashboard?.alertas).length}</strong>
+                <p>Pontos de atenção detectados na análise.</p>
+              </div>
+              <div>
+                <span>Oportunidades</span>
+                <strong>{oportunidades.length}</strong>
+                <p>Oportunidades para crescer identificadas.</p>
+              </div>
+              <div>
+                <span>Ações recomendadas</span>
+                <strong>{recomendacoes.length}</strong>
+                <p>Recomendações prioritárias pela IA.</p>
+              </div>
+              <div>
                 <span>Histórico</span>
                 <strong>{historico.length}</strong>
                 <p>{historico.length > 0 ? 'Recomendações registradas' : 'Sem histórico ainda.'}</p>
               </div>
             </div>
+
+            {principais.length > 0 && (
+              <div className="insights-modal-lista">
+                <div className="section-kicker">Principais achados da análise</div>
+                {principais.map((item, index) => {
+                  const Icon = iconPorTipo(item.tipo)
+                  const destino = destinoPorTipo(item)
+                  return (
+                    <article key={`${item.tipo || 'modal'}-${item.titulo || index}`} className="insights-modal-item">
+                      <div className="insights-modal-item__icon">
+                        <Icon size={16} />
+                      </div>
+                      <div className="insights-modal-item__content">
+                        <strong>{item.titulo || 'Insight'}</strong>
+                        <p>{item.descricao || 'Sem descrição.'}</p>
+                      </div>
+                      <div className="insights-modal-item__meta">
+                        <small>Impacto</small>
+                        <strong>{formatCurrency(item.impacto || item.impactoEstimado)}</strong>
+                      </div>
+                      <Button variant="secondary" onClick={() => navigate(destino)}>{rotuloDestino(destino)}</Button>
+                    </article>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}

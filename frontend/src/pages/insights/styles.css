@@ -922,6 +922,65 @@
   font-size: 11px;
 }
 
+.insights-modal-lista {
+  display: grid;
+  gap: 10px;
+}
+
+.insights-modal-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.insights-modal-item__icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  background: rgba(var(--primary-rgb), 0.12);
+  color: var(--primary);
+}
+
+.insights-modal-item__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.insights-modal-item__content strong {
+  display: block;
+  font-size: 14px;
+}
+
+.insights-modal-item__content p {
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.insights-modal-item__meta {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.insights-modal-item__meta small {
+  display: block;
+  color: var(--muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.insights-modal-item__meta strong {
+  color: var(--primary);
+}
+
 /* ---------- Estados ---------- */
 
 .insights-panel {
@@ -1038,11 +1097,17 @@
 
 /* O .gendaz-chat global usa height: min(72vh,760px) + min-height:560px
    (página inteira). Na sidebar ele deve preencher 100% do card sem
-   crescer além dele: min-height:0 + overflow:hidden. */
+   crescer além dele. Em vez de height:100% (frágil em flex aninhado,
+   que vira height:auto e estoura o card quando o zoom muda), usamos
+   flex:1 1 auto + min-height:0 + overflow:hidden: a altura vem do card
+   pai (que tem limite fixo) e o conteúdo rola dentro de
+   .gendaz-chat__messages. */
 .insights-sidebar-chat .gendaz-chat {
   width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  flex: 1 1 auto;
+  align-self: stretch;
+  max-height: none;
   min-height: 0;
   min-width: 0;
   background: transparent;
@@ -1059,15 +1124,25 @@
 }
 
 /* Mensagens: scroll interno só aqui (flex:1 1 auto; min-height:0;
-   overflow-y:auto já vêm do global.css). */
+   overflow-y:auto). Flex-column para o estado vazio conseguir
+   preencher 100% da área (altura correta do card mesmo sem mensagens). */
 .insights-sidebar-chat .gendaz-chat__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
   flex-shrink: 1;
   margin-bottom: 10px;
+  overflow-y: auto;
   scrollbar-width: thin;
 }
 
-/* Estado vazio (sem CSS no global.css — criado localmente) */
+/* Estado vazio (sem CSS no global.css — criado localmente).
+   flex:1 faz o empty ocupar toda a área de mensagens, então o card
+   mantém a altura correta mesmo sem nenhuma mensagem enviada. */
 .insights-sidebar-chat .gendaz-chat__empty {
+  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;

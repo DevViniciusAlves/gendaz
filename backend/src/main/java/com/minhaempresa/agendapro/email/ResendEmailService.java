@@ -432,8 +432,8 @@ public class ResendEmailService {
 
     private String montarHtmlBoasVindas(String nomeCliente, String nomeEmpresa) {
         String corpo = """
-                <p style=\"margin:0 0 10px;\">Agora voce faz parte da <strong>%s</strong>.</p>
-                <p style=\"margin:0;\">Voce ja pode acessar sua conta e comecar a usar a plataforma.</p>
+                <p style=\"margin:0 0 10px;\">Que bom ter voce conosco! Sua conta na <strong>%s</strong> ja esta pronta para uso.</p>
+                <p style=\"margin:0;\">Acesse o painel para organizar sua agenda, clientes, servicos e financeiro em um so lugar.</p>
                 """.formatted(nomeEmpresa);
         return montarEmailPadrao(
                 "Gendaz",
@@ -454,7 +454,7 @@ public class ResendEmailService {
         return montarEmailPadrao(
                 "Gendaz",
                 "Recuperacao de senha",
-                "Ola %s,".formatted(nomeCliente),
+                "Ola %s, recebemos sua solicitacao para redefinir a senha.".formatted(nomeCliente),
                 corpo,
                 linkRecuperacao,
                 "Redefinir senha",
@@ -518,8 +518,8 @@ public class ResendEmailService {
                 """.formatted(codigo);
         return montarEmailPadrao(
                 "Gendaz",
-                "Meu Gendaz",
-                "Ola %s,".formatted(nomeCliente),
+                "Seu codigo de acesso ao Meu Gendaz",
+                "Ola %s, use o codigo abaixo para entrar.".formatted(nomeCliente),
                 corpo,
                 montarUrlBase() + "/meu-gendaz",
                 "Abrir Meu Gendaz",
@@ -617,6 +617,13 @@ public class ResendEmailService {
     }
 
     private String montarEmailPadrao(String badge, String titulo, String subtitulo, String corpo, String ctaUrl, String ctaTexto, String rodape) {
+        // Nunca deixar o cabecalho "so gendaz": se o titulo vier vazio, usa o
+        // subtitulo; se ambos vierem vazios, usa uma frase generica.
+        String tituloFinal = safe(titulo, "");
+        String subtituloFinal = safe(subtitulo, "");
+        if (tituloFinal.isBlank()) {
+            tituloFinal = subtituloFinal.isBlank() ? "Obrigado pela atencao" : subtituloFinal;
+        }
         return """
                 <html>
                   <body style=\"margin:0; padding:0; background:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
@@ -650,8 +657,8 @@ public class ResendEmailService {
                 </html>
                 """.formatted(
                 safe(badge, "Gendaz"),
-                safe(titulo, "Gendaz"),
-                safe(subtitulo, ""),
+                tituloFinal,
+                subtituloFinal,
                 corpo,
                 safe(ctaUrl, montarUrlBase()),
                 safe(ctaTexto, "Abrir"),
