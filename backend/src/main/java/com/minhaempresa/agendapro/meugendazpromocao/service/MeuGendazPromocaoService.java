@@ -145,7 +145,6 @@ public class MeuGendazPromocaoService {
     }
 
     private void garantirNotificacoes(ClienteEntity cliente) {
-        syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
         List<MeuGendazPromocaoEntity> promocoesAtivas = promocaoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
                 cliente.getEmpresa().getId(),
                 com.minhaempresa.agendapro.shared.enums.StatusCadastro.ATIVO

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send, Sparkles, Target } from 'lucide-react'
+import { Bot, Loader, Send, Sparkles } from 'lucide-react'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
@@ -19,9 +19,7 @@ function criarChaveHistorico(item) {
 }
 
 export default function InsightsChat({ onEnviar, historico = [] }) {
-  const [mensagens, setMensagens] = useState([
-    { id: 'boas-vindas', origem: 'bot', texto: 'Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.' },
-  ])
+  const [mensagens, setMensagens] = useState([])
   const [entrada, setEntrada] = useState('')
   const [carregando, setCarregando] = useState(false)
   const ref = useRef(null)
@@ -68,7 +66,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
           if (resposta) {
             mensagensHistorico.push({
               id: `hist-assistant-${item?.id ?? `pendente-${index}`}`,
-              origem: 'bot',
+              origem: 'ia',
               texto: resposta,
             })
           }
@@ -81,7 +79,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
         if (pergunta) {
           mensagensHistorico.push({
             id: `hist-user-${item?.id ?? `hist-${index}`}`,
-            origem: 'user',
+            origem: 'cliente',
             texto: pergunta,
           })
         }
@@ -89,7 +87,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
         if (resposta) {
           mensagensHistorico.push({
             id: `hist-assistant-${item?.id ?? `hist-${index}`}`,
-            origem: 'bot',
+            origem: 'ia',
             texto: resposta,
           })
         }
@@ -112,9 +110,9 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
 
     const historicoParaEnviar = [
       ...mensagens
-        .filter((item) => item.origem === 'user' || item.origem === 'bot')
+        .filter((item) => item.origem === 'cliente' || item.origem === 'ia')
         .map((item) => ({
-          role: item.origem === 'bot' ? 'assistant' : 'user',
+          role: item.origem === 'ia' ? 'assistant' : 'user',
           content: item.texto,
         })),
       { role: 'user', content: pergunta },
@@ -123,7 +121,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
     setEntrada('')
     setMensagens((current) => [
       ...current,
-      { id: `user-${Date.now()}`, origem: 'user', texto: pergunta },
+      { id: `cliente-${Date.now()}`, origem: 'cliente', texto: pergunta },
     ])
 
     envioPendenteRef.current = {
@@ -138,8 +136,8 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
       setMensagens((current) => [
         ...current,
         {
-          id: `bot-${Date.now()}`,
-          origem: 'bot',
+          id: `ia-${Date.now()}`,
+          origem: 'ia',
           texto: textoResposta,
         },
       ])
@@ -153,7 +151,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
         ...current,
         {
           id: `erro-${Date.now()}`,
-          origem: 'bot',
+          origem: 'ia',
           texto: error?.response?.data?.mensagem || 'Não foi possível analisar agora.',
         },
       ])
@@ -163,69 +161,67 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
   }
 
   return (
-    <section className="insights-chat">
-      <header className="insights-chat__head">
-        <div className="insights-chat__avatar" aria-hidden="true">
-          <Sparkles size={15} />
-        </div>
-        <div className="insights-chat__head-info">
-          <h3>Consultor IA</h3>
-          <p>Respostas com base nos dados da sua empresa</p>
-        </div>
-      </header>
+    <section className="gendaz-chat gendaz-chat--insights">
+      <div className="gendaz-panel__head">
+        <Bot size={18} />
+        <h2>gendazIA</h2>
+      </div>
 
-      <div className="insights-chat__messages" ref={ref}>
+      <div className="gendaz-chat__messages" ref={ref}>
+        {mensagens.length === 0 && !carregando && (
+          <div className="gendaz-chat__empty">
+            <Sparkles size={18} />
+            <p>Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.</p>
+          </div>
+        )}
+
         {mensagens.map((mensagem) => (
           <div
             key={mensagem.id}
-            className={`insights-chat__message insights-chat__message--${mensagem.origem}`}
+            className={`gendaz-chat__message gendaz-chat__message--${mensagem.origem}`}
           >
-            <div className="insights-chat__bubble">{mensagem.texto}</div>
+            <div className="gendaz-chat__text">{mensagem.texto}</div>
           </div>
         ))}
+
         {carregando && (
-          <div className="insights-chat__typing" aria-live="polite">
-            <span />
-            <span />
-            <span />
-            <em>Analisando...</em>
+          <div className="gendaz-chat__message gendaz-chat__message--ia gendaz-chat__message--loading">
+            <Loader size={16} className="gendaz-spinner" />
+            <span>Analisando...</span>
           </div>
         )}
       </div>
 
-      <div className="insights-chat__suggestions">
-        <div className="insights-suggestions">
-          {SUGESTOES.map((texto) => (
-            <button
-              key={texto}
-              type="button"
-              className="insights-suggestion"
-              onClick={() => setEntrada(texto)}
-            >
-              <Target size={14} />
-              <span>{texto}</span>
-            </button>
-          ))}
-        </div>
+      <div className="gendaz-chat__sugestoes gendaz-chat__sugestoes--base">
+        {SUGESTOES.map((sugestao) => (
+          <button
+            key={sugestao}
+            type="button"
+            className="gendaz-btn gendaz-btn--small"
+            onClick={() => setEntrada(sugestao)}
+          >
+            {sugestao}
+          </button>
+        ))}
       </div>
 
       <form
-        className="insights-chat__form"
+        className="gendaz-chat__form"
         onSubmit={(event) => {
           event.preventDefault()
           enviar()
         }}
       >
         <input
-          className="chat-input"
           value={entrada}
           onChange={(e) => setEntrada(e.target.value)}
-          placeholder="Faça uma pergunta ao consultor IA..."
-          aria-label="Faça uma pergunta ao consultor IA"
+          placeholder="Faça uma pergunta à gendazIA..."
+          aria-label="Faça uma pergunta à gendazIA"
+          disabled={carregando}
         />
         <button
           type="submit"
-          className="btn btn-primary btn-send"
+          className="gendaz-btn gendaz-btn--primary"
           disabled={!entrada.trim() || carregando}
           aria-label="Enviar pergunta"
         >

@@ -141,18 +141,12 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           </label>
           <label>
             <span>Adicionar cupom</span>
-            {cuponsAplicaveis.length > 0 ? (
-              <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
-                <option value="">Sem cupom</option>
-                {cuponsAplicaveis.map((cupom) => (
-                  <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao}</option>
-                ))}
-              </select>
-            ) : (
-              <select value="" disabled>
-                <option value="">Nenhum cupom disponível</option>
-              </select>
-            )}
+            <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
+              <option value="">Sem cupom</option>
+              {cuponsAplicaveis.map((cupom) => (
+                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao}</option>
+              ))}
+            </select>
           </label>
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Cancelar</button>

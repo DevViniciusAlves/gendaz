@@ -6,6 +6,7 @@ import com.minhaempresa.agendapro.meugendazpromocao.entity.MeuGendazPromocaoEnti
 import com.minhaempresa.agendapro.meugendazpromocao.repository.MeuGendazPromocaoRepository;
 import com.minhaempresa.agendapro.promocao.entity.PromocaoEntity;
 import com.minhaempresa.agendapro.promocao.repository.PromocaoRepository;
+import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import java.util.LinkedHashMap;
@@ -141,7 +142,7 @@ public class MeuGendazPromocaoSyncService {
             }
             mirror.setStatus(promocao.getStatus());
             mirror.setAplicarTodosServicos(promocao.getAplicarTodosServicos());
-            mirror.setServicos(new HashSet<>(promocao.getServicos()));
+            sincronizarServicos(mirror, promocao);
             if (mirror.getDataCriacao() == null) {
                 mirror.setDataCriacao(promocao.getDataCriacao());
             }
@@ -149,5 +150,39 @@ public class MeuGendazPromocaoSyncService {
         }
 
         meuGendazPromocaoRepository.save(mirror);
+    }
+
+    /**
+     * Sincroniza a colecao ManyToMany de servicos do mirror de forma idempotente.
+     * <p>
+     * Nunca substitui a colecao persistida por um Set externo: quando os ids dos
+     * servicos nao mudaram, nada e feito (evita dirty-check e o INSERT duplicado na
+     * join table {@code meu_gendaz_promocao_servico}, cuja PK e composta). Quando
+     * mudaram, aplica o diff diretamente na colecao gerenciada pelo Hibernate.
+     */
+    private void sincronizarServicos(MeuGendazPromocaoEntity mirror, PromocaoEntity promocao) {
+        Set<ServicoEntity> novos = promocao.getServicos() == null
+                ? new HashSet<>()
+                : new HashSet<>(promocao.getServicos());
+        Set<Long> idsNovos = novos.stream()
+                .map(ServicoEntity::getId)
+                .collect(Collectors.toSet());
+
+        Set<Long> idsAtuais = mirror.getServicos() == null
+                ? new HashSet<>()
+                : mirror.getServicos().stream()
+                        .map(ServicoEntity::getId)
+                        .collect(Collectors.toSet());
+
+        if (idsNovos.equals(idsAtuais)) {
+            return;
+        }
+
+        mirror.getServicos().removeIf(servico -> !idsNovos.contains(servico.getId()));
+        for (ServicoEntity servico : novos) {
+            if (!idsAtuais.contains(servico.getId())) {
+                mirror.getServicos().add(servico);
+            }
+        }
     }
 }

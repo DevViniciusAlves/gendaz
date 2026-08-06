@@ -25,7 +25,6 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ResendEmailService {
     private static final URI RESEND_URI = URI.create("https://api.resend.com/emails");
-    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendazpngpreto.png";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -136,7 +135,7 @@ public class ResendEmailService {
     }
 
     /**
-     * Envia qualquer email usando o template padrao unico (logo Gendaz + CTA preto).
+     * Envia qualquer email usando o template padrao unico (marca "gendaz" em texto + CTA preto).
      */
     public boolean enviarComTemplate(
             String email,
@@ -623,8 +622,8 @@ public class ResendEmailService {
                   <body style=\"margin:0; padding:0; background:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
                     <div style=\"max-width:760px; margin:0 auto; padding:36px 20px;\">
                       <div style=\"background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;\">
-                        <div style=\"background:#ffffff; padding:32px 36px; text-align:center; border-bottom:1px solid #e5e7eb;\">
-                          <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:200px; width:100%%; height:auto; display:block; margin:0 auto;\" />
+                        <div style=\"background:#ffffff; padding:28px 36px; text-align:center; border-bottom:1px solid #e5e7eb;\">
+                          <span style=\"font-size:24px; font-weight:800; letter-spacing:-0.02em; color:#111111;\">gendaz</span>
                         </div>
                         <div style=\"padding:32px 36px 28px; text-align:center; background:#ffffff;\">
                           <div style=\"display:inline-block; padding:6px 12px; border-radius:999px; background:#111111; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;\">%s</div>
@@ -650,7 +649,6 @@ public class ResendEmailService {
                   </body>
                 </html>
                 """.formatted(
-                EMAIL_LOGO_URL,
                 safe(badge, "Gendaz"),
                 safe(titulo, "Gendaz"),
                 safe(subtitulo, ""),

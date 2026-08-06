@@ -708,20 +708,14 @@ export default function Agenda() {
           <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
           <label className="field">
             <span>Adicionar cupom</span>
-            {promocoesAplicaveis.length > 0 ? (
-              <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
-                <option value="">Nenhum cupom</option>
-                {promocoesAplicaveis.map((cupom) => (
-                  <option key={cupom.id} value={cupom.codigo}>
-                    {cupom.codigo} - {cupom.descricao}
-                  </option>
-                ))}
-              </select>
-            ) : (
-              <select value="" disabled>
-                <option value="">Nenhum cupom disponível</option>
-              </select>
-            )}
+            <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
+              <option value="">Nenhum cupom</option>
+              {promocoesAplicaveis.map((cupom) => (
+                <option key={cupom.id} value={cupom.codigo}>
+                  {cupom.codigo} - {cupom.descricao}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
