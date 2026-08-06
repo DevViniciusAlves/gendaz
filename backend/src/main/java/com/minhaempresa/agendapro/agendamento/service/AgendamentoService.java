@@ -141,6 +141,24 @@ public class AgendamentoService {
                 log.error("[agendamento-debug] falha ao enviar email. mensagem='{}' contexto={}", e.getMessage(), contextoEmailErro, e);
             }
             try {
+                resendEmailService.enviarConfirmacaoAgendamento(
+                        cliente.getEmail(),
+                        cliente.getNome(),
+                        servico.getNome(),
+                        profissional.getNome(),
+                        salvo.getData(),
+                        salvo.getHoraInicio(),
+                        empresa.getNomeFantasia(),
+                        empresa.getAgendamentoSlug()
+                );
+            } catch (Exception e) {
+                Map<String, Object> contextoEmailConfirmacaoErro = new LinkedHashMap<>();
+                contextoEmailConfirmacaoErro.put("agendamentoId", salvo.getId());
+                contextoEmailConfirmacaoErro.put("protocolo", salvo.getProtocolo());
+                contextoEmailConfirmacaoErro.put("clienteEmail", cliente.getEmail());
+                log.error("[agendamento-debug] falha ao enviar email de confirmacao. mensagem='{}' contexto={}", e.getMessage(), contextoEmailConfirmacaoErro, e);
+            }
+            try {
                 if (request.cupomCodigo() != null && !request.cupomCodigo().isBlank()) {
                     meuGendazPromocaoService.validarERegistrarUso(cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
                 }

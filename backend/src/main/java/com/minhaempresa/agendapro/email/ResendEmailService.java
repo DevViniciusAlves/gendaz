@@ -10,6 +10,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -132,6 +135,195 @@ public class ResendEmailService {
         return enviarEmail(destinatario, assunto, html);
     }
 
+    /**
+     * Envia qualquer email usando o template padrao unico (logo Gendaz + CTA verde).
+     */
+    public boolean enviarComTemplate(
+            String email,
+            String assunto,
+            String titulo,
+            String subtitulo,
+            String corpoHtml,
+            String ctaUrl,
+            String ctaTexto
+    ) {
+        String html = montarEmailPadrao(
+                "Gendaz",
+                titulo,
+                subtitulo,
+                corpoHtml,
+                ctaUrl,
+                ctaTexto,
+                "Este e um e-mail automatico da Gendaz. Se preferir, responda diretamente por este canal."
+        );
+        return enviarEmail(email, assunto, html);
+    }
+
+    /**
+     * Email de promocao/cupom com o template padrao.
+     */
+    public boolean enviarPromocao(
+            String emailCliente,
+            String nomeCliente,
+            String nomeEmpresa,
+            String cupomCodigo,
+            String desconto,
+            String descricao,
+            LocalDateTime validoAte,
+            String slug
+    ) {
+        if (emailCliente == null || emailCliente.isBlank()) {
+            log.warn("[resend] email do cliente vazio, promocao ignorada");
+            return false;
+        }
+        try {
+            String dataFim = validoAte != null
+                    ? validoAte.format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+                    : "consulte os termos no portal";
+            String codigo = safe(cupomCodigo, "-");
+            String corpo = """
+                    <div style="text-align:center; margin:6px 0 18px;">
+                      <div style="display:inline-block; background:#e8f9ec; border:1px solid #42f569; border-radius:12px; padding:16px 24px; text-align:left;">
+                        <p style="margin:0 0 4px; color:#111111;"><strong>Cupom:</strong> %s</p>
+                        <p style="margin:0 0 4px; color:#111111;"><strong>Desconto:</strong> %s</p>
+                        <p style="margin:0; color:#6b7280;">Valido ate %s</p>
+                      </div>
+                    </div>
+                    <p style="margin:0 0 12px;">%s</p>
+                    <p style="margin:0 0 8px;"><strong>Como usar:</strong></p>
+                    <ol style="margin:0 0 12px; padding-left:20px; color:#111111;">
+                      <li style="margin-bottom:6px;">Acesse nosso portal de agendamentos</li>
+                      <li style="margin-bottom:6px;">Escolha o servico desejado</li>
+                      <li style="margin-bottom:6px;">Aplique o cupom <strong>%s</strong> no checkout</li>
+                      <li style="margin-bottom:6px;">Pronto! Seu desconto foi aplicado</li>
+                    </ol>
+                    <p style="margin:0;">Qualquer duvida, e so responder este e-mail.</p>
+                    """.formatted(
+                    codigo,
+                    safe(desconto, "-"),
+                    dataFim,
+                    safe(descricao, "Temos uma oferta especial para voce. Aproveite antes que acabe!"),
+                    codigo
+            );
+            return enviarComTemplate(
+                    emailCliente,
+                    "Promocao especial: " + codigo,
+                    "Oferta especial para voce",
+                    "Ola %s, %s preparou um cupom novo para voce.".formatted(
+                            safe(nomeCliente, "cliente"), safe(nomeEmpresa, "nossa empresa")),
+                    corpo,
+                    montarUrlMeuGendaz(slug) + "/agenda",
+                    "Agendar com desconto"
+            );
+        } catch (Exception e) {
+            log.error("[resend] erro ao montar email promocao: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Email de confirmacao de agendamento com o template padrao.
+     */
+    public boolean enviarConfirmacaoAgendamento(
+            String emailCliente,
+            String nomeCliente,
+            String nomeServico,
+            String nomeProfissional,
+            LocalDate data,
+            LocalTime horaInicio,
+            String nomeEmpresa,
+            String slug
+    ) {
+        if (emailCliente == null || emailCliente.isBlank()) {
+            log.warn("[resend] email do cliente vazio, confirmacao ignorada");
+            return false;
+        }
+        try {
+            String dataFormatada = (data != null
+                    ? data.format(DateTimeFormatter.ofPattern("dd 'de' MMMM 'de' yyyy"))
+                    : "data a definir")
+                    + " as "
+                    + (horaInicio != null ? horaInicio.format(DateTimeFormatter.ofPattern("HH:mm")) : "--:--");
+            String corpo = """
+                    <div style="background:#e8f9ec; border:1px solid #42f569; border-radius:12px; padding:16px 20px; color:#111111; font-size:14px; line-height:1.8;">
+                      <p style="margin:0 0 6px;"><strong>Servico:</strong> %s</p>
+                      <p style="margin:0 0 6px;"><strong>Profissional:</strong> %s</p>
+                      <p style="margin:0 0 6px;"><strong>Data e hora:</strong> %s</p>
+                      <p style="margin:0;"><strong>Empresa:</strong> %s</p>
+                    </div>
+                    <p style="margin:16px 0 0;">Dica: chegue com alguns minutos de antecedencia para a melhor experiencia.</p>
+                    <p style="margin:8px 0 0;">Precisa reagendar? Acesse seu portal a qualquer momento para fazer alteracoes.</p>
+                    """.formatted(
+                    safe(nomeServico, "servico"),
+                    safe(nomeProfissional, "profissional"),
+                    dataFormatada,
+                    safe(nomeEmpresa, "nossa empresa")
+            );
+            return enviarComTemplate(
+                    emailCliente,
+                    "Confirmacao de agendamento",
+                    "Seu agendamento foi confirmado",
+                    "Ola %s, tudo certo com o seu compromisso.".formatted(safe(nomeCliente, "cliente")),
+                    corpo,
+                    montarUrlMeuGendaz(slug) + "/agenda",
+                    "Ver meus agendamentos"
+            );
+        } catch (Exception e) {
+            log.error("[resend] erro ao montar email confirmacao: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Email de lembrete de agendamento com o template padrao.
+     */
+    public boolean enviarLembreteAgendamento(
+            String emailCliente,
+            String nomeCliente,
+            String nomeServico,
+            String nomeProfissional,
+            LocalDate data,
+            LocalTime horaInicio,
+            String nomeEmpresa,
+            String slug
+    ) {
+        if (emailCliente == null || emailCliente.isBlank()) {
+            log.warn("[resend] email do cliente vazio, lembrete ignorado");
+            return false;
+        }
+        try {
+            String dataFormatada = (data != null
+                    ? data.format(DateTimeFormatter.ofPattern("EEEE 'de' dd 'de' MMMM"))
+                    : "data a definir")
+                    + " as "
+                    + (horaInicio != null ? horaInicio.format(DateTimeFormatter.ofPattern("HH:mm")) : "--:--");
+            String corpo = """
+                    <div style="background:#fff7e6; border:1px solid #ffb340; border-radius:12px; padding:16px 20px; color:#111111; font-size:14px; line-height:1.8;">
+                      <p style="margin:0 0 6px;"><strong>Quando:</strong> %s</p>
+                      <p style="margin:0 0 6px;"><strong>Servico:</strong> %s</p>
+                      <p style="margin:0;"><strong>Profissional:</strong> %s</p>
+                    </div>
+                    <p style="margin:16px 0 0;">Precisa cancelar ou reagendar? Faca isso com antecedencia no seu portal.</p>
+                    """.formatted(
+                    dataFormatada,
+                    safe(nomeServico, "servico"),
+                    safe(nomeProfissional, "profissional")
+            );
+            return enviarComTemplate(
+                    emailCliente,
+                    "Lembrete de agendamento",
+                    "Voce tem um agendamento marcado",
+                    "Ola %s, nao esqueca do seu compromisso.".formatted(safe(nomeCliente, "cliente")),
+                    corpo,
+                    montarUrlMeuGendaz(slug) + "/agenda",
+                    "Acessar o portal"
+            );
+        } catch (Exception e) {
+            log.error("[resend] erro ao montar email lembrete: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
     private boolean enviarEmail(String destinatario, String assunto, String html) {
         contarExecucao("ResendEmailService#enviarEmail");
         if (apiKey.isBlank()) {
@@ -229,6 +421,14 @@ public class ResendEmailService {
 
     private String montarUrlBase() {
         return frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.replaceAll("/+$", "");
+    }
+
+    private String montarUrlMeuGendaz(String slug) {
+        String base = montarUrlBase();
+        if (slug == null || slug.isBlank()) {
+            return base + "/meu-gendaz";
+        }
+        return base + "/meu-gendaz/" + slug.trim().toLowerCase();
     }
 
     private String montarHtmlBoasVindas(String nomeCliente, String nomeEmpresa) {
@@ -436,7 +636,7 @@ public class ResendEmailService {
                           </div>
 
                           <div style=\"text-align:center; margin-top:24px;\">
-                            <a href=\"%s\" style=\"display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">%s</a>
+                            <a href=\"%s\" style=\"display:inline-block; background:#42f569; color:#111111; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">%s</a>
                           </div>
                         </div>
 

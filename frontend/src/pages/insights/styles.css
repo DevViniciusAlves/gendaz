@@ -59,8 +59,9 @@
   gap: 12px;
   min-height: 0;
   position: sticky;
-  top: 16px;
-  align-self: stretch;
+  top: 88px;
+  height: calc(100vh - 112px);
+  align-self: start;
 }
 
 .insights-summary-panel,
@@ -661,6 +662,21 @@
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+  margin-top: 10px;
+}
+
+.insights-sidebar-chat .insights-chat__suggestions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+  padding-top: 12px;
+}
+
+.insights-sidebar-chat .insights-chat__suggestions .insights-suggestion {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 10px;
 }
 
 .insights-sidebar-chat .insights-chat__form .chat-input {
@@ -919,6 +935,13 @@
   .insights-change-risk-row,
   .insights-bottom-grid {
     grid-template-columns: 1fr;
+  }
+
+  .insights-sidebar {
+    position: static;
+    height: auto;
+    min-height: 0;
+    align-self: stretch;
   }
 
   .insights-sidebar-card {

@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send } from 'lucide-react'
+import { Send, Target } from 'lucide-react'
+
+const SUGESTOES = [
+  'Como aumentar meu faturamento?',
+  'Quais clientes devo recuperar?',
+  'Qual serviço devo divulgar?',
+]
 
 function normalizarTexto(valor) {
   return String(valor ?? '').trim()
@@ -170,6 +176,22 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
           </div>
         ))}
         {carregando && <div className="insights-chat__typing">Analisando...</div>}
+      </div>
+
+      <div className="insights-chat__suggestions">
+        <div className="insights-suggestions">
+          {SUGESTOES.map((texto) => (
+            <button
+              key={texto}
+              type="button"
+              className="insights-suggestion"
+              onClick={() => setEntrada(texto)}
+            >
+              <Target size={14} />
+              <span>{texto}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="insights-chat__form">

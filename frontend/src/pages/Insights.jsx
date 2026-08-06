@@ -5,7 +5,6 @@ import {
   Clock,
   HelpCircle,
   Sparkles,
-  Target,
   TrendingUp,
   Users,
   Wand2,
@@ -401,31 +400,6 @@ export default function Insights() {
                 <div className="insights-sidebar-layout">
                   <div className="insights-sidebar-chat">
                     <InsightsChat onEnviar={analisar} historico={historico} />
-                  </div>
-
-                  <div className="insights-sidebar-stack">
-                    <div className="insights-sidebar-block">
-                      <span className="insights-label">Sugestões rápidas</span>
-                      <div className="insights-suggestions">
-                        {[
-                          'Como aumentar meu faturamento?',
-                          'Quais clientes devo recuperar?',
-                          'Qual serviço devo divulgar?',
-                        ].map((texto) => (
-                          <button
-                            key={texto}
-                            type="button"
-                            className="insights-suggestion"
-                            onClick={() => {
-                              window.dispatchEvent(new CustomEvent('agendapro:insights-suggestion', { detail: { pergunta: texto } }))
-                            }}
-                          >
-                            <Target size={14} />
-                            <span>{texto}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}

@@ -147,6 +147,18 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
+    if (status === 429) {
+      if (!isMeuGendazPath()) {
+        const msg = error.response?.data?.erro
+          || error.response?.data?.mensagem
+          || 'Muitas requisições. Aguarde um momento e tente novamente.'
+        window.dispatchEvent(new CustomEvent('agendapro:toast', {
+          detail: { type: 'warning', message: msg },
+        }))
+      }
+      return Promise.reject(error)
+    }
+
     if (status !== 401) {
       return Promise.reject(error)
     }

@@ -20,7 +20,6 @@ import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import com.minhaempresa.agendapro.servico.repository.ServicoRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -225,29 +224,16 @@ public class PromocaoService {
                     ? promocao.getValor() + "%"
                     : "R$ " + promocao.getValor();
 
-            String assunto = "Promoção disponível: " + promocao.getCodigo();
-            String html = """
-                    <html>
-                      <body style="font-family:Arial,Helvetica,sans-serif; color:#111111; background:#f4f4f5; padding:24px;">
-                        <div style="max-width:680px; margin:0 auto; background:#ffffff; border-radius:16px; padding:28px;">
-                          <h1 style="margin:0 0 12px;">%s</h1>
-                          <p style="margin:0 0 16px;">Olá %s! %s preparou um cupom novo para você. Aproveite antes que acabe.</p>
-                          <p style="margin:0 0 8px;"><strong>Cupom:</strong> %s</p>
-                          <p style="margin:0 0 8px;"><strong>Desconto:</strong> %s</p>
-                          <p style="margin:0 0 8px;"><strong>Válido até:</strong> %s</p>
-                        </div>
-                      </body>
-                    </html>
-                    """.formatted(
-                    promocao.getDescricao(),
+            boolean enviado = resendEmailService.enviarPromocao(
+                    cliente.getEmail(),
                     cliente.getNome(),
                     nomeEmpresa,
                     promocao.getCodigo(),
                     desconto,
-                    promocao.getDataFim().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+                    promocao.getDescricao(),
+                    promocao.getDataFim(),
+                    empresa.getAgendamentoSlug()
             );
-
-            boolean enviado = resendEmailService.enviarEmailCrm(cliente.getEmail(), assunto, html);
             notificacao.setStatus(enviado ? "ENVIADA" : "ERRO");
             notificacao.setDataEnvio(LocalDateTime.now());
             if (!enviado) {

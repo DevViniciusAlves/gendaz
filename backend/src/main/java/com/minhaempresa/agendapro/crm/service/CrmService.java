@@ -139,14 +139,21 @@ public class CrmService {
         }
 
         String assunto = montarAssunto(request.template(), cliente.getNome());
-        String html = montarHtml(
-                request.template(),
-                cliente.getNome(),
-                request.customMessage(),
-                cliente.getEmpresa() != null ? cliente.getEmpresa().getAgendamentoSlug() : null
-        );
+        String slug = cliente.getEmpresa() != null ? cliente.getEmpresa().getAgendamentoSlug() : null;
+        String titulo = montarTitulo(request.template());
+        String subtitulo = montarSubtitulo(request.template());
+        String ctaTexto = "resgate".equals(request.template()) ? "Voltar para o Meu Gendaz" : "Acessar o Meu Gendaz";
+        String corpo = montarCorpo(request.template(), cliente.getNome(), request.customMessage(), slug);
 
-        boolean enviado = resendEmailService.enviarEmailCrm(cliente.getEmail(), assunto, html);
+        boolean enviado = resendEmailService.enviarComTemplate(
+                cliente.getEmail(),
+                assunto,
+                titulo,
+                subtitulo,
+                corpo,
+                montarUrlMeuGendaz(slug),
+                ctaTexto
+        );
 
         CrmContatoEntity contato = CrmContatoEntity.builder()
                 .empresa(cliente.getEmpresa())
@@ -154,7 +161,7 @@ public class CrmService {
                 .tipo(request.canal() != null ? request.canal() : "email")
                 .template(request.template())
                 .assunto(assunto)
-                .mensagem(request.customMessage() != null ? request.customMessage() : html)
+                .mensagem(request.customMessage() != null ? request.customMessage() : corpo)
                 .status(enviado ? "enviado" : "nao_entregue")
                 .build();
         crmContatoRepository.save(contato);
@@ -273,7 +280,17 @@ public class CrmService {
         };
     }
 
-    private String montarHtml(String template, String nome, String customMessage, String slugEmpresa) {
+    private String montarTitulo(String template) {
+        return "resgate".equals(template) ? "Estamos com saudade de voce" : "Queremos falar com voce novamente";
+    }
+
+    private String montarSubtitulo(String template) {
+        return "resgate".equals(template)
+                ? "Seu ultimo contato foi ha algum tempo. Volte quando quiser para continuar seu atendimento."
+                : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
+    }
+
+    private String montarCorpo(String template, String nome, String customMessage, String slugEmpresa) {
         String nomeSafe = nome != null ? nome : "cliente";
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
@@ -286,50 +303,15 @@ public class CrmService {
         };
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
-        String logoUrl = "https://api.gendaz.site/email/gendazpngpreto.png";
         String ctaUrl = montarUrlMeuGendaz(slugEmpresa);
-        String titulo = "resgate".equals(template) ? "Estamos com saudade de voce" : "Queremos falar com voce novamente";
-        String subtitulo = "resgate".equals(template)
-                ? "Seu ultimo contato foi ha algum tempo. Volte quando quiser para continuar seu atendimento."
-                : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
-        String botaoTexto = "resgate".equals(template) ? "Voltar para o Meu Gendaz" : "Acessar o Meu Gendaz";
 
         return """
-                <html>
-                  <body style=\"margin:0; padding:0; background-color:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
-                    <div style=\"max-width:760px; margin:0 auto; padding:36px 20px;\">
-                      <div style=\"background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;\">
-                        <div style=\"padding:36px 36px 28px; text-align:center; background:#ffffff;\">
-                          <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:180px; width:100%%; height:auto; display:block; margin:0 auto 16px;\" />
-                          <div style=\"display:inline-block; padding:6px 12px; border-radius:999px; background:#111111; color:#ffffff; font-size:12px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;\">Gendaz</div>
-                          <h1 style=\"margin:18px 0 10px; font-size:28px; line-height:1.2; color:#111111;\">%s</h1>
-                          <p style=\"margin:0 auto; max-width:520px; font-size:16px; line-height:1.7; color:#4b5563;\">%s</p>
-                        </div>
-
-                        <div style=\"padding:0 36px 28px;\">
-                          <div style=\"background:#f7f7f7; border:1px solid #e5e7eb; border-radius:16px; padding:22px 20px; color:#111111; font-size:14px; line-height:1.8;\">
-                            <p style=\"margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;\">%s</p>
-                            <p style=\"margin:0; font-size:14px; line-height:1.7; color:#6b7280;\">
-                              Voce tambem pode acessar diretamente o Meu Gendaz da sua empresa:
-                              <a href=\"%s\" style=\"color:#111111; text-decoration:none; font-weight:700;\">%s</a>
-                            </p>
-                          </div>
-
-                          <div style=\"text-align:center; margin-top:24px;\">
-                            <a href=\"%s\" style=\"display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 26px; border-radius:999px; font-size:15px;\">
-                              %s
-                            </a>
-                          </div>
-                        </div>
-
-                        <div style=\"padding:0 36px 30px; text-align:center;\">
-                          <p style=\"margin:0; font-size:12px; line-height:1.6; color:#6b7280;\">Este e um e-mail automatico da Gendaz. Se preferir, responda diretamente por este canal.</p>
-                        </div>
-                      </div>
-                    </div>
-                  </body>
-                </html>
-                """.formatted(logoUrl, titulo, subtitulo, textoFinal, ctaUrl, ctaUrl, ctaUrl, botaoTexto);
+                <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">%s</p>
+                <p style="margin:0; font-size:14px; line-height:1.7; color:#6b7280;">
+                  Voce tambem pode acessar diretamente o Meu Gendaz da sua empresa:
+                  <a href="%s" style="color:#42f569; text-decoration:none; font-weight:700;">%s</a>
+                </p>
+                """.formatted(textoFinal, ctaUrl, ctaUrl);
     }
 
     private String montarUrlMeuGendaz(String slugEmpresa) {

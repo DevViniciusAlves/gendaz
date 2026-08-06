@@ -72,6 +72,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
             if (probe.isConsumed()) {
                 allowed = true;
+            } else {
+                long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
+                response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
+                reason = "Muitas requisições. Aguarde um momento.";
+                log.warn("[rate-limit] API geral bloqueada: usuario={} aguarde={}s", usuarioIdOpt.get(), waitForRefill);
             }
         } else {
             allowed = true;
@@ -108,6 +113,14 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private Optional<Long> getUserIdFromRequest(HttpServletRequest request) {
+        String userId = request.getHeader("X-Usuario-Id");
+        if (userId != null && !userId.isBlank()) {
+            try {
+                return Optional.of(Long.parseLong(userId.trim()));
+            } catch (NumberFormatException e) {
+                log.warn("[rate-limit] X-Usuario-Id invalido: {}", userId);
+            }
+        }
         return Optional.empty();
     }
 }
