@@ -719,6 +719,10 @@ export const appApi = {
     return api.get(`/pagamentos/planos/empresa/${empresaId}/atual`, options).then((response) => response.data)
   },
 
+  listarAssinaturas(empresaId = empresaIdAtual(), options = {}) {
+    return api.get(`/assinaturas/empresa/${empresaId}`, options).then((response) => response.data)
+  },
+
   enviarMensagem(conversaId, conteudo) {
     return api.post('/mensagens/enviar', { conversaId, conteudo }).then((response) => response.data)
   },

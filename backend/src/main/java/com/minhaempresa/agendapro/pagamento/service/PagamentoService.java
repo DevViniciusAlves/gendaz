@@ -144,12 +144,11 @@ public class PagamentoService {
         EmpresaEntity empresa = empresaService.buscarEntidade(empresaId);
         PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
 
-        assinaturaService.buscarAtualPorEmpresa(empresaId).ifPresent(assinatura -> {
-            if (plano.getNome().equalsIgnoreCase(assinatura.getPlano().getNome())
-                    && assinatura.getStatus().name().equals("ATIVA")) {
-                throw new BusinessException("Esta empresa ja possui o plano " + plano.getNome() + " ativo.");
-            }
-        });
+        // Nova regra: permite ate 2 planos ativos simultaneos (fila de vigencia
+        // futura). Quando ja existem 2, bloqueia nova cobranca ate um expirar.
+        if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
+            throw new BusinessException("Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
+        }
 
         PagamentoPlanoEntity pagamento = novoPagamentoPlano(
                 empresa,
@@ -664,20 +663,16 @@ public class PagamentoService {
     private PagamentoPlanoEntity liberarContaPorPagamentoAprovado(PagamentoPlanoEntity pagamento, String origem) {
         EmpresaEntity empresa = pagamento.getEmpresa();
         AssinaturaEntity assinatura = pagamento.getAssinatura();
-        LocalDate hoje = LocalDate.now();
         boolean mudou = pagamento.getStatus() != StatusPagamento.PAYMENT_APPROVED
                 || pagamento.getDataPagamento() == null
                 || empresa.getStatus() != StatusEmpresa.ATIVA
                 || assinatura == null
                 || assinatura.getStatus() != StatusAssinatura.ATIVA;
 
-        if (assinatura != null && assinatura.getPlano().getId().equals(pagamento.getPlano().getId())) {
-            assinatura.setStatus(StatusAssinatura.ATIVA);
-            assinatura.setDataInicio(hoje);
-            assinatura.setDataFim(hoje.plusMonths(1));
-        } else {
-            assinatura = assinaturaService.ativarPlanoPago(empresa, pagamento.getPlano());
-        }
+        // Nova regra: a assinatura e encadeada na fila de planos (ate 2 ativos),
+        // sem cancelar o plano em vigor. Se a assinatura vinculada ao pagamento
+        // for do mesmo plano, ela e reativada e reposicionada na fila.
+        assinatura = assinaturaService.ativarPlanoPago(empresa, pagamento.getPlano(), assinatura);
 
         pagamento.setAssinatura(assinatura);
         pagamento.setStatus(StatusPagamento.PAYMENT_APPROVED);
@@ -701,24 +696,17 @@ public class PagamentoService {
     private void rebaixarContaPorPagamento(PagamentoPlanoEntity pagamento, StatusPagamento status) {
         LocalDate hoje = LocalDate.now();
         AssinaturaEntity assinaturaRelacionada = pagamento.getAssinatura();
-        if (assinaturaRelacionada == null) {
-            assinaturaRelacionada = assinaturaService.buscarAtualPorEmpresa(pagamento.getEmpresa().getId())
-                    .filter(assinatura -> assinatura.getPlano().getId().equals(pagamento.getPlano().getId()))
-                    .orElse(null);
-        }
-
-        if (assinaturaRelacionada != null) {
-            if (status == StatusPagamento.PAYMENT_REJECTED || status == StatusPagamento.PAYMENT_CANCELED || status == StatusPagamento.PAYMENT_EXPIRED) {
-                assinaturaRelacionada.setStatus(StatusAssinatura.PENDENTE_PAGAMENTO);
-                assinaturaRelacionada.setDataFim(hoje);
-            }
+        if (assinaturaRelacionada != null
+                && (status == StatusPagamento.PAYMENT_REJECTED
+                || status == StatusPagamento.PAYMENT_CANCELED
+                || status == StatusPagamento.PAYMENT_EXPIRED)) {
+            assinaturaRelacionada.setStatus(StatusAssinatura.PENDENTE_PAGAMENTO);
+            assinaturaRelacionada.setDataFim(hoje);
             pagamento.setAssinatura(assinaturaRelacionada);
         }
 
-        boolean possuiAssinaturaValida = assinaturaService.buscarAtualPorEmpresa(pagamento.getEmpresa().getId())
-                .stream()
-                .anyMatch(assinatura -> assinatura.getStatus() == StatusAssinatura.ATIVA || assinatura.getStatus() == StatusAssinatura.TESTE);
-        pagamento.getEmpresa().setStatus(possuiAssinaturaValida ? StatusEmpresa.ATIVA : StatusEmpresa.PENDENTE_PAGAMENTO);
+        boolean possuiVigenciaFutura = !assinaturaService.buscarFilaAtiva(pagamento.getEmpresa().getId()).isEmpty();
+        pagamento.getEmpresa().setStatus(possuiVigenciaFutura ? StatusEmpresa.ATIVA : StatusEmpresa.PENDENTE_PAGAMENTO);
     }
 
     private PagamentoPlanoEntity sincronizarPagamentoComGateway(PagamentoPlanoEntity pagamento) {

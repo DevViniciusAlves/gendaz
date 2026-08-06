@@ -65,6 +65,22 @@ function formatarPreco(valor) {
   }) + '/mes'
 }
 
+function formatarDataCurta(iso) {
+  if (!iso) return ''
+  const [a, m, d] = String(iso).slice(0, 10).split('-')
+  return d && m && a ? `${d}/${m}/${a}` : String(iso).slice(0, 10)
+}
+
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function duracaoDiasEntre(inicio, fim) {
+  if (!inicio || !fim) return null
+  const diff = (new Date(String(fim).slice(0, 10)) - new Date(String(inicio).slice(0, 10))) / 86400000
+  return Number.isFinite(diff) ? Math.round(diff) : null
+}
+
 export default function Planos() {
   const navigate = useNavigate()
   const [data] = useLocalData('planos')
@@ -75,6 +91,7 @@ export default function Planos() {
   const [checkoutSolicitadoEm, setCheckoutSolicitadoEm] = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
+  const [filaAssinaturas, setFilaAssinaturas] = useState([])
 
   const planos = useMemo(() => planosBase.map((plano) => {
     const planoApi = data.planos?.find((item) => String(item.nome).toUpperCase() === plano.codigo)
@@ -87,6 +104,21 @@ export default function Planos() {
   const pagamentoCheckoutPlano = pagamentoPlano
     ? { ...pagamentoPlano, checkoutSolicitadoEm: checkoutSolicitadoEm || getInicioCheckout(pagamentoPlano) }
     : null
+
+  const filaAtiva = useMemo(() => {
+    const hoje = hojeISO()
+    return (Array.isArray(filaAssinaturas) ? filaAssinaturas : [])
+      .filter((item) => {
+        const status = String(item?.status || '').toUpperCase()
+        if (status !== 'ATIVA' && status !== 'TESTE') return false
+        if (!item?.dataFim) return true
+        return String(item.dataFim).slice(0, 10) >= hoje
+      })
+      .sort((a, b) => String(a.dataInicio || '').localeCompare(String(b.dataInicio || '')))
+  }, [filaAssinaturas])
+  const planoVigente = String(usuario?.plano || usuario?.assinatura?.planoNome || '').toUpperCase()
+  const limiteAtingido = filaAtiva.length >= 2
+  const proximoPlano = filaAtiva.find((item) => String(item.planoNome || '').toUpperCase() !== planoVigente) || null
   const timerPlano = useCheckoutTimer(checkoutSolicitado ? pagamentoCheckoutPlano : null)
   const checkoutValidoPlano = checkoutSolicitado && Boolean(pagamentoPlano?.checkoutUrl) && !timerPlano.expirou
   const statusPagamentoPlano = pagamentoPlano?.status === 'PAYMENT_PENDING'
@@ -96,6 +128,9 @@ export default function Planos() {
   useEffect(() => {
     if (!usuario?.empresaId) return
     atualizarPlanoAtual().catch(() => null)
+    appApi.listarAssinaturas(usuario.empresaId)
+      .then((lista) => setFilaAssinaturas(Array.isArray(lista) ? lista : []))
+      .catch(() => null)
     appApi.listarPagamentosPlano(usuario.empresaId)
       .then((pagamentos) => {
         const lista = Array.isArray(pagamentos) ? pagamentos : []
@@ -121,7 +156,10 @@ export default function Planos() {
       navigate('/criar-conta?plano=PRO')
       return
     }
-    if (usuario.plano === 'PRO') return
+    if (limiteAtingido) {
+      setErro('Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.')
+      return
+    }
 
     setErro('')
     setCarregando(true)
@@ -154,7 +192,10 @@ export default function Planos() {
       navigate('/criar-conta?plano=BASICO')
       return
     }
-    if (usuario.plano === 'BASICO') return
+    if (limiteAtingido) {
+      setErro('Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.')
+      return
+    }
 
     setErro('')
     setCarregando(true)
@@ -234,9 +275,55 @@ export default function Planos() {
           <div className="panel-head">
             <div>
               <span className="section-kicker">Plano atual</span>
-              <h2>{usuario.plano === 'PRO' ? 'Plano Pro ativo' : 'Plano Basico ativo'}</h2>
+              <h2>{planoVigente === 'PRO' ? 'Plano Pro em vigor' : 'Plano Basico em vigor'}</h2>
             </div>
           </div>
+
+          {filaAtiva.length === 0 && (
+            <p className="plan-payment-note">Voce ainda nao possui um plano ativo. Escolha um plano abaixo para comecar.</p>
+          )}
+          {filaAtiva.length === 1 && !limiteAtingido && (
+            <p className="plan-payment-note">
+              {proximoPlano
+                ? 'Voce possui 1 plano ativo. Pode adicionar mais um: ele comeca automaticamente depois que o plano atual terminar.'
+                : 'Voce possui 1 plano ativo. Quer garantir mais tempo? Compre o mesmo plano para somar os dias, ou adicione o outro plano para quando este terminar.'}
+            </p>
+          )}
+          {limiteAtingido && (
+            <p className="plan-payment-note plan-payment-helper">
+              Limite de 2 planos ativos atingido. Aguarde um deles expirar para contratar novamente.
+            </p>
+          )}
+
+          {filaAtiva.length > 0 && (
+            <div className="plan-payment-status">
+              {filaAtiva.map((item) => {
+                const hoje = hojeISO()
+                const inicio = String(item.dataInicio || '').slice(0, 10)
+                const fim = String(item.dataFim || '').slice(0, 10)
+                const ehFuturo = inicio > hoje
+                const ehTeste = String(item.status || '').toLowerCase() === 'teste'
+                const duracao = duracaoDiasEntre(inicio, fim)
+                return (
+                  <div key={item.id} className="plan-payment-status-head">
+                    <div>
+                      <span>
+                        {String(item.planoNome || '').toUpperCase()}
+                        {ehFuturo
+                          ? ` · começa em ${formatarDataCurta(inicio)}${duracao ? ` (${duracao} dias)` : ''}`
+                          : item.diasRestantes != null && item.diasRestantes > 0
+                            ? ` · restam ${item.diasRestantes} dias`
+                            : ''}
+                      </span>
+                      <strong>
+                        {ehTeste ? 'Teste gratuito' : ehFuturo ? 'Agendado' : 'Em vigor'} · {inicio} a {fim}
+                      </strong>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
 
           {checkoutValidoPlano && (
             <div className="plan-payment-status plan-payment-status--checkout">
@@ -314,9 +401,15 @@ export default function Planos() {
               type="button"
               onClick={() => handlePlanClick(plano)}
               className={plano.destaque ? 'btn btn-primary plan-action-link' : 'btn btn-secondary plan-action-link'}
-              disabled={carregando || (usuario?.plano === plano.codigo)}
+              disabled={carregando || limiteAtingido}
             >
-              {usuario?.plano === plano.codigo ? 'Plano atual' : carregando ? 'Iniciando...' : plano.cta}
+              {carregando
+                ? 'Iniciando...'
+                : limiteAtingido
+                  ? 'Limite de 2 planos atingido'
+                  : String(usuario?.plano || '').toUpperCase() === plano.codigo
+                    ? 'Adicionar dias ao plano'
+                    : 'Adicionar este plano'}
             </button>
           </ScrollReveal>
         ))}

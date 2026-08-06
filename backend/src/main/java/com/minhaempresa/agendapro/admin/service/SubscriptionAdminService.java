@@ -35,10 +35,14 @@ public class SubscriptionAdminService {
 
         boolean encontrouAtual = false;
         List<AssinaturaAdminResponse> resultado = new ArrayList<>();
+        LocalDate hoje = LocalDate.now();
 
         for (AssinaturaEntity a : todas) {
-            boolean isAtual = !encontrouAtual
+            boolean vigente = a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje)
+                    && a.getDataFim() != null && !a.getDataFim().isBefore(hoje)
                     && (a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE);
+            boolean isAtual = !encontrouAtual
+                    && (vigente || a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE);
             if (isAtual) {
                 encontrouAtual = true;
             }

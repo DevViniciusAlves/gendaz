@@ -158,9 +158,10 @@ public class AgendamentoPublicoService {
         if (empresa.getStatus() != StatusEmpresa.ATIVA) {
             return false;
         }
-        return assinaturaRepository.findFirstByEmpresaIdOrderByIdDesc(empresa.getId())
-                .map(assinatura -> assinatura.getStatus() == StatusAssinatura.ATIVA || assinatura.getStatus() == StatusAssinatura.TESTE)
-                .orElse(false);
+        LocalDate hoje = LocalDate.now();
+        return assinaturaRepository.findByEmpresaId(empresa.getId()).stream()
+                .anyMatch(a -> (a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
+                        && (a.getDataFim() == null || !a.getDataFim().isBefore(hoje)));
     }
 
     private EmpresaEntity buscarEmpresa(String slugOuEmpresaId) {

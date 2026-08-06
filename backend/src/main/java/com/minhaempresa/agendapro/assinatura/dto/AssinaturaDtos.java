@@ -17,6 +17,6 @@ public final class AssinaturaDtos {
             LocalDate dataFim,
             LocalDate dataInicioTeste,
             LocalDate dataFimTeste,
-            long diasRestantesTeste
+            long diasRestantes
     ) {}
 }

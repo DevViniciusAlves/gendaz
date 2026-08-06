@@ -569,17 +569,19 @@ public class AdminService {
                 throw new BusinessException("Selecione um plano para criar a assinatura.");
             }
             assinatura = assinaturaService.ativarPlanoPago(empresa, plano);
+            // mantem o encadeamento da fila: prazo conta a partir do inicio encadeado
+            assinatura.setDataFim(assinatura.getDataInicio().plusDays(diasPlano));
         } else {
             if (plano != null) {
                 assinatura.setPlano(plano);
             }
             assinatura.setStatus(StatusAssinatura.ATIVA);
+            assinatura.setDataInicio(LocalDate.now());
+            assinatura.setDataFim(LocalDate.now().plusDays(diasPlano));
         }
 
-        LocalDate hoje = LocalDate.now();
-        assinatura.setDataInicio(hoje);
-        assinatura.setDataFim(hoje.plusDays(diasPlano));
         assinaturaRepository.save(assinatura);
+        assinaturaService.reposicionarFuturas(empresa.getId(), assinatura.getId());
     }
 
     private String normalizarTextoObrigatorio(String valor) {

@@ -333,7 +333,7 @@ export default function Configuracoes() {
             </div>
           </div>
           {usuario.assinatura?.status === 'TESTE' && (
-            <small className="settings-card-muted">{usuario.assinatura.diasRestantesTeste} dias restantes do teste grátis.</small>
+            <small className="settings-card-muted">{usuario.assinatura.diasRestantes} dias restantes do teste grátis.</small>
           )}
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>
         </section>

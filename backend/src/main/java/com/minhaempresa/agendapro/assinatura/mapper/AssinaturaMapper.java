@@ -18,12 +18,12 @@ public class AssinaturaMapper {
                 assinatura.getDataFim(),
                 assinatura.getDataInicioTeste(),
                 assinatura.getDataFimTeste(),
-                diasRestantes(assinatura.getDataFimTeste())
+                diasRestantes(assinatura.getDataFim())
         );
     }
 
-    private long diasRestantes(LocalDate dataFimTeste) {
-        if (dataFimTeste == null) return 0;
-        return Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), dataFimTeste));
+    private long diasRestantes(LocalDate dataFim) {
+        if (dataFim == null) return 0;
+        return Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), dataFim));
     }
 }
