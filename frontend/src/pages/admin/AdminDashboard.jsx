@@ -1,15 +1,23 @@
-import { Ban, BarChart2, CheckCircle2, Eye, LogOut, Pencil, Power, RefreshCw, Search, ShieldCheck, XCircle } from 'lucide-react'
+import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Users, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
-import AnimatedBackground from '../../components/AnimatedBackground.jsx'
 import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import Table from '../../components/Table.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
+import logoAdmin from '../../assets/logos/gendaz-logo-branco.png'
 
-const abas = ['Dashboard', 'Usuarios', 'Pagamentos', 'Aprovar Pagamentos', 'Chamados', 'Logs', 'Configuracoes']
+const abas = [
+  { label: 'Dashboard', icon: LayoutDashboard },
+  { label: 'Usuarios', icon: Users },
+  { label: 'Pagamentos', icon: CreditCard },
+  { label: 'Aprovar Pagamentos', icon: BadgeCheck },
+  { label: 'Chamados', icon: Ticket },
+  { label: 'Logs', icon: ScrollText },
+  { label: 'Configuracoes', icon: Settings2 },
+]
 const STATUS_PAGAMENTO_CONFIRMADO = new Set([
   'PAGO',
   'PAGA',
@@ -571,23 +579,35 @@ export default function AdminDashboard() {
   }
 
   return (
-    <main className="admin-shell">
-      <AnimatedBackground />
-      <aside className="admin-sidebar">
-        <div>
-          <ShieldCheck size={22} />
-          <strong>gendaz Admin</strong>
-          <span>{adminUsuario?.email}</span>
+    <main className="admin-shell admin-gendaz gendaz-shell">
+      <aside className="admin-gendaz-sidebar gendaz-sidebar">
+        <div className="sidebar-logo-wrapper">
+          <img src={logoAdmin} alt="gendaz" className="sidebar-logo" />
         </div>
-        {abas.map((item) => (
-          <button key={item} type="button" className={aba === item ? 'active' : ''} onClick={() => setAba(item)}>
-            {item}
+        <span className="nav-label">Painel admin</span>
+        <nav>
+          {abas.map(({ label, icon: Icon }) => (
+            <button
+              key={label}
+              type="button"
+              className={`gendaz-sidebar__link ${aba === label ? 'is-active' : ''}`}
+              onClick={() => setAba(label)}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="admin-gendaz-sidebar-foot">
+          {adminUsuario?.email && <span className="admin-gendaz-sidebar-email">{adminUsuario.email}</span>}
+          <button type="button" className="gendaz-sidebar__link" onClick={sair}>
+            <LogOut size={16} />
+            <span>Sair</span>
           </button>
-        ))}
-        <button type="button" onClick={sair}><LogOut size={16} /> Sair</button>
+        </div>
       </aside>
 
-      <section className="admin-content">
+      <section className="admin-gendaz-content gendaz-main">
         {impersonation && (
           <div className="impersonation-banner" style={{ margin: '0 0 16px' }}>
             <strong>Contexto ativo: {impersonation.empresa}.</strong>
@@ -611,10 +631,10 @@ export default function AdminDashboard() {
         )}
 
         {aba === 'Dashboard' && (
-          <>
-            <div className="page-title page-title-admin">
+          <div className="admin-gendaz-page">
+            <div className="admin-gendaz-page-head">
               <div>
-                <span className="section-kicker">Super Admin</span>
+                <span className="admin-gendaz-kicker">Super Admin</span>
                 <h1>Dashboard administrativo</h1>
                 <p>Visao tática da saude do Gendaz com contas, pagamentos e fluxo operacional.</p>
               </div>
@@ -763,14 +783,14 @@ export default function AdminDashboard() {
                 </div>
               </section>
             </div>
-          </>
+          </div>
         )}
 
         {aba === 'Usuarios' && (
           <section className="admin-section">
-            <div className="page-title page-title-admin">
+            <div className="admin-gendaz-page-head">
               <div>
-                <span className="section-kicker">Cadastro e contas</span>
+                <span className="admin-gendaz-kicker">Cadastro e contas</span>
                 <h1>Usuarios e empresas</h1>
               </div>
               <div className="page-title-actions">
@@ -816,7 +836,17 @@ export default function AdminDashboard() {
 
         {aba === 'Pagamentos' && (
           <section className="admin-section">
-            <h1>Pagamentos</h1>
+            <div className="admin-gendaz-page-head">
+              <div>
+                <span className="admin-gendaz-kicker">Financeiro</span>
+                <h1>Pagamentos</h1>
+              </div>
+              <div className="page-title-actions">
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Pagamentos'}>
+                  {recarregando === 'Pagamentos' ? 'Recarregando...' : 'Recarregar'}
+                </Button>
+              </div>
+            </div>
             <div className="admin-filters admin-filters-payments">
               <label className="search-shell">
                 <input
@@ -841,9 +871,6 @@ export default function AdminDashboard() {
                 <option value="BASICO">Básico</option>
                 <option value="PRO">Pro</option>
               </select>
-              <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Pagamentos'}>
-                {recarregando === 'Pagamentos' ? 'Recarregando...' : 'Recarregar'}
-              </Button>
             </div>
             <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Empresa', 'Vencimento', 'Pagamento', 'Acoes']}>
               {pagamentosFiltrados.map((item) => (
@@ -868,7 +895,17 @@ export default function AdminDashboard() {
 
         {aba === 'Aprovar Pagamentos' && (
           <section className="admin-section">
-            <h1>Aprovar pagamentos</h1>
+            <div className="admin-gendaz-page-head">
+              <div>
+                <span className="admin-gendaz-kicker">Moderacao</span>
+                <h1>Aprovar pagamentos</h1>
+              </div>
+              <div className="page-title-actions">
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Aprovar Pagamentos'}>
+                  {recarregando === 'Aprovar Pagamentos' ? 'Recarregando...' : 'Recarregar'}
+                </Button>
+              </div>
+            </div>
             <div className="admin-filters">
               <label className="search-shell">
                 <input
@@ -878,9 +915,6 @@ export default function AdminDashboard() {
                   placeholder="Pesquisar por empresa, responsavel, e-mail ou telefone"
                 />
               </label>
-              <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Aprovar Pagamentos'}>
-                {recarregando === 'Aprovar Pagamentos' ? 'Recarregando...' : 'Recarregar'}
-              </Button>
             </div>
             <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Status pagamento', 'Status empresa', 'Referencia', 'Provider ID', 'Criado em', 'Acoes']}>
               {pagamentosModeracaoFiltrados.map((item) => (
@@ -905,7 +939,17 @@ export default function AdminDashboard() {
 
         {aba === 'Logs' && (
           <section className="admin-section">
-            <h1>Logs / Auditoria</h1>
+            <div className="admin-gendaz-page-head">
+              <div>
+                <span className="admin-gendaz-kicker">Auditoria</span>
+                <h1>Logs / Auditoria</h1>
+              </div>
+              <div className="page-title-actions">
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Logs'}>
+                  {recarregando === 'Logs' ? 'Recarregando...' : 'Recarregar'}
+                </Button>
+              </div>
+            </div>
             <div className="admin-filters">
               <input
                 value={pesquisaLog}
@@ -921,9 +965,6 @@ export default function AdminDashboard() {
                 <option value="SECURITY">SECURITY</option>
                 <option value="ERROR">ERROR</option>
               </select>
-              <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Logs'}>
-                {recarregando === 'Logs' ? 'Recarregando...' : 'Recarregar'}
-              </Button>
             </div>
             <Table columns={['Tipo', 'Severidade', 'Admin', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
               {logsFiltrados.map((item) => (
@@ -943,7 +984,17 @@ export default function AdminDashboard() {
 
         {aba === 'Chamados' && (
           <section className="admin-section">
-            <h1>Chamados</h1>
+            <div className="admin-gendaz-page-head">
+              <div>
+                <span className="admin-gendaz-kicker">Suporte</span>
+                <h1>Chamados</h1>
+              </div>
+              <div className="page-title-actions">
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Chamados'}>
+                  {recarregando === 'Chamados' ? 'Recarregando...' : 'Recarregar'}
+                </Button>
+              </div>
+            </div>
             <div className="admin-filters">
               <label className="search-shell">
                 <input
@@ -953,9 +1004,6 @@ export default function AdminDashboard() {
                   placeholder="Pesquisar por assunto, empresa, usuario ou status"
                 />
               </label>
-              <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Chamados'}>
-                {recarregando === 'Chamados' ? 'Recarregando...' : 'Recarregar'}
-              </Button>
             </div>
             <Table columns={['Assunto', 'Empresa', 'Usuario', 'Status', 'Resposta', 'Data', 'Acoes']}>
               {chamadosFiltrados.map((item) => (
@@ -981,9 +1029,9 @@ export default function AdminDashboard() {
 
         {aba === 'Configuracoes' && (
           <section className="admin-section admin-config">
-            <div className="page-title page-title-admin">
+            <div className="admin-gendaz-page-head">
               <div>
-                <span className="section-kicker">Admin seguro</span>
+                <span className="admin-gendaz-kicker">Admin seguro</span>
                 <h1>Configuracoes seguras</h1>
               </div>
               <div className="page-title-actions">

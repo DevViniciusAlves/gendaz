@@ -1,0 +1,1636 @@
+/* ============================================================
+   ADMIN GENDAZ THEME
+   Painel admin redesenhado com o design system do portal Gendaz
+   (fundos #080808 / #111111 / #171717, fonte Faktum, cards com
+   gradiente, botões primários brancos, tabs pill).
+
+   Arquivo importado por ÚLTIMO no main.jsx para vencer a cascata
+   de overrides anteriores (global.css / panel-theme.css).
+   Escopo: somente o painel admin (.admin-gendaz) e a tela de
+   login admin (.admin-login-screen). Nada fora disso é afetado.
+   ============================================================ */
+
+/* ---------- Tokens (escopo admin) ---------- */
+html .admin-gendaz,
+html .admin-gendaz .gendaz-shell,
+html .admin-login-screen {
+  --gd-bg: #080808;
+  --gd-surface: #111111;
+  --gd-surface-2: #171717;
+  --gd-surface-3: #1d1d1d;
+  --gd-border: rgba(255, 255, 255, 0.10);
+  --gd-border-strong: rgba(255, 255, 255, 0.18);
+  --gd-text: #f5f5f5;
+  --gd-muted: rgba(245, 245, 245, 0.68);
+  --gd-soft: rgba(255, 255, 255, 0.05);
+  --gd-soft-hover: rgba(255, 255, 255, 0.08);
+  --gd-shadow: 0 18px 42px rgba(0, 0, 0, 0.34);
+  --gd-shadow-hover: 0 24px 56px rgba(0, 0, 0, 0.48);
+  --gd-green: #4ea365;
+  --gd-red: #f87171;
+  --gd-blue: #7aa2f7;
+}
+
+/* ---------- Fonte: Faktum (igual ao Gendaz) ---------- */
+html .admin-gendaz,
+html .admin-gendaz *,
+html .admin-gendaz *::before,
+html .admin-gendaz *::after,
+html .admin-login-screen,
+html .admin-login-screen *,
+html .admin-login-screen *::before,
+html .admin-login-screen *::after {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+  font-style: normal !important;
+  font-synthesis: none;
+}
+
+/* Restaura pesos de destaque onde o Gendaz usa bold */
+html .admin-gendaz strong,
+html .admin-gendaz b,
+html .admin-gendaz h1,
+html .admin-gendaz h2,
+html .admin-gendaz h3,
+html .admin-gendaz .gendaz-sidebar__link.is-active,
+html .admin-login-screen strong {
+  font-weight: 700 !important;
+}
+
+html .admin-gendaz .admin-gendaz-page-head h1,
+html .admin-gendaz .admin-gendaz-metric strong,
+html .admin-gendaz .admin-gendaz-kpi-value {
+  font-weight: 800 !important;
+}
+
+/* ---------- Layout base ---------- */
+html .admin-gendaz.admin-shell,
+html .admin-gendaz.gendaz-shell {
+  min-height: 100vh;
+  display: grid !important;
+  grid-template-columns: 264px minmax(0, 1fr) !important;
+  background: var(--gd-bg) !important;
+  color: var(--gd-text) !important;
+  color-scheme: dark;
+}
+
+/* Desliga qualquer background animado/glow herdado */
+html .admin-gendaz .animated-background,
+html .admin-gendaz .bg-sheen,
+html .admin-gendaz .bg-grid,
+html .admin-gendaz .bg-radial,
+html .admin-gendaz .radial-1,
+html .admin-gendaz .radial-2,
+html .admin-gendaz .radial-3,
+html .admin-gendaz .bg-streak {
+  display: none !important;
+}
+
+/* ---------- Sidebar (igual ao Gendaz) ---------- */
+html .admin-gendaz .admin-gendaz-sidebar,
+html .admin-gendaz .gendaz-sidebar {
+  position: sticky !important;
+  top: 0 !important;
+  height: 100vh !important;
+  padding: 22px 14px !important;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 34%),
+    linear-gradient(180deg, #121212 0%, #0d0d0d 100%) !important;
+  border-right: 1px solid var(--gd-border) !important;
+  color: var(--gd-text) !important;
+  box-shadow: none !important;
+  overflow-y: auto;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar::before,
+html .admin-gendaz .admin-gendaz-sidebar::after,
+html .admin-gendaz .gendaz-sidebar::before,
+html .admin-gendaz .gendaz-sidebar::after {
+  display: none !important;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .sidebar-logo-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 96px;
+  padding: 16px 10px 18px;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .sidebar-logo {
+  display: block;
+  width: 100%;
+  max-width: 196px;
+  max-height: 140px;
+  height: auto;
+  object-fit: contain;
+  margin: 0 auto;
+  filter: none;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .nav-label {
+  display: block;
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  margin-top: 6px;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar nav {
+  display: grid;
+  gap: 4px;
+  margin-top: 14px;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .gendaz-sidebar__link,
+html .admin-gendaz .admin-gendaz-sidebar button.gendaz-sidebar__link {
+  width: 100%;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.78) !important;
+  text-decoration: none;
+  text-align: left;
+  font-size: 14px;
+  font-weight: 600 !important;
+  cursor: pointer;
+  transition: background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .gendaz-sidebar__link svg {
+  flex: 0 0 auto;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .gendaz-sidebar__link:hover {
+  color: var(--gd-text) !important;
+  background: var(--gd-soft-hover) !important;
+  transform: translateX(2px);
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .gendaz-sidebar__link.is-active {
+  color: var(--gd-text) !important;
+  background: rgba(255, 255, 255, 0.10) !important;
+  border-left: 3px solid rgba(255, 255, 255, 0.72) !important;
+  padding-left: 9px !important;
+  font-weight: 800 !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .admin-gendaz-sidebar-foot {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--gd-border);
+  display: grid;
+  gap: 4px;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .admin-gendaz-sidebar-foot .gendaz-sidebar__link {
+  color: rgba(255, 255, 255, 0.68) !important;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .admin-gendaz-sidebar-foot .gendaz-sidebar__link:hover {
+  color: #ffffff !important;
+  background: rgba(248, 113, 113, 0.12) !important;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .admin-gendaz-sidebar-foot .gendaz-sidebar__link:hover svg {
+  color: var(--gd-red) !important;
+}
+
+html .admin-gendaz .admin-gendaz-sidebar .admin-gendaz-sidebar-email {
+  display: block;
+  padding: 0 12px 8px;
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 11px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------- Conteúdo ---------- */
+html .admin-gendaz .admin-gendaz-content,
+html .admin-gendaz.gendaz-shell .gendaz-main {
+  min-width: 0;
+  padding: 30px;
+  background: var(--gd-bg) !important;
+}
+
+html .admin-gendaz .admin-gendaz-page {
+  display: grid;
+  gap: 18px;
+}
+
+/* ---------- Cabeçalho de página (kicker + título) ---------- */
+html .admin-gendaz .admin-gendaz-page-head,
+html .admin-gendaz .page-title.page-title-admin {
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+  gap: 16px !important;
+  margin: 0 0 6px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+html .admin-gendaz .admin-gendaz-page-head .admin-gendaz-kicker,
+html .admin-gendaz .page-title .section-kicker,
+html .admin-gendaz .gendaz-kicker,
+html .admin-gendaz .section-kicker {
+  display: block !important;
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+html .admin-gendaz .admin-gendaz-page-head h1,
+html .admin-gendaz .page-title.page-title-admin h1 {
+  margin: 4px 0 0 !important;
+  color: var(--gd-text) !important;
+  font-size: 24px !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2;
+}
+
+html .admin-gendaz .admin-gendaz-page-head p,
+html .admin-gendaz .page-title.page-title-admin p {
+  margin: 6px 0 0 !important;
+  color: var(--gd-muted) !important;
+  font-size: 13px !important;
+  max-width: 640px;
+}
+
+html .admin-gendaz .page-title-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- Botões (igual ao Gendaz) ---------- */
+html .admin-gendaz .btn,
+html .admin-gendaz .gendaz-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 0 15px;
+  font-size: 14px;
+  font-weight: 700 !important;
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+html .admin-gendaz .btn-primary,
+html .admin-gendaz .gendaz-btn--primary,
+html .admin-gendaz .btn:not(.btn-secondary):not(.btn-ghost) {
+  background: #f5f5f5 !important;
+  color: #0a0a0a !important;
+  border: 1px solid #f5f5f5 !important;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.10) !important;
+}
+
+html .admin-gendaz .btn-primary:hover,
+html .admin-gendaz .gendaz-btn--primary:hover,
+html .admin-gendaz .btn:not(.btn-secondary):not(.btn-ghost):hover:not(:disabled) {
+  background: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.16) !important;
+}
+
+html .admin-gendaz .btn-secondary,
+html .admin-gendaz .btn-ghost,
+html .admin-gendaz .gendaz-btn--ghost,
+html .admin-gendaz .gendaz-btn:not(.gendaz-btn--primary):not(.gendaz-btn--danger) {
+  background: var(--gd-soft) !important;
+  color: var(--gd-text) !important;
+  border: 1px solid var(--gd-border) !important;
+  box-shadow: none !important;
+}
+
+html .admin-gendaz .btn-secondary:hover,
+html .admin-gendaz .btn-ghost:hover,
+html .admin-gendaz .gendaz-btn--ghost:hover,
+html .admin-gendaz .gendaz-btn:not(.gendaz-btn--primary):not(.gendaz-btn--danger):hover:not(:disabled) {
+  background: var(--gd-soft-hover) !important;
+  border-color: var(--gd-border-strong) !important;
+  color: var(--gd-text) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.42) !important;
+}
+
+html .admin-gendaz .btn:disabled,
+html .admin-gendaz .gendaz-btn:disabled {
+  cursor: not-allowed !important;
+  opacity: .55 !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+html .admin-gendaz .btn .spin,
+html .admin-gendaz .gendaz-btn .spin {
+  animation: adminGendazSpin 0.8s linear infinite;
+}
+
+@keyframes adminGendazSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Botões de ação de tabela (ícones) */
+html .admin-gendaz .table-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+html .admin-gendaz .icon-btn {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  border: 1px solid var(--gd-border) !important;
+  background: var(--gd-soft) !important;
+  color: var(--gd-muted) !important;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: none !important;
+}
+
+html .admin-gendaz .icon-btn:hover {
+  background: var(--gd-soft-hover) !important;
+  color: var(--gd-text) !important;
+  border-color: var(--gd-border-strong) !important;
+}
+
+/* ---------- Grid de cards de métricas ---------- */
+html .admin-gendaz .admin-gendaz-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+html .admin-gendaz .admin-gendaz-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 1280px) {
+  html .admin-gendaz .admin-gendaz-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  html .admin-gendaz .admin-gendaz-grid,
+  html .admin-gendaz .admin-gendaz-grid--two {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Grid de estratégia (4 cards) ---------- */
+html .admin-gendaz .admin-strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+@media (max-width: 1280px) {
+  html .admin-gendaz .admin-strategy-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  html .admin-gendaz .admin-strategy-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+html .admin-gendaz .admin-strategy-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  padding: 18px 20px;
+  border-radius: 14px !important;
+}
+
+html .admin-gendaz .admin-strategy-card span {
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+html .admin-gendaz .admin-strategy-card strong {
+  color: var(--gd-text) !important;
+  font-size: 26px !important;
+  font-weight: 800 !important;
+  line-height: 1.1 !important;
+  letter-spacing: -0.02em;
+  word-break: break-word;
+}
+
+html .admin-gendaz .admin-strategy-card small {
+  color: rgba(245, 245, 245, 0.5) !important;
+  font-size: 12px !important;
+}
+
+html .admin-gendaz .admin-strategy-card--highlight {
+  border-color: var(--gd-border-strong) !important;
+  background:
+    linear-gradient(180deg, var(--gd-surface-3) 0%, var(--gd-surface-2) 100%) !important;
+}
+
+/* ---------- Cards (igual ao Gendaz) ---------- */
+html .admin-gendaz .admin-gendaz-card,
+html .admin-gendaz .gendaz-card,
+html .admin-gendaz .admin-metrics article,
+html .admin-gendaz .admin-panels section,
+html .admin-gendaz .admin-strategy-card,
+html .admin-gendaz .admin-tactical-panel,
+html .admin-gendaz .admin-config div,
+html .admin-gendaz .admin-section .table-wrap,
+html .admin-gendaz .admin-filters,
+html .admin-gendaz .search-shell,
+html .admin-gendaz .confirm-box,
+html .admin-gendaz .modal,
+html .admin-gendaz .admin-gendaz-panel {
+  background:
+    linear-gradient(180deg, var(--gd-surface-2) 0%, var(--gd-surface) 100%) !important;
+  border: 1px solid var(--gd-border) !important;
+  border-radius: 14px !important;
+  box-shadow: var(--gd-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  color: var(--gd-text) !important;
+}
+
+html .admin-gendaz .admin-gendaz-card:hover,
+html .admin-gendaz .gendaz-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--gd-shadow-hover), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html .admin-gendaz .admin-gendaz-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+}
+
+html .admin-gendaz .admin-gendaz-card--metric {
+  min-height: 118px;
+  align-content: start;
+  gap: 4px;
+  padding: 16px 18px;
+}
+
+html .admin-gendaz .admin-gendaz-card--metric > span {
+  color: var(--gd-muted);
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-gendaz-card--metric strong {
+  color: var(--gd-text);
+  font-size: 26px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  word-break: break-word;
+}
+
+html .admin-gendaz .admin-gendaz-card--metric small {
+  color: rgba(245, 245, 245, 0.5);
+  font-size: 12px;
+}
+
+html .admin-gendaz .admin-gendaz-card--highlight {
+  background:
+    linear-gradient(180deg, var(--gd-surface-3) 0%, var(--gd-surface-2) 100%) !important;
+  border-color: var(--gd-border-strong) !important;
+}
+
+/* Card de cabeçalho de painel */
+html .admin-gendaz .admin-gendaz-panel {
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+}
+
+html .admin-gendaz .admin-gendaz-panel .panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+html .admin-gendaz .admin-gendaz-panel h2,
+html .admin-gendaz .admin-panels h2,
+html .admin-gendaz .admin-tactical-panel h2 {
+  margin: 0;
+  color: var(--gd-text) !important;
+  font-size: 18px;
+  font-weight: 700 !important;
+  letter-spacing: -0.01em;
+}
+
+html .admin-gendaz .admin-gendaz-panel p,
+html .admin-gendaz .admin-panels p,
+html .admin-gendaz .admin-tactical-panel p {
+  margin: 4px 0 0;
+  color: var(--gd-muted) !important;
+  font-size: 13px !important;
+}
+
+/* ---------- Métricas compactas (9 cartões) ---------- */
+html .admin-gendaz .admin-metrics {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+html .admin-gendaz .admin-metrics article {
+  padding: 14px 16px;
+  min-height: 0;
+  display: grid;
+  gap: 4px;
+  align-content: start;
+}
+
+html .admin-gendaz .admin-metrics span {
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+}
+
+html .admin-gendaz .admin-metrics strong {
+  color: var(--gd-text) !important;
+  font-size: 20px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 1280px) {
+  html .admin-gendaz .admin-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ---------- Painéis táticos ---------- */
+html .admin-gendaz .admin-panels {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+html .admin-gendaz .admin-panels--tactical {
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+}
+
+@media (max-width: 1280px) {
+  html .admin-gendaz .admin-panels,
+  html .admin-gendaz .admin-panels--tactical {
+    grid-template-columns: 1fr;
+  }
+}
+
+html .admin-gendaz .admin-panels section {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+  padding: 20px;
+}
+
+html .admin-gendaz .admin-status-stack {
+  display: grid;
+  gap: 10px;
+}
+
+html .admin-gendaz .admin-status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html .admin-gendaz .admin-status-row span {
+  color: var(--gd-muted);
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-status-row strong {
+  color: var(--gd-text);
+  font-size: 15px;
+  font-weight: 700 !important;
+}
+
+html .admin-gendaz .admin-mini-bars {
+  display: grid;
+  gap: 12px;
+}
+
+html .admin-gendaz .admin-mini-bar > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+html .admin-gendaz .admin-mini-bar span {
+  color: var(--gd-muted);
+  font-size: 12px;
+}
+
+html .admin-gendaz .admin-mini-bar strong {
+  color: var(--gd-text);
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-mini-bar-track {
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+html .admin-gendaz .admin-mini-bar-track i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: #f5f5f5;
+}
+
+html .admin-gendaz .admin-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+html .admin-gendaz .admin-bar:last-child {
+  border-bottom: 0;
+}
+
+html .admin-gendaz .admin-bar span {
+  color: var(--gd-muted);
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+html .admin-gendaz .admin-bar strong {
+  color: var(--gd-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+html .admin-gendaz .admin-bar-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+html .admin-gendaz .admin-bar-row span {
+  color: var(--gd-muted);
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-bar-row strong {
+  color: var(--gd-text);
+  font-size: 14px;
+}
+
+html .admin-gendaz .admin-empty-tactical {
+  padding: 18px 12px;
+  color: var(--gd-muted);
+  font-size: 13px;
+  text-align: center;
+  border: 1px dashed var(--gd-border);
+  border-radius: 10px;
+}
+
+/* ---------- Gráfico de área ---------- */
+html .admin-gendaz .admin-area-chart-shell {
+  width: 100%;
+  height: 260px;
+}
+
+html .admin-gendaz .admin-bar-chart-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 8px;
+  color: var(--gd-muted);
+  text-align: center;
+}
+
+html .admin-gendaz .admin-bar-chart-empty svg {
+  opacity: 0.6;
+}
+
+html .admin-gendaz .admin-bar-chart-empty p {
+  margin: 0;
+  color: var(--gd-text);
+}
+
+html .admin-gendaz .admin-bar-chart-empty small {
+  color: var(--gd-muted);
+}
+
+/* ---------- Tabelas (estilo Gendaz) ---------- */
+html .admin-gendaz .table-wrap {
+  overflow-x: auto;
+  padding: 4px;
+}
+
+html .admin-gendaz .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+html .admin-gendaz .data-table thead th {
+  padding: 12px 14px;
+  color: rgba(245, 245, 245, 0.58) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+  text-align: left;
+  border-bottom: 1px solid var(--gd-border);
+  background: transparent !important;
+  white-space: nowrap;
+}
+
+html .admin-gendaz .data-table tbody td {
+  padding: 13px 14px;
+  color: var(--gd-text) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  vertical-align: middle;
+}
+
+html .admin-gendaz .data-table tbody tr {
+  background: transparent !important;
+  transition: background 0.15s ease;
+}
+
+html .admin-gendaz .data-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03) !important;
+}
+
+html .admin-gendaz .data-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+html .admin-gendaz .data-table td .cell-truncate {
+  color: var(--gd-text);
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+html .admin-gendaz .data-table td small,
+html .admin-gendaz .data-table td .muted {
+  color: var(--gd-muted) !important;
+}
+
+/* ---------- Filtros / busca ---------- */
+html .admin-gendaz .admin-filters {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 14px !important;
+}
+
+html .admin-gendaz .admin-filters .search-shell,
+html .admin-gendaz .search-shell {
+  display: flex;
+  align-items: center;
+  flex: 1 1 260px;
+  min-width: 220px;
+  padding: 0 4px 0 12px;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--gd-border) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+}
+
+html .admin-gendaz .search-shell input {
+  width: 100%;
+  min-height: 44px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  color: var(--gd-text) !important;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+/* ---------- Inputs / selects / textareas ---------- */
+html .admin-gendaz input,
+html .admin-gendaz select,
+html .admin-gendaz textarea,
+html .admin-gendaz .field input,
+html .admin-gendaz .field select,
+html .admin-gendaz .field textarea {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid var(--gd-border) !important;
+  border-radius: 10px !important;
+  color: var(--gd-text) !important;
+  -webkit-text-fill-color: var(--gd-text) !important;
+  caret-color: #ffffff;
+  color-scheme: dark !important;
+  min-height: 44px;
+  padding: 0 14px;
+  font-size: 13px;
+  width: 100%;
+  box-shadow: none !important;
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+html .admin-gendaz textarea {
+  padding: 12px 14px;
+  min-height: 96px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+html .admin-gendaz input::placeholder,
+html .admin-gendaz textarea::placeholder {
+  color: rgba(245, 245, 245, 0.4) !important;
+  -webkit-text-fill-color: rgba(245, 245, 245, 0.4) !important;
+}
+
+html .admin-gendaz input:focus,
+html .admin-gendaz select:focus,
+html .admin-gendaz textarea:focus {
+  outline: none;
+  border-color: var(--gd-border-strong) !important;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10) !important;
+}
+
+html .admin-gendaz select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23f5f5f5' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 34px;
+  cursor: pointer;
+}
+
+html .admin-gendaz select option,
+html .admin-gendaz select optgroup {
+  background: #111111 !important;
+  color: #f5f5f5 !important;
+}
+
+html .admin-gendaz select option:checked,
+html .admin-gendaz select option:hover {
+  background: #f5f5f5 !important;
+  color: #111111 !important;
+}
+
+html .admin-gendaz input:-webkit-autofill,
+html .admin-gendaz input:-webkit-autofill:hover,
+html .admin-gendaz input:-webkit-autofill:focus,
+html .admin-gendaz input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f5f5f5 !important;
+  caret-color: #ffffff;
+  box-shadow: 0 0 0 1000px #141414 inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #141414 inset !important;
+  border: 1px solid var(--gd-border) !important;
+  transition: background-color 9999s ease-out 0s;
+}
+
+/* Campos de formulário dentro de modais */
+html .admin-gendaz .admin-form-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 4px 0;
+}
+
+@media (max-width: 900px) {
+  html .admin-gendaz .admin-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+html .admin-gendaz .field {
+  display: grid;
+  gap: 8px;
+}
+
+html .admin-gendaz .field > span,
+html .admin-gendaz .field label {
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+html .admin-gendaz .field-hint {
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+html .admin-gendaz .field-hint strong {
+  color: var(--gd-muted) !important;
+}
+
+html .admin-gendaz .field-hint.limit-reached {
+  color: var(--gd-red) !important;
+}
+
+html .admin-gendaz .form-error {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.10);
+  color: var(--gd-red) !important;
+  font-size: 13px;
+}
+
+/* ---------- Detalhes / configurações ---------- */
+html .admin-gendaz .admin-detail-list {
+  display: grid;
+  gap: 8px;
+}
+
+html .admin-gendaz .admin-detail-list p {
+  margin: 0;
+  color: var(--gd-muted) !important;
+  font-size: 13px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+html .admin-gendaz .admin-detail-list p strong {
+  color: var(--gd-text) !important;
+  min-width: 120px;
+}
+
+html .admin-gendaz .admin-config {
+  display: grid;
+  gap: 12px;
+}
+
+html .admin-gendaz .admin-config div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+}
+
+html .admin-gendaz .admin-config div span {
+  color: var(--gd-muted) !important;
+  font-size: 13px !important;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  font-weight: 700 !important;
+}
+
+html .admin-gendaz .admin-config div strong {
+  color: var(--gd-text) !important;
+  font-size: 14px;
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ---------- Seções de aba ---------- */
+html .admin-gendaz .admin-section {
+  display: grid;
+  gap: 16px;
+}
+
+html .admin-gendaz .admin-section > h1 {
+  margin: 0;
+  color: var(--gd-text) !important;
+  font-size: 24px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+/* ---------- Toast / aviso ---------- */
+html .admin-gendaz .admin-toast {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--gd-border-strong);
+  background: var(--gd-surface-2) !important;
+  box-shadow: var(--gd-shadow) !important;
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-toast span {
+  color: var(--gd-text) !important;
+}
+
+html .admin-gendaz .admin-toast.success {
+  border-color: rgba(78, 163, 101, 0.55);
+  background: rgba(78, 163, 101, 0.12) !important;
+}
+
+html .admin-gendaz .admin-toast.success span {
+  color: #7ed39a !important;
+}
+
+html .admin-gendaz .admin-toast.error {
+  border-color: rgba(248, 113, 113, 0.55);
+  background: rgba(248, 113, 113, 0.10) !important;
+}
+
+html .admin-gendaz .admin-toast.error span {
+  color: var(--gd-red) !important;
+}
+
+html .admin-gendaz .admin-toast button {
+  border: 0;
+  background: transparent;
+  color: var(--gd-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+html .admin-gendaz .admin-toast button:hover {
+  color: var(--gd-text);
+  background: var(--gd-soft);
+}
+
+/* ---------- Banner de impersonação ---------- */
+html .admin-gendaz .impersonation-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(122, 162, 247, 0.5);
+  background: rgba(122, 162, 247, 0.10) !important;
+  font-size: 13px;
+}
+
+html .admin-gendaz .impersonation-banner strong {
+  color: #c4d4fb !important;
+}
+
+html .admin-gendaz .impersonation-banner span {
+  color: var(--gd-muted) !important;
+  flex: 1 1 auto;
+}
+
+html .admin-gendaz .impersonation-banner button {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(122, 162, 247, 0.6);
+  background: transparent;
+  color: #c4d4fb;
+  font-weight: 700 !important;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+html .admin-gendaz .impersonation-banner button:hover {
+  background: rgba(122, 162, 247, 0.18);
+}
+
+/* ---------- Modal ---------- */
+html .admin-gendaz .modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.72) !important;
+  backdrop-filter: blur(8px) !important;
+  -webkit-backdrop-filter: blur(8px) !important;
+}
+
+html .admin-gendaz .modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 16px;
+  padding: 20px;
+  border-radius: 16px !important;
+}
+
+html .admin-gendaz .modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+html .admin-gendaz .modal-header h2 {
+  margin: 0;
+  color: var(--gd-text) !important;
+  font-size: 18px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+html .admin-gendaz .modal .confirm-box {
+  display: grid;
+  gap: 16px;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+html .admin-gendaz .modal .confirm-box > p {
+  margin: 0;
+  color: var(--gd-muted) !important;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+html .admin-gendaz .modal .confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* ---------- Status badges (pílulas) ---------- */
+html .admin-gendaz .status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gd-border);
+  background: var(--gd-soft);
+  color: var(--gd-muted) !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  white-space: nowrap;
+  -webkit-text-fill-color: var(--gd-muted) !important;
+}
+
+html .admin-gendaz .status .status-dot {
+  font-size: 8px;
+  color: currentColor;
+}
+
+html .admin-gendaz .status-pago,
+html .admin-gendaz .status-paga,
+html .admin-gendaz .status-confirmado,
+html .admin-gendaz .status-confirmada,
+html .admin-gendaz .status-aprovado,
+html .admin-gendaz .status-ativo,
+html .admin-gendaz .status-ativa,
+html .admin-gendaz .status-ativo-pagamento,
+html .admin-gendaz .status-resolvido,
+html .admin-gendaz .status-info,
+html .admin-gendaz .status-finalizado {
+  color: #7ed39a !important;
+  -webkit-text-fill-color: #7ed39a !important;
+  background: rgba(78, 163, 101, 0.12) !important;
+  border-color: rgba(78, 163, 101, 0.35) !important;
+}
+
+html .admin-gendaz .status-pendente,
+html .admin-gendaz .status-pendente-pagamento,
+html .admin-gendaz .status-payment-pending,
+html .admin-gendaz .status-payment-approved,
+html .admin-gendaz .status-em-analise,
+html .admin-gendaz .status-em-análise,
+html .admin-gendaz .status-warning,
+html .admin-gendaz .status-teste,
+html .admin-gendaz .status-aberto,
+html .admin-gendaz .status-em-andamento,
+html .admin-gendaz .status-pausado {
+  color: #f5c15c !important;
+  -webkit-text-fill-color: #f5c15c !important;
+  background: rgba(217, 146, 34, 0.12) !important;
+  border-color: rgba(217, 146, 34, 0.35) !important;
+}
+
+html .admin-gendaz .status-inativo,
+html .admin-gendaz .status-inativa,
+html .admin-gendaz .status-cancelado,
+html .admin-gendaz .status-cancelada,
+html .admin-gendaz .status-expirada,
+html .admin-gendaz .status-bloqueada,
+html .admin-gendaz .status-payment-rejected,
+html .admin-gendaz .status-payment-canceled,
+html .admin-gendaz .status-payment-expired,
+html .admin-gendaz .status-error,
+html .admin-gendaz .status-nao-resolvido,
+html .admin-gendaz .status-fechado,
+html .admin-gendaz .status-security {
+  color: var(--gd-red) !important;
+  -webkit-text-fill-color: var(--gd-red) !important;
+  background: rgba(248, 113, 113, 0.10) !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+}
+
+/* ---------- Tabs em pílula (estilo Promoções do Gendaz) ---------- */
+html .admin-gendaz .admin-gendaz-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px;
+  border-radius: 18px;
+  border: 1px solid var(--gd-border);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, rgba(255, 255, 255, 0.02) 100%);
+  box-shadow: var(--gd-shadow);
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+html .admin-gendaz .admin-gendaz-tabs button {
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--gd-muted);
+  font: inherit;
+  font-weight: 700 !important;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+html .admin-gendaz .admin-gendaz-tabs button:hover {
+  color: var(--gd-text);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+html .admin-gendaz .admin-gendaz-tabs button.is-active {
+  background: #f5f5f5;
+  color: #111111 !important;
+  box-shadow: 0 10px 28px rgba(255, 255, 255, 0.12);
+}
+
+/* ---------- Vazio / carregando ---------- */
+html .admin-gendaz .admin-gendaz-empty {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  min-height: 220px;
+  padding: 24px;
+  color: var(--gd-muted);
+  text-align: center;
+}
+
+html .admin-gendaz .admin-gendaz-empty svg {
+  opacity: 0.5;
+}
+
+html .admin-gendaz .admin-gendaz-empty strong {
+  color: var(--gd-text);
+}
+
+html .admin-gendaz .admin-gendaz-loading {
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  min-height: 60vh;
+  color: var(--gd-muted);
+}
+
+/* ============================================================
+   LOGIN ADMIN (design Gendaz auth)
+   ============================================================ */
+html .admin-login-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 34%),
+    var(--gd-bg) !important;
+  color: var(--gd-text);
+  color-scheme: dark;
+}
+
+html .admin-login-screen * {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+html .admin-login-screen .animated-background,
+html .admin-login-screen .bg-sheen,
+html .admin-login-screen .bg-grid,
+html .admin-login-screen .bg-radial {
+  display: none !important;
+}
+
+html .admin-login-screen .admin-login-card {
+  width: min(440px, 100%);
+  display: grid;
+  gap: 12px;
+  padding: 28px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--gd-surface-2) 0%, var(--gd-surface) 100%) !important;
+  border: 1px solid var(--gd-border) !important;
+  box-shadow: var(--gd-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+}
+
+html .admin-login-screen .admin-login-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+html .admin-login-screen .admin-login-brand {
+  display: flex;
+  align-items: center;
+}
+
+html .admin-login-screen .admin-login-logo {
+  display: block;
+  width: min(170px, 100%);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.34));
+}
+
+html .admin-login-screen .admin-login-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--gd-border);
+  background: transparent;
+  color: var(--gd-muted);
+  font-size: 12px;
+  font-weight: 700 !important;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+
+html .admin-login-screen .admin-login-back-btn:hover {
+  color: var(--gd-text);
+  background: var(--gd-soft-hover);
+  border-color: var(--gd-border-strong);
+}
+
+html .admin-login-screen .admin-login-kicker,
+html .admin-login-screen .section-kicker {
+  display: block;
+  color: rgba(255, 255, 255, 0.82) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+
+html .admin-login-screen .admin-login-title {
+  margin: 0;
+  color: var(--gd-text) !important;
+  font-size: 26px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+html .admin-login-screen .admin-login-copy {
+  margin: 0;
+  color: var(--gd-muted) !important;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+html .admin-login-screen .admin-login-form {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+html .admin-login-screen .admin-login-field {
+  display: grid;
+  gap: 8px;
+}
+
+html .admin-login-screen .admin-login-label {
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+html .admin-login-screen .admin-login-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid var(--gd-border);
+  background: rgba(255, 255, 255, 0.04);
+  transition: border-color .16s ease, box-shadow .16s ease;
+}
+
+html .admin-login-screen .admin-login-input-wrap:focus-within {
+  border-color: var(--gd-border-strong);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10);
+}
+
+html .admin-login-screen .admin-login-icon {
+  color: var(--gd-muted);
+  flex: 0 0 auto;
+}
+
+html .admin-login-screen .admin-login-input-wrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 46px;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--gd-text) !important;
+  -webkit-text-fill-color: var(--gd-text) !important;
+  caret-color: #ffffff;
+  font-size: 14px;
+  padding: 0;
+}
+
+html .admin-login-screen .admin-login-input-wrap input::placeholder {
+  color: rgba(245, 245, 245, 0.4) !important;
+  -webkit-text-fill-color: rgba(245, 245, 245, 0.4) !important;
+}
+
+html .admin-login-screen .admin-login-eye-btn {
+  border: 0;
+  background: transparent;
+  color: var(--gd-muted);
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+}
+
+html .admin-login-screen .admin-login-eye-btn:hover {
+  color: var(--gd-text);
+}
+
+html .admin-login-screen .admin-login-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  background: rgba(248, 113, 113, 0.10);
+  color: var(--gd-red) !important;
+  font-size: 13px;
+}
+
+html .admin-login-screen .admin-login-submit {
+  min-height: 48px;
+  border-radius: 10px;
+  border: 1px solid #f5f5f5;
+  background: #f5f5f5 !important;
+  color: #0a0a0a !important;
+  font-size: 14px;
+  font-weight: 800 !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.10);
+}
+
+html .admin-login-screen .admin-login-submit:hover:not(:disabled) {
+  background: #ffffff !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(255, 255, 255, 0.16);
+}
+
+html .admin-login-screen .admin-login-submit:disabled {
+  cursor: not-allowed;
+  opacity: .6;
+}
+
+html .admin-login-screen .admin-login-helper {
+  margin: 6px 0 0;
+  color: var(--gd-muted) !important;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Botão genérico usado fora do .admin-gendaz (ex.: página 404) */
+html .admin-login-screen .btn,
+html .admin-login-screen .btn-primary {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 10px;
+  padding: 0 15px;
+  font-size: 14px;
+  font-weight: 700 !important;
+  background: #f5f5f5 !important;
+  color: #0a0a0a !important;
+  border: 1px solid #f5f5f5 !important;
+  box-shadow: 0 8px 24px rgba(255, 255, 255, 0.10);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+html .admin-login-screen .btn-primary:hover {
+  background: #ffffff !important;
+  transform: translateY(-2px);
+}
+
+/* Loading do AdminAccessGate */
+html .admin-login-screen .admin-login-panel {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  text-align: center;
+  padding: 32px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--gd-surface-2) 0%, var(--gd-surface) 100%) !important;
+  border: 1px solid var(--gd-border) !important;
+  box-shadow: var(--gd-shadow) !important;
+}
+
+html .admin-login-screen .admin-login-panel h1 {
+  margin: 0;
+  color: var(--gd-text) !important;
+  font-size: 22px;
+  font-weight: 800 !important;
+  letter-spacing: -0.02em;
+}
+
+html .admin-login-screen .admin-login-panel .admin-login-copy {
+  max-width: 320px;
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 1080px) {
+  html .admin-gendaz.admin-shell,
+  html .admin-gendaz.gendaz-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar,
+  html .admin-gendaz .gendaz-sidebar {
+    position: relative !important;
+    height: auto !important;
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  html .admin-gendaz .admin-gendaz-content,
+  html .admin-gendaz.gendaz-shell .gendaz-main {
+    padding: 20px;
+  }
+}

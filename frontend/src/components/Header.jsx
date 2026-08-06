@@ -2,27 +2,97 @@ import { Bell, ChevronDown, LogOut, UserCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { appApi } from '../api/appApi.js'
 import { PLANOS } from '../services/localStore.js'
 import ThemeToggle from './ThemeToggle.jsx'
 
-function planoResumo(usuario) {
-  const nomePlano = PLANOS[usuario?.plano]?.nome || usuario?.plano || 'Plano'
-  const assinatura = usuario?.assinatura
+function hojeISO() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function diasRestantesDe(dataFimISO) {
+  if (!dataFimISO) return null
+  const fim = new Date(`${String(dataFimISO).slice(0, 10)}T12:00:00`).getTime()
+  return Math.max(0, Math.ceil((fim - Date.now()) / 86400000))
+}
+
+function duracaoDias(inicioISO, fimISO) {
+  if (!inicioISO || !fimISO) return null
+  const diff = (new Date(`${String(fimISO).slice(0, 10)}T00:00:00`) - new Date(`${String(inicioISO).slice(0, 10)}T00:00:00`)) / 86400000
+  return Number.isFinite(diff) ? Math.round(diff) : null
+}
+
+function nomePlanoDe(codigo) {
+  return PLANOS[codigo]?.nome || codigo || 'Plano'
+}
+
+function planoResumo(usuario, filaAtiva) {
   if (usuario?.statusConta === 'ACCOUNT_INACTIVE') return 'Conta inativa'
-  if (assinatura?.status === 'EXPIRADA') return 'Plano vencido'
-  if (assinatura?.status === 'PENDENTE_PAGAMENTO' || assinatura?.status === 'PENDENTE') return 'Pagamento pendente'
-  const dataFim = assinatura?.dataFimTeste || assinatura?.dataFim
-  if (!dataFim) return nomePlano
-  const restante = Math.max(0, Math.ceil((new Date(`${dataFim}T12:00:00`).getTime() - Date.now()) / 86400000))
-  return `${nomePlano} - ${restante} dias restantes`
+  const assinatura = usuario?.assinatura
+  if ((assinatura?.status === 'PENDENTE_PAGAMENTO' || assinatura?.status === 'PENDENTE') && filaAtiva.length === 0) {
+    return 'Pagamento pendente'
+  }
+  if (assinatura?.status === 'EXPIRADA' && filaAtiva.length === 0) return 'Plano vencido'
+
+  const hoje = hojeISO()
+  const fila = [...filaAtiva].sort((a, b) => String(a.dataInicio || '').localeCompare(String(b.dataInicio || '')))
+
+  // Sem fila carregada: usa a assinatura do usuario (plano vigente)
+  if (fila.length === 0) {
+    const nome = nomePlanoDe(usuario?.plano)
+    const dataFim = assinatura?.dataFimTeste || assinatura?.dataFim
+    if (!dataFim) return nome
+    const restante = diasRestantesDe(dataFim) ?? 0
+    return `${nome} - ${restante} dias restantes`
+  }
+
+  const partes = fila.map((item) => {
+    const nome = nomePlanoDe(item?.planoNome)
+    const inicio = String(item?.dataInicio || '').slice(0, 10)
+    const fim = String(item?.dataFim || '').slice(0, 10)
+    // Plano futuro: ainda nao comecou, mostra a duracao que ele tera
+    if (inicio && inicio > hoje) {
+      const dias = duracaoDias(inicio, fim) ?? diasRestantesDe(fim) ?? 0
+      return `${nome} ${dias} dias`
+    }
+    // Plano em vigor: mostra os dias restantes ate terminar
+    const restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
+    return `${nome} ${restante ?? 0} dias restantes`
+  })
+  return partes.join(' / ')
 }
 
 export default function Header() {
   const { usuario, logout } = useAuth()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [accountOpen, setAccountOpen] = useState(false)
+  const [filaAssinaturas, setFilaAssinaturas] = useState([])
   const notificationsRef = useRef(null)
   const accountRef = useRef(null)
+
+  useEffect(() => {
+    if (!usuario?.empresaId) {
+      setFilaAssinaturas([])
+      return
+    }
+    let ativo = true
+    appApi.listarAssinaturas(usuario.empresaId)
+      .then((lista) => {
+        if (!ativo) return
+        const hoje = hojeISO()
+        const fila = (Array.isArray(lista) ? lista : []).filter((item) => {
+          const status = String(item?.status || '').toUpperCase()
+          if (status !== 'ATIVA' && status !== 'TESTE') return false
+          if (!item?.dataFim) return true
+          return String(item.dataFim).slice(0, 10) >= hoje
+        })
+        setFilaAssinaturas(fila)
+      })
+      .catch(() => null)
+    return () => {
+      ativo = false
+    }
+  }, [usuario?.empresaId])
 
   useEffect(() => {
     function fecharAoClicarFora(event) {
@@ -54,7 +124,7 @@ export default function Header() {
       </div>
       <div className="topbar-actions">
         <Link to="/sistema/planos" className="demo-pill topbar-link">
-          {planoResumo(usuario)}
+          {planoResumo(usuario, filaAssinaturas)}
         </Link>
         <Link to="/sistema/suporte" className="demo-pill topbar-link">
           Suporte

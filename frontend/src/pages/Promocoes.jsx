@@ -51,6 +51,7 @@ export default function Promocoes() {
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [disparando, setDisparando] = useState(false)
+  const [cupomEmAcao, setCupomEmAcao] = useState(null)
   const [modalAberto, setModalAberto] = useState(false)
   const [notificarAberto, setNotificarAberto] = useState(false)
   const [usoAberto, setUsoAberto] = useState(false)
@@ -154,23 +155,70 @@ export default function Promocoes() {
   }
 
   async function desativar(id) {
-    await promocoesApi.desativar(id, empresaId)
-    sinalizarPromocoesAtualizadas()
-    await carregar()
+    if (cupomEmAcao) return
+    setCupomEmAcao(id)
+    window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      detail: { type: 'loading', message: 'Desativando cupom... aguarde' },
+    }))
+    try {
+      await promocoesApi.desativar(id, empresaId)
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'success', message: 'Cupom desativado com sucesso.' },
+      }))
+      sinalizarPromocoesAtualizadas()
+      await carregar()
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'error', message: error?.response?.data?.message || error?.response?.data?.mensagem || 'Não foi possível desativar o cupom.' },
+      }))
+    } finally {
+      setCupomEmAcao(null)
+    }
   }
 
   async function ativar(id) {
-    await promocoesApi.ativar(id, empresaId)
-    sinalizarPromocoesAtualizadas()
-    await carregar()
+    if (cupomEmAcao) return
+    setCupomEmAcao(id)
+    window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      detail: { type: 'loading', message: 'Ativando cupom... aguarde' },
+    }))
+    try {
+      await promocoesApi.ativar(id, empresaId)
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'success', message: 'Cupom ativado com sucesso.' },
+      }))
+      sinalizarPromocoesAtualizadas()
+      await carregar()
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'error', message: error?.response?.data?.message || error?.response?.data?.mensagem || 'Não foi possível ativar o cupom.' },
+      }))
+    } finally {
+      setCupomEmAcao(null)
+    }
   }
 
   async function excluirConfirmado() {
-    if (!modalExcluir) return
-    await promocoesApi.excluir(modalExcluir.id, empresaId)
-    sinalizarPromocoesAtualizadas()
-    setModalExcluir(null)
-    await carregar()
+    if (!modalExcluir || cupomEmAcao) return
+    setCupomEmAcao(modalExcluir.id)
+    window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      detail: { type: 'loading', message: 'Excluindo cupom... aguarde' },
+    }))
+    try {
+      await promocoesApi.excluir(modalExcluir.id, empresaId)
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'success', message: 'Cupom excluído com sucesso.' },
+      }))
+      sinalizarPromocoesAtualizadas()
+      setModalExcluir(null)
+      await carregar()
+    } catch (error) {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'error', message: error?.response?.data?.message || error?.response?.data?.mensagem || 'Não foi possível excluir o cupom.' },
+      }))
+    } finally {
+      setCupomEmAcao(null)
+    }
   }
 
   async function abrirResumo(cupom) {
@@ -293,11 +341,15 @@ export default function Promocoes() {
                       <button type="button" className="btn-secondary" onClick={() => abrirResumo(cupom)}><Eye size={14} /> Ver uso</button>
                       <button type="button" className="btn-secondary" onClick={() => navigator.clipboard.writeText(cupom.codigo)}><Copy size={14} /> Copiar</button>
                       {cupom.status === 'ATIVO' ? (
-                        <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)}>Desativar</button>
+                        <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
+                          {cupomEmAcao === cupom.id ? 'Desativando...' : 'Desativar'}
+                        </button>
                       ) : (
-                        <button type="button" className="btn-secondary" onClick={() => ativar(cupom.id)}>Ativar</button>
+                        <button type="button" className="btn-secondary" onClick={() => ativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
+                          {cupomEmAcao === cupom.id ? 'Ativando...' : 'Ativar'}
+                        </button>
                       )}
-                      <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)}><Trash2 size={14} /> Excluir</button>
+                      <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)} disabled={cupomEmAcao === cupom.id}><Trash2 size={14} /> Excluir</button>
                     </div>
                   </td>
                 </tr>
@@ -637,8 +689,10 @@ export default function Promocoes() {
             </div>
             <p className="warning" style={{ marginTop: 0 }}>Essa ação é irreversível.</p>
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <Button variant="secondary" onClick={() => setModalExcluir(null)}>Cancelar</Button>
-              <button type="button" className="btn btn-danger" onClick={excluirConfirmado}>Excluir</button>
+              <Button variant="secondary" onClick={() => setModalExcluir(null)} disabled={Boolean(cupomEmAcao)}>Cancelar</Button>
+              <button type="button" className="btn btn-danger" onClick={excluirConfirmado} disabled={Boolean(cupomEmAcao)}>
+                {cupomEmAcao ? 'Excluindo...' : 'Excluir'}
+              </button>
             </div>
           </div>
         </div>
