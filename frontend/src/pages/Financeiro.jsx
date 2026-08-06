@@ -11,7 +11,7 @@ import Pagination from '../components/Pagination.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { usePendentes } from '../hooks/usePendentes.js'
+import { usePendentes } from '../contexts/PendentesContext.jsx'
 import { currency, todayIso } from '../services/localStore.js'
 
 const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])

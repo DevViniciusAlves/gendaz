@@ -2,7 +2,7 @@
 import { BarChart3, CalendarDays, Gift, Home, MessageCircle, ReceiptText, Settings, Sparkles, Users, Wrench, UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
-import { usePendentes } from '../hooks/usePendentes.js'
+import { usePendentes } from '../contexts/PendentesContext.jsx'
 import logoSidebar from '../assets/logos/gendaz-logo-branco.png'
 
 const items = [

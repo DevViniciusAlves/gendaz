@@ -290,6 +290,9 @@ export function AuthProvider({ children }) {
         salvarUsuarioSessao(updated)
         setUsuario(updated)
         ultimaRenovacaoBemSucedidaRef.current = Date.now()
+        // Ao retornar para a aba, após renovar a sessão, sinaliza uma atualização
+        // única dos dados das telas abertas (sem polling contínuo).
+        window.dispatchEvent(new Event('agendapro:data-changed'))
       } catch (error) {
         const statusConta = error?.response?.data?.statusConta
         const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()

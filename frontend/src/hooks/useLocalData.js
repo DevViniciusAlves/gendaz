@@ -6,7 +6,6 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
 const CACHE_PREFIX = 'agendapro_scope_cache_'
-const POLLING_INTERVAL_MS = 30000
 
 function ttlDoEscopo(scope) {
   if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
@@ -150,24 +149,17 @@ export function useLocalData(scope = 'full') {
       setLoading(false)
     }
 
+    // Sem polling: a tela carrega ao montar e só reage a ações reais
+    // (agendapro:data-changed), troca de rota (remontagem) e recarga manual.
+    // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
     function reloadFromEvent() {
       reload(true)
     }
 
     window.addEventListener('agendapro:data-changed', reloadFromEvent)
-    window.addEventListener('agendapro:session-changed', reloadFromEvent)
-
-    let timer = null
-    if (scope !== 'insights') {
-      timer = setInterval(() => {
-        reload(true)
-      }, POLLING_INTERVAL_MS)
-    }
 
     return () => {
-      if (timer) clearInterval(timer)
       window.removeEventListener('agendapro:data-changed', reloadFromEvent)
-      window.removeEventListener('agendapro:session-changed', reloadFromEvent)
     }
   }, [scope, reload])
 

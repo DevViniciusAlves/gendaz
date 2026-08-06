@@ -5,6 +5,7 @@ import Header from '../components/Header.jsx'
 import OperationToast from '../components/OperationToast.jsx'
 import Sidebar from '../components/Sidebar.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { PendentesProvider } from '../contexts/PendentesContext.jsx'
 
 export default function AppLayout() {
   const { usuario, impersonation, encerrarImpersonacao } = useAuth()
@@ -31,22 +32,24 @@ export default function AppLayout() {
   }
 
   return (
-    <div className="app-shell">
-      <AnimatedBackground />
-      <OperationToast />
-      <Sidebar />
-      <div className="app-main">
-        {impersonation && (
-          <div className="impersonation-banner">
-            <strong>Voce esta acessando a conta de {impersonation.empresa} como Super Admin.</strong>
-            <button type="button" onClick={sairDaContaAcessada}>Sair da conta e voltar ao Admin</button>
-          </div>
-        )}
-        <Header />
-        <main className="content">
-          <Outlet key={location.pathname} />
-        </main>
+    <PendentesProvider>
+      <div className="app-shell">
+        <AnimatedBackground />
+        <OperationToast />
+        <Sidebar />
+        <div className="app-main">
+          {impersonation && (
+            <div className="impersonation-banner">
+              <strong>Voce esta acessando a conta de {impersonation.empresa} como Super Admin.</strong>
+              <button type="button" onClick={sairDaContaAcessada}>Sair da conta e voltar ao Admin</button>
+            </div>
+          )}
+          <Header />
+          <main className="content">
+            <Outlet key={location.pathname} />
+          </main>
+        </div>
       </div>
-    </div>
+    </PendentesProvider>
   )
 }

@@ -16,12 +16,6 @@ function diasRestantesDe(dataFimISO) {
   return Math.max(0, Math.ceil((fim - Date.now()) / 86400000))
 }
 
-function duracaoDias(inicioISO, fimISO) {
-  if (!inicioISO || !fimISO) return null
-  const diff = (new Date(`${String(fimISO).slice(0, 10)}T00:00:00`) - new Date(`${String(inicioISO).slice(0, 10)}T00:00:00`)) / 86400000
-  return Number.isFinite(diff) ? Math.round(diff) : null
-}
-
 function nomePlanoDe(codigo) {
   return PLANOS[codigo]?.nome || codigo || 'Plano'
 }
@@ -34,32 +28,42 @@ function planoResumo(usuario, filaAtiva) {
   }
   if (assinatura?.status === 'EXPIRADA' && filaAtiva.length === 0) return 'Plano vencido'
 
-  const hoje = hojeISO()
-  const fila = [...filaAtiva].sort((a, b) => String(a.dataInicio || '').localeCompare(String(b.dataInicio || '')))
+  // Junta a assinatura atual (do usuario) com a fila retornada pela API,
+  // removendo duplicidades para nunca exibir o mesmo plano duas vezes.
+  const mapa = new Map()
+  const registrar = (item) => {
+    if (!item) return
+    const nome = nomePlanoDe(item?.planoNome || item?.plano)
+    const inicio = String(item?.dataInicio || '').slice(0, 10)
+    const fim = String(item?.dataFim || item?.dataFimTeste || '').slice(0, 10)
+    if (!fim) return
+    const chave = `${nome}|${inicio}`
+    if (mapa.has(chave)) return
+    mapa.set(chave, {
+      nome,
+      inicio,
+      restante: item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim),
+    })
+  }
 
-  // Sem fila carregada: usa a assinatura do usuario (plano vigente)
-  if (fila.length === 0) {
+  ;(Array.isArray(filaAtiva) ? filaAtiva : []).forEach(registrar)
+  registrar(assinatura)
+
+  const itens = [...mapa.values()]
+    .sort((a, b) => String(a.inicio).localeCompare(String(b.inicio)) || a.nome.localeCompare(b.nome))
+
+  // Nenhum plano identificado: recai sobre os dados do usuario
+  if (itens.length === 0) {
     const nome = nomePlanoDe(usuario?.plano)
     const dataFim = assinatura?.dataFimTeste || assinatura?.dataFim
     if (!dataFim) return nome
     const restante = diasRestantesDe(dataFim) ?? 0
-    return `${nome} - ${restante} dias restantes`
+    return `${nome} ${restante} dias restantes`
   }
 
-  const partes = fila.map((item) => {
-    const nome = nomePlanoDe(item?.planoNome)
-    const inicio = String(item?.dataInicio || '').slice(0, 10)
-    const fim = String(item?.dataFim || '').slice(0, 10)
-    // Plano futuro: ainda nao comecou, mostra a duracao que ele tera
-    if (inicio && inicio > hoje) {
-      const dias = duracaoDias(inicio, fim) ?? diasRestantesDe(fim) ?? 0
-      return `${nome} ${dias} dias`
-    }
-    // Plano em vigor: mostra os dias restantes ate terminar
-    const restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
-    return `${nome} ${restante ?? 0} dias restantes`
-  })
-  return partes.join(' / ')
+  return itens
+    .map((item) => `${item.nome} ${item.restante ?? 0} dias restantes`)
+    .join(' / ')
 }
 
 export default function Header() {
@@ -92,7 +96,7 @@ export default function Header() {
     return () => {
       ativo = false
     }
-  }, [usuario?.empresaId])
+  }, [usuario?.empresaId, usuario?.assinatura?.id])
 
   useEffect(() => {
     function fecharAoClicarFora(event) {
