@@ -1,10 +1,13 @@
 package com.minhaempresa.agendapro.admin.service;
 
 import com.minhaempresa.agendapro.admin.dto.AdminAssinaturaDtos.AssinaturaAdminResponse;
+import com.minhaempresa.agendapro.admin.dto.AdminAssinaturaDtos.CriarAssinaturaRequest;
 import com.minhaempresa.agendapro.admin.dto.AdminAssinaturaDtos.EditarAssinaturaRequest;
 import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
+import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.plano.entity.PlanoEntity;
 import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
@@ -24,7 +27,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SubscriptionAdminService {
 
+    private static final int LIMITE_PLANOS_ATIVOS = 2;
+    private static final int DIAS_PADRAO = 30;
+
     private final AssinaturaRepository assinaturaRepository;
+    private final EmpresaRepository empresaRepository;
     private final PlanoService planoService;
 
     @Transactional(readOnly = true)
@@ -108,6 +115,74 @@ public class SubscriptionAdminService {
         recalcularFila(fila, subscriptionId);
 
         return listarAssinaturas(empresaId);
+    }
+
+    @Transactional
+    public List<AssinaturaAdminResponse> criarAssinatura(Long empresaId, CriarAssinaturaRequest request) {
+        EmpresaEntity empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+        PlanoEntity plano = planoService.buscarEntidade(request.planoId());
+
+        if (contarFilaAtiva(empresaId) >= LIMITE_PLANOS_ATIVOS) {
+            throw new BusinessException("Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
+        }
+
+        LocalDate hoje = LocalDate.now();
+        LocalDate dataInicio = request.dataInicio() != null ? request.dataInicio() : proximaDataInicio(empresaId, hoje);
+        int dias = request.dias() != null ? request.dias() : DIAS_PADRAO;
+        if (dias < 1) {
+            throw new BusinessException("Dias minimos: 1.");
+        }
+        LocalDate dataFim = request.dataFim() != null ? request.dataFim() : dataInicio.plusDays(dias);
+        StatusAssinatura status = request.status() != null ? request.status() : StatusAssinatura.ATIVA;
+
+        AssinaturaEntity nova = AssinaturaEntity.builder()
+                .empresa(empresa)
+                .plano(plano)
+                .status(status)
+                .dataInicio(dataInicio)
+                .dataFim(dataFim)
+                .build();
+        assinaturaRepository.save(nova);
+
+        List<AssinaturaEntity> fila = assinaturaRepository.findByEmpresaId(empresaId);
+        fila.sort(Comparator.comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
+                .thenComparing(AssinaturaEntity::getId));
+        recalcularFila(fila, nova.getId());
+
+        return listarAssinaturas(empresaId);
+    }
+
+    /**
+     * Quantidade de planos na fila de vigencia (ATIVA ou TESTE, ainda nao vencidos).
+     * Base do limite de 2 planos simultaneos.
+     */
+    private long contarFilaAtiva(Long empresaId) {
+        LocalDate hoje = LocalDate.now();
+        return assinaturaRepository.findByEmpresaId(empresaId).stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .count();
+    }
+
+    /**
+     * Proxima data de inicio para um novo plano: dia seguinte ao fim do ultimo
+     * plano ativo da fila (ou hoje quando nao ha fila).
+     */
+    private LocalDate proximaDataInicio(Long empresaId, LocalDate hoje) {
+        List<AssinaturaEntity> fila = assinaturaRepository.findByEmpresaId(empresaId).stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .sorted(Comparator
+                        .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(AssinaturaEntity::getId))
+                .toList();
+        if (fila.isEmpty()) {
+            return hoje;
+        }
+        AssinaturaEntity ultima = fila.get(fila.size() - 1);
+        LocalDate fim = ultima.getDataFim() == null ? hoje : ultima.getDataFim();
+        return fim.plusDays(1);
     }
 
     private void recalcularFila(List<AssinaturaEntity> fila, Long aPartirDeId) {

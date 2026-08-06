@@ -1,4 +1,4 @@
-import { Check, ExternalLink, RefreshCw, ShieldCheck } from 'lucide-react'
+import { Check, ExternalLink, RefreshCw, ShieldCheck, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -16,15 +16,15 @@ const planosBase = [
     extra: '7 dias gratis',
     descricao: 'Para organizar conversas, agenda, clientes e servicos no mesmo painel.',
     beneficios: [
-      'Agenda com atendimento organizado',
-      'Cadastro de clientes pelo painel',
-      'Aba de promoções e cupons liberada',
-      'Cadastro de ate 4 servicos',
-      'Confirmacao de consulta automatizada',
-      'Cancelamento e remarcacao automatizados',
+      'Dashboard',
+      'Agendamentos',
+      'Cadastro de clientes',
+      'Cadastro de serviços',
+      'Promoções',
+      'Confirmação de agendamento',
+      'Cancelamento e remarcação',
     ],
-    indicadoPara: ['Clinicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
-    naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatorios'],
+    naoInclui: ['Profissionais', 'CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
     cta: 'Comecar no Basico',
     precoFallback: 39.00,
   },
@@ -34,15 +34,22 @@ const planosBase = [
     subtitulo: 'Gestao com financeiro simples',
     descricao: 'Para acompanhar agenda, profissionais, pagamentos e indicadores em um so lugar.',
     beneficios: [
-      'Tudo que o Basico oferece',
-      'Ate 3 usuarios por conta',
-      'CRM automatizado para relacionamento',
-      'Insights para apoiar a gestao',
-      'Profissionais ilimitados',
-      'Servicos ilimitados',
-      'Aba de promoções e cupons completa',
+      'Tudo do Plano Básico +',
+      'Até 3 usuários na conta',
+      'Cadastro de profissionais',
+      'CRM',
+      'Insights inteligentes',
+      'Financeiro',
+      'Relatórios',
+      'Gestão de equipe',
     ],
-    indicadoPara: ['Equipes de atendimento', 'Servicos com cobranca recorrente', 'Operacao com acompanhamento diario'],
+    beneficiosExtra: [
+      'Controle completo da operação',
+      'Gestão financeira',
+      'Relatórios estratégicos',
+      'Organização da equipe',
+      'Crescimento com mais produtividade',
+    ],
     cta: 'Assinar Pro',
     precoFallback: 89.00,
     destaque: true,
@@ -372,27 +379,38 @@ export default function Planos() {
               <p className="plan-description">{plano.descricao}</p>
 
               <div className="plan-section">
-                <h3>Beneficios</h3>
+                <h3>Benefícios</h3>
                 <div className="plan-list">
                   {plano.beneficios.map((item) => (
                     <strong key={item}>
-                      <Check size={16} />{item}
+                      <Check size={16} style={{ color: '#22c55e' }} />{item}
                     </strong>
                   ))}
                 </div>
               </div>
 
-              <div className="plan-section">
-                <h3>Indicado para</h3>
-                <div className="plan-list plan-list-muted">
-                  {plano.indicadoPara.map((item) => <small key={item}>{item}</small>)}
+              {plano.beneficiosExtra && plano.beneficiosExtra.length > 0 && (
+                <div className="plan-section">
+                  <h3>Benefícios</h3>
+                  <div className="plan-list">
+                    {plano.beneficiosExtra.map((item) => (
+                      <strong key={item}>
+                        <Check size={16} style={{ color: '#22c55e' }} />{item}
+                      </strong>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {plano.naoInclui && (
+              {plano.naoInclui && plano.naoInclui.length > 0 && (
                 <div className="plan-unavailable">
-                  <span>O que nao inclui</span>
-                  {plano.naoInclui.map((item) => <small key={item}>{item}</small>)}
+                  <span>Não inclui</span>
+                  {plano.naoInclui.map((item) => (
+                    <small key={item} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <X size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                      {item}
+                    </small>
+                  ))}
                 </div>
               )}
             </div>

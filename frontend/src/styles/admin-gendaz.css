@@ -1198,6 +1198,102 @@ html .admin-gendaz .modal .confirm-actions {
   flex-wrap: wrap;
 }
 
+/* ---------- Planos da conta (ate 2) ---------- */
+html .admin-gendaz .admin-assinaturas-block {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+}
+
+html .admin-gendaz .admin-assinaturas {
+  display: grid;
+  gap: 10px;
+}
+
+html .admin-gendaz .admin-assinatura {
+  display: grid;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--gd-border);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html .admin-gendaz .admin-assinatura__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+html .admin-gendaz .admin-assinatura__head strong {
+  color: var(--gd-text) !important;
+  font-size: 14px;
+}
+
+html .admin-gendaz .admin-assinatura__meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  color: var(--gd-muted) !important;
+  font-size: 12px !important;
+}
+
+html .admin-gendaz .admin-assinatura__edit {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px auto auto;
+  gap: 8px;
+  align-items: center;
+}
+
+html .admin-gendaz .admin-assinatura__edit select,
+html .admin-gendaz .admin-assinatura__edit input {
+  min-height: 38px;
+}
+
+html .admin-gendaz .admin-assinatura__edit .btn,
+html .admin-gendaz .admin-assinatura__add-btn .btn {
+  min-height: 38px;
+  padding: 0 12px;
+  font-size: 13px;
+}
+
+html .admin-gendaz .admin-assinatura__editar {
+  justify-self: start;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+}
+
+html .admin-gendaz .admin-assinatura__add {
+  border: 1px dashed var(--gd-border-strong);
+  border-radius: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+html .admin-gendaz .admin-assinatura__add-btn {
+  justify-self: start;
+}
+
+html .admin-gendaz .admin-assinaturas-empty {
+  padding: 18px 14px;
+  border: 1px dashed var(--gd-border);
+  border-radius: 12px;
+  color: var(--gd-muted) !important;
+  font-size: 13px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  html .admin-gendaz .admin-assinatura__edit {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ---------- Status badges (pílulas) ---------- */
 html .admin-gendaz .status {
   display: inline-flex;

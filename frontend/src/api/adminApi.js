@@ -90,6 +90,18 @@ export const adminApi = {
     return api.patch(`/admin/chamados/${chamadoId}`, payload).then((response) => response.data)
   },
 
+  listarAssinaturas(empresaId) {
+    return api.get(`/admin/empresas/${empresaId}/subscriptions`).then((response) => response.data)
+  },
+
+  criarAssinatura(empresaId, payload) {
+    return api.post(`/admin/empresas/${empresaId}/subscriptions`, payload).then((response) => response.data)
+  },
+
+  editarAssinatura(empresaId, subscriptionId, payload) {
+    return api.put(`/admin/empresas/${empresaId}/subscriptions/${subscriptionId}`, payload).then((response) => response.data)
+  },
+
   atualizarStatusChamado(chamadoId, status) {
     return api.patch(`/admin/chamados/${chamadoId}/status`, { status }).then((response) => response.data)
   },

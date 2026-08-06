@@ -235,6 +235,14 @@ function formatarDataHora(valor) {
   }).format(data)
 }
 
+function formatarDataSimples(valor) {
+  if (!valor) return '-'
+  const texto = String(valor).slice(0, 10)
+  const data = new Date(`${texto}T12:00:00`)
+  if (Number.isNaN(data.getTime())) return '-'
+  return data.toLocaleDateString('pt-BR')
+}
+
 function rotuloPlano(valor) {
   const plano = String(valor || '').trim().toUpperCase()
   if (plano === 'BASICO') return 'Básico'
@@ -258,7 +266,12 @@ export default function AdminDashboard() {
   const [motivo, setMotivo] = useState('')
   const [transacaoId, setTransacaoId] = useState('')
   const [empresaEdicao, setEmpresaEdicao] = useState({ nomeFantasia: '', documento: '', telefone: '', email: '' })
-  const [assinaturaEdicao, setAssinaturaEdicao] = useState({ planoId: '', diasPlano: 30 })
+  const [assinaturas, setAssinaturas] = useState([])
+  const [adicionandoPlano, setAdicionandoPlano] = useState(false)
+  const [novaAssinatura, setNovaAssinatura] = useState({ planoId: '', dias: 30 })
+  const [editandoAssinaturaId, setEditandoAssinaturaId] = useState(null)
+  const [assinaturaEditForm, setAssinaturaEditForm] = useState({ planoId: '', dias: 30 })
+  const [salvandoAssinatura, setSalvandoAssinatura] = useState(false)
   const [chamadoEdicao, setChamadoEdicao] = useState({ status: 'EM_ANALISE', resposta: '' })
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
@@ -377,6 +390,14 @@ export default function AdminDashboard() {
     return Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 4)
   }, [usuarios])
 
+  const assinaturasAtivas = useMemo(() => (assinaturas || []).filter((item) => {
+    const status = String(item.status || '').toUpperCase()
+    if (status !== 'ATIVA' && status !== 'TESTE') return false
+    const fim = String(item.dataFim || '')
+    if (!fim) return true
+    return fim >= todayIso()
+  }), [assinaturas])
+
   const pagamentosFiltrados = useMemo(() => pagamentos.filter((item) => (
     contemTermo(item, pesquisaPagamento, ['empresa', 'responsavel', 'email', 'telefone', 'plano', 'status', 'gateway', 'externalPaymentId', 'paymentReference'])
   )), [pagamentos, pesquisaPagamento])
@@ -406,16 +427,21 @@ export default function AdminDashboard() {
       telefone: item?.telefone || '',
       email: item?.emailEmpresa || item?.email || '',
     })
-    setAssinaturaEdicao({
-      planoId: item?.planoId || '',
-      diasPlano: 30,
-    })
     setChamadoEdicao({
       status: item?.status || 'EM_ANALISE',
       resposta: item?.resposta || '',
     })
     setErro('')
     setAviso('')
+
+    if (tipo === 'empresa-editar') {
+      setAssinaturas([])
+      setAdicionandoPlano(false)
+      setEditandoAssinaturaId(null)
+      setNovaAssinatura({ planoId: '', dias: 30 })
+      setAssinaturaEditForm({ planoId: '', dias: 30 })
+      adminApi.listarAssinaturas(item.empresaId).then(setAssinaturas).catch(() => setAssinaturas([]))
+    }
   }
 
   function atualizarEmpresaNaTabela(empresaAtualizada) {
@@ -519,8 +545,8 @@ export default function AdminDashboard() {
         documento: String(empresaEdicao.documento || '').replace(/\D/g, ''),
         telefone: String(empresaEdicao.telefone || '').replace(/[^\d()+\-\s]/g, '').trim(),
         email: empresaEdicao.email.trim().toLowerCase(),
-        planoId: assinaturaEdicao.planoId ? Number(assinaturaEdicao.planoId) : null,
-        diasPlano: assinaturaEdicao.diasPlano ? Number(assinaturaEdicao.diasPlano) : null,
+        planoId: null,
+        diasPlano: null,
         motivo: motivo.trim(),
       }
       const empresaAtualizada = await adminApi.atualizarEmpresa(modal.empresaId, {
@@ -555,6 +581,62 @@ export default function AdminDashboard() {
       setErro(mensagemErroApi(error, 'Nao foi possivel atualizar o chamado.'))
     } finally {
       setCarregandoAcao(false)
+    }
+  }
+
+  function iniciarEdicaoAssinatura(assinatura) {
+    setEditandoAssinaturaId(assinatura.id)
+    setAssinaturaEditForm({
+      planoId: assinatura.planoId != null ? String(assinatura.planoId) : '',
+      dias: assinatura.dias > 0 ? assinatura.dias : 30,
+    })
+  }
+
+  async function criarNovaAssinatura() {
+    if (!modal || !novaAssinatura.planoId) {
+      setErro('Selecione um plano para adicionar a conta.')
+      return
+    }
+    const dias = Math.max(1, Number(novaAssinatura.dias) || 30)
+    setSalvandoAssinatura(true)
+    setErro('')
+    try {
+      const lista = await adminApi.criarAssinatura(modal.empresaId, {
+        planoId: Number(novaAssinatura.planoId),
+        dias,
+      })
+      setAssinaturas(lista)
+      setNovaAssinatura({ planoId: '', dias: 30 })
+      setAdicionandoPlano(false)
+      setAviso('Plano adicionado a conta com sucesso.')
+    } catch (error) {
+      setErro(mensagemErroApi(error, 'Nao foi possivel adicionar o plano.'))
+    } finally {
+      setSalvandoAssinatura(false)
+    }
+  }
+
+  async function salvarEdicaoAssinatura() {
+    if (!modal || !editandoAssinaturaId || !assinaturaEditForm.planoId) {
+      setErro('Selecione um plano para atualizar.')
+      return
+    }
+    const dias = Math.max(1, Number(assinaturaEditForm.dias) || 30)
+    setSalvandoAssinatura(true)
+    setErro('')
+    try {
+      const lista = await adminApi.editarAssinatura(modal.empresaId, editandoAssinaturaId, {
+        planoId: Number(assinaturaEditForm.planoId),
+        dias,
+        status: 'ATIVA',
+      })
+      setAssinaturas(lista)
+      setEditandoAssinaturaId(null)
+      setAviso('Plano atualizado com sucesso.')
+    } catch (error) {
+      setErro(mensagemErroApi(error, 'Nao foi possivel atualizar o plano.'))
+    } finally {
+      setSalvandoAssinatura(false)
     }
   }
 
@@ -1101,32 +1183,100 @@ export default function AdminDashboard() {
                     placeholder="E-mail da empresa"
                   />
                 </label>
+              </div>
+              <div className="admin-assinaturas-block">
                 <label className="field">
-                  <span>Plano da conta</span>
-                  <select
-                    value={assinaturaEdicao.planoId}
-                    onChange={(event) => setAssinaturaEdicao((atual) => ({ ...atual, planoId: event.target.value }))}
-                  >
-                    <option value="">Manter plano atual</option>
-                    {planos.map((plano) => (
-                      <option key={plano.id} value={plano.id}>
-                        {plano.nome} - {plano.descricao}
-                      </option>
+                  <span>Planos da conta (ate 2)</span>
+                </label>
+                {assinaturas.length === 0 ? (
+                  <div className="admin-assinaturas-empty">Nenhum plano cadastrado nesta conta.</div>
+                ) : (
+                  <div className="admin-assinaturas">
+                    {assinaturas.map((assinatura) => (
+                      <div className="admin-assinatura" key={assinatura.id}>
+                        <div className="admin-assinatura__head">
+                          <strong>{assinatura.planoNome || 'Plano'}</strong>
+                          <StatusBadge status={assinatura.status} />
+                        </div>
+                        <div className="admin-assinatura__meta">
+                          <span>{formatarDataSimples(assinatura.dataInicio)} ate {formatarDataSimples(assinatura.dataFim)}</span>
+                          <small>{assinatura.diasRestantes} dias restantes</small>
+                        </div>
+                        {editandoAssinaturaId === assinatura.id ? (
+                          <div className="admin-assinatura__edit">
+                            <select
+                              value={assinaturaEditForm.planoId}
+                              onChange={(event) => setAssinaturaEditForm((atual) => ({ ...atual, planoId: event.target.value }))}
+                            >
+                              <option value="">Selecionar plano</option>
+                              {planos.map((plano) => (
+                                <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                              ))}
+                            </select>
+                            <input
+                              type="number"
+                              min={1}
+                              max={3650}
+                              value={assinaturaEditForm.dias}
+                              onChange={(event) => setAssinaturaEditForm((atual) => ({ ...atual, dias: event.target.value }))}
+                              placeholder="Dias"
+                            />
+                            <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={salvarEdicaoAssinatura}>
+                              {salvandoAssinatura ? 'Salvando...' : 'Salvar'}
+                            </button>
+                            <button type="button" className="btn btn-ghost" disabled={salvandoAssinatura} onClick={() => setEditandoAssinaturaId(null)}>
+                              Cancelar
+                            </button>
+                          </div>
+                        ) : (
+                          <button type="button" className="btn btn-ghost admin-assinatura__editar" onClick={() => iniciarEdicaoAssinatura(assinatura)}>
+                            Editar plano
+                          </button>
+                        )}
+                      </div>
                     ))}
-                  </select>
-                </label>
-                <label className="field">
-                  <span>Dias do plano</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={3650}
-                    value={assinaturaEdicao.diasPlano}
-                    onChange={(event) => setAssinaturaEdicao((atual) => ({ ...atual, diasPlano: event.target.value }))}
-                    placeholder="Ex: 30"
-                  />
-                  <small className="field-hint">Define por quantos dias o plano vai valer a partir de hoje.</small>
-                </label>
+                  </div>
+                )}
+                {adicionandoPlano ? (
+                  <div className="admin-assinatura__edit admin-assinatura__add">
+                    <select
+                      value={novaAssinatura.planoId}
+                      onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, planoId: event.target.value }))}
+                    >
+                      <option value="">Selecionar plano</option>
+                      {planos.map((plano) => (
+                        <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={1}
+                      max={3650}
+                      value={novaAssinatura.dias}
+                      onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, dias: event.target.value }))}
+                      placeholder="Dias"
+                    />
+                    <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={criarNovaAssinatura}>
+                      {salvandoAssinatura ? 'Adicionando...' : 'Adicionar'}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost"
+                      disabled={salvandoAssinatura}
+                      onClick={() => { setAdicionandoPlano(false); setNovaAssinatura({ planoId: '', dias: 30 }) }}
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                ) : (
+                  assinaturasAtivas.length < 2 ? (
+                    <button type="button" className="btn btn-secondary admin-assinatura__add-btn" onClick={() => setAdicionandoPlano(true)}>
+                      + Adicionar plano
+                    </button>
+                  ) : (
+                    <small className="field-hint">Limite atingido: a conta ja possui 2 planos ativos.</small>
+                  )
+                )}
               </div>
               <label className="field">
                 <span>Motivo obrigatorio</span>

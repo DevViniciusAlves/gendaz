@@ -9,6 +9,7 @@
   MessageCircle,
   ShieldCheck,
   UserPlus,
+  X,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useState } from 'react'
@@ -77,9 +78,8 @@ const plans = [
     preco: 'R$ 39,00/mês',
     extra: '7 dias grátis',
     descricao: 'Para organizar conversas, agenda, clientes e serviços no mesmo painel.',
-    beneficios: ['Agenda organizada', 'Cadastro de clientes', 'Cadastro de serviços', 'Confirmação de consulta', 'Cancelamento e remarcação'],
-    indicadoPara: ['Clínicas pequenas', 'Atendimento individual', 'Rotina de agenda e conversas'],
-    naoInclui: ['Profissionais', 'Financeiro', 'Pagamentos', 'Relatórios'],
+    beneficios: ['Dashboard', 'Agendamentos', 'Cadastro de clientes', 'Cadastro de serviços', 'Promoções', 'Confirmação de agendamento', 'Cancelamento e remarcação'],
+    naoInclui: ['Profissionais', 'CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
     cta: 'Começar no Básico',
   },
   {
@@ -87,8 +87,8 @@ const plans = [
     subtitulo: 'Gestão com financeiro simples',
     preco: 'R$ 89,00/mês',
     descricao: 'Para quem precisa acompanhar agenda, profissionais, pagamentos e indicadores em um só lugar.',
-    beneficios: ['Tudo do Básico', 'Acesso para até 3 usuários', 'Profissionais', 'Financeiro mensal', 'Pagamentos pendentes', 'Agenda por profissional', 'Relatórios operacionais'],
-    indicadoPara: ['Equipes de atendimento', 'Serviços com cobrança recorrente', 'Operação com acompanhamento diário'],
+    beneficios: ['Tudo do Plano Básico +', 'Até 3 usuários na conta', 'Cadastro de profissionais', 'CRM', 'Insights inteligentes', 'Financeiro', 'Relatórios', 'Gestão de equipe'],
+    beneficiosExtra: ['Controle completo da operação', 'Gestão financeira', 'Relatórios estratégicos', 'Organização da equipe', 'Crescimento com mais produtividade'],
     cta: 'Escolher Pro',
     destaque: true,
   },
@@ -337,24 +337,35 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
                   <h3>Benefícios</h3>
                   <div className="plan-list">
                     {plano.beneficios.map((item) => (
-                      <strong key={item} className={item === 'Tudo do Básico' ? 'plan-list-tudo-basico' : ''}>
-                        <Check size={16} />{item}
+                      <strong key={item} className={item === 'Tudo do Plano Básico +' ? 'plan-list-tudo-basico' : ''}>
+                        <Check size={16} style={{ color: '#22c55e' }} />{item}
                       </strong>
                     ))}
                   </div>
                 </div>
 
-                <div className="plan-section">
-                  <h3>Indicado para</h3>
-                  <div className="plan-list plan-list-muted">
-                    {plano.indicadoPara.map((item) => <small key={item}>{item}</small>)}
+                {plano.beneficiosExtra && plano.beneficiosExtra.length > 0 && (
+                  <div className="plan-section">
+                    <h3>Benefícios</h3>
+                    <div className="plan-list">
+                      {plano.beneficiosExtra.map((item) => (
+                        <strong key={item}>
+                          <Check size={16} style={{ color: '#22c55e' }} />{item}
+                        </strong>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
-                {plano.naoInclui && (
+                {plano.naoInclui && plano.naoInclui.length > 0 && (
                   <div className="plan-unavailable">
-                    <span>O que não inclui</span>
-                    {plano.naoInclui.map((item) => <small key={item}>{item}</small>)}
+                    <span>Não inclui</span>
+                    {plano.naoInclui.map((item) => (
+                      <small key={item} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <X size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                        {item}
+                      </small>
+                    ))}
                   </div>
                 )}
               </div>
