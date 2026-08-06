@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Send, Target } from 'lucide-react'
+import { Send, Sparkles, Target } from 'lucide-react'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
@@ -164,18 +164,33 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
 
   return (
     <section className="insights-chat">
-      <div className="insights-chat__head">
-        <h3>Chat IA - Insights</h3>
-        <p>Pergunte sobre seu negócio</p>
-      </div>
+      <header className="insights-chat__head">
+        <div className="insights-chat__avatar" aria-hidden="true">
+          <Sparkles size={15} />
+        </div>
+        <div className="insights-chat__head-info">
+          <h3>Consultor IA</h3>
+          <p>Respostas com base nos dados da sua empresa</p>
+        </div>
+      </header>
 
       <div className="insights-chat__messages" ref={ref}>
         {mensagens.map((mensagem) => (
-          <div key={mensagem.id} className={`insights-chat__message insights-chat__message--${mensagem.origem}`}>
+          <div
+            key={mensagem.id}
+            className={`insights-chat__message insights-chat__message--${mensagem.origem}`}
+          >
             <div className="insights-chat__bubble">{mensagem.texto}</div>
           </div>
         ))}
-        {carregando && <div className="insights-chat__typing">Analisando...</div>}
+        {carregando && (
+          <div className="insights-chat__typing" aria-live="polite">
+            <span />
+            <span />
+            <span />
+            <em>Analisando...</em>
+          </div>
+        )}
       </div>
 
       <div className="insights-chat__suggestions">
@@ -194,20 +209,29 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
         </div>
       </div>
 
-      <div className="insights-chat__form">
+      <form
+        className="insights-chat__form"
+        onSubmit={(event) => {
+          event.preventDefault()
+          enviar()
+        }}
+      >
         <input
           className="chat-input"
           value={entrada}
           onChange={(e) => setEntrada(e.target.value)}
           placeholder="Faça uma pergunta ao consultor IA..."
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') enviar()
-          }}
+          aria-label="Faça uma pergunta ao consultor IA"
         />
-        <button type="button" className="btn btn-primary btn-send" onClick={enviar} disabled={!entrada.trim() || carregando}>
+        <button
+          type="submit"
+          className="btn btn-primary btn-send"
+          disabled={!entrada.trim() || carregando}
+          aria-label="Enviar pergunta"
+        >
           <Send size={16} />
         </button>
-      </div>
+      </form>
     </section>
   )
 }
