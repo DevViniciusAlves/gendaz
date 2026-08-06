@@ -610,7 +610,15 @@
 }
 
 /* Grid com linha central minmax(0,1fr): as mensagens rolam dentro
-   do card e NUNCA expandem a altura da página. */
+   do card e NUNCA expandem a altura da página.
+
+   Contrato de altura (mesmo princípio do flex:
+   flex:1 / min-height:0 / flex-shrink:0):
+   - head / sugestões / form: linhas "auto" que NÃO encolhem (flex-shrink: 0)
+   - mensagens: linha minmax(0,1fr) = único elemento que cresce/encolhe,
+     com overflow-y: auto (scroll só aqui)
+   - .insights-chat tem height:100% + overflow:hidden → impede crescimento infinito
+*/
 .insights-sidebar-chat .insights-chat {
   width: 100%;
   height: 100%;
@@ -628,6 +636,7 @@
   align-items: center;
   gap: 10px;
   min-height: 0;
+  flex-shrink: 0;
 }
 
 .insights-sidebar-chat .insights-chat__avatar {
@@ -753,6 +762,7 @@
 
 .insights-sidebar-chat .insights-chat__suggestions {
   min-height: 0;
+  flex-shrink: 0;
 }
 
 .insights-sidebar-chat .insights-chat__suggestions .insights-suggestions {
@@ -772,6 +782,7 @@
   align-items: center;
   gap: 8px;
   min-height: 0;
+  flex-shrink: 0;
 }
 
 .insights-sidebar-chat .insights-chat__form .chat-input {

@@ -25,7 +25,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class ResendEmailService {
     private static final URI RESEND_URI = URI.create("https://api.resend.com/emails");
-    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendaz-logo-navbar.png";
+    private static final String EMAIL_LOGO_URL = "https://api.gendaz.site/email/gendazpngpreto.png";
 
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
@@ -623,7 +623,7 @@ public class ResendEmailService {
                   <body style=\"margin:0; padding:0; background:#0b0b0c; font-family:Arial, Helvetica, sans-serif; color:#111111;\">
                     <div style=\"max-width:760px; margin:0 auto; padding:36px 20px;\">
                       <div style=\"background:#ffffff; border-radius:20px; overflow:hidden; box-shadow:0 18px 60px rgba(0,0,0,0.18); border:1px solid #e5e7eb;\">
-                        <div style=\"background:#111111; padding:32px 36px; text-align:center;\">
+                        <div style=\"background:#ffffff; padding:32px 36px; text-align:center; border-bottom:1px solid #e5e7eb;\">
                           <img src=\"%s\" alt=\"Gendaz\" style=\"max-width:200px; width:100%%; height:auto; display:block; margin:0 auto;\" />
                         </div>
                         <div style=\"padding:32px 36px 28px; text-align:center; background:#ffffff;\">

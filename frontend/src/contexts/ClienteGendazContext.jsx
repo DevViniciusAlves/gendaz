@@ -4,6 +4,30 @@ import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
+function isErroTransitorio(err) {
+  if (!err?.response) return true
+  const status = err.response.status
+  return status === 0 || status >= 500 || status === 429
+}
+
+async function tentarComRetry(requester, tentativas = 2, esperaMs = 600) {
+  let ultimoErro = null
+  for (let tentativa = 1; tentativa <= tentativas; tentativa++) {
+    try {
+      return await requester()
+    } catch (err) {
+      ultimoErro = err
+      const transitório = isErroTransitorio(err)
+      if (tentativa < tentativas && transitório) {
+        await new Promise((resolve) => setTimeout(resolve, esperaMs * tentativa))
+        continue
+      }
+      throw err
+    }
+  }
+  throw ultimoErro
+}
+
 export function ClienteGendazProvider({ children, slug }) {
   const [cliente, setCliente] = useState(null)
   const [perfilPendente, setPerfilPendente] = useState(false)
@@ -61,15 +85,34 @@ export function ClienteGendazProvider({ children, slug }) {
       setErro(null)
 
       const headers = {}
-      const tokenSessao = lerTokenSessao()
+      let tokenSessao = lerTokenSessao()
       if (tokenSessao) {
         headers['X-Session-Token'] = tokenSessao
       }
 
-      const perfilRes = await clienteApi.get('/meu-gendaz/perfil', {
+      // Renova/valida a sessão antes de carregar (idempotente, mesmo padrão do painel Gendaz).
+      // Evita cair para a tela de login em F5 por token divergente ou rotação concorrente.
+      if (tokenSessao) {
+        try {
+          const refreshRes = await clienteApi.post('/meu-gendaz/auth/refresh', null, {
+            skipMeuGendazLogout: true,
+            headers: { 'X-Session-Token': tokenSessao },
+          })
+          const tokenRenovado = refreshRes?.data?.sessionToken
+          if (tokenRenovado && tokenRenovado !== tokenSessao) {
+            tokenSessao = tokenRenovado
+            salvarTokenSessao(tokenRenovado)
+            headers['X-Session-Token'] = tokenRenovado
+          }
+        } catch {
+          // Erro no refresh: segue para o /perfil, que decide (silencioso quando exigirSessao=false)
+        }
+      }
+
+      const perfilRes = await tentarComRetry(() => clienteApi.get('/meu-gendaz/perfil', {
         skipMeuGendazLogout: !exigirSessao,
         headers,
-      })
+      }))
 
       if (perfilRes?.data?.cadastroPendente) {
         setPerfilPendente(true)
@@ -138,7 +181,7 @@ export function ClienteGendazProvider({ children, slug }) {
 
       await carregarBeneficios()
     } catch (err) {
-      if (err.response?.status === 401) {
+      if (err?.response?.status === 401) {
         if (exigirSessao) {
           limparEstadoSessao()
           window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
@@ -146,7 +189,7 @@ export function ClienteGendazProvider({ children, slug }) {
         setCarregando(false)
         return
       }
-      setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar dados.')
+      setErro(err?.response?.data?.mensagem || err?.message || 'Erro ao carregar dados.')
     } finally {
       setCarregando(false)
     }

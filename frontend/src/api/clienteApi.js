@@ -21,6 +21,34 @@ function emitirToast(type, message) {
   }))
 }
 
+function chaveTokenSessao(slug) {
+  return `meu_gendaz_session_token_${String(slug || '').trim().toLowerCase()}`
+}
+
+function lerTokenSessao(slug) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return ''
+  return window.sessionStorage.getItem(chaveTokenSessao(slug)) || ''
+}
+
+function salvarTokenSessao(slug, token) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  const key = chaveTokenSessao(slug)
+  if (!token) {
+    window.sessionStorage.removeItem(key)
+    return
+  }
+  window.sessionStorage.setItem(key, token)
+}
+
+async function tentarRenovarSessao(slug, tokenAtual) {
+  if (!slug || !tokenAtual) return null
+  const { data } = await clienteApi.post('/meu-gendaz/auth/refresh', null, {
+    skipMeuGendazLogout: true,
+    headers: { 'X-Session-Token': tokenAtual },
+  })
+  return data?.sessionToken || null
+}
+
 clienteApi.interceptors.request.use((config) => {
   const now = Date.now()
   if (now > resetTime) {
@@ -60,11 +88,33 @@ clienteApi.interceptors.response.use(
     if (status === 401) {
       const isAuthEndpoint = url.includes('/meu-gendaz/auth/solicitar-codigo')
         || url.includes('/meu-gendaz/auth/validar-codigo')
+        || url.includes('/meu-gendaz/auth/refresh')
         || url.includes('/meu-gendaz/auth/logout')
       const isSilentMeuGendazRequest = Boolean(error.config?.skipMeuGendazLogout)
+      const slug = clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
+      const tokenSessao = slug ? lerTokenSessao(slug) : ''
 
       if (isAuthEndpoint || isSilentMeuGendazRequest) {
         return Promise.reject(error)
+      }
+
+      // Tenta renovar a sessão (idempotente) antes de derrubar o login no F5.
+      if (slug && tokenSessao && !error.config?._tentouRenovar) {
+        error.config._tentouRenovar = true
+        try {
+          const tokenRenovado = await tentarRenovarSessao(slug, tokenSessao)
+          if (tokenRenovado) {
+            salvarTokenSessao(slug, tokenRenovado)
+            clienteApi.defaults.headers.common['X-Session-Token'] = tokenRenovado
+            error.config.headers = {
+              ...(error.config.headers || {}),
+              'X-Session-Token': tokenRenovado,
+            }
+            return clienteApi.request(error.config)
+          }
+        } catch {
+          // segue para o logout abaixo
+        }
       }
 
       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))

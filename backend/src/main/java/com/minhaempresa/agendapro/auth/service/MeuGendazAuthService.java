@@ -127,6 +127,34 @@ public class MeuGendazAuthService {
         }
     }
 
+    /**
+     * Renova/valida a sessão do Meu Gendaz de forma idempotente (mesmo padrão do painel Gendaz).
+     * Resolve o usuário pelo token informado — não depende do e-mail no request.
+     * Se o token informado ainda é o ativo, mantém o mesmo token — evita race de rotação
+     * em refreshes concorrentes (ex: F5). Só gera um token novo se o informado não for mais o ativo.
+     */
+    @Transactional
+    public MeuGendazAuthResponse refreshSessao(String slug, String sessionToken) {
+        EmpresaEntity empresa = buscarEmpresa(slug);
+        if (sessionToken == null || sessionToken.isBlank()) {
+            throw new BusinessException("Sessao nao encontrada. Faca login novamente.");
+        }
+        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), sessionToken)
+                .orElseThrow(() -> new BusinessException("Sessao invalida. Faca login novamente."));
+        if (usuario.getStatus() != StatusUsuario.ATIVO) {
+            throw new BusinessException("Usuario inativo.");
+        }
+        if (!usuarioSessionService.sessaoValida(usuario.getId(), sessionToken, empresa.getId())) {
+            throw new BusinessException("Sessao invalida. Faca login novamente.");
+        }
+        String sessaoRenovada = usuarioSessionService.renovarSessao(usuario, sessionToken);
+        if (!sessaoRenovada.equals(sessionToken)) {
+            usuario.setSessaoAtiva(sessaoRenovada);
+            usuarioRepository.save(usuario);
+        }
+        return new MeuGendazAuthResponse("Sessao renovada com sucesso.", usuario.getEmail(), sessaoRenovada, "ACTIVE");
+    }
+
     private EmpresaEntity buscarEmpresa(String slug) {
         String normalizado = normalizarSlug(slug);
         if (normalizado.isBlank()) {

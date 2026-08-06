@@ -86,9 +86,9 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
+        String session = request.getHeader("X-Session-Token");
         if (session == null || session.isBlank()) {
-            session = request.getHeader("X-Session-Token");
+            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
         }
         if (session == null || session.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
@@ -105,9 +105,9 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
+        String session = request.getHeader("X-Session-Token");
         if (session == null || session.isBlank()) {
-            session = request.getHeader("X-Session-Token");
+            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
         }
         if (session == null || session.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
@@ -127,9 +127,9 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
+        String session = request.getHeader("X-Session-Token");
         if (session == null || session.isBlank()) {
-            session = request.getHeader("X-Session-Token");
+            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
         }
         if (session == null || session.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");

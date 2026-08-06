@@ -97,6 +97,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/criar-conta",
                         "/api/auth/refresh",
                         "/api/auth/logout",
+                        "/api/meu-gendaz/auth/refresh",
                         "/api/public/**",
                         "/api/health/**"
                 );

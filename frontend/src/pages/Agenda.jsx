@@ -706,9 +706,9 @@ export default function Agenda() {
           )}
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
-          {promocoesAplicaveis.length > 0 && (
-            <label className="field">
-              <span>Adicionar cupom</span>
+          <label className="field">
+            <span>Adicionar cupom</span>
+            {promocoesAplicaveis.length > 0 ? (
               <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
                 <option value="">Nenhum cupom</option>
                 {promocoesAplicaveis.map((cupom) => (
@@ -717,8 +717,12 @@ export default function Agenda() {
                   </option>
                 ))}
               </select>
-            </label>
-          )}
+            ) : (
+              <select value="" disabled>
+                <option value="">Nenhum cupom disponível</option>
+              </select>
+            )}
+          </label>
           <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>

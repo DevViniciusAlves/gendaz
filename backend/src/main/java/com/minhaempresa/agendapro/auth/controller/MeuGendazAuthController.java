@@ -5,6 +5,8 @@ import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazCodigoResponse;
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazSolicitarCodigoRequest;
 import com.minhaempresa.agendapro.auth.dto.AuthDtos.MeuGendazValidarCodigoRequest;
 import com.minhaempresa.agendapro.auth.service.MeuGendazAuthService;
+import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.CookieHelper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -41,6 +43,25 @@ public class MeuGendazAuthController {
     ) {
         MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
         String cookieName = nomeCookie(request.slug());
+        adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<MeuGendazAuthResponse> refresh(
+            HttpServletRequest http,
+            HttpServletResponse response
+    ) {
+        String slug = http.getHeader("X-Meu-Gendaz-Slug");
+        if (slug == null || slug.isBlank()) {
+            throw new BusinessException("Slug da empresa invalido.");
+        }
+        String sessionToken = http.getHeader("X-Session-Token");
+        if (sessionToken == null || sessionToken.isBlank()) {
+            sessionToken = CookieHelper.lerCookie(http, nomeCookie(slug)).orElse(null);
+        }
+        MeuGendazAuthResponse auth = authService.refreshSessao(slug, sessionToken);
+        String cookieName = nomeCookie(slug);
         adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
     }
