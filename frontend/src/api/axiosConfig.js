@@ -140,10 +140,15 @@ api.interceptors.response.use(
     const isAdminRequest = url.startsWith('/admin/')
 
     if (mensagem.includes('conta indisponivel')
-      || mensagem.includes('conta inativa')
+      || mensagem.includes('conta suspensa')
+      || mensagem.includes('suspensa pelo administrador')) {
+      window.dispatchEvent(new CustomEvent('agendeasy:account-inactive', { detail: { motivoInatividade: 'ADMIN_SUSPENSAO' } }))
+      return Promise.reject(error)
+    }
+    if (mensagem.includes('conta inativa')
       || mensagem.includes('periodo gratuito terminou')
       || mensagem.includes('mensalidade')) {
-      window.dispatchEvent(new Event('agendeasy:account-inactive'))
+      window.dispatchEvent(new CustomEvent('agendeasy:account-inactive', { detail: { motivoInatividade: 'PAGAMENTO_PENDENTE' } }))
       return Promise.reject(error)
     }
 

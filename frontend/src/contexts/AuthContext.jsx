@@ -5,12 +5,36 @@ import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
 import { getSessionUser, setSessionUser } from '../api/axiosConfig.js'
 
 const AuthContext = createContext(null)
+const IMPERSONATION_STORAGE_KEY = 'agendapro_impersonation'
 let pendingPaymentMemory = null
 let adminUsuarioMemory = null
 let impersonationMemory = null
 
 function limparSessaoUsuario() {
   setSessionUser(null)
+}
+
+function lerImpersonationPersistida() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null
+  try {
+    const raw = window.sessionStorage.getItem(IMPERSONATION_STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function salvarImpersonationPersistida(impersonation) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  try {
+    if (impersonation) {
+      window.sessionStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(impersonation))
+    } else {
+      window.sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY)
+    }
+  } catch {
+    // fallback apenas em memoria
+  }
 }
 
 function limparSessaoAdmin() {
@@ -81,7 +105,7 @@ function isMeuGendazPath() {
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [usuario, setUsuario] = useState(() => getSessionUser())
-  const [impersonation, setImpersonation] = useState(() => impersonationMemory)
+  const [impersonation, setImpersonation] = useState(() => impersonationMemory || lerImpersonationPersistida())
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const refreshEmAndamentoRef = useRef(null)
   const validacaoInicialEmAndamentoRef = useRef(false)
@@ -273,6 +297,9 @@ export function AuthProvider({ children }) {
     function marcarContaIndisponivel(event) {
       if (!usuario) return
       const motivoInatividade = event?.detail?.motivoInatividade || usuario?.motivoInatividade || 'PAGAMENTO_PENDENTE'
+      if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === motivoInatividade) {
+        return
+      }
       const atualizado = { ...usuario, statusConta: 'ACCOUNT_INACTIVE', motivoInatividade }
       salvarUsuarioSessao(atualizado)
       setUsuario(atualizado)
@@ -506,12 +533,38 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       modoProxy: true,
     }
     impersonationMemory = impersonationData
+    salvarImpersonationPersistida(impersonationData)
     setImpersonation(impersonationData)
+
+    const usuarioImpersonado = {
+      id: payload?.usuarioId,
+      perfil: 'DONO',
+      empresaId: payload?.empresaId,
+      nome: payload?.usuarioNome || payload?.nome,
+      email: payload?.usuarioEmail || payload?.email,
+      plano: payload?.plano,
+      statusConta: 'ACTIVE',
+      impersonadoPorAdmin: true,
+    }
+    salvarUsuarioSessao(usuarioImpersonado)
+    setUsuario(usuarioImpersonado)
   }
 
   async function encerrarImpersonacao() {
+    const contexto = impersonationMemory || lerImpersonationPersistida()
+    if (contexto?.sessionId) {
+      try {
+        await adminApi.encerrarImpersonacao(contexto.sessionId)
+      } catch {
+        // mantem o encerramento local mesmo se o backend falhar
+      }
+    }
+    limparSessaoUsuario()
+    clearLocalData()
     impersonationMemory = null
+    salvarImpersonationPersistida(null)
     setImpersonation(null)
+    setUsuario(null)
   }
 
   function getPagamentoPendente() {

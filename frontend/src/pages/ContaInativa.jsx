@@ -1,7 +1,7 @@
 import { Copy, CreditCard, Info, LockKeyhole, RefreshCw, ShieldAlert, QrCode, MessageSquare, LogOut, AlertCircle } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Link, useNavigate } from 'react-router-dom'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -69,6 +69,7 @@ export default function ContaInativa() {
   const [copiado, setCopiado] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [planoSelecionado, setPlanoSelecionado] = useState(() => String(usuario?.plano || usuario?.assinatura?.planoNome || 'BASICO').toUpperCase())
+  const carregadoParaEmpresaRef = useRef(null)
 
   const motivoInatividade = usuario?.motivoInatividade || 'PAGAMENTO_PENDENTE'
   const isAdminSuspensao = motivoInatividade === 'ADMIN_SUSPENSAO'
@@ -113,7 +114,11 @@ export default function ContaInativa() {
     let ativo = true
     async function carregar() {
       if (!usuario?.empresaId) {
-        setCarregando(false)
+        if (ativo) setCarregando(false)
+        return
+      }
+      if (carregadoParaEmpresaRef.current === usuario.empresaId) {
+        if (ativo) setCarregando(false)
         return
       }
       try {
@@ -122,13 +127,15 @@ export default function ContaInativa() {
           appApi.listarPagamentosPlano(usuario.empresaId, { skipUsuarioHeader: true }),
         ])
 
-        if (assinaturaAtual?.status === 'ATIVA' || assinaturaAtual?.status === 'TESTE') {
+        if (!ativo) return
+        carregadoParaEmpresaRef.current = usuario.empresaId
+
+        if (assinaturaAtual?.status === 'ATIVA' && !isAdminSuspensao) {
           atualizarUsuario({ statusConta: 'ACTIVE', assinatura: assinaturaAtual, plano: assinaturaAtual.planoNome || usuario.plano, motivoInatividade: null })
           navigate('/sistema/dashboard', { replace: true })
           return
         }
 
-        if (!ativo) return
         setAssinatura(assinaturaAtual || null)
         setPagamentosPlano(Array.isArray(pagamentosPlano) ? pagamentosPlano : [])
         const planoInicial = String(usuario?.plano || assinaturaAtual?.planoNome || 'BASICO').toUpperCase()
@@ -156,7 +163,13 @@ export default function ContaInativa() {
     return () => {
       ativo = false
     }
-  }, [navigate, atualizarUsuario, usuario, assinatura?.planoNome])
+  }, [navigate, atualizarUsuario, usuario?.empresaId, isAdminSuspensao])
+
+  useEffect(() => {
+    if (usuario?.statusConta === 'ACTIVE') {
+      navigate('/sistema/dashboard', { replace: true })
+    }
+  }, [usuario?.statusConta, navigate])
 
   useEffect(() => {
     let ativo = true

@@ -29,7 +29,7 @@ function planoResumo(usuario, filaAtiva) {
   if (assinatura?.status === 'EXPIRADA' && filaAtiva.length === 0) return 'Plano vencido'
 
   // Junta a assinatura atual (do usuario) com a fila retornada pela API,
-  // removendo duplicidades para nunca exibir o mesmo plano duas vezes.
+  // removendo duplicidades para nunca exibir a mesma assinatura duas vezes.
   const mapa = new Map()
   const registrar = (item) => {
     if (!item) return
@@ -37,19 +37,30 @@ function planoResumo(usuario, filaAtiva) {
     const inicio = String(item?.dataInicio || '').slice(0, 10)
     const fim = String(item?.dataFim || item?.dataFimTeste || '').slice(0, 10)
     if (!fim) return
-    const chave = `${nome}|${inicio}`
+    const restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
+    const chave = item?.id != null ? `id:${item.id}` : `${nome}|${inicio}|${fim}`
     if (mapa.has(chave)) return
     mapa.set(chave, {
       nome,
       inicio,
-      restante: item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim),
+      restante,
     })
   }
 
   ;(Array.isArray(filaAtiva) ? filaAtiva : []).forEach(registrar)
   registrar(assinatura)
 
-  const itens = [...mapa.values()]
+  // Mesmo plano comprado de novo: nao duplica o plano, apenas soma os dias
+  // (considera o fim do ultimo periodo). Planos diferentes seguem lado a lado.
+  const porNome = new Map()
+  ;[...mapa.values()].forEach((item) => {
+    const existente = porNome.get(item.nome)
+    if (!existente || item.restante > existente.restante) {
+      porNome.set(item.nome, item)
+    }
+  })
+
+  const itens = [...porNome.values()]
     .sort((a, b) => String(a.inicio).localeCompare(String(b.inicio)) || a.nome.localeCompare(b.nome))
 
   // Nenhum plano identificado: recai sobre os dados do usuario

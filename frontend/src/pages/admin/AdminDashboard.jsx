@@ -471,7 +471,7 @@ export default function AdminDashboard() {
       const session = await adminApi.impersonar(modal.empresaId, motivo.trim() || null)
       iniciarImpersonacao(session)
       setModal(null)
-      setAviso(`Contexto da empresa ${modal.empresa} carregado no painel admin.`)
+      navigate('/sistema/dashboard')
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel acessar esta conta agora.'))
     } finally {
@@ -693,7 +693,13 @@ export default function AdminDashboard() {
         {impersonation && (
           <div className="impersonation-banner" style={{ margin: '0 0 16px' }}>
             <strong>Contexto ativo: {impersonation.empresa}.</strong>
-            <span>Voce continua no painel admin, sem trocar a sessao da empresa.</span>
+            <span>Voce esta com acesso visual a esta conta.</span>
+            <button
+              type="button"
+              onClick={() => navigate('/sistema/dashboard')}
+            >
+              Ver conta
+            </button>
             <button
               type="button"
               onClick={() => {
