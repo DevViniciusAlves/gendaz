@@ -135,7 +135,7 @@ function formatoCompactoReceita(valor) {
   return `R$ ${Math.round(valor)}`
 }
 
-function GraficoArea({ dados }) {
+function GraficoColunas({ dados }) {
   const [tooltip, setTooltip] = useState(null)
   const temDados = dados.some((d) => Number(d.valor || 0) > 0)
   const width = 760
@@ -149,30 +149,20 @@ function GraficoArea({ dados }) {
   const maxValor = Math.max(...dados.map((d) => Number(d.valor || 0)), 1)
   const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
-  const pontos = dados.map((d, index) => {
-    const x = pLeft + (chartW * (dados.length > 1 ? index / (dados.length - 1) : 0))
-    const y = pTop + chartH - ((Number(d.valor || 0)) / maxValor) * chartH
-    return { ...d, valor: Number(d.valor || 0), x, y }
+  const colunas = dados.map((d, index) => {
+    const valor = Number(d.valor || 0)
+    const columnWidth = (chartW / dados.length) * 0.7
+    const gap = (chartW / dados.length) * 0.3
+    const x = pLeft + index * (columnWidth + gap) + gap / 2
+    const h = (valor / maxValor) * chartH
+    const y = pTop + chartH - h
+    return { ...d, valor, x, y, width: columnWidth, height: Math.max(h, 0) }
   })
-
-  const linha = suavizarPontos(pontos, width, height)
-  const areaBase = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linha} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
-  const linhaSecundaria = suavizarPontos(
-    pontos.map((p, index) => ({
-      ...p,
-      y: p.y + Math.min(26, 10 + (index % 4) * 4),
-    })),
-    width,
-    height,
-  )
-  const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
-
-  const rotulosValor = pontos.filter((p) => p.valor > 0)
 
   if (!temDados) {
     return (
       <div className="bar-chart-empty">
-        <BarChart2 size={40} color="var(--primary)" />
+        <BarChart2 size={40} color="#000" />
         <p>Nenhuma receita registrada neste mes.</p>
         <small>Os valores aparecerao aqui conforme os pagamentos confirmados entrarem no periodo.</small>
       </div>
@@ -187,77 +177,42 @@ function GraficoArea({ dados }) {
           const val = maxValor * frac
           return (
             <g key={frac}>
-              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="var(--dashboard-chart-grid)" strokeWidth={1} />
-              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="var(--dashboard-chart-text)">
+              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="#e0e0e0" strokeWidth={1} />
+              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#666">
                 {formatoCompactoReceita(val)}
               </text>
             </g>
           )
         })}
-
-        <defs>
-          <linearGradient id="areaPrimary" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.88" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.12" />
-          </linearGradient>
-          <linearGradient id="areaSecondary" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.52" />
-            <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.06" />
-          </linearGradient>
-        </defs>
-
-        <path d={areaSecundaria} fill="url(#areaSecondary)" opacity={0.7} />
-        <path d={areaBase} fill="url(#areaPrimary)" opacity={0.92} />
-        <path d={linha} fill="none" stroke="var(--primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-
-        {rotulosValor.map((p) => (
-          <text key={`valor-${p.iso}`} x={p.x} y={p.y - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill="var(--dashboard-chart-text)">
-            {formatoCompactoReceita(p.valor)}
-          </text>
-        ))}
-
-        {pontos.map((p, index) => {
-          const hasValue = p.valor > 0
+        {colunas.map((col, index) => {
           const isHovered = tooltip?.index === index
           return (
-            <g key={p.iso}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={isHovered ? 5.5 : 4}
-                fill={isHovered ? 'var(--primary)' : 'rgba(255,255,255,0.92)'}
-                stroke="var(--primary)"
-                strokeWidth={1.8}
-                opacity={hasValue ? 1 : 0.45}
-                onMouseEnter={() => {
-                  if (!hasValue) return
-                  setTooltip({ index, x: p.x, y: p.y, valor: p.valor, label: p.label })
-                }}
+            <g key={col.iso}>
+              <rect
+                x={col.x}
+                y={col.y}
+                width={col.width}
+                height={col.height}
+                fill={isHovered ? '#333' : '#000'}
+                onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
                 onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: hasValue ? 'pointer' : 'default' }}
+                style={{ cursor: col.valor > 0 ? 'pointer' : 'default' }}
               />
-              {(
-                <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-text)">
-                  {p.label}
-                </text>
-              )}
-            </g>
-          )
-        })}
-
-        {tooltip && (() => {
-          const tx = Math.min(Math.max(tooltip.x, pLeft + 48), width - pRight - 48)
-          const ty = Math.max(tooltip.y - 60, pTop)
-          return (
-            <g style={{ pointerEvents: 'none' }}>
-              <rect x={tx - 52} y={ty} width={104} height={38} rx={8} fill="var(--dashboard-chart-tooltip-bg)" opacity={0.96} />
-              <text x={tx} y={ty + 14} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-tooltip-muted)">{tooltip.label}</text>
-              <text x={tx} y={ty + 29} textAnchor="middle" fontSize={12} fill="var(--dashboard-chart-tooltip-text)" fontWeight={700}>
-                {currency(tooltip.valor)}
+              <text x={col.x + col.width / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#666">
+                {col.label}
               </text>
             </g>
           )
-        })()}
+        })}
+        {tooltip && (
+          <g style={{ pointerEvents: 'none' }}>
+            <rect x={tooltip.x - 52} y={tooltip.y - 45} width={104} height={38} rx={4} fill="#000" />
+            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">{tooltip.label}</text>
+            <text x={tooltip.x} y={tooltip.y - 16} textAnchor="middle" fontSize={12} fill="#fff" fontWeight={700}>
+              {currency(tooltip.valor)}
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   )
@@ -489,7 +444,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               </div>
-              <GraficoArea dados={receitaDias} />
+              <GraficoColunas dados={receitaDias} />
             </ScrollReveal>
           )}
 

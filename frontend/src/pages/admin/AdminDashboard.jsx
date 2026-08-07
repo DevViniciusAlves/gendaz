@@ -105,7 +105,7 @@ function formatoCompactoReceita(valor) {
   return `R$ ${Math.round(valor)}`
 }
 
-function GraficoLinha({ dados }) {
+function GraficoColunas({ dados }) {
   const [tooltip, setTooltip] = useState(null)
   const temDados = dados.some((d) => Number(d.valor || 0) > 0)
   const width = 760
@@ -119,30 +119,21 @@ function GraficoLinha({ dados }) {
   const maxValor = Math.max(...dados.map((d) => Number(d.valor || 0)), 1)
   const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
-  const pontos = dados.map((d, index) => {
-    const x = pLeft + (chartW * (dados.length > 1 ? index / (dados.length - 1) : 0))
-    const y = pTop + chartH - ((Number(d.valor || 0)) / maxValor) * chartH
-    return { ...d, valor: Number(d.valor || 0), x, y }
+  const colunas = dados.map((d, index) => {
+    const valor = Number(d.valor || 0)
+    const columnWidth = (chartW / dados.length) * 0.7
+    const gap = (chartW / dados.length) * 0.3
+    const x = pLeft + index * (columnWidth + gap) + gap / 2
+    const h = (valor / maxValor) * chartH
+    const y = pTop + chartH - h
+    return { ...d, valor, x, y, width: columnWidth, height: Math.max(h, 0) }
   })
-
-  const linha = suavizarPontos(pontos)
-  const area = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linha} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
-  const linhaSecundaria = suavizarPontos(
-    pontos.map((p, index) => ({
-      ...p,
-      y: p.y + Math.min(26, 10 + (index % 4) * 4),
-    })),
-  )
-  const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
-
-  const rotulosValor = pontos.filter((p) => p.valor > 0)
 
   if (!temDados) {
     return (
       <div className="admin-bar-chart-empty">
-        <BarChart2 size={40} color="var(--color-primary)" />
+        <BarChart2 size={40} color="#000" />
         <p>Nenhum pagamento confirmado neste periodo.</p>
-        <small>Os valores vao aparecer conforme os pagamentos forem entrando.</small>
       </div>
     )
   }
@@ -155,72 +146,42 @@ function GraficoLinha({ dados }) {
           const val = maxValor * frac
           return (
             <g key={frac}>
-              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
-              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="rgba(255,255,255,0.55)">
+              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="#e0e0e0" strokeWidth={1} />
+              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#666">
                 {formatoCompactoReceita(val)}
               </text>
             </g>
           )
         })}
-        <defs>
-          <linearGradient id="adminAreaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.88" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.12" />
-          </linearGradient>
-          <linearGradient id="adminAreaSecondary" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.52" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.06" />
-          </linearGradient>
-        </defs>
-        <path d={areaSecundaria} fill="url(#adminAreaSecondary)" opacity={0.7} />
-        <path d={area} fill="url(#adminAreaFill)" opacity={0.92} />
-        <path d={linha} fill="none" stroke="var(--color-primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
-        {rotulosValor.map((p) => (
-          <text key={`valor-${p.iso}`} x={p.x} y={p.y - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill="rgba(255,255,255,0.85)">
-            {formatoCompactoReceita(p.valor)}
-          </text>
-        ))}
-        {pontos.map((p, index) => {
-          const hasValue = p.valor > 0
+        {colunas.map((col, index) => {
           const isHovered = tooltip?.index === index
           return (
-            <g key={p.iso}>
-              <circle
-                cx={p.x}
-                cy={p.y}
-                r={isHovered ? 5.5 : 4}
-                fill={isHovered ? 'var(--color-primary)' : 'rgba(255,255,255,0.92)'}
-                stroke="var(--color-primary)"
-                strokeWidth={1.8}
-                opacity={hasValue ? 1 : 0.45}
-                onMouseEnter={() => {
-                  if (!hasValue) return
-                  setTooltip({ index, x: p.x, y: p.y, valor: p.valor, label: p.label })
-                }}
+            <g key={col.iso}>
+              <rect
+                x={col.x}
+                y={col.y}
+                width={col.width}
+                height={col.height}
+                fill={isHovered ? '#333' : '#000'}
+                onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
                 onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: hasValue ? 'pointer' : 'default' }}
+                style={{ cursor: col.valor > 0 ? 'pointer' : 'default' }}
               />
-              {(
-                <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.55)">
-                  {p.label}
-                </text>
-              )}
-            </g>
-          )
-        })}
-        {tooltip && (() => {
-          const tx = Math.min(Math.max(tooltip.x, pLeft + 48), width - pRight - 48)
-          const ty = Math.max(tooltip.y - 60, pTop)
-          return (
-            <g style={{ pointerEvents: 'none' }}>
-              <rect x={tx - 52} y={ty} width={104} height={38} rx={8} fill="#111111" opacity={0.96} />
-              <text x={tx} y={ty + 14} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.62)">{tooltip.label}</text>
-              <text x={tx} y={ty + 29} textAnchor="middle" fontSize={12} fill="#ffffff" fontWeight={700}>
-                {moeda(tooltip.valor)}
+              <text x={col.x + col.width / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#666">
+                {col.label}
               </text>
             </g>
           )
-        })()}
+        })}
+        {tooltip && (
+          <g style={{ pointerEvents: 'none' }}>
+            <rect x={tooltip.x - 52} y={tooltip.y - 45} width={104} height={38} rx={4} fill="#000" />
+            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">{tooltip.label}</text>
+            <text x={tooltip.x} y={tooltip.y - 16} textAnchor="middle" fontSize={12} fill="#fff" fontWeight={700}>
+              {moeda(tooltip.valor)}
+            </text>
+          </g>
+        )}
       </svg>
     </div>
   )
@@ -833,7 +794,7 @@ export default function AdminDashboard() {
                     <p>Base confirmada por data de pagamento no mes corrente.</p>
                   </div>
                 </div>
-                <GraficoLinha dados={receitaMensalGrafico} />
+                <GraficoColunas dados={receitaMensalGrafico} />
               </section>
               <section className="admin-tactical-panel">
                 <div className="panel-head">
