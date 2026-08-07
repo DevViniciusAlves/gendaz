@@ -46,8 +46,9 @@ export default function Dashboard() {
   const promos = dashboard?.promocoes || []
   const notifs = dashboard?.notificacoes || []
   const textoPadrao = '-----'
-  const totalGasto = Number(dashboard?.totalGasto || 0)
+  const totalGasto = (dashboard?.totalGasto !== undefined && dashboard?.totalGasto !== null) ? Number(dashboard.totalGasto) : 0
   const servicoMaisEscolhido = dashboard?.servicoMaisEscolhido || textoPadrao
+
   const servicoProximo = proximo?.servicoNome || proximo?.servico || textoPadrao
   const profissionalProximo = proximo?.profissionalNome || proximo?.profissional || textoPadrao
   const dataProximo = proximo?.data ? new Date(`${proximo.data}T12:00:00`).toLocaleDateString('pt-BR') : textoPadrao

@@ -150,11 +150,11 @@ function GraficoColunas({ dados }) {
   const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
   const colunas = dados.map((d, index) => {
-    const valor = Number(d.valor || 0)
+    const valor = Number(d.valor || 0) || 0
     const columnWidth = (chartW / dados.length) * 0.7
     const gap = (chartW / dados.length) * 0.3
     const x = pLeft + index * (columnWidth + gap) + gap / 2
-    const h = (valor / maxValor) * chartH
+    const h = (valor / (maxValor || 1)) * chartH
     const y = pTop + chartH - h
     return { ...d, valor, x, y, width: columnWidth, height: Math.max(h, 0) }
   })
@@ -193,7 +193,7 @@ function GraficoColunas({ dados }) {
                 y={col.y}
                 width={col.width}
                 height={col.height}
-                fill={isHovered ? '#333' : '#000'}
+                fill={isHovered ? 'rgba(255, 255, 255, 0.9)' : '#ffffff'}
                 onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
                 onMouseLeave={() => setTooltip(null)}
                 style={{ cursor: col.valor > 0 ? 'pointer' : 'default' }}
@@ -354,7 +354,7 @@ export default function Dashboard() {
   if (canFinanceiro) {
     metrics.push(
       { key: 'financeiro', icon: CreditCard, label: 'Receita total do mes', value: receitaTotal === 0 ? 'R$ 0,00' : currency(receitaTotal), detail: receitaTotal === 0 ? 'nenhum valor no mes' : 'valor total do mes' },
-      { key: 'pendentes', icon: CreditCard, label: 'Pendente de cobranca', value: totalPendente === 0 ? 0 : totalPendente, detail: totalPendente === 0 ? 'nenhum pendente' : currency(totalPendente) },
+      { key: 'pendentes', icon: CreditCard, label: 'Pendente de cobranca', value: totalPendente === 0 ? 'R$ 0,00' : currency(totalPendente), detail: totalPendente === 0 ? 'nenhum pendente' : 'valor total pendente' },
     )
   }
 

@@ -293,7 +293,10 @@ export default function Gendaz() {
 
     const html = document.documentElement
     const temaAnterior = html.dataset.theme || ''
-    html.dataset.theme = 'dark'
+    // Verifica se ja esta em algum tema, se nao, tenta respeitar o sistema ou define padrao
+    if (!html.dataset.theme) {
+      html.dataset.theme = 'light' 
+    }
 
     return () => {
       if (temaAnterior) {
