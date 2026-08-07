@@ -1,4 +1,4 @@
-import { Check, RefreshCw, Trash, X } from 'lucide-react'
+import { Check, Download, RefreshCw, Trash, X } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
@@ -7,12 +7,14 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import Button from '../components/Button.jsx'
 import DashboardCard from '../components/DashboardCard.jsx'
+import ExportCsvModal from '../components/ExportCsvModal.jsx'
 import Pagination from '../components/Pagination.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { usePendentes } from '../contexts/PendentesContext.jsx'
 import { currency, todayIso } from '../services/localStore.js'
+import { dataHojeDdMmAAAA, exportarCsv, formatarData, metodoPagamentoLegivel, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
 
 const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])
 
@@ -68,6 +70,7 @@ export default function Financeiro() {
   const [bulkModal, setBulkModal] = useState(null)
   const [bulkExecutando, setBulkExecutando] = useState(false)
   const [erroPagamentos, setErroPagamentos] = useState('')
+  const [exportModal, setExportModal] = useState(false)
   const itensPorPaginaPagamentos = 10
 
   useEffect(() => {
@@ -156,6 +159,42 @@ export default function Financeiro() {
     }
   }
 
+  async function exportarFinanceiro({ modo, dataInicial, dataFinal }) {
+    const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
+    const registros = pagamentos.filter((item) => {
+      if (modo !== 'periodo') return true
+      const dataBase = String(
+        item.dataPagamento || item.pagoEm || item.createdAt || item.data || item.dataCriacao || item.updatedAt || item.agendamento?.data || '',
+      ).slice(0, 10)
+      return dataBase >= dataInicial && dataBase <= dataFinal
+    })
+    if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
+    exportarCsv({
+      fileName: modo === 'periodo'
+        ? `financeiro-gendaz-${periodoParaArquivo(dataInicial, dataFinal)}.csv`
+        : `financeiro-gendaz-todos-${dataHojeDdMmAAAA()}.csv`,
+      columns: [
+        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Valor',
+        'Método de pagamento', 'Status', 'Data do agendamento', 'Data do pagamento',
+        'Data de criação', 'Observações',
+      ],
+      rows: registros.map((item) => [
+        item.id,
+        item.protocolo || item.agendamento?.protocolo || '',
+        item.clienteNome || item.cliente?.nome || '',
+        item.servicoNome || item.servico?.nome || '',
+        item.profissionalNome || item.agendamento?.profissionalNome || 'Sem preferência',
+        currency(item.valor || 0),
+        metodoPagamentoLegivel(item.metodoPagamento),
+        statusPagamentoLegivel(item.status),
+        item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
+        item.dataPagamento ? formatarData(item.dataPagamento) : '',
+        '',
+        item.observacoes || item.agendamento?.observacoes || '',
+      ]),
+    })
+  }
+
   function limparSelecaoPagamentos() {
     setSelecionandoPagamentos(false)
     setPagamentosSelecionados([])
@@ -235,6 +274,15 @@ export default function Financeiro() {
               aria-label="Filtrar financeiro por mês"
             />
           </label>
+
+          <Button
+            variant="secondary"
+            icon={Download}
+            onClick={() => setExportModal(true)}
+            className="financeiro-refresh-btn"
+          >
+            Exportar CSV
+          </Button>
 
           <Button
             variant="secondary"
@@ -380,6 +428,13 @@ export default function Financeiro() {
         loading={bulkExecutando}
         onCancel={() => setBulkModal(null)}
         onConfirm={executarBulkPagamentos}
+      />
+
+      <ExportCsvModal
+        open={exportModal}
+        title="Exportar financeiro"
+        onClose={() => setExportModal(false)}
+        onConfirm={exportarFinanceiro}
       />
     </section>
   )

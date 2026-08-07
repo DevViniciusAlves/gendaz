@@ -1,4 +1,4 @@
-﻿import { Pencil, Plus, Power, RefreshCw, Trash } from 'lucide-react'
+﻿import { Pencil, Plus, Power, RefreshCw, Trash, Download } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
@@ -14,6 +14,7 @@ import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
 import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { exportarCsv, formatarData, dataHojeDdMmAAAA } from '../utils/csvExport.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
 
@@ -126,6 +127,39 @@ export default function Clientes() {
     setModal(true)
   }
 
+  async function exportarClientes() {
+    if (!clientes.length) {
+      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        detail: { type: 'error', message: 'Nenhum registro encontrado para exportação.' },
+      }))
+      return
+    }
+    const columns = [
+      'ID', 'Nome', 'Telefone', 'E-mail', 'Status', 'Total gasto',
+      'Quantidade de atendimentos', 'Último atendimento', 'Data de cadastro', 'Observações'
+    ]
+    const rows = clientes.map((cliente) => [
+      cliente.id,
+      cliente.nome,
+      exibirTelefone(cliente.telefone),
+      cliente.email || '',
+      cliente.status === 'ATIVO' ? 'Ativo' : 'Inativo',
+      currency(cliente.totalGasto || 0),
+      cliente.quantidadeAtendimentos || 0,
+      cliente.ultimoAtendimento ? formatarData(cliente.ultimoAtendimento) : '',
+      cliente.dataCriacao ? formatarData(cliente.dataCriacao) : '',
+      cliente.observacoes || '',
+    ])
+    exportarCsv({
+      fileName: `clientes-gendaz-${dataHojeDdMmAAAA()}.csv`,
+      columns,
+      rows,
+    })
+    window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      detail: { type: 'success', message: 'Arquivo CSV exportado com sucesso.' },
+    }))
+  }
+
   function abrirEdicao(cliente) {
     setClienteEditando(cliente.id)
     setForm({
@@ -236,6 +270,9 @@ export default function Clientes() {
           <p>Busca, cadastro e histÃ³rico bÃ¡sico da base atendida.</p>
         </div>
         <div className="table-actions">
+          <Button variant="secondary" icon={Download} onClick={exportarClientes} disabled={recarregando}>
+            {recarregando ? 'Exportando...' : 'Exportar CSV'}
+          </Button>
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
             {recarregando ? 'Recarregando...' : 'Recarregar'}
           </Button>

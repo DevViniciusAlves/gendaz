@@ -44,6 +44,7 @@ function normalizarUsuarioSessao(usuarioBase, fallbackAtual) {
     plano: resolverPlano(usuario, fallbackAtual),
     assinatura: usuario?.assinatura || fallbackAtual?.assinatura || null,
     statusConta: usuario?.statusConta || fallbackAtual?.statusConta || 'ACTIVE',
+    motivoInatividade: usuario?.motivoInatividade || fallbackAtual?.motivoInatividade || null,
   }
 }
 
@@ -105,6 +106,7 @@ export function AuthProvider({ children }) {
                 ...refresh.usuario,
                 assinatura: refresh.assinatura,
                 statusConta: refresh.statusConta,
+                motivoInatividade: refresh.motivoInatividade,
               }
             : null,
           usuario,
@@ -115,6 +117,7 @@ export function AuthProvider({ children }) {
         return true
       } catch (error) {
         const statusConta = error?.response?.data?.statusConta
+        const motivoInatividade = error?.response?.data?.motivoInatividade
         const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
         if (statusConta === 'ACCOUNT_INACTIVE'
           || mensagem.includes('conta inativa')
@@ -124,6 +127,7 @@ export function AuthProvider({ children }) {
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
+              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
             },
             usuario,
           )
@@ -198,6 +202,7 @@ export function AuthProvider({ children }) {
                 ...refresh.usuario,
                 assinatura: refresh.assinatura,
                 statusConta: refresh.statusConta,
+                motivoInatividade: refresh.motivoInatividade,
               }
             : null,
           usuario,
@@ -209,6 +214,7 @@ export function AuthProvider({ children }) {
         if (!mounted) return
         const status = error.response?.status
         const statusConta = error.response?.data?.statusConta
+        const motivoInatividade = error.response?.data?.motivoInatividade
         const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || '').toLowerCase()
         const contaMarcadaInativa = statusConta === 'ACCOUNT_INACTIVE'
           || mensagem.includes('conta inativa')
@@ -226,6 +232,7 @@ export function AuthProvider({ children }) {
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
+              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
             },
             usuario,
           )
@@ -362,7 +369,7 @@ export function AuthProvider({ children }) {
       setAdminUsuario(adminResponse.admin)
       return { adminAccess: true, admin: adminResponse.admin }
     }
-    if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
+if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
       const pending = {
         email,
         usuario: response.usuario,
@@ -370,6 +377,7 @@ export function AuthProvider({ children }) {
         pagamentoPlano: response.pagamentoPlano,
         mensagem: response.mensagem,
         statusConta: response.statusConta,
+        motivoInatividade: response.motivoInatividade || 'PAGAMENTO_PENDENTE',
       }
       pendingPaymentMemory = pending
       return { pendingPayment: true, ...pending }
@@ -380,6 +388,7 @@ export function AuthProvider({ children }) {
         plano: response.assinatura?.planoNome || response.usuario?.plano || null,
         assinatura: response.assinatura,
         statusConta: 'ACCOUNT_INACTIVE',
+        motivoInatividade: response.motivoInatividade || 'PAGAMENTO_PENDENTE',
       }
       clearLocalData()
       pendingPaymentMemory = null

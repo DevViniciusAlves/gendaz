@@ -3052,6 +3052,18 @@ tbody tr:hover { background: #fffaf5; }
 .confirm-box p { margin: 0; color: var(--muted); }
 .confirm-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
+.export-csv-modal { display: grid; gap: 16px; }
+.export-csv-modal .field { display: grid; gap: 6px; }
+.export-csv-modal .field span { font-size: 13px; color: var(--muted); }
+.export-csv-modal .field input { width: 100%; }
+.export-options { display: grid; gap: 10px; }
+.export-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; cursor: pointer; }
+.export-option input { margin-top: 3px; accent-color: var(--primary); }
+.export-option span { display: grid; gap: 2px; }
+.export-option strong { font-size: 14px; }
+.export-option small { color: var(--muted); font-size: 13px; }
+.export-period { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
 .login-screen { display: grid; place-items: center; min-height: 100vh; padding: 24px; }
 .login-screen,
 .criar-conta-screen {

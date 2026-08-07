@@ -150,7 +150,9 @@ public class AuthService {
                             mapper.toResponse(usuario),
                             assinatura,
                             pagamentoPlano,
-                            "ACCOUNT_PENDING_PAYMENT"
+                            "ACCOUNT_PENDING_PAYMENT",
+                            null,
+                            "PAGAMENTO_PENDENTE"
                     );
                 }
                 if (assinaturaAtual != null && assinaturaAtual.getStatus() == StatusAssinatura.EXPIRADA) {
@@ -164,17 +166,22 @@ public class AuthService {
                             mapper.toResponse(usuario),
                             assinatura,
                             pagamentoPlano,
-                            "ACCOUNT_INACTIVE"
+                            "ACCOUNT_INACTIVE",
+                            null,
+                            "PAGAMENTO_PENDENTE"
                     );
                 }
                 if (usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
                     log.info("Login redirecionado para conta inativa para {}", mascararEmail(email));
+                    String motivo = usuario.getEmpresa().getStatus() == StatusEmpresa.BLOQUEADA ? "ADMIN_SUSPENSAO" : "PAGAMENTO_PENDENTE";
                     return new LoginResponse(
                             "Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o AgendNew.",
                             mapper.toResponse(usuario),
                             assinatura,
                             pagamentoPlano,
-                            "ACCOUNT_INACTIVE"
+                            "ACCOUNT_INACTIVE",
+                            null,
+                            motivo
                     );
                 }
             }
@@ -252,12 +259,14 @@ public class AuthService {
                         mapper.toResponse(cadastro.usuario()),
                         assinaturaService.toResponse(cadastro.assinatura()),
                         pagamentoPlano,
-                        "ACCOUNT_PENDING_PAYMENT"
+                        "ACCOUNT_PENDING_PAYMENT",
+                        null,
+                        "PAGAMENTO_PENDENTE"
                 );
             }
             String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
             registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
-            return new LoginResponse("Conta criada com sucesso. Seu teste grátis de 7 dias começou.", mapper.toResponse(cadastro.usuario()), assinaturaService.toResponse(cadastro.assinatura()), null, "ACTIVE", sessionToken);
+            return new LoginResponse("Conta criada com sucesso. Seu teste grátis de 7 dias começou.", mapper.toResponse(cadastro.usuario()), assinaturaService.toResponse(cadastro.assinatura()), null, "ACTIVE", sessionToken, null);
         } catch (RuntimeException ex) {
             log.error("Cadastro falhou para {} em {} ms. Causa real abaixo.", mascararEmail(email), duracaoMs(inicio), ex);
             throw ex;
@@ -319,7 +328,8 @@ public class AuthService {
                 ? null
                 : pagamentoService.buscarUltimoPagamentoPlanoPendente(usuario.getEmpresa().getId()).orElse(null);
         String statusConta = calcularStatusConta(usuario, assinatura);
-        return new RefreshResponse("Sessao renovada com sucesso.", mapper.toResponse(usuario), assinatura, pagamentoPlano, statusConta, novaSessao);
+        String motivoInatividade = calcularMotivoInatividade(usuario, assinatura);
+        return new RefreshResponse("Sessao renovada com sucesso.", mapper.toResponse(usuario), assinatura, pagamentoPlano, statusConta, novaSessao, motivoInatividade);
     }
 
     @Transactional(readOnly = true)
@@ -378,6 +388,22 @@ public class AuthService {
             return "ACCOUNT_INACTIVE";
         }
         return "ACTIVE";
+    }
+
+    private String calcularMotivoInatividade(UsuarioEntity usuario, AssinaturaResponse assinatura) {
+        if (usuario.getEmpresa() == null) {
+            return null;
+        }
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
+            return "PAGAMENTO_PENDENTE";
+        }
+        if (assinatura != null && assinatura.status() == StatusAssinatura.EXPIRADA) {
+            return "PAGAMENTO_PENDENTE";
+        }
+        if (usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+            return usuario.getEmpresa().getStatus() == StatusEmpresa.BLOQUEADA ? "ADMIN_SUSPENSAO" : "PAGAMENTO_PENDENTE";
+        }
+        return null;
     }
 
     private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario, String documento) {

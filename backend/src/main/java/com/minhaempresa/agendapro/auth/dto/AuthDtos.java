@@ -50,18 +50,23 @@ public final class AuthDtos {
             AssinaturaResponse assinatura,
             PagamentoPlanoResponse pagamentoPlano,
             String statusConta,
-            String sessionToken
+            String sessionToken,
+            String motivoInatividade
     ) {
         public LoginResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura) {
-            this(mensagem, usuario, assinatura, null, "ACTIVE", null);
+            this(mensagem, usuario, assinatura, null, "ACTIVE", null, null);
         }
 
         public LoginResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura, PagamentoPlanoResponse pagamentoPlano) {
-            this(mensagem, usuario, assinatura, pagamentoPlano, "ACTIVE", null);
+            this(mensagem, usuario, assinatura, pagamentoPlano, "ACTIVE", null, null);
         }
 
         public LoginResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura, PagamentoPlanoResponse pagamentoPlano, String statusConta) {
-            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, null);
+            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, null, null);
+        }
+
+        public LoginResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura, PagamentoPlanoResponse pagamentoPlano, String statusConta, String sessionToken) {
+            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, sessionToken, null);
         }
     }
 
@@ -71,10 +76,15 @@ public final class AuthDtos {
             AssinaturaResponse assinatura,
             PagamentoPlanoResponse pagamentoPlano,
             String statusConta,
-            String sessionToken
+            String sessionToken,
+            String motivoInatividade
     ) {
         public RefreshResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura, PagamentoPlanoResponse pagamentoPlano, String statusConta) {
-            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, null);
+            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, null, null);
+        }
+
+        public RefreshResponse(String mensagem, UsuarioResponse usuario, AssinaturaResponse assinatura, PagamentoPlanoResponse pagamentoPlano, String statusConta, String sessionToken) {
+            this(mensagem, usuario, assinatura, pagamentoPlano, statusConta, sessionToken, null);
         }
     }
 

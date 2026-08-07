@@ -1,11 +1,13 @@
-import { RefreshCw } from 'lucide-react'
+import { Download, RefreshCw } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Button from '../components/Button.jsx'
+import ExportCsvModal from '../components/ExportCsvModal.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
 import Pagination from '../components/Pagination.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { todayIso } from '../services/localStore.js'
+import { currency, todayIso } from '../services/localStore.js'
+import { dataHojeDdMmAAAA, exportarCsv, formatarData, periodoParaArquivo } from '../utils/csvExport.js'
 
 export default function Relatorios() {
   const [data, , { reload }] = useLocalData('relatorios')
@@ -13,6 +15,7 @@ export default function Relatorios() {
   const [cliente, setCliente] = useState('')
   const [servico, setServico] = useState('')
   const [recarregando, setRecarregando] = useState(false)
+  const [exportModal, setExportModal] = useState(null)
   const [paginaConsultas, setPaginaConsultas] = useState(1)
   const [paginaCancelados, setPaginaCancelados] = useState(1)
   const itensPorPagina = 10
@@ -61,6 +64,78 @@ export default function Relatorios() {
     }
   }
 
+  function dentroDoPeriodo(item, dataInicial, dataFinal) {
+    const dataBase = String(item.data || item.dataAgendamento || '')
+    if (!dataBase) return false
+    return dataBase >= dataInicial && dataBase <= dataFinal
+  }
+
+  function montarLinhaConsultas(item) {
+    return [
+      item.id,
+      item.protocolo || '',
+      item.clienteNome || '',
+      item.servicoNome || '',
+      item.profissionalNome || 'Sem preferência',
+      currency(item.valor || 0),
+      formatarData(item.data),
+      item.horaInicio || '',
+      item.horaFim || '',
+      item.status || '',
+      item.observacoes || '',
+    ]
+  }
+
+  function montarLinhaCancelados(item) {
+    return [
+      item.id,
+      item.protocolo || '',
+      item.clienteNome || '',
+      item.servicoNome || '',
+      item.profissionalNome || 'Sem preferência',
+      currency(item.valor || 0),
+      formatarData(item.data),
+      item.horaInicio || '',
+      item.observacoes || '',
+    ]
+  }
+
+  async function exportarConsultas({ modo, dataInicial, dataFinal }) {
+    const base = Array.isArray(data.agendamentos) ? data.agendamentos : []
+    const registros = base
+      .filter((item) => item.status !== 'CANCELADO')
+      .filter((item) => modo !== 'periodo' || dentroDoPeriodo(item, dataInicial, dataFinal))
+    if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
+    exportarCsv({
+      fileName: modo === 'periodo'
+        ? `relatorio-consultas-gendaz-${periodoParaArquivo(dataInicial, dataFinal)}.csv`
+        : `relatorio-consultas-gendaz-${dataHojeDdMmAAAA()}.csv`,
+      columns: [
+        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Valor',
+        'Data', 'Hora início', 'Hora fim', 'Status', 'Observações',
+      ],
+      rows: registros.map(montarLinhaConsultas),
+    })
+  }
+
+  async function exportarCancelados({ modo, dataInicial, dataFinal }) {
+    const base = Array.isArray(data.agendamentos) ? data.agendamentos : []
+    const registros = base
+      .filter((item) => item.status === 'CANCELADO')
+      .filter((item) => modo !== 'periodo' || dentroDoPeriodo(item, dataInicial, dataFinal))
+    if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
+    exportarCsv({
+      fileName: modo === 'periodo'
+        ? `relatorio-cancelados-gendaz-${periodoParaArquivo(dataInicial, dataFinal)}.csv`
+        : `relatorio-cancelados-gendaz-${dataHojeDdMmAAAA()}.csv`,
+      columns: [
+        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Valor',
+        'Data', 'Hora início', 'Observações',
+      ],
+      rows: registros.map(montarLinhaCancelados),
+    })
+  }
+
   return (
     <section className="page">
       <div className="page-title">
@@ -105,6 +180,12 @@ export default function Relatorios() {
           </small>
         </label>
         <div className="table-actions report-actions">
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('consultas')}>
+            Exportar consultas
+          </Button>
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('cancelados')}>
+            Exportar cancelados
+          </Button>
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
             {recarregando ? 'Recarregando...' : 'Recarregar'}
           </Button>
@@ -147,6 +228,19 @@ export default function Relatorios() {
         ]} rows={canceladosPaginados} empty="Nenhum cancelamento no período." />
         <Pagination page={paginaCanceladosAtual} totalPages={totalPaginasCancelados} totalItems={cancelados.length} pageSize={itensPorPagina} onPageChange={setPaginaCancelados} />
       </section>
+
+      <ExportCsvModal
+        open={exportModal === 'consultas'}
+        title="Exportar consultas"
+        onClose={() => setExportModal(null)}
+        onConfirm={exportarConsultas}
+      />
+      <ExportCsvModal
+        open={exportModal === 'cancelados'}
+        title="Exportar cancelados"
+        onClose={() => setExportModal(null)}
+        onConfirm={exportarCancelados}
+      />
     </section>
   )
 }
