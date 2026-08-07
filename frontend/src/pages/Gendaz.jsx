@@ -339,13 +339,9 @@ function GendazContent({ slug }) {
     await sincronizarDados({ exigirSessao: true })
   }, [sincronizarDados])
 
-  useEffect(() => {
-    if (!location.pathname) return
-    if (ultimaRotaRef.current === location.pathname) return
-    ultimaRotaRef.current = location.pathname
-    // Sincronizacao passiva: nao derruba a sessao se alguma chamada secundaria falhar.
-    void sincronizarDados({ exigirSessao: false })
-  }, [location.pathname, sincronizarDados])
+  // Efeito de sincronização ao mudar de rota removido para evitar loop infinito
+  // na inicialização ou navegação dentro do Meu Gendaz.
+  // A sincronização inicial é feita pelo useEffect no ClienteGendazProvider (linha 160).
 
   const bloqueiaTela = carregando && !cliente && !perfilAcesso && !cadastroPendente
 
