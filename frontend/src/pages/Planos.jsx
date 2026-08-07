@@ -119,7 +119,7 @@ export default function Planos() {
         const status = String(item?.status || '').toUpperCase()
         if (status !== 'ATIVA' && status !== 'TESTE') return false
         if (!item?.dataFim) return true
-        return String(item.dataFim).slice(0, 10) >= hoje
+        return String(item.dataFim).slice(0, 10) > hoje
       })
       .sort((a, b) => String(a.dataInicio || '').localeCompare(String(b.dataInicio || '')))
   }, [filaAssinaturas])

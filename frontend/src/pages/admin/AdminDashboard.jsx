@@ -59,55 +59,32 @@ function diasDoMesAtual() {
 
 function buildReceitaMes(pagamentos) {
   const hoje = new Date(`${todayIso()}T12:00:00`)
-  const dias = diasDoMesAtual()
   const mapaReceita = {}
 
   pagamentos.forEach((p) => {
     if (!pagamentoConfirmado(p.status)) return
     const dia = extrairDataPagamento(p)
     if (!dia || !dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
-    mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
+    
+    // Extrai o dia para usar como chave e label
+    const diaDoMes = parseInt(dia.split('-')[2], 10)
+    mapaReceita[diaDoMes] = (mapaReceita[diaDoMes] || 0) + Number(p.valor || 0)
   })
 
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0, 0)
-  const resultado = []
-  for (let i = 0; i < dias; i++) {
-    const data = new Date(inicioMes)
-    data.setDate(data.getDate() + i)
-    const iso = data.toISOString().slice(0, 10)
-    const label = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    resultado.push({ iso, label, valor: mapaReceita[iso] || 0 })
-  }
-  return resultado
-}
-
-function suavizarPontos(pontos) {
-  if (pontos.length < 2) return ''
-  const curvas = [`M ${pontos[0].x} ${pontos[0].y}`]
-  for (let i = 0; i < pontos.length - 1; i++) {
-    const atual = pontos[i]
-    const proximo = pontos[i + 1]
-    const pontoMeio = (atual.x + proximo.x) / 2
-    curvas.push(`C ${pontoMeio} ${atual.y}, ${pontoMeio} ${proximo.y}, ${proximo.x} ${proximo.y}`)
-  }
-  return curvas.join(' ')
-}
-
-function formatoCompactoReceita(valor) {
-  if (!valor || valor <= 0) return 'R$ 0'
-  if (valor >= 1000) {
-    const milhar = valor / 1000
-    const texto = milhar >= 100
-      ? Math.round(milhar)
-      : (milhar % 1 === 0 ? milhar : milhar.toFixed(1).replace('.', ','))
-    return `R$ ${texto}k`
-  }
-  return `R$ ${Math.round(valor)}`
+  // Ordena os dias que tiveram movimento
+  return Object.keys(mapaReceita)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map((dia) => ({
+      iso: dia.toString(),
+      label: dia.toString(),
+      valor: mapaReceita[dia]
+    }))
 }
 
 function GraficoColunas({ dados }) {
   const [tooltip, setTooltip] = useState(null)
-  const temDados = dados.some((d) => Number(d.valor || 0) > 0)
+  const temDados = dados.length > 0
   const width = 760
   const height = 240
   const pLeft = 42
@@ -121,8 +98,8 @@ function GraficoColunas({ dados }) {
 
   const colunas = dados.map((d, index) => {
     const valor = Number(d.valor || 0)
-    const columnWidth = (chartW / dados.length) * 0.7
-    const gap = (chartW / dados.length) * 0.3
+    const columnWidth = Math.min((chartW / Math.max(dados.length, 1)) * 0.7, 40)
+    const gap = (chartW - (columnWidth * dados.length)) / Math.max(dados.length, 1)
     const x = pLeft + index * (columnWidth + gap) + gap / 2
     const h = (valor / maxValor) * chartH
     const y = pTop + chartH - h
@@ -165,7 +142,7 @@ function GraficoColunas({ dados }) {
                 fill={isHovered ? '#333' : '#000'}
                 onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
                 onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: col.valor > 0 ? 'pointer' : 'default' }}
+                style={{ cursor: 'pointer' }}
               />
               <text x={col.x + col.width / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#666">
                 {col.label}
@@ -176,7 +153,7 @@ function GraficoColunas({ dados }) {
         {tooltip && (
           <g style={{ pointerEvents: 'none' }}>
             <rect x={tooltip.x - 52} y={tooltip.y - 45} width={104} height={38} rx={4} fill="#000" />
-            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">{tooltip.label}</text>
+            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">Dia {tooltip.label}</text>
             <text x={tooltip.x} y={tooltip.y - 16} textAnchor="middle" fontSize={12} fill="#fff" fontWeight={700}>
               {moeda(tooltip.valor)}
             </text>
@@ -418,7 +395,7 @@ export default function AdminDashboard() {
     if (status !== 'ATIVA' && status !== 'TESTE') return false
     const fim = String(item.dataFim || '')
     if (!fim) return true
-    return fim >= todayIso()
+    return fim > todayIso()
   }), [assinaturas])
 
   const pagamentosFiltrados = useMemo(() => pagamentos.filter((item) => (

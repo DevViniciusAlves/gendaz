@@ -261,47 +261,44 @@ export default function Financeiro() {
         <div className="financeiro-title-block">
           <span className="section-kicker">Financeiro</span>
           <h1>Financeiro</h1>
-          <p>Resumo mensal, pendências e rankings operacionais.</p>
-        </div>
-
-        <div className="financeiro-controls">
-          <label className="field compact-field financeiro-month-field">
-            <span>Mês</span>
-            <input
-              type="month"
-              value={mes}
-              onChange={(e) => setMes(e.target.value)}
-              aria-label="Filtrar financeiro por mês"
-            />
-          </label>
-
-          <Button
-            variant="secondary"
-            icon={Download}
-            onClick={() => setExportModal(true)}
-            className="financeiro-refresh-btn"
-          >
-            Exportar CSV
-          </Button>
-
-          <Button
-            variant="secondary"
-            icon={RefreshCw}
-            onClick={recarregar}
-            disabled={recarregando}
-            className="financeiro-refresh-btn"
-          >
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
+          <p>Resumo mensal e pendências.</p>
         </div>
       </div>
 
       <div className="metric-grid compact financeiro-metrics">
         <DashboardCard title="Total recebido" value={currency(recebido)} />
         <DashboardCard title="Total pendente" value={currency(pendente)} />
-        <DashboardCard title="Consultas realizadas" value={realizadas} />
-        <DashboardCard title="Cliente com mais consultas" value={clienteTop?.nome || '-'} />
-        <DashboardCard title="Servico mais vendido" value={servicoTop?.nome || '-'} />
+      </div>
+
+      <div className="financeiro-controls" style={{ marginBottom: '2rem' }}>
+        <label className="field compact-field financeiro-month-field">
+          <span>Mês</span>
+          <input
+            type="month"
+            value={mes}
+            onChange={(e) => setMes(e.target.value)}
+            aria-label="Filtrar financeiro por mês"
+          />
+        </label>
+
+        <Button
+          variant="secondary"
+          icon={Download}
+          onClick={() => setExportModal(true)}
+          className="financeiro-refresh-btn"
+        >
+          Exportar CSV
+        </Button>
+
+        <Button
+          variant="secondary"
+          icon={RefreshCw}
+          onClick={recarregar}
+          disabled={recarregando}
+          className="financeiro-refresh-btn"
+        >
+          {recarregando ? 'Recarregando...' : 'Recarregar'}
+        </Button>
       </div>
 
       <section className="panel financeiro-panel">

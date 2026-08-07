@@ -144,18 +144,6 @@ export default function Relatorios() {
         <p>Relatórios simples para acompanhar agendamentos, clientes e desempenho financeiro do período.</p>
       </div>
 
-      <div className="settings-summary-grid">
-        <section className="panel settings-card">
-          <span className="section-kicker">Consultas</span>
-          <h2>{consultas.length}</h2>
-          <p className="settings-card-text">Atendimentos realizados no filtro atual.</p>
-        </section>
-        <section className="panel settings-card">
-          <span className="section-kicker">Cancelados</span>
-          <h2>{cancelados.length}</h2>
-          <p className="settings-card-text">Histórico de cancelamentos no período.</p>
-        </section>
-      </div>
 
       <div className="panel report-filters">
         <label className="field report-filter-field report-filter-month">
