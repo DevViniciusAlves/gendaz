@@ -93,28 +93,57 @@ function suavizarPontos(pontos) {
   return curvas.join(' ')
 }
 
+function formatoCompactoReceita(valor) {
+  if (!valor || valor <= 0) return 'R$ 0'
+  if (valor >= 1000) {
+    const milhar = valor / 1000
+    const texto = milhar >= 100
+      ? Math.round(milhar)
+      : (milhar % 1 === 0 ? milhar : milhar.toFixed(1).replace('.', ','))
+    return `R$ ${texto}k`
+  }
+  return `R$ ${Math.round(valor)}`
+}
+
 function GraficoLinha({ dados }) {
   const [tooltip, setTooltip] = useState(null)
-  const temDados = dados.some((d) => d.valor > 0)
+  const temDados = dados.some((d) => Number(d.valor || 0) > 0)
   const width = 760
   const height = 240
-  const pLeft = 24
+  const pLeft = 42
   const pRight = 18
-  const pTop = 16
+  const pTop = 36
   const pBottom = 28
   const chartW = width - pLeft - pRight
   const chartH = height - pTop - pBottom
-  const maxValor = Math.max(...dados.map((d) => d.valor), 1)
+  const maxValor = Math.max(...dados.map((d) => Number(d.valor || 0)), 1)
   const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
   const pontos = dados.map((d, index) => {
     const x = pLeft + (chartW * (dados.length > 1 ? index / (dados.length - 1) : 0))
-    const y = pTop + chartH - ((d.valor || 0) / maxValor) * chartH
-    return { ...d, x, y }
+    const y = pTop + chartH - ((Number(d.valor || 0)) / maxValor) * chartH
+    return { ...d, valor: Number(d.valor || 0), x, y }
   })
 
   const linha = suavizarPontos(pontos)
   const area = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linha} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
+  const linhaSecundaria = suavizarPontos(
+    pontos.map((p, index) => ({
+      ...p,
+      y: p.y + Math.min(26, 10 + (index % 4) * 4),
+    })),
+  )
+  const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
+
+  // Rotulos de valor: mostra acima dos pontos com receita, sem sobrepor vizinhos.
+  const rotulosValor = []
+  let ultimoXRotulo = -Infinity
+  pontos.forEach((p) => {
+    if (p.valor <= 0) return
+    if (p.x - ultimoXRotulo < 52) return
+    ultimoXRotulo = p.x
+    rotulosValor.push(p)
+  })
 
   if (!temDados) {
     return (
@@ -136,19 +165,29 @@ function GraficoLinha({ dados }) {
             <g key={frac}>
               <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="rgba(255,255,255,0.08)" strokeWidth={1} />
               <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="rgba(255,255,255,0.55)">
-                {moeda(val)}
+                {formatoCompactoReceita(val)}
               </text>
             </g>
           )
         })}
         <defs>
           <linearGradient id="adminAreaFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.72" />
-            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.10" />
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.88" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.12" />
+          </linearGradient>
+          <linearGradient id="adminAreaSecondary" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-primary)" stopOpacity="0.52" />
+            <stop offset="100%" stopColor="var(--color-primary)" stopOpacity="0.06" />
           </linearGradient>
         </defs>
-        <path d={area} fill="url(#adminAreaFill)" opacity={0.9} />
+        <path d={areaSecundaria} fill="url(#adminAreaSecondary)" opacity={0.7} />
+        <path d={area} fill="url(#adminAreaFill)" opacity={0.92} />
         <path d={linha} fill="none" stroke="var(--color-primary)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round" />
+        {rotulosValor.map((p) => (
+          <text key={`valor-${p.iso}`} x={p.x} y={p.y - 10} textAnchor="middle" fontSize={10} fontWeight={700} fill="rgba(255,255,255,0.85)">
+            {formatoCompactoReceita(p.valor)}
+          </text>
+        ))}
         {pontos.map((p, index) => {
           const hasValue = p.valor > 0
           const isHovered = tooltip?.index === index
@@ -179,7 +218,7 @@ function GraficoLinha({ dados }) {
         })}
         {tooltip && (() => {
           const tx = Math.min(Math.max(tooltip.x, pLeft + 48), width - pRight - 48)
-          const ty = Math.max(tooltip.y - 54, pTop)
+          const ty = Math.max(tooltip.y - 60, pTop)
           return (
             <g style={{ pointerEvents: 'none' }}>
               <rect x={tx - 52} y={ty} width={104} height={38} rx={8} fill="#111111" opacity={0.96} />
