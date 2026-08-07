@@ -1,4 +1,4 @@
-import { Copy, CreditCard, Info, LockKeyhole, RefreshCw, ShieldAlert, QrCode } from 'lucide-react'
+import { Copy, CreditCard, Info, LockKeyhole, RefreshCw, ShieldAlert, QrCode, MessageSquare, LogOut, AlertCircle } from 'lucide-react'
 import QRCode from 'qrcode'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useMemo, useState } from 'react'
@@ -16,6 +16,8 @@ const statusView = {
   PAYMENT_CANCELED: { label: 'Pagamento cancelado', tone: 'danger' },
   PAYMENT_EXPIRED: { label: 'Pagamento expirado', tone: 'danger' },
 }
+
+const WHATSAPP_URL = 'https://wa.me/5565993360300?text=Ol%C3%A1%2C%20minha%20conta%20foi%20suspensa%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.'
 
 function formatarMoeda(valor) {
   if (valor == null || Number.isNaN(Number(valor))) return null
@@ -67,6 +69,9 @@ export default function ContaInativa() {
   const [copiado, setCopiado] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState('')
   const [planoSelecionado, setPlanoSelecionado] = useState(() => String(usuario?.plano || usuario?.assinatura?.planoNome || 'BASICO').toUpperCase())
+
+  const motivoInatividade = usuario?.motivoInatividade || 'PAGAMENTO_PENDENTE'
+  const isAdminSuspensao = motivoInatividade === 'ADMIN_SUSPENSAO'
 
   const planoAtual = assinatura?.planoNome || usuario?.plano || 'BASICO'
   const statusPagamento = pagamento?.status || 'PAYMENT_PENDING'
@@ -291,139 +296,176 @@ export default function ContaInativa() {
       <section className="payment-pro-card">
         <img src={logoGendaz} alt="gendaz" className="payment-pro-logo" />
 
-        <span className="payment-plan-badge">Conta inativa</span>
-        <h1>Conta inativa</h1>
-        <p className="payment-pro-copy">
-          Seu período gratuito terminou. Para continuar usando o gendaz, regularize sua mensalidade.
-        </p>
+        {isAdminSuspensao ? (
+          <>
+            <span className="payment-plan-badge" style={{ background: 'rgba(220, 38, 38, 0.14)', borderColor: 'rgba(220, 38, 38, 0.26)', color: '#fca5a5' }}>Conta suspensa</span>
+            <h1>Conta suspensa</h1>
+            <p className="payment-pro-copy">
+              Sua conta foi suspensa pelo administrador. Entre em contato com o suporte para mais informações.
+            </p>
 
-        <div className="payment-status-card danger">
-          <div className="payment-status-icon">
-            <ShieldAlert size={24} />
-          </div>
-          <div>
-            <span>Status da conta</span>
-            <strong>Conta inativa</strong>
-          </div>
-          <em>{planoSelecionado}{valorPlanoSelecionado ? ` · ${formatarMoeda(valorPlanoSelecionado)}` : ''}</em>
-        </div>
-
-        <div className="payment-checkout-card">
-          <CreditCard size={38} />
-          <div>
-            <strong>Regularização</strong>
-            <h2>Gerar pagamento</h2>
-            <p>Use o fluxo de pagamento já existente para reativar sua conta.</p>
-          </div>
-
-          <div className="payment-client-grid single-row">
-            <label>
-              <span>Plano</span>
-              <select value={planoSelecionado} onChange={trocarPlano}>
-                <option value="BASICO">Básico</option>
-                <option value="PRO">Pro</option>
-              </select>
-            </label>
-            <div className="payment-status-card">
+            <div className="payment-status-card danger">
+              <div className="payment-status-icon">
+                <AlertCircle size={24} />
+              </div>
               <div>
-                <span>Valor do plano</span>
-                <strong>{valorPlanoSelecionado ? formatarMoeda(valorPlanoSelecionado) : 'Selecione um plano'}</strong>
+                <span>Motivo</span>
+                <strong>Suspensão administrativa</strong>
               </div>
-              <em>{planoSelecionado}</em>
             </div>
-          </div>
 
-          <div className="payment-client-grid">
-            <label>
-              <span>Nome</span>
-              <input type="text" value={form.customerName} onChange={(e) => setForm((atual) => ({ ...atual, customerName: e.target.value }))} />
-            </label>
-            <label>
-              <span>E-mail</span>
-              <input type="email" value={form.customerEmail} onChange={(e) => setForm((atual) => ({ ...atual, customerEmail: e.target.value }))} />
-            </label>
-            <label>
-              <span>Telefone</span>
-              <input type="text" value={form.customerPhone} onChange={(e) => setForm((atual) => ({ ...atual, customerPhone: e.target.value }))} />
-            </label>
-            <label>
-              <span>Documento</span>
-              <input type="text" value={form.customerDocNumber} onChange={(e) => setForm((atual) => ({ ...atual, customerDocNumber: e.target.value }))} />
-            </label>
-          </div>
-
-          <div className="payment-client-grid single-row">
-            <label>
-              <span>Tipo do documento</span>
-              <select value={form.customerDocType} onChange={(e) => setForm((atual) => ({ ...atual, customerDocType: e.target.value }))}>
-                <option value="">Selecione</option>
-                <option value="cpf">CPF</option>
-                <option value="cnpj">CNPJ</option>
-              </select>
-            </label>
-          </div>
-
-          <Button type="button" icon={LockKeyhole} onClick={gerarPagamento} disabled={gerando}>
-            {gerando ? 'Gerando...' : 'Gerar pagamento'}
-          </Button>
-
-          {checkoutAtivoAtual && (
-            <div className="checkout-container">
-              <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout}>
-                Abrir checkout
-              </Button>
-              {timerCheckout.tempoRestante !== null && (
-                <span className="checkout-timer">Expira em: {timerCheckout.formatado}</span>
-              )}
+            <div className="payment-checkout-card" style={{ textAlign: 'center' }}>
+              <MessageSquare size={48} style={{ color: 'var(--color-primary)', marginBottom: '16px' }} />
+              <strong style={{ display: 'block', fontSize: '22px', marginBottom: '8px' }}>Fale com o suporte</strong>
+              <p style={{ color: 'rgba(255, 255, 255, 0.68)', marginBottom: '24px' }}>
+                Nossa equipe está à disposição para ajudar a resolver sua situação.
+              </p>
+              <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+                <MessageSquare size={20} /> Suporte via WhatsApp
+              </a>
             </div>
-          )}
-          {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
-            <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>
-          )}
 
-          {pagamento?.id && (
-            <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando}>
-              {carregando ? 'Verificando...' : 'Já paguei, verificar'}
+            <Button type="button" className="payment-logout-button" onClick={sairDaConta}>
+              <LogOut size={18} /> Sair da conta
             </Button>
-          )}
-          <Button type="button" className="payment-logout-button" onClick={sairDaConta}>
-            Sair da conta
-          </Button>
+          </>
+        ) : (
+          <>
+            <span className="payment-plan-badge">Conta inativa</span>
+            <h1>Conta inativa</h1>
+            <p className="payment-pro-copy">
+              Seu período gratuito terminou. Para continuar usando o gendaz, regularize sua mensalidade.
+            </p>
 
-          <Link to="/" className="payment-back-link">← Voltar ao site</Link>
-        </div>
-
-        {(pagamento?.pixCopiaECola || pagamento?.pixQrCodeBase64 || qrDataUrl) && (
-          <div className="payment-pix-card">
-            <div className="payment-pix-header">
-              <QrCode size={22} />
-              <strong>Pagamento PIX</strong>
-            </div>
-            <div className="payment-pix-body">
-              {pagamento?.pixQrCodeBase64 ? (
-                <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
-              ) : qrDataUrl ? (
-                <img className="pix-qr-image large" src={qrDataUrl} alt="QR Code PIX" />
-              ) : null}
-              <div className="payment-pix-copy">
-                <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
-                {pagamento?.dataExpiracao && <small>Vencimento: {new Date(pagamento.dataExpiracao).toLocaleString('pt-BR')}</small>}
-                {pagamento?.pixCopiaECola && (
-                  <button type="button" className="btn btn-secondary" onClick={copiarPix}>
-                    <Copy size={16} /> {copiado ? 'Código copiado' : 'Copiar código PIX'}
-                  </button>
-                )}
+            <div className="payment-status-card danger">
+              <div className="payment-status-icon">
+                <ShieldAlert size={24} />
               </div>
+              <div>
+                <span>Status da conta</span>
+                <strong>Conta inativa</strong>
+              </div>
+              <em>{planoSelecionado}{valorPlanoSelecionado ? ` · ${formatarMoeda(valorPlanoSelecionado)}` : ''}</em>
             </div>
-          </div>
+
+            <div className="payment-checkout-card">
+              <CreditCard size={38} />
+              <div>
+                <strong>Regularização</strong>
+                <h2>Gerar pagamento</h2>
+                <p>Use o fluxo de pagamento já existente para reativar sua conta.</p>
+              </div>
+
+              <div className="payment-client-grid single-row">
+                <label>
+                  <span>Plano</span>
+                  <select value={planoSelecionado} onChange={trocarPlano}>
+                    <option value="BASICO">Básico</option>
+                    <option value="PRO">Pro</option>
+                  </select>
+                </label>
+                <div className="payment-status-card">
+                  <div>
+                    <span>Valor do plano</span>
+                    <strong>{valorPlanoSelecionado ? formatarMoeda(valorPlanoSelecionado) : 'Selecione um plano'}</strong>
+                  </div>
+                  <em>{planoSelecionado}</em>
+                </div>
+              </div>
+
+              <div className="payment-client-grid">
+                <label>
+                  <span>Nome</span>
+                  <input type="text" value={form.customerName} onChange={(e) => setForm((atual) => ({ ...atual, customerName: e.target.value }))} />
+                </label>
+                <label>
+                  <span>E-mail</span>
+                  <input type="email" value={form.customerEmail} onChange={(e) => setForm((atual) => ({ ...atual, customerEmail: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Telefone</span>
+                  <input type="text" value={form.customerPhone} onChange={(e) => setForm((atual) => ({ ...atual, customerPhone: e.target.value }))} />
+                </label>
+                <label>
+                  <span>Documento</span>
+                  <input type="text" value={form.customerDocNumber} onChange={(e) => setForm((atual) => ({ ...atual, customerDocNumber: e.target.value }))} />
+                </label>
+              </div>
+
+              <div className="payment-client-grid single-row">
+                <label>
+                  <span>Tipo do documento</span>
+                  <select value={form.customerDocType} onChange={(e) => setForm((atual) => ({ ...atual, customerDocType: e.target.value }))}>
+                    <option value="">Selecione</option>
+                    <option value="cpf">CPF</option>
+                    <option value="cnpj">CNPJ</option>
+                  </select>
+                </label>
+              </div>
+
+              <Button type="button" icon={LockKeyhole} onClick={gerarPagamento} disabled={gerando}>
+                {gerando ? 'Gerando...' : 'Gerar pagamento'}
+              </Button>
+
+              {checkoutAtivoAtual && (
+                <div className="checkout-container">
+                  <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout}>
+                    Abrir checkout
+                  </Button>
+                  {timerCheckout.tempoRestante !== null && (
+                    <span className="checkout-timer">Expira em: {timerCheckout.formatado}</span>
+                  )}
+                </div>
+              )}
+              {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
+                <small className="plan-checkout-expired-note">Checkout expirado. Gere um novo pagamento para continuar.</small>
+              )}
+
+              {pagamento?.id && (
+                <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando}>
+                  {carregando ? 'Verificando...' : 'Já paguei, verificar'}
+                </Button>
+              )}
+              <Button type="button" className="payment-logout-button" onClick={sairDaConta}>
+                <LogOut size={18} /> Sair da conta
+              </Button>
+
+              <Link to="/" className="payment-back-link">← Voltar ao site</Link>
+            </div>
+
+            {(pagamento?.pixCopiaECola || pagamento?.pixQrCodeBase64 || qrDataUrl) && (
+              <div className="payment-pix-card">
+                <div className="payment-pix-header">
+                  <QrCode size={22} />
+                  <strong>Pagamento PIX</strong>
+                </div>
+                <div className="payment-pix-body">
+                  {pagamento?.pixQrCodeBase64 ? (
+                    <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
+                  ) : qrDataUrl ? (
+                    <img className="pix-qr-image large" src={qrDataUrl} alt="QR Code PIX" />
+                  ) : null}
+                  <div className="payment-pix-copy">
+                    <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
+                    {pagamento?.dataExpiracao && <small>Vencimento: {new Date(pagamento.dataExpiracao).toLocaleString('pt-BR')}</small>}
+                    {pagamento?.pixCopiaECola && (
+                      <button type="button" className="btn btn-secondary" onClick={copiarPix}>
+                        <Copy size={16} /> {copiado ? 'Código copiado' : 'Copiar código PIX'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="payment-info-card">
+              <Info size={20} />
+              <span>Após a aprovação, sua conta pode levar até 15 minutos para ser liberada.</span>
+            </div>
+
+            {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
+          </>
         )}
-
-        <div className="payment-info-card">
-          <Info size={20} />
-          <span>Após a aprovação, sua conta pode levar até 15 minutos para ser liberada.</span>
-        </div>
-
-        {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
       </section>
     </main>
   )

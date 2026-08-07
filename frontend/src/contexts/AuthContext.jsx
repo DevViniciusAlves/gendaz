@@ -261,9 +261,9 @@ export function AuthProvider({ children }) {
   }, [adminUsuario])
 
   useEffect(() => {
-    function marcarContaIndisponivel() {
+function marcarContaIndisponivel() {
       if (!usuario) return
-      const atualizado = { ...usuario, statusConta: 'ACCOUNT_INACTIVE' }
+      const atualizado = { ...usuario, statusConta: 'ACCOUNT_INACTIVE', motivoInatividade: 'ADMIN_SUSPENSAO' }
       salvarUsuarioSessao(atualizado)
       setUsuario(atualizado)
     }
@@ -290,6 +290,7 @@ export function AuthProvider({ children }) {
                 ...refresh.usuario,
                 assinatura: refresh.assinatura,
                 statusConta: refresh.statusConta,
+                motivoInatividade: refresh.motivoInatividade,
               }
             : null,
           usuario,
@@ -302,6 +303,7 @@ export function AuthProvider({ children }) {
         window.dispatchEvent(new Event('agendapro:data-changed'))
       } catch (error) {
         const statusConta = error?.response?.data?.statusConta
+        const motivoInatividade = error?.response?.data?.motivoInatividade
         const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
         if (statusConta === 'ACCOUNT_INACTIVE'
           || mensagem.includes('conta inativa')
@@ -311,6 +313,7 @@ export function AuthProvider({ children }) {
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
+              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
             },
             usuario,
           )

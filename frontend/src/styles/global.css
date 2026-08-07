@@ -2190,6 +2190,7 @@ tbody tr:hover { background: #fffaf5; }
 .settings-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .settings-card-text { margin: 0; font-size: 16px; font-weight: 700; }
 .settings-card-muted { color: var(--muted); }
+.settings-card .btn { width: 100%; justify-content: center; }
 .settings-ramo-box {
   display: flex;
   align-items: center;

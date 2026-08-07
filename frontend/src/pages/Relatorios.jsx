@@ -149,11 +149,17 @@ export default function Relatorios() {
           <span className="section-kicker">Consultas</span>
           <h2>{consultas.length}</h2>
           <p className="settings-card-text">Atendimentos realizados no filtro atual.</p>
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('consultas')}>
+            Exportar CSV
+          </Button>
         </section>
         <section className="panel settings-card">
           <span className="section-kicker">Cancelados</span>
           <h2>{cancelados.length}</h2>
           <p className="settings-card-text">Histórico de cancelamentos no período.</p>
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('cancelados')}>
+            Exportar CSV
+          </Button>
         </section>
       </div>
 
@@ -180,12 +186,6 @@ export default function Relatorios() {
           </small>
         </label>
         <div className="table-actions report-actions">
-          <Button variant="secondary" icon={Download} onClick={() => setExportModal('consultas')}>
-            Exportar consultas
-          </Button>
-          <Button variant="secondary" icon={Download} onClick={() => setExportModal('cancelados')}>
-            Exportar cancelados
-          </Button>
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
             {recarregando ? 'Recarregando...' : 'Recarregar'}
           </Button>
