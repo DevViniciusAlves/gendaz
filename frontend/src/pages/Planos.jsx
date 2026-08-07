@@ -304,13 +304,15 @@ export default function Planos() {
 
           {filaAtiva.length > 0 && (
             <div className="plan-payment-status">
-              {filaAtiva.map((item) => {
+              {filaAtiva.map((item, idx) => {
                 const hoje = hojeISO()
                 const inicio = String(item.dataInicio || '').slice(0, 10)
                 const fim = String(item.dataFim || '').slice(0, 10)
                 const ehFuturo = inicio > hoje
                 const ehTeste = String(item.status || '').toLowerCase() === 'teste'
                 const duracao = duracaoDiasEntre(inicio, fim)
+                const proximoPlano = idx < filaAtiva.length - 1 ? filaAtiva[idx + 1] : null
+                const mesmoPlano = proximoPlano && String(proximoPlano.planoNome || '').toUpperCase() === String(item.planoNome || '').toUpperCase()
                 return (
                   <div key={item.id} className="plan-payment-status-head">
                     <div>
@@ -319,7 +321,7 @@ export default function Planos() {
                         {ehFuturo
                           ? ` · começa em ${formatarDataCurta(inicio)}${duracao ? ` (${duracao} dias)` : ''}`
                           : item.diasRestantes != null && item.diasRestantes > 0
-                            ? ` · restam ${item.diasRestantes} dias`
+                            ? ` · restam ${item.diasRestantes} dias${proximoPlano && mesmoPlano ? ` / ${proximoPlano.planoNome} ${proximoPlano.diasRestantes} dias restantes` : ''}`
                             : ''}
                       </span>
                       <strong>
