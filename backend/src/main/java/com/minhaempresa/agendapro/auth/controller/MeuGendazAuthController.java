@@ -44,7 +44,8 @@ public class MeuGendazAuthController {
         MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
         String cookieName = nomeCookie(request.slug());
         adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
-        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
+        // O sessionToken não deve ser retornado no JSON para evitar armazenamento no client side.
+        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
 
     @PostMapping("/refresh")
@@ -56,15 +57,15 @@ public class MeuGendazAuthController {
         if (slug == null || slug.isBlank()) {
             throw new BusinessException("Slug da empresa invalido.");
         }
-        String sessionToken = http.getHeader("X-Session-Token");
-        if (sessionToken == null || sessionToken.isBlank()) {
-            sessionToken = CookieHelper.lerCookie(http, nomeCookie(slug)).orElse(null);
-        }
+        String sessionToken = CookieHelper.lerCookie(http, nomeCookie(slug))
+                .orElseThrow(() -> new BusinessException("Sessao expirada ou invalida."));
         MeuGendazAuthResponse auth = authService.refreshSessao(slug, sessionToken);
         String cookieName = nomeCookie(slug);
         adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
-        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), auth.sessionToken(), auth.status()));
+        // O sessionToken não deve ser retornado no JSON para evitar armazenamento no client side.
+        return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
+
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
         ResponseCookie cookie = ResponseCookie.from(nome, valor)

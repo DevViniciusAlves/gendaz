@@ -42,25 +42,6 @@ export function ClienteGendazProvider({ children, slug }) {
   const [profissionais, setProfissionais] = useState([])
   const sincronizandoRef = useRef(null)
 
-  function sessionTokenKey() {
-    return `meu_gendaz_session_token_${String(slug || '').trim().toLowerCase()}`
-  }
-
-  function lerTokenSessao() {
-    if (typeof window === 'undefined' || !window.sessionStorage) return ''
-    return window.sessionStorage.getItem(sessionTokenKey()) || ''
-  }
-
-  function salvarTokenSessao(token) {
-    if (typeof window === 'undefined' || !window.sessionStorage) return
-    const key = sessionTokenKey()
-    if (!token) {
-      window.sessionStorage.removeItem(key)
-      return
-    }
-    window.sessionStorage.setItem(key, token)
-  }
-
   const limparEstadoSessao = useCallback(() => {
     setCliente(null)
     setPerfilPendente(false)
@@ -71,7 +52,6 @@ export function ClienteGendazProvider({ children, slug }) {
     setConfiguracoes(null)
     setServicos([])
     setProfissionais([])
-    salvarTokenSessao('')
   }, [slug])
 
   const sincronizarDados = useCallback(async ({ exigirSessao = false } = {}) => {
@@ -84,34 +64,8 @@ export function ClienteGendazProvider({ children, slug }) {
       setCarregando(true)
       setErro(null)
 
-      const headers = {}
-      let tokenSessao = lerTokenSessao()
-      if (tokenSessao) {
-        headers['X-Session-Token'] = tokenSessao
-      }
-
-      // Renova/valida a sessão antes de carregar (idempotente, mesmo padrão do painel Gendaz).
-      // Evita cair para a tela de login em F5 por token divergente ou rotação concorrente.
-      if (tokenSessao) {
-        try {
-          const refreshRes = await clienteApi.post('/meu-gendaz/auth/refresh', null, {
-            skipMeuGendazLogout: true,
-            headers: { 'X-Session-Token': tokenSessao },
-          })
-          const tokenRenovado = refreshRes?.data?.sessionToken
-          if (tokenRenovado && tokenRenovado !== tokenSessao) {
-            tokenSessao = tokenRenovado
-            salvarTokenSessao(tokenRenovado)
-            headers['X-Session-Token'] = tokenRenovado
-          }
-        } catch {
-          // Erro no refresh: segue para o /perfil, que decide (silencioso quando exigirSessao=false)
-        }
-      }
-
       const perfilRes = await tentarComRetry(() => clienteApi.get('/meu-gendaz/perfil', {
         skipMeuGendazLogout: !exigirSessao,
-        headers,
       }))
 
       if (perfilRes?.data?.cadastroPendente) {
@@ -138,10 +92,10 @@ export function ClienteGendazProvider({ children, slug }) {
       })
 
       const [dashboardRes, agendamentosRes, servRes, profRes] = await Promise.allSettled([
-        clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao, headers }),
-        clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao, headers }),
-        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao, headers }),
-        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao, headers }),
+        clienteApi.get('/meu-gendaz/dashboard', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/agendamentos/proximos', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/servicos', { skipMeuGendazLogout: !exigirSessao }),
+        clienteApi.get('/meu-gendaz/profissionais', { skipMeuGendazLogout: !exigirSessao }),
       ])
 
       const respostas = [dashboardRes, agendamentosRes, servRes, profRes]
@@ -175,10 +129,6 @@ export function ClienteGendazProvider({ children, slug }) {
         setProfissionais(Array.isArray(profRes.value.data) ? profRes.value.data : [])
       }
 
-      if (tokenSessao) {
-        salvarTokenSessao(tokenSessao)
-      }
-
       await carregarBeneficios()
     } catch (err) {
       if (err?.response?.status === 401) {
@@ -202,6 +152,7 @@ export function ClienteGendazProvider({ children, slug }) {
       sincronizandoRef.current = null
     }
   }, [limparEstadoSessao, slug])
+
 
   useEffect(() => {
     if (!slug) return undefined

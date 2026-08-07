@@ -86,13 +86,9 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = request.getHeader("X-Session-Token");
-        if (session == null || session.isBlank()) {
-            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
-        }
-        if (session == null || session.isBlank()) {
-            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
-        }
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug))
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
+        
         Optional<UsuarioEntity> user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session);
         UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
         if (!usuarioSessionService.sessaoValida(usuario.getId(), session, usuario.getEmpresa().getId())) {
@@ -105,13 +101,9 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = request.getHeader("X-Session-Token");
-        if (session == null || session.isBlank()) {
-            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
-        }
-        if (session == null || session.isBlank()) {
-            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
-        }
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug))
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
+        
         UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), usuario.getEmail());
@@ -127,16 +119,13 @@ public class MeuGendazController {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = request.getHeader("X-Session-Token");
-        if (session == null || session.isBlank()) {
-            session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
-        }
-        if (session == null || session.isBlank()) {
-            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
-        }
+        String session = CookieHelper.lerCookie(request, nomeCookie(slug))
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
+        
         return usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
     }
+
 
     private Long getEmpresaId(ClienteEntity cliente) {
         if (cliente.getEmpresa() == null) {
@@ -345,9 +334,6 @@ public class MeuGendazController {
             EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                     .orElseThrow(() -> new BusinessException("Loja nao encontrada."));
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
-            if (session == null || session.isBlank()) {
-                session = request.getHeader("X-Session-Token");
-            }
             if (session != null) {
                 UsuarioEntity user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
                 if (user != null) {
@@ -365,6 +351,7 @@ public class MeuGendazController {
         response.addHeader("Set-Cookie", clearCookie.toString());
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
     }
+
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard(HttpServletRequest request) {

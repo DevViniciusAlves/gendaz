@@ -75,11 +75,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "Accept",
                         "Origin",
                         "X-Requested-With",
-                        "X-Usuario-Id",
-                        "X-Usuario-Perfil",
-                        "X-Session-Token",
                         "X-Meu-Gendaz-Slug"
                 )
+
                 .exposedHeaders("Set-Cookie", "Retry-After")
                 .allowCredentials(true)
                 .maxAge(3600);
