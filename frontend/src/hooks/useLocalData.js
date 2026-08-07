@@ -6,6 +6,7 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
 const CACHE_PREFIX = 'agendapro_scope_cache_'
+const CACHE_VERSION = 5
 
 function ttlDoEscopo(scope) {
   if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
@@ -20,6 +21,7 @@ function chaveCache(scope) {
 function salvarCacheSession(cacheKey, payload) {
   try {
     localStorage.setItem(`${CACHE_PREFIX}${cacheKey}`, JSON.stringify({
+      version: CACHE_VERSION,
       time: Date.now(),
       data: payload,
     }))
@@ -34,6 +36,7 @@ function lerCacheSession(cacheKey) {
     if (!raw) return null
     const parsed = JSON.parse(raw)
     if (!parsed?.data || !parsed?.time) return null
+    if (parsed.version !== CACHE_VERSION) return null
     return parsed
   } catch {
     return null

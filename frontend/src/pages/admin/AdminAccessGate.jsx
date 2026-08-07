@@ -14,11 +14,14 @@ export default function AdminAccessGate({ children }) {
       })
       .catch((error) => {
         if (!ativo) return
+        // Rota admin oculta (whitelist de IP) -> pagina nao encontrada.
+        // Demais erros (rede, 401, 5xx) mantem o login visivel para o
+        // usuario tentar novamente, sem tela preta.
         if (error.response?.status === 404) {
           setStatus('not-found')
           return
         }
-        setStatus('not-found')
+        setStatus('allowed')
       })
 
     return () => {

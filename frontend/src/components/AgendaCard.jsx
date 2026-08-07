@@ -37,7 +37,19 @@ function statusLabel(status) {
   return mapa[status] || status
 }
 
-export default function AgendaCard({ agendamento, onIniciar, onPausar, onFinalizar, onEditar, onCancelar, onExcluir }) {
+export default function AgendaCard({
+  agendamento,
+  onIniciar,
+  onPausar,
+  onFinalizar,
+  onEditar,
+  onCancelar,
+  onExcluir,
+  selectionMode = false,
+  selected = false,
+  onToggleSelection,
+  selectionDisabled = false,
+}) {
   const [menuAberto, setMenuAberto] = useState(false)
   const status = agendamento.status || 'PENDENTE'
   const statusClass = status.toLowerCase()
@@ -47,6 +59,18 @@ export default function AgendaCard({ agendamento, onIniciar, onPausar, onFinaliz
   return (
     <div className="agenda-card">
       <div className="agenda-card-header">
+        {selectionMode && (
+          <button
+            type="button"
+            className={`agenda-card-select ${selected ? 'agenda-card-select-checked' : ''}`}
+            onClick={(event) => {
+              event.stopPropagation()
+              onToggleSelection?.(agendamento.id)
+            }}
+            disabled={selectionDisabled}
+            aria-label={`Selecionar agendamento ${agendamento.id}`}
+          />
+        )}
         <div className="agenda-card-avatar">{iniciais}</div>
         <div className="agenda-card-titulo">
           <span className="agenda-card-nome">{agendamento.clienteNome}</span>

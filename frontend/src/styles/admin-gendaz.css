@@ -733,6 +733,14 @@ html .admin-gendaz .admin-empty-tactical {
   border-radius: 10px;
 }
 
+html .admin-gendaz .admin-loading {
+  display: grid;
+  place-items: center;
+  min-height: 240px;
+  color: var(--gd-muted);
+  font-size: 14px;
+}
+
 /* ---------- Gráfico de área ---------- */
 html .admin-gendaz .admin-area-chart-shell {
   width: 100%;
@@ -1266,6 +1274,25 @@ html .admin-gendaz .admin-assinatura__editar {
   min-height: 36px !important;
   padding: 0 12px !important;
   font-size: 13px !important;
+}
+
+html .admin-gendaz .admin-assinatura__remover {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px !important;
+  padding: 0 12px !important;
+  font-size: 13px !important;
+  color: #f87171 !important;
+  border-color: rgba(248, 113, 113, 0.35) !important;
+  background: rgba(248, 113, 113, 0.08) !important;
+}
+
+html .admin-gendaz .admin-assinatura__remover:hover:not(:disabled) {
+  color: #fca5a5 !important;
+  border-color: rgba(248, 113, 113, 0.55) !important;
+  background: rgba(248, 113, 113, 0.14) !important;
 }
 
 html .admin-gendaz .admin-assinatura__add {

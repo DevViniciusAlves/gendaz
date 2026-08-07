@@ -59,6 +59,45 @@
   border-bottom: 1px solid #404040 !important;
 }
 
+.agenda-card-select {
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(255, 255, 255, 0.35) !important;
+  background: transparent !important;
+  cursor: pointer !important;
+  padding: 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  transition: border-color 0.15s, background-color 0.15s !important;
+}
+
+.agenda-card-select:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+.agenda-card-select:disabled {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+}
+
+.agenda-card-select-checked {
+  background-color: var(--color-primary, #7c3aed) !important;
+  border-color: var(--color-primary, #7c3aed) !important;
+}
+
+.agenda-card-select-checked::after {
+  content: '' !important;
+  width: 6px !important;
+  height: 6px !important;
+  border-radius: 50% !important;
+  background: #ffffff !important;
+}
+
 .agenda-card-avatar {
   width: 38px !important;
   height: 38px !important;
@@ -470,6 +509,14 @@
 
 :root[data-theme='light'] .agenda-card-header {
   border-bottom-color: #e5e7eb !important;
+}
+
+:root[data-theme='light'] .agenda-card-select {
+  border-color: rgba(17, 24, 39, 0.35) !important;
+}
+
+:root[data-theme='light'] .agenda-card-select:hover:not(:disabled) {
+  border-color: rgba(17, 24, 39, 0.6) !important;
 }
 
 :root[data-theme='light'] .agenda-card-nome,

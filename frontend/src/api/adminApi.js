@@ -102,6 +102,10 @@ export const adminApi = {
     return api.put(`/admin/empresas/${empresaId}/subscriptions/${subscriptionId}`, payload).then((response) => response.data)
   },
 
+  removerAssinatura(empresaId, subscriptionId) {
+    return api.delete(`/admin/empresas/${empresaId}/subscriptions/${subscriptionId}`).then((response) => response.data)
+  },
+
   atualizarStatusChamado(chamadoId, status) {
     return api.patch(`/admin/chamados/${chamadoId}/status`, { status }).then((response) => response.data)
   },

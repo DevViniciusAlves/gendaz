@@ -7,30 +7,34 @@ import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class AdminIpWhitelistInterceptor implements HandlerInterceptor {
     @Value("${ADMIN_ALLOWED_IPS:}")
     private String adminAllowedIps;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
-        String ipRequisicao = extrairIpReal(request);
         Set<String> ipsPermitidos = carregarIpsPermitidos();
 
+        // Sem whitelist configurada o painel admin fica liberado por IP
+        // (a autenticacao por token continua exigida pelo AdminTokenInterceptor).
         if (ipsPermitidos.isEmpty()) {
-            ocultarRota(response);
-            return false;
+            return true;
         }
 
+        String ipRequisicao = extrairIpReal(request);
         if (ipRequisicao != null && ipsPermitidos.contains(ipRequisicao)) {
             return true;
         }
 
+        log.warn("Acesso admin negado por whitelist de IP: {}", ipRequisicao);
         ocultarRota(response);
         return false;
     }

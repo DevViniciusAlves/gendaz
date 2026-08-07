@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,5 +44,13 @@ public class AdminSubscriptionController {
             @Valid @RequestBody EditarAssinaturaRequest request
     ) {
         return ResponseEntity.ok(subscriptionAdminService.editarAssinatura(empresaId, subscriptionId, request));
+    }
+
+    @DeleteMapping("/{subscriptionId}")
+    public ResponseEntity<List<AssinaturaAdminResponse>> removerAssinatura(
+            @PathVariable Long empresaId,
+            @PathVariable Long subscriptionId
+    ) {
+        return ResponseEntity.ok(subscriptionAdminService.removerAssinatura(empresaId, subscriptionId));
     }
 }

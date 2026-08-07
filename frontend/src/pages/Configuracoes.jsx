@@ -293,8 +293,8 @@ export default function Configuracoes() {
     }
   }
 
-  const planoAtivo = PLANOS[usuario.plano]
-  const horariosExibidos = horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
+  const planoAtivo = PLANOS[usuario?.plano]
+  const horariosExibidos = Array.isArray(horariosAtendimento) && horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
     : ''
@@ -317,11 +317,11 @@ export default function Configuracoes() {
           <div className="settings-card-head">
             <div>
               <span className="section-kicker">Usuário logado</span>
-              <h2>{usuario.nome}</h2>
+              <h2>{usuario?.nome}</h2>
             </div>
-            <StatusBadge status={usuario.perfil} />
+            <StatusBadge status={usuario?.perfil} />
           </div>
-          <p className="settings-card-text">{usuario.email}</p>
+          <p className="settings-card-text">{usuario?.email}</p>
           <small className="settings-card-muted">Acesso principal do painel.</small>
         </section>
 
@@ -329,10 +329,10 @@ export default function Configuracoes() {
           <div className="settings-card-head">
             <div>
               <span className="section-kicker">Plano ativo</span>
-              <h2>{planoAtivo?.nome || usuario.plano}</h2>
+              <h2>{planoAtivo?.nome || usuario?.plano}</h2>
             </div>
           </div>
-          {usuario.assinatura?.status === 'TESTE' && (
+          {usuario?.assinatura?.status === 'TESTE' && (
             <small className="settings-card-muted">{usuario.assinatura.diasRestantes} dias restantes do teste grátis.</small>
           )}
           <Link to="/sistema/planos" className="btn btn-secondary settings-link-btn">Ver planos</Link>

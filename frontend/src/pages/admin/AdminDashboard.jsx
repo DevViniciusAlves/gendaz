@@ -1,7 +1,8 @@
-import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Users, XCircle } from 'lucide-react'
+import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
+import { formatoCompactoReceita } from '../../utils/formatters.js'
 import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
@@ -58,10 +59,11 @@ function diasDoMesAtual() {
 }
 
 function buildReceitaMes(pagamentos) {
+  const listaPagamentos = Array.isArray(pagamentos) ? pagamentos : []
   const hoje = new Date(`${todayIso()}T12:00:00`)
   const mapaReceita = {}
 
-  pagamentos.forEach((p) => {
+  listaPagamentos.forEach((p) => {
     if (!pagamentoConfirmado(p.status)) return
     const dia = extrairDataPagamento(p)
     if (!dia || !dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
@@ -242,6 +244,7 @@ export default function AdminDashboard() {
   const [assinaturaEditForm, setAssinaturaEditForm] = useState({ planoId: '', dias: 30 })
   const [salvandoAssinatura, setSalvandoAssinatura] = useState(false)
   const [chamadoEdicao, setChamadoEdicao] = useState({ status: 'EM_ANALISE', resposta: '' })
+  const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [aviso, setAviso] = useState('')
   const [carregandoAcao, setCarregandoAcao] = useState(false)
@@ -268,23 +271,39 @@ export default function AdminDashboard() {
   }, [erro])
 
   async function carregarAdmin() {
-    const [dashboardData, usuariosData, pagamentosData, chamadosData, logsData, configData, planosData] = await Promise.all([
-      adminApi.dashboard(),
-      adminApi.usuarios(),
-      adminApi.pagamentos(),
-      adminApi.chamados(),
-      adminApi.logs(),
-      adminApi.configuracoes(),
-      adminApi.planos(),
-    ])
-    setDashboard(dashboardData)
-    setUsuarios(usuariosData)
-    setPagamentos(pagamentosData)
-    setPagamentosModeracao(pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
-    setChamados(chamadosData)
-    setLogs(logsData)
-    setConfig(configData)
-    setPlanos(planosData)
+    setCarregando(true)
+    try {
+      const results = await Promise.allSettled([
+        adminApi.dashboard(),
+        adminApi.usuarios(),
+        adminApi.pagamentos(),
+        adminApi.chamados(),
+        adminApi.logs(),
+        adminApi.configuracoes(),
+        adminApi.planos(),
+      ])
+
+      if (results[0].status === 'fulfilled') setDashboard(results[0].value)
+      if (results[1].status === 'fulfilled') setUsuarios(Array.isArray(results[1].value) ? results[1].value : [])
+      if (results[2].status === 'fulfilled') {
+        const listaPagamentos = Array.isArray(results[2].value) ? results[2].value : []
+        setPagamentos(listaPagamentos)
+        setPagamentosModeracao(listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
+      }
+      if (results[3].status === 'fulfilled') setChamados(Array.isArray(results[3].value) ? results[3].value : [])
+      if (results[4].status === 'fulfilled') setLogs(Array.isArray(results[4].value) ? results[4].value : [])
+      if (results[5].status === 'fulfilled') setConfig(results[5].value)
+      if (results[6].status === 'fulfilled') setPlanos(Array.isArray(results[6].value) ? results[6].value : [])
+
+      if (results.some(r => r.status === 'rejected')) {
+        console.error('Algumas chamadas falharam:', results.filter(r => r.status === 'rejected'))
+      }
+    } catch (e) {
+      console.error('Falha crítica ao carregar painel:', e)
+      setErro('Erro crítico ao carregar painel. Tente novamente.')
+    } finally {
+      setCarregando(false)
+    }
   }
 
   useEffect(() => {
@@ -307,16 +326,18 @@ export default function AdminDashboard() {
           adminApi.dashboard(),
           adminApi.pagamentos(filtroPagamento),
         ])
+        const listaPagamentos = Array.isArray(pagamentosData) ? pagamentosData : []
         let pagamentosModeracao
         if (filtroPagamento.status === '' && filtroPagamento.plano === '') {
-          pagamentosModeracao = pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+          pagamentosModeracao = listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
         } else {
-          pagamentosModeracao = (await adminApi.pagamentos()).filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+          const todosPagamentos = Array.isArray(await adminApi.pagamentos()) ? await adminApi.pagamentos() : []
+          pagamentosModeracao = todosPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
         }
         if (!ativo) return
         setDashboard(dashboardData)
-        setPagamentos(pagamentosData)
-        setPagamentosModeracao(pagamentosModeracao)
+        setPagamentos(listaPagamentos)
+        setPagamentosModeracao(Array.isArray(pagamentosModeracao) ? pagamentosModeracao : [])
       } catch {
         // polling silencioso para nao poluir o painel com erros
       }
@@ -342,9 +363,9 @@ export default function AdminDashboard() {
       if (aba === 'Dashboard' || aba === 'Usuarios' || aba === 'Configuracoes') {
         await carregarAdmin()
       } else if (aba === 'Pagamentos') {
-        setPagamentos(await adminApi.pagamentos(filtroPagamento))
+        setPagamentos(Array.isArray(await adminApi.pagamentos(filtroPagamento)) ? await adminApi.pagamentos(filtroPagamento) : [])
       } else if (aba === 'Aprovar Pagamentos') {
-        const pagamentosData = await adminApi.pagamentos()
+        const pagamentosData = Array.isArray(await adminApi.pagamentos()) ? await adminApi.pagamentos() : []
         setPagamentosModeracao(pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
       } else if (aba === 'Chamados') {
         setChamados(await adminApi.chamados())
@@ -375,10 +396,10 @@ export default function AdminDashboard() {
   const contasCanceladas = dashboard?.empresasVencidas || 0
   const contasTeste = dashboard?.empresasTesteGratis || 0
   const contasAtivasPct = Math.round((contasAtivas / Math.max(contasAtivas + contasCanceladas + contasTeste, 1)) * 100)
-  const receitaMensalGrafico = buildReceitaMes(pagamentos)
-  const pagamentosConfirmadosLista = pagamentos.filter((item) => pagamentoConfirmado(item.status))
-  const pagamentosPendentesLista = pagamentos.filter((item) => statusNormalizado(item.status) === 'PENDENTE')
-  const pagamentoMaisRecente = [...pagamentos]
+  const receitaMensalGrafico = buildReceitaMes(Array.isArray(pagamentos) ? pagamentos : [])
+  const pagamentosConfirmadosLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => pagamentoConfirmado(item.status))
+  const pagamentosPendentesLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => statusNormalizado(item.status) === 'PENDENTE')
+  const pagamentoMaisRecente = (Array.isArray(pagamentos) ? [...pagamentos] : [])
     .sort((a, b) => String(b.dataPagamento || b.dataCriacao || b.data || '').localeCompare(String(a.dataPagamento || a.dataCriacao || a.data || '')))
     .slice(0, 5)
   const planoResumo = useMemo(() => {
@@ -398,19 +419,19 @@ export default function AdminDashboard() {
     return fim > todayIso()
   }), [assinaturas])
 
-  const pagamentosFiltrados = useMemo(() => pagamentos.filter((item) => (
+  const pagamentosFiltrados = useMemo(() => (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => (
     contemTermo(item, pesquisaPagamento, ['empresa', 'responsavel', 'email', 'telefone', 'plano', 'status', 'gateway', 'externalPaymentId', 'paymentReference'])
   )), [pagamentos, pesquisaPagamento])
 
-  const pagamentosModeracaoFiltrados = useMemo(() => pagamentosModeracao.filter((item) => (
+  const pagamentosModeracaoFiltrados = useMemo(() => (Array.isArray(pagamentosModeracao) ? pagamentosModeracao : []).filter((item) => (
     contemTermo(item, pesquisaAprovacao, ['empresa', 'responsavel', 'email', 'telefone', 'plano', 'status', 'statusEmpresa', 'externalPaymentId', 'paymentReference'])
   )), [pagamentosModeracao, pesquisaAprovacao])
 
-  const chamadosFiltrados = useMemo(() => chamados.filter((item) => (
+  const chamadosFiltrados = useMemo(() => (Array.isArray(chamados) ? chamados : []).filter((item) => (
     contemTermo(item, pesquisaChamado, ['assunto', 'empresa', 'usuario', 'status', 'resposta'])
   )), [chamados, pesquisaChamado])
 
-  const logsFiltrados = useMemo(() => logs.filter((item) => {
+  const logsFiltrados = useMemo(() => (Array.isArray(logs) ? logs : []).filter((item) => {
     const tipoOk = !filtroLog.tipo || item.tipo?.toLowerCase().includes(filtroLog.tipo.toLowerCase())
     const severidadeOk = !filtroLog.severidade || item.severidade === filtroLog.severidade
     const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descricao', 'motivo'])
@@ -445,7 +466,7 @@ export default function AdminDashboard() {
   }
 
   function atualizarEmpresaNaTabela(empresaAtualizada) {
-    setUsuarios((atuais) => atuais.map((item) => (
+    setUsuarios((atuais) => (Array.isArray(atuais) ? atuais : []).map((item) => (
       item.empresaId === empresaAtualizada.empresaId ? { ...item, ...empresaAtualizada } : item
     )))
   }
@@ -640,6 +661,27 @@ export default function AdminDashboard() {
     }
   }
 
+  async function removerPlanoDaConta(assinatura) {
+    if (!modal) return
+    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe nao restar nenhum plano, a conta ficara inativa.`)
+    if (!semPlano) return
+    setSalvandoAssinatura(true)
+    setErro('')
+    try {
+      const lista = await adminApi.removerAssinatura(modal.empresaId, assinatura.id)
+      setAssinaturas(lista)
+      setEditandoAssinaturaId(null)
+      setAviso('Plano removido da conta com sucesso.')
+      carregarAdmin().catch(() => {
+        setErro('O plano foi removido, mas nao foi possivel recarregar a tabela agora.')
+      })
+    } catch (error) {
+      setErro(mensagemErroApi(error, 'Nao foi possivel remover o plano.'))
+    } finally {
+      setSalvandoAssinatura(false)
+    }
+  }
+
   function renderAcoesPagamento(item) {
     return (
       <div className="table-actions">
@@ -690,6 +732,7 @@ export default function AdminDashboard() {
       </aside>
 
       <section className="admin-gendaz-content gendaz-main">
+        {carregando && <div className="admin-loading">Carregando...</div>}
         {impersonation && (
           <div className="impersonation-banner" style={{ margin: '0 0 16px' }}>
             <strong>Contexto ativo: {impersonation.empresa}.</strong>
@@ -887,7 +930,7 @@ export default function AdminDashboard() {
                 </Button>
               </div>
             </div>
-            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Empresa', 'Assinatura', 'Ultimo pagamento', 'Acoes']}>
+            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Status empresa', 'Assinatura', 'Ultimo pagamento', 'Acoes']}>
               {usuarios.map((item) => (
                 <tr key={item.empresaId}>
                   <td>{item.empresa}</td>
@@ -960,7 +1003,7 @@ export default function AdminDashboard() {
                 <option value="PRO">Pro</option>
               </select>
             </div>
-            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Empresa', 'Vencimento', 'Pagamento', 'Acoes']}>
+            <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Status empresa', 'Vencimento', 'Pagamento', 'Acoes']}>
               {pagamentosFiltrados.map((item) => (
                 <tr key={item.id}>
                   <td>{item.empresa}</td>
@@ -1239,6 +1282,15 @@ export default function AdminDashboard() {
                             Editar plano
                           </button>
                         )}
+                        <button
+                          type="button"
+                          className="btn btn-ghost admin-assinatura__remover"
+                          disabled={salvandoAssinatura}
+                          onClick={() => removerPlanoDaConta(assinatura)}
+                        >
+                          <Trash2 size={14} />
+                          Remover
+                        </button>
                       </div>
                     ))}
                   </div>

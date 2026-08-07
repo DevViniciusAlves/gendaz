@@ -11,9 +11,9 @@ export default function Pedidos() {
   const [buscaProtocolo, setBuscaProtocolo] = useState('')
   const [buscaCliente, setBuscaCliente] = useState('')
 
-  const pedidos = useMemo(() => data.pedidos.filter((pedido) => {
-    const matchesProtocolo = pedido.protocolo.toLowerCase().includes(buscaProtocolo.toLowerCase())
-    const matchesCliente = pedido.clienteNome.toLowerCase().includes(buscaCliente.toLowerCase())
+  const pedidos = useMemo(() => (Array.isArray(data.pedidos) ? data.pedidos : []).filter((pedido) => {
+    const matchesProtocolo = String(pedido.protocolo || '').toLowerCase().includes(buscaProtocolo.toLowerCase())
+    const matchesCliente = String(pedido.clienteNome || '').toLowerCase().includes(buscaCliente.toLowerCase())
     return matchesProtocolo && matchesCliente
   }), [data.pedidos, buscaProtocolo, buscaCliente])
 

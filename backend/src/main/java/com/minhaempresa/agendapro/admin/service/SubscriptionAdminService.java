@@ -7,7 +7,10 @@ import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
+import com.minhaempresa.agendapro.pagamento.entity.PagamentoPlanoEntity;
+import com.minhaempresa.agendapro.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.agendapro.plano.entity.PlanoEntity;
 import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
@@ -32,6 +35,7 @@ public class SubscriptionAdminService {
 
     private final AssinaturaRepository assinaturaRepository;
     private final EmpresaRepository empresaRepository;
+    private final PagamentoPlanoRepository pagamentoPlanoRepository;
     private final PlanoService planoService;
 
     @Transactional(readOnly = true)
@@ -151,6 +155,97 @@ public class SubscriptionAdminService {
         recalcularFila(fila, nova.getId());
 
         return listarAssinaturas(empresaId);
+    }
+
+    /**
+     * Remove um plano da conta do cliente. Pagamentos que apontavam para a
+     * assinatura sao desvinculados antes da exclusao. Os planos restantes sao
+     * reencadeados e, quando nenhum plano com vigencia resta, a conta fica
+     * INATIVA.
+     */
+    @Transactional
+    public List<AssinaturaAdminResponse> removerAssinatura(Long empresaId, Long subscriptionId) {
+        AssinaturaEntity assinatura = assinaturaRepository.findById(subscriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
+
+        if (!assinatura.getEmpresa().getId().equals(empresaId)) {
+            throw new BusinessException("Assinatura nao pertence a esta empresa.");
+        }
+
+        List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findByAssinaturaId(subscriptionId);
+        pagamentos.forEach(p -> p.setAssinatura(null));
+        pagamentoPlanoRepository.saveAll(pagamentos);
+
+        assinaturaRepository.delete(assinatura);
+
+        reordenarFilaAposRemocao(empresaId, assinatura);
+
+        return listarAssinaturas(empresaId);
+    }
+
+    /**
+     * Reencadeia a fila de planos ativos (ATIVA ou TESTE) apos a remocao de um
+     * plano. Se o plano removido estava em vigor, o proximo passa a valer hoje.
+     * Planos que vinham depois do removido sao deslocados para cima. Quando nao
+     * sobra nenhum plano com vigencia futura, a conta e marcada como INATIVA.
+     */
+    private void reordenarFilaAposRemocao(Long empresaId, AssinaturaEntity removida) {
+        LocalDate hoje = LocalDate.now();
+
+        List<AssinaturaEntity> ativas = assinaturaRepository.findByEmpresaId(empresaId).stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .sorted(Comparator.comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(AssinaturaEntity::getId))
+                .toList();
+
+        if (ativas.isEmpty()) {
+            empresaRepository.findById(empresaId)
+                    .filter(e -> e.getStatus() != StatusEmpresa.INATIVA)
+                    .ifPresent(e -> {
+                        e.setStatus(StatusEmpresa.INATIVA);
+                        empresaRepository.save(e);
+                    });
+            return;
+        }
+
+        boolean removidaEraAtual = removida.getDataInicio() != null && !removida.getDataInicio().isAfter(hoje);
+        int idxInicio = 0;
+
+        if (removidaEraAtual) {
+            AssinaturaEntity primeira = ativas.get(0);
+            long dias = diasDe(primeira);
+            primeira.setDataInicio(hoje);
+            primeira.setDataFim(hoje.plusDays(dias));
+            assinaturaRepository.save(primeira);
+            idxInicio = 1;
+        } else {
+            LocalDate referencia = removida.getDataInicio() != null ? removida.getDataInicio() : hoje;
+            while (idxInicio < ativas.size()
+                    && (ativas.get(idxInicio).getDataInicio() == null
+                    || !ativas.get(idxInicio).getDataInicio().isAfter(referencia))) {
+                idxInicio++;
+            }
+        }
+
+        for (int i = idxInicio; i < ativas.size(); i++) {
+            AssinaturaEntity anterior = ativas.get(i - 1);
+            AssinaturaEntity atual = ativas.get(i);
+            if (anterior.getDataFim() != null) {
+                long dias = diasDe(atual);
+                LocalDate inicio = anterior.getDataFim().plusDays(1);
+                atual.setDataInicio(inicio);
+                atual.setDataFim(inicio.plusDays(dias));
+                assinaturaRepository.save(atual);
+            }
+        }
+    }
+
+    private long diasDe(AssinaturaEntity a) {
+        long dias = a.getDataInicio() != null && a.getDataFim() != null
+                ? ChronoUnit.DAYS.between(a.getDataInicio(), a.getDataFim())
+                : DIAS_PADRAO;
+        return Math.max(dias, 1);
     }
 
     /**

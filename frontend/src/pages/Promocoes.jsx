@@ -327,7 +327,7 @@ export default function Promocoes() {
                   <td><strong>{cupom.codigo}</strong></td>
                   <td>{cupom.descricao}</td>
                   <td>{cupom.tipo === 'PERCENTUAL' ? `${cupom.valor}%` : currency(cupom.valor)}</td>
-                  <td>{new Date(cupom.dataFim).toLocaleDateString('pt-BR')}</td>
+                  <td>{cupom.dataFim ? new Date(cupom.dataFim).toLocaleDateString('pt-BR') : 'Sem prazo'}</td>
                   <td>
                     {cupom.status === 'ATIVO'
                       ? <span className="status status-success"><CheckCircle2 size={14} /> Ativo</span>

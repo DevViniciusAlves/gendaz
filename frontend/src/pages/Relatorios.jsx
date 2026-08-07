@@ -24,14 +24,14 @@ export default function Relatorios() {
     reload(true)
   }, [])
 
-  const consultas = useMemo(() => data.agendamentos.filter((item) => {
+  const consultas = useMemo(() => (Array.isArray(data.agendamentos) ? data.agendamentos : []).filter((item) => {
     const matchesMes = !mes || item.data.startsWith(mes)
     const matchesCliente = !cliente.trim() || item.clienteNome.toLowerCase().includes(cliente.trim().toLowerCase())
     const matchesServico = !servico.trim() || item.servicoNome.toLowerCase().includes(servico.trim().toLowerCase())
     return item.status !== 'CANCELADO' && matchesMes && matchesCliente && matchesServico
   }), [cliente, data.agendamentos, mes, servico])
 
-  const cancelados = useMemo(() => data.agendamentos.filter((item) => {
+  const cancelados = useMemo(() => (Array.isArray(data.agendamentos) ? data.agendamentos : []).filter((item) => {
     const matchesMes = !mes || item.data.startsWith(mes)
     const matchesCliente = !cliente.trim() || item.clienteNome.toLowerCase().includes(cliente.trim().toLowerCase())
     const matchesServico = !servico.trim() || item.servicoNome.toLowerCase().includes(servico.trim().toLowerCase())

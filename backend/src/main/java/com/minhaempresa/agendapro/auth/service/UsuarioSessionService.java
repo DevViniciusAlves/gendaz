@@ -1,5 +1,6 @@
 package com.minhaempresa.agendapro.auth.service;
 
+import com.minhaempresa.agendapro.auth.websocket.SessionWebSocketHandler;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UsuarioSessionService {
     private final UsuarioRepository usuarioRepository;
+    private final SessionWebSocketHandler sessionWebSocketHandler;
 
     @Transactional
     public synchronized String renovarSessao(UsuarioEntity usuario) {
@@ -23,6 +25,9 @@ public class UsuarioSessionService {
                 .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
         usuarioBloqueado.setSessaoAtiva(sessao);
         usuarioRepository.save(usuarioBloqueado);
+        
+        sessionWebSocketHandler.notifySessionInvalidated(usuario.getId(), sessao);
+        
         return sessao;
     }
 

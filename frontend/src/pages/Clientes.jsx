@@ -45,7 +45,7 @@ export default function Clientes() {
   }, [refreshTrigger, reload])
 
   const clientes = useMemo(() => {
-    return data.clientes
+    return (Array.isArray(data.clientes) ? data.clientes : [])
       .map((cliente) => ({
         ...cliente,
         status: cliente.status || 'ATIVO',

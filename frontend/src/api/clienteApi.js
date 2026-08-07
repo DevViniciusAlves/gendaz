@@ -55,7 +55,8 @@ clienteApi.interceptors.response.use(
     }
 
     const status = error.response?.status
-    if (status === 401) {
+    const skipLogout = error.config?.skipMeuGendazLogout === true
+    if (status === 401 && !skipLogout) {
        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
     }
 

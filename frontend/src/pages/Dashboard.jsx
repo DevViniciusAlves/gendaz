@@ -256,10 +256,11 @@ export default function Dashboard() {
   const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
   const totalClientesBase = clientesAtivos.length
   const servicosAtivosBase = servicosVisiveis.filter((s) => s.status === 'ATIVO').length
-  const receitaConfirmadaBase = data.pagamentos
+  const pagamentosVisiveis = Array.isArray(data.pagamentos) ? data.pagamentos : []
+  const receitaConfirmadaBase = pagamentosVisiveis
     .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
     .reduce((sum, p) => sum + Number(p.valor || 0), 0)
-  const pagamentosPendentesBase = data.pagamentos.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
+  const pagamentosPendentesBase = pagamentosVisiveis.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
   const pendenteCobrancaBase = pagamentosPendentesBase.reduce((sum, p) => sum + Number(p.valor || 0), 0)
 
   const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
@@ -286,11 +287,11 @@ export default function Dashboard() {
   const receitaDiasResumo = resumoDashboard?.receitaPorDia?.length
     ? normalizarReceitaDias(resumoDashboard.receitaPorDia)
     : []
-  const receitaDiasBase = buildReceitaMes(data.pagamentos)
+  const receitaDiasBase = buildReceitaMes(pagamentosVisiveis)
   const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
   const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
     ? resumoDashboard.proximosAgendamentos
-    : data.agendamentos
+    : agendamentosVisiveis
         .filter((a) => a.data >= hoje && (a.status === 'CONFIRMADO' || a.status === 'PENDENTE'))
         .sort((a, b) => (a.data + a.horaInicio).localeCompare(b.data + b.horaInicio))
         .slice(0, 3)
@@ -330,7 +331,7 @@ export default function Dashboard() {
       return dataB.localeCompare(dataA)
     })
     .slice(0, 2)
-  const ultimosAtendimentos = [...data.agendamentos]
+  const ultimosAtendimentos = [...agendamentosVisiveis]
     .sort((a, b) => {
       const dataA = `${a.data || ''} ${a.horaInicio || ''}`
       const dataB = `${b.data || ''} ${b.horaInicio || ''}`
@@ -583,7 +584,7 @@ export default function Dashboard() {
               </div>
               <Link className="inline-link" to="/sistema/agenda">Ver todos</Link>
             </div>
-            {data.agendamentos.length === 0 ? (
+            {agendamentosVisiveis.length === 0 ? (
               <div className="dash-empty-state" style={{ padding: '32px 0' }}>
                 <CalendarDays size={36} color="var(--primary)" />
                 <p>Nenhum atendimento registrado ainda.</p>

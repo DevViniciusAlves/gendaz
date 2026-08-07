@@ -25,4 +25,6 @@ public interface PagamentoPlanoRepository extends JpaRepository<PagamentoPlanoEn
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndPlano_NomeOrderByDataCriacaoDesc(String email, String planoNome);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndStatusOrderByDataCriacaoDesc(String email, StatusPagamento status);
+    @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
+    List<PagamentoPlanoEntity> findByAssinaturaId(Long assinaturaId);
 }

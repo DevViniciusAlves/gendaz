@@ -21,9 +21,9 @@ export default function Entregas() {
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 10
 
-  const entregas = useMemo(() => data.entregas.filter((item) => {
-    const matchesProtocolo = item.protocolo.toLowerCase().includes(buscaProtocolo.toLowerCase())
-    const matchesCliente = item.clienteNome.toLowerCase().includes(buscaCliente.toLowerCase())
+  const entregas = useMemo(() => (Array.isArray(data.entregas) ? data.entregas : []).filter((item) => {
+    const matchesProtocolo = String(item.protocolo || '').toLowerCase().includes(buscaProtocolo.toLowerCase())
+    const matchesCliente = String(item.clienteNome || '').toLowerCase().includes(buscaCliente.toLowerCase())
     return matchesProtocolo && matchesCliente
   }), [data.entregas, buscaProtocolo, buscaCliente])
   const totalPaginas = Math.max(1, Math.ceil(entregas.length / itensPorPagina))
@@ -39,7 +39,7 @@ export default function Entregas() {
   function salvar(event) {
     event.preventDefault()
     setErro('')
-    const cliente = data.clientes.find((item) => item.id === Number(form.clienteId))
+    const cliente = (Array.isArray(data.clientes) ? data.clientes : []).find((item) => item.id === Number(form.clienteId))
     const endereco = form.endereco.trim().replace(/\s+/g, ' ')
     const observacoes = form.observacoes.trim()
 
@@ -130,7 +130,7 @@ export default function Entregas() {
 
       <Modal title="Criar entrega" open={modal} onClose={() => setModal(false)}>
         <form className="form-grid" onSubmit={salvar}>
-          <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: e.target.value })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: e.target.value })}>{(Array.isArray(data.clientes) ? data.clientes : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <Input label="Endereco" helper="Informe um endereco objetivo." maxLength={180} value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} required />
           <Input label="Observacoes" helper="Use uma observacao curta." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           <Input label="Data prevista" helper="Escolha uma data valida." type="date" value={form.dataPrevisao} onChange={(e) => setForm({ ...form, dataPrevisao: e.target.value })} />

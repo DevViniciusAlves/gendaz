@@ -207,9 +207,9 @@ export function ClienteGendazProvider({ children, slug }) {
       meuGendazPromocoesApi.notificacoes(),
     ])
     setBeneficios({
-      promocoes: promosRes.status === 'fulfilled' ? promosRes.value : [],
-      cupons: cuponsRes.status === 'fulfilled' ? cuponsRes.value : [],
-      notificacoes: notifRes.status === 'fulfilled' ? (notifRes.value?.notificacoes || []) : [],
+      promocoes: promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [],
+      cupons: cuponsRes.status === 'fulfilled' && Array.isArray(cuponsRes.value) ? cuponsRes.value : [],
+      notificacoes: notifRes.status === 'fulfilled' ? (Array.isArray(notifRes.value?.notificacoes) ? notifRes.value.notificacoes : []) : [],
     })
   }, [])
 

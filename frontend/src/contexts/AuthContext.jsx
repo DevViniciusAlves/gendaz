@@ -3,6 +3,8 @@ import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
 import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
 import { getSessionUser, setSessionUser } from '../api/axiosConfig.js'
+import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
+import { useSessionCheck } from '../hooks/useSessionCheck.js'
 
 const AuthContext = createContext(null)
 const IMPERSONATION_STORAGE_KEY = 'agendapro_impersonation'
@@ -102,6 +104,19 @@ export function AuthProvider({ children }) {
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
+  
+  useSessionWebSocket(() => {
+    console.warn('[auth-debug] websocket invalidacao de sessao recebida')
+    logout('session_invalidated')
+    setSessionExpired(true)
+  })
+
+  useSessionCheck(() => {
+    console.warn('[auth-debug] sessao invalidada detectada via storage')
+    logout('session_invalidated')
+    setSessionExpired(true)
+  })
+
   const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
 
@@ -407,6 +422,15 @@ export function AuthProvider({ children }) {
   async function login(email, senha, { allowAdmin = false } = {}) {
     setSessionExpired(false)
     const response = await appApi.login(email, senha)
+
+    const sessionId = response.sessionId || Date.now().toString()
+    try {
+      window.sessionStorage.setItem('agendapro_session_id', sessionId)
+      window.localStorage.setItem('agendapro_session_id', sessionId)
+    } catch {
+      // armazenamento indisponivel
+    }
+
     if (response.usuario?.perfil === 'SUPER_ADMIN') {
       if (!allowAdmin) {
         throw new Error('Acesso administrativo deve ser feito pela tela de login do admin.')
@@ -474,6 +498,13 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       return { pendingPayment: true, ...pending }
     }
     const user = response.usuario
+    const sessionId = response.sessionId || Date.now().toString()
+    try {
+      window.sessionStorage.setItem('agendapro_session_id', sessionId)
+      window.localStorage.setItem('agendapro_session_id', sessionId)
+    } catch {
+      // armazenamento indisponivel
+    }
     const usuarioComPlano = {
       ...user,
       plano: response.assinatura?.planoNome || user.plano || null,
@@ -511,12 +542,13 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 
   function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
-    setSessionExpired(false)
+    setSessionExpired(motivo === 'session_invalidated')
     appApi.logout().catch(() => {})
     limparSessaoUsuario()
     clearLocalData()
     setUsuario(null)
   }
+
 
   async function adminLogin(email, senha) {
     setSessionExpired(false)

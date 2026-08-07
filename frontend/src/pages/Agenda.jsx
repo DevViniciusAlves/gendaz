@@ -61,7 +61,7 @@ function formatarIsoLocal(data) {
 }
 
 function primeiroId(lista) {
-  return lista[0]?.id ?? ''
+  return Array.isArray(lista) ? (lista[0]?.id ?? '') : ''
 }
 
 function profissionaisAtivos(lista) {
@@ -83,7 +83,7 @@ export default function Agenda() {
   const [data, , { loading, reload }] = useLocalData('agenda')
   const { refreshTrigger } = useContext(RefreshContext)
   const { usuario, renovarAoRetomarAba } = useAuth()
-  const servicosAtivos = data.servicos.filter((item) => item.status !== 'INATIVO')
+  const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
   const profissionaisAtivosLista = useMemo(() => profissionaisAtivos(data.profissionais), [data.profissionais])
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && profissionaisAtivosLista.length > 0
@@ -127,7 +127,7 @@ export default function Agenda() {
     return { inicio: dataFiltro, fim: dataFiltro }
   }, [dataFiltro])
 
-  const filtrados = useMemo(() => data.agendamentos.filter((item) => {
+  const filtrados = useMemo(() => (Array.isArray(data.agendamentos) ? data.agendamentos : []).filter((item) => {
     const matchesPeriodo = !filtrosData.inicio || !filtrosData.fim
       ? true
       : item.data >= filtrosData.inicio && item.data <= filtrosData.fim
@@ -138,8 +138,8 @@ export default function Agenda() {
     return matchesPeriodo && matchesProfissional && matchesStatus && matchesBusca
   }), [data.agendamentos, filtrosData, profissionalId, status, termoBusca])
 
-  const clientesPorId = useMemo(() => new Map(data.clientes.map((cliente) => [cliente.id, cliente])), [data.clientes])
-  const servicosPorId = useMemo(() => new Map(data.servicos.map((servico) => [servico.id, servico])), [data.servicos])
+  const clientesPorId = useMemo(() => new Map((Array.isArray(data.clientes) ? data.clientes : []).map((cliente) => [cliente.id, cliente])), [data.clientes])
+  const servicosPorId = useMemo(() => new Map((Array.isArray(data.servicos) ? data.servicos : []).map((servico) => [servico.id, servico])), [data.servicos])
   const profissionaisPorId = useMemo(() => new Map(profissionaisAtivosLista.map((profissional) => [profissional.id, profissional])), [profissionaisAtivosLista])
 
   const filtradosEnriquecidos = filtrados.map((item) => {
@@ -170,7 +170,7 @@ export default function Agenda() {
       .then((lista) => setPromocoes(Array.isArray(lista) ? lista : []))
       .catch(() => setPromocoes([]))
 
-    const servicosAtivosAtuais = data.servicos.filter((item) => item.status !== 'INATIVO')
+    const servicosAtivosAtuais = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
     const clientePadrao = primeiroId(data.clientes)
     const servicoPadrao = primeiroId(servicosAtivosAtuais)
     const profissionalPadrao = primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE
@@ -302,7 +302,7 @@ export default function Agenda() {
   }
 
   function existeConflito(payload, ignorarId = null) {
-    return data.agendamentos.some((item) => (
+    return (Array.isArray(data.agendamentos) ? data.agendamentos : []).some((item) => (
       item.id !== ignorarId &&
       payload.profissionalId &&
       item.profissionalId === Number(payload.profissionalId) &&
@@ -654,6 +654,10 @@ export default function Agenda() {
           <AgendaCard
             key={agendamento.id}
             agendamento={agendamento}
+            selectionMode={selecionando}
+            selected={selecionados.includes(agendamento.id)}
+            onToggleSelection={alternarSelecionado}
+            selectionDisabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
               descricao: 'Tem certeza que deseja iniciar este atendimento?',
@@ -687,7 +691,7 @@ export default function Agenda() {
 
       <Modal title="Criar agendamento" open={modalCriar} onClose={() => setModalCriar(false)}>
         <form className="form-grid" onSubmit={criarAgendamento}>
-          <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+          <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: Number(e.target.value) })}>{(Array.isArray(data.clientes) ? data.clientes : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <label className="field"><span>Serviço</span><select value={form.servicoId} onChange={(e) => setForm({ ...form, servicoId: Number(e.target.value), cupomCodigo: '' })}>{servicosAtivos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           {temProfissionais && (
             <label className="field">
@@ -726,8 +730,8 @@ export default function Agenda() {
       <Modal title="Editar agendamento" open={modalEditar} onClose={() => setModalEditar(false)}>
         {edicao && (
           <form className="form-grid" onSubmit={salvarEdicao}>
-            <label className="field"><span>Cliente</span><select value={edicao.clienteId} onChange={(e) => setEdicao({ ...edicao, clienteId: Number(e.target.value) })}>{data.clientes.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
-            <label className="field"><span>Serviço</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{data.servicos.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+            <label className="field"><span>Cliente</span><select value={edicao.clienteId} onChange={(e) => setEdicao({ ...edicao, clienteId: Number(e.target.value) })}>{(Array.isArray(data.clientes) ? data.clientes : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+            <label className="field"><span>Serviço</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{(Array.isArray(data.servicos) ? data.servicos : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             {temProfissionais && (
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}

@@ -58,24 +58,24 @@ function periodoAtual() {
 }
 
 function enriquecerClientes(clientes, pagamentos) {
-  return clientes.map((cliente) => ({
+  return (Array.isArray(clientes) ? clientes : []).map((cliente) => ({
     ...cliente,
-    totalGasto: pagamentos
+    totalGasto: (Array.isArray(pagamentos) ? pagamentos : [])
       .filter((pagamento) => pagamento.clienteId === cliente.id && pagamento.status === 'PAGO')
       .reduce((total, pagamento) => total + moedaNumero(pagamento.valor), 0),
   }))
 }
 
 function enriquecerServicos(servicos, agendamentos) {
-  return servicos.map((servico) => ({
+  return (Array.isArray(servicos) ? servicos : []).map((servico) => ({
     ...servico,
     valor: moedaNumero(servico.valor),
-    vendas: agendamentos.filter((agendamento) => agendamento.servicoId === servico.id).length,
+    vendas: (Array.isArray(agendamentos) ? agendamentos : []).filter((agendamento) => agendamento.servicoId === servico.id).length,
   }))
 }
 
 function normalizarAgendamentos(agendamentos) {
-  return agendamentos.map((item) => ({
+  return (Array.isArray(agendamentos) ? agendamentos : []).map((item) => ({
     ...item,
     horaInicio: horaCurta(item.horaInicio),
     horaFim: horaCurta(item.horaFim),
@@ -83,7 +83,7 @@ function normalizarAgendamentos(agendamentos) {
 }
 
 function normalizarPagamentos(pagamentos) {
-  return pagamentos.map((item) => ({ ...item, valor: moedaNumero(item.valor) }))
+  return (Array.isArray(pagamentos) ? pagamentos : []).map((item) => ({ ...item, valor: moedaNumero(item.valor) }))
 }
 
 function normalizarResumoDashboard(resumo) {
@@ -210,8 +210,9 @@ export const appApi = {
           api.get('/planos').then((response) => response.data),
           api.get(`/financeiro/resumo?empresaId=${empresaId}&mes=${periodo.mes}&ano=${periodo.ano}`).then((response) => response.data),
         ])
+        const conversasValidas = Array.isArray(conversas) ? conversas : []
         const mensagensPorConversa = await Promise.all(
-          conversas.map((conversa) => api.get(`/mensagens/conversa/${conversa.id}`).then((response) => response.data)),
+          conversasValidas.map((conversa) => api.get(`/mensagens/conversa/${conversa.id}`).then((response) => response.data)),
         )
         return {
           empresa,
