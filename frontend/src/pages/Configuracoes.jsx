@@ -92,7 +92,7 @@ function atualizarHorario(lista, index, campo, valor) {
 
 export default function Configuracoes() {
   const [data, , { reload }] = useLocalData('configuracoes')
-  const { usuario, logout } = useAuth()
+  const { usuario, authLoading, logout } = useAuth()
   const navigate = useNavigate()
   const [empresa, setEmpresa] = useState(data.empresa)
   const [salvo, setSalvo] = useState(false)

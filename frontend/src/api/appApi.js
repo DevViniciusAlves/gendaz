@@ -199,7 +199,8 @@ export const appApi = {
     const loaders = {
       full: async () => {
         const periodo = periodoAtual()
-        const [clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, planos, financeiro] = await Promise.all([
+        const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, planos, financeiro] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
@@ -213,7 +214,7 @@ export const appApi = {
           conversas.map((conversa) => api.get(`/mensagens/conversa/${conversa.id}`).then((response) => response.data)),
         )
         return {
-          empresa: empresaResumo,
+          empresa,
           clientesBase,
           servicosBase,
           profissionais,
@@ -226,7 +227,8 @@ export const appApi = {
         }
       },
       dashboard: async () => {
-        const [clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, resumo] = await Promise.all([
+        const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, resumo] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
@@ -237,7 +239,7 @@ export const appApi = {
         ])
         const dashboardResumo = normalizarResumoDashboard(resumo)
         return {
-          empresa: empresaResumo,
+          empresa,
           clientesBase,
           servicosBase,
           profissionais,
@@ -277,77 +279,104 @@ export const appApi = {
         }
       },
       clientes: async () => {
-        const [clientesBase, pagamentosBase] = await Promise.all([
+        const [empresa, clientesBase, pagamentosBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
         ])
-        return { empresa: empresaResumo, clientesBase, pagamentosBase }
+        return { empresa, clientesBase, pagamentosBase }
       },
       servicos: async () => {
-        const servicosBase = await api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data)
-        return { empresa: empresaResumo, servicosBase }
+        const [empresa, servicosBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
+        ])
+        return { empresa, servicosBase }
       },
       profissionais: async () => {
-        const profissionais = await api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data)
-        return { empresa: empresaResumo, profissionais }
+        const [empresa, profissionais] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
+        ])
+        return { empresa, profissionais }
       },
       agenda: async () => {
-        const [clientesBase, servicosBase, profissionais, agendamentosBase] = await Promise.all([
+        const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
         ])
-        return { empresa: empresaResumo, clientesBase, servicosBase, profissionais, agendamentosBase }
+        return { empresa, clientesBase, servicosBase, profissionais, agendamentosBase }
       },
       financeiro: async () => {
         const periodo = periodoAtual()
-        const [pagamentosBase, financeiro] = await Promise.all([
+        const [empresa, pagamentosBase, financeiro] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/financeiro/resumo?empresaId=${empresaId}&mes=${periodo.mes}&ano=${periodo.ano}`).then((response) => response.data),
         ])
-        return { empresa: empresaResumo, clientesBase: [], servicosBase: [], agendamentosBase: [], pagamentosBase, financeiro }
+        return { empresa, clientesBase: [], servicosBase: [], agendamentosBase: [], pagamentosBase, financeiro }
       },
       relatorios: async () => {
-        const [clientesBase, servicosBase, agendamentosBase] = await Promise.all([
+        const [empresa, clientesBase, servicosBase, agendamentosBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
         ])
-        return { empresa: empresaResumo, clientesBase, servicosBase, agendamentosBase }
+        return { empresa, clientesBase, servicosBase, agendamentosBase }
       },
       configuracoes: async () => {
-        return { empresa: empresaResumo }
+        const empresa = await api.get(`/empresas/${empresaId}`).then((response) => response.data)
+        return { empresa }
       },
       pagamentos: async () => {
-        const [clientesBase, pagamentosBase] = await Promise.all([
+        const [empresa, clientesBase, pagamentosBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
         ])
-        return { empresa: empresaResumo, clientesBase, pagamentosBase }
+        return { empresa, clientesBase, pagamentosBase }
       },
       entregas: async () => {
-        const clientesBase = await api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data)
-        return { empresa: empresaResumo, clientesBase }
+        const [empresa, clientesBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
+        ])
+        return { empresa, clientesBase }
       },
       notasFiscais: async () => {
-        const clientesBase = await api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data)
-        return { empresa: empresaResumo, clientesBase }
+        const [empresa, clientesBase] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
+        ])
+        return { empresa, clientesBase }
       },
       pedidos: async () => {
-        const produtos = await api.get(`/produtos/empresa/${empresaId}`).then((response) => response.data).catch(() => [])
-        return { empresa: empresaResumo, produtos }
+        const [empresa, produtos] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/produtos/empresa/${empresaId}`).then((response) => response.data).catch(() => []),
+        ])
+        return { empresa, produtos }
       },
       produtos: async () => {
-        return { empresa: empresaResumo, produtos: getData().produtos }
+        const empresa = await api.get(`/empresas/${empresaId}`).then((response) => response.data)
+        return { empresa, produtos: getData().produtos }
       },
       usuarios: async () => {
-        return { empresa: empresaResumo, equipe: getData().equipe }
+        const empresa = await api.get(`/empresas/${empresaId}`).then((response) => response.data)
+        return { empresa, equipe: getData().equipe }
       },
       planos: async () => {
-        const planos = await api.get('/planos').then((response) => response.data)
-        return { empresa: empresaResumo, planos }
+        const [empresa, planos] = await Promise.all([
+          api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get('/planos').then((response) => response.data),
+        ])
+        return { empresa, planos }
       },
+
     }
 
     const loaded = await (loaders[scope] || loaders.full)()
