@@ -2190,7 +2190,6 @@ tbody tr:hover { background: #fffaf5; }
 .settings-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .settings-card-text { margin: 0; font-size: 16px; font-weight: 700; }
 .settings-card-muted { color: var(--muted); }
-.settings-card .btn { width: 100%; justify-content: center; }
 .settings-ramo-box {
   display: flex;
   align-items: center;
@@ -3007,8 +3006,10 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .financeiro-refresh-btn {
-  min-height: 44px;
-  padding-inline: 16px;
+  min-height: 36px;
+  height: 36px;
+  padding-inline: 12px;
+  font-size: 13px;
   white-space: nowrap;
 }
 
@@ -3059,7 +3060,7 @@ tbody tr:hover { background: #fffaf5; }
 .export-csv-modal .field input { width: 100%; }
 .export-options { display: grid; gap: 10px; }
 .export-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; cursor: pointer; }
-.export-option input { margin-top: 3px; accent-color: var(--primary); }
+.export-option input { width: 16px; height: 16px; min-width: 16px; min-height: 16px; margin-top: 3px; flex-shrink: 0; accent-color: var(--primary); }
 .export-option span { display: grid; gap: 2px; }
 .export-option strong { font-size: 14px; }
 .export-option small { color: var(--muted); font-size: 13px; }

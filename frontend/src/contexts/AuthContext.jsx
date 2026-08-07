@@ -123,11 +123,14 @@ export function AuthProvider({ children }) {
           || mensagem.includes('conta inativa')
           || mensagem.includes('periodo gratuito terminou')
           || mensagem.includes('mensalidade')) {
+          const motivoSuspensaoAdmin = mensagem.includes('indisponível')
+            || mensagem.includes('indisponivel')
+            || mensagem.includes('suspensa')
           const atualizado = normalizarUsuarioSessao(
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
-              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
+              motivoInatividade: motivoInatividade || (motivoSuspensaoAdmin ? 'ADMIN_SUSPENSAO' : 'PAGAMENTO_PENDENTE'),
             },
             usuario,
           )
@@ -220,6 +223,9 @@ export function AuthProvider({ children }) {
           || mensagem.includes('conta inativa')
           || mensagem.includes('periodo gratuito terminou')
           || mensagem.includes('mensalidade')
+          || mensagem.includes('indisponível')
+          || mensagem.includes('indisponivel')
+          || mensagem.includes('suspensa')
         const falhaFatal = status === 401
           || mensagem.includes('sessao foi encerrada')
           || mensagem.includes('sessão foi encerrada')
@@ -228,11 +234,14 @@ export function AuthProvider({ children }) {
           || mensagem.includes('sessao expirada')
           || mensagem.includes('sessão expirada')
         if (contaMarcadaInativa) {
+          const motivoSuspensaoAdmin = mensagem.includes('indisponível')
+            || mensagem.includes('indisponivel')
+            || mensagem.includes('suspensa')
           const atualizado = normalizarUsuarioSessao(
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
-              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
+              motivoInatividade: motivoInatividade || (motivoSuspensaoAdmin ? 'ADMIN_SUSPENSAO' : 'PAGAMENTO_PENDENTE'),
             },
             usuario,
           )
@@ -261,9 +270,10 @@ export function AuthProvider({ children }) {
   }, [adminUsuario])
 
   useEffect(() => {
-function marcarContaIndisponivel() {
+    function marcarContaIndisponivel(event) {
       if (!usuario) return
-      const atualizado = { ...usuario, statusConta: 'ACCOUNT_INACTIVE', motivoInatividade: 'ADMIN_SUSPENSAO' }
+      const motivoInatividade = event?.detail?.motivoInatividade || usuario?.motivoInatividade || 'PAGAMENTO_PENDENTE'
+      const atualizado = { ...usuario, statusConta: 'ACCOUNT_INACTIVE', motivoInatividade }
       salvarUsuarioSessao(atualizado)
       setUsuario(atualizado)
     }
@@ -308,12 +318,18 @@ function marcarContaIndisponivel() {
         if (statusConta === 'ACCOUNT_INACTIVE'
           || mensagem.includes('conta inativa')
           || mensagem.includes('periodo gratuito terminou')
-          || mensagem.includes('mensalidade')) {
+          || mensagem.includes('mensalidade')
+          || mensagem.includes('indisponível')
+          || mensagem.includes('indisponivel')
+          || mensagem.includes('suspensa')) {
+          const motivoSuspensaoAdmin = mensagem.includes('indisponível')
+            || mensagem.includes('indisponivel')
+            || mensagem.includes('suspensa')
           const atualizado = normalizarUsuarioSessao(
             {
               ...usuario,
               statusConta: 'ACCOUNT_INACTIVE',
-              motivoInatividade: motivoInatividade || 'PAGAMENTO_PENDENTE',
+              motivoInatividade: motivoInatividade || (motivoSuspensaoAdmin ? 'ADMIN_SUSPENSAO' : 'PAGAMENTO_PENDENTE'),
             },
             usuario,
           )

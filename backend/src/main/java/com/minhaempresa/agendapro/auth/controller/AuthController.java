@@ -38,7 +38,7 @@ public class AuthController {
             if (login.sessionToken() != null && login.usuario() != null) {
                 adicionarCookie(http, response, "agendapro_session", login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
-            return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null));
+            return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (BusinessException ex) {
             if ("CAPTCHA_REQUIRED".equals(ex.getMessage())) {
                 return ResponseEntity.status(403).body(Map.of(
@@ -60,7 +60,7 @@ public class AuthController {
             if (login.sessionToken() != null && login.usuario() != null) {
                 adicionarCookie(http, response, "agendapro_session", login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
-            return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null));
+            return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (RuntimeException ex) {
             log.error("Erro real no POST /api/auth/criar-conta para email={}", mascararEmail(request.email()), ex);
             throw ex;

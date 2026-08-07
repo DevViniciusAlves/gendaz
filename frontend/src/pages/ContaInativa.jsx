@@ -123,7 +123,7 @@ export default function ContaInativa() {
         ])
 
         if (assinaturaAtual?.status === 'ATIVA' || assinaturaAtual?.status === 'TESTE') {
-          atualizarUsuario({ statusConta: 'ACTIVE', assinatura: assinaturaAtual, plano: assinaturaAtual.planoNome || usuario.plano })
+          atualizarUsuario({ statusConta: 'ACTIVE', assinatura: assinaturaAtual, plano: assinaturaAtual.planoNome || usuario.plano, motivoInatividade: null })
           navigate('/sistema/dashboard', { replace: true })
           return
         }
@@ -233,7 +233,7 @@ export default function ContaInativa() {
       setMensagem(resultado.mensagem || 'Status atualizado com sucesso.')
       if (resultado.statusVerificacao === 'APPROVED') {
         limparInicioCheckout(pagamento)
-        atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoAtual })
+        atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoAtual, motivoInatividade: null })
         setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
       }
     } catch (error) {

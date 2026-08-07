@@ -127,37 +127,44 @@ export default function Clientes() {
     setModal(true)
   }
 
-  async function exportarClientes() {
+  function confirmarExportacao() {
     if (!clientes.length) {
       window.dispatchEvent(new CustomEvent('agendapro:toast', {
         detail: { type: 'error', message: 'Nenhum registro encontrado para exportação.' },
       }))
       return
     }
-    const columns = [
-      'ID', 'Nome', 'Telefone', 'E-mail', 'Status', 'Total gasto',
-      'Quantidade de atendimentos', 'Último atendimento', 'Data de cadastro', 'Observações'
-    ]
-    const rows = clientes.map((cliente) => [
-      cliente.id,
-      cliente.nome,
-      exibirTelefone(cliente.telefone),
-      cliente.email || '',
-      cliente.status === 'ATIVO' ? 'Ativo' : 'Inativo',
-      currency(cliente.totalGasto || 0),
-      cliente.quantidadeAtendimentos || 0,
-      cliente.ultimoAtendimento ? formatarData(cliente.ultimoAtendimento) : '',
-      cliente.dataCriacao ? formatarData(cliente.dataCriacao) : '',
-      cliente.observacoes || '',
-    ])
-    exportarCsv({
-      fileName: `clientes-gendaz-${dataHojeDdMmAAAA()}.csv`,
-      columns,
-      rows,
+    setConfirmacao({
+      titulo: 'Exportar clientes',
+      descricao: `Deseja exportar todos os ${clientes.length} cliente(s)?`,
+      acaoLabel: 'Exportar',
+      acao: async () => {
+        const columns = [
+          'ID', 'Nome', 'Telefone', 'E-mail', 'Status', 'Total gasto',
+          'Quantidade de atendimentos', 'Último atendimento', 'Data de cadastro', 'Observações'
+        ]
+        const rows = clientes.map((cliente) => [
+          cliente.id,
+          cliente.nome,
+          exibirTelefone(cliente.telefone),
+          cliente.email || '',
+          cliente.status === 'ATIVO' ? 'Ativo' : 'Inativo',
+          currency(cliente.totalGasto || 0),
+          cliente.quantidadeAtendimentos || 0,
+          cliente.ultimoAtendimento ? formatarData(cliente.ultimoAtendimento) : '',
+          cliente.dataCriacao ? formatarData(cliente.dataCriacao) : '',
+          cliente.observacoes || '',
+        ])
+        exportarCsv({
+          fileName: `clientes-gendaz-${dataHojeDdMmAAAA()}.csv`,
+          columns,
+          rows,
+        })
+        window.dispatchEvent(new CustomEvent('agendapro:toast', {
+          detail: { type: 'success', message: 'Arquivo CSV exportado com sucesso.' },
+        }))
+      },
     })
-    window.dispatchEvent(new CustomEvent('agendapro:toast', {
-      detail: { type: 'success', message: 'Arquivo CSV exportado com sucesso.' },
-    }))
   }
 
   function abrirEdicao(cliente) {
@@ -270,7 +277,7 @@ export default function Clientes() {
           <p>Busca, cadastro e histÃ³rico bÃ¡sico da base atendida.</p>
         </div>
         <div className="table-actions">
-          <Button variant="secondary" icon={Download} onClick={exportarClientes} disabled={recarregando}>
+          <Button variant="secondary" icon={Download} onClick={confirmarExportacao} disabled={recarregando}>
             {recarregando ? 'Exportando...' : 'Exportar CSV'}
           </Button>
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>

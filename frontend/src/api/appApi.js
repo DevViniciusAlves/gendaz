@@ -191,7 +191,8 @@ export const appApi = {
       : [null, null]
 
     if (!estaImpersonando && (assinaturaAtual?.status === 'EXPIRADA' || ['INATIVA', 'BLOQUEADA', 'PENDENTE_PAGAMENTO'].includes(empresaResumo?.status))) {
-      window.dispatchEvent(new Event('agendeasy:account-inactive'))
+      const motivoInatividade = empresaResumo?.status === 'BLOQUEADA' ? 'ADMIN_SUSPENSAO' : 'PAGAMENTO_PENDENTE'
+      window.dispatchEvent(new CustomEvent('agendeasy:account-inactive', { detail: { motivoInatividade } }))
       throw new Error('Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.')
     }
 
@@ -353,7 +354,8 @@ export const appApi = {
 
     const empresa = loaded.empresa
     if (!estaImpersonando && empresa?.status && empresa.status !== 'ATIVA') {
-      window.dispatchEvent(new Event('agendeasy:account-inactive'))
+      const motivoInatividade = empresa.status === 'BLOQUEADA' ? 'ADMIN_SUSPENSAO' : 'PAGAMENTO_PENDENTE'
+      window.dispatchEvent(new CustomEvent('agendeasy:account-inactive', { detail: { motivoInatividade } }))
       throw new Error('Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.')
     }
 

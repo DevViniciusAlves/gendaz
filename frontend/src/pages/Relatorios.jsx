@@ -149,17 +149,11 @@ export default function Relatorios() {
           <span className="section-kicker">Consultas</span>
           <h2>{consultas.length}</h2>
           <p className="settings-card-text">Atendimentos realizados no filtro atual.</p>
-          <Button variant="secondary" icon={Download} onClick={() => setExportModal('consultas')}>
-            Exportar CSV
-          </Button>
         </section>
         <section className="panel settings-card">
           <span className="section-kicker">Cancelados</span>
           <h2>{cancelados.length}</h2>
           <p className="settings-card-text">Histórico de cancelamentos no período.</p>
-          <Button variant="secondary" icon={Download} onClick={() => setExportModal('cancelados')}>
-            Exportar CSV
-          </Button>
         </section>
       </div>
 
@@ -193,7 +187,12 @@ export default function Relatorios() {
       </div>
 
       <section className="panel">
-        <h2>Histórico de consultas</h2>
+        <div className="panel-head">
+          <h2>Histórico de consultas</h2>
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('consultas')}>
+            Exportar CSV
+          </Button>
+        </div>
         <Table columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
             <div className="name-cell">
@@ -212,7 +211,12 @@ export default function Relatorios() {
       </section>
 
       <section className="panel">
-        <h2>Histórico de cancelados</h2>
+        <div className="panel-head">
+          <h2>Histórico de cancelados</h2>
+          <Button variant="secondary" icon={Download} onClick={() => setExportModal('cancelados')}>
+            Exportar CSV
+          </Button>
+        </div>
         <Table columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
             <div className="name-cell">
