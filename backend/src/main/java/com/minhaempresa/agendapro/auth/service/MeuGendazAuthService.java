@@ -7,6 +7,7 @@ import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
@@ -138,15 +139,15 @@ public class MeuGendazAuthService {
     public MeuGendazAuthResponse refreshSessao(String slug, String sessionToken) {
         EmpresaEntity empresa = buscarEmpresa(slug);
         if (sessionToken == null || sessionToken.isBlank()) {
-            throw new BusinessException("Sessao nao encontrada. Faca login novamente.");
+            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }
         UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), sessionToken)
-                .orElseThrow(() -> new BusinessException("Sessao invalida. Faca login novamente."));
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
             throw new BusinessException("Usuario inativo.");
         }
         if (!usuarioSessionService.sessaoValidaMeuGendaz(usuario.getId(), sessionToken, empresa.getId())) {
-            throw new BusinessException("Sessao invalida. Faca login novamente.");
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
         String sessaoRenovada = usuarioSessionService.renovarSessaoMeuGendaz(usuario, sessionToken);
         if (!sessaoRenovada.equals(sessionToken)) {

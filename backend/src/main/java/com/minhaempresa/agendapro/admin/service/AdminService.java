@@ -30,6 +30,7 @@ import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ConflictException;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
@@ -187,13 +188,13 @@ public class AdminService {
         return new AdminLoginResponse(token, new AdminUsuarioResponse(admin.getId(), admin.getNome(), admin.getEmail(), admin.getPerfil().name()));
     }
 
-    public UsuarioEntity exigirAdmin(String token) {
+public UsuarioEntity exigirAdmin(String token) {
         if (token == null || token.isBlank()) {
-            throw new BusinessException("Acesso admin nao autorizado.");
+            throw new SessaoExpiradaException("Acesso admin nao autorizado.");
         }
         UsuarioEntity admin = usuarioRepository.findBySessaoAtiva(token).orElse(null);
         if (admin == null || admin.getPerfil() != PerfilUsuario.SUPER_ADMIN || admin.getStatus() != StatusUsuario.ATIVO) {
-            throw new BusinessException("Acesso admin nao autorizado.");
+            throw new SessaoExpiradaException("Acesso admin nao autorizado.");
         }
         return admin;
     }

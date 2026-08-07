@@ -124,6 +124,16 @@ export function AuthProvider({ children }) {
   const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
 
+  function forcarLogoutPorFalhaRefresh(motivo) {
+    console.error(`[auth-seguranca] Falha crítica no refresh: ${motivo}. Forçando logout total.`)
+    limparSessaoUsuario()
+    clearLocalData()
+    limparIdSessaoLocal()
+    setUsuario(null)
+    setSessionExpired(true)
+    window.dispatchEvent(new Event('agendeasy:session-expired'))
+  }
+
   async function renovarAoRetomarAba({ ignorarThrottle = false } = {}) {
     if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return true
     if (contaInativa(usuario)) return true
@@ -152,7 +162,7 @@ export function AuthProvider({ children }) {
         setUsuario(updated)
         ultimaRenovacaoBemSucedidaRef.current = Date.now()
         return true
-      } catch (error) {
+} catch (error) {
         const statusConta = error?.response?.data?.statusConta
         const motivoInatividade = error?.response?.data?.motivoInatividade
         const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
@@ -176,19 +186,15 @@ export function AuthProvider({ children }) {
           throw new Error('Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.')
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba detectou acesso em outro dispositivo, encerrando sessao local')
-          limparSessaoUsuario()
-          clearLocalData()
-          setUsuario(null)
-          setSessionExpired(true)
+          forcarLogoutPorFalhaRefresh('acesso_em_outro_dispositivo')
           return false
         }
         if (error?.response?.status === 401) {
-          window.dispatchEvent(new Event('agendeasy:session-expired'))
-          throw new Error('Sua sessÃ£o expirou. Por favor, recarregue a página.')
+          forcarLogoutPorFalhaRefresh('sessao_expirada_401')
+          return false
         }
         if (!erroTemporarioAutenticacao(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal')
+          forcarLogoutPorFalhaRefresh('erro_fatal_nao_tratado')
         } else {
           console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario')
         }
@@ -253,7 +259,7 @@ export function AuthProvider({ children }) {
         salvarUsuarioSessao(updated)
         setUsuario(updated)
         ultimaRenovacaoBemSucedidaRef.current = Date.now()
-      } catch (error) {
+} catch (error) {
         if (!mounted) return
         const status = error.response?.status
         const statusConta = error.response?.data?.statusConta
@@ -288,15 +294,9 @@ export function AuthProvider({ children }) {
           salvarUsuarioSessao(atualizado)
           setUsuario(atualizado)
         } else if (status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          console.warn('[auth-debug] refresh inicial detectou acesso em outro dispositivo, encerrando sessao local')
-          limparSessaoUsuario()
-          clearLocalData()
-          setUsuario(null)
-          setSessionExpired(true)
+          forcarLogoutPorFalhaRefresh('acesso_em_outro_dispositivo')
         } else if (falhaFatal) {
-          limparSessaoUsuario()
-          clearLocalData()
-          setUsuario(null)
+          forcarLogoutPorFalhaRefresh('falha_fatal_validacao_inicial')
         } else {
           console.warn('[auth-debug] refresh inicial ignorou erro temporario')
         }
@@ -357,7 +357,7 @@ export function AuthProvider({ children }) {
         // Ao retornar para a aba, após renovar a sessão, sinaliza uma atualização
         // única dos dados das telas abertas (sem polling contínuo).
         window.dispatchEvent(new Event('agendapro:data-changed'))
-      } catch (error) {
+} catch (error) {
         const statusConta = error?.response?.data?.statusConta
         const motivoInatividade = error?.response?.data?.motivoInatividade
         const mensagem = String(error?.response?.data?.mensagem || error?.response?.data?.message || '').toLowerCase()
@@ -384,15 +384,15 @@ export function AuthProvider({ children }) {
           return
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba detectou acesso em outro dispositivo, encerrando sessao local')
-          limparSessaoUsuario()
-          clearLocalData()
-          setUsuario(null)
-          setSessionExpired(true)
+          forcarLogoutPorFalhaRefresh('acesso_em_outro_dispositivo')
+          return
+        }
+        if (error?.response?.status === 401) {
+          forcarLogoutPorFalhaRefresh('sessao_expirada_401')
           return
         }
         if (!erroTemporarioAutenticacao(error)) {
-          console.warn('[auth-debug] renovacao ao retomar aba falhou com erro fatal')
+          forcarLogoutPorFalhaRefresh('erro_fatal_nao_tratado')
         } else {
           console.warn('[auth-debug] renovacao ao retomar aba ignorou erro temporario')
         }

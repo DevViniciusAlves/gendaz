@@ -24,6 +24,7 @@ import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.shared.DocumentoUtils;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ConflictException;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
@@ -366,11 +367,11 @@ public class AuthService {
         return usuario;
     }
 
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId, String sessionToken) {
         if (sessionToken != null && !sessionToken.isBlank()) {
             UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
-                    .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+                    .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
             if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
                 log.debug("Header X-Usuario-Id divergente da sessão. Mantendo cookie como fonte de verdade. header={}, sessao={}", usuarioId, usuario.getId());
             }
@@ -387,7 +388,7 @@ public class AuthService {
         if (usuarioId != null) {
             return buscarUsuarioAutenticado(usuarioId);
         }
-        throw new BusinessException("Usuário autenticado obrigatório.");
+        throw new SessaoExpiradaException("Usuário autenticado obrigatório.");
     }
 
     private String calcularStatusConta(UsuarioEntity usuario, AssinaturaResponse assinatura) {

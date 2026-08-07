@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.auth.service;
 import com.minhaempresa.agendapro.auth.websocket.SessionWebSocketHandler;
 import com.minhaempresa.agendapro.empresa.enums.StatusEmpresa;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
@@ -22,7 +23,7 @@ public class UsuarioSessionService {
     public synchronized String renovarSessao(UsuarioEntity usuario) {
         String sessao = UUID.randomUUID().toString();
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
-                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
         usuarioBloqueado.setSessaoAtiva(sessao);
         usuarioRepository.save(usuarioBloqueado);
         
@@ -48,7 +49,7 @@ public class UsuarioSessionService {
     @Transactional
     public synchronized String renovarSessao(UsuarioEntity usuario, Long empresaId) {
         if (usuario == null || empresaId == null || usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
-            throw new BusinessException("Usuario autenticado invalido.");
+            throw new SessaoExpiradaException("Usuario autenticado invalido.");
         }
         return renovarSessao(usuario);
     }
@@ -56,7 +57,7 @@ public class UsuarioSessionService {
     @Transactional
     public synchronized String obterOuCriarSessao(UsuarioEntity usuario) {
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
-                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
         if (usuarioBloqueado.getSessaoAtiva() != null && !usuarioBloqueado.getSessaoAtiva().isBlank()) {
             return usuarioBloqueado.getSessaoAtiva();
         }
@@ -109,7 +110,7 @@ public class UsuarioSessionService {
             return;
         }
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
         if (sessao == null || sessao.equals(usuario.getSessaoAtiva())) {
             usuario.setSessaoAtiva(null);
             usuarioRepository.save(usuario);
@@ -125,7 +126,7 @@ public class UsuarioSessionService {
     public synchronized String criarSessaoMeuGendaz(UsuarioEntity usuario) {
         String sessao = UUID.randomUUID().toString();
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
-                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
         usuarioBloqueado.setSessaoAtivaMeuGendaz(sessao);
         usuarioRepository.save(usuarioBloqueado);
         return sessao;
@@ -163,7 +164,7 @@ public class UsuarioSessionService {
             return;
         }
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuario autenticado invalido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
         if (sessao == null || sessao.equals(usuario.getSessaoAtivaMeuGendaz())) {
             usuario.setSessaoAtivaMeuGendaz(null);
             usuarioRepository.save(usuario);

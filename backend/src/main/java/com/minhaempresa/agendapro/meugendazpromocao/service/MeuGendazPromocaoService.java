@@ -10,6 +10,7 @@ import com.minhaempresa.agendapro.promocao.repository.PromocaoRepository;
 import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class MeuGendazPromocaoService {
         } catch (Exception e) {
             log.warn("[meu-gendaz] falha ao garantir notificacoes do cliente {}: {}", cliente.getId(), e.getMessage());
         }
-        LocalDateTime agora = LocalDateTime.now();
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         return adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
                 .filter(PromocaoEntity::estaAtiva)
                 .filter(p -> {
@@ -62,7 +63,17 @@ public class MeuGendazPromocaoService {
                 .orElseGet(() -> promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(cliente.getEmpresa().getId(), p.getCodigo().trim())
                         .map(MeuGendazPromocaoEntity::getId)
                         .orElse(null));
+        
         boolean jaUsou = mirrorId != null && usoRepository.existsByPromocaoIdAndClienteId(mirrorId, cliente.getId());
+        
+        // Calcula validade real baseada em fuso horário Brasil
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        boolean dentroPeriodo = p.getDataInicio() == null || p.getDataFim() == null
+                || (!agora.isBefore(p.getDataInicio()) && !agora.isAfter(p.getDataFim()));
+        boolean dentroLimite = p.getQuantidadeLimite() == null || p.getQuantidadeUsada() == null
+                || p.getQuantidadeUsada() < p.getQuantidadeLimite();
+        boolean valida = p.estaAtiva() && dentroPeriodo && dentroLimite;
+
         Set<ServicoEntity> servicos = p.getServicos() == null ? Set.of() : p.getServicos();
         return new PromocaoClienteResponse(
                 p.getId(),
@@ -74,7 +85,7 @@ public class MeuGendazPromocaoService {
                 p.getAplicarTodosServicos(),
                 servicos.stream().map(this::servicoParaMapa).toList(),
                 jaUsou,
-                true
+                valida
         );
     }
 

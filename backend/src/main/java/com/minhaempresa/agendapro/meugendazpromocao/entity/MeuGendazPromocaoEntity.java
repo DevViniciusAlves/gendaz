@@ -6,6 +6,7 @@ import com.minhaempresa.agendapro.shared.enums.StatusCadastro;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.HashSet;
 import java.util.Set;
 import lombok.AllArgsConstructor;
@@ -99,8 +100,9 @@ public class MeuGendazPromocaoEntity {
     }
 
     public boolean isValida() {
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         boolean dentroPeriodo = dataInicio == null || dataFim == null
-                || (!LocalDateTime.now().isBefore(dataInicio) && !LocalDateTime.now().isAfter(dataFim));
+                || (!agora.isBefore(dataInicio) && !agora.isAfter(dataFim));
         boolean dentroLimite = quantidadeLimite == null || quantidadeUsada == null || quantidadeUsada < quantidadeLimite;
         return estaAtiva() && dentroPeriodo && dentroLimite;
     }
