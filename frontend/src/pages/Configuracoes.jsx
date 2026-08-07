@@ -142,9 +142,10 @@ export default function Configuracoes() {
   }
 
   useEffect(() => {
+    if (authLoading || !usuario) return
     carregarLink().catch(() => setErroLink('Não foi possível carregar o link do Meu Gendaz.'))
     carregarHorarios().catch(() => setErroHorario('Não foi possível carregar o horário de atendimento.'))
-  }, [])
+  }, [authLoading, usuario])
 
   async function recarregar() {
     if (recarregando) return
