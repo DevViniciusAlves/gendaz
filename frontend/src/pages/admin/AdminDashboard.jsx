@@ -135,15 +135,7 @@ function GraficoLinha({ dados }) {
   )
   const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
 
-  // Rotulos de valor: mostra acima dos pontos com receita, sem sobrepor vizinhos.
-  const rotulosValor = []
-  let ultimoXRotulo = -Infinity
-  pontos.forEach((p) => {
-    if (p.valor <= 0) return
-    if (p.x - ultimoXRotulo < 52) return
-    ultimoXRotulo = p.x
-    rotulosValor.push(p)
-  })
+  const rotulosValor = pontos.filter((p) => p.valor > 0)
 
   if (!temDados) {
     return (
@@ -208,7 +200,7 @@ function GraficoLinha({ dados }) {
                 onMouseLeave={() => setTooltip(null)}
                 style={{ cursor: hasValue ? 'pointer' : 'default' }}
               />
-              {index % 5 === 0 && (
+              {(
                 <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="rgba(255,255,255,0.55)">
                   {p.label}
                 </text>
@@ -369,7 +361,38 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (!adminUsuario) return
-    adminApi.pagamentos(filtroPagamento).then(setPagamentos).catch(() => {})
+    let ativo = true
+
+    async function atualizarFinanceiro() {
+      try {
+        const [dashboardData, pagamentosData] = await Promise.all([
+          adminApi.dashboard(),
+          adminApi.pagamentos(filtroPagamento),
+        ])
+        let pagamentosModeracao
+        if (filtroPagamento.status === '' && filtroPagamento.plano === '') {
+          pagamentosModeracao = pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+        } else {
+          pagamentosModeracao = (await adminApi.pagamentos()).filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+        }
+        if (!ativo) return
+        setDashboard(dashboardData)
+        setPagamentos(pagamentosData)
+        setPagamentosModeracao(pagamentosModeracao)
+      } catch {
+        // polling silencioso para nao poluir o painel com erros
+      }
+    }
+
+    atualizarFinanceiro()
+    const timer = setInterval(atualizarFinanceiro, 15000)
+    const onFocus = () => { atualizarFinanceiro() }
+    window.addEventListener('focus', onFocus)
+    return () => {
+      ativo = false
+      clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+    }
   }, [adminUsuario, filtroPagamento])
 
   async function recarregarAbaAtual() {

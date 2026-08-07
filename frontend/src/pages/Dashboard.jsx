@@ -167,15 +167,7 @@ function GraficoArea({ dados }) {
   )
   const areaSecundaria = `M ${pontos[0]?.x || pLeft} ${pTop + chartH} ${linhaSecundaria} L ${pontos[pontos.length - 1]?.x || pLeft} ${pTop + chartH} Z`
 
-  // Rotulos de valor: mostra acima dos pontos com receita, sem sobrepor vizinhos.
-  const rotulosValor = []
-  let ultimoXRotulo = -Infinity
-  pontos.forEach((p) => {
-    if (p.valor <= 0) return
-    if (p.x - ultimoXRotulo < 52) return
-    ultimoXRotulo = p.x
-    rotulosValor.push(p)
-  })
+  const rotulosValor = pontos.filter((p) => p.valor > 0)
 
   if (!temDados) {
     return (
@@ -244,7 +236,7 @@ function GraficoArea({ dados }) {
                 onMouseLeave={() => setTooltip(null)}
                 style={{ cursor: hasValue ? 'pointer' : 'default' }}
               />
-              {index % 5 === 0 && (
+              {(
                 <text x={p.x} y={height - 8} textAnchor="middle" fontSize={10} fill="var(--dashboard-chart-text)">
                   {p.label}
                 </text>
