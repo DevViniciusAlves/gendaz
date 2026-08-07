@@ -14,6 +14,7 @@ import CriarConta from '../pages/CriarConta.jsx'
 import PagamentoPendente from '../pages/PagamentoPendente.jsx'
 import PagamentoRetorno from '../pages/PagamentoRetorno.jsx'
 import ContaInativa from '../pages/ContaInativa.jsx'
+import SessionExpiredScreen from '../pages/SessionExpiredScreen.jsx'
 import TermosDeUso from '../pages/TermosDeUso.jsx'
 import PoliticaPrivacidade from '../pages/PoliticaPrivacidade.jsx'
 import Dashboard from '../pages/Dashboard.jsx'
@@ -94,6 +95,8 @@ function AdminRoute({ children }) {
 }
 
 export default function AppRoutes() {
+  const { sessionExpired } = useAuth()
+  if (sessionExpired) return <SessionExpiredScreen />
   return (
     <Routes>
       <Route path="/" element={<Home />} />

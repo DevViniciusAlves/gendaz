@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback, useContext, useRef } from 'react'
-import { useLocation, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState, useCallback, useContext } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -317,8 +317,6 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, perfilAcesso, sincronizarDados } = useContext(ClienteGendazContext)
-  const location = useLocation()
-  const ultimaRotaRef = useRef('')
 
   useEffect(() => {
     const tituloAnterior = document.title

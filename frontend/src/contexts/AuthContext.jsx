@@ -90,13 +90,6 @@ function mensagemAcessoOutroDispositivo(error) {
     || mensagem.includes('acesso em outro dispositivo')
 }
 
-function emitirToast(type, message) {
-  if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('agendapro:toast', {
-    detail: { type, message },
-  }))
-}
-
 function isMeuGendazPath() {
   if (typeof window === 'undefined') return false
   return window.location.pathname.startsWith('/meu-gendaz/')
@@ -107,6 +100,7 @@ export function AuthProvider({ children }) {
   const [usuario, setUsuario] = useState(() => getSessionUser())
   const [impersonation, setImpersonation] = useState(() => impersonationMemory || lerImpersonationPersistida())
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
+  const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
   const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
@@ -163,9 +157,12 @@ export function AuthProvider({ children }) {
           throw new Error('Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.')
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessÃ£o continua ativa.')
-          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local')
-          return true
+          console.warn('[auth-debug] renovacao ao retomar aba detectou acesso em outro dispositivo, encerrando sessao local')
+          limparSessaoUsuario()
+          clearLocalData()
+          setUsuario(null)
+          setSessionExpired(true)
+          return false
         }
         if (error?.response?.status === 401) {
           window.dispatchEvent(new Event('agendeasy:session-expired'))
@@ -272,8 +269,11 @@ export function AuthProvider({ children }) {
           salvarUsuarioSessao(atualizado)
           setUsuario(atualizado)
         } else if (status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
-          console.warn('[auth-debug] refresh inicial detectou outro dispositivo, mantendo sessao local')
+          console.warn('[auth-debug] refresh inicial detectou acesso em outro dispositivo, encerrando sessao local')
+          limparSessaoUsuario()
+          clearLocalData()
+          setUsuario(null)
+          setSessionExpired(true)
         } else if (falhaFatal) {
           limparSessaoUsuario()
           clearLocalData()
@@ -365,8 +365,11 @@ export function AuthProvider({ children }) {
           return
         }
         if (error?.response?.status === 401 && mensagemAcessoOutroDispositivo(error)) {
-          emitirToast('warning', 'Sua conta foi acessada em outro dispositivo, mas esta sessão continua ativa.')
-          console.warn('[auth-debug] renovacao ao retomar aba detectou outro dispositivo, mantendo sessao local')
+          console.warn('[auth-debug] renovacao ao retomar aba detectou acesso em outro dispositivo, encerrando sessao local')
+          limparSessaoUsuario()
+          clearLocalData()
+          setUsuario(null)
+          setSessionExpired(true)
           return
         }
         if (!erroTemporarioAutenticacao(error)) {
@@ -402,6 +405,7 @@ export function AuthProvider({ children }) {
   }, [adminUsuario, usuario])
 
   async function login(email, senha, { allowAdmin = false } = {}) {
+    setSessionExpired(false)
     const response = await appApi.login(email, senha)
     if (response.usuario?.perfil === 'SUPER_ADMIN') {
       if (!allowAdmin) {
@@ -452,6 +456,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   }
 
   async function criarConta(payload) {
+    setSessionExpired(false)
     const response = await appApi.criarConta(payload)
     if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
       const pending = {
@@ -506,6 +511,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 
   function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
+    setSessionExpired(false)
     appApi.logout().catch(() => {})
     limparSessaoUsuario()
     clearLocalData()
@@ -513,6 +519,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   }
 
   async function adminLogin(email, senha) {
+    setSessionExpired(false)
     const response = await adminApi.login(email, senha)
     setAdminUsuario(response.admin)
     setAuthLoading(false)
@@ -583,6 +590,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   const value = useMemo(() => ({
     usuario,
     authLoading,
+    sessionExpired,
     login,
     criarConta,
     logout,
@@ -597,7 +605,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     impersonation,
     iniciarImpersonacao,
     encerrarImpersonacao,
-  }), [usuario, authLoading, adminUsuario, impersonation])
+  }), [usuario, authLoading, adminUsuario, impersonation, sessionExpired])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
