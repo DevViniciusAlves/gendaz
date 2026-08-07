@@ -66,6 +66,22 @@ public class AuthService {
     private final TransactionTemplate transactionTemplate;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
+    public boolean validarCredenciaisLogin(String email, String senha) {
+        String emailNormalizado = normalizarEmail(email);
+        try {
+            List<UsuarioEntity> usuariosEncontrados = usuarioRepository.findAllByEmailIgnoreCase(emailNormalizado);
+            return usuariosEncontrados.stream()
+                    .filter(Objects::nonNull)
+                    .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
+                    .filter(u -> passwordService.matches(senha, u.getSenha()))
+                    .findFirst()
+                    .isPresent();
+        } catch (Exception e) {
+            log.warn("[validar-credenciais] erro ao validar credenciais: {}", e.getMessage());
+            return false;
+        }
+    }
+
     @Transactional
     public LoginResponse login(LoginRequest request) {
         long inicio = System.nanoTime();

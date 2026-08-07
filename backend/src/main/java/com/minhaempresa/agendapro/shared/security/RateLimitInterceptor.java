@@ -1,5 +1,7 @@
 package com.minhaempresa.agendapro.shared.security;
 
+import com.minhaempresa.agendapro.auth.service.AuthService;
+import com.minhaempresa.agendapro.admin.service.AdminService;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,9 +20,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private static final Logger log = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
     private final RateLimitConfig rateLimitConfig;
+    private final AuthService authService;
+    private final AdminService adminService;
 
-    public RateLimitInterceptor(RateLimitConfig rateLimitConfig) {
+    public RateLimitInterceptor(RateLimitConfig rateLimitConfig, AuthService authService, AdminService adminService) {
         this.rateLimitConfig = rateLimitConfig;
+        this.authService = authService;
+        this.adminService = adminService;
     }
 
     @Override
@@ -35,15 +41,55 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         String reason = "Unknown";
 
         if (isLoginEndpoint(path, method)) {
-            Bucket bucket = rateLimitConfig.getLoginBucket(ip);
-            ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
-            if (probe.isConsumed()) {
+            String email = request.getParameter("email");
+            String senha = request.getParameter("senha");
+            
+            // Rate limit only counts FAILED login attempts (wrong credentials)
+            // If credentials are valid, don't count toward limit
+            boolean credenciaisValidas = false;
+            if (email != null && !email.isBlank() && senha != null && !senha.isBlank()) {
+                credenciaisValidas = authService.validarCredenciaisLogin(email, senha);
+            }
+            
+            if (credenciaisValidas) {
+                // Valid credentials - allow without consuming rate limit token
                 allowed = true;
             } else {
-                long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
-                response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
-                reason = "Login rate limit exceeded (5 por hora)";
-                log.warn("[rate-limit] login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                // Invalid credentials - consume rate limit token
+                Bucket bucket = rateLimitConfig.getLoginBucket(ip);
+                ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+                if (probe.isConsumed()) {
+                    allowed = true;
+                } else {
+                    long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
+                    response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
+                    reason = "Login rate limit exceeded (5 tentativas invalidas por hora)";
+                    log.warn("[rate-limit] login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                }
+            }
+        } else if (isAdminLoginEndpoint(path, method)) {
+            String email = request.getParameter("email");
+            String senha = request.getParameter("senha");
+            
+            // Rate limit only counts FAILED admin login attempts
+            boolean credenciaisValidas = false;
+            if (email != null && !email.isBlank() && senha != null && !senha.isBlank()) {
+                credenciaisValidas = adminService.validarCredenciaisAdmin(email, senha);
+            }
+            
+            if (credenciaisValidas) {
+                allowed = true;
+            } else {
+                Bucket bucket = rateLimitConfig.getLoginBucket(ip);
+                ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
+                if (probe.isConsumed()) {
+                    allowed = true;
+                } else {
+                    long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
+                    response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
+                    reason = "Admin login rate limit exceeded (5 tentativas invalidas por hora)";
+                    log.warn("[rate-limit] admin login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                }
             }
         } else if (isRegistrarEndpoint(path, method)) {
             Bucket bucket = rateLimitConfig.getRegistrarBucket(ip);
@@ -94,6 +140,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private boolean isLoginEndpoint(String path, String method) {
         return path.contains("/api/auth/login") && "POST".equals(method);
+    }
+
+    private boolean isAdminLoginEndpoint(String path, String method) {
+        return path.contains("/api/admin/auth/login") && "POST".equals(method);
     }
 
     private boolean isRegistrarEndpoint(String path, String method) {

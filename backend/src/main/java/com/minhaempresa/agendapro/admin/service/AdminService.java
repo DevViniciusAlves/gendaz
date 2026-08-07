@@ -160,6 +160,20 @@ public class AdminService {
         );
     }
 
+    public boolean validarCredenciaisAdmin(String email, String senha) {
+        String emailNormalizado = email == null ? "" : email.trim().toLowerCase();
+        try {
+            UsuarioEntity admin = usuarioRepository.findByEmail(emailNormalizado).orElse(null);
+            return admin != null 
+                && admin.getPerfil() == PerfilUsuario.SUPER_ADMIN 
+                && admin.getStatus() == StatusUsuario.ATIVO 
+                && passwordService.matches(senha, admin.getSenha());
+        } catch (Exception e) {
+            log.warn("[validar-credenciais-admin] erro ao validar credenciais: {}", e.getMessage());
+            return false;
+        }
+    }
+
     @Transactional
     public AdminLoginResponse login(AdminLoginRequest request, String ip, String userAgent) {
         String email = request.email() == null ? "" : request.email().trim().toLowerCase();

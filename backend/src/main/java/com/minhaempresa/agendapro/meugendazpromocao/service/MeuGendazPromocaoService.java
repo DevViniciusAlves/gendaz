@@ -5,43 +5,77 @@ import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.meugendazpromocao.dto.MeuGendazPromocaoDtos.*;
 import com.minhaempresa.agendapro.meugendazpromocao.entity.*;
 import com.minhaempresa.agendapro.meugendazpromocao.repository.*;
+import com.minhaempresa.agendapro.promocao.entity.PromocaoEntity;
+import com.minhaempresa.agendapro.promocao.repository.PromocaoRepository;
 import com.minhaempresa.agendapro.servico.entity.ServicoEntity;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MeuGendazPromocaoService {
     private final MeuGendazPromocaoRepository promocaoRepository;
     private final MeuGendazPromocaoUsoRepository usoRepository;
     private final MeuGendazPromocaoNotificacaoRepository notificacaoRepository;
     private final MeuGendazPromocaoSyncService syncService;
+    private final PromocaoRepository adminPromocaoRepository;
 
     @Transactional
     public List<PromocaoClienteResponse> listarPromocoes(ClienteEntity cliente) {
-        syncService.sincronizarEmpresa(cliente.getEmpresa().getId());
-        garantirNotificacoes(cliente);
-        return promocaoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(cliente.getEmpresa().getId(), com.minhaempresa.agendapro.shared.enums.StatusCadastro.ATIVO)
-                .stream()
-                .filter(MeuGendazPromocaoEntity::isValida)
-                .map(promocao -> new PromocaoClienteResponse(
-                        promocao.getId(),
-                        promocao.getCodigo(),
-                        promocao.getDescricao(),
-                        promocao.getTipo(),
-                        promocao.getValor(),
-                        promocao.getDataFim(),
-                        promocao.getAplicarTodosServicos(),
-                        promocao.getServicos().stream().map(this::servicoParaMapa).toList(),
-                        usoRepository.existsByPromocaoIdAndClienteId(promocao.getId(), cliente.getId()),
-                        promocao.isValida()
-                ))
+        Long empresaId = cliente.getEmpresa().getId();
+        try {
+            syncService.sincronizarEmpresa(empresaId);
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao sincronizar promocoes da empresa {}: {}", empresaId, e.getMessage());
+        }
+        try {
+            garantirNotificacoes(cliente);
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao garantir notificacoes do cliente {}: {}", cliente.getId(), e.getMessage());
+        }
+        LocalDateTime agora = LocalDateTime.now();
+        return adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .filter(PromocaoEntity::estaAtiva)
+                .filter(p -> {
+                    boolean dentroPeriodo = p.getDataInicio() == null || p.getDataFim() == null
+                            || (!agora.isBefore(p.getDataInicio()) && !agora.isAfter(p.getDataFim()));
+                    boolean dentroLimite = p.getQuantidadeLimite() == null || p.getQuantidadeUsada() == null
+                            || p.getQuantidadeUsada() < p.getQuantidadeLimite();
+                    return dentroPeriodo && dentroLimite;
+                })
+                .map(p -> toPromocaoClienteResponse(cliente, p))
                 .toList();
+    }
+
+    private PromocaoClienteResponse toPromocaoClienteResponse(ClienteEntity cliente, PromocaoEntity p) {
+        Long mirrorId = promocaoRepository.findByEmpresaIdAndPromocaoOrigemId(cliente.getEmpresa().getId(), p.getId())
+                .map(MeuGendazPromocaoEntity::getId)
+                .orElseGet(() -> promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(cliente.getEmpresa().getId(), p.getCodigo().trim())
+                        .map(MeuGendazPromocaoEntity::getId)
+                        .orElse(null));
+        boolean jaUsou = mirrorId != null && usoRepository.existsByPromocaoIdAndClienteId(mirrorId, cliente.getId());
+        Set<ServicoEntity> servicos = p.getServicos() == null ? Set.of() : p.getServicos();
+        return new PromocaoClienteResponse(
+                p.getId(),
+                p.getCodigo(),
+                p.getDescricao(),
+                p.getTipo() == null ? null : p.getTipo().name(),
+                p.getValor(),
+                p.getDataFim(),
+                p.getAplicarTodosServicos(),
+                servicos.stream().map(this::servicoParaMapa).toList(),
+                jaUsou,
+                true
+        );
     }
 
     @Transactional(readOnly = true)
@@ -93,8 +127,18 @@ public class MeuGendazPromocaoService {
         if (cupomCodigo == null || cupomCodigo.isBlank()) {
             return null;
         }
-        syncService.sincronizarEmpresa(empresa.getId());
-        MeuGendazPromocaoEntity promocao = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), cupomCodigo.trim())
+        String codigoNormalizado = cupomCodigo.trim();
+        try {
+            syncService.sincronizarEmpresa(empresa.getId());
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para validar cupom: {}", empresa.getId(), e.getMessage());
+        }
+        Optional<MeuGendazPromocaoEntity> opt = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), codigoNormalizado);
+        if (opt.isEmpty()) {
+            Long mirrorId = syncERegistrarMirror(empresa.getId(), codigoNormalizado);
+            opt = mirrorId != null ? promocaoRepository.findById(mirrorId) : Optional.empty();
+        }
+        MeuGendazPromocaoEntity promocao = opt
                 .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
         if (!promocao.isValida()) {
             throw new IllegalArgumentException("Cupom expirado ou invalido.");
@@ -107,6 +151,22 @@ public class MeuGendazPromocaoService {
             throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
         }
         return promocao;
+    }
+
+    private Long syncERegistrarMirror(Long empresaId, String codigoNormalizado) {
+        Optional<PromocaoEntity> admin = adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .filter(p -> p.getCodigo() != null && p.getCodigo().trim().equalsIgnoreCase(codigoNormalizado))
+                .findFirst();
+        if (admin.isPresent()) {
+            try {
+                syncService.sincronizarPromocao(empresaId, admin.get().getId());
+            } catch (Exception e) {
+                log.warn("[meu-gendaz] falha ao sincronizar cupom {}: {}", codigoNormalizado, e.getMessage());
+            }
+        }
+        return promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresaId, codigoNormalizado)
+                .map(MeuGendazPromocaoEntity::getId)
+                .orElse(null);
     }
 
     public BigDecimal calcularDesconto(ServicoEntity servico, MeuGendazPromocaoEntity promocao) {

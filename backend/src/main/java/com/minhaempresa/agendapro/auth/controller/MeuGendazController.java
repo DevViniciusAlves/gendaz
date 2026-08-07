@@ -103,12 +103,17 @@ public class MeuGendazController {
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
-        
+
         UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), usuario.getEmail());
-        ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
-                .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
+        ClienteEntity cliente;
+        try {
+            cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
+                    .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
+        } catch (Exception e) {
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
+        }
         if (cliente.getEmpresa() == null || !empresa.getId().equals(cliente.getEmpresa().getId())) {
             throw new SessaoExpiradaException("Sessao invalida para esta loja.");
         }
@@ -121,9 +126,15 @@ public class MeuGendazController {
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
-        
-        return usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
-                .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+
+        UsuarioEntity usuario;
+        try {
+            usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
+                    .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+        } catch (Exception e) {
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
+        }
+        return usuario;
     }
 
 
