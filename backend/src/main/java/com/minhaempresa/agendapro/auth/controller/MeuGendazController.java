@@ -89,9 +89,9 @@ public class MeuGendazController {
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
         
-        Optional<UsuarioEntity> user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session);
+        Optional<UsuarioEntity> user = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session);
         UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        if (!usuarioSessionService.sessaoValida(usuario.getId(), session, usuario.getEmpresa().getId())) {
+        if (!usuarioSessionService.sessaoValidaMeuGendaz(usuario.getId(), session, usuario.getEmpresa().getId())) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
         return usuario;
@@ -104,7 +104,7 @@ public class MeuGendazController {
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
         
-        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
+        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), usuario.getEmail());
         ClienteEntity cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
@@ -122,7 +122,7 @@ public class MeuGendazController {
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
         
-        return usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
+        return usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
     }
 
@@ -335,9 +335,9 @@ public class MeuGendazController {
                     .orElseThrow(() -> new BusinessException("Loja nao encontrada."));
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session != null) {
-                UsuarioEntity user = usuarioRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
+                UsuarioEntity user = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session).orElse(null);
                 if (user != null) {
-                    user.setSessaoAtiva(null);
+                    user.setSessaoAtivaMeuGendaz(null);
                     usuarioRepository.save(user);
                 }
             }
@@ -390,8 +390,8 @@ public class MeuGendazController {
             result.put("agendamentosFuturos", futuros.size());
             result.put("totalGasto", totalGasto);
             result.put("servicoMaisEscolhido", servicoMaisEscolhido);
-            result.put("promocoes", List.of());
-            result.put("notificacoes", List.of());
+            result.put("promocoes", meuGendazPromocaoService.listarPromocoes(cliente));
+            result.put("notificacoes", meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente));
             return ResponseEntity.ok(result);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -427,9 +427,12 @@ public class MeuGendazController {
             CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
             ChamadoResponse chamado = chamadoService.criar(chamadoRequest, usuario.getId(), "MEU_GENDAZ");
             return ResponseEntity.ok(chamado);
+        } catch (SessaoExpiradaException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
+            log.error("[meu-gendaz] erro ao abrir chamado", e);
             return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel abrir o chamado.", "erro", e.getMessage()));
         }
     }
@@ -441,9 +444,12 @@ public class MeuGendazController {
             UsuarioEntity usuario = findUsuarioAcessoFromSession(httpRequest);
             Long empresaId = getEmpresaId(cliente);
             return ResponseEntity.ok(chamadoService.listarPorEmpresaEUsuario(empresaId, usuario.getId()));
+        } catch (SessaoExpiradaException e) {
+            return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
+            log.error("[meu-gendaz] erro ao listar chamados", e);
             return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel carregar os chamados."));
         }
     }

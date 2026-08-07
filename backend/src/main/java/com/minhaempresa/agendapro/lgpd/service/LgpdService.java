@@ -106,6 +106,7 @@ public class LgpdService {
         usuarios.forEach(u -> {
             u.setStatus(StatusUsuario.INATIVO);
             u.setSessaoAtiva(null);
+            u.setSessaoAtivaMeuGendaz(null);
         });
         usuarioRepository.saveAll(usuarios);
 

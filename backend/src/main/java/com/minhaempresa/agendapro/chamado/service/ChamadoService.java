@@ -78,6 +78,7 @@ public class ChamadoService {
         }
         return chamadoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId)
                 .stream()
+                .filter(this::ehChamadoCompleto)
                 .filter(this::ehChamadoPainel)
                 .map(mapper::toResponse)
                 .toList();
@@ -87,6 +88,7 @@ public class ChamadoService {
     public List<ChamadoResponse> listarPorEmpresaEUsuario(Long empresaId, Long usuarioId) {
         return chamadoRepository.findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(empresaId, usuarioId)
                 .stream()
+                .filter(this::ehChamadoCompleto)
                 .filter(this::ehChamadoMeuGendaz)
                 .map(mapper::toResponse)
                 .toList();
@@ -94,7 +96,10 @@ public class ChamadoService {
 
     @Transactional(readOnly = true)
     public List<ChamadoResponse> listarTodos() {
-        return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream().map(mapper::toResponse).toList();
+        return chamadoRepository.findAllByOrderByDataCriacaoDesc().stream()
+                .filter(this::ehChamadoCompleto)
+                .map(mapper::toResponse)
+                .toList();
     }
 
     @Transactional
@@ -151,6 +156,13 @@ public class ChamadoService {
             case "Alteração em conta" -> PrioridadeChamado.MEDIA;
             default -> PrioridadeChamado.MEDIA;
         };
+    }
+
+    private boolean ehChamadoCompleto(ChamadoEntity chamado) {
+        return chamado != null
+                && chamado.getEmpresa() != null
+                && chamado.getUsuario() != null
+                && chamado.getStatus() != null;
     }
 
     private boolean ehChamadoPainel(com.minhaempresa.agendapro.chamado.entity.ChamadoEntity chamado) {

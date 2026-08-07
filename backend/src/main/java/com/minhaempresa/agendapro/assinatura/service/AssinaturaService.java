@@ -70,7 +70,7 @@ public class AssinaturaService {
         return assinaturaRepository.findByEmpresaId(empresaId).stream()
                 .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
                         || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
@@ -90,7 +90,7 @@ public class AssinaturaService {
         List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
         Optional<AssinaturaEntity> vigente = fila.stream()
                 .filter(a -> a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje)
-                        && a.getDataFim() != null && !a.getDataFim().isBefore(hoje))
+                        && a.getDataFim() != null && a.getDataFim().isAfter(hoje))
                 .findFirst();
         if (vigente.isPresent()) {
             return vigente;
@@ -132,7 +132,7 @@ public class AssinaturaService {
         if (assinaturaVinculada != null && assinaturaVinculada.getPlano().getId().equals(plano.getId())) {
             assinaturaVinculada.setStatus(StatusAssinatura.ATIVA);
             // Idempotencia: se ja esta em vigor (nao venceu), mantem onde esta.
-            if (assinaturaVinculada.getDataFim() != null && !assinaturaVinculada.getDataFim().isBefore(hoje)) {
+            if (assinaturaVinculada.getDataFim() != null && assinaturaVinculada.getDataFim().isAfter(hoje)) {
                 return assinaturaRepository.save(assinaturaVinculada);
             }
             encadearNaFila(empresa.getId(), assinaturaVinculada, hoje, assinaturaVinculada.getId());
@@ -207,7 +207,7 @@ public class AssinaturaService {
             if (anterior.getDataFim() == null) {
                 continue;
             }
-            LocalDate novaInicio = anterior.getDataFim().plusDays(1);
+            LocalDate novaInicio = anterior.getDataFim();
             long dias = atual.getDataInicio() != null && atual.getDataFim() != null
                     ? ChronoUnit.DAYS.between(atual.getDataInicio(), atual.getDataFim())
                     : 30;
@@ -230,7 +230,7 @@ public class AssinaturaService {
             boolean venceu = (a.getStatus() == StatusAssinatura.ATIVA
                     || a.getStatus() == StatusAssinatura.TESTE)
                     && a.getDataFim() != null
-                    && a.getDataFim().isBefore(hoje);
+                    && !a.getDataFim().isAfter(hoje);
             if (venceu) {
                 a.setStatus(StatusAssinatura.EXPIRADA);
                 assinaturaRepository.save(a);
@@ -271,7 +271,7 @@ public class AssinaturaService {
         } else {
             AssinaturaEntity ultima = fila.get(fila.size() - 1);
             LocalDate fim = ultima.getDataFim() == null ? hoje : ultima.getDataFim();
-            dataInicio = fim.plusDays(1);
+            dataInicio = fim;
         }
         alvo.setDataInicio(dataInicio);
         alvo.setDataFim(dataInicio.plusMonths(MESES_POR_PERIODO));

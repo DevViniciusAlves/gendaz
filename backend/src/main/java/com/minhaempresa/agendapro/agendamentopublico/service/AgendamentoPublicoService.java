@@ -161,7 +161,7 @@ public class AgendamentoPublicoService {
         LocalDate hoje = LocalDate.now();
         return assinaturaRepository.findByEmpresaId(empresa.getId()).stream()
                 .anyMatch(a -> (a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
-                        && (a.getDataFim() == null || !a.getDataFim().isBefore(hoje)));
+                        && (a.getDataFim() == null || a.getDataFim().isAfter(hoje)));
     }
 
     private EmpresaEntity buscarEmpresa(String slugOuEmpresaId) {

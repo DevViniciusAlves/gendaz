@@ -99,7 +99,15 @@ public class AuthController {
             HttpServletResponse response
     ) {
         String sessionToken = CookieHelper.lerCookie(http, "agendapro_session").orElse(null);
-        authService.logout(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken);
+        try {
+            if (sessionToken != null && !sessionToken.isBlank()) {
+                authService.logout(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken);
+            } else if (usuarioId != null) {
+                authService.logout(usuarioId, null);
+            }
+        } catch (BusinessException ex) {
+            log.debug("Logout sem sessao valida (best-effort): {}", ex.getMessage());
+        }
         limparCookie(http, response, "agendapro_session");
         return ResponseEntity.noContent().build();
     }

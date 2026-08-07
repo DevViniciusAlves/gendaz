@@ -156,11 +156,18 @@ export default function Dashboard() {
                 {promos.map((promo) => (
                   <div key={promo.id} className="gendaz-mini-card">
                     <div className="gendaz-mini-card__header">
-                      <strong>{promo.titulo}</strong>
-                      <span className="gendaz-desconto">{promo.desconto}% OFF</span>
+                      <strong>{promo.codigo}</strong>
+                      <span className="gendaz-desconto">
+                        {promo.tipo === 'PERCENTUAL' ? `${promo.valor}% OFF` : `R$ ${Number(promo.valor).toFixed(2)}`}
+                      </span>
                     </div>
                     <span>{promo.descricao}</span>
-                    {promo.cupom && <small>Cupom: <strong>{promo.cupom}</strong></small>}
+                    <small>
+                      {promo.aplicarTodosServicos
+                        ? 'Aplicável a todos os serviços'
+                        : 'Aplicável a serviços selecionados'}
+                      {promo.dataFim ? ` · Válido até ${new Date(promo.dataFim).toLocaleDateString('pt-BR')}` : ''}
+                    </small>
                   </div>
                 ))}
               </div>
@@ -255,8 +262,9 @@ export default function Dashboard() {
           </div>
           <ul className="gendaz-list">
             {notifs.slice(0, 5).map((notif) => (
-              <li key={notif.id} className={notif.lida ? 'gendaz-list__item--lida' : ''}>
-                {notif.mensagem} <small>— {notif.data}</small>
+              <li key={notif.promocaoId}>
+                {notif.cupomDescricao || 'Nova promoção disponível'}
+                {notif.dataEnvio && <small> — {new Date(notif.dataEnvio).toLocaleDateString('pt-BR')}</small>}
               </li>
             ))}
           </ul>

@@ -105,17 +105,21 @@ export function AuthProvider({ children }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
   
+  const sessaoDoMeuGendaz = isMeuGendazPath()
+
   useSessionWebSocket(() => {
+    if (isMeuGendazPath()) return
     console.warn('[auth-debug] websocket invalidacao de sessao recebida')
     logout('session_invalidated')
     setSessionExpired(true)
-  })
+  }, { enabled: !sessaoDoMeuGendaz })
 
   useSessionCheck(() => {
+    if (isMeuGendazPath()) return
     console.warn('[auth-debug] sessao invalidada detectada via storage')
     logout('session_invalidated')
     setSessionExpired(true)
-  })
+  }, { enabled: !sessaoDoMeuGendaz })
 
   const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
@@ -540,12 +544,24 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return assinatura
   }
 
+  function limparIdSessaoLocal() {
+    try {
+      window.sessionStorage.removeItem('agendapro_session_id')
+      window.localStorage.removeItem('agendapro_session_id')
+    } catch {
+      // armazenamento indisponivel
+    }
+  }
+
   function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
     setSessionExpired(motivo === 'session_invalidated')
-    appApi.logout().catch(() => {})
+    if (!isMeuGendazPath()) {
+      appApi.logout().catch(() => {})
+    }
     limparSessaoUsuario()
     clearLocalData()
+    limparIdSessaoLocal()
     setUsuario(null)
   }
 

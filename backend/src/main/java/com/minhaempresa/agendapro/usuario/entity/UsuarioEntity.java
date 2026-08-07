@@ -60,6 +60,9 @@ public class UsuarioEntity {
     @Column(length = 80)
     private String sessaoAtiva;
 
+    @Column(name = "sessao_ativa_meu_gendaz", length = 80)
+    private String sessaoAtivaMeuGendaz;
+
     @Column(name = "tentativas_login_falhadas", nullable = false)
     private Integer tentativasLoginFalhadas;
 

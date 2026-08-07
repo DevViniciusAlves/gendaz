@@ -50,7 +50,7 @@ public class SubscriptionAdminService {
 
         for (AssinaturaEntity a : todas) {
             boolean vigente = a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje)
-                    && a.getDataFim() != null && !a.getDataFim().isBefore(hoje)
+                    && a.getDataFim() != null && a.getDataFim().isAfter(hoje)
                     && (a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE);
             boolean isAtual = !encontrouAtual
                     && (vigente || a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE);
@@ -194,7 +194,7 @@ public class SubscriptionAdminService {
 
         List<AssinaturaEntity> ativas = assinaturaRepository.findByEmpresaId(empresaId).stream()
                 .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
                 .sorted(Comparator.comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
                 .toList();
@@ -233,7 +233,7 @@ public class SubscriptionAdminService {
             AssinaturaEntity atual = ativas.get(i);
             if (anterior.getDataFim() != null) {
                 long dias = diasDe(atual);
-                LocalDate inicio = anterior.getDataFim().plusDays(1);
+                LocalDate inicio = anterior.getDataFim();
                 atual.setDataInicio(inicio);
                 atual.setDataFim(inicio.plusDays(dias));
                 assinaturaRepository.save(atual);
@@ -256,7 +256,7 @@ public class SubscriptionAdminService {
         LocalDate hoje = LocalDate.now();
         return assinaturaRepository.findByEmpresaId(empresaId).stream()
                 .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
                 .count();
     }
 
@@ -267,7 +267,7 @@ public class SubscriptionAdminService {
     private LocalDate proximaDataInicio(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> fila = assinaturaRepository.findByEmpresaId(empresaId).stream()
                 .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || !a.getDataFim().isBefore(hoje))
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
@@ -277,7 +277,7 @@ public class SubscriptionAdminService {
         }
         AssinaturaEntity ultima = fila.get(fila.size() - 1);
         LocalDate fim = ultima.getDataFim() == null ? hoje : ultima.getDataFim();
-        return fim.plusDays(1);
+        return fim;
     }
 
     private void recalcularFila(List<AssinaturaEntity> fila, Long aPartirDeId) {
@@ -294,7 +294,7 @@ public class SubscriptionAdminService {
             AssinaturaEntity atual = fila.get(i);
 
             if (anterior.getDataFim() != null) {
-                LocalDate novaDataInicio = anterior.getDataFim().plusDays(1);
+                LocalDate novaDataInicio = anterior.getDataFim();
                 long diasAtuais = atual.getDataInicio() != null && atual.getDataFim() != null
                         ? ChronoUnit.DAYS.between(atual.getDataInicio(), atual.getDataFim())
                         : 30;

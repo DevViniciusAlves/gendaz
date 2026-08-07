@@ -609,7 +609,7 @@ export default function AdminDashboard() {
     setEditandoAssinaturaId(assinatura.id)
     setAssinaturaEditForm({
       planoId: assinatura.planoId != null ? String(assinatura.planoId) : '',
-      dias: assinatura.dias > 0 ? assinatura.dias : 30,
+      dias: assinatura.dias >= 0 ? assinatura.dias : 30,
     })
   }
 
@@ -618,7 +618,7 @@ export default function AdminDashboard() {
       setErro('Selecione um plano para adicionar a conta.')
       return
     }
-    const dias = Math.max(1, Number(novaAssinatura.dias) || 30)
+    const dias = novaAssinatura.dias === '' || novaAssinatura.dias == null ? 30 : Math.max(0, Number(novaAssinatura.dias))
     setSalvandoAssinatura(true)
     setErro('')
     try {
@@ -642,7 +642,7 @@ export default function AdminDashboard() {
       setErro('Selecione um plano para atualizar.')
       return
     }
-    const dias = Math.max(1, Number(assinaturaEditForm.dias) || 30)
+    const dias = assinaturaEditForm.dias === '' || assinaturaEditForm.dias == null ? 30 : Math.max(0, Number(assinaturaEditForm.dias))
     setSalvandoAssinatura(true)
     setErro('')
     try {
@@ -1264,7 +1264,7 @@ export default function AdminDashboard() {
                             </select>
                             <input
                               type="number"
-                              min={1}
+                              min={0}
                               max={3650}
                               value={assinaturaEditForm.dias}
                               onChange={(event) => setAssinaturaEditForm((atual) => ({ ...atual, dias: event.target.value }))}
@@ -1308,7 +1308,7 @@ export default function AdminDashboard() {
                     </select>
                     <input
                       type="number"
-                      min={1}
+                      min={0}
                       max={3650}
                       value={novaAssinatura.dias}
                       onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, dias: event.target.value }))}
