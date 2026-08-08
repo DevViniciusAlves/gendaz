@@ -6,6 +6,7 @@ import Button from '../components/Button.jsx'
 import ScrollReveal from '../components/ScrollReveal.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
+import GraficoReceitaMes from '../components/gendaz/GraficoReceitaMes.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency, PLANOS, todayIso } from '../services/localStore.js'
@@ -135,88 +136,7 @@ function formatoCompactoReceita(valor) {
   return `R$ ${Math.round(valor)}`
 }
 
-function GraficoColunas({ dados }) {
-  const [tooltip, setTooltip] = useState(null)
-  const temDados = dados.some((d) => Number(d.valor || 0) > 0)
-  const width = 760
-  const height = 240
-  const pLeft = 42
-  const pRight = 18
-  const pTop = 36
-  const pBottom = 28
-  const chartW = width - pLeft - pRight
-  const chartH = height - pTop - pBottom
-  const maxValor = Math.max(...dados.map((d) => Number(d.valor || 0)), 1)
-  const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
-  const colunas = dados.map((d, index) => {
-    const valor = Number(d.valor || 0) || 0
-    const columnWidth = (chartW / dados.length) * 0.7
-    const gap = (chartW / dados.length) * 0.3
-    const x = pLeft + index * (columnWidth + gap) + gap / 2
-    const h = (valor / (maxValor || 1)) * chartH
-    const y = pTop + chartH - h
-    return { ...d, valor, x, y, width: columnWidth, height: Math.max(h, 0) }
-  })
-
-  if (!temDados) {
-    return (
-      <div className="bar-chart-empty">
-        <BarChart2 size={40} color="#000" />
-        <p>Nenhuma receita registrada neste mes.</p>
-        <small>Os valores aparecerao aqui conforme os pagamentos confirmados entrarem no periodo.</small>
-      </div>
-    )
-  }
-
-  return (
-    <div className="area-chart-shell">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafico de receita por dia" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-        {gridFracs.map((frac) => {
-          const y = pTop + chartH * (1 - frac)
-          const val = maxValor * frac
-          return (
-            <g key={frac}>
-              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="#e0e0e0" strokeWidth={1} />
-              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#666">
-                {formatoCompactoReceita(val)}
-              </text>
-            </g>
-          )
-        })}
-        {colunas.map((col, index) => {
-          const isHovered = tooltip?.index === index
-          return (
-            <g key={col.iso}>
-              <rect
-                x={col.x}
-                y={col.y}
-                width={col.width}
-                height={col.height}
-                fill={isHovered ? 'rgba(255, 255, 255, 0.9)' : '#ffffff'}
-                onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
-                onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: col.valor > 0 ? 'pointer' : 'default' }}
-              />
-              <text x={col.x + col.width / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#666">
-                {col.label}
-              </text>
-            </g>
-          )
-        })}
-        {tooltip && (
-          <g style={{ pointerEvents: 'none' }}>
-            <rect x={tooltip.x - 52} y={tooltip.y - 45} width={104} height={38} rx={4} fill="#000" />
-            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">{tooltip.label}</text>
-            <text x={tooltip.x} y={tooltip.y - 16} textAnchor="middle" fontSize={12} fill="#fff" fontWeight={700}>
-              {currency(tooltip.valor)}
-            </text>
-          </g>
-        )}
-      </svg>
-    </div>
-  )
-}
 
 export default function Dashboard() {
   const [data, , { loading, reload }] = useLocalData('dashboard')
@@ -430,24 +350,24 @@ export default function Dashboard() {
             ))}
           </div>
 
-          {canFinanceiro && (
-            <ScrollReveal className="panel receita-chart-panel" delay={0}>
-              <div className="panel-head">
-                <div>
-                  <span className="section-kicker">Financeiro</span>
-                  <h2>Receita do mes</h2>
-                  <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
-                </div>
-                <div className="receita-chart-periodo">
-                  <div className="receita-chart-periodo-head">
-                    <TrendingUp size={16} color="var(--primary)" />
-                    <small>{mesAtual}</small>
-                  </div>
-                </div>
-              </div>
-              <GraficoColunas dados={receitaDias} />
-            </ScrollReveal>
-          )}
+           {canFinanceiro && (
+             <ScrollReveal className="panel receita-chart-panel" delay={0}>
+               <div className="panel-head">
+                 <div>
+                   <span className="section-kicker">Financeiro</span>
+                   <h2>Receita do mês</h2>
+                   <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
+                 </div>
+                 <div className="receita-chart-periodo">
+                   <div className="receita-chart-periodo-head">
+                     <TrendingUp size={16} color="var(--primary)" />
+                     <small>{mesAtual}</small>
+                   </div>
+                 </div>
+               </div>
+               <GraficoReceitaMes dados={receitaDias} />
+             </ScrollReveal>
+           )}
 
           <div className="dashboard-grid">
             <ScrollReveal className="panel" delay={0}>

@@ -7,6 +7,7 @@ import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import Table from '../../components/Table.jsx'
+import GraficoReceitaMes from '../../components/gendaz/GraficoReceitaMes.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import logoAdmin from '../../assets/logos/gendaz-logo-branco.png'
 
@@ -84,87 +85,7 @@ function buildReceitaMes(pagamentos) {
     }))
 }
 
-function GraficoColunas({ dados }) {
-  const [tooltip, setTooltip] = useState(null)
-  const temDados = dados.length > 0
-  const width = 760
-  const height = 240
-  const pLeft = 42
-  const pRight = 18
-  const pTop = 36
-  const pBottom = 28
-  const chartW = width - pLeft - pRight
-  const chartH = height - pTop - pBottom
-  const maxValor = Math.max(...dados.map((d) => Number(d.valor || 0)), 1)
-  const gridFracs = [0, 0.25, 0.5, 0.75, 1]
 
-  const colunas = dados.map((d, index) => {
-    const valor = Number(d.valor || 0)
-    const columnWidth = Math.min((chartW / Math.max(dados.length, 1)) * 0.7, 40)
-    const gap = (chartW - (columnWidth * dados.length)) / Math.max(dados.length, 1)
-    const x = pLeft + index * (columnWidth + gap) + gap / 2
-    const h = (valor / maxValor) * chartH
-    const y = pTop + chartH - h
-    return { ...d, valor, x, y, width: columnWidth, height: Math.max(h, 0) }
-  })
-
-  if (!temDados) {
-    return (
-      <div className="admin-bar-chart-empty">
-        <BarChart2 size={40} color="#000" />
-        <p>Nenhum pagamento confirmado neste periodo.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="admin-area-chart-shell">
-      <svg viewBox={`0 0 ${width} ${height}`} role="img" aria-label="Grafico administrativo de receita mensal" style={{ width: '100%', height: '100%', overflow: 'visible' }}>
-        {gridFracs.map((frac) => {
-          const y = pTop + chartH * (1 - frac)
-          const val = maxValor * frac
-          return (
-            <g key={frac}>
-              <line x1={pLeft} y1={y} x2={width - pRight} y2={y} stroke="#e0e0e0" strokeWidth={1} />
-              <text x={pLeft - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#666">
-                {formatoCompactoReceita(val)}
-              </text>
-            </g>
-          )
-        })}
-        {colunas.map((col, index) => {
-          const isHovered = tooltip?.index === index
-          return (
-            <g key={col.iso}>
-              <rect
-                x={col.x}
-                y={col.y}
-                width={col.width}
-                height={col.height}
-                fill={isHovered ? '#333' : '#000'}
-                onMouseEnter={() => setTooltip({ index, x: col.x + col.width / 2, y: col.y, valor: col.valor, label: col.label })}
-                onMouseLeave={() => setTooltip(null)}
-                style={{ cursor: 'pointer' }}
-              />
-              <text x={col.x + col.width / 2} y={height - 8} textAnchor="middle" fontSize={10} fill="#666">
-                {col.label}
-              </text>
-            </g>
-          )
-        })}
-        {tooltip && (
-          <g style={{ pointerEvents: 'none' }}>
-            <rect x={tooltip.x - 52} y={tooltip.y - 45} width={104} height={38} rx={4} fill="#000" />
-            <text x={tooltip.x} y={tooltip.y - 31} textAnchor="middle" fontSize={10} fill="#fff">Dia {tooltip.label}</text>
-            <text x={tooltip.x} y={tooltip.y - 16} textAnchor="middle" fontSize={12} fill="#fff" fontWeight={700}>
-              {moeda(tooltip.valor)}
-            </text>
-          </g>
-        )}
-      </svg>
-    </div>
-  )
-}
 
 function acaoModalTitulo(modal) {
   if (modal?.tipo === 'pagamento-aprovar') return `Aprovar pagamento de ${modal?.empresa || ''}`
@@ -806,16 +727,16 @@ export default function AdminDashboard() {
               ))}
             </div>
             <div className="admin-panels admin-panels--tactical">
-              <section className="admin-tactical-panel">
-                <div className="panel-head">
-                  <div>
-                    <span className="section-kicker">Financeiro</span>
-                    <h2>Receita dos pagamentos</h2>
-                    <p>Base confirmada por data de pagamento no mes corrente.</p>
-                  </div>
-                </div>
-                <GraficoColunas dados={receitaMensalGrafico} />
-              </section>
+               <section className="admin-tactical-panel">
+                 <div className="panel-head">
+                   <div>
+                     <span className="section-kicker">Financeiro</span>
+                     <h2>Receita dos pagamentos</h2>
+                     <p>Base confirmada por data de pagamento no mês corrente.</p>
+                   </div>
+                 </div>
+                 <GraficoReceitaMes dados={receitaMensalGrafico} />
+               </section>
               <section className="admin-tactical-panel">
                 <div className="panel-head">
                   <div>
