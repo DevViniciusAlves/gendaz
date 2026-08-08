@@ -233,9 +233,9 @@ export default function ContaInativa() {
 
             <div className="inactive-account-cards">
               <div className="inactive-account-card">
-                <CreditCard size={32} />
+                <CreditCard size={20} />
                 <div style={{ width: '100%' }}>
-                  <h3 style={{ marginBottom: '12px' }}>Escolher Plano</h3>
+                  <h3 style={{ color: '#111', marginBottom: '8px' }}>Escolher Plano</h3>
                   <div className="field">
                     <select value={planoSelecionado} onChange={trocarPlano} style={{ width: '100%' }}>
                       <option value="BASICO">Básico</option>
@@ -246,8 +246,8 @@ export default function ContaInativa() {
               </div>
 
               <div className="inactive-account-card" onClick={gerarPagamento} style={{ cursor: gerando ? 'wait' : 'pointer' }}>
-                <LockKeyhole size={32} />
-                <h3>Gerar Pagamento</h3>
+                <LockKeyhole size={20} />
+                <h3 style={{ color: '#111' }}>Gerar Pagamento</h3>
                 {pagamento && (
                   <div style={{ width: '100%', marginTop: '12px' }}>
                     {checkoutAtivoAtual && (
@@ -293,8 +293,8 @@ export default function ContaInativa() {
               </div>
 
               <div className="inactive-account-card" onClick={sairDaConta}>
-                <LogOut size={32} />
-                <h3>Sair da Conta</h3>
+                <LogOut size={20} />
+                <h3 style={{ color: '#111' }}>Sair da Conta</h3>
               </div>
             </div>
 
