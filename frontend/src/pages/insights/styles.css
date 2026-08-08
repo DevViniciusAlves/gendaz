@@ -593,7 +593,6 @@
 .insights-sidebar-layout {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   gap: 0;
   min-height: 0;
   flex: 1 1 auto;
@@ -603,251 +602,9 @@
 .insights-sidebar-chat {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-}
-
-/* Grid com linha central minmax(0,1fr): as mensagens rolam dentro
-   do card e NUNCA expandem a altura da página.
-
-   Contrato de altura (mesmo princípio do flex:
-   flex:1 / min-height:0 / flex-shrink:0):
-   - head / sugestões / form: linhas "auto" que NÃO encolhem (flex-shrink: 0)
-   - mensagens: linha minmax(0,1fr) = único elemento que cresce/encolhe,
-     com overflow-y: auto (scroll só aqui)
-   - .insights-chat tem height:100% + overflow:hidden → impede crescimento infinito
-*/
-.insights-sidebar-chat .insights-chat {
-  width: 100%;
-  height: 100%;
-  max-height: 100%;
-  min-height: 0;
-  min-width: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 10px;
-  overflow: hidden;
-}
-
-.insights-sidebar-chat .insights-chat__head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 0;
-  flex-shrink: 0;
-}
-
-.insights-sidebar-chat .insights-chat__avatar {
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  color: var(--primary);
-}
-
-.insights-sidebar-chat .insights-chat__head-info {
-  min-width: 0;
-}
-
-.insights-sidebar-chat .insights-chat__head h3 {
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.25;
-  margin: 0 0 2px;
-  color: var(--text);
-}
-
-.insights-sidebar-chat .insights-chat__head p {
-  margin: 0;
-  font-size: 11px;
-  line-height: 1.35;
-  color: var(--muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.insights-sidebar-chat .insights-chat__messages {
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  gap: 8px;
-  padding-right: 4px;
-  scrollbar-width: thin;
-}
-
-.insights-sidebar-chat .insights-chat__message {
-  display: flex;
-  width: 100%;
-  min-width: 0;
-}
-
-.insights-sidebar-chat .insights-chat__message--user {
-  justify-content: flex-end;
-}
-
-.insights-sidebar-chat .insights-chat__message--bot {
-  justify-content: flex-start;
-}
-
-.insights-sidebar-chat .insights-chat__bubble {
-  max-width: 85%;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-  padding: 8px 12px;
-  border-radius: 12px;
-}
-
-.insights-sidebar-chat .insights-chat__message--user .insights-chat__bubble {
-  background: var(--primary);
-  color: var(--bg);
-  border-bottom-right-radius: 2px;
-}
-
-.insights-sidebar-chat .insights-chat__message--bot .insights-chat__bubble {
-  background: rgba(255, 255, 255, 0.07);
-  color: var(--text);
-  border-bottom-left-radius: 2px;
-}
-
-.insights-sidebar-chat .insights-chat__typing {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 10px 2px;
-  font-style: normal;
-}
-
-.insights-sidebar-chat .insights-chat__typing span {
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  background: var(--muted);
-  animation: insights-typing 1.2s infinite ease-in-out;
-}
-
-.insights-sidebar-chat .insights-chat__typing span:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.insights-sidebar-chat .insights-chat__typing span:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.insights-sidebar-chat .insights-chat__typing em {
-  margin-left: 4px;
-  font-size: 11px;
-  font-style: normal;
-  color: var(--muted);
-}
-
-@keyframes insights-typing {
-  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
-  30% { opacity: 1; transform: translateY(-2px); }
-}
-
-.insights-sidebar-chat .insights-chat__suggestions {
-  min-height: 0;
-  flex-shrink: 0;
-}
-
-.insights-sidebar-chat .insights-chat__suggestions .insights-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.insights-sidebar-chat .insights-chat__suggestions .insights-suggestion {
-  min-height: 32px;
-  padding: 6px 10px;
-  font-size: 11px;
-}
-
-.insights-sidebar-chat .insights-chat__form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 0;
-  flex-shrink: 0;
-}
-
-.insights-sidebar-chat .insights-chat__form .chat-input {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 12px;
-  padding: 10px 12px;
-}
-
-.insights-sidebar-chat .insights-chat__form .btn-send {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  padding: 0;
-  flex: 0 0 40px;
-}
-
-.insights-sidebar-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.insights-sidebar-head h2 {
-  margin: 4px 0 0;
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* ---------- Sugestões ---------- */
-
-.insights-suggestions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.insights-suggestion {
-  width: 100%;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  border: 0.5px solid var(--border);
-  background: var(--surface-soft);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 12px;
-  font-size: 11px;
-  cursor: pointer;
-  min-height: 36px;
-}
-
-.insights-suggestion:hover {
-  border-color: var(--primary);
-}
-
-.insights-simulation {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  min-height: 44px;
 }
 
 /* ---------- Modal de análise ---------- */
@@ -1104,10 +861,10 @@
    .gendaz-chat__messages. */
 .insights-sidebar-chat .gendaz-chat {
   width: 100%;
-  height: auto;
+  height: 100%;
+  max-height: 100%;
   flex: 1 1 auto;
   align-self: stretch;
-  max-height: none;
   min-height: 0;
   min-width: 0;
   background: transparent;
@@ -1115,6 +872,9 @@
   border-radius: 0;
   padding: 0;
   box-shadow: none;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+  gap: 10px;
   overflow: hidden;
 }
 
@@ -1133,8 +893,9 @@
   flex: 1 1 auto;
   min-height: 0;
   flex-shrink: 1;
-  margin-bottom: 10px;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
   scrollbar-width: thin;
 }
 
@@ -1148,7 +909,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 10px;
-  padding: 28px 14px 24px;
+  padding: 12px 14px 24px;
   color: var(--gendaz-muted);
   text-align: center;
 }
@@ -1167,7 +928,7 @@
 /* Sugestões/atalhos iniciais: fixos, entre as mensagens e o input */
 .insights-sidebar-chat .gendaz-chat__sugestoes--base {
   flex-shrink: 0;
-  margin: 0 0 10px;
+  margin: 0;
 }
 
 /* Input fixo na base (não encolhe) */
