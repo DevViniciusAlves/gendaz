@@ -275,7 +275,7 @@ export default function ContaInativa() {
                         </div>
                         <div className="payment-pix-body">
                           {pagamento?.pixQrCodeBase64 && (
-                            <img className="pix-qr-image large" src={data:image/png;base64,} alt="QR Code PIX" />
+                            <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
                           )}
                           <div className="payment-pix-copy">
                             <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
@@ -298,7 +298,7 @@ export default function ContaInativa() {
               </div>
             </div>
 
-            {mensagem && <div className={payment-feedback }>{mensagem}</div>}
+            {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
           </>
         )}
       </section>
