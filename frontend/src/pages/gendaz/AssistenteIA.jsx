@@ -12,6 +12,21 @@ const ATALHOS = [
   { label: 'Reagendar', prompt: 'Quero reagendar um agendamento.' },
 ]
 
+function acaoDetalhada(acao) {
+  switch (String(acao || '').toLowerCase()) {
+    case 'agenda':
+      return { texto: 'Vamos abrir a agenda e seguir com seu agendamento.', botao: 'Ir para agenda' }
+    case 'reagendar':
+      return { texto: 'Vamos localizar o agendamento certo e reagendar.', botao: 'Ir para agenda' }
+    case 'cancelar':
+      return { texto: 'Vamos localizar o agendamento e confirmar o cancelamento.', botao: 'Ir para agenda' }
+    case 'servicos':
+      return { texto: 'Se quiser, eu posso te levar para ver os serviços.', botao: 'Ver serviços' }
+    default:
+      return null
+  }
+}
+
 export default function AssistenteIA() {
   const { cliente } = useContext(ClienteGendazContext)
   const [mensagens, setMensagens] = useState([])
@@ -116,11 +131,11 @@ export default function AssistenteIA() {
                     ))}
                   </div>
                 )}
-                {item.acao && (
+                {item.acao && acaoDetalhada(item.acao) && (
                   <div className="gendaz-chat__acao">
-                    <Calendar size={14} /> Acao disponivel
+                    <Calendar size={14} /> {acaoDetalhada(item.acao).texto}
                     <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={() => navigate('agenda')}>
-                      <ArrowRight size={14} /> Ir para Agenda
+                      <ArrowRight size={14} /> {acaoDetalhada(item.acao).botao}
                     </button>
                   </div>
                 )}
