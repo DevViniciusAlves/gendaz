@@ -729,65 +729,27 @@ public class InsightsService {
     }
 
     private MeuGendazIAResponse responderClienteLocalmente(Long empresaId, String pergunta, Map<String, Object> dados) {
-        Map<String, Object> financeiro = mapa(dados.get("financeiro"));
-        List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
-        List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
         String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase();
-        String empresaNome = stringValor(dados.get("empresaNome"));
 
         List<String> sugestoes = new ArrayList<>();
         String resposta;
         String acao = "nenhuma";
 
         if (perguntaNormalizada.matches(".*(agendar|marcar|reserva).*")) {
-            resposta = "Posso te ajudar a agendar na " + empresaNome + ". Vá até a aba de agenda para escolher serviço, profissional, data e horário.";
-            sugestoes = List.of("Ir para Agenda", "Ver serviços", "Ver horários");
+            resposta = "Vou te ajudar aqui mesmo. Me diga qual serviço você quer.";
+            sugestoes = List.of("Quero agendar", "Ver serviços", "Ver horários");
             acao = "agenda";
         } else if (perguntaNormalizada.matches(".*(reagendar|remarcar|trocar).*")) {
-            resposta = "Para reagendar, abra a agenda e escolha o atendimento desejado. Eu posso te orientar no próximo passo.";
-            sugestoes = List.of("Ir para Agenda", "Ver meus agendamentos", "Cancelar agendamento");
+            resposta = "Sem problema. Me diga qual agendamento você quer alterar.";
+            sugestoes = List.of("Reagendar", "Ver meus agendamentos");
             acao = "reagendar";
         } else if (perguntaNormalizada.matches(".*(cancelar|desmarcar|remover).*")) {
-            resposta = "Se quiser cancelar um agendamento, vá até a agenda e selecione o compromisso. Posso te ajudar a encontrar o atendimento correto.";
-            sugestoes = List.of("Ir para Agenda", "Ver meus agendamentos");
+            resposta = "Entendi. Me diga qual agendamento você quer cancelar.";
+            sugestoes = List.of("Cancelar", "Ver meus agendamentos");
             acao = "cancelar";
-        } else if (perguntaNormalizada.matches(".*(preco|precos|valor|valores|servico|servicos).*")) {
-            if (servicos.isEmpty()) {
-                resposta = "No momento não encontrei serviços cadastrados para esta empresa.";
-            } else {
-                String lista = servicos.stream()
-                        .limit(5)
-                        .map(s -> {
-                            String nome = stringValor(s.get("nome"));
-                            double valor = numero(s.get("valor"));
-                            return nome + " - " + formatarMoeda(valor);
-                        })
-                        .reduce((a, b) -> a + "; " + b)
-                        .orElse("");
-                resposta = "Os serviços encontrados foram: " + lista + ".";
-            }
-            sugestoes = List.of("Quero agendar", "Ver profissionais", "Ver promoções");
-            acao = "servicos";
-        } else if (perguntaNormalizada.matches(".*(cobrar|pendente|pagamento|gasto|financeiro).*")) {
-            resposta = "Até o momento, o valor total confirmado é " + formatarMoeda(numero(financeiro.get("receita_30d"))) + ". Se quiser, posso te orientar sobre serviços e agendamentos.";
-            sugestoes = List.of("Ver serviços", "Ir para Agenda");
-            acao = "nenhuma";
-        } else if (perguntaNormalizada.matches(".*(profissional|equipe|quem atende).*")) {
-            if (profissionais.isEmpty()) {
-                resposta = "Não encontrei profissionais cadastrados agora.";
-            } else {
-                String lista = profissionais.stream()
-                        .limit(5)
-                        .map(p -> stringValor(p.get("nome")))
-                        .reduce((a, b) -> a + "; " + b)
-                        .orElse("");
-                resposta = "Os profissionais cadastrados são: " + lista + ".";
-            }
-            sugestoes = List.of("Quero agendar", "Ver serviços");
-            acao = "nenhuma";
         } else {
-            resposta = "Posso ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções. Se quiser, me diga o que você precisa.";
-            sugestoes = List.of("Quero agendar", "Ver serviços", "Ver promoções");
+            resposta = "Posso ajudar com agendamento, reagendamento ou cancelamento. Me diga o que você quer fazer.";
+            sugestoes = List.of("Quero agendar", "Reagendar", "Cancelar");
         }
 
         return new MeuGendazIAResponse(resposta, sugestoes, acao, LocalDateTime.now(ZoneId.of(appTimezone)));
