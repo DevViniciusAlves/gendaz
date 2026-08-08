@@ -31,13 +31,24 @@ function planoResumo(usuario, filaAtiva) {
   // Junta a assinatura atual (do usuario) com a fila retornada pela API,
   // removendo duplicidades para nunca exibir a mesma assinatura duas vezes.
   const mapa = new Map()
-  const registrar = (item) => {
+  const registrar = (item, isAtivo = false) => {
     if (!item) return
     const nome = nomePlanoDe(item?.planoNome || item?.plano)
     const inicio = String(item?.dataInicio || '').slice(0, 10)
     const fim = String(item?.dataFim || item?.dataFimTeste || '').slice(0, 10)
     if (!fim) return
-    const restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
+    
+    // Planos futuros (na fila) têm dias congelados enquanto o plano atual estiver ativo
+    let restante
+    if (!isAtivo && assinatura && assinatura.status !== 'EXPIRADA') {
+      // Plano futuro: dias congelados enquanto o plano atual estiver ativo
+      // (não desconta dias enquanto o plano atual não expirar)
+      restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
+    } else {
+      // Plano atual ou plano futuro quando não há plano ativo: desconta dias normalmente
+      restante = item?.diasRestantes != null ? item.diasRestantes : diasRestantesDe(fim)
+    }
+    
     const chave = item?.id != null ? `id:${item.id}` : `${nome}|${inicio}|${fim}`
     if (mapa.has(chave)) return
     mapa.set(chave, {
@@ -47,21 +58,32 @@ function planoResumo(usuario, filaAtiva) {
     })
   }
 
-  ;(Array.isArray(filaAtiva) ? filaAtiva : []).forEach(registrar)
-  registrar(assinatura)
+  // Registra primeiro os planos da fila (futuros)
+  ;(Array.isArray(filaAtiva) ? filaAtiva : []).forEach(item => registrar(item, false))
+  // Registra o plano atual por último para garantir que ele seja considerado ativo
+  registrar(assinatura, true)
 
-  // Mesmo plano comprado de novo: nao duplica o plano, apenas soma os dias
-  // (considera o fim do ultimo periodo). Planos diferentes seguem lado a lado.
+  // Agrupa por nome de plano: se for o mesmo plano, soma os dias; se for diferente, mantém separado
   const porNome = new Map()
   ;[...mapa.values()].forEach((item) => {
     const existente = porNome.get(item.nome)
-    if (!existente || item.restante > existente.restante) {
-      porNome.set(item.nome, item)
+    if (existente) {
+      // Mesmo plano: soma os dias
+      porNome.set(item.nome, {
+        nome: item.nome,
+        restante: existente.restante + item.restante,
+      })
+    } else {
+      // Plano diferente: mantém separado
+      porNome.set(item.nome, {
+        nome: item.nome,
+        restante: item.restante,
+      })
     }
   })
 
   const itens = [...porNome.values()]
-    .sort((a, b) => String(a.inicio).localeCompare(String(b.inicio)) || a.nome.localeCompare(b.nome))
+    .sort((a, b) => a.nome.localeCompare(b.nome))
 
   // Nenhum plano identificado: recai sobre os dados do usuario
   if (itens.length === 0) {
@@ -72,6 +94,12 @@ function planoResumo(usuario, filaAtiva) {
     return `${nome} ${restante} dias restantes`
   }
 
+  // Se tiver apenas 1 plano, exibe sem o " / "
+  if (itens.length === 1) {
+    return `${itens[0].nome} ${itens[0].restante ?? 0} dias restantes`
+  }
+
+  // Se tiver múltiplos planos diferentes, exibe separados por " / "
   return itens
     .map((item) => `${item.nome} ${item.restante ?? 0} dias restantes`)
     .join(' / ')
