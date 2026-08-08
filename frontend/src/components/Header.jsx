@@ -64,25 +64,26 @@ function planoResumo(usuario, filaAtiva) {
   registrar(assinatura, true)
 
   // Agrupa por nome de plano: se for o mesmo plano, soma os dias; se for diferente, mantém separado
-  const porNome = new Map()
+  const porPlano = new Map()
   ;[...mapa.values()].forEach((item) => {
-    const existente = porNome.get(item.nome)
+    const chavePlano = String(item.nome || '').trim().toUpperCase()
+    const existente = porPlano.get(chavePlano)
     if (existente) {
       // Mesmo plano: soma os dias
-      porNome.set(item.nome, {
+      porPlano.set(chavePlano, {
         nome: item.nome,
         restante: existente.restante + item.restante,
       })
     } else {
       // Plano diferente: mantém separado
-      porNome.set(item.nome, {
+      porPlano.set(chavePlano, {
         nome: item.nome,
         restante: item.restante,
       })
     }
   })
 
-  const itens = [...porNome.values()]
+  const itens = [...porPlano.values()]
     .sort((a, b) => a.nome.localeCompare(b.nome))
 
   // Nenhum plano identificado: recai sobre os dados do usuario
