@@ -12,7 +12,9 @@ const api = axios.create({
 })
 
 let sessionUser = null
+let adminSessionToken = null
 const SESSION_USER_STORAGE_KEY = 'agendapro_session_user'
+const ADMIN_SESSION_TOKEN_KEY = 'agendapro_admin_session_token'
 
 function lerUsuarioPersistido() {
   if (typeof window === 'undefined' || !window.sessionStorage) return null
@@ -51,6 +53,53 @@ export function getSessionUser() {
   }
   return null
 }
+
+function lerAdminTokenPersistido() {
+  if (typeof window === 'undefined' || !window.sessionStorage) return null
+  try {
+    return window.sessionStorage.getItem(ADMIN_SESSION_TOKEN_KEY)
+  } catch {
+    return null
+  }
+}
+
+function salvarAdminTokenPersistido(token) {
+  if (typeof window === 'undefined' || !window.sessionStorage) return
+  try {
+    if (token) {
+      window.sessionStorage.setItem(ADMIN_SESSION_TOKEN_KEY, token)
+    } else {
+      window.sessionStorage.removeItem(ADMIN_SESSION_TOKEN_KEY)
+    }
+  } catch {
+    // fallback
+  }
+}
+
+export function setAdminSessionToken(token) {
+  adminSessionToken = token || null
+  salvarAdminTokenPersistido(adminSessionToken)
+}
+
+export function getAdminSessionToken() {
+  if (adminSessionToken) return adminSessionToken
+  const persistido = lerAdminTokenPersistido()
+  if (persistido) {
+    adminSessionToken = persistido
+    return adminSessionToken
+  }
+  return null
+}
+
+api.interceptors.request.use((config) => {
+  const headers = { ...(config.headers || {}) }
+  const adminToken = getAdminSessionToken()
+  if (adminToken && !headers['X-Admin-Token']) {
+    headers['X-Admin-Token'] = adminToken
+  }
+  config.headers = headers
+  return config
+})
 
 api.interceptors.response.use(
   (response) => response,

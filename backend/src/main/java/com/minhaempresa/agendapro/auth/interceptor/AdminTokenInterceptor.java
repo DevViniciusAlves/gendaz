@@ -23,7 +23,10 @@ public class AdminTokenInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String token = CookieHelper.lerCookie(request, "agendeasy_admin_session").orElse(null);
+        String token = request.getHeader("X-Admin-Token");
+        if (token == null || token.isBlank()) {
+            token = CookieHelper.lerCookie(request, "agendeasy_admin_session").orElse(null);
+        }
         if (token != null && !token.isBlank()) {
             try {
                 adminService.exigirAdmin(token);

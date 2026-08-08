@@ -250,6 +250,10 @@ public class AdminController {
     }
 
     private String tokenAdmin(HttpServletRequest request) {
+        String headerToken = request.getHeader("X-Admin-Token");
+        if (headerToken != null && !headerToken.isBlank()) {
+            return headerToken;
+        }
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {

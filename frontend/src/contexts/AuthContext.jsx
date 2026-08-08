@@ -2,7 +2,7 @@
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
 import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
-import { getSessionUser, setSessionUser } from '../api/axiosConfig.js'
+import { getSessionUser, setSessionUser, setAdminSessionToken } from '../api/axiosConfig.js'
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
 import { useSessionCheck } from '../hooks/useSessionCheck.js'
 
@@ -10,6 +10,7 @@ const AuthContext = createContext(null)
 const IMPERSONATION_STORAGE_KEY = 'agendapro_impersonation'
 let pendingPaymentMemory = null
 let adminUsuarioMemory = null
+let adminSessionTokenMemory = null
 let impersonationMemory = null
 
 function limparSessaoUsuario() {
@@ -41,6 +42,8 @@ function salvarImpersonationPersistida(impersonation) {
 
 function limparSessaoAdmin() {
   adminUsuarioMemory = null
+  adminSessionTokenMemory = null
+  setAdminSessionToken(null)
 }
 
 function emitirMudancaSessao() {
@@ -569,6 +572,8 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   async function adminLogin(email, senha) {
     setSessionExpired(false)
     const response = await adminApi.login(email, senha)
+    adminSessionTokenMemory = response.token || null
+    setAdminSessionToken(adminSessionTokenMemory)
     setAdminUsuario(response.admin)
     setAuthLoading(false)
     return response.admin
