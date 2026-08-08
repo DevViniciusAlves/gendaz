@@ -83,6 +83,11 @@ function isMeuGendazPath() {
   return window.location.pathname.startsWith('/meu-gendaz/')
 }
 
+function isAdminPath() {
+  if (typeof window === 'undefined') return false
+  return window.location.pathname.startsWith('/admin')
+}
+
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
   const [usuario, setUsuario] = useState(() => getSessionUser())
