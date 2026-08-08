@@ -60,9 +60,7 @@ public class SubscriptionAdminService {
             long dias = a.getDataInicio() != null && a.getDataFim() != null
                     ? ChronoUnit.DAYS.between(a.getDataInicio(), a.getDataFim())
                     : 0;
-            long diasRestantes = a.getDataFim() != null
-                    ? Math.max(0, ChronoUnit.DAYS.between(LocalDate.now(), a.getDataFim()))
-                    : 0;
+            long diasRestantes = diasRestantes(a.getDataInicio(), a.getDataFim());
 
             resultado.add(new AssinaturaAdminResponse(
                     a.getId(),
@@ -78,6 +76,14 @@ public class SubscriptionAdminService {
         }
 
         return resultado;
+    }
+
+    private long diasRestantes(LocalDate dataInicio, LocalDate dataFim) {
+        if (dataFim == null) return 0;
+        LocalDate referencia = dataInicio != null && dataInicio.isAfter(LocalDate.now())
+                ? dataInicio
+                : LocalDate.now();
+        return Math.max(0, ChronoUnit.DAYS.between(referencia, dataFim));
     }
 
     @Transactional
