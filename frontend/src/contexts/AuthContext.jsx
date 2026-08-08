@@ -4,7 +4,6 @@ import { adminApi } from '../api/adminApi.js'
 import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
 import { getSessionUser, setSessionUser, setAdminSessionToken } from '../api/axiosConfig.js'
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
-import { useSessionCheck } from '../hooks/useSessionCheck.js'
 
 const AuthContext = createContext(null)
 const IMPERSONATION_STORAGE_KEY = 'agendapro_impersonation'
@@ -108,21 +107,12 @@ export function AuthProvider({ children }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
   
-  const sessaoDoMeuGendaz = isMeuGendazPath()
-
   useSessionWebSocket(() => {
     if (isMeuGendazPath()) return
     console.warn('[auth-debug] websocket invalidacao de sessao recebida')
     logout('session_invalidated')
     setSessionExpired(true)
-  }, { enabled: !sessaoDoMeuGendaz })
-
-  useSessionCheck(() => {
-    if (isMeuGendazPath()) return
-    console.warn('[auth-debug] sessao invalidada detectada via storage')
-    logout('session_invalidated')
-    setSessionExpired(true)
-  }, { enabled: !sessaoDoMeuGendaz })
+  }, { enabled: !isMeuGendazPath() })
 
   const validacaoInicialEmAndamentoRef = useRef(false)
   const ultimaRenovacaoBemSucedidaRef = useRef(0)
@@ -131,7 +121,6 @@ export function AuthProvider({ children }) {
     console.error(`[auth-seguranca] Falha crítica no refresh: ${motivo}. Forçando logout total.`)
     limparSessaoUsuario()
     clearLocalData()
-    limparIdSessaoLocal()
     setUsuario(null)
     setSessionExpired(true)
     window.dispatchEvent(new Event('agendeasy:session-expired'))
@@ -430,14 +419,6 @@ export function AuthProvider({ children }) {
     setSessionExpired(false)
     const response = await appApi.login(email, senha)
 
-    const sessionId = response.sessionId || Date.now().toString()
-    try {
-      window.sessionStorage.setItem('agendapro_session_id', sessionId)
-      window.localStorage.setItem('agendapro_session_id', sessionId)
-    } catch {
-      // armazenamento indisponivel
-    }
-
     if (response.usuario?.perfil === 'SUPER_ADMIN') {
       if (!allowAdmin) {
         throw new Error('Acesso administrativo deve ser feito pela tela de login do admin.')
@@ -505,13 +486,6 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       return { pendingPayment: true, ...pending }
     }
     const user = response.usuario
-    const sessionId = response.sessionId || Date.now().toString()
-    try {
-      window.sessionStorage.setItem('agendapro_session_id', sessionId)
-      window.localStorage.setItem('agendapro_session_id', sessionId)
-    } catch {
-      // armazenamento indisponivel
-    }
     const usuarioComPlano = {
       ...user,
       plano: response.assinatura?.planoNome || user.plano || null,
@@ -547,15 +521,6 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return assinatura
   }
 
-  function limparIdSessaoLocal() {
-    try {
-      window.sessionStorage.removeItem('agendapro_session_id')
-      window.localStorage.removeItem('agendapro_session_id')
-    } catch {
-      // armazenamento indisponivel
-    }
-  }
-
   function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
     setSessionExpired(motivo === 'session_invalidated')
@@ -564,7 +529,6 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     }
     limparSessaoUsuario()
     clearLocalData()
-    limparIdSessaoLocal()
     setUsuario(null)
   }
 
