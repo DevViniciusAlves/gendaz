@@ -233,9 +233,9 @@ export default function ContaInativa() {
 
             <div className="inactive-account-cards">
               <div className="inactive-account-card">
-                <CreditCard size={20} />
+                <CreditCard size={24} />
                 <div style={{ width: '100%' }}>
-                  <h3 style={{ color: '#111', marginBottom: '8px' }}>Escolher Plano</h3>
+                  <h3>Escolher Plano</h3>
                   <div className="field">
                     <select value={planoSelecionado} onChange={trocarPlano} style={{ width: '100%' }}>
                       <option value="BASICO">Básico</option>
@@ -246,57 +246,54 @@ export default function ContaInativa() {
               </div>
 
               <div className="inactive-account-card" onClick={gerarPagamento} style={{ cursor: gerando ? 'wait' : 'pointer' }}>
-                <LockKeyhole size={20} />
-                <h3 style={{ color: '#111' }}>Gerar Pagamento</h3>
-                {pagamento && (
-                  <div style={{ width: '100%', marginTop: '12px' }}>
-                    {checkoutAtivoAtual && (
-                      <div style={{ marginBottom: '12px' }}>
-                        <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout} style={{ width: '100%' }}>
-                          Abrir checkout
-                        </Button>
-                      </div>
-                    )}
-                    {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
-                      <small className="plan-checkout-expired-note" style={{ display: 'block', marginBottom: '12px', textAlign: 'center' }}>Checkout expirado. Gere um novo pagamento.</small>
-                    )}
-
-                    {pagamento?.id && (
-                      <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando} style={{ width: '100%', marginBottom: '12px' }}>
-                        {carregando ? 'Verificando...' : 'Já paguei, verificar'}
-                      </Button>
-                    )}
-
-                    {(pagamento?.pixCopiaECola || pagamento?.pixQrCodeBase64) && (
-                      <div className="payment-pix-card" style={{ marginTop: '16px', width: '100%' }}>
-                        <div className="payment-pix-header">
-                          <QrCode size={22} />
-                          <strong>Pagamento PIX</strong>
-                        </div>
-                        <div className="payment-pix-body">
-                          {pagamento?.pixQrCodeBase64 && (
-                            <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
-                          )}
-                          <div className="payment-pix-copy">
-                            <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
-                            {pagamento?.pixCopiaECola && (
-                              <button type="button" className="btn btn-secondary" onClick={copiarPix} style={{ marginTop: '8px' }}>
-                                <Copy size={16} /> {copiado ? 'Código copiado' : 'Copiar código PIX'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
+                <LockKeyhole size={24} />
+                <h3>Gerar Pagamento</h3>
               </div>
 
               <div className="inactive-account-card" onClick={sairDaConta}>
-                <LogOut size={20} />
-                <h3 style={{ color: '#111' }}>Sair da Conta</h3>
+                <LogOut size={24} />
+                <h3>Sair da Conta</h3>
               </div>
             </div>
+
+            {pagamento && (
+              <div className="inactive-account-actions">
+                {checkoutAtivoAtual && (
+                  <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout} style={{ width: '100%' }}>
+                    Abrir checkout
+                  </Button>
+                )}
+                {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
+                  <small className="plan-checkout-expired-note" style={{ display: 'block', textAlign: 'center' }}>Checkout expirado. Gere um novo pagamento.</small>
+                )}
+                {pagamento?.id && (
+                  <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando} style={{ width: '100%' }}>
+                    {carregando ? 'Verificando...' : 'Já paguei, verificar'}
+                  </Button>
+                )}
+                {(pagamento?.pixCopiaECola || pagamento?.pixQrCodeBase64) && (
+                  <div className="payment-pix-card" style={{ width: '100%' }}>
+                    <div className="payment-pix-header">
+                      <QrCode size={22} />
+                      <strong>Pagamento PIX</strong>
+                    </div>
+                    <div className="payment-pix-body">
+                      {pagamento?.pixQrCodeBase64 && (
+                        <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
+                      )}
+                      <div className="payment-pix-copy">
+                        <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
+                        {pagamento?.pixCopiaECola && (
+                          <button type="button" className="btn btn-secondary" onClick={copiarPix} style={{ marginTop: '8px' }}>
+                            <Copy size={16} /> {copiado ? 'Código copiado' : 'Copiar código PIX'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
           </>
