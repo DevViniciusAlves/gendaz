@@ -6,7 +6,6 @@ import { getSessionUser, setSessionUser, setAdminSessionToken } from '../api/axi
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
 
 const AuthContext = createContext(null)
-const IMPERSONATION_STORAGE_KEY = 'agendapro_impersonation'
 let pendingPaymentMemory = null
 let adminUsuarioMemory = null
 let adminSessionTokenMemory = null
@@ -17,26 +16,11 @@ function limparSessaoUsuario() {
 }
 
 function lerImpersonationPersistida() {
-  if (typeof window === 'undefined' || !window.sessionStorage) return null
-  try {
-    const raw = window.sessionStorage.getItem(IMPERSONATION_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
+  return impersonationMemory
 }
 
 function salvarImpersonationPersistida(impersonation) {
-  if (typeof window === 'undefined' || !window.sessionStorage) return
-  try {
-    if (impersonation) {
-      window.sessionStorage.setItem(IMPERSONATION_STORAGE_KEY, JSON.stringify(impersonation))
-    } else {
-      window.sessionStorage.removeItem(IMPERSONATION_STORAGE_KEY)
-    }
-  } catch {
-    // fallback apenas em memoria
-  }
+  impersonationMemory = impersonation || null
 }
 
 function limparSessaoAdmin() {
@@ -210,7 +194,7 @@ export function AuthProvider({ children }) {
         validacaoInicialEmAndamentoRef.current = false
         return
       }
-      if (!adminUsuario) {
+      if (isAdminPath() && !adminUsuario) {
         try {
           const adminRefresh = await adminApi.refresh()
           if (adminRefresh?.admin?.perfil === 'SUPER_ADMIN') {

@@ -13,82 +13,21 @@ const api = axios.create({
 
 let sessionUser = null
 let adminSessionToken = null
-const SESSION_USER_STORAGE_KEY = 'agendapro_session_user'
-const ADMIN_SESSION_TOKEN_KEY = 'agendapro_admin_session_token'
-
-function lerUsuarioPersistido() {
-  if (typeof window === 'undefined' || !window.sessionStorage) return null
-  try {
-    const raw = window.sessionStorage.getItem(SESSION_USER_STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch {
-    return null
-  }
-}
-
-function salvarUsuarioPersistido(usuario) {
-  if (typeof window === 'undefined' || !window.sessionStorage) return
-  try {
-    if (usuario) {
-      window.sessionStorage.setItem(SESSION_USER_STORAGE_KEY, JSON.stringify(usuario))
-    } else {
-      window.sessionStorage.removeItem(SESSION_USER_STORAGE_KEY)
-    }
-  } catch {
-    // fallback
-  }
-}
 
 export function setSessionUser(usuario) {
   sessionUser = usuario || null
-  salvarUsuarioPersistido(sessionUser)
 }
 
 export function getSessionUser() {
-  if (sessionUser) return sessionUser
-  const persistido = lerUsuarioPersistido()
-  if (persistido) {
-    sessionUser = persistido
-    return sessionUser
-  }
-  return null
-}
-
-function lerAdminTokenPersistido() {
-  if (typeof window === 'undefined' || !window.sessionStorage) return null
-  try {
-    return window.sessionStorage.getItem(ADMIN_SESSION_TOKEN_KEY)
-  } catch {
-    return null
-  }
-}
-
-function salvarAdminTokenPersistido(token) {
-  if (typeof window === 'undefined' || !window.sessionStorage) return
-  try {
-    if (token) {
-      window.sessionStorage.setItem(ADMIN_SESSION_TOKEN_KEY, token)
-    } else {
-      window.sessionStorage.removeItem(ADMIN_SESSION_TOKEN_KEY)
-    }
-  } catch {
-    // fallback
-  }
+  return sessionUser
 }
 
 export function setAdminSessionToken(token) {
   adminSessionToken = token || null
-  salvarAdminTokenPersistido(adminSessionToken)
 }
 
 export function getAdminSessionToken() {
-  if (adminSessionToken) return adminSessionToken
-  const persistido = lerAdminTokenPersistido()
-  if (persistido) {
-    adminSessionToken = persistido
-    return adminSessionToken
-  }
-  return null
+  return adminSessionToken
 }
 
 api.interceptors.request.use((config) => {
@@ -131,8 +70,9 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    if (status === 401) {
-       window.dispatchEvent(new Event('agendeasy:session-expired'))
+    const url = String(error.config?.url || '')
+    if (status === 401 && url.includes('/auth/refresh')) {
+      window.dispatchEvent(new Event('agendeasy:session-expired'))
     }
 
     return Promise.reject(error)
