@@ -33,6 +33,56 @@ function detectarIntencao(texto) {
   return null
 }
 
+function pad2(valor) {
+  return String(valor).padStart(2, '0')
+}
+
+function formatarDataISO(data) {
+  if (!(data instanceof Date) || Number.isNaN(data.getTime())) return null
+  const ano = data.getFullYear()
+  const mes = pad2(data.getMonth() + 1)
+  const dia = pad2(data.getDate())
+  return `${ano}-${mes}-${dia}`
+}
+
+function interpretarDataLivre(texto) {
+  const t = normalizarTexto(texto).trim()
+  if (!t) return null
+  if (/^\d{4}-\d{2}-\d{2}$/.test(t)) return t
+  const hoje = new Date()
+  const base = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate())
+  if (/^hoje$/.test(t)) return formatarDataISO(base)
+  if (/^amanha$/.test(t)) return formatarDataISO(new Date(base.getTime() + 86400000))
+  if (/^depois de amanha$/.test(t)) return formatarDataISO(new Date(base.getTime() + 2 * 86400000))
+  const matchDia = t.match(/^(\d{1,2})(?:\/(\d{1,2})(?:\/(\d{2,4}))?)?$/)
+  if (matchDia) {
+    const dia = Number(matchDia[1])
+    const mes = Number(matchDia[2] || (base.getMonth() + 1))
+    let ano = Number(matchDia[3] || base.getFullYear())
+    if (ano < 100) ano += 2000
+    if (!dia || !mes || !ano) return null
+    const data = new Date(ano, mes - 1, dia)
+    return formatarDataISO(data)
+  }
+  return null
+}
+
+function interpretarHoraLivre(texto) {
+  const t = normalizarTexto(texto).trim()
+  if (!t) return null
+  const matchHora = t.match(/^(\d{1,2})(?::(\d{2}))?\s*(h|hs|horas?)?$/)
+  if (!matchHora) return null
+  const hora = Number(matchHora[1])
+  const minuto = Number(matchHora[2] || 0)
+  if (Number.isNaN(hora) || Number.isNaN(minuto)) return null
+  if (hora < 0 || hora > 23 || minuto < 0 || minuto > 59) return null
+  return `${pad2(hora)}:${pad2(minuto)}`
+}
+
+function normalizarHora(hora) {
+  return interpretarHoraLivre(hora) || normalizarTexto(hora)
+}
+
 function formatarServicos(servicos) {
   return (Array.isArray(servicos) ? servicos : [])
     .map((servico, index) => `${index + 1}. ${servico.nome || servico.titulo || `Serviço ${servico.id}`}`)
@@ -46,6 +96,13 @@ function formatarAgendamentos(agendamentos) {
     const hora = agendamento.horaInicio || agendamento.hora || ''
     return `${index + 1}. #${agendamento.id} - ${servico} - ${data} ${hora}`
   }).join('\n')
+}
+
+function formatarDataLegivel(dataISO) {
+  if (!dataISO) return ''
+  const data = new Date(`${dataISO}T00:00:00`)
+  if (Number.isNaN(data.getTime())) return dataISO
+  return new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(data)
 }
 
 function criarMensagemSistema() {
@@ -204,22 +261,23 @@ export default function AssistenteIA() {
       }
 
       if (!dadosFluxo.data) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-          adicionarMensagem('ia', 'Me envie a data no formato AAAA-MM-DD, por favor.')
+        const dataInterpretada = interpretarDataLivre(texto)
+        if (!dataInterpretada) {
+          adicionarMensagem('ia', 'Me diga a data como "hoje", "amanhã" ou "21/08".')
           return
         }
         try {
           setCarregando(true)
-          const listaHorarios = await buscarHorarios(dadosFluxo.servicoId, dadosFluxo.profissionalId, texto)
+          const listaHorarios = await buscarHorarios(dadosFluxo.servicoId, dadosFluxo.profissionalId, dataInterpretada)
           const disponiveis = Array.isArray(listaHorarios) ? listaHorarios.filter((item) => item?.disponivel !== false).map((item) => item.horario || item) : []
           setHorarios(disponiveis)
-          setDadosFluxo((prev) => ({ ...prev, data: texto }))
+          setDadosFluxo((prev) => ({ ...prev, data: dataInterpretada }))
           if (disponiveis.length === 0) {
             adicionarMensagem('ia', 'Não encontrei horários para essa data. Me diga outra data.')
             setDadosFluxo((prev) => ({ ...prev, data: null }))
             return
           }
-          adicionarMensagem('ia', `Tenho estes horários: ${disponiveis.join(', ')}. Qual você prefere?`)
+          adicionarMensagem('ia', `Tenho estes horários para ${formatarDataLegivel(dataInterpretada)}: ${disponiveis.join(', ')}. Qual você prefere?`)
         } catch {
           adicionarMensagem('ia', 'Não consegui consultar os horários agora. Tente outra data.')
         } finally {
@@ -229,11 +287,13 @@ export default function AssistenteIA() {
       }
 
       if (!dadosFluxo.hora) {
-        if (!horarios.includes(texto)) {
-          adicionarMensagem('ia', 'Escolha um horário da lista acima.')
+        const horaInterpretada = interpretarHoraLivre(texto)
+        const horarioEncontrado = horarios.find((item) => normalizarHora(item) === horaInterpretada || normalizarTexto(String(item)) === normalizarTexto(texto))
+        if (!horaInterpretada || !horarioEncontrado) {
+          adicionarMensagem('ia', 'Me diga um horário como 8h, 8:00 ou 14h30. Também pode tocar em um horário da lista.')
           return
         }
-        setDadosFluxo((prev) => ({ ...prev, hora: texto }))
+        setDadosFluxo((prev) => ({ ...prev, hora: normalizarHora(horarioEncontrado) }))
         adicionarMensagem('ia', 'Pronto. Quer que eu confirme o agendamento agora? Responda "sim" ou "não".')
         return
       }
@@ -276,24 +336,25 @@ export default function AssistenteIA() {
       }
 
       if (!dadosFluxo.novaData) {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) {
-          adicionarMensagem('ia', 'Me envie a nova data no formato AAAA-MM-DD.')
+        const dataInterpretada = interpretarDataLivre(texto)
+        if (!dataInterpretada) {
+          adicionarMensagem('ia', 'Me diga a nova data como "hoje", "amanhã" ou "21/08".')
           return
         }
         try {
           setCarregando(true)
           const servicoId = dadosFluxo.agendamentoBase?.servicoId
           const profissionalId = dadosFluxo.agendamentoBase?.profissionalId
-          const listaHorarios = await buscarHorarios(servicoId, profissionalId, texto)
+          const listaHorarios = await buscarHorarios(servicoId, profissionalId, dataInterpretada)
           const disponiveis = Array.isArray(listaHorarios) ? listaHorarios.filter((item) => item?.disponivel !== false).map((item) => item.horario || item) : []
           setHorarios(disponiveis)
-          setDadosFluxo((prev) => ({ ...prev, novaData: texto }))
+          setDadosFluxo((prev) => ({ ...prev, novaData: dataInterpretada }))
           if (disponiveis.length === 0) {
             adicionarMensagem('ia', 'Não encontrei horários nessa data. Me envie outra data.')
             setDadosFluxo((prev) => ({ ...prev, novaData: null }))
             return
           }
-          adicionarMensagem('ia', `Tenho estes horários: ${disponiveis.join(', ')}. Qual você quer?`)
+          adicionarMensagem('ia', `Tenho estes horários para ${formatarDataLegivel(dataInterpretada)}: ${disponiveis.join(', ')}. Qual você quer?`)
         } catch {
           adicionarMensagem('ia', 'Não consegui consultar os horários para reagendar.')
         } finally {
@@ -303,11 +364,13 @@ export default function AssistenteIA() {
       }
 
       if (!dadosFluxo.novaHora) {
-        if (!horarios.includes(texto)) {
-          adicionarMensagem('ia', 'Escolha um horário da lista acima.')
+        const horaInterpretada = interpretarHoraLivre(texto)
+        const horarioEncontrado = horarios.find((item) => normalizarHora(item) === horaInterpretada || normalizarTexto(String(item)) === normalizarTexto(texto))
+        if (!horaInterpretada || !horarioEncontrado) {
+          adicionarMensagem('ia', 'Me diga um horário como 8h, 8:00 ou 14h30.')
           return
         }
-        setDadosFluxo((prev) => ({ ...prev, novaHora: texto }))
+        setDadosFluxo((prev) => ({ ...prev, novaHora: normalizarHora(horarioEncontrado) }))
         adicionarMensagem('ia', 'Posso confirmar o reagendamento agora? Responda "sim" ou "não".')
         return
       }
