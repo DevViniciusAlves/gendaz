@@ -67,12 +67,12 @@
   flex-direction: column;
   gap: 12px;
   min-height: 0;
-  height: 726px;
-  max-height: 726px;
+  height: 1217px;
+  max-height: 1217px;
   min-width: 0;
   overflow: hidden;
   align-self: start;
-  flex: 0 0 726px;
+  flex: 0 0 1217px;
 }
 
 /* ---------- Painéis base ---------- */
