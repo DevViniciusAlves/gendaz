@@ -34,7 +34,8 @@ class AuthControllerTest {
 
     @Test
     void deveRealizarLoginComCredenciais() throws Exception {
-        UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@agendapro.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", null, null, null, null, null, LocalDateTime.now(), null);
+        LocalDateTime agora = LocalDateTime.now();
+        UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@agendapro.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", true, null, null, null, null, null, agora, agora);
         when(authService.login(any())).thenReturn(new LoginResponse("ok", usuario, null, null, "ACTIVE", "sessao-teste"));
 
         mockMvc.perform(post("/api/auth/login")
@@ -49,7 +50,8 @@ class AuthControllerTest {
 
     @Test
     void deveRenovarSessaoComCookie() throws Exception {
-        UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@agendapro.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", null, null, null, null, null, LocalDateTime.now(), null);
+        LocalDateTime agora = LocalDateTime.now();
+        UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@agendapro.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", true, null, null, null, null, null, agora, agora);
         when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
 
         mockMvc.perform(post("/api/auth/refresh")
