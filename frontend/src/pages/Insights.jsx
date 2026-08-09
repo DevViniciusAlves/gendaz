@@ -339,10 +339,8 @@ export default function Insights() {
               </div>
 
               {chatAberto && (
-                <div className="insights-sidebar-layout">
-                  <div className="insights-sidebar-chat">
-                    <InsightsChat onEnviar={analisar} historico={historico} />
-                  </div>
+                <div className="insights-sidebar-chat">
+                  <InsightsChat onEnviar={analisar} historico={historico} />
                 </div>
               )}
             </section>
