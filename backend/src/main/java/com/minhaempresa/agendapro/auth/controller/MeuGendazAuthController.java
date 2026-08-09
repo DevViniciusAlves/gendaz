@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.time.Duration;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -68,13 +69,17 @@ public class MeuGendazAuthController {
 
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        ResponseCookie cookie = ResponseCookie.from(nome, valor)
+        boolean safariMobile = isSafariMobile(request);
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(nome, valor)
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofSeconds(maxAge))
-                .build();
+                .path("/");
+        if (safariMobile) {
+            builder.domain(".gendaz.site").sameSite("Lax");
+        } else {
+            builder.sameSite("None");
+        }
+        ResponseCookie cookie = builder.maxAge(Duration.ofSeconds(maxAge)).build();
         response.addHeader("Set-Cookie", cookie.toString());
     }
 
@@ -92,6 +97,17 @@ public class MeuGendazAuthController {
             return "https".equalsIgnoreCase(forwardedProto);
         }
         return request.isSecure();
+    }
+
+    private boolean isSafariMobile(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent == null) {
+            return false;
+        }
+        String ua = userAgent.toLowerCase(Locale.ROOT);
+        boolean isIos = ua.contains("iphone") || ua.contains("ipad") || ua.contains("ipod");
+        boolean isSafari = ua.contains("safari") && !ua.contains("crios") && !ua.contains("fxios") && !ua.contains("edgios") && !ua.contains("chrome");
+        return isIos && isSafari;
     }
 
     private String getClientIp(HttpServletRequest request) {

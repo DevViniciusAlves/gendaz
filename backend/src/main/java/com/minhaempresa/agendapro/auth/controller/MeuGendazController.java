@@ -36,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
@@ -357,8 +358,16 @@ public class MeuGendazController {
         }
         String slug = request.getHeader("X-Meu-Gendaz-Slug");
         String cookieName = slug == null || slug.isBlank() ? "meu_gendaz_session" : nomeCookie(slug.trim().toLowerCase());
-        ResponseCookie clearCookie = ResponseCookie.from(cookieName, "")
-                .httpOnly(true).secure(true).path("/").sameSite("None").maxAge(Duration.ZERO).build();
+        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
+                .httpOnly(true)
+                .secure(true)
+                .path("/");
+        if (isSafariMobile(request)) {
+            builder.domain(".gendaz.site").sameSite("Lax");
+        } else {
+            builder.sameSite("None");
+        }
+        ResponseCookie clearCookie = builder.maxAge(Duration.ZERO).build();
         response.addHeader("Set-Cookie", clearCookie.toString());
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
     }
@@ -485,6 +494,17 @@ public class MeuGendazController {
         return isStatusConcluido(normalizado)
                 || "PENDENTE".equals(normalizado)
                 || "CANCELADO".equals(normalizado);
+    }
+
+    private boolean isSafariMobile(HttpServletRequest request) {
+        String userAgent = request.getHeader("User-Agent");
+        if (userAgent == null) {
+            return false;
+        }
+        String ua = userAgent.toLowerCase(Locale.ROOT);
+        boolean isIos = ua.contains("iphone") || ua.contains("ipad") || ua.contains("ipod");
+        boolean isSafari = ua.contains("safari") && !ua.contains("crios") && !ua.contains("fxios") && !ua.contains("edgios") && !ua.contains("chrome");
+        return isIos && isSafari;
     }
 
     @GetMapping("/promocoes")
