@@ -241,8 +241,9 @@ public class MembresiaService {
         } else if (usuario.getEmpresa() != null && !usuario.getEmpresa().getId().equals(convite.getEmpresa().getId())) {
             throw new ConflictException("Email ja vinculado a empresa.");
         }
+        final Long usuarioId = usuario.getId();
         List<MembresiaEntity> membresiasUsuario = membresiaRepository.findByEmpresaId(convite.getEmpresa().getId()).stream()
-                .filter(m -> m.getUsuario() != null && m.getUsuario().getId().equals(usuario.getId()))
+                .filter(m -> m.getUsuario() != null && m.getUsuario().getId().equals(usuarioId))
                 .toList();
         if (membresiasUsuario.size() > 1) {
             throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
