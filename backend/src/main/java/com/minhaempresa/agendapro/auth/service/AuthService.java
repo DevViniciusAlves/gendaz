@@ -73,7 +73,7 @@ public class AuthService {
     public boolean validarCredenciaisLogin(String email, String senha) {
         String emailNormalizado = normalizarEmail(email);
         try {
-            UsuarioEntity usuario = usuarioRepository.findByEmailIgnoreCase(emailNormalizado).orElse(null);
+            UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(emailNormalizado);
             return usuario != null
                     && usuario.getStatus() == StatusUsuario.ATIVO
                     && passwordService.matches(senha, usuario.getSenha());
@@ -89,7 +89,7 @@ public class AuthService {
         String email = normalizarEmail(request.email());
         log.info("Login solicitado para {}", mascararEmail(email));
         try {
-            UsuarioEntity usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
+            UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(email);
 
             if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO) {
                 throw new BusinessException("E-mail ou senha invalidos.");
@@ -294,6 +294,17 @@ public class AuthService {
                 log.warn("Email de recuperacao nao enviado para {}", mascararEmail(usuario.getEmail()));
             }
         });
+    }
+
+    private UsuarioEntity resolverUsuarioUnicoPorEmail(String email) {
+        List<UsuarioEntity> usuarios = usuarioRepository.findAllByEmailIgnoreCase(email);
+        if (usuarios.isEmpty()) {
+            return null;
+        }
+        if (usuarios.size() > 1) {
+            throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
+        }
+        return usuarios.get(0);
     }
 
     @Transactional
