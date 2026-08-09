@@ -44,8 +44,6 @@ public final class UsuarioDtos {
             LocalDateTime dataAtualizacao
     ) {}
 
-    public record CriarConviteRequest(@Email @NotBlank @Size(max = 120) String email) {}
-
     public record ConviteResponse(
             Long id,
             Long empresaId,

@@ -118,7 +118,15 @@ public class MembresiaService {
         convite.setDataExpiracao(LocalDateTime.now().plusDays(7));
         convite.setTokenHash(hash(gerarToken()));
         conviteRepository.save(convite);
-        resendEmailService.enviarComTemplate(convite.getEmail(), "Convite re-enviado", "Seu convite foi renovado", "<p>Use o novo acesso enviado.</p>", "https://gendaz.site/login", "Entrar");
+        resendEmailService.enviarComTemplate(
+                convite.getEmail(),
+                "Convite re-enviado",
+                "Seu convite foi renovado",
+                "Seu acesso foi renovado e o link anterior foi invalidado.",
+                "<p>Use o novo acesso enviado.</p>",
+                "https://gendaz.site/login",
+                "Entrar"
+        );
         registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", convite.getId(), "SUCCESS");
         return toResponse(convite);
     }
