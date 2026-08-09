@@ -12,7 +12,6 @@ const api = axios.create({
 })
 
 let sessionUser = null
-let adminSessionToken = null
 
 export function setSessionUser(usuario) {
   sessionUser = usuario || null
@@ -22,21 +21,7 @@ export function getSessionUser() {
   return sessionUser
 }
 
-export function setAdminSessionToken(token) {
-  adminSessionToken = token || null
-}
-
-export function getAdminSessionToken() {
-  return adminSessionToken
-}
-
 api.interceptors.request.use((config) => {
-  const headers = { ...(config.headers || {}) }
-  const adminToken = getAdminSessionToken()
-  if (adminToken && !headers['X-Admin-Token']) {
-    headers['X-Admin-Token'] = adminToken
-  }
-  config.headers = headers
   return config
 })
 

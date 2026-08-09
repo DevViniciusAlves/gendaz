@@ -2,7 +2,7 @@
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
 import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
-import { getSessionUser, setSessionUser, setAdminSessionToken } from '../api/axiosConfig.js'
+import { setSessionUser } from '../api/axiosConfig.js'
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
 
 const AuthContext = createContext(null)
@@ -26,7 +26,6 @@ function salvarImpersonationPersistida(impersonation) {
 function limparSessaoAdmin() {
   adminUsuarioMemory = null
   adminSessionTokenMemory = null
-  setAdminSessionToken(null)
 }
 
 function emitirMudancaSessao() {
@@ -90,7 +89,7 @@ function isAdminPath() {
 
 export function AuthProvider({ children }) {
   const [authLoading, setAuthLoading] = useState(true)
-  const [usuario, setUsuario] = useState(() => getSessionUser())
+  const [usuario, setUsuario] = useState(null)
   const [impersonation, setImpersonation] = useState(() => impersonationMemory || lerImpersonationPersistida())
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const [sessionExpired, setSessionExpired] = useState(false)
@@ -526,7 +525,6 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     setSessionExpired(false)
     const response = await adminApi.login(email, senha)
     adminSessionTokenMemory = response.token || null
-    setAdminSessionToken(adminSessionTokenMemory)
     setAdminUsuario(response.admin)
     setAuthLoading(false)
     return response.admin
