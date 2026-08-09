@@ -6,12 +6,11 @@ import com.minhaempresa.agendapro.cliente.service.ClienteEmailBloqueadoService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
+import com.minhaempresa.agendapro.meugendazacesso.entity.MeuGendazAcessoEntity;
+import com.minhaempresa.agendapro.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
-import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
-import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
-import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -33,7 +32,7 @@ public class MeuGendazAuthService {
     private static final Duration REENVIO_1 = Duration.ofSeconds(30);
     private static final Duration REENVIO_2 = Duration.ofSeconds(120);
 
-    private final UsuarioRepository usuarioRepository;
+    private final MeuGendazAcessoRepository meuGendazAcessoRepository;
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
     private final UsuarioSessionService usuarioSessionService;
@@ -45,7 +44,7 @@ public class MeuGendazAuthService {
         EmpresaEntity empresa = buscarEmpresa(slug);
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        UsuarioEntity usuario = buscarUsuarioAcesso(empresa, normalizado);
+        MeuGendazAcessoEntity acesso = buscarAcesso(empresa, normalizado);
         CodigoLoginState state = estados.computeIfAbsent(chaveEstado(empresa.getId(), normalizado), key -> new CodigoLoginState());
         synchronized (state) {
             state.limparSeExpirado();
@@ -77,7 +76,7 @@ public class MeuGendazAuthService {
             state.usado = false;
             state.solicitacoes++;
 
-            boolean enviado = resendEmailService.enviarCodigoMeuGendaz(usuario.getEmail(), usuario.getNome(), state.codigo);
+            boolean enviado = resendEmailService.enviarCodigoMeuGendaz(acesso.getEmail(), acesso.getNome(), state.codigo);
             if (!enviado) {
                 throw new BusinessException("Nao foi possivel enviar o codigo agora.");
             }
@@ -92,7 +91,7 @@ public class MeuGendazAuthService {
         EmpresaEntity empresa = buscarEmpresa(slug);
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        UsuarioEntity usuario = buscarUsuarioAcesso(empresa, normalizado);
+        MeuGendazAcessoEntity acesso = buscarAcesso(empresa, normalizado);
         CodigoLoginState state = estados.get(chaveEstado(empresa.getId(), normalizado));
         if (state == null) {
             throw new BusinessException("Solicite um novo codigo.");
@@ -121,9 +120,7 @@ public class MeuGendazAuthService {
             }
 
             state.usado = true;
-            String sessionToken = usuarioSessionService.criarSessaoMeuGendaz(usuario);
-            usuario.setSessaoAtivaMeuGendaz(sessionToken);
-            usuarioRepository.save(usuario);
+            String sessionToken = usuarioSessionService.criarSessaoMeuGendaz(acesso);
             return new MeuGendazAuthResponse("Login realizado com sucesso.", normalizado, sessionToken, "ACTIVE");
         }
     }
@@ -141,20 +138,16 @@ public class MeuGendazAuthService {
         if (sessionToken == null || sessionToken.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }
-        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), sessionToken)
+        MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), sessionToken)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        if (usuario.getStatus() != StatusUsuario.ATIVO) {
-            throw new BusinessException("Usuario inativo.");
+        if (acesso.getStatus() != StatusUsuario.ATIVO) {
+            throw new BusinessException("Acesso inativo.");
         }
-        if (!usuarioSessionService.sessaoValidaMeuGendaz(usuario.getId(), sessionToken, empresa.getId())) {
+        if (!usuarioSessionService.sessaoValidaMeuGendaz(acesso.getId(), sessionToken, empresa.getId())) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
-        String sessaoRenovada = usuarioSessionService.renovarSessaoMeuGendaz(usuario, sessionToken);
-        if (!sessaoRenovada.equals(sessionToken)) {
-            usuario.setSessaoAtivaMeuGendaz(sessaoRenovada);
-            usuarioRepository.save(usuario);
-        }
-        return new MeuGendazAuthResponse("Sessao renovada com sucesso.", usuario.getEmail(), sessaoRenovada, "ACTIVE");
+        String sessaoRenovada = usuarioSessionService.renovarSessaoMeuGendaz(acesso, sessionToken);
+        return new MeuGendazAuthResponse("Sessao renovada com sucesso.", acesso.getEmail(), sessaoRenovada, "ACTIVE");
     }
 
     private EmpresaEntity buscarEmpresa(String slug) {
@@ -166,25 +159,22 @@ public class MeuGendazAuthService {
                 .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
     }
 
-    private UsuarioEntity buscarUsuarioAcesso(EmpresaEntity empresa, String email) {
-        return usuarioRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
-                .orElseGet(() -> salvarUsuarioAcesso(empresa, email));
+    private MeuGendazAcessoEntity buscarAcesso(EmpresaEntity empresa, String email) {
+        return meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
+                .orElseGet(() -> salvarAcesso(empresa, email));
     }
 
-    private UsuarioEntity salvarUsuarioAcesso(EmpresaEntity empresa, String email) {
-        UsuarioEntity novoUsuario = UsuarioEntity.builder()
+    private MeuGendazAcessoEntity salvarAcesso(EmpresaEntity empresa, String email) {
+        MeuGendazAcessoEntity novoAcesso = MeuGendazAcessoEntity.builder()
                 .nome(nomePadrao(email))
                 .email(email)
-                .senha(hashUsuarioTemporario(email, empresa.getId()))
-                .perfil(PerfilUsuario.ATENDENTE)
                 .status(StatusUsuario.ATIVO)
-                .aceitouTermos(true)
                 .empresa(empresa)
                 .build();
         try {
-            return usuarioRepository.save(novoUsuario);
+            return meuGendazAcessoRepository.save(novoAcesso);
         } catch (DataIntegrityViolationException ex) {
-            return usuarioRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
+            return meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
                     .orElseThrow(() -> ex);
         }
     }
@@ -212,10 +202,6 @@ public class MeuGendazAuthService {
 
     private String hashCodigo(String codigo, String email, Long empresaId) {
         return Integer.toHexString((codigo + ":" + email + ":" + empresaId).hashCode());
-    }
-
-    private String hashUsuarioTemporario(String email, Long empresaId) {
-        return Integer.toHexString(("meu-gendaz:" + email + ":" + empresaId).hashCode());
     }
 
     private String nomePadrao(String email) {

@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.chamado.mapper;
 import com.minhaempresa.agendapro.chamado.dto.ChamadoDtos.ChamadoResponse;
 import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 
 public class ChamadoMapper {
@@ -12,6 +13,7 @@ public class ChamadoMapper {
         }
         EmpresaEntity empresa = chamado.getEmpresa();
         UsuarioEntity usuario = chamado.getUsuario();
+        MeuGendazAcessoEntity acesso = chamado.getMeuGendazAcesso();
         return new ChamadoResponse(
                 chamado.getId(),
                 chamado.getAssunto(),
@@ -20,8 +22,8 @@ public class ChamadoMapper {
                 chamado.getOrigem(),
                 empresa != null ? empresa.getId() : null,
                 empresa != null ? empresa.getNomeFantasia() : null,
-                usuario != null ? usuario.getId() : null,
-                usuario != null ? usuario.getNome() : null,
+                usuario != null ? usuario.getId() : (acesso != null ? acesso.getId() : null),
+                usuario != null ? usuario.getNome() : (acesso != null ? acesso.getNome() : null),
                 chamado.getStatus(),
                 chamado.getDataCriacao(),
                 chamado.getDataAtualizacao(),

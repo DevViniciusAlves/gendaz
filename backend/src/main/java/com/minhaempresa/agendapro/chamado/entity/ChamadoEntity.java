@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.chamado.entity;
 import com.minhaempresa.agendapro.chamado.enums.StatusChamado;
 import com.minhaempresa.agendapro.chamado.enums.PrioridadeChamado;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -37,9 +38,13 @@ public class ChamadoEntity {
     @JoinColumn(name = "empresa_id", nullable = false)
     private EmpresaEntity empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "usuario_id")
     private UsuarioEntity usuario;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "meu_gendaz_acesso_id")
+    private MeuGendazAcessoEntity meuGendazAcesso;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

@@ -16,6 +16,8 @@ import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.InsightsRequest;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.MeuGendazIAResponse;
 import com.minhaempresa.agendapro.insights.service.InsightsService;
+import com.minhaempresa.agendapro.meugendazacesso.entity.MeuGendazAcessoEntity;
+import com.minhaempresa.agendapro.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.agendapro.meugendazpromocao.service.MeuGendazPromocaoService;
 import com.minhaempresa.agendapro.profissional.service.ProfissionalService;
 import com.minhaempresa.agendapro.servico.service.ServicoService;
@@ -23,15 +25,12 @@ import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.CookieHelper;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
-import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
-import com.minhaempresa.agendapro.usuario.repository.UsuarioRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +44,6 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -58,7 +56,7 @@ import jakarta.validation.Valid;
 @RequiredArgsConstructor
 @Slf4j
 public class MeuGendazController {
-    private final UsuarioRepository usuarioRepository;
+    private final MeuGendazAcessoRepository meuGendazAcessoRepository;
     private final EmpresaRepository empresaRepository;
     private final ClienteRepository clienteRepository;
     private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
@@ -83,19 +81,19 @@ public class MeuGendazController {
         return "meu_gendaz_session_" + slug;
     }
 
-    private UsuarioEntity findUserFromSession(HttpServletRequest request) {
+    private MeuGendazAcessoEntity findAcessoFromSession(HttpServletRequest request) {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
                 .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
         
-        Optional<UsuarioEntity> user = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session);
-        UsuarioEntity usuario = user.orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        if (!usuarioSessionService.sessaoValidaMeuGendaz(usuario.getId(), session, usuario.getEmpresa().getId())) {
+        MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
+        if (!usuarioSessionService.sessaoValidaMeuGendaz(acesso.getId(), session, empresa.getId())) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
-        return usuario;
+        return acesso;
     }
 
     private ClienteEntity findClienteFromSession(HttpServletRequest request) {
@@ -105,12 +103,12 @@ public class MeuGendazController {
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
 
-        UsuarioEntity usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
+        MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), usuario.getEmail());
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), acesso.getEmail());
         ClienteEntity cliente;
         try {
-            cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), usuario.getEmail())
+            cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), acesso.getEmail())
                     .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
         } catch (Exception e) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
@@ -120,24 +118,6 @@ public class MeuGendazController {
         }
         return cliente;
     }
-
-    private UsuarioEntity findUsuarioAcessoFromSession(HttpServletRequest request) {
-        String slug = slugAtual(request);
-        EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
-                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
-        String session = CookieHelper.lerCookie(request, nomeCookie(slug))
-                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
-
-        UsuarioEntity usuario;
-        try {
-            usuario = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session)
-                    .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
-        } catch (Exception e) {
-            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
-        }
-        return usuario;
-    }
-
 
     private Long getEmpresaId(ClienteEntity cliente) {
         if (cliente.getEmpresa() == null) {
@@ -161,23 +141,23 @@ public class MeuGendazController {
     @GetMapping("/perfil")
     public ResponseEntity<?> perfil(HttpServletRequest request) {
         try {
-            UsuarioEntity usuario = findUserFromSession(request);
-            if (usuario.getEmpresa() == null) {
+            MeuGendazAcessoEntity acesso = findAcessoFromSession(request);
+            if (acesso.getEmpresa() == null) {
                 throw new SessaoExpiradaException("Empresa nao encontrada para este acesso.");
             }
-            EmpresaEntity empresa = empresaRepository.findById(usuario.getEmpresa().getId())
+            EmpresaEntity empresa = empresaRepository.findById(acesso.getEmpresa().getId())
                     .orElseThrow(() -> new SessaoExpiradaException("Empresa nao encontrada para este acesso."));
             Optional<ClienteEntity> clienteOpt = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(
                     empresa.getId(),
-                    usuario.getEmail()
+                    acesso.getEmail()
             );
             ClienteEntity cliente = clienteOpt.orElse(null);
             boolean cadastroPendente = cliente == null;
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("cadastroPendente", cadastroPendente);
-            result.put("id", cliente != null ? cliente.getId() : usuario.getId());
-            result.put("nome", cliente != null ? cliente.getNome() : usuario.getNome());
-            result.put("email", usuario.getEmail());
+            result.put("id", cliente != null ? cliente.getId() : acesso.getId());
+            result.put("nome", cliente != null ? cliente.getNome() : acesso.getNome());
+            result.put("email", acesso.getEmail());
             result.put("telefone", cliente != null ? cliente.getTelefone() : null);
             result.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : null);
             if (cadastroPendente) {
@@ -347,10 +327,9 @@ public class MeuGendazController {
                     .orElseThrow(() -> new BusinessException("Loja nao encontrada."));
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session != null) {
-                UsuarioEntity user = usuarioRepository.findByEmpresaIdAndSessaoAtivaMeuGendaz(empresa.getId(), session).orElse(null);
-                if (user != null) {
-                    user.setSessaoAtivaMeuGendaz(null);
-                    usuarioRepository.save(user);
+                MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
+                if (acesso != null) {
+                    usuarioSessionService.encerrarSessaoMeuGendaz(acesso.getId(), session);
                 }
             }
         } catch (Exception e) {
@@ -435,7 +414,7 @@ public class MeuGendazController {
     @PostMapping("/suporte")
     public ResponseEntity<?> criarSuporte(@Valid @RequestBody CriarSuporteRequest request, HttpServletRequest httpRequest) {
         try {
-            UsuarioEntity usuario = findUsuarioAcessoFromSession(httpRequest);
+            MeuGendazAcessoEntity acesso = findAcessoFromSession(httpRequest);
             String tipo = request.tipoOcorrencia().trim();
             String motivo = request.motivo().trim();
             String mensagem = request.mensagem().trim();
@@ -445,7 +424,7 @@ public class MeuGendazController {
                     + "Motivo: " + motivo + "\n\n"
                     + mensagem;
             CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
-            ChamadoResponse chamado = chamadoService.criar(chamadoRequest, usuario.getId(), "MEU_GENDAZ");
+            ChamadoResponse chamado = chamadoService.criarMeuGendaz(chamadoRequest, acesso);
             return ResponseEntity.ok(chamado);
         } catch (SessaoExpiradaException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
@@ -461,9 +440,9 @@ public class MeuGendazController {
     public ResponseEntity<?> listarSuporte(HttpServletRequest httpRequest) {
         try {
             ClienteEntity cliente = findClienteFromSession(httpRequest);
-            UsuarioEntity usuario = findUsuarioAcessoFromSession(httpRequest);
+            MeuGendazAcessoEntity acesso = findAcessoFromSession(httpRequest);
             Long empresaId = getEmpresaId(cliente);
-            return ResponseEntity.ok(chamadoService.listarPorEmpresaEUsuario(empresaId, usuario.getId()));
+            return ResponseEntity.ok(chamadoService.listarPorEmpresaEMeuGendazAcesso(empresaId, acesso.getId()));
         } catch (SessaoExpiradaException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (BusinessException e) {
@@ -560,14 +539,14 @@ public class MeuGendazController {
     @PatchMapping("/perfil")
     public ResponseEntity<?> atualizarPerfil(@RequestBody Map<String, String> body, HttpServletRequest request) {
         try {
-            UsuarioEntity usuario = findUserFromSession(request);
-            EmpresaEntity empresa = usuario.getEmpresa() == null ? null : empresaRepository.findById(usuario.getEmpresa().getId()).orElse(null);
+            MeuGendazAcessoEntity acesso = findAcessoFromSession(request);
+            EmpresaEntity empresa = acesso.getEmpresa() == null ? null : empresaRepository.findById(acesso.getEmpresa().getId()).orElse(null);
             if (empresa == null) {
                 throw new BusinessException("Empresa nao encontrada para este acesso.");
             }
             Long empresaId = empresa.getId();
             String nome = body.get("nome") == null ? "" : body.get("nome").trim();
-            String email = usuario.getEmail() == null ? "" : usuario.getEmail().trim().toLowerCase();
+            String email = acesso.getEmail() == null ? "" : acesso.getEmail().trim().toLowerCase();
             String telefone = sanitizacaoService.telefone(body.get("telefone"));
 
             Optional<ClienteEntity> clienteExistente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresaId, email);
@@ -610,8 +589,8 @@ public class MeuGendazController {
             cliente.setTelefone(telefone);
             clienteRepository.save(cliente);
 
-            usuario.setNome(nome);
-            usuarioRepository.save(usuario);
+            acesso.setNome(nome);
+            meuGendazAcessoRepository.save(acesso);
 
             Map<String, Object> result = new LinkedHashMap<>();
             result.put("id", cliente.getId());

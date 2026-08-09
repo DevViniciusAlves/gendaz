@@ -18,7 +18,6 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     Optional<UsuarioEntity> findByEmpresaIdAndEmail(Long empresaId, String email);
     Optional<UsuarioEntity> findByEmpresaIdAndEmailIgnoreCase(Long empresaId, String email);
     Optional<UsuarioEntity> findByEmpresaIdAndSessaoAtiva(Long empresaId, String sessaoAtiva);
-    Optional<UsuarioEntity> findByEmpresaIdAndSessaoAtivaMeuGendaz(Long empresaId, String sessaoAtivaMeuGendaz);
     Optional<UsuarioEntity> findByEmpresaAndEmail(com.minhaempresa.agendapro.empresa.entity.EmpresaEntity empresa, String email);
     Optional<UsuarioEntity> findFirstByPerfil(PerfilUsuario perfil);
     List<UsuarioEntity> findByEmpresaId(Long empresaId);

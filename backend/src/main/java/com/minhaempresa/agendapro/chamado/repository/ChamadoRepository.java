@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
     List<ChamadoEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
     List<ChamadoEntity> findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(Long empresaId, Long usuarioId);
+    List<ChamadoEntity> findByEmpresaIdAndMeuGendazAcesso_IdOrderByDataCriacaoDesc(Long empresaId, Long meuGendazAcessoId);
     List<ChamadoEntity> findAllByOrderByDataCriacaoDesc();
 
     @Query(value = """
@@ -16,7 +17,7 @@ public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
                 c.assunto AS assunto,
                 c.mensagem AS mensagem,
                 COALESCE(e.nome_fantasia, '') AS empresa,
-                COALESCE(u.nome, '') AS usuario,
+                COALESCE(u.nome, mga.nome, '') AS usuario,
                 COALESCE(c.status, '') AS status,
                 c.resposta AS resposta,
                 c.data_criacao AS dataCriacao,
@@ -24,6 +25,7 @@ public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
             FROM chamados c
             LEFT JOIN empresas e ON e.id = c.empresa_id
             LEFT JOIN usuarios u ON u.id = c.usuario_id
+            LEFT JOIN meu_gendaz_acessos mga ON mga.id = c.meu_gendaz_acesso_id
             ORDER BY c.data_criacao DESC
             """, nativeQuery = true)
     List<AdminChamadoProjection> listarParaAdmin();

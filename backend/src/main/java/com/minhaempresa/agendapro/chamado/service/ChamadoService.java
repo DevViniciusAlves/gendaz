@@ -10,6 +10,7 @@ import com.minhaempresa.agendapro.chamado.mapper.ChamadoMapper;
 import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
@@ -68,6 +69,36 @@ public class ChamadoService {
         return mapper.toResponse(chamado);
     }
 
+    @Transactional
+    public ChamadoResponse criarMeuGendaz(CriarChamadoRequest request, MeuGendazAcessoEntity acesso) {
+        if (acesso == null || acesso.getEmpresa() == null) {
+            throw new BusinessException("Acesso do Meu Gendaz sem empresa nao pode abrir chamado.");
+        }
+        EmpresaEntity empresa = acesso.getEmpresa();
+        PrioridadeChamado prioridadeAutomatica = prioridadePorAssunto(request.assunto());
+        ChamadoEntity chamado = chamadoRepository.save(ChamadoEntity.builder()
+                .assunto(request.assunto().trim())
+                .mensagem(request.mensagem().trim())
+                .prioridade(prioridadeAutomatica)
+                .origem(ORIGEM_MEU_GENDAZ)
+                .empresa(empresa)
+                .meuGendazAcesso(acesso)
+                .status(StatusChamado.ABERTO)
+                .build());
+        auditService.registrar(
+                "CHAMADO_CRIADO",
+                "INFO",
+                null,
+                null,
+                empresa,
+                "Chamado aberto pelo Meu Gendaz",
+                request.assunto().trim(),
+                null,
+                null
+        );
+        return mapper.toResponse(chamado);
+    }
+
     @Transactional(readOnly = true)
     public List<ChamadoResponse> listarPorEmpresa(Long empresaId, Long usuarioId) {
         UsuarioEntity usuario = buscarUsuario(usuarioId);
@@ -87,6 +118,16 @@ public class ChamadoService {
     @Transactional(readOnly = true)
     public List<ChamadoResponse> listarPorEmpresaEUsuario(Long empresaId, Long usuarioId) {
         return chamadoRepository.findByEmpresaIdAndUsuarioIdOrderByDataCriacaoDesc(empresaId, usuarioId)
+                .stream()
+                .filter(this::ehChamadoCompleto)
+                .filter(this::ehChamadoMeuGendaz)
+                .map(mapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ChamadoResponse> listarPorEmpresaEMeuGendazAcesso(Long empresaId, Long acessoId) {
+        return chamadoRepository.findByEmpresaIdAndMeuGendazAcesso_IdOrderByDataCriacaoDesc(empresaId, acessoId)
                 .stream()
                 .filter(this::ehChamadoCompleto)
                 .filter(this::ehChamadoMeuGendaz)
@@ -161,7 +202,7 @@ public class ChamadoService {
     private boolean ehChamadoCompleto(ChamadoEntity chamado) {
         return chamado != null
                 && chamado.getEmpresa() != null
-                && chamado.getUsuario() != null
+                && (chamado.getUsuario() != null || chamado.getMeuGendazAcesso() != null)
                 && chamado.getStatus() != null;
     }
 

@@ -19,6 +19,7 @@ import com.minhaempresa.agendapro.lgpd.dto.LgpdDtos.EmpresaExportada;
 import com.minhaempresa.agendapro.lgpd.dto.LgpdDtos.ExcluirContaResponse;
 import com.minhaempresa.agendapro.lgpd.dto.LgpdDtos.ExportacaoDadosResponse;
 import com.minhaempresa.agendapro.mensagem.repository.MensagemRepository;
+import com.minhaempresa.agendapro.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.agendapro.notafiscal.repository.NotaFiscalRepository;
 import com.minhaempresa.agendapro.notificacao.repository.NotificacaoRepository;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoPlanoRepository;
@@ -49,6 +50,7 @@ public class LgpdService {
     private final AgendamentoRepository agendamentoRepository;
     private final ConversaRepository conversaRepository;
     private final MensagemRepository mensagemRepository;
+    private final MeuGendazAcessoRepository meuGendazAcessoRepository;
     private final PagamentoRepository pagamentoRepository;
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
     private final NotaFiscalRepository notaFiscalRepository;
@@ -109,6 +111,11 @@ public class LgpdService {
             u.setSessaoAtivaMeuGendaz(null);
         });
         usuarioRepository.saveAll(usuarios);
+
+        meuGendazAcessoRepository.findByEmpresaId(empresaId).forEach(acesso -> {
+            acesso.setSessaoAtiva(null);
+            meuGendazAcessoRepository.save(acesso);
+        });
 
         empresa.setStatus(StatusEmpresa.INATIVA);
         empresaRepository.save(empresa);
