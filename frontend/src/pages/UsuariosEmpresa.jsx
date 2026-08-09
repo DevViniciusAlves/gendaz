@@ -20,6 +20,8 @@ export default function UsuariosEmpresa() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [modalOpen, setModalOpen] = useState(false)
+  const [nome, setNome] = useState('')
+  const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
   const [salvando, setSalvando] = useState(false)
 
@@ -86,7 +88,9 @@ export default function UsuariosEmpresa() {
     event.preventDefault()
     setSalvando(true)
     try {
-      await appApi.criarConviteUsuario({ email })
+      await appApi.criarConviteUsuario({ nome, telefone, email })
+      setNome('')
+      setTelefone('')
       setEmail('')
       setModalOpen(false)
       await carregar()
@@ -153,6 +157,8 @@ export default function UsuariosEmpresa() {
 
       <Modal title="Adicionar usuário" open={modalOpen} onClose={() => setModalOpen(false)}>
         <form onSubmit={criarConvite} className="modal-body">
+          <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
+          <Input label="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="modal-actions">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>

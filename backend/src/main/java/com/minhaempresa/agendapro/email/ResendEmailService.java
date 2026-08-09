@@ -158,6 +158,37 @@ public class ResendEmailService {
         return enviarEmail(email, assunto, html);
     }
 
+    public boolean enviarConviteEmpresa(String email, String nome, String empresa, String linkAceitar, String linkRecusar) {
+        if (email == null || email.isBlank()) {
+            log.warn("[resend] email vazio, convite ignorado");
+            return false;
+        }
+        try {
+            String corpo = """
+                    <p style="margin:0 0 12px;">Voce foi convidado para acessar a conta <strong>%s</strong>.</p>
+                    <p style="margin:0 0 18px;">Deseja aceitar o convite?</p>
+                    <div style="text-align:center; margin:24px 0 8px;">
+                      <a href="%s" style="display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 24px; border-radius:999px; margin-right:8px;">Sim, aceitar</a>
+                      <a href="%s" style="display:inline-block; background:#ffffff; color:#111111; border:1px solid #d1d5db; text-decoration:none; font-weight:700; padding:14px 24px; border-radius:999px;">Nao, recusar</a>
+                    </div>
+                    <p style="margin:0;">Nome: <strong>%s</strong>.</p>
+                    """.formatted(safe(empresa, "Gendaz"), safe(linkAceitar, montarUrlBase()), safe(linkRecusar, montarUrlBase()), safe(nome, "usuario"));
+            String html = montarEmailPadrao(
+                    "Gendaz",
+                    "Voce foi convidado para acessar a conta",
+                    "Convite para a empresa %s".formatted(safe(empresa, "Gendaz")),
+                    corpo,
+                    safe(linkAceitar, montarUrlBase()),
+                    "Sim, aceitar",
+                    "Se nao quiser acessar, pode recusar no proprio email."
+            );
+            return enviarEmail(email, "Convite para acessar a conta " + safe(empresa, "Gendaz"), html);
+        } catch (Exception e) {
+            log.error("[resend] erro ao montar email de convite: {}", e.getMessage(), e);
+            return false;
+        }
+    }
+
     /**
      * Email de promocao/cupom com o template padrao.
      */

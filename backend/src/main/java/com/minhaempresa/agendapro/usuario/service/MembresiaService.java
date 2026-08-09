@@ -22,7 +22,9 @@ import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.AceitarConviteRequest;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.ConviteEmpresaResponse;
+import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.ConvitePublicoResponse;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.MembroEmpresaResponse;
+import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.RecusarConviteRequest;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
@@ -43,6 +45,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MembresiaService {
     private static final int LIMITE_REENVIO = 3;
+    private static final java.time.Duration DURACAO_CONVITE = java.time.Duration.ofHours(1);
     private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
     private final MembresiaRepository membresiaRepository;
     private final ConviteEmpresaRepository conviteRepository;
@@ -66,8 +69,10 @@ public class MembresiaService {
     }
 
     @Transactional
-    public ConviteEmpresaResponse criarConvite(Long empresaId, Long usuarioAtualId, String emailBruto) {
+    public ConviteEmpresaResponse criarConvite(Long empresaId, Long usuarioAtualId, String nomeBruto, String telefoneBruto, String emailBruto) {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
+        String nome = sanitizacaoService.textoObrigatorio(nomeBruto);
+        String telefone = sanitizacaoService.telefone(telefoneBruto);
         String email = sanitizacaoService.email(emailBruto);
         if (email == null || !email.contains("@")) {
             throw new BusinessException("Email invalido.");
@@ -85,24 +90,25 @@ public class MembresiaService {
         if (!usuariosPainel.isEmpty()) {
             throw new ConflictException("Email ja vinculado a empresa.");
         }
+        String token = gerarToken();
         ConviteEmpresaEntity convite = ConviteEmpresaEntity.builder()
                 .empresa(executor.getEmpresa())
+                .nomeConvidado(nome)
+                .telefoneConvidado(telefone)
                 .email(email)
                 .criadoPor(executor)
                 .status(StatusConviteEmpresa.PENDING)
-                .dataExpiracao(LocalDateTime.now().plusDays(7))
-                .tokenHash(hash(gerarToken()))
+                .dataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE))
+                .tokenHash(hash(token))
                 .reenvios(0)
                 .build();
         conviteRepository.save(convite);
-        boolean enviado = resendEmailService.enviarComTemplate(
+        boolean enviado = resendEmailService.enviarConviteEmpresa(
                 email,
-                "Convite para acessar a conta Gendaz",
-                "Voce foi convidado para acessar a conta",
-                "Acesse o painel com seu email para concluir o cadastro.",
-                "<p style='margin:0;'>Seu acesso foi liberado pela empresa.</p>",
-                "https://gendaz.site/login",
-                "Entrar"
+                nome,
+                executor.getEmpresa().getNomeFantasia(),
+                montarUrlConvite(token),
+                montarUrlConvite(token) + "&acao=recusar"
         );
         if (!enviado) {
             throw new BusinessException("Falha no envio do convite.");
@@ -122,19 +128,16 @@ public class MembresiaService {
             throw new BusinessException("Limite de reenvios atingido.");
         }
         convite.setReenvios(convite.getReenvios() + 1);
-        convite.setDataExpiracao(LocalDateTime.now().plusDays(7));
-        convite.setTokenHash(hash(gerarToken()));
+        convite.setDataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE));
+        String token = gerarToken();
+        convite.setTokenHash(hash(token));
         conviteRepository.save(convite);
-        String ctaUrl = "https://gendaz.site/login";
-        String ctaTexto = "Entrar";
-        resendEmailService.enviarComTemplate(
+        resendEmailService.enviarConviteEmpresa(
                 convite.getEmail(),
-                "Convite re-enviado",
-                "Seu convite foi renovado",
-                "Seu acesso foi renovado e o link anterior foi invalidado.",
-                "<p>Use o novo acesso enviado.</p>",
-                ctaUrl,
-                ctaTexto
+                convite.getNomeConvidado(),
+                convite.getEmpresa().getNomeFantasia(),
+                montarUrlConvite(token),
+                montarUrlConvite(token) + "&acao=recusar"
         );
         registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", convite.getId(), "SUCCESS");
         return toResponse(convite);
@@ -149,6 +152,33 @@ public class MembresiaService {
         conviteRepository.save(convite);
         registrarAudit("INVITE_CANCELLED", executor, executor.getEmpresa(), "Convite cancelado", convite.getId(), "SUCCESS");
         return toResponse(convite);
+    }
+
+    @Transactional
+    public ConviteEmpresaResponse recusarConvite(String token) {
+        String hash = hash(token);
+        ConviteEmpresaEntity convite = conviteRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
+        if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
+            throw new BusinessException("Convite invalido.");
+        }
+        convite.setStatus(StatusConviteEmpresa.CANCELLED);
+        convite.setCanceladoEm(LocalDateTime.now());
+        conviteRepository.save(convite);
+        registrarAudit("INVITE_REJECTED", convite.getCriadoPor(), convite.getEmpresa(), "Convite recusado", convite.getId(), "SUCCESS");
+        return toResponse(convite);
+    }
+
+    @Transactional(readOnly = true)
+    public ConvitePublicoResponse convitePublico(String token) {
+        ConviteEmpresaEntity convite = buscarConvitePorToken(token);
+        boolean valido = convite.getStatus() == StatusConviteEmpresa.PENDING && convite.getDataExpiracao().isAfter(LocalDateTime.now());
+        return new ConvitePublicoResponse(
+                convite.getNomeConvidado(),
+                convite.getEmail(),
+                convite.getEmpresa() == null ? null : convite.getEmpresa().getNomeFantasia(),
+                valido
+        );
     }
 
     @Transactional
@@ -218,9 +248,7 @@ public class MembresiaService {
 
     @Transactional
     public MembroEmpresaResponse aceitarConvite(String token, AceitarConviteRequest request) {
-        String hash = hash(token);
-        ConviteEmpresaEntity convite = conviteRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
+        ConviteEmpresaEntity convite = buscarConvitePorToken(token);
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) throw new BusinessException("Convite invalido.");
         if (convite.getDataExpiracao().isBefore(LocalDateTime.now())) throw new BusinessException("Convite expirado.");
         String email = sanitizacaoService.email(request.email());
@@ -360,6 +388,15 @@ public class MembresiaService {
         return convite;
     }
 
+    private ConviteEmpresaEntity buscarConvitePorToken(String token) {
+        if (token == null || token.isBlank()) {
+            throw new ResourceNotFoundException("Convite nao encontrado.");
+        }
+        String hash = hash(token);
+        return conviteRepository.findByTokenHash(hash)
+                .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
+    }
+
     private MembresiaEntity buscarMembresiaUnica(Long empresaId, Long usuarioId) {
         List<MembresiaEntity> membros = membresiaRepository.findAllByEmpresaIdAndUsuarioId(empresaId, usuarioId);
         if (membros.isEmpty()) {
@@ -386,6 +423,10 @@ public class MembresiaService {
         byte[] bytes = new byte[32];
         secureRandom.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private String montarUrlConvite(String token) {
+        return "https://gendaz.site/convite?token=" + token;
     }
 
     private String hash(String token) {

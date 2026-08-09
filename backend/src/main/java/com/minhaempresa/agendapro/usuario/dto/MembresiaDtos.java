@@ -37,12 +37,25 @@ public final class MembresiaDtos {
             Boolean owner
     ) {}
 
-    public record CriarConviteRequest(@Email @NotBlank @Size(max = 120) String email) {}
+    public record CriarConviteRequest(
+            @NotBlank @Size(min = 2, max = 80) String nome,
+            @NotBlank @Size(max = 19) String telefone,
+            @Email @NotBlank @Size(max = 120) String email
+    ) {}
 
     public record AceitarConviteRequest(
             @Email @NotBlank @Size(max = 120) String email,
             @NotBlank @Size(min = 2, max = 80) String nome,
             @NotBlank @Size(min = 8, max = 72) String senha,
             @NotBlank String token
+    ) {}
+
+    public record RecusarConviteRequest(@NotBlank String token) {}
+
+    public record ConvitePublicoResponse(
+            String nome,
+            String email,
+            String empresaNome,
+            Boolean valido
     ) {}
 }

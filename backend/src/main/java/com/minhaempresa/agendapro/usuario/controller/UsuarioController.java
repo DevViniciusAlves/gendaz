@@ -4,7 +4,9 @@ import com.minhaempresa.agendapro.usuario.dto.UsuarioDtos.AtualizarUsuarioReques
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.AceitarConviteRequest;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.CriarConviteRequest;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.ConviteEmpresaResponse;
+import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.ConvitePublicoResponse;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.MembroEmpresaResponse;
+import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.RecusarConviteRequest;
 import com.minhaempresa.agendapro.usuario.dto.UsuarioDtos.UsuarioResponse;
 import com.minhaempresa.agendapro.auth.service.AuthService;
 import com.minhaempresa.agendapro.shared.CookieHelper;
@@ -47,7 +49,7 @@ public class UsuarioController {
             HttpServletRequest http
     ) {
         Long usuarioId = extrairUsuario(http);
-        return ResponseEntity.ok(membresiaService.criarConvite(empresaId, usuarioId, request.email()));
+        return ResponseEntity.ok(membresiaService.criarConvite(empresaId, usuarioId, request.nome(), request.telefone(), request.email()));
     }
 
     @PostMapping("/convites/{conviteId}/reenviar")
@@ -95,6 +97,16 @@ public class UsuarioController {
     @PostMapping("/convites/aceitar")
     public ResponseEntity<MembroEmpresaResponse> aceitarConvite(@Valid @RequestBody AceitarConviteRequest request) {
         return ResponseEntity.ok(membresiaService.aceitarConvite(request.token(), request));
+    }
+
+    @PostMapping("/convites/recusar")
+    public ResponseEntity<ConviteEmpresaResponse> recusarConvite(@Valid @RequestBody RecusarConviteRequest request) {
+        return ResponseEntity.ok(membresiaService.recusarConvite(request.token()));
+    }
+
+    @GetMapping("/convites/publico")
+    public ResponseEntity<ConvitePublicoResponse> convitePublico(@RequestParam String token) {
+        return ResponseEntity.ok(membresiaService.convitePublico(token));
     }
 
     @GetMapping("/empresa/{empresaId}/resumo")

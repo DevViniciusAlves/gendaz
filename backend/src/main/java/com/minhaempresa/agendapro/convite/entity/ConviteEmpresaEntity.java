@@ -29,6 +29,12 @@ public class ConviteEmpresaEntity {
     @Column(nullable = false, length = 120)
     private String email;
 
+    @Column(name = "nome_convidado", length = 120)
+    private String nomeConvidado;
+
+    @Column(name = "telefone_convidado", length = 19)
+    private String telefoneConvidado;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "criado_por_usuario_id", nullable = false)
     private UsuarioEntity criadoPor;

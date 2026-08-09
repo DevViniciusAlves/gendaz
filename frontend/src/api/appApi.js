@@ -824,6 +824,18 @@ export const appApi = {
     return api.post('/auth/recuperar-senha', { email }).then((response) => response.data)
   },
 
+  aceitarConviteUsuario(payload) {
+    return api.post('/usuarios/convites/aceitar', payload).then((response) => response.data)
+  },
+
+  obterConviteUsuario(token) {
+    return api.get('/usuarios/convites/publico', { params: { token } }).then((response) => response.data)
+  },
+
+  recusarConviteUsuario(payload) {
+    return api.post('/usuarios/convites/recusar', payload).then((response) => response.data)
+  },
+
   redefinirSenha(token, novaSenha, confirmarNovaSenha) {
     return api.post('/auth/redefinir-senha', { token, novaSenha, confirmarNovaSenha }).then((response) => response.data)
   },

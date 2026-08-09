@@ -6,6 +6,7 @@ import Home from '../pages/Home.jsx'
 import Login from '../pages/Login.jsx'
 import RecuperarSenha from '../pages/RecuperarSenha.jsx'
 import RedefinirSenha from '../pages/RedefinirSenha.jsx'
+import Convite from '../pages/Convite.jsx'
 import AdminLogin from '../pages/admin/AdminLogin.jsx'
 import AdminDashboard from '../pages/admin/AdminDashboard.jsx'
 import AdminAccessGate from '../pages/admin/AdminAccessGate.jsx'
@@ -104,6 +105,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/recuperar-senha" element={<RecuperarSenha />} />
       <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+      <Route path="/convite" element={<Convite />} />
       <Route path="/admin/login" element={<AdminAccessGate><AdminLogin /></AdminAccessGate>} />
       <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

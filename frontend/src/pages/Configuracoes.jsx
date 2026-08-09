@@ -294,6 +294,7 @@ export default function Configuracoes() {
   }
 
   const planoAtivo = PLANOS[usuario?.plano]
+  const planoEhBasico = String(usuario?.plano || usuario?.assinatura?.planoNome || '').toUpperCase() === 'BASICO'
   const horariosExibidos = Array.isArray(horariosAtendimento) && horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
@@ -312,14 +313,16 @@ export default function Configuracoes() {
         </div>
       </div>
 
-      <div className="panel" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
-        <div>
-          <span className="section-kicker">Equipe</span>
-          <h2>Usuários da empresa</h2>
-          <p className="settings-card-muted">Convide, remova e reative membros da conta.</p>
+      {!planoEhBasico && (
+        <div className="panel" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+          <div>
+            <span className="section-kicker">Equipe</span>
+            <h2>Usuários da empresa</h2>
+            <p className="settings-card-muted">Convide, remova e reative membros da conta.</p>
+          </div>
+          <Link to="/sistema/configuracoes/usuarios" className="btn btn-primary">Abrir usuários</Link>
         </div>
-        <Link to="/sistema/configuracoes/usuarios" className="btn btn-primary">Abrir usuários</Link>
-      </div>
+      )}
 
       <div className="settings-summary-grid">
         <section className="panel settings-card">
