@@ -355,11 +355,8 @@ public class AuthService {
             throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
         }
         if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
-                && usuario.getEmpresa() != null
-                && membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
-                .filter(m -> m.getStatus() == StatusMembresia.ACTIVE)
-                .isEmpty()) {
-            throw new BusinessException("Usuário sem membresia ativa.");
+                && usuario.getEmpresa() != null) {
+            garantirMembresiaAtivaOuCriar(usuario);
         }
         return usuario;
     }
@@ -381,11 +378,8 @@ public class AuthService {
                 throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
             }
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
-                    && usuario.getEmpresa() != null
-                    && membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
-                    .filter(m -> m.getStatus() == StatusMembresia.ACTIVE)
-                    .isEmpty()) {
-                throw new BusinessException("Usuário sem membresia ativa.");
+                    && usuario.getEmpresa() != null) {
+                garantirMembresiaAtivaOuCriar(usuario);
             }
             return usuario;
         }
@@ -395,6 +389,22 @@ public class AuthService {
         throw new SessaoExpiradaException("Usuário autenticado obrigatório.");
     }
 
+    private void garantirMembresiaAtivaOuCriar(UsuarioEntity usuario) {
+        membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
+                .ifPresentOrElse(membresia -> {
+                    if (membresia.getStatus() != StatusMembresia.ACTIVE) {
+                        throw new BusinessException("Usuário sem membresia ativa.");
+                    }
+                }, () -> membresiaRepository.save(com.minhaempresa.agendapro.membresia.entity.MembresiaEntity.builder()
+                        .usuario(usuario)
+                        .empresa(usuario.getEmpresa())
+                        .status(StatusMembresia.ACTIVE)
+                        .funcao(usuario.getPerfil() == PerfilUsuario.DONO
+                                ? com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.OWNER
+                                : com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.MEMBER)
+                        .owner(usuario.getPerfil() == PerfilUsuario.DONO)
+                        .build()));
+    }
     private String calcularStatusConta(UsuarioEntity usuario, AssinaturaResponse assinatura) {
         if (usuario.getEmpresa() == null) {
             return "ACTIVE";
