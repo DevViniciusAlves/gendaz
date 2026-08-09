@@ -34,6 +34,7 @@ public final class UsuarioDtos {
             StatusUsuario status,
             Long empresaId,
             String empresaNome,
+            Boolean owner,
             Boolean aceitouTermos,
             LocalDateTime dataAceiteTermos,
             String versaoTermos,
@@ -41,5 +42,19 @@ public final class UsuarioDtos {
             String versaoPolitica,
             LocalDateTime dataCriacao,
             LocalDateTime dataAtualizacao
+    ) {}
+
+    public record CriarConviteRequest(@Email @NotBlank @Size(max = 120) String email) {}
+
+    public record ConviteResponse(
+            Long id,
+            Long empresaId,
+            String email,
+            String status,
+            LocalDateTime dataCriacao,
+            LocalDateTime dataExpiracao,
+            LocalDateTime dataAceite,
+            Integer reenvios,
+            Boolean owner
     ) {}
 }

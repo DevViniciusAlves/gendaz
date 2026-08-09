@@ -15,7 +15,7 @@ import lombok.*;
 @Entity
 @Table(
         name = "usuarios",
-        uniqueConstraints = @UniqueConstraint(name = "uk_usuario_empresa_email", columnNames = {"empresa_id", "email"})
+        uniqueConstraints = @UniqueConstraint(name = "uk_usuario_email", columnNames = {"email"})
 )
 public class UsuarioEntity {
     @Id

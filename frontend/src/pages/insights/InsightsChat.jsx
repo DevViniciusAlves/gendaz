@@ -199,7 +199,7 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
       <header className="insights-ai-chat__header">
         <div>
           <div className="section-kicker">IA Gendaz</div>
-          <h2>Chat IA</h2>
+          <h2>gendazIA</h2>
         </div>
         <button
           type="button"

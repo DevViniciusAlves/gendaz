@@ -312,6 +312,15 @@ export default function Configuracoes() {
         </div>
       </div>
 
+      <div className="panel" style={{ marginBottom: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16 }}>
+        <div>
+          <span className="section-kicker">Equipe</span>
+          <h2>Usuários da empresa</h2>
+          <p className="settings-card-muted">Convide, remova e reative membros da conta.</p>
+        </div>
+        <Link to="/sistema/configuracoes/usuarios" className="btn btn-primary">Abrir usuários</Link>
+      </div>
+
       <div className="settings-summary-grid">
         <section className="panel settings-card">
           <div className="settings-card-head">

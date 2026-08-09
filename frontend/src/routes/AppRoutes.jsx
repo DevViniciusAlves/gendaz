@@ -29,6 +29,7 @@ import Financeiro from '../pages/Financeiro.jsx'
 import Relatorios from '../pages/Relatorios.jsx'
 import Planos from '../pages/Planos.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
+import UsuariosEmpresa from '../pages/UsuariosEmpresa.jsx'
 import Suporte from '../pages/Suporte.jsx'
 import Conta from '../pages/Conta.jsx'
 import Gendaz from '../pages/Gendaz.jsx'
@@ -142,6 +143,7 @@ export default function AppRoutes() {
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
         <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />
+        <Route path="configuracoes/usuarios" element={<PlanRoute routeKey="configuracoes"><UsuariosEmpresa /></PlanRoute>} />
         <Route path="suporte" element={<Suporte />} />
         <Route path="conta" element={<Conta />} />
       </Route>

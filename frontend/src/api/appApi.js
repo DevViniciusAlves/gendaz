@@ -368,7 +368,10 @@ export const appApi = {
       },
       usuarios: async () => {
         const empresa = await api.get(`/empresas/${empresaId}`).then((response) => response.data)
-        return { empresa, equipe: getData().equipe }
+        const resumo = await api.get(`/usuarios/empresa/${empresaId}/resumo`).then((response) => response.data).catch(() => ({ limite: 1, usados: 0 }))
+        const membros = await api.get(`/usuarios/empresa/${empresaId}/membros`).then((response) => response.data).catch(() => [])
+        const convites = await api.get(`/usuarios/empresa/${empresaId}/convites`).then((response) => response.data).catch(() => [])
+        return { empresa, resumo, membros, convites }
       },
       planos: async () => {
         const [empresa, planos] = await Promise.all([
@@ -481,6 +484,74 @@ export const appApi = {
       loading: 'Editando usuário... aguarde',
       success: 'Usuário atualizado com sucesso.',
       error: 'Não foi possível atualizar o usuário.',
+    })
+  },
+
+  listarMembros(empresaId = empresaIdAtual()) {
+    return api.get(`/usuarios/empresa/${empresaId}/membros`).then((response) => response.data)
+  },
+
+  listarConvites(empresaId = empresaIdAtual()) {
+    return api.get(`/usuarios/empresa/${empresaId}/convites`).then((response) => response.data)
+  },
+
+  resumoUsuarios(empresaId = empresaIdAtual()) {
+    return api.get(`/usuarios/empresa/${empresaId}/resumo`).then((response) => response.data)
+  },
+
+  criarConviteUsuario(payload) {
+    return comNotificacao(() => api.post(`/usuarios/empresa/${empresaIdAtual()}/convites`, payload).then((response) => response.data), {
+      loading: 'Criando convite... aguarde',
+      success: 'Convite criado com sucesso.',
+      error: 'Não foi possível criar o convite.',
+    })
+  },
+
+  reenviarConviteUsuario(conviteId) {
+    return comNotificacao(() => api.post(`/usuarios/convites/${conviteId}/reenviar`).then((response) => response.data), {
+      loading: 'Reenviando convite... aguarde',
+      success: 'Convite reenviado com sucesso.',
+      error: 'Não foi possível reenviar o convite.',
+    })
+  },
+
+  cancelarConviteUsuario(conviteId) {
+    return comNotificacao(() => api.delete(`/usuarios/convites/${conviteId}`).then((response) => response.data), {
+      loading: 'Cancelando convite... aguarde',
+      success: 'Convite cancelado com sucesso.',
+      error: 'Não foi possível cancelar o convite.',
+    })
+  },
+
+  removerMembroUsuario(usuarioId) {
+    return comNotificacao(() => api.delete(`/usuarios/${usuarioId}`).then((response) => response.data), {
+      loading: 'Removendo membro... aguarde',
+      success: 'Membro removido com sucesso.',
+      error: 'Não foi possível remover o membro.',
+    })
+  },
+
+  desativarMembroUsuario(usuarioId) {
+    return comNotificacao(() => api.patch(`/usuarios/${usuarioId}/desativar`).then((response) => response.data), {
+      loading: 'Desativando membro... aguarde',
+      success: 'Membro desativado com sucesso.',
+      error: 'Não foi possível desativar o membro.',
+    })
+  },
+
+  reativarMembroUsuario(usuarioId) {
+    return comNotificacao(() => api.patch(`/usuarios/${usuarioId}/reativar`).then((response) => response.data), {
+      loading: 'Reativando membro... aguarde',
+      success: 'Membro reativado com sucesso.',
+      error: 'Não foi possível reativar o membro.',
+    })
+  },
+
+  transferirPropriedadeUsuario(usuarioId) {
+    return comNotificacao(() => api.post(`/usuarios/${usuarioId}/transferir-propriedade`).then((response) => response.data), {
+      loading: 'Transferindo proprietário... aguarde',
+      success: 'Propriedade transferida com sucesso.',
+      error: 'Não foi possível transferir a propriedade.',
     })
   },
 

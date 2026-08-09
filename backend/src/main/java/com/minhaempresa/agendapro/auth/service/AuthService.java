@@ -26,6 +26,8 @@ import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ConflictException;
 import com.minhaempresa.agendapro.shared.SessaoExpiradaException;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
+import com.minhaempresa.agendapro.membresia.enums.StatusMembresia;
+import com.minhaempresa.agendapro.membresia.repository.MembresiaRepository;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.enums.StatusUsuario;
 import com.minhaempresa.agendapro.usuario.mapper.UsuarioMapper;
@@ -65,18 +67,16 @@ public class AuthService {
     private final IpTrackingService ipTrackingService;
     private final ProfissionalService profissionalService;
     private final TransactionTemplate transactionTemplate;
+    private final MembresiaRepository membresiaRepository;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
     public boolean validarCredenciaisLogin(String email, String senha) {
         String emailNormalizado = normalizarEmail(email);
         try {
-            List<UsuarioEntity> usuariosEncontrados = usuarioRepository.findAllByEmailIgnoreCase(emailNormalizado);
-            return usuariosEncontrados.stream()
-                    .filter(Objects::nonNull)
-                    .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
-                    .filter(u -> passwordService.matches(senha, u.getSenha()))
-                    .findFirst()
-                    .isPresent();
+            UsuarioEntity usuario = usuarioRepository.findByEmailIgnoreCase(emailNormalizado).orElse(null);
+            return usuario != null
+                    && usuario.getStatus() == StatusUsuario.ATIVO
+                    && passwordService.matches(senha, usuario.getSenha());
         } catch (Exception e) {
             log.warn("[validar-credenciais] erro ao validar credenciais: {}", e.getMessage());
             return false;
@@ -89,19 +89,9 @@ public class AuthService {
         String email = normalizarEmail(request.email());
         log.info("Login solicitado para {}", mascararEmail(email));
         try {
-            List<UsuarioEntity> usuariosEncontrados = usuarioRepository.findAllByEmailIgnoreCase(email);
-            UsuarioEntity usuario = usuariosEncontrados.stream()
-                    .filter(Objects::nonNull)
-                    .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
-                    .filter(u -> passwordService.matches(request.senha(), u.getSenha()))
-                    .findFirst()
-                    .orElseGet(() -> usuariosEncontrados.stream()
-                            .filter(Objects::nonNull)
-                            .filter(u -> u.getStatus() == StatusUsuario.ATIVO)
-                            .findFirst()
-                            .orElse(null));
+            UsuarioEntity usuario = usuarioRepository.findByEmailIgnoreCase(email).orElse(null);
 
-            if (usuario == null) {
+            if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO) {
                 throw new BusinessException("E-mail ou senha invalidos.");
             }
 
@@ -356,13 +346,20 @@ public class AuthService {
         }
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
-        if (usuario.getStatus() != StatusUsuario.ATIVO) {
+        if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
             throw new BusinessException("Usuário inativo.");
         }
         if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                 && usuario.getEmpresa() != null
                 && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
             throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
+        }
+        if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                && usuario.getEmpresa() != null
+                && membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
+                .filter(m -> m.getStatus() == StatusMembresia.ACTIVE)
+                .isEmpty()) {
+            throw new BusinessException("Usuário sem membresia ativa.");
         }
         return usuario;
     }
@@ -375,13 +372,20 @@ public class AuthService {
             if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
                 log.debug("Header X-Usuario-Id divergente da sessão. Mantendo cookie como fonte de verdade. header={}, sessao={}", usuarioId, usuario.getId());
             }
-            if (usuario.getStatus() != StatusUsuario.ATIVO) {
+            if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
                 throw new BusinessException("Usuário inativo.");
             }
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                     && usuario.getEmpresa() != null
                     && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
                 throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
+            }
+            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                    && usuario.getEmpresa() != null
+                    && membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
+                    .filter(m -> m.getStatus() == StatusMembresia.ACTIVE)
+                    .isEmpty()) {
+                throw new BusinessException("Usuário sem membresia ativa.");
             }
             return usuario;
         }
