@@ -67,10 +67,7 @@
   flex-direction: column;
   gap: 12px;
   min-height: 0;
-  position: sticky;
-  top: 88px;
-  height: calc(100vh - 112px);
-  align-self: start;
+  align-self: stretch;
 }
 
 /* ---------- Painéis base ---------- */
@@ -590,7 +587,7 @@
 }
 
 .insights-ai-chat.is-closed {
-  height: auto;
+  height: 74px;
   min-height: 74px;
 }
 
