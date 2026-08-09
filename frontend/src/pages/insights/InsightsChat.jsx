@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Bot, HelpCircle, Loader, Send, Sparkles } from 'lucide-react'
+import { getSessionUser } from '../../api/axiosConfig.js'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
@@ -18,13 +19,39 @@ function criarChaveHistorico(item) {
   ].join('::')
 }
 
+function chaveArmazenamento() {
+  const usuario = getSessionUser()
+  const empresaId = usuario?.empresaId || 'local'
+  const usuarioId = usuario?.id || 'anon'
+  return `agendapro_insights_chat_${empresaId}_${usuarioId}`
+}
+
+function carregarMensagensSalvas() {
+  try {
+    const raw = localStorage.getItem(chaveArmazenamento())
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed?.mensagens) ? parsed.mensagens : []
+  } catch {
+    return []
+  }
+}
+
 export default function InsightsChat({ aberto = true, onToggle, onEnviar, historico = [] }) {
-  const [mensagens, setMensagens] = useState([])
+  const [mensagens, setMensagens] = useState(() => carregarMensagensSalvas())
   const [entrada, setEntrada] = useState('')
   const [carregando, setCarregando] = useState(false)
   const mensagensRef = useRef(null)
   const historicoProcessadoRef = useRef(new Set())
   const envioPendenteRef = useRef(null)
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(chaveArmazenamento(), JSON.stringify({ mensagens }))
+    } catch {
+      // Se o storage falhar, o chat continua funcionando sem persistir.
+    }
+  }, [mensagens])
 
   useEffect(() => {
     mensagensRef.current?.scrollTo({
