@@ -69,7 +69,9 @@ public class MembresiaService {
             throw new BusinessException("Email invalido.");
         }
         validarLimite(empresaId);
-        if (membresiaRepository.findByEmpresaIdAndUsuarioId(empresaId, usuarioRepository.findByEmailIgnoreCase(email).map(UsuarioEntity::getId).orElse(-1L)).isPresent()) {
+        if (usuarioRepository.findByEmailIgnoreCase(email)
+                .map(usuario -> membresiaRepository.existsByEmpresaIdAndUsuarioId(empresaId, usuario.getId()))
+                .orElse(false)) {
             throw new ConflictException("Email ja vinculado a empresa.");
         }
         conviteRepository.findByEmpresaIdAndEmailAndStatus(empresaId, email, StatusConviteEmpresa.PENDING)
@@ -278,8 +280,14 @@ public class MembresiaService {
         if (usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
             throw new ResourceNotFoundException("Usuario nao encontrado.");
         }
-        MembresiaEntity membresia = membresiaRepository.findByEmpresaIdAndUsuarioId(empresaId, usuarioAtualId)
-                .orElseThrow(() -> new BusinessException("Usuario sem membresia."));
+        List<MembresiaEntity> membros = membresiaRepository.findAllByEmpresaIdAndUsuarioId(empresaId, usuarioAtualId);
+        if (membros.isEmpty()) {
+            throw new BusinessException("Usuario sem membresia.");
+        }
+        if (membros.size() > 1) {
+            throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
+        }
+        MembresiaEntity membresia = membros.get(0);
         if (!Boolean.TRUE.equals(membresia.getOwner()) || membresia.getStatus() != StatusMembresia.ACTIVE) {
             throw new BusinessException("Usuario sem permissao.");
         }

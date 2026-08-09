@@ -390,20 +390,25 @@ public class AuthService {
     }
 
     private void garantirMembresiaAtivaOuCriar(UsuarioEntity usuario) {
-        membresiaRepository.findByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId())
-                .ifPresentOrElse(membresia -> {
-                    if (membresia.getStatus() != StatusMembresia.ACTIVE) {
-                        throw new BusinessException("Usuário sem membresia ativa.");
-                    }
-                }, () -> membresiaRepository.save(com.minhaempresa.agendapro.membresia.entity.MembresiaEntity.builder()
-                        .usuario(usuario)
-                        .empresa(usuario.getEmpresa())
-                        .status(StatusMembresia.ACTIVE)
-                        .funcao(usuario.getPerfil() == PerfilUsuario.DONO
-                                ? com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.OWNER
-                                : com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.MEMBER)
-                        .owner(usuario.getPerfil() == PerfilUsuario.DONO)
-                        .build()));
+        List<com.minhaempresa.agendapro.membresia.entity.MembresiaEntity> membros = membresiaRepository.findAllByEmpresaIdAndUsuarioId(usuario.getEmpresa().getId(), usuario.getId());
+        if (membros.isEmpty()) {
+            membresiaRepository.save(com.minhaempresa.agendapro.membresia.entity.MembresiaEntity.builder()
+                    .usuario(usuario)
+                    .empresa(usuario.getEmpresa())
+                    .status(StatusMembresia.ACTIVE)
+                    .funcao(usuario.getPerfil() == PerfilUsuario.DONO
+                            ? com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.OWNER
+                            : com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia.MEMBER)
+                    .owner(usuario.getPerfil() == PerfilUsuario.DONO)
+                    .build());
+            return;
+        }
+        if (membros.size() > 1) {
+            throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
+        }
+        if (membros.get(0).getStatus() != StatusMembresia.ACTIVE) {
+            throw new BusinessException("Usuário sem membresia ativa.");
+        }
     }
     private String calcularStatusConta(UsuarioEntity usuario, AssinaturaResponse assinatura) {
         if (usuario.getEmpresa() == null) {
