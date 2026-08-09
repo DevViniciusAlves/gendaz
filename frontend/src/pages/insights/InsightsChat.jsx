@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Bot, Loader, Send, Sparkles } from 'lucide-react'
+import { Bot, HelpCircle, Loader, Send, Sparkles } from 'lucide-react'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
@@ -18,23 +18,25 @@ function criarChaveHistorico(item) {
   ].join('::')
 }
 
-export default function InsightsChat({ onEnviar, historico = [] }) {
+export default function InsightsChat({ aberto = true, onToggle, onEnviar, historico = [] }) {
   const [mensagens, setMensagens] = useState([])
   const [entrada, setEntrada] = useState('')
   const [carregando, setCarregando] = useState(false)
-  const ref = useRef(null)
+  const mensagensRef = useRef(null)
   const historicoProcessadoRef = useRef(new Set())
   const envioPendenteRef = useRef(null)
 
   useEffect(() => {
-    ref.current?.scrollTo({ top: ref.current.scrollHeight, behavior: 'smooth' })
+    mensagensRef.current?.scrollTo({
+      top: mensagensRef.current.scrollHeight,
+      behavior: 'smooth',
+    })
   }, [mensagens, carregando])
 
   useEffect(() => {
     function aplicarSugestao(evento) {
       const pergunta = normalizarTexto(evento?.detail?.pergunta)
-      if (!pergunta) return
-      setEntrada(pergunta)
+      if (pergunta) setEntrada(pergunta)
     }
 
     window.addEventListener('agendapro:insights-suggestion', aplicarSugestao)
@@ -104,6 +106,7 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
         if (idsExistentes.has(String(item.id))) return false
         return !textosExistentes.has(normalizarTexto(item.texto).toLowerCase())
       })
+
       return novas.length > 0 ? [...current, ...novas] : current
     })
   }, [historico])
@@ -165,73 +168,91 @@ export default function InsightsChat({ onEnviar, historico = [] }) {
   }
 
   return (
-    <section className="gendaz-chat gendaz-chat--insights">
-      <div className="gendaz-panel__head">
-        <Bot size={18} />
-        <h2>gendazIA</h2>
-      </div>
-
-      <div className="gendaz-chat__messages" ref={ref}>
-        {mensagens.length === 0 && !carregando && (
-          <div className="gendaz-chat__empty">
-            <Sparkles size={18} />
-            <p>Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.</p>
-          </div>
-        )}
-
-        {mensagens.map((mensagem) => (
-          <div
-            key={mensagem.id}
-            className={`gendaz-chat__message gendaz-chat__message--${mensagem.origem}`}
-          >
-            <div className="gendaz-chat__text">{mensagem.texto}</div>
-          </div>
-        ))}
-
-        {carregando && (
-          <div className="gendaz-chat__message gendaz-chat__message--ia gendaz-chat__message--loading">
-            <Loader size={16} className="gendaz-spinner" />
-            <span>Analisando...</span>
-          </div>
-        )}
-      </div>
-
-      <div className="gendaz-chat__sugestoes gendaz-chat__sugestoes--base">
-        {SUGESTOES.map((sugestao) => (
-          <button
-            key={sugestao}
-            type="button"
-            className="gendaz-btn gendaz-btn--small"
-            onClick={() => setEntrada(sugestao)}
-          >
-            {sugestao}
-          </button>
-        ))}
-      </div>
-
-      <form
-        className="gendaz-chat__form"
-        onSubmit={(event) => {
-          event.preventDefault()
-          enviar()
-        }}
-      >
-        <input
-          value={entrada}
-          onChange={(e) => setEntrada(e.target.value)}
-          placeholder="Faça uma pergunta à gendazIA..."
-          aria-label="Faça uma pergunta à gendazIA"
-          disabled={carregando}
-        />
+    <section className={`insights-ai-chat ${aberto ? 'is-open' : 'is-closed'}`}>
+      <header className="insights-ai-chat__header">
+        <div>
+          <div className="section-kicker">IA Gendaz</div>
+          <h2>Chat IA</h2>
+        </div>
         <button
-          type="submit"
-          className="gendaz-btn gendaz-btn--primary"
-          disabled={!entrada.trim() || carregando}
-          aria-label="Enviar pergunta"
+          type="button"
+          className="icon-btn insights-ai-chat__toggle"
+          onClick={onToggle}
+          aria-label="Abrir ou fechar chat"
         >
-          <Send size={16} />
+          <HelpCircle size={18} />
         </button>
-      </form>
+      </header>
+
+      {aberto && (
+        <div className="insights-ai-chat__body">
+          <div className="insights-ai-chat__messages" ref={mensagensRef}>
+            {mensagens.length === 0 && !carregando && (
+              <div className="insights-ai-chat__empty">
+                <Bot size={16} />
+                <strong>gendazIA</strong>
+                <Sparkles size={16} />
+                <p>Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.</p>
+              </div>
+            )}
+
+            {mensagens.map((mensagem) => (
+              <div
+                key={mensagem.id}
+                className={`insights-ai-chat__message insights-ai-chat__message--${mensagem.origem}`}
+              >
+                <div className="insights-ai-chat__bubble">{mensagem.texto}</div>
+              </div>
+            ))}
+
+            {carregando && (
+              <div className="insights-ai-chat__message insights-ai-chat__message--ia">
+                <div className="insights-ai-chat__bubble insights-ai-chat__bubble--loading">
+                  <Loader size={14} className="gendaz-spinner" />
+                  <span>Analisando...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="insights-ai-chat__suggestions">
+            {SUGESTOES.map((sugestao) => (
+              <button
+                key={sugestao}
+                type="button"
+                className="insights-ai-chat__suggestion"
+                onClick={() => setEntrada(sugestao)}
+              >
+                {sugestao}
+              </button>
+            ))}
+          </div>
+
+          <form
+            className="insights-ai-chat__form"
+            onSubmit={(event) => {
+              event.preventDefault()
+              enviar()
+            }}
+          >
+            <input
+              value={entrada}
+              onChange={(e) => setEntrada(e.target.value)}
+              placeholder="Faça uma pergunta à gendazIA..."
+              aria-label="Faça uma pergunta à gendazIA"
+              disabled={carregando}
+            />
+            <button
+              type="submit"
+              className="insights-ai-chat__send"
+              disabled={!entrada.trim() || carregando}
+              aria-label="Enviar pergunta"
+            >
+              <Send size={16} />
+            </button>
+          </form>
+        </div>
+      )}
     </section>
   )
 }

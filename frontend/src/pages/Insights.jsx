@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import {
   AlertCircle,
   Calendar,
-  HelpCircle,
   Sparkles,
   TrendingUp,
   Users,
@@ -327,23 +326,12 @@ export default function Insights() {
           </div>
 
           <aside className="insights-sidebar">
-            <section className={`panel insights-sidebar-card ${chatAberto ? 'is-open' : 'is-closed'}`}>
-              <div className="insights-sidebar-head">
-                <div>
-                  <div className="section-kicker">IA Gendaz</div>
-                  <h2>Chat IA</h2>
-                </div>
-                <button type="button" className="icon-btn" onClick={() => setChatAberto((value) => !value)} aria-label="Abrir ou fechar chat">
-                  <HelpCircle size={18} />
-                </button>
-              </div>
-
-              {chatAberto && (
-                <div className="insights-sidebar-chat">
-                  <InsightsChat onEnviar={analisar} historico={historico} />
-                </div>
-              )}
-            </section>
+            <InsightsChat
+              aberto={chatAberto}
+              onToggle={() => setChatAberto((value) => !value)}
+              onEnviar={analisar}
+              historico={historico}
+            />
           </aside>
         </div>
       )}
