@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.usuario.repository;
 import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import com.minhaempresa.agendapro.usuario.entity.UsuarioEntity;
 import jakarta.persistence.LockModeType;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,6 +16,17 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     Optional<UsuarioEntity> findByEmail(String email);
     Optional<UsuarioEntity> findByEmailIgnoreCase(String email);
     List<UsuarioEntity> findAllByEmailIgnoreCase(String email);
+    @Query("""
+            select distinct u
+            from UsuarioEntity u
+            left join MembresiaEntity m on m.usuario = u
+            where lower(trim(u.email)) = lower(trim(:email))
+              and (m.id is not null or u.perfil in :perfisPainel)
+            """)
+    List<UsuarioEntity> findUsuariosPainelByEmailIgnoreCase(
+            @Param("email") String email,
+            @Param("perfisPainel") Collection<PerfilUsuario> perfisPainel
+    );
     Optional<UsuarioEntity> findByEmpresaIdAndEmail(Long empresaId, String email);
     Optional<UsuarioEntity> findByEmpresaIdAndEmailIgnoreCase(Long empresaId, String email);
     Optional<UsuarioEntity> findByEmpresaIdAndSessaoAtiva(Long empresaId, String sessaoAtiva);

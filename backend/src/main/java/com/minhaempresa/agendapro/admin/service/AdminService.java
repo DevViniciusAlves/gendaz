@@ -164,7 +164,7 @@ public class AdminService {
     public boolean validarCredenciaisAdmin(String email, String senha) {
         String emailNormalizado = email == null ? "" : email.trim().toLowerCase();
         try {
-            UsuarioEntity admin = usuarioRepository.findByEmail(emailNormalizado).orElse(null);
+            UsuarioEntity admin = buscarAdminPorEmail(emailNormalizado);
             return admin != null 
                 && admin.getPerfil() == PerfilUsuario.SUPER_ADMIN 
                 && admin.getStatus() == StatusUsuario.ATIVO 
@@ -178,7 +178,7 @@ public class AdminService {
     @Transactional
     public AdminLoginResponse login(AdminLoginRequest request, String ip, String userAgent) {
         String email = request.email() == null ? "" : request.email().trim().toLowerCase();
-        UsuarioEntity admin = usuarioRepository.findByEmail(email).orElse(null);
+        UsuarioEntity admin = buscarAdminPorEmail(email);
         if (admin == null || admin.getPerfil() != PerfilUsuario.SUPER_ADMIN || admin.getStatus() != StatusUsuario.ATIVO || !passwordService.matches(request.senha(), admin.getSenha())) {
             auditService.registrar("ADMIN_LOGIN_FAILED", "SECURITY", null, null, null, "Falha de login admin", null, ip, userAgent);
             throw new BusinessException("Credenciais invalidas.");
@@ -678,5 +678,15 @@ public UsuarioEntity exigirAdmin(String token) {
                 ultimoPagamento == null ? null : ultimoPagamento.getDataPagamento(),
                 ultimoPagamento == null ? null : ultimoPagamento.getValor()
         );
+    }
+
+    private UsuarioEntity buscarAdminPorEmail(String email) {
+        List<UsuarioEntity> admins = usuarioRepository.findAllByEmailIgnoreCase(email).stream()
+                .filter(usuario -> usuario.getPerfil() == PerfilUsuario.SUPER_ADMIN)
+                .toList();
+        if (admins.size() > 1) {
+            throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
+        }
+        return admins.isEmpty() ? null : admins.get(0);
     }
 }

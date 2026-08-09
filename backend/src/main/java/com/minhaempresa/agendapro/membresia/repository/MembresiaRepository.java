@@ -15,4 +15,5 @@ public interface MembresiaRepository extends JpaRepository<MembresiaEntity, Long
     List<MembresiaEntity> findByEmpresaIdAndStatus(Long empresaId, StatusMembresia status);
     List<MembresiaEntity> findByEmpresaIdAndFuncao(Long empresaId, FuncaoMembresia funcao);
     boolean existsByEmpresaIdAndUsuarioId(Long empresaId, Long usuarioId);
+    boolean existsByUsuarioId(Long usuarioId);
 }

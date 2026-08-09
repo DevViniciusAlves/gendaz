@@ -15,6 +15,7 @@ import com.minhaempresa.agendapro.membresia.enums.StatusMembresia;
 import com.minhaempresa.agendapro.membresia.repository.MembresiaRepository;
 import com.minhaempresa.agendapro.plano.entity.PlanoEntity;
 import com.minhaempresa.agendapro.plano.service.PlanoService;
+import com.minhaempresa.agendapro.auth.service.PasswordService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ConflictException;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
@@ -33,6 +34,7 @@ import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +43,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MembresiaService {
     private static final int LIMITE_REENVIO = 3;
+    private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
     private final MembresiaRepository membresiaRepository;
     private final ConviteEmpresaRepository conviteRepository;
     private final UsuarioRepository usuarioRepository;
@@ -48,6 +51,7 @@ public class MembresiaService {
     private final PlanoService planoService;
     private final SanitizacaoService sanitizacaoService;
     private final ResendEmailService resendEmailService;
+    private final PasswordService passwordService;
     private final AdminAuditService auditService;
     private final SecureRandom secureRandom = new SecureRandom();
 
@@ -69,17 +73,16 @@ public class MembresiaService {
             throw new BusinessException("Email invalido.");
         }
         validarLimite(empresaId);
-        List<UsuarioEntity> usuariosExistentes = usuarioRepository.findAllByEmailIgnoreCase(email);
-        if (usuariosExistentes.size() > 1) {
+        List<UsuarioEntity> usuariosPainel = buscarUsuariosPainelPorEmail(email);
+        if (usuariosPainel.size() > 1) {
             throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
         }
-        if (usuariosExistentes.stream().anyMatch(usuario -> membresiaRepository.existsByEmpresaIdAndUsuarioId(empresaId, usuario.getId()))) {
+        if (usuariosPainel.stream().anyMatch(usuario -> membresiaRepository.existsByEmpresaIdAndUsuarioId(empresaId, usuario.getId()))) {
             throw new ConflictException("Email ja vinculado a empresa.");
         }
         conviteRepository.findByEmpresaIdAndEmailAndStatus(empresaId, email, StatusConviteEmpresa.PENDING)
                 .ifPresent(i -> { throw new ConflictException("Convite pendente ja existente."); });
-        UsuarioEntity existente = usuariosExistentes.isEmpty() ? null : usuariosExistentes.get(0);
-        if (existente != null && existente.getEmpresa() != null && !empresaId.equals(existente.getEmpresa().getId())) {
+        if (!usuariosPainel.isEmpty()) {
             throw new ConflictException("Email ja vinculado a empresa.");
         }
         ConviteEmpresaEntity convite = ConviteEmpresaEntity.builder()
@@ -224,22 +227,35 @@ public class MembresiaService {
         if (!convite.getEmail().equalsIgnoreCase(email)) throw new BusinessException("Convite invalido para este email.");
         validarLimite(convite.getEmpresa().getId());
         List<UsuarioEntity> usuariosExistentes = usuarioRepository.findAllByEmailIgnoreCase(email);
-        if (usuariosExistentes.size() > 1) {
+        List<UsuarioEntity> usuariosPainel = buscarUsuariosPainelPorEmail(email);
+        if (usuariosPainel.size() > 1) {
             throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
         }
-        UsuarioEntity usuario = usuariosExistentes.isEmpty() ? null : usuariosExistentes.get(0);
+        Optional<UsuarioEntity> legadoParaConverter = usuariosPainel.isEmpty()
+                ? selecionarUsuarioLegadoParaConverter(usuariosExistentes, usuariosPainel, convite.getEmpresa().getId())
+                : Optional.empty();
+        UsuarioEntity usuario = legadoParaConverter.orElseGet(() -> usuariosPainel.isEmpty() ? null : usuariosPainel.get(0));
         if (usuario == null) {
+            passwordService.validarSenha(request.senha());
             usuario = usuarioRepository.save(UsuarioEntity.builder()
                     .nome(sanitizacaoService.textoObrigatorio(request.nome()))
                     .email(email)
-                    .senha(request.senha())
+                    .senha(passwordService.hash(request.senha()))
                     .perfil(PerfilUsuario.ATENDENTE)
                     .status(StatusUsuario.ATIVO)
                     .empresa(convite.getEmpresa())
                     .aceitouTermos(false)
                     .build());
-        } else if (usuario.getEmpresa() != null && !usuario.getEmpresa().getId().equals(convite.getEmpresa().getId())) {
+        } else if (usuario.getEmpresa() == null || !usuario.getEmpresa().getId().equals(convite.getEmpresa().getId())) {
             throw new ConflictException("Email ja vinculado a empresa.");
+        } else if (legadoParaConverter.isPresent()) {
+            passwordService.validarSenha(request.senha());
+            usuario.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
+            usuario.setSenha(passwordService.hash(request.senha()));
+            usuario.setPerfil(PerfilUsuario.ATENDENTE);
+            usuario.setStatus(StatusUsuario.ATIVO);
+            usuario.setEmpresa(convite.getEmpresa());
+            usuarioRepository.save(usuario);
         }
         final Long usuarioId = usuario.getId();
         List<MembresiaEntity> membresiasUsuario = membresiaRepository.findByEmpresaId(convite.getEmpresa().getId()).stream()
@@ -282,6 +298,34 @@ public class MembresiaService {
         if (contarUsados(empresaId) >= limiteEmpresa(empresaId)) {
             throw new BusinessException("Seu plano atingiu o limite de usuarios.");
         }
+    }
+
+    private List<UsuarioEntity> buscarUsuariosPainelPorEmail(String email) {
+        return usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
+    }
+
+    private Optional<UsuarioEntity> selecionarUsuarioLegadoParaConverter(List<UsuarioEntity> usuariosExistentes, List<UsuarioEntity> usuariosPainel, Long empresaId) {
+        if (usuariosExistentes.isEmpty()) {
+            return Optional.empty();
+        }
+        Set<Long> idsPainel = usuariosPainel.stream().map(UsuarioEntity::getId).collect(java.util.stream.Collectors.toSet());
+        List<UsuarioEntity> legados = usuariosExistentes.stream()
+                .filter(usuario -> !idsPainel.contains(usuario.getId()))
+                .filter(usuario -> !membresiaRepository.existsByUsuarioId(usuario.getId()))
+                .toList();
+        if (legados.isEmpty()) {
+            return Optional.empty();
+        }
+        List<UsuarioEntity> legadosDaEmpresa = legados.stream()
+                .filter(usuario -> usuario.getEmpresa() != null && empresaId.equals(usuario.getEmpresa().getId()))
+                .toList();
+        if (legadosDaEmpresa.size() == 1) {
+            return Optional.of(legadosDaEmpresa.get(0));
+        }
+        if (legados.size() == 1) {
+            return Optional.of(legados.get(0));
+        }
+        throw new ConflictException("Este email possui acessos legados duplicados. Regularize o cadastro antes de aceitar o convite.");
     }
 
     private UsuarioEntity validarDono(Long empresaId, Long usuarioAtualId) {

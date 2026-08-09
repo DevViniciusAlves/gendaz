@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class UsuarioService {
+    private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
     private final UsuarioRepository usuarioRepository;
     private final EmpresaService empresaService;
     private final PasswordService passwordService;
@@ -119,8 +120,14 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public UsuarioEntity buscarPorEmail(String email) {
-        return usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+        List<UsuarioEntity> usuarios = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
+        if (usuarios.isEmpty()) {
+            throw new ResourceNotFoundException("Usuario nao encontrado.");
+        }
+        if (usuarios.size() > 1) {
+            throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
+        }
+        return usuarios.get(0);
     }
 
     private void validarNome(String nome) {

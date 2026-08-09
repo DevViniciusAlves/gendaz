@@ -43,7 +43,10 @@ public class SuperAdminBootstrap implements CommandLineRunner {
         if (email.isBlank() || superAdminPassword == null || superAdminPassword.isBlank()) {
             throw new IllegalStateException("SUPER_ADMIN_EMAIL e SUPER_ADMIN_PASSWORD sao obrigatorios quando o bootstrap admin esta ativo.");
         }
-        UsuarioEntity existente = usuarioRepository.findByEmail(email).orElse(null);
+        UsuarioEntity existente = usuarioRepository.findAllByEmailIgnoreCase(email).stream()
+                .filter(usuario -> usuario.getPerfil() == PerfilUsuario.SUPER_ADMIN)
+                .findFirst()
+                .orElse(null);
         if (existente != null) {
             if (existente.getPerfil() != PerfilUsuario.SUPER_ADMIN) {
                 throw new IllegalStateException("SUPER_ADMIN_EMAIL ja pertence a um usuario comum.");

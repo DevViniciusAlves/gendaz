@@ -51,6 +51,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class AuthService {
     private static final String VERSAO_TERMOS = "2026-06-22";
     private static final String VERSAO_PRIVACIDADE = "2026-06-22";
+    private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
 
     private final UsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
@@ -283,7 +284,7 @@ public class AuthService {
     @Transactional
     public void solicitarRecuperacaoSenha(String email) {
         String normalizado = normalizarEmail(email);
-        usuarioRepository.findAllByEmailIgnoreCase(normalizado).forEach(usuario -> {
+        usuarioRepository.findUsuariosPainelByEmailIgnoreCase(normalizado, PERFIS_PAINEL_DIRETOS).forEach(usuario -> {
             String token = passwordRecoveryService.solicitarRecuperacao(usuario);
             boolean enviado = resendEmailService.enviarRecuperacaoSenha(
                     usuario.getEmail(),
@@ -297,7 +298,7 @@ public class AuthService {
     }
 
     private UsuarioEntity resolverUsuarioUnicoPorEmail(String email) {
-        List<UsuarioEntity> usuarios = usuarioRepository.findAllByEmailIgnoreCase(email);
+        List<UsuarioEntity> usuarios = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
         if (usuarios.isEmpty()) {
             return null;
         }
@@ -464,6 +465,7 @@ public class AuthService {
         if (empresaRepository.existsByDocumento(documento)) {
             throw new ConflictException("Este documento ja esta cadastrado.");
         }
+        validarEmailDisponivelParaPainel(email);
 
             PlanoEntity planoEscolhido = planoService.buscarPorNomePermitido(request.plano());
             boolean cadastroPro = "PRO".equalsIgnoreCase(planoEscolhido.getNome());
@@ -527,6 +529,13 @@ public class AuthService {
         passwordService.validarSenha(request.senha());
         if (!Boolean.TRUE.equals(request.aceiteTermos())) {
             throw new BusinessException("Aceite os termos para continuar.");
+        }
+    }
+
+    private void validarEmailDisponivelParaPainel(String email) {
+        List<UsuarioEntity> usuariosPainel = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
+        if (!usuariosPainel.isEmpty()) {
+            throw new ConflictException("Este e-mail ja esta cadastrado.");
         }
     }
 
