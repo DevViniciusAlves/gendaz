@@ -1757,3 +1757,85 @@ html .admin-login-screen .admin-login-panel .admin-login-copy {
     padding: 20px;
   }
 }
+
+@media (max-width: 767px) {
+  html .admin-gendaz.admin-shell,
+  html .admin-gendaz.gendaz-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar,
+  html .admin-gendaz .gendaz-sidebar {
+    position: sticky !important;
+    top: 0;
+    z-index: 20;
+    height: auto !important;
+    padding: 12px !important;
+    overflow-x: auto;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar nav,
+  html .admin-gendaz .gendaz-sidebar nav {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar .gendaz-sidebar__link,
+  html .admin-gendaz .admin-gendaz-sidebar button.gendaz-sidebar__link,
+  html .admin-gendaz .gendaz-sidebar__link {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  html .admin-gendaz .admin-gendaz-sidebar .sidebar-logo-wrapper,
+  html .admin-gendaz .gendaz-sidebar .sidebar-logo-wrapper {
+    min-height: 0;
+    padding: 4px 0 10px;
+  }
+
+  html .admin-gendaz .admin-gendaz-content,
+  html .admin-gendaz.gendaz-shell .gendaz-main {
+    padding: 14px !important;
+  }
+
+  html .admin-gendaz .admin-gendaz-page-head,
+  html .admin-gendaz .page-title.page-title-admin {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  html .admin-gendaz .page-title-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  html .admin-gendaz .admin-gendaz-page-head h1,
+  html .admin-gendaz .page-title.page-title-admin h1 {
+    font-size: 24px !important;
+  }
+
+  html .admin-gendaz .admin-gendaz-grid,
+  html .admin-gendaz .admin-gendaz-grid--two,
+  html .admin-gendaz .admin-strategy-grid,
+  html .admin-gendaz .admin-metrics,
+  html .admin-gendaz .admin-panels,
+  html .admin-gendaz .admin-panels--tactical {
+    grid-template-columns: 1fr !important;
+  }
+
+  html .admin-gendaz .table-wrap,
+  html .admin-gendaz .admin-filters,
+  html .admin-gendaz .search-shell,
+  html .admin-gendaz .modal {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  html .admin-gendaz .data-table {
+    min-width: 720px;
+  }
+}

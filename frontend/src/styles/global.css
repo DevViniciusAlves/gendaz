@@ -2237,6 +2237,212 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+@media (max-width: 767px) {
+  html, body {
+    min-width: 0;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: auto;
+    padding: 12px 12px 10px !important;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+
+  .app-shell .sidebar-logo-wrapper {
+    min-height: 0 !important;
+    padding: 4px 0 10px !important;
+  }
+
+  .app-shell .sidebar .sidebar-logo {
+    max-width: 132px;
+    transform: none;
+  }
+
+  .app-shell .sidebar nav {
+    display: flex !important;
+    gap: 8px !important;
+    margin-top: 10px !important;
+    padding-bottom: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-shell .sidebar a {
+    min-height: 38px !important;
+    padding: 0 12px !important;
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .app-shell .sidebar a span {
+    display: inline;
+  }
+
+  .app-shell .sidebar-foot {
+    margin-top: 12px !important;
+    padding-top: 10px;
+    border-top: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  .app-shell .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 18;
+    min-height: 0 !important;
+    padding: 12px 14px !important;
+    gap: 10px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .app-shell .topbar > div:first-child {
+    width: 100%;
+  }
+
+  .app-shell .topbar strong {
+    font-size: 18px;
+  }
+
+  .app-shell .topbar span {
+    font-size: 12px;
+  }
+
+  .app-shell .topbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .app-shell .user-menu {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .app-shell .user-menu__text {
+    min-width: 0;
+  }
+
+  .app-shell .content {
+    padding: 14px !important;
+  }
+
+  .app-shell .page {
+    gap: 14px !important;
+  }
+
+  .app-shell .page-title,
+  .app-shell .row-title,
+  .app-shell .page-title-actions,
+  .app-shell .filters,
+  .app-shell .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .app-shell .page-title h1 {
+    font-size: 22px !important;
+    line-height: 1.15;
+  }
+
+  .app-shell .panel,
+  .app-shell .dashboard-summary-card,
+  .app-shell .metric-card,
+  .app-shell .table-wrap,
+  .app-shell .search-shell,
+  .app-shell .filters,
+  .app-shell .delivery-search,
+  .app-shell .report-filters {
+    padding: 14px !important;
+    border-radius: 16px;
+  }
+
+  .app-shell .dashboard-grid,
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .metric-grid,
+  .app-shell .grid,
+  .app-shell .form-grid,
+  .app-shell .settings-summary-grid,
+  .app-shell .first-steps-grid,
+  .app-shell .conversation-filters {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .table-wrap,
+  .app-shell .search-shell,
+  .app-shell .filters,
+  .app-shell .report-filters {
+    overflow-x: auto;
+  }
+
+  .app-shell .data-table {
+    min-width: 720px;
+  }
+
+  .app-shell .pagination-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .app-shell .modal-backdrop {
+    padding: 14px;
+  }
+
+  .app-shell .modal {
+    width: 100%;
+    padding: 16px;
+  }
+
+  .login-screen-v2,
+  .criar-conta-screen,
+  .admin-login-screen,
+  .session-expired-screen,
+  .payment-page,
+  .booking-page {
+    padding: 16px !important;
+  }
+
+  .login-card-v2,
+  .criar-conta-card,
+  .admin-login-card,
+  .session-expired-card,
+  .payment-card,
+  .booking-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 20px 16px !important;
+    border-radius: 20px !important;
+  }
+
+  .login-card-header,
+  .admin-login-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .login-title-v2,
+  .admin-login-title,
+  .session-expired-card h1 {
+    font-size: 26px !important;
+  }
+}
+
 .settings-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 18px; }
 .settings-card { display: grid; gap: 14px; min-height: 0; }
 .settings-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
