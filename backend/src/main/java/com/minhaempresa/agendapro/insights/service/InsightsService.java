@@ -311,21 +311,24 @@ public class InsightsService {
         if (groq.containsKey("alertas")) {
             alertas = limitarItens(parsePrincipais(groq.get("alertas")), 4, alertas);
         }
-        if (groq.containsKey("oportunidades")) {
+        if (!oportunidades.isEmpty() && groq.containsKey("oportunidades")) {
             oportunidades = limitarOportunidades(groq.get("oportunidades"), oportunidades);
         }
-        if (groq.containsKey("acoes")) {
+        if (!acoes.isEmpty() && groq.containsKey("acoes")) {
             acoes = limitarAcoes(groq.get("acoes"), acoes);
         }
-        if (groq.containsKey("acoes_recomendadas")) {
+        if (!acoes.isEmpty() && groq.containsKey("acoes_recomendadas")) {
             acoes = limitarAcoes(groq.get("acoes_recomendadas"), acoes);
         }
-        if (groq.containsKey("recomendacoes")) {
+        if (!acoes.isEmpty() && groq.containsKey("recomendacoes")) {
             acoes = limitarAcoes(groq.get("recomendacoes"), acoes);
         }
 
         if (acoes.isEmpty()) {
             acoes = montarAcoesReais(pendente, atRisk, servicos, profissionais, receita30, receita60);
+        }
+        if (oportunidades.isEmpty()) {
+            oportunidades = montarOportunidadesReais(pendente, atRisk, servicos, profissionais, receita30, receita60);
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
@@ -685,12 +688,73 @@ public class InsightsService {
         }
         if (acoes.isEmpty()) {
             acoes.add(new InsightAction(
-                    "Manter monitoramento ativo",
+                    "Acompanhar indicadores",
                     "Baixa",
-                    "Nenhuma ação crítica no momento, acompanhar a operação"
+                    "Nenhum sinal crítico suficiente para ação imediata"
             ));
         }
         return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
+    }
+
+    private List<InsightItem> montarOportunidadesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
+        List<InsightItem> oportunidades = new ArrayList<>();
+        if (pendente > 0) {
+            oportunidades.add(new InsightItem(
+                    "Recuperar valores em aberto",
+                    "Existe dinheiro pendente no financeiro e vale priorizar cobrança.",
+                    "Baseado no saldo pendente real.",
+                    formatarMoeda(pendente),
+                    "Alta"
+            ));
+        }
+        long servicosSemVenda = servicos.stream().filter(s -> longo(s.get("vendas_30d")) <= 0).count();
+        if (servicosSemVenda > 0) {
+            oportunidades.add(new InsightItem(
+                    "Revisar serviços sem venda",
+                    "Há serviços sem conversão no período e isso pede divulgação ou ajuste de oferta.",
+                    servicosSemVenda + " serviços sem venda recente",
+                    "Impacto não estimado",
+                    "Média"
+            ));
+        }
+        long profissionaisOciosos = profissionais.stream().filter(p -> longo(p.get("agendamentos_30d")) <= 0).count();
+        if (profissionaisOciosos > 0) {
+            oportunidades.add(new InsightItem(
+                    "Aproveitar agenda ociosa",
+                    "Existe capacidade parada que pode receber mais demanda.",
+                    profissionaisOciosos + " profissionais com baixa ocupação",
+                    "Impacto não estimado",
+                    "Média"
+            ));
+        }
+        if (atRisk > 0) {
+            oportunidades.add(new InsightItem(
+                    "Reativar base sem retorno",
+                    "Parte dos clientes está há mais de 30 dias sem agendar.",
+                    atRisk + " clientes em risco",
+                    "Impacto não estimado",
+                    "Alta"
+            ));
+        }
+        if (receita60 > 0 && receita30 < receita60) {
+            oportunidades.add(new InsightItem(
+                    "Compensar queda de receita",
+                    "A receita recente caiu em relação ao período anterior.",
+                    "Comparação real de 30d vs 60d.",
+                    "Impacto não estimado",
+                    "Alta"
+            ));
+        }
+        if (oportunidades.isEmpty()) {
+            oportunidades.add(new InsightItem(
+                    "Sem oportunidade crítica",
+                    "Os dados atuais não mostram uma ação prioritária clara.",
+                    "Sem sinal forte no período analisado.",
+                    "Baixa",
+                    "Média"
+            ));
+        }
+        return oportunidades.size() > 3 ? oportunidades.subList(0, 3) : oportunidades;
     }
 
     private String primeiroNaoVazio(Map<?, ?> mapa, String... chaves) {
