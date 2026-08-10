@@ -243,7 +243,9 @@ public class InsightsService {
                 - Retorne no máximo 3 oportunidades.
                 - Retorne no máximo 4 ações.
                 - Se houver pendências, devolva ações para cobrança e recuperação.
-                - Se houver clientes inativos, devolva ações de reativação.
+                - So recomende reativacao de clientes quando clientes.inativos_status ou resumo.clientes_inativos for maior que 0.
+                - Se clientes.inativos_status for 0, nao cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
+                - Se nao houver sinal real suficiente, devolva arrays vazios para oportunidades e acoes.
                 - Se houver serviço sem venda ou profissional ocioso, devolva ações práticas.
                 - Se a Groq não conseguir estimar impacto, use "Impacto não estimado".
 
@@ -296,9 +298,6 @@ public class InsightsService {
             oportunidades.add(new InsightItem("Cobrança ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperável no financeiro.", formatarMoeda(pendente), "Alta"));
             acoes.add(new InsightAction("Cobrar pagamentos pendentes", "Alta", formatarMoeda(pendente)));
         }
-        if (false && atRisk > 0) {
-            acoes.add(new InsightAction("Reativar clientes em risco", "Alta", atRisk + " contatos"));
-        }
         if (servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) == 0)) {
             oportunidades.add(new InsightItem("Divulgar serviço sem venda", "Há serviço sem conversão no período.", "O catálogo da empresa mostra um serviço sem movimento recente.", "Impacto não estimado", "Média"));
         }
@@ -315,24 +314,29 @@ public class InsightsService {
         if (groq.containsKey("alertas")) {
             alertas = limitarItens(parsePrincipais(groq.get("alertas")), 4, alertas);
         }
-        if (!oportunidades.isEmpty() && groq.containsKey("oportunidades")) {
+        if (groq.containsKey("oportunidades")) {
             oportunidades = limitarOportunidades(groq.get("oportunidades"), oportunidades);
         }
-        if (!acoes.isEmpty() && groq.containsKey("acoes")) {
+        if (groq.containsKey("acoes")) {
             acoes = limitarAcoes(groq.get("acoes"), acoes);
         }
-        if (!acoes.isEmpty() && groq.containsKey("acoes_recomendadas")) {
+        if (groq.containsKey("acoes_recomendadas")) {
             acoes = limitarAcoes(groq.get("acoes_recomendadas"), acoes);
         }
-        if (!acoes.isEmpty() && groq.containsKey("recomendacoes")) {
+        if (groq.containsKey("recomendacoes")) {
             acoes = limitarAcoes(groq.get("recomendacoes"), acoes);
         }
 
+        principais = filtrarItensSemBaseReal(principais, clientesInativos, servicosInativos, profissionaisInativos);
+        alertas = filtrarItensSemBaseReal(alertas, clientesInativos, servicosInativos, profissionaisInativos);
+        oportunidades = filtrarItensSemBaseReal(oportunidades, clientesInativos, servicosInativos, profissionaisInativos);
+        acoes = filtrarAcoesSemBaseReal(acoes, clientesInativos, servicosInativos, profissionaisInativos);
+
         if (acoes.isEmpty()) {
-            acoes = List.of(new InsightAction("Aguardando análise do Groq", "Baixa", "Sincronize os dados para gerar ações reais"));
+            acoes = List.of(new InsightAction("Nenhuma acao recomendada no momento", "Baixa", "Os dados reais nao indicam uma acao prioritaria agora"));
         }
         if (oportunidades.isEmpty()) {
-            oportunidades = List.of(new InsightItem("Sem oportunidade crítica", "Os dados atuais não mostram uma ação prioritária clara.", "Sincronize os dados para que o Groq analise a base real.", "Baixa", "Média"));
+            oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados nao mostram uma acao prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
@@ -464,16 +468,6 @@ public class InsightsService {
             ));
         }
 
-        if (atRisk > 0) {
-            alertas.add(new InsightItem(
-                    "Clientes em risco",
-                    "Clientes sem retorno recente devem ser reativados antes de virar churn.",
-                    atRisk + " clientes",
-                    "Alta",
-                    "alerta"
-            ));
-        }
-
         long servicosSemMovimento = servicos.stream().filter(servico -> longo(servico.get("vendas_30d")) <= 0).count();
         long profissionaisSemMovimento = profissionais.stream().filter(profissional -> longo(profissional.get("agendamentos_30d")) <= 0).count();
         if (servicosSemMovimento > 0 || profissionaisSemMovimento > 0) {
@@ -519,15 +513,6 @@ public class InsightsService {
                     "acao"
             );
         }
-        if (atRisk > 0) {
-            return new InsightItem(
-                    "Próxima Melhor Ação",
-                    "Reative os clientes sem retorno recente antes que virem churn.",
-                    atRisk + " clientes em risco",
-                    "Alta",
-                    "acao"
-            );
-        }
         if (profissionaisSemMovimento > 0 || servicosSemMovimento > 0) {
             return new InsightItem(
                     "Próxima Melhor Ação",
@@ -540,7 +525,7 @@ public class InsightsService {
         if (quedaReceita) {
             return new InsightItem(
                     "Próxima Melhor Ação",
-                    "Compense a queda recente de faturamento com campanhas de reativação e recorrência.",
+                    "Compense a queda recente de faturamento com uma campanha comercial para os serviços com melhor potencial.",
                     "Receita recente abaixo do período anterior",
                     "Média",
                     "acao"
@@ -603,19 +588,10 @@ public class InsightsService {
     }
 
     private InsightItem montarPrincipalClienteRisco(long atRisk, boolean clienteEmRisco) {
-        if (clienteEmRisco) {
-            return new InsightItem(
-                    "Cliente em Risco",
-                    "Clientes sem retorno recente precisam de reativação para evitar churn.",
-                    atRisk + " clientes sem agendamento recente",
-                    "Alta",
-                    "cliente"
-            );
-        }
         return new InsightItem(
-                "Cliente em Risco",
-                "A base de clientes não mostra risco imediato agora.",
-                "Sem clientes críticos no período atual",
+                "Base de Clientes",
+                "A base cadastrada nao mostra alerta de clientes no momento.",
+                "Sem acao critica pelos dados atuais",
                 "Baixa",
                 "cliente"
         );
@@ -651,6 +627,52 @@ public class InsightsService {
         return itens.isEmpty() ? fallback : itens.size() > 4 ? itens.subList(0, 4) : itens;
     }
 
+    private List<InsightItem> filtrarItensSemBaseReal(List<InsightItem> itens, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+        if (itens == null || itens.isEmpty()) return List.of();
+        return itens.stream()
+                .filter(item -> temBaseReal(textoDoItem(item), clientesInativos, servicosInativos, profissionaisInativos))
+                .toList();
+    }
+
+    private List<InsightAction> filtrarAcoesSemBaseReal(List<InsightAction> acoes, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+        if (acoes == null || acoes.isEmpty()) return List.of();
+        return acoes.stream()
+                .filter(acao -> temBaseReal(textoDaAcao(acao), clientesInativos, servicosInativos, profissionaisInativos))
+                .toList();
+    }
+
+    private boolean temBaseReal(String texto, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+        String normalizado = texto == null ? "" : texto.toLowerCase();
+        boolean mencionaCliente = normalizado.contains("client");
+        boolean clienteSemBase =
+                normalizado.contains("reativ")
+                        || normalizado.contains("inativ")
+                        || normalizado.contains("risco")
+                        || normalizado.contains("churn")
+                        || normalizado.contains("sem retorno")
+                        || normalizado.contains("sem agendamento");
+        if (mencionaCliente && clienteSemBase && clientesInativos <= 0) {
+            return false;
+        }
+        if (normalizado.contains("servi") && normalizado.contains("inativ") && servicosInativos <= 0) {
+            return false;
+        }
+        if (normalizado.contains("profission") && normalizado.contains("inativ") && profissionaisInativos <= 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private String textoDoItem(InsightItem item) {
+        if (item == null) return "";
+        return String.join(" ", item.titulo(), item.descricao(), item.impacto(), item.urgencia(), item.tipo());
+    }
+
+    private String textoDaAcao(InsightAction acao) {
+        if (acao == null) return "";
+        return String.join(" ", acao.descricao(), acao.urgencia(), acao.impactoEstimado());
+    }
+
     private List<InsightAction> montarAcoesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
         List<InsightAction> acoes = new ArrayList<>();
         if (pendente > 0) {
@@ -658,13 +680,6 @@ public class InsightsService {
                     "Cobrar pagamentos pendentes",
                     "Alta",
                     formatarMoeda(pendente)
-            ));
-        }
-        if (atRisk > 0) {
-            acoes.add(new InsightAction(
-                    "Reativar clientes em risco",
-                    "Alta",
-                    atRisk + " contatos"
             ));
         }
         boolean servicoSemVenda = servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) <= 0);
@@ -687,7 +702,7 @@ public class InsightsService {
             acoes.add(new InsightAction(
                     "Recuperar receita perdida",
                     "Média",
-                    "Rodar campanha de reativação para recuperar faturamento"
+                    "Divulgar os servicos com melhor potencial para recuperar faturamento"
             ));
         }
         if (acoes.isEmpty()) {
@@ -731,15 +746,6 @@ public class InsightsService {
                     "Média"
             ));
         }
-        if (atRisk > 0) {
-            oportunidades.add(new InsightItem(
-                    "Reativar base sem retorno",
-                    "Parte dos clientes está há mais de 30 dias sem agendar.",
-                    atRisk + " clientes em risco",
-                    "Impacto não estimado",
-                    "Alta"
-            ));
-        }
         if (receita60 > 0 && receita30 < receita60) {
             oportunidades.add(new InsightItem(
                     "Compensar queda de receita",
@@ -751,8 +757,8 @@ public class InsightsService {
         }
         if (oportunidades.isEmpty()) {
             oportunidades.add(new InsightItem(
-                    "Sem oportunidade crítica",
-                    "Os dados atuais não mostram uma ação prioritária clara.",
+                    "Sem recomendacao no momento",
+                    "Os dados reais sincronizados nao mostram uma acao prioritaria agora.",
                     "Sem sinal forte no período analisado.",
                     "Baixa",
                     "Média"

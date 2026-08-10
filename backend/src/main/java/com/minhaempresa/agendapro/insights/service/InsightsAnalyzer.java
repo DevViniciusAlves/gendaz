@@ -75,12 +75,13 @@ public class InsightsAnalyzer {
             );
         }
 
-        long ativos = clientes.stream().filter(cliente -> diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje) <= 30).count();
+        long ativos = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.ATIVO).count();
         long atRisk = clientes.stream().filter(cliente -> {
+            if (cliente.getStatus() != StatusCadastro.ATIVO || !ultimaDataPorCliente.containsKey(cliente.getId())) return false;
             long diasSem = diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje);
             return diasSem > 30 && diasSem <= 60;
         }).count();
-        long churned = clientes.stream().filter(cliente -> diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje) > 60).count();
+        long churned = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.INATIVO).count();
         long clientesAtivos = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.ATIVO).count();
         long clientesInativos = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.INATIVO).count();
         long servicosAtivos = servicos.stream().filter(servico -> servico.getStatus() == StatusCadastro.ATIVO).count();
@@ -224,10 +225,14 @@ public class InsightsAnalyzer {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", cliente.getId());
             item.put("nome", cliente.getNome());
-            item.put("dias_sem_agendar", diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje));
+            LocalDate ultimaData = ultimaDataPorCliente.get(cliente.getId());
+            item.put("dias_sem_agendar", ultimaData == null ? null : diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje));
             resultado.add(item);
         }
-        resultado.sort(Comparator.comparingLong(item -> Long.parseLong(String.valueOf(item.get("dias_sem_agendar")))));
+        resultado.sort(Comparator.comparingLong(item -> {
+            Object dias = item.get("dias_sem_agendar");
+            return dias == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(dias));
+        }));
         return Map.of("itens", resultado.stream().limit(5).toList());
     }
 

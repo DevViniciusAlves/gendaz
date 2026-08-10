@@ -48,11 +48,13 @@ function cacheValido(cache, scope) {
 }
 
 function cacheDoEscopo(scope) {
+  if (scope === 'insights') return null
   const cacheKey = chaveCache(scope)
   return cacheLocal.get(cacheKey) || lerCacheSession(cacheKey)
 }
 
 function salvarCache(scope, payload) {
+  if (scope === 'insights') return payload
   const cacheKey = chaveCache(scope)
   const entry = { data: payload, time: Date.now() }
   cacheLocal.set(cacheKey, entry)

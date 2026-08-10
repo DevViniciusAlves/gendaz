@@ -4,6 +4,14 @@ import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
+function isSafariIphone() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent.toLowerCase()
+  const isIos = /iphone|ipod/.test(ua)
+  const isSafari = ua.includes('safari') && !ua.includes('crios') && !ua.includes('fxios') && !ua.includes('edgios') && !ua.includes('chrome')
+  return isIos && isSafari
+}
+
 function isErroTransitorio(err) {
   if (!err?.response) return true
   const status = err.response.status
@@ -157,8 +165,12 @@ export function ClienteGendazProvider({ children, slug }) {
   useEffect(() => {
     if (!slug) return undefined
     clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
-    void sincronizarDados({ exigirSessao: false })
+    const delayInicial = isSafariIphone() ? 1100 : 0
+    const timer = window.setTimeout(() => {
+      void sincronizarDados({ exigirSessao: false })
+    }, delayInicial)
     return () => {
+      window.clearTimeout(timer)
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
   }, [slug, sincronizarDados])
