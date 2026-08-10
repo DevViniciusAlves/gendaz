@@ -181,7 +181,7 @@ export function ClienteGendazProvider({ children, slug }) {
       setErro(null)
       setCarregando(false)
       if (slug) {
-        window.location.href = `/meu-gendaz/${slug}`
+        window.history.replaceState({}, '', `/meu-gendaz/${slug}`)
       }
     }
 

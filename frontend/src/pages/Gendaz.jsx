@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
-import { useNavigate, useParams, useLocation } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -106,12 +106,7 @@ function GendazAuthGate({ slug, onLogin }) {
       })
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
         if (isSafariIphone()) {
-          await new Promise((resolve) => window.setTimeout(resolve, 700))
-          navigate(`/meu-gendaz/${slug}/dashboard`, {
-            replace: true,
-            state: { safariIphoneLogin: true },
-          })
-          return
+          await new Promise((resolve) => window.setTimeout(resolve, 1200))
         }
         await onLogin()
         navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
@@ -380,7 +375,6 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, perfilAcesso, sincronizarDados } = useContext(ClienteGendazContext)
-  const location = useLocation()
 
   useEffect(() => {
     const tituloAnterior = document.title
@@ -394,15 +388,6 @@ function GendazContent({ slug }) {
     if (!slug) return undefined
     return () => {}
   }, [slug])
-
-  useEffect(() => {
-    if (!location.state?.safariIphoneLogin) return undefined
-    const timer = window.setTimeout(() => {
-      void sincronizarDados({ exigirSessao: true })
-      window.history.replaceState({}, '', window.location.pathname)
-    }, 900)
-    return () => window.clearTimeout(timer)
-  }, [location.state, sincronizarDados])
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
