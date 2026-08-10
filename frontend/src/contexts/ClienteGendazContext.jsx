@@ -165,15 +165,28 @@ export function ClienteGendazProvider({ children, slug }) {
   useEffect(() => {
     if (!slug) return undefined
     clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
-    const delayInicial = isSafariIphone() ? 1100 : 0
-    const timer = window.setTimeout(() => {
-      void sincronizarDados({ exigirSessao: false })
-    }, delayInicial)
+    let cancelado = false
+    const delayInicial = isSafariIphone() ? 1400 : 0
+
+    const executarSincronizacaoInicial = async () => {
+      await new Promise((resolve) => window.setTimeout(resolve, delayInicial))
+      if (cancelado) return
+      await sincronizarDados({ exigirSessao: false })
+      if (cancelado || !isSafariIphone()) return
+      if (!cliente && !perfilAcesso && !cadastroPendente && !carregando) {
+        await new Promise((resolve) => window.setTimeout(resolve, 900))
+        if (!cancelado) {
+          await sincronizarDados({ exigirSessao: false })
+        }
+      }
+    }
+
+    void executarSincronizacaoInicial()
     return () => {
-      window.clearTimeout(timer)
+      cancelado = true
       delete clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug']
     }
-  }, [slug, sincronizarDados])
+  }, [slug, sincronizarDados, cliente, perfilAcesso, cadastroPendente, carregando])
 
   useEffect(() => {
     const lidarComLogout = () => {
