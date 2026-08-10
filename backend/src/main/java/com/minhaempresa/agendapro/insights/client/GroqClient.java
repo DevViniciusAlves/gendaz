@@ -119,9 +119,9 @@ public class GroqClient {
         try {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("model", model);
-            payload.put("temperature", 0.7);
-            payload.put("max_tokens", 500);
-            payload.put("top_p", 0.9);
+            payload.put("temperature", 0.85);
+            payload.put("max_tokens", 450);
+            payload.put("top_p", 0.95);
             payload.put("messages", montarMensagens(systemPrompt, historico, userPrompt));
 
             String body = objectMapper.writeValueAsString(payload);

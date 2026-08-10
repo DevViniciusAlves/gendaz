@@ -80,8 +80,11 @@ public class InsightsService {
                 Voce e uma IA consultora de negocios para pequenas empresas de servicos.
                 Responda sempre em portugues do Brasil.
                 Use apenas os dados fornecidos.
+                Escreva de forma humana, natural e direta, como uma pessoa experiente conversando com o dono do negocio.
+                Nao use tom robótico, nem frases prontas de IA, nem expressões repetidas como "com base nos dados fornecidos".
+                Evite listas numeradas, marcadores e asteriscos quando der para responder em texto corrido.
+                Se precisar listar pontos, faca isso de forma curta, simples e bem conversada.
                 Nao invente numeros.
-                Nao retorne texto fora do JSON quando a pergunta for sobre analise.
                 """;
         String promptUsuario = """
                 Dados da empresa:
@@ -91,7 +94,7 @@ public class InsightsService {
                 %s
                 """.formatted(serializar(dados), pergunta);
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        return resposta.orElseGet(() -> responderLocalmente(pergunta, dados));
+        return resposta.map(this::humanizarTexto).orElseGet(() -> responderLocalmente(pergunta, dados));
     }
 
     @Transactional(readOnly = true)
@@ -103,6 +106,8 @@ public class InsightsService {
                 Responda sempre em portugues do Brasil.
                 Use apenas os dados fornecidos.
                 Seja cordial, humana, acolhedora e natural.
+                Fale como uma atendente de verdade, sem soar mecanica ou com cara de IA.
+                Prefira frases curtas, fluidas e espontaneas.
                 Nao invente valores, horarios ou servicos.
                 Ajude o cliente com duvidas sobre agendar, reagendar, cancelar, servicos, precos, profissionais, horarios e promocoes.
                 Se a pergunta pedir acao, conduza o atendimento passo a passo.
@@ -141,7 +146,7 @@ public class InsightsService {
                 return responderClienteLocalmente(empresaId, pergunta, dados);
             }
             return new MeuGendazIAResponse(
-                    texto,
+                    humanizarTexto(texto),
                     sugestoes,
                     acao == null || acao.isBlank() ? "nenhuma" : acao.trim().toLowerCase(),
                     LocalDateTime.now(ZoneId.of(appTimezone))
@@ -753,6 +758,19 @@ public class InsightsService {
         }
 
         return new MeuGendazIAResponse(resposta, sugestoes, acao, LocalDateTime.now(ZoneId.of(appTimezone)));
+    }
+
+    private String humanizarTexto(String texto) {
+        if (texto == null) {
+            return "";
+        }
+        return texto
+                .replace("**", "")
+                .replace("*", "")
+                .replace("```", "")
+                .replaceAll("(?m)^\\s*\\d+\\.\\s*", "")
+                .replaceAll("\\s+", " ")
+                .trim();
     }
 
     private Map<String, Object> mapa(Object valor) {
