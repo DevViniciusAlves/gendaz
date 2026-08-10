@@ -7,6 +7,8 @@ import GendazLayout from '../components/gendaz/GendazLayout.jsx'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
+const COOLDOWN_SEGUNDOS = 120
+
 function GendazAuthGate({ slug, onLogin }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -18,6 +20,8 @@ function GendazAuthGate({ slug, onLogin }) {
   const [reenviarEm, setReenviarEm] = useState(0)
   const [tentativas, setTentativas] = useState(0)
   const [bloqueado, setBloqueado] = useState(false)
+  const [ultimoEmailSolicitado, setUltimoEmailSolicitado] = useState('')
+  const [codigoSolicitado, setCodigoSolicitado] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -47,14 +51,27 @@ function GendazAuthGate({ slug, onLogin }) {
     return () => clearInterval(timer)
   }, [reenviarEm])
 
+  function emailAtualNormalizado() {
+    return email.trim().toLowerCase()
+  }
+
+  function solicitarEtapaCodigoSemReenviar() {
+    setErro('')
+    if (!emailAtualNormalizado()) return
+    setCodigo('')
+    setEtapa('codigo')
+  }
+
   async function solicitarCodigo() {
     setErro('')
     if (!email.trim()) return
     setCarregando(true)
     try {
       await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { slug, email: email.trim() })
+      setUltimoEmailSolicitado(emailAtualNormalizado())
+      setCodigoSolicitado(true)
       setEtapa('codigo')
-      setReenviarEm(30)
+      setReenviarEm(COOLDOWN_SEGUNDOS)
       setTentativas(0)
       setCodigo('')
     } catch (error) {
@@ -103,6 +120,27 @@ function GendazAuthGate({ slug, onLogin }) {
     await solicitarCodigo()
   }
 
+  function entrarComEmail(event) {
+    event.preventDefault()
+    if (bloqueado) return
+
+    const emailNormalizado = emailAtualNormalizado()
+    if (!emailNormalizado) return
+
+    if (codigoSolicitado && ultimoEmailSolicitado === emailNormalizado && reenviarEm > 0) {
+      solicitarEtapaCodigoSemReenviar()
+      return
+    }
+
+    void solicitarCodigo()
+  }
+
+  function voltarParaEmail() {
+    setEtapa('email')
+    setCodigo('')
+    setErro('')
+  }
+
   return (
     <main className="gendaz-auth">
       <section className="gendaz-auth__card">
@@ -116,12 +154,18 @@ function GendazAuthGate({ slug, onLogin }) {
         {erro && <p className="gendaz-auth__error">{erro}</p>}
 
         {etapa === 'email' ? (
-          <form className="gendaz-auth__form" onSubmit={(event) => { event.preventDefault(); void solicitarCodigo(); }}>
+          <form className="gendaz-auth__form" onSubmit={entrarComEmail}>
             <label>
               <span>E-mail</span>
               <input
                 value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                onChange={(event) => {
+                  const novoEmail = event.target.value
+                  setEmail(novoEmail)
+                  if (ultimoEmailSolicitado && novoEmail.trim().toLowerCase() !== ultimoEmailSolicitado) {
+                    setCodigoSolicitado(false)
+                  }
+                }}
                 placeholder="voce@exemplo.com"
                 type="email"
                 autoComplete="email"
@@ -150,7 +194,7 @@ function GendazAuthGate({ slug, onLogin }) {
             <button
               className="gendaz-btn gendaz-btn--voltar"
               type="button"
-              onClick={() => { setEtapa('email'); setCodigo(''); setErro(''); }}
+              onClick={voltarParaEmail}
               disabled={carregando}
             >
               <ArrowLeft size={16} /> Voltar
@@ -158,7 +202,11 @@ function GendazAuthGate({ slug, onLogin }) {
             <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => void reenviarCodigo()} disabled={reenviarEm > 0 || bloqueado}>
               {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar codigo'}
             </button>
-            <small>Tentativas restantes: {Math.max(0, 5 - tentativas)}</small>
+            <small>
+              {reenviarEm > 0
+                ? `Codigo valido por mais ${reenviarEm}s.`
+                : `Tentativas restantes: ${Math.max(0, 5 - tentativas)}`}
+            </small>
         </form>
       )}
     </section>
