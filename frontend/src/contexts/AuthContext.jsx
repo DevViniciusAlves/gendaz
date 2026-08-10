@@ -97,6 +97,7 @@ export function AuthProvider({ children }) {
   
   useSessionWebSocket(() => {
     if (isMeuGendazPath()) return
+    if (!usuario) return
     console.warn('[auth-debug] websocket invalidacao de sessao recebida')
     logout('session_invalidated')
     setSessionExpired(true)
@@ -514,6 +515,9 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     setSessionExpired(motivo === 'session_invalidated')
     if (!isMeuGendazPath()) {
       appApi.logout().catch(() => {})
+    }
+    if (motivo === 'manual') {
+      setSessionExpired(false)
     }
     limparSessaoUsuario()
     clearLocalData()
