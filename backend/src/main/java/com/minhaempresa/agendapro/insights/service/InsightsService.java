@@ -278,8 +278,12 @@ public class InsightsService {
         List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
         List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
 
+        Map<String, Object> resumo = mapa(dados.get("resumo"));
         double pendente = numero(financeiro.get("pendente"));
         long atRisk = longo(clientes.get("at_risk"));
+        long clientesInativos = longo(clientes.get("inativos_status"));
+        long servicosInativos = longo(resumo.get("servicos_inativos"));
+        long profissionaisInativos = longo(resumo.get("profissionais_inativos"));
         double receita30 = numero(financeiro.get("receita_30d"));
         double receita60 = numero(financeiro.get("receita_60d"));
 

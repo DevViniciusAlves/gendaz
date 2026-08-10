@@ -81,6 +81,12 @@ public class InsightsAnalyzer {
             return diasSem > 30 && diasSem <= 60;
         }).count();
         long churned = clientes.stream().filter(cliente -> diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje) > 60).count();
+        long clientesAtivos = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.ATIVO).count();
+        long clientesInativos = clientes.stream().filter(cliente -> cliente.getStatus() == StatusCadastro.INATIVO).count();
+        long servicosAtivos = servicos.stream().filter(servico -> servico.getStatus() == StatusCadastro.ATIVO).count();
+        long servicosInativos = servicos.stream().filter(servico -> servico.getStatus() == StatusCadastro.INATIVO).count();
+        long profissionaisAtivos = profissionais.stream().filter(profissional -> profissional.getStatus() == StatusCadastro.ATIVO).count();
+        long profissionaisInativos = profissionais.stream().filter(profissional -> profissional.getStatus() == StatusCadastro.INATIVO).count();
 
         BigDecimal receitaPeriodo = somarPagamentos(pagamentos, inicioPeriodo, hoje, true);
         BigDecimal receitaPeriodoAnterior = somarPagamentos(pagamentos, inicioPeriodoAnterior, fimPeriodoAnterior, true);
@@ -95,6 +101,8 @@ public class InsightsAnalyzer {
         clientesResumo.put("ativos", ativos);
         clientesResumo.put("at_risk", atRisk);
         clientesResumo.put("churned", churned);
+        clientesResumo.put("ativos_status", clientesAtivos);
+        clientesResumo.put("inativos_status", clientesInativos);
         clientesResumo.put("lifetime_value_medio", calcularTicketMedio(pagamentos, clientes.size()));
 
         Map<String, Object> financeiroResumo = new LinkedHashMap<>();
@@ -107,8 +115,13 @@ public class InsightsAnalyzer {
         Map<String, Object> resumo = new LinkedHashMap<>();
         resumo.put("servicos_total", servicos.size());
         resumo.put("profissionais_total", profissionais.size());
+        resumo.put("servicos_ativos", servicosAtivos);
+        resumo.put("servicos_inativos", servicosInativos);
+        resumo.put("profissionais_ativos", profissionaisAtivos);
+        resumo.put("profissionais_inativos", profissionaisInativos);
         resumo.put("clientes_total", clientes.size());
         resumo.put("clientes_at_risk", atRisk);
+        resumo.put("clientes_inativos", clientesInativos);
         resumo.put("receita_confirmada", receitaPeriodo.doubleValue());
         resumo.put("pendente_cobranca", pendente.doubleValue());
         resumo.put("agendamentos_total", agendamentos.size());
