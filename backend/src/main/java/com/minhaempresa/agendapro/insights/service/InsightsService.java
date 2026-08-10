@@ -3,6 +3,7 @@ package com.minhaempresa.agendapro.insights.service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.empresa.enums.RamoEmpresa;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
 import com.minhaempresa.agendapro.insights.client.GroqClient;
 import com.minhaempresa.agendapro.insights.dto.InsightsDtos.ChatMessageRequest;
@@ -61,6 +62,12 @@ public class InsightsService {
         Map<String, Object> dados = analyzer.coletarDados(empresaId, periodo);
         DashboardResponse fallback = construirDashboardLocal(empresaId, dados, "AUTO");
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(appTimezone));
+
+        if (contaNova(dados)) {
+            DashboardResponse respostaContaNova = montarDashboardContaNova(empresaId, dados);
+            salvarDashboard(empresaId, dados, respostaContaNova, "AUTO", agora);
+            return respostaContaNova;
+        }
 
         InsightEntity ultimo = ultimoDashboard(empresaId);
         if (!forcar && ultimo != null && ultimo.getDataExpiracao() != null && ultimo.getDataExpiracao().isAfter(agora)) {
@@ -211,6 +218,7 @@ public class InsightsService {
     }
 
     private DashboardResponse gerarDashboardNovo(Long empresaId, Integer periodo, Map<String, Object> dados, DashboardResponse fallback, String origem) {
+        String ramoContexto = contextoRamo(dados);
         String promptSistema = """
                 Voce e uma IA consultora de negocios para pequenas empresas de servicos.
                 Voce deve analisar apenas os dados fornecidos.
@@ -220,9 +228,21 @@ public class InsightsService {
                 Responda sempre em portugues do Brasil.
                 Se nao houver dados suficientes, explique isso no campo descricao.
                 Gere recomendacoes praticas e acionaveis.
+                Adapte as recomendacoes ao ramo informado.
                 """;
         String promptUsuario = """
                 Analise os dados agregados reais desta empresa e devolva JSON puro no formato abaixo.
+                Contexto do ramo da empresa:
+                %s
+
+                Diretrizes por ramo:
+                - BARBERSHOP: foco em recorrencia, retorno rapido, barba e servicos complementares.
+                - SALAO_CABELO: foco em recorrencia, combos, tratamentos, coloracao e fidelizacao.
+                - PERSONAL_TRAINER: foco em retenção, pacotes de sessoes, frequencia semanal e acompanhamento.
+                - CLINICA_FISIOTERAPIA: foco em reavaliacao, continuidade de tratamento e follow-up.
+                - CLINICA_ODONTOLOGIA: foco em prevençao, retorno periodico e agenda preventiva.
+                - OUTRO: use recomendacoes genericas e praticas, sem inventar servicos.
+
                 Estrutura esperada:
                 {
                   "alertas": [
@@ -251,7 +271,7 @@ public class InsightsService {
 
                 Dados:
                 %s
-                """.formatted(serializar(dados));
+                """.formatted(ramoContexto, serializar(dados));
 
         if (!groqClient.disponivel()) {
             return fallback;
@@ -352,6 +372,54 @@ public class InsightsService {
                 impactoTotal,
                 LocalDateTime.now(ZoneId.of(appTimezone))
         );
+    }
+
+    private boolean contaNova(Map<String, Object> dados) {
+        Map<String, Object> clientes = mapa(dados.get("clientes"));
+        Map<String, Object> financeiro = mapa(dados.get("financeiro"));
+        List<Map<String, Object>> agendamentosRecentes = listaMapa(dados.get("agendamentosRecentes"));
+        long totalClientes = longo(clientes.get("total"));
+        double receita30 = numero(financeiro.get("receita_30d"));
+        return totalClientes == 0 && receita30 <= 0 && (agendamentosRecentes == null || agendamentosRecentes.isEmpty());
+    }
+
+    private DashboardResponse montarDashboardContaNova(Long empresaId, Map<String, Object> dados) {
+        return new DashboardResponse(
+                empresaId,
+                stringValor(dados.get("empresaNome")),
+                100,
+                List.of(new InsightItem(
+                        "Bem-vindo ao Insights!",
+                        "Sua conta esta pronta para receber analises quando voce registrar dados reais.",
+                        "N/A",
+                        "Baixa",
+                        "info"
+                )),
+                List.of(),
+                List.of(),
+                List.of(new InsightAction(
+                        "Registre seu primeiro cliente",
+                        "Alta",
+                        "Comece criando clientes para que o Gendaz possa analisar tendencias."
+                )),
+                "N/A",
+                LocalDateTime.now(ZoneId.of(appTimezone))
+        );
+    }
+
+    private String contextoRamo(Map<String, Object> dados) {
+        String ramo = stringValor(dados.get("empresaRamo"));
+        String display = stringValor(dados.get("empresaRamoDisplayName"));
+        if (ramo.isBlank() && display.isBlank()) {
+            return "OUTRO - ramo nao identificado";
+        }
+        if (ramo.isBlank()) {
+            return display;
+        }
+        if (display.isBlank()) {
+            return ramo;
+        }
+        return ramo + " - " + display;
     }
 
     private InsightEntity ultimoDashboard(Long empresaId) {

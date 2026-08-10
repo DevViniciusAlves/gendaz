@@ -7,6 +7,7 @@ import com.minhaempresa.agendapro.cliente.entity.ClienteEntity;
 import com.minhaempresa.agendapro.cliente.repository.ClienteRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
 import com.minhaempresa.agendapro.empresa.repository.EmpresaRepository;
+import com.minhaempresa.agendapro.empresa.enums.RamoEmpresa;
 import com.minhaempresa.agendapro.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
@@ -131,6 +132,9 @@ public class InsightsAnalyzer {
         Map<String, Object> dados = new LinkedHashMap<>();
         dados.put("empresaId", empresaId);
         dados.put("empresaNome", empresa != null ? empresa.getNomeFantasia() : "");
+        RamoEmpresa ramo = empresa != null ? empresa.getRamo() : null;
+        dados.put("empresaRamo", ramo != null ? ramo.name() : null);
+        dados.put("empresaRamoDisplayName", ramo != null ? ramo.getDisplayName() : null);
         dados.put("periodo", dias);
         dados.put("servicos", servicosAnalise);
         dados.put("profissionais", profissionaisAnalise);
