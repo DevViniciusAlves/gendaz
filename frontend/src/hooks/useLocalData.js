@@ -146,7 +146,7 @@ export function useLocalData(scope = 'full') {
   useEffect(() => {
     const usuarioAtual = getSessionUser()
     if (usuarioAtual?.id && usuarioAtual?.empresaId) {
-      reload(true)
+      reload(false)
     } else {
       setStateData(emptyData(usuarioAtual))
       setLoading(false)
@@ -156,7 +156,7 @@ export function useLocalData(scope = 'full') {
     // (agendapro:data-changed), troca de rota (remontagem) e recarga manual.
     // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
     function reloadFromEvent() {
-      reload(true)
+      reload(false)
     }
 
     window.addEventListener('agendapro:data-changed', reloadFromEvent)
