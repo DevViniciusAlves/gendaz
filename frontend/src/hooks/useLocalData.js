@@ -9,7 +9,7 @@ const CACHE_PREFIX = 'agendapro_scope_cache_'
 const CACHE_VERSION = 5
 
 function ttlDoEscopo(scope) {
-  if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
+  if (scope === 'insights') return 0
   return 24 * 60 * 60 * 1000
 }
 
@@ -146,7 +146,7 @@ export function useLocalData(scope = 'full') {
   useEffect(() => {
     const usuarioAtual = getSessionUser()
     if (usuarioAtual?.id && usuarioAtual?.empresaId) {
-      reload(scope === 'insights' ? false : true)
+      reload(true)
     } else {
       setStateData(emptyData(usuarioAtual))
       setLoading(false)

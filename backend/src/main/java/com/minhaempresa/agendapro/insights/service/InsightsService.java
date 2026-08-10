@@ -281,7 +281,7 @@ public class InsightsService {
         Map<String, Object> resumo = mapa(dados.get("resumo"));
         double pendente = numero(financeiro.get("pendente"));
         long clientesInativos = longo(clientes.get("inativos_status"));
-        long atRisk = clientesInativos;
+        long atRisk = 0;
         long servicosInativos = longo(resumo.get("servicos_inativos"));
         long profissionaisInativos = longo(resumo.get("profissionais_inativos"));
         double receita30 = numero(financeiro.get("receita_30d"));
@@ -429,7 +429,7 @@ public class InsightsService {
         double pendente = numero(financeiro.get("pendente"));
         double receita30 = numero(financeiro.get("receita_30d"));
         double receita60 = numero(financeiro.get("receita_60d"));
-        long atRisk = longo(clientes.get("at_risk"));
+        long atRisk = 0;
 
         long servicosSemMovimento = servicos.stream()
                 .filter(servico -> longo(servico.get("vendas_30d")) <= 0)
@@ -440,7 +440,7 @@ public class InsightsService {
 
         boolean quedaReceita = receita60 > 0 && receita30 < receita60;
         boolean riscoOciosidade = servicosSemMovimento > 0 || profissionaisSemMovimento > 0;
-        boolean clienteEmRisco = atRisk > 0;
+        boolean clienteEmRisco = false;
         boolean perdaFinanceira = pendente > 0 || quedaReceita;
 
         List<InsightItem> itens = new ArrayList<>();
