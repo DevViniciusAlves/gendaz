@@ -525,9 +525,9 @@ export const appApi = {
 
   removerMembroUsuario(usuarioId) {
     return comNotificacao(() => api.delete(`/usuarios/${usuarioId}`).then((response) => response.data), {
-      loading: 'Removendo membro... aguarde',
-      success: 'Membro removido com sucesso.',
-      error: 'Não foi possível remover o membro.',
+      loading: 'Excluindo conta... aguarde',
+      success: 'Conta excluida com sucesso.',
+      error: 'Nao foi possivel excluir a conta.',
     })
   },
 

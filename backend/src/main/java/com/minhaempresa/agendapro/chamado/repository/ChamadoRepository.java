@@ -3,7 +3,9 @@ package com.minhaempresa.agendapro.chamado.repository;
 import com.minhaempresa.agendapro.chamado.entity.ChamadoEntity;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
     List<ChamadoEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
@@ -29,4 +31,8 @@ public interface ChamadoRepository extends JpaRepository<ChamadoEntity, Long> {
             ORDER BY c.data_criacao DESC
             """, nativeQuery = true)
     List<AdminChamadoProjection> listarParaAdmin();
+
+    @Modifying
+    @Query("update ChamadoEntity c set c.usuario = null where c.usuario.id = :usuarioId")
+    void desvincularUsuario(@Param("usuarioId") Long usuarioId);
 }

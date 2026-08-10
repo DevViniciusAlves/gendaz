@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetTokenEntity, Long> {
     Optional<PasswordResetTokenEntity> findByTokenHashAndUsadoFalse(String tokenHash);
+    void deleteByUsuarioId(Long usuarioId);
 }

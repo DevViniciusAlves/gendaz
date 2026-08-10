@@ -1,6 +1,7 @@
 package com.minhaempresa.agendapro.usuario.service;
 
 import com.minhaempresa.agendapro.admin.service.AdminAuditService;
+import com.minhaempresa.agendapro.admin.repository.AuditLogRepository;
 import com.minhaempresa.agendapro.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.agendapro.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.agendapro.assinatura.service.AssinaturaService;
@@ -8,7 +9,9 @@ import com.minhaempresa.agendapro.convite.entity.ConviteEmpresaEntity;
 import com.minhaempresa.agendapro.convite.enums.StatusConviteEmpresa;
 import com.minhaempresa.agendapro.convite.repository.ConviteEmpresaRepository;
 import com.minhaempresa.agendapro.email.ResendEmailService;
+import com.minhaempresa.agendapro.auth.repository.PasswordResetTokenRepository;
 import com.minhaempresa.agendapro.empresa.entity.EmpresaEntity;
+import com.minhaempresa.agendapro.chamado.repository.ChamadoRepository;
 import com.minhaempresa.agendapro.membresia.entity.MembresiaEntity;
 import com.minhaempresa.agendapro.membresia.enums.FuncaoMembresia;
 import com.minhaempresa.agendapro.membresia.enums.StatusMembresia;
@@ -50,6 +53,9 @@ public class MembresiaService {
     private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
     private final MembresiaRepository membresiaRepository;
     private final ConviteEmpresaRepository conviteRepository;
+    private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final AuditLogRepository auditLogRepository;
+    private final ChamadoRepository chamadoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AssinaturaService assinaturaService;
     private final PlanoService planoService;
@@ -68,7 +74,10 @@ public class MembresiaService {
 
     @Transactional(readOnly = true)
     public List<ConviteEmpresaResponse> listarConvites(Long empresaId) {
-        return conviteRepository.findByEmpresaId(empresaId).stream().map(this::toResponse).toList();
+        return conviteRepository.findByEmpresaIdAndStatus(empresaId, StatusConviteEmpresa.PENDING)
+                .stream()
+                .map(this::toResponse)
+                .toList();
     }
 
     @Transactional
@@ -80,7 +89,6 @@ public class MembresiaService {
         if (email == null || !email.contains("@")) {
             throw new BusinessException("Email invalido.");
         }
-        validarLimite(empresaId);
         List<UsuarioEntity> usuariosPainel = buscarUsuariosPainelPorEmail(email);
         if (usuariosPainel.size() > 1) {
             throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
@@ -130,31 +138,42 @@ public class MembresiaService {
         if (convite.getReenvios() != null && convite.getReenvios() >= LIMITE_REENVIO) {
             throw new BusinessException("Limite de reenvios atingido.");
         }
-        convite.setReenvios(convite.getReenvios() + 1);
-        convite.setDataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE));
-        String token = gerarToken();
-        convite.setTokenHash(hash(token));
-        conviteRepository.save(convite);
+        String nome = convite.getNomeConvidado();
+        String telefone = convite.getTelefoneConvidado();
+        String email = convite.getEmail();
+        conviteRepository.delete(convite);
+        String tokenNovo = gerarToken();
+        ConviteEmpresaEntity novoConvite = ConviteEmpresaEntity.builder()
+                .empresa(executor.getEmpresa())
+                .nomeConvidado(nome)
+                .telefoneConvidado(telefone)
+                .email(email)
+                .criadoPor(executor)
+                .status(StatusConviteEmpresa.PENDING)
+                .dataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE))
+                .tokenHash(hash(tokenNovo))
+                .reenvios((convite.getReenvios() == null ? 0 : convite.getReenvios()) + 1)
+                .build();
+        conviteRepository.save(novoConvite);
         resendEmailService.enviarConviteEmpresa(
-                convite.getEmail(),
-                convite.getNomeConvidado(),
+                novoConvite.getEmail(),
+                novoConvite.getNomeConvidado(),
                 convite.getEmpresa().getNomeFantasia(),
-                montarUrlConvite(token),
-                montarUrlConvite(token) + "&acao=recusar"
+                montarUrlConvite(tokenNovo),
+                montarUrlConvite(tokenNovo) + "&acao=recusar"
         );
-        registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", convite.getId(), "SUCCESS");
-        return toResponse(convite);
+        registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", novoConvite.getId(), "SUCCESS");
+        return toResponse(novoConvite);
     }
 
     @Transactional
     public ConviteEmpresaResponse cancelarConvite(Long empresaId, Long usuarioAtualId, Long conviteId) {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         ConviteEmpresaEntity convite = buscarConvite(empresaId, conviteId);
-        convite.setStatus(StatusConviteEmpresa.CANCELLED);
-        convite.setCanceladoEm(LocalDateTime.now());
-        conviteRepository.save(convite);
+        ConviteEmpresaResponse resposta = toResponse(convite);
+        conviteRepository.delete(convite);
         registrarAudit("INVITE_CANCELLED", executor, executor.getEmpresa(), "Convite cancelado", convite.getId(), "SUCCESS");
-        return toResponse(convite);
+        return resposta;
     }
 
     @Transactional
@@ -191,14 +210,19 @@ public class MembresiaService {
         if (Boolean.TRUE.equals(membresia.getOwner())) {
             throw new BusinessException("O dono nao pode ser removido diretamente.");
         }
-        membresia.setStatus(StatusMembresia.REMOVED);
-        membresia.setDataRemocao(LocalDateTime.now());
-        membresiaRepository.save(membresia);
         UsuarioEntity usuario = membresia.getUsuario();
-        usuario.setStatus(StatusUsuario.REMOVIDO);
-        usuarioRepository.save(usuario);
-        registrarAudit("MEMBER_REMOVED", executor, executor.getEmpresa(), "Membro removido", membroId(membresia), "SUCCESS");
-        return toResponse(membresia);
+        Long membroId = membroId(membresia);
+        desalocarDadosUsuario(usuario, executor, empresaId);
+        chamadoRepository.desvincularUsuario(usuarioId);
+        passwordResetTokenRepository.deleteByUsuarioId(usuarioId);
+        conviteRepository.reatribuirCriador(usuarioId, executor);
+        auditLogRepository.desvincularUsuario(usuarioId);
+        auditLogRepository.desvincularAdmin(usuarioId);
+        membresiaRepository.desvincularAlteracoes(usuarioId);
+        membresiaRepository.delete(membresia);
+        usuarioRepository.delete(usuario);
+        registrarAudit("MEMBER_REMOVED", executor, executor.getEmpresa(), "Conta excluida", membroId, "SUCCESS");
+        return new MembroEmpresaResponse(membroId, usuarioId, usuario.getNome(), usuario.getEmail(), StatusMembresia.REMOVED, FuncaoMembresia.MEMBER, false, membresia.getDataEntrada(), LocalDateTime.now(), membresia.getDataCriacao(), LocalDateTime.now());
     }
 
     @Transactional
@@ -313,8 +337,9 @@ public class MembresiaService {
 
     @Transactional(readOnly = true)
     public int contarUsados(Long empresaId) {
-        return (int) (membresiaRepository.findByEmpresaId(empresaId).stream().filter(m -> m.getStatus() == StatusMembresia.ACTIVE).count()
-                + conviteRepository.findByEmpresaIdAndStatus(empresaId, StatusConviteEmpresa.PENDING).size());
+        return (int) membresiaRepository.findByEmpresaId(empresaId).stream()
+                .filter(m -> m.getStatus() == StatusMembresia.ACTIVE)
+                .count();
     }
 
     @Transactional(readOnly = true)
@@ -447,5 +472,18 @@ public class MembresiaService {
 
     private void registrarAudit(String tipo, UsuarioEntity usuario, EmpresaEntity empresa, String descricao, Long recursoId, String resultado) {
         try { auditService.registrar(tipo, resultado, null, usuario, empresa, descricao, null, null, null); } catch (Exception ignored) {}
+    }
+
+    private void desalocarDadosUsuario(UsuarioEntity usuario, UsuarioEntity executor, Long empresaId) {
+        if (usuario == null) {
+            return;
+        }
+        if (usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
+            throw new BusinessException("Usuario sem permissao.");
+        }
+        usuario.setSessaoAtiva(null);
+        usuario.setSessaoAtivaMeuGendaz(null);
+        usuario.setStatus(StatusUsuario.REMOVIDO);
+        usuarioRepository.save(usuario);
     }
 }

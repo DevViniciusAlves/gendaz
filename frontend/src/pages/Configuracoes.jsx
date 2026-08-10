@@ -381,11 +381,21 @@ export default function Configuracoes() {
           </div>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
-          <Input label="Telefone" helper={empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : 'Use codigo da cidade + numero.'} inputMode="numeric" maxLength={19} neutralLimit value={empresa?.telefone || ''} onChange={(e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })} />
+          <Input
+            label="Telefone"
+            helper={perfilAtendente ? 'Somente o dono pode alterar este dado.' : (empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : 'Use codigo da cidade + numero.')}
+            inputMode="numeric"
+            maxLength={19}
+            neutralLimit
+            value={empresa?.telefone || ''}
+            readOnly={perfilAtendente}
+            onChange={perfilAtendente ? undefined : (e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })}
+          />
           <label className="field">
             <span>Fuso horário</span>
             <select
               value={empresa?.timezone || 'America/Cuiaba'}
+              disabled={perfilAtendente}
               onChange={(event) => setEmpresa((atual) => ({ ...(atual || {}), timezone: event.target.value }))}
             >
               {TIMEZONE_OPCOES.map((opcao) => (
@@ -394,14 +404,20 @@ export default function Configuracoes() {
                 </option>
               ))}
             </select>
-            <small className="field-hint">Usado para lembretes e validações de horário.</small>
+            <small className="field-hint">{perfilAtendente ? 'Somente o dono pode alterar este dado.' : 'Usado para lembretes e validações de horário.'}</small>
           </label>
           <Input label="E-mail" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." type="email" maxLength={120} value={empresa?.email || ''} readOnly />
           <div className="settings-form-actions field-wide">
-            <Button variant="secondary" type="button" onClick={() => setSolicitacaoAberta((aberta) => !aberta)}>Solicitar alteração</Button>
-            <Button icon={Save} type="submit">Salvar configurações</Button>
+            <Button variant="secondary" type="button" onClick={() => setSolicitacaoAberta((aberta) => !aberta)} disabled={perfilAtendente}>Solicitar alteração</Button>
+            <Button icon={Save} type="submit" disabled={perfilAtendente}>Salvar configurações</Button>
           </div>
         </form>
+
+        {perfilAtendente && (
+          <p className="plan-payment-note plan-payment-helper">
+            Seu perfil nao permite alterar os dados da empresa.
+          </p>
+        )}
 
         {solicitacaoAberta && (
           <form className="support-inline-form" onSubmit={solicitarAlteracao}>

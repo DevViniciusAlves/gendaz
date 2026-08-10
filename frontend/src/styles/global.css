@@ -13001,6 +13001,47 @@ tbody tr:hover { background: #fffaf5; }
   letter-spacing: -0.04em;
 }
 
+.invite-card-v2 .login-label-v2,
+.invite-card-v2 .section-kicker,
+.invite-card-v2 .login-helper-v2,
+.invite-card-v2 .inline-link {
+  color: #ffffff;
+}
+
+.invite-card-v2 .login-input-wrap-v2 input {
+  background: #ffffff;
+  color: #111111;
+  border-color: #ffffff;
+}
+
+.invite-card-v2 .login-input-wrap-v2 input::placeholder {
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.invite-card-v2 .login-input-wrap-v2 input:read-only {
+  color: #111111;
+  opacity: 1;
+}
+
+.invite-card-v2 .login-eye-btn {
+  background: rgba(17, 17, 17, 0.08);
+  color: #111111;
+}
+
+.invite-card-v2 .login-eye-btn:hover {
+  background: rgba(17, 17, 17, 0.14);
+  color: #111111;
+}
+
+.invite-card-v2 .btn-secondary {
+  color: #ffffff;
+}
+
+.invite-card-v2 .login-input-wrap-v2 input:focus {
+  border-color: #ffffff;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.10);
+}
+
 .invite-preview-v2 {
   display: grid;
   gap: 12px;

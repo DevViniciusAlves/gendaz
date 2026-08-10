@@ -1,9 +1,10 @@
-import { Plus, RefreshCw, Shield, UserX, UserCheck, Mail, Copy } from 'lucide-react'
+import { Plus, RefreshCw, Shield, UserX, Mail, Copy, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
+import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import Table from '../components/Table.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -14,6 +15,7 @@ function formatDate(value) {
 
 export default function UsuariosEmpresa() {
   const { usuario } = useAuth()
+  const perfilAtendente = String(usuario?.perfil || '').toUpperCase() === 'ATENDENTE'
   const [resumo, setResumo] = useState({ limite: 1, usados: 0 })
   const [membros, setMembros] = useState([])
   const [convites, setConvites] = useState([])
@@ -24,6 +26,8 @@ export default function UsuariosEmpresa() {
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [confirmacao, setConfirmacao] = useState(null)
+  const [executandoExclusao, setExecutandoExclusao] = useState(false)
 
   async function carregar() {
     if (!usuario?.empresaId) return
@@ -69,7 +73,7 @@ export default function UsuariosEmpresa() {
       membroId: item.id,
       raw: item,
     })),
-    ...convites.map((item) => ({
+    ...convites.filter((item) => String(item.status || '').toUpperCase() === 'PENDING').map((item) => ({
       id: `c-${item.id}`,
       tipo: 'Convite',
       nome: '-',
@@ -82,7 +86,7 @@ export default function UsuariosEmpresa() {
       owner: false,
       raw: item,
     })),
-  ], [membros, convites])
+  ].slice(0, 3), [membros, convites])
 
   async function criarConvite(event) {
     event.preventDefault()
@@ -101,6 +105,25 @@ export default function UsuariosEmpresa() {
     }
   }
 
+  function solicitarExclusao(row) {
+    if (perfilAtendente) return
+    setConfirmacao({
+      titulo: 'Excluir conta',
+      descricao: `Tem certeza que deseja excluir a conta de ${row.nome || row.email}? Essa ação apagará a conta do sistema e o login será perdido. Não será possível reverter.`,
+      confirmLabel: 'Sim, excluir',
+      danger: true,
+      acao: async () => {
+        setExecutandoExclusao(true)
+        try {
+          await appApi.removerMembroUsuario(row.usuarioId)
+          await carregar()
+        } finally {
+          setExecutandoExclusao(false)
+        }
+      },
+    })
+  }
+
   return (
     <section className="page">
       <div className="page-title">
@@ -117,10 +140,11 @@ export default function UsuariosEmpresa() {
           </div>
           <div style={{ display: 'flex', gap: 12 }}>
             <Button variant="secondary" icon={RefreshCw} onClick={carregar} loading={loading} />
-            <Button icon={Plus} onClick={() => setModalOpen(true)} disabled={limiteAtingido}>Adicionar usuário</Button>
+            <Button icon={Plus} onClick={() => setModalOpen(true)} disabled={limiteAtingido || perfilAtendente}>Adicionar usuário</Button>
           </div>
         </div>
-        {limiteAtingido && <p className="plan-payment-note plan-payment-helper">Seu plano atingiu o limite de usuários.</p>}
+        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil nao permite adicionar usuarios.</p>}
+        {limiteAtingido && !perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu plano atingiu o limite de usuários.</p>}
         {error && <p className="form-error">{error}</p>}
       </div>
 
@@ -138,13 +162,12 @@ export default function UsuariosEmpresa() {
               {row.tipo === 'Convite' && (
                 <>
                   <button className="icon-btn" onClick={() => appApi.reenviarConviteUsuario(row.raw.id).then(carregar)} aria-label="Reenviar"><Mail size={16} /></button>
-                  <button className="icon-btn" onClick={() => appApi.cancelarConviteUsuario(row.raw.id).then(carregar)} aria-label="Cancelar"><UserX size={16} /></button>
+                  <button className="icon-btn" onClick={() => appApi.cancelarConviteUsuario(row.raw.id).then(carregar)} aria-label="Excluir convite"><Trash2 size={16} /></button>
                 </>
               )}
               {row.tipo === 'Membro' && !row.owner && (
                 <>
-                  <button className="icon-btn" onClick={() => appApi.desativarMembroUsuario(row.usuarioId).then(carregar)} aria-label="Desativar"><UserX size={16} /></button>
-                  <button className="icon-btn" onClick={() => appApi.reativarMembroUsuario(row.usuarioId).then(carregar)} aria-label="Reativar"><UserCheck size={16} /></button>
+                  <button className="icon-btn" onClick={() => solicitarExclusao(row)} aria-label="Excluir conta"><Trash2 size={16} /></button>
                 </>
               )}
               {row.owner && <span className="status-badge">Dono</span>}
@@ -155,17 +178,36 @@ export default function UsuariosEmpresa() {
         empty={loading ? 'Carregando...' : 'Nenhum usuário encontrado.'}
       />
 
-      <Modal title="Adicionar usuário" open={modalOpen} onClose={() => setModalOpen(false)}>
+      <Modal title="Adicionar usuário" open={modalOpen && !perfilAtendente} onClose={() => setModalOpen(false)}>
         <form onSubmit={criarConvite} className="modal-body">
           <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
           <Input label="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           <div className="modal-actions">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" loading={salvando} disabled={limiteAtingido}>Criar convite</Button>
+            <Button type="submit" loading={salvando} disabled={limiteAtingido || perfilAtendente}>Criar convite</Button>
           </div>
         </form>
       </Modal>
+
+      <BulkConfirmModal
+        open={Boolean(confirmacao)}
+        title={confirmacao?.titulo || 'Confirmar ação'}
+        description={confirmacao?.descricao || ''}
+        confirmLabel={confirmacao?.confirmLabel || 'Confirmar'}
+        danger={Boolean(confirmacao?.danger)}
+        loading={executandoExclusao}
+        onCancel={() => setConfirmacao(null)}
+        onConfirm={async () => {
+          if (!confirmacao?.acao) return
+          try {
+            await confirmacao.acao()
+            setConfirmacao(null)
+          } catch (err) {
+            setError(err.response?.data?.mensagem || 'Nao foi possivel excluir a conta.')
+          }
+        }}
+      />
     </section>
   )
 }
