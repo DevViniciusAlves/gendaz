@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -106,9 +106,11 @@ function GendazAuthGate({ slug, onLogin }) {
       })
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
         if (isSafariIphone()) {
-          window.setTimeout(() => {
-            window.location.replace(`/meu-gendaz/${slug}/dashboard`)
-          }, 350)
+          await new Promise((resolve) => window.setTimeout(resolve, 700))
+          navigate(`/meu-gendaz/${slug}/dashboard`, {
+            replace: true,
+            state: { safariIphoneLogin: true },
+          })
           return
         }
         await onLogin()
@@ -189,8 +191,8 @@ function GendazAuthGate({ slug, onLogin }) {
               {carregando ? 'Enviando...' : 'Continuar'}
             </button>
           </form>
-      ) : (
-        <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
+        ) : (
+          <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
             <label>
               <span>Digite o codigo enviado para seu e-mail</span>
               <input
@@ -221,10 +223,10 @@ function GendazAuthGate({ slug, onLogin }) {
                 ? `Codigo valido por mais ${reenviarEm}s.`
                 : `Tentativas restantes: ${Math.max(0, 5 - tentativas)}`}
             </small>
-        </form>
-      )}
-    </section>
-  </main>
+          </form>
+        )}
+      </section>
+    </main>
   )
 }
 
@@ -355,9 +357,8 @@ export default function Gendaz() {
 
     const html = document.documentElement
     const temaAnterior = html.dataset.theme || ''
-    // Verifica se ja esta em algum tema, se nao, tenta respeitar o sistema ou define padrao
     if (!html.dataset.theme) {
-      html.dataset.theme = 'light' 
+      html.dataset.theme = 'light'
     }
 
     return () => {
@@ -379,6 +380,7 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, perfilAcesso, sincronizarDados } = useContext(ClienteGendazContext)
+  const location = useLocation()
 
   useEffect(() => {
     const tituloAnterior = document.title
@@ -390,18 +392,21 @@ function GendazContent({ slug }) {
 
   useEffect(() => {
     if (!slug) return undefined
-    // O backend gerencia a sessão via cookie automaticamente.
-    // Não é mais necessário manipular headers manualmente.
     return () => {}
   }, [slug])
+
+  useEffect(() => {
+    if (!location.state?.safariIphoneLogin) return undefined
+    const timer = window.setTimeout(() => {
+      void sincronizarDados({ exigirSessao: true })
+      window.history.replaceState({}, '', window.location.pathname)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [location.state, sincronizarDados])
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
   }, [sincronizarDados])
-
-  // Efeito de sincronização ao mudar de rota removido para evitar loop infinito
-  // na inicialização ou navegação dentro do Meu Gendaz.
-  // A sincronização inicial é feita pelo useEffect no ClienteGendazProvider (linha 160).
 
   const bloqueiaTela = carregando && !cliente && !perfilAcesso && !cadastroPendente
 
