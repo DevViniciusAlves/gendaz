@@ -340,12 +340,8 @@ public class MeuGendazController {
         ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
                 .httpOnly(true)
                 .secure(true)
-                .path("/");
-        if (isSafariMobile(request)) {
-            builder.domain(".gendaz.site").sameSite("Lax");
-        } else {
-            builder.sameSite("None");
-        }
+                .path("/")
+                .sameSite("None");
         ResponseCookie clearCookie = builder.maxAge(Duration.ZERO).build();
         response.addHeader("Set-Cookie", clearCookie.toString());
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
