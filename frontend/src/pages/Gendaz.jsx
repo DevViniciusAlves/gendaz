@@ -9,6 +9,14 @@ import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
 const COOLDOWN_SEGUNDOS = 120
 
+function isSafariIphone() {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent.toLowerCase()
+  const isIos = /iphone|ipod/.test(ua)
+  const isSafari = ua.includes('safari') && !ua.includes('crios') && !ua.includes('fxios') && !ua.includes('edgios') && !ua.includes('chrome')
+  return isIos && isSafari
+}
+
 function GendazAuthGate({ slug, onLogin }) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
@@ -97,6 +105,12 @@ function GendazAuthGate({ slug, onLogin }) {
         codigo: codigo.trim(),
       })
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
+        if (isSafariIphone()) {
+          window.setTimeout(() => {
+            window.location.replace(`/meu-gendaz/${slug}/dashboard`)
+          }, 350)
+          return
+        }
         await onLogin()
         navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
       } else {
