@@ -19417,6 +19417,271 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+@media (max-width: 767px) {
+  .app-shell .content,
+  .admin-shell .admin-content,
+  .app-shell .page,
+  .admin-shell .admin-page,
+  .gendaz-shell .gendaz-main {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .app-shell .page-title h1,
+  .admin-shell .page-title h1,
+  .admin-shell .page-title-admin h1,
+  .gendaz-page__header h1,
+  .gendaz-auth__card h1 {
+    font-size: 24px !important;
+    line-height: 1.15 !important;
+    word-break: break-word;
+  }
+
+  .app-shell .row-title,
+  .app-shell .topbar,
+  .app-shell .topbar-actions,
+  .app-shell .filters,
+  .app-shell .table-actions,
+  .app-shell .delivery-action,
+  .app-shell .account-badges,
+  .gendaz-page__header,
+  .gendaz-panel__head,
+  .gendaz-card__top,
+  .gendaz-card__actions,
+  .gendaz-agenda-actions,
+  .gendaz-mini-card__actions,
+  .admin-shell .page-title,
+  .admin-shell .page-title-actions,
+  .admin-shell .panel-head,
+  .admin-shell .table-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .app-shell .topbar {
+    min-height: auto;
+    padding-block: 14px;
+  }
+
+  .app-shell .topbar strong,
+  .admin-shell .page-title h1 {
+    font-size: 22px !important;
+  }
+
+  .app-shell .dashboard-hero,
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .plan-card,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .conversation-list,
+  .app-shell .client-panel,
+  .app-shell .chat-center,
+  .app-shell .settings-card,
+  .app-shell .support-card,
+  .app-shell .solution-card,
+  .app-shell .booking-link-panel,
+  .app-shell .booking-qr-card,
+  .app-shell .first-steps-card,
+  .app-shell .payment-pro-card,
+  .app-shell .payment-checkout-card,
+  .gendaz-card,
+  .gendaz-panel,
+  .gendaz-chat,
+  .gendaz-auth__card,
+  .admin-shell .admin-gendaz-card,
+  .admin-shell .admin-gendaz-panel,
+  .admin-shell .admin-filters,
+  .admin-shell .modal {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .app-shell .data-table,
+  .admin-shell .data-table {
+    min-width: 640px;
+  }
+
+  .app-shell .table-wrap,
+  .admin-shell .table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .app-shell .schedule-grid,
+  .app-shell .plans-grid.detailed,
+  .app-shell .settings-summary-grid,
+  .app-shell .support-grid,
+  .app-shell .metric-grid,
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .dashboard-grid,
+  .app-shell .chat-layout,
+  .app-shell .booking-schedule-grid,
+  .app-shell .booking-preview-grid,
+  .gendaz-grid,
+  .gendaz-grid--two,
+  .gendaz-grid--four,
+  .gendaz-agenda-grid,
+  .gendaz-historico-grid,
+  .gendaz-resumo-financeiro,
+  .gendaz-promocoes__grade,
+  .admin-shell .admin-metrics,
+  .admin-shell .admin-panels,
+  .admin-shell .admin-gendaz-grid,
+  .admin-shell .admin-gendaz-grid--two,
+  .admin-shell .admin-strategy-grid,
+  .admin-shell .admin-assinatura__edit {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gendaz-agenda-grid {
+    gap: 10px;
+  }
+
+  .gendaz-table__row,
+  .gendaz-table__row--agenda,
+  .gendaz-agenda-proximo__linha--datahora,
+  .gendaz-historico-field--datahora,
+  .gendaz-mini-card__header,
+  .gendaz-mini-card,
+  .gendaz-auth__form,
+  .gendaz-form,
+  .admin-shell .admin-assinatura__edit {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gendaz-table__row,
+  .gendaz-table__row--agenda {
+    gap: 10px;
+  }
+
+  .gendaz-sidebar,
+  .admin-shell .admin-sidebar {
+    overflow-x: auto;
+  }
+
+  .gendaz-sidebar nav,
+  .admin-shell .admin-sidebar nav {
+    display: flex !important;
+    flex-wrap: nowrap;
+    gap: 8px !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gendaz-sidebar__link,
+  .admin-shell .gendaz-sidebar__link,
+  .admin-shell .admin-gendaz-sidebar .gendaz-sidebar__link {
+    white-space: nowrap;
+    flex: 0 0 auto;
+  }
+
+  .gendaz-auth {
+    padding: 16px;
+  }
+
+  .gendaz-auth__card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .gendaz-auth__form input,
+  .gendaz-form input,
+  .gendaz-form select,
+  .gendaz-form textarea,
+  .admin-shell .admin-filters input,
+  .admin-shell .admin-filters select {
+    min-height: 48px;
+  }
+
+  .gendaz-page__header p,
+  .gendaz-panel span,
+  .gendaz-panel small,
+  .gendaz-card span,
+  .gendaz-card small,
+  .admin-shell .page-title p,
+  .admin-shell .admin-gendaz-panel p {
+    font-size: 12px !important;
+    line-height: 1.45;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell .content,
+  .admin-shell .admin-content,
+  .gendaz-shell .gendaz-main {
+    padding: 14px 12px 18px !important;
+  }
+
+  .app-shell .dashboard-hero h1,
+  .app-shell .page-title h1,
+  .admin-shell .page-title h1,
+  .admin-shell .page-title-admin h1,
+  .gendaz-page__header h1,
+  .gendaz-auth__card h1 {
+    font-size: 22px !important;
+  }
+
+  .app-shell .dashboard-hero,
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .plan-card,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .conversation-list,
+  .app-shell .client-panel,
+  .app-shell .chat-center,
+  .app-shell .settings-card,
+  .app-shell .support-card,
+  .app-shell .solution-card,
+  .app-shell .booking-link-panel,
+  .app-shell .booking-qr-card,
+  .app-shell .first-steps-card,
+  .app-shell .payment-pro-card,
+  .app-shell .payment-checkout-card,
+  .gendaz-card,
+  .gendaz-panel,
+  .gendaz-chat,
+  .gendaz-auth__card,
+  .admin-shell .admin-gendaz-card,
+  .admin-shell .admin-gendaz-panel,
+  .admin-shell .admin-filters,
+  .admin-shell .modal {
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .app-shell .table-wrap,
+  .admin-shell .table-wrap {
+    margin-inline: -2px;
+  }
+
+  .gendaz-card__top,
+  .gendaz-card__body,
+  .gendaz-card__actions,
+  .gendaz-panel__head,
+  .gendaz-mini-card__actions {
+    gap: 8px;
+  }
+
+  .gendaz-agenda-actions .gendaz-btn,
+  .gendaz-card .gendaz-btn,
+  .app-shell .btn,
+  .admin-shell .gendaz-btn {
+    width: 100%;
+  }
+
+  .gendaz-pagination,
+  .pagination-bar,
+  .pagination-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
 
 
 
