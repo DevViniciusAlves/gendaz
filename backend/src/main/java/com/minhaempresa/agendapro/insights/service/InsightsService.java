@@ -280,8 +280,8 @@ public class InsightsService {
 
         Map<String, Object> resumo = mapa(dados.get("resumo"));
         double pendente = numero(financeiro.get("pendente"));
-        long atRisk = longo(clientes.get("at_risk"));
         long clientesInativos = longo(clientes.get("inativos_status"));
+        long atRisk = clientesInativos;
         long servicosInativos = longo(resumo.get("servicos_inativos"));
         long profissionaisInativos = longo(resumo.get("profissionais_inativos"));
         double receita30 = numero(financeiro.get("receita_30d"));
@@ -296,7 +296,7 @@ public class InsightsService {
             oportunidades.add(new InsightItem("Cobrança ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperável no financeiro.", formatarMoeda(pendente), "Alta"));
             acoes.add(new InsightAction("Cobrar pagamentos pendentes", "Alta", formatarMoeda(pendente)));
         }
-        if (atRisk > 0) {
+        if (false && atRisk > 0) {
             acoes.add(new InsightAction("Reativar clientes em risco", "Alta", atRisk + " contatos"));
         }
         if (servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) == 0)) {
@@ -329,10 +329,10 @@ public class InsightsService {
         }
 
         if (acoes.isEmpty()) {
-            acoes = montarAcoesReais(pendente, atRisk, servicos, profissionais, receita30, receita60);
+            acoes = List.of(new InsightAction("Aguardando análise do Groq", "Baixa", "Sincronize os dados para gerar ações reais"));
         }
         if (oportunidades.isEmpty()) {
-            oportunidades = montarOportunidadesReais(pendente, atRisk, servicos, profissionais, receita30, receita60);
+            oportunidades = List.of(new InsightItem("Sem oportunidade crítica", "Os dados atuais não mostram uma ação prioritária clara.", "Sincronize os dados para que o Groq analise a base real.", "Baixa", "Média"));
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
