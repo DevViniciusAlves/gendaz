@@ -13023,6 +13023,12 @@ tbody tr:hover { background: #fffaf5; }
   opacity: 1;
 }
 
+.invite-card-v2 .field input:read-only {
+  color: #111111;
+  opacity: 1;
+  -webkit-text-fill-color: #111111;
+}
+
 .invite-card-v2 .login-eye-btn {
   background: rgba(17, 17, 17, 0.08);
   color: #111111;
@@ -13034,7 +13040,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .invite-card-v2 .btn-secondary {
-  color: #ffffff;
+  color: #111111;
 }
 
 .invite-card-v2 .login-input-wrap-v2 input:focus {
@@ -13068,6 +13074,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .invite-choice-grid-v2 .btn-secondary {
   background: rgba(255, 255, 255, 0.05);
+  color: #111111;
 }
 
 .invite-choice-grid-v2 .btn-secondary:hover {
@@ -13075,7 +13082,13 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .invite-choice-grid-v2 .btn-primary {
+  color: #111111;
   box-shadow: 0 14px 28px rgba(255, 255, 255, 0.06);
+}
+
+.invite-actions-v2 .btn-primary,
+.invite-actions-v2 .btn-secondary {
+  color: #111111;
 }
 
 @media (max-width: 520px) {

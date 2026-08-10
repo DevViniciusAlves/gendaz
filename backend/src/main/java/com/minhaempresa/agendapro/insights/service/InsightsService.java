@@ -45,7 +45,7 @@ public class InsightsService {
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DashboardResponse gerarDashboard(Long empresaId, Integer periodo) {
         return obterDashboard(empresaId, periodo, false);
     }
@@ -55,7 +55,7 @@ public class InsightsService {
         return obterDashboard(empresaId, periodo, true);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public DashboardResponse obterDashboard(Long empresaId, Integer periodo, boolean forcar) {
         validarAcessoEmpresa(empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, periodo);

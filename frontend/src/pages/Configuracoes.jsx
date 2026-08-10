@@ -326,7 +326,15 @@ export default function Configuracoes() {
             <h2>Usuários da empresa</h2>
             <p className="settings-card-muted">Convide, remova e reative membros da conta.</p>
           </div>
-          <Link to="/sistema/configuracoes/usuarios" className="btn btn-primary">Abrir usuários</Link>
+          <Link
+            to={perfilAtendente ? '#' : '/sistema/configuracoes/usuarios'}
+            className={`btn btn-primary${perfilAtendente ? ' is-disabled' : ''}`}
+            onClick={perfilAtendente ? (event) => event.preventDefault() : undefined}
+            aria-disabled={perfilAtendente}
+            tabIndex={perfilAtendente ? -1 : 0}
+          >
+            Abrir usuários
+          </Link>
         </div>
       )}
 
