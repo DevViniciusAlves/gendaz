@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { Lock } from 'lucide-react'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import { appApi } from '../api/appApi.js'
@@ -29,20 +30,56 @@ export default function RedefinirSenha() {
   }
 
   return (
-    <main className="login-screen app-dark-screen reset-password-screen">
-      <section className="login-panel reset-password-panel">
-        <span className="section-kicker">Nova senha</span>
-        <h1>Redefinir acesso</h1>
-        <form onSubmit={enviar}>
+    <main className="login-screen-v2 reset-password-screen">
+      <section className="login-card-v2 reset-password-card-v2">
+        <div className="login-card-header">
+          <div className="login-brand-v2">
+            <span className="section-kicker reset-kicker-v2">Nova senha</span>
+          </div>
+        </div>
+
+        <h1 className="login-title-v2">Redefinir acesso</h1>
+
+        <form onSubmit={enviar} className="login-form-v2">
           <input type="hidden" value={token} readOnly />
-          <Input label="Nova senha" type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required />
-          <Input label="Confirmar nova senha" type="password" value={confirmarNovaSenha} onChange={(e) => setConfirmarNovaSenha(e.target.value)} required />
-          {erro && <p className="form-error">{erro}</p>}
-          {mensagem && <p className="success-text">{mensagem}</p>}
-          <Button type="submit" disabled={carregando}>{carregando ? 'Salvando...' : 'Redefinir senha'}</Button>
+          <label className="login-field-v2">
+            <span className="login-label-v2">Nova senha</span>
+            <div className="login-input-wrap-v2">
+              <Lock size={16} className="login-input-icon-left" />
+              <input
+                type="password"
+                value={novaSenha}
+                onChange={(e) => setNovaSenha(e.target.value)}
+                placeholder="Digite sua nova senha"
+                required
+              />
+            </div>
+          </label>
+
+          <label className="login-field-v2">
+            <span className="login-label-v2">Confirmar nova senha</span>
+            <div className="login-input-wrap-v2">
+              <Lock size={16} className="login-input-icon-left" />
+              <input
+                type="password"
+                value={confirmarNovaSenha}
+                onChange={(e) => setConfirmarNovaSenha(e.target.value)}
+                placeholder="Repita a nova senha"
+                required
+              />
+            </div>
+          </label>
+
+          {erro && <p className="login-error-v2">{erro}</p>}
+          {mensagem && <p className="login-success-v2 reset-success-v2">{mensagem}</p>}
+
+          <Button type="submit" className="reset-submit-btn-v2" disabled={carregando}>
+            {carregando ? 'Salvando...' : 'Redefinir senha'}
+          </Button>
         </form>
-        <p className="login-helper">
-          <Link to="/login" className="inline-link">Voltar para o login</Link>
+
+        <p className="login-links-v2 reset-links-v2">
+          <Link to="/login" className="login-link-v2 reset-back-link-v2">Voltar para o login</Link>
         </p>
       </section>
     </main>

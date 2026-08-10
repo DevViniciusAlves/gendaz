@@ -125,7 +125,7 @@ public class AuthService {
                     usuario.setBloqueadoAte(LocalDateTime.now().plusHours(5));
                     usuarioRepository.save(usuario);
                     log.warn("[login] usuario {} bloqueado por 5h apos {} tentativas", mascararEmail(email), usuario.getTentativasLoginFalhadas());
-                    throw new BusinessException("Sua conta foi temporariamente bloqueada por segurança. Tente novamente em 5 horas.");
+                    throw new BusinessException("Tentativas de senha esgotadas. Sua conta foi bloqueada temporariamente. Tente novamente em 5 horas.");
                 }
 
                 usuarioRepository.save(usuario);

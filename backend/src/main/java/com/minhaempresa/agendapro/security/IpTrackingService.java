@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class IpTrackingService {
 
-    private static final int MAX_TENTATIVAS_POR_HORA = 20;
+    private static final int MAX_TENTATIVAS_POR_HORA = 15;
     private static final int DURACAO_BLOQUEIO_HORAS = 24;
 
     private final IpTrackingRepository ipTrackingRepository;
@@ -44,7 +44,7 @@ public class IpTrackingService {
         if (tracking.getTentativasFalhadas() >= MAX_TENTATIVAS_POR_HORA) {
             tracking.setBloqueado(true);
             tracking.setBloqueadoAte(LocalDateTime.now().plusHours(DURACAO_BLOQUEIO_HORAS));
-            tracking.setMotivoBloqueio("Multiplas tentativas falhadas de login");
+            tracking.setMotivoBloqueio("Muitas solicitacoes suspeitas de login");
             log.warn("[ip-tracking] IP {} bloqueado por {}h", ip, DURACAO_BLOQUEIO_HORAS);
         }
 

@@ -12978,11 +12978,11 @@ tbody tr:hover { background: #fffaf5; }
 .login-card-v2 {
   width: 100%;
   max-width: 400px;
-  background: var(--bg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
+  background: #0a0a0a;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
   padding: 2rem;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
 }
 
 .invite-screen-v2 {
@@ -13263,9 +13263,9 @@ tbody tr:hover { background: #fffaf5; }
 
 .login-input-wrap-v2 input {
   width: 100%;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 10px;
+  background: #050505;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 14px;
   padding: 12px 16px 12px 40px;
   color: #ffffff;
   font-size: 14px;
@@ -13275,12 +13275,12 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .login-input-wrap-v2 input::placeholder {
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.45);
 }
 
 .login-input-wrap-v2 input:focus {
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.08);
 }
 
 .admin-login-input-wrap input {
@@ -13332,6 +13332,142 @@ tbody tr:hover { background: #fffaf5; }
   align-items: center;
   justify-content: center;
   transition: color 0.2s ease;
+}
+
+.recovery-password-screen {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 38%),
+    #050505;
+}
+
+.recovery-password-card-v2 {
+  max-width: 420px;
+}
+
+.recovery-password-card-v2 .login-title-v2 {
+  margin-bottom: 1.25rem;
+}
+
+.recovery-password-card-v2 .login-label-v2,
+.recovery-password-card-v2 .section-kicker,
+.recovery-password-card-v2 .login-link-v2 {
+  color: #ffffff;
+}
+
+.recovery-password-card-v2 .login-success-v2 {
+  color: #ffffff;
+}
+
+.recovery-password-card-v2 .login-input-wrap-v2 input {
+  background: #000000;
+  color: #ffffff;
+}
+
+.recovery-password-card-v2 .login-input-wrap-v2 input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.recovery-password-card-v2 .login-input-icon-left {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.recovery-password-card-v2 .recovery-submit-btn-v2 {
+  width: 100%;
+  padding: 12px;
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+.recovery-password-card-v2 .recovery-submit-btn-v2:hover {
+  background: #eaeaea;
+  transform: translateY(-1px);
+}
+
+.recovery-password-card-v2 .recovery-submit-btn-v2:disabled {
+  opacity: 0.65;
+  transform: none;
+}
+
+.recovery-password-card-v2 .recovery-links-v2 {
+  margin-top: 1.25rem;
+}
+
+.recovery-password-card-v2 .recovery-back-link-v2 {
+  font-size: 14px;
+}
+
+.reset-password-screen {
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.06), transparent 38%),
+    #050505;
+}
+
+.reset-password-card-v2 {
+  max-width: 420px;
+}
+
+.reset-password-card-v2 .login-title-v2 {
+  margin-bottom: 1.25rem;
+}
+
+.reset-password-card-v2 .login-label-v2,
+.reset-password-card-v2 .section-kicker,
+.reset-password-card-v2 .login-link-v2 {
+  color: #ffffff;
+}
+
+.reset-password-card-v2 .login-success-v2 {
+  color: #ffffff;
+}
+
+.reset-password-card-v2 .login-input-wrap-v2 input {
+  background: #000000;
+  color: #ffffff;
+}
+
+.reset-password-card-v2 .login-input-wrap-v2 input::placeholder {
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.reset-password-card-v2 .login-input-icon-left {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.reset-password-card-v2 .reset-submit-btn-v2 {
+  width: 100%;
+  padding: 12px;
+  background: #ffffff;
+  color: #000000;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s ease, opacity 0.2s ease, background 0.2s ease;
+}
+
+.reset-password-card-v2 .reset-submit-btn-v2:hover {
+  background: #eaeaea;
+  transform: translateY(-1px);
+}
+
+.reset-password-card-v2 .reset-submit-btn-v2:disabled {
+  opacity: 0.65;
+  transform: none;
+}
+
+.reset-password-card-v2 .reset-links-v2 {
+  margin-top: 1.25rem;
+}
+
+.reset-password-card-v2 .reset-back-link-v2 {
+  font-size: 14px;
 }
 
 .login-eye-btn:hover {

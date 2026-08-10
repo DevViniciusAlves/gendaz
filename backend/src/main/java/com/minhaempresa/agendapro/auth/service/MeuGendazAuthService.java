@@ -50,7 +50,7 @@ public class MeuGendazAuthService {
             state.limparSeExpirado();
             LocalDateTime agora = LocalDateTime.now();
             if (state.bloqueadoAte != null && agora.isBefore(state.bloqueadoAte)) {
-                throw new BusinessException("Voce atingiu o limite de solicitacoes. Tente novamente mais tarde.");
+                throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde um tempo e tente novamente.");
             }
             if (state.ultimaSolicitacao != null) {
                 long segundos = Duration.between(state.ultimaSolicitacao, agora).getSeconds();
@@ -62,7 +62,7 @@ public class MeuGendazAuthService {
                 }
                 if (state.solicitacoes >= 2) {
                     state.bloqueadoAte = agora.plusHours(24);
-                    throw new BusinessException("Solicitacoes bloqueadas. Tente novamente em 24 horas.");
+                    throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde 24 horas para tentar novamente.");
                 }
             }
 
@@ -100,7 +100,7 @@ public class MeuGendazAuthService {
             state.limparSeExpirado();
             LocalDateTime agora = LocalDateTime.now();
             if (state.bloqueadoAte != null && agora.isBefore(state.bloqueadoAte)) {
-                throw new BusinessException("Voce atingiu o limite de solicitacoes. Tente novamente mais tarde.");
+                throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde um tempo e tente novamente.");
             }
             if (state.usado) {
                 throw new BusinessException("Este codigo ja foi utilizado.");
