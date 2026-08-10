@@ -223,24 +223,14 @@ public class PagamentoService {
         log.info("Verificacao de pagamento acionada: empresa={}, pagamento={}", empresaId, pagamentoId);
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findByIdAndEmpresaId(pagamentoId, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nao encontramos um pagamento para esta conta."));
-        AssinaturaEntity assinatura = assinaturaService.buscarAtualPorEmpresa(empresaId).orElse(null);
         if (pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
             pagamento = sincronizarPagamentoComGateway(pagamento);
-            assinatura = pagamento.getAssinatura() == null ? assinatura : pagamento.getAssinatura();
         }
         if (pagamento.getStatus() == StatusPagamento.PAYMENT_APPROVED) {
             pagamento = liberarContaPorPagamentoAprovado(pagamento, "VERIFICACAO");
             pagamento = pagamentoPlanoRepository.save(pagamento);
-            assinatura = pagamento.getAssinatura();
-        } else if (pagamento.getEmpresa().getStatus() == StatusEmpresa.ATIVA
-                && assinatura != null
-                && assinatura.getStatus() == StatusAssinatura.ATIVA
-                && assinatura.getPlano().getId().equals(pagamento.getPlano().getId())) {
-            log.warn("Pagamento {} estava pendente, mas a conta ja esta ativa. Sincronizando status internamente.", pagamentoId);
-            pagamento = liberarContaPorPagamentoAprovado(pagamento, "VERIFICACAO");
-            pagamento = pagamentoPlanoRepository.save(pagamento);
-            assinatura = pagamento.getAssinatura();
         }
+        AssinaturaEntity assinatura = pagamento.getAssinatura();
         PagamentoPlanoResponse pagamentoResponse = mapper.toPlanoResponse(pagamento);
         return switch (pagamento.getStatus()) {
             case PAYMENT_APPROVED -> new VerificarPagamentoPlanoResponse(

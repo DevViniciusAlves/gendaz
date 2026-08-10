@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +58,8 @@ public class MembresiaService {
     private final PasswordService passwordService;
     private final AdminAuditService auditService;
     private final SecureRandom secureRandom = new SecureRandom();
+    @Value("${app.frontend-url:${FRONTEND_URL:https://gendaz.site}}")
+    private String frontendUrl;
 
     @Transactional(readOnly = true)
     public List<MembroEmpresaResponse> listarMembros(Long empresaId) {
@@ -426,7 +429,8 @@ public class MembresiaService {
     }
 
     private String montarUrlConvite(String token) {
-        return "https://gendaz.site/convite?token=" + token;
+        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim().replaceAll("/+$", "");
+        return base + "/convite?token=" + token;
     }
 
     private String hash(String token) {
