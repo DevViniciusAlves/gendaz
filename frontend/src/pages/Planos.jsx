@@ -99,6 +99,7 @@ export default function Planos() {
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [filaAssinaturas, setFilaAssinaturas] = useState([])
+  const perfilAtendente = String(usuario?.perfil || '').toUpperCase() === 'ATENDENTE'
 
   const planos = useMemo(() => planosBase.map((plano) => {
     const planoApi = data.planos?.find((item) => String(item.nome).toUpperCase() === plano.codigo)
@@ -163,6 +164,10 @@ export default function Planos() {
       navigate('/criar-conta?plano=PRO')
       return
     }
+    if (perfilAtendente) {
+      setErro('Seu perfil nao permite comprar ou editar planos.')
+      return
+    }
     if (limiteAtingido) {
       setErro('Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.')
       return
@@ -197,6 +202,10 @@ export default function Planos() {
   async function iniciarPagamentoBasico() {
     if (!usuario) {
       navigate('/criar-conta?plano=BASICO')
+      return
+    }
+    if (perfilAtendente) {
+      setErro('Seu perfil nao permite comprar ou editar planos.')
       return
     }
     if (limiteAtingido) {
@@ -275,6 +284,7 @@ export default function Planos() {
         <span className="section-kicker">Comercial</span>
         <h1>Planos do atendimento</h1>
         <p>Escolha o plano que melhor se encaixa na rotina do seu atendimento.</p>
+        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil nao pode comprar ou editar planos.</p>}
       </div>
 
       {usuario && (
@@ -419,11 +429,13 @@ export default function Planos() {
               type="button"
               onClick={() => handlePlanClick(plano)}
               className={plano.destaque ? 'btn btn-primary plan-action-link' : 'btn btn-secondary plan-action-link'}
-              disabled={carregando || limiteAtingido}
+              disabled={carregando || limiteAtingido || perfilAtendente}
             >
               {carregando
                 ? 'Iniciando...'
-                : limiteAtingido
+                : perfilAtendente
+                  ? 'Bloqueado para atendente'
+                  : limiteAtingido
                   ? 'Limite de 2 planos atingido'
                   : String(usuario?.plano || '').toUpperCase() === plano.codigo
                     ? 'Adicionar dias ao plano'

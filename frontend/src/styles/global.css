@@ -12985,6 +12985,65 @@ tbody tr:hover { background: #fffaf5; }
   box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 
+.invite-screen-v2 {
+  background: var(--bg);
+}
+
+.invite-card-v2 {
+  max-width: 440px;
+}
+
+.invite-card-v2 h1 {
+  margin: 0 0 1rem;
+  color: #ffffff;
+  font-size: 28px;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.invite-preview-v2 {
+  display: grid;
+  gap: 12px;
+}
+
+.invite-actions-v2,
+.invite-choice-grid-v2 {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.invite-actions-v2 .btn,
+.invite-choice-grid-v2 .btn {
+  min-height: 48px;
+  border-radius: 999px;
+}
+
+.invite-choice-grid-v2 .btn {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.invite-choice-grid-v2 .btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.invite-choice-grid-v2 .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.invite-choice-grid-v2 .btn-primary {
+  box-shadow: 0 14px 28px rgba(255, 255, 255, 0.06);
+}
+
+@media (max-width: 520px) {
+  .invite-actions-v2,
+  .invite-choice-grid-v2 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .admin-login-card {
   width: 100%;
   max-width: 400px;

@@ -13,7 +13,12 @@ import com.minhaempresa.agendapro.pagamento.dto.PagamentoDtos.WebhookPagamentoPl
 import com.minhaempresa.agendapro.pagamento.gateway.PaymentGatewayProperties;
 import com.minhaempresa.agendapro.pagamento.service.PagamentoService;
 import com.minhaempresa.agendapro.pagamento.service.PagamentoBulkService;
+import com.minhaempresa.agendapro.auth.service.AuthService;
+import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.CookieHelper;
+import com.minhaempresa.agendapro.usuario.enums.PerfilUsuario;
 import jakarta.validation.Valid;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +34,7 @@ public class PagamentoController {
     private final PagamentoService pagamentoService;
     private final PagamentoBulkService pagamentoBulkService;
     private final PaymentGatewayProperties paymentGatewayProperties;
+    private final AuthService authService;
 
     @PostMapping
     public ResponseEntity<PagamentoResponse> criar(@Valid @RequestBody CriarPagamentoRequest request) {
@@ -61,7 +67,8 @@ public class PagamentoController {
     }
 
     @PostMapping("/planos/pro/iniciar")
-    public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPro(@Valid @RequestBody IniciarPagamentoPlanoRequest request) {
+    public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPro(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
+        validarNaoAtendente(http);
         return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlanoPro(request));
     }
 
@@ -225,5 +232,23 @@ public class PagamentoController {
             }
         }
         return primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
+    }
+
+    private void validarNaoAtendente(HttpServletRequest http) {
+        Long usuarioId = extrairUsuarioId(http.getHeader("X-Usuario-Id"));
+        String sessao = CookieHelper.lerCookie(http, "agendapro_session").orElse(null);
+        PerfilUsuario perfil = authService.buscarUsuarioAutenticado(usuarioId, sessao).getPerfil();
+        if (perfil == PerfilUsuario.ATENDENTE) {
+            throw new BusinessException("Seu perfil nao permite comprar ou editar planos.");
+        }
+    }
+
+    private Long extrairUsuarioId(String valor) {
+        if (valor == null || valor.isBlank()) return null;
+        try {
+            return Long.valueOf(valor);
+        } catch (NumberFormatException ignored) {
+            return null;
+        }
     }
 }

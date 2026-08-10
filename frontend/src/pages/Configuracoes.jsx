@@ -295,6 +295,12 @@ export default function Configuracoes() {
 
   const planoAtivo = PLANOS[usuario?.plano]
   const planoEhBasico = String(usuario?.plano || usuario?.assinatura?.planoNome || '').toUpperCase() === 'BASICO'
+  const perfilAtendente = String(usuario?.perfil || '').toUpperCase() === 'ATENDENTE'
+  const perfilExibido = perfilAtendente
+    ? 'ATENDENTE'
+    : usuario?.owner
+      ? 'DONO'
+      : String(usuario?.perfil || 'ATENDENTE').toUpperCase()
   const horariosExibidos = Array.isArray(horariosAtendimento) && horariosAtendimento.length > 0 ? horariosAtendimento : criarHorariosPadrao()
   const qrCodeUrl = portalClienteLink?.publicUrl
     ? `https://api.qrserver.com/v1/create-qr-code/?size=320x320&format=png&data=${encodeURIComponent(portalClienteLink.publicUrl)}`
@@ -331,7 +337,7 @@ export default function Configuracoes() {
               <span className="section-kicker">Usuário logado</span>
               <h2>{usuario?.nome}</h2>
             </div>
-            <StatusBadge status={usuario?.perfil} />
+            <StatusBadge status={perfilExibido} />
           </div>
           <p className="settings-card-text">{usuario?.email}</p>
           <small className="settings-card-muted">Acesso principal do painel.</small>
