@@ -6,10 +6,10 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
 const CACHE_PREFIX = 'agendapro_scope_cache_'
-const CACHE_VERSION = 5
+const CACHE_VERSION = 6
 
 function ttlDoEscopo(scope) {
-  if (scope === 'insights') return 0
+  if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
   return 24 * 60 * 60 * 1000
 }
 
@@ -48,13 +48,11 @@ function cacheValido(cache, scope) {
 }
 
 function cacheDoEscopo(scope) {
-  if (scope === 'insights') return null
   const cacheKey = chaveCache(scope)
   return cacheLocal.get(cacheKey) || lerCacheSession(cacheKey)
 }
 
 function salvarCache(scope, payload) {
-  if (scope === 'insights') return payload
   const cacheKey = chaveCache(scope)
   const entry = { data: payload, time: Date.now() }
   cacheLocal.set(cacheKey, entry)
