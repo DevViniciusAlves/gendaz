@@ -49,7 +49,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String sessao = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
+        String sessao = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
 
         if (isAdminSession(request)) {
             if (sessao != null && !sessao.isBlank()) {

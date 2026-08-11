@@ -57,42 +57,42 @@ public class UsuarioController {
     @PostMapping("/convites/{conviteId}/reenviar")
     public ResponseEntity<ConviteEmpresaResponse> reenviarConvite(@PathVariable Long conviteId, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.reenviarConvite(empresaId, usuarioId, conviteId));
     }
 
     @DeleteMapping("/convites/{conviteId}")
     public ResponseEntity<ConviteEmpresaResponse> cancelarConvite(@PathVariable Long conviteId, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.cancelarConvite(empresaId, usuarioId, conviteId));
     }
 
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<MembroEmpresaResponse> desativar(@PathVariable Long id, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.desativarMembro(empresaId, usuarioId, id));
     }
 
     @PatchMapping("/{id}/reativar")
     public ResponseEntity<MembroEmpresaResponse> reativar(@PathVariable Long id, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.reativarMembro(empresaId, usuarioId, id));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<MembroEmpresaResponse> remover(@PathVariable Long id, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.removerMembro(empresaId, usuarioId, id));
     }
 
     @PostMapping("/{id}/transferir-propriedade")
     public ResponseEntity<MembroEmpresaResponse> transferir(@PathVariable Long id, HttpServletRequest http) {
         Long usuarioId = extrairUsuario(http);
-        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null)).getEmpresa().getId();
+        Long empresaId = authService.buscarUsuarioAutenticado(usuarioId, CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null)).getEmpresa().getId();
         return ResponseEntity.ok(membresiaService.transferirPropriedade(empresaId, usuarioId, id));
     }
 
@@ -121,7 +121,7 @@ public class UsuarioController {
     }
 
     private Long extrairUsuario(HttpServletRequest http) {
-        String cookie = CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
+        String cookie = CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null);
         String header = http.getHeader("X-Usuario-Id");
         Long usuarioId = header == null || header.isBlank() ? null : Long.valueOf(header);
         return authService.buscarUsuarioAutenticado(usuarioId, cookie).getId();
