@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.agendamento.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -48,6 +49,7 @@ class AgendamentoServiceTest {
 
     @Test
     void deveCalcularHoraFimPelaDuracaoDoServico() {
+        LocalDate data = LocalDate.now().plusDays(1);
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
         ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).build();
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).build();
@@ -65,10 +67,10 @@ class AgendamentoServiceTest {
         });
         when(pagamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        var response = agendamentoService.criar(new CriarAgendamentoRequest(1L, 1L, 1L, 1L, LocalDate.now(), LocalTime.of(9, 0), null, null));
+        var response = agendamentoService.criar(new CriarAgendamentoRequest(1L, 1L, 1L, 1L, data, LocalTime.of(9, 0), null, null));
 
         assertEquals(LocalTime.of(10, 0), response.horaFim());
-        verify(resendEmailService).enviarEmailNovoAgendamento(empresa, agendamentoCaptor.capture());
+        verify(resendEmailService).enviarEmailNovoAgendamento(eq(empresa), agendamentoCaptor.capture());
         assertEquals("10", agendamentoCaptor.getValue().getId().toString());
     }
 }

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: gendaz-backend
+    runtime: java
+    plan: standard
+    buildCommand: cd backend && mvn clean package -DskipTests
+    startCommand: java -jar backend/target/*.jar
+    envVars:
+      - key: JPA_HIBERNATE_DDL_AUTO
+        value: validate
+      - key: JAVA_TOOL_OPTIONS
+        value: -Xms256m -Xmx512m

@@ -2,7 +2,6 @@ package com.minhaempresa.gendaz.shared;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.ResponseCookie;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
@@ -39,7 +38,25 @@ public class SecurityHeadersConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health", "/api/health").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers(
+                                "/api/auth/login",
+                                "/api/auth/criar-conta",
+                                "/api/auth/recuperar-senha",
+                                "/api/auth/redefinir-senha",
+                                "/api/auth/csrf",
+                                "/api/auth/refresh",
+                                "/api/auth/logout",
+                                "/api/meu-gendaz/auth/solicitar-codigo",
+                                "/api/meu-gendaz/auth/validar-codigo",
+                                "/api/meu-gendaz/auth/refresh",
+                                "/api/public/**",
+                                "/api/pagamentos/webhook",
+                                "/api/pagamentos/planos/webhook",
+                                "/api/pagamentos/planos/webhook/cakto"
+                        ).permitAll()
+                        .requestMatchers("/api/admin/**", "/admin", "/admin/**").authenticated()
+                        .requestMatchers("/api/meu-gendaz/**").authenticated()
+                        .anyRequest().authenticated())
                 .headers(headers -> headers
                         .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000).includeSubDomains(true))
                         .contentTypeOptions(Customizer.withDefaults())

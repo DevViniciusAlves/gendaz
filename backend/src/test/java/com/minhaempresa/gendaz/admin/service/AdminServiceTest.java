@@ -17,11 +17,13 @@ import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.util.Optional;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class AdminServiceTest {
@@ -80,7 +82,7 @@ class AdminServiceTest {
                 .perfil(PerfilUsuario.SUPER_ADMIN)
                 .status(StatusUsuario.ATIVO)
                 .build();
-        when(usuarioRepository.findByEmail("admin@Gendaz.com")).thenReturn(Optional.of(admin));
+        when(usuarioRepository.findAllByEmailIgnoreCase("admin@gendaz.com")).thenReturn(List.of(admin));
         when(usuarioSessionService.renovarSessao(admin)).thenReturn("token-admin");
 
         var response = adminService.login(new AdminLoginRequest("admin@Gendaz.com", "SenhaForte123!"), "127.0.0.1", "test");
@@ -91,7 +93,7 @@ class AdminServiceTest {
 
     @Test
     void deveExigirTokenValidoParaAcessoAdmin() {
-        assertThrows(BusinessException.class, () -> adminService.exigirAdmin("token-invalido"));
+        assertThrows(SessaoExpiradaException.class, () -> adminService.exigirAdmin("token-invalido"));
     }
 }
 

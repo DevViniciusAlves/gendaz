@@ -236,8 +236,6 @@ class AgendamentoServiceHorariosTest {
         ProfissionalEntity sistema = criarProfissional(10L, empresaId, true);
 
         AgendamentoHorarioProjection cancelado = mock(AgendamentoHorarioProjection.class);
-        when(cancelado.getHoraInicio()).thenReturn(LocalTime.of(9, 0));
-        when(cancelado.getHoraFim()).thenReturn(LocalTime.of(10, 0));
         when(cancelado.getStatus()).thenReturn(StatusAgendamento.CANCELADO);
 
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
