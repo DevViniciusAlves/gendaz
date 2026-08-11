@@ -33,6 +33,7 @@ import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.agendapro.plano.entity.PlanoEntity;
 import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
@@ -187,6 +188,7 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoPlanoResponse criarPagamentoPlanoPendente(Long empresaId, String planoNome, MetodoPagamento metodoPagamento) {
+        validarEmpresaAtual(empresaId);
         validarMetodoPagamentoPlano(metodoPagamento);
         EmpresaEntity empresa = empresaService.buscarEntidade(empresaId);
         PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
@@ -199,6 +201,7 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public List<PagamentoPlanoResponse> listarPagamentosPlano(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
                 .map(mapper::toPlanoResponse)
                 .toList();
@@ -206,6 +209,7 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public Optional<PagamentoPlanoResponse> buscarUltimoPagamentoPlanoPendente(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(empresaId, StatusPagamento.PAYMENT_PENDING)
                 .stream()
                 .findFirst()
@@ -214,12 +218,14 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public PagamentoPlanoResponse consultarPagamentoPlano(Long empresaId, Long pagamentoId) {
+        validarEmpresaAtual(empresaId);
         return mapper.toPlanoResponse(pagamentoPlanoRepository.findByIdAndEmpresaId(pagamentoId, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado.")));
     }
 
     @Transactional
     public VerificarPagamentoPlanoResponse verificarPagamentoPlano(Long empresaId, Long pagamentoId) {
+        validarEmpresaAtual(empresaId);
         log.info("Verificacao de pagamento acionada: empresa={}, pagamento={}", empresaId, pagamentoId);
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findByIdAndEmpresaId(pagamentoId, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Nao encontramos um pagamento para esta conta."));
@@ -547,6 +553,7 @@ public class PagamentoService {
 
     @Transactional
     public AssinaturaResponse consultarPlanoAtual(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return assinaturaService.buscarAtualResponsePorEmpresa(empresaId);
     }
 
@@ -558,7 +565,15 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public long contarPendentes(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return pagamentoRepository.countByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE);
+    }
+
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
     }
 
     private PagamentoPlanoEntity novoPagamentoPlano(EmpresaEntity empresa, PlanoEntity plano, MetodoPagamento metodoPagamento) {

@@ -21,6 +21,7 @@ import com.minhaempresa.agendapro.plano.service.PlanoService;
 import com.minhaempresa.agendapro.auth.service.PasswordService;
 import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.shared.ConflictException;
+import com.minhaempresa.agendapro.shared.CompanyContext;
 import com.minhaempresa.agendapro.shared.ResourceNotFoundException;
 import com.minhaempresa.agendapro.shared.SanitizacaoService;
 import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.AceitarConviteRequest;
@@ -69,11 +70,13 @@ public class MembresiaService {
 
     @Transactional(readOnly = true)
     public List<MembroEmpresaResponse> listarMembros(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return membresiaRepository.findByEmpresaId(empresaId).stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<ConviteEmpresaResponse> listarConvites(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return conviteRepository.findByEmpresaIdAndStatus(empresaId, StatusConviteEmpresa.PENDING)
                 .stream()
                 .map(this::toResponse)
@@ -446,6 +449,13 @@ public class MembresiaService {
     }
 
     private long membroId(MembresiaEntity m) { return m.getId(); }
+
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
+    }
 
     private String gerarToken() {
         byte[] bytes = new byte[32];

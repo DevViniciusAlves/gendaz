@@ -198,6 +198,18 @@ public class InsightsService {
     }
 
     @Transactional(readOnly = true)
+    public InsightEntity obterInsight(Long id, Long empresaId) {
+        InsightEntity insight = insightRepository.findById(id).orElse(null);
+        if (insight == null) {
+            return null;
+        }
+        if (empresaId != null && !empresaId.equals(insight.getEmpresaId())) {
+            throw new BusinessException("Insight nao encontrado para a empresa atual.");
+        }
+        return insight;
+    }
+
+    @Transactional(readOnly = true)
     public List<InsightHistoryResponse> obterHistorico(Long empresaId) {
         return insightRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
                 .map(item -> new InsightHistoryResponse(item.getId(), item.getEmpresaId(), item.getTipo(), item.getPergunta(), item.getResposta(), item.getDataCriacao()))

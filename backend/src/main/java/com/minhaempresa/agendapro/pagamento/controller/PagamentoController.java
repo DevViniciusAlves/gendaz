@@ -109,7 +109,7 @@ public class PagamentoController {
             @RequestParam Map<String, String> queryParams,
             @RequestBody(required = false) Map<String, Object> body) {
         if (usarWebhookCakto(body)) {
-            String assinaturaFinal = resolverAssinaturaWebhook(assinaturaCakto, webhookSecret, authorization, queryParams, body);
+            String assinaturaFinal = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
             return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinaturaFinal));
         }
         String providerPaymentId = extrairPaymentId(queryParams, body);
@@ -127,10 +127,7 @@ public class PagamentoController {
         if (body == null || body.isEmpty()) {
             throw new com.minhaempresa.agendapro.shared.BusinessException("Webhook da Cakto sem payload valido.");
         }
-        String assinatura = extrairSecretWebhookCakto(body);
-        if (assinatura == null || assinatura.isBlank()) {
-            assinatura = resolverAssinaturaWebhook(assinaturaCakto, webhookSecret, authorization, queryParams, body);
-        }
+        String assinatura = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
         return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinatura));
     }
 
@@ -158,27 +155,6 @@ public class PagamentoController {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
-    private String extrairSecretWebhookCakto(Map<String, Object> body) {
-        Object secret = body.get("secret");
-        if (secret == null) secret = body.get("webhook_secret");
-        if (secret == null) secret = body.get("webhookSecret");
-        if (secret instanceof String texto && !texto.isBlank()) {
-            return texto;
-        }
-
-        Object data = body.get("data");
-        if (data instanceof Map<?, ?> dataMap) {
-            Object nestedSecret = ((Map<String, Object>) dataMap).get("secret");
-            if (nestedSecret == null) nestedSecret = ((Map<String, Object>) dataMap).get("webhook_secret");
-            if (nestedSecret == null) nestedSecret = ((Map<String, Object>) dataMap).get("webhookSecret");
-            if (nestedSecret instanceof String texto && !texto.isBlank()) {
-                return texto;
-            }
-        }
-        return null;
-    }
-
     private boolean usarWebhookCakto(Map<String, Object> body) {
         if ("CAKTO".equalsIgnoreCase(paymentGatewayProperties.getProvider())) {
             return true;
@@ -192,46 +168,6 @@ public class PagamentoController {
                 || body.containsKey("productId")
                 || body.containsKey("sale_status")
                 || body.containsKey("saleStatus");
-    }
-
-    @SuppressWarnings("unchecked")
-    private String resolverAssinaturaWebhook(
-            String assinaturaCakto,
-            String webhookSecret,
-            String authorization,
-            Map<String, String> queryParams,
-            Map<String, Object> body
-    ) {
-        if (queryParams != null) {
-            String querySecret = primeiraNaoVazia(
-                    queryParams.get("secret"),
-                    queryParams.get("webhook_secret"),
-                    queryParams.get("webhookSecret")
-            );
-            if (querySecret != null) {
-                return querySecret;
-            }
-        }
-        if (body != null) {
-            Object secret = body.get("secret");
-            if (secret == null) secret = body.get("webhook_secret");
-            if (secret == null) secret = body.get("webhookSecret");
-            if (secret instanceof String texto && !texto.isBlank()) {
-                return texto;
-            }
-            for (String nested : List.of("data", "payment", "sale", "metadata")) {
-                Object valor = body.get(nested);
-                if (valor instanceof Map<?, ?> mapa) {
-                    Object nestedSecret = ((Map<String, Object>) mapa).get("secret");
-                    if (nestedSecret == null) nestedSecret = ((Map<String, Object>) mapa).get("webhook_secret");
-                    if (nestedSecret == null) nestedSecret = ((Map<String, Object>) mapa).get("webhookSecret");
-                    if (nestedSecret instanceof String texto && !texto.isBlank()) {
-                        return texto;
-                    }
-                }
-            }
-        }
-        return primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
     }
 
     private void validarNaoAtendente(HttpServletRequest http) {

@@ -315,7 +315,7 @@ public class AuthService {
 
     @Transactional
     public void trocarSenha(Long usuarioId, String sessionToken, String senhaAtual, String novaSenha, String confirmarNovaSenha) {
-        UsuarioEntity usuario = buscarUsuarioAutenticado(usuarioId);
+        UsuarioEntity usuario = buscarUsuarioAutenticado(usuarioId, sessionToken);
         if (!passwordService.matches(senhaAtual, usuario.getSenha())) {
             throw new BusinessException("Senha atual inválida.");
         }
@@ -353,11 +353,19 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId) {
-        if (usuarioId == null) {
-            throw new BusinessException("Usuário autenticado obrigatório.");
+        throw new SessaoExpiradaException("Usuário autenticado obrigatório.");
+    }
+
+    @Transactional(readOnly = true)
+    public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId, String sessionToken) {
+        if (sessionToken == null || sessionToken.isBlank()) {
+            throw new SessaoExpiradaException("Sessão não encontrada.");
         }
-        UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuário autenticado inválido."));
+        UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
+                .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
+        if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
+            log.warn("Header X-Usuario-Id divergente da sessao. header={}, sessao={}", usuarioId, usuario.getId());
+        }
         if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
             throw new BusinessException("Usuário inativo.");
         }
@@ -371,34 +379,6 @@ public class AuthService {
             garantirMembresiaAtivaOuCriar(usuario);
         }
         return usuario;
-    }
-
-@Transactional(readOnly = true)
-    public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId, String sessionToken) {
-        if (sessionToken != null && !sessionToken.isBlank()) {
-            UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
-                    .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
-            if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
-                log.debug("Header X-Usuario-Id divergente da sessão. Mantendo cookie como fonte de verdade. header={}, sessao={}", usuarioId, usuario.getId());
-            }
-            if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
-                throw new BusinessException("Usuário inativo.");
-            }
-            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
-                    && usuario.getEmpresa() != null
-                    && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
-                throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
-            }
-            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
-                    && usuario.getEmpresa() != null) {
-                garantirMembresiaAtivaOuCriar(usuario);
-            }
-            return usuario;
-        }
-        if (usuarioId != null) {
-            return buscarUsuarioAutenticado(usuarioId);
-        }
-        throw new SessaoExpiradaException("Usuário autenticado obrigatório.");
     }
 
     private void garantirMembresiaAtivaOuCriar(UsuarioEntity usuario) {

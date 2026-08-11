@@ -10,6 +10,8 @@ import com.minhaempresa.agendapro.usuario.dto.MembresiaDtos.RecusarConviteReques
 import com.minhaempresa.agendapro.usuario.dto.UsuarioDtos.UsuarioResponse;
 import com.minhaempresa.agendapro.auth.service.AuthService;
 import com.minhaempresa.agendapro.shared.CookieHelper;
+import com.minhaempresa.agendapro.shared.CompanyContext;
+import com.minhaempresa.agendapro.shared.BusinessException;
 import com.minhaempresa.agendapro.usuario.service.UsuarioService;
 import com.minhaempresa.agendapro.usuario.service.MembresiaService;
 import jakarta.validation.Valid;
@@ -111,6 +113,7 @@ public class UsuarioController {
 
     @GetMapping("/empresa/{empresaId}/resumo")
     public ResponseEntity<?> resumo(@PathVariable Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(java.util.Map.of(
                 "limite", membresiaService.limiteEmpresa(empresaId),
                 "usados", membresiaService.contarUsados(empresaId)
@@ -122,5 +125,12 @@ public class UsuarioController {
         String header = http.getHeader("X-Usuario-Id");
         Long usuarioId = header == null || header.isBlank() ? null : Long.valueOf(header);
         return authService.buscarUsuarioAutenticado(usuarioId, cookie).getId();
+    }
+
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
     }
 }

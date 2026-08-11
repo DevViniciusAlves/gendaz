@@ -108,7 +108,7 @@ public class InsightsController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> detalhe(@PathVariable Long id) {
-        var insight = insightsService.obterInsight(id);
+        var insight = insightsService.obterInsight(id, CompanyContext.getCompanyId());
         if (insight == null) {
             return ResponseEntity.notFound().build();
         }

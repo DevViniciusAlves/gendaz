@@ -8,6 +8,8 @@ import com.minhaempresa.agendapro.financeiro.dto.FinanceiroDtos.ResumoFinanceiro
 import com.minhaempresa.agendapro.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.agendapro.pagamento.enums.StatusPagamento;
 import com.minhaempresa.agendapro.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.agendapro.shared.BusinessException;
+import com.minhaempresa.agendapro.shared.CompanyContext;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,6 +30,7 @@ public class FinanceiroService {
 
     @Transactional(readOnly = true)
     public ResumoFinanceiroResponse resumo(Long empresaId, int mes, int ano) {
+        validarEmpresaAtual(empresaId);
         LocalDateTime inicio = LocalDate.of(ano, mes, 1).atStartOfDay();
         LocalDateTime fim = inicio.toLocalDate().withDayOfMonth(inicio.toLocalDate().lengthOfMonth()).atTime(LocalTime.MAX);
         List<PagamentoEntity> pagamentosMes = pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(empresaId, inicio, fim);
@@ -70,5 +73,12 @@ public class FinanceiroService {
 
     private LocalDateTime dataOrdenacaoPagamento(PagamentoEntity pagamento) {
         return pagamento.getDataPagamento() != null ? pagamento.getDataPagamento() : null;
+    }
+
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = CompanyContext.getCompanyId();
+        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
     }
 }
