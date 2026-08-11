@@ -30,6 +30,20 @@ export async function garantirCsrfCookie() {
 }
 
 api.interceptors.request.use((config) => {
+  if (typeof window !== 'undefined') {
+    const metodo = String(config.method || 'get').toLowerCase()
+    const precisaCsrf = ['post', 'put', 'patch', 'delete'].includes(metodo)
+    if (precisaCsrf) {
+      const cookies = document.cookie ? document.cookie.split('; ') : []
+      const xsrf = cookies
+        .map((item) => item.split('='))
+        .find(([nome]) => nome === 'XSRF-TOKEN')
+      if (xsrf?.[1]) {
+        config.headers = config.headers || {}
+        config.headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf[1])
+      }
+    }
+  }
   return config
 })
 
