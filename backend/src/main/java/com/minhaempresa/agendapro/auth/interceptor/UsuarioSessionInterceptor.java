@@ -22,6 +22,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 public class UsuarioSessionInterceptor implements HandlerInterceptor {
     private static final List<String> ROTAS_PUBLICAS = List.of(
             "/api/auth/login",
+            "/api/auth/csrf",
             "/api/auth/criar-conta",
             "/api/auth/recuperar-senha",
             "/api/auth/redefinir-senha",
