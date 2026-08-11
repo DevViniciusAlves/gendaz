@@ -30,6 +30,8 @@ import org.springframework.security.web.csrf.CsrfToken;
 @Slf4j
 public class AuthController {
     private static final int SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
+    private static final String SESSION_COOKIE = "Gendaz_session";
+    private static final String LEGACY_SESSION_COOKIE = "agendapro_session";
     private final AuthService authService;
 
     @PostMapping("/login")
@@ -37,7 +39,8 @@ public class AuthController {
         try {
             LoginResponse login = authService.login(request);
             if (login.sessionToken() != null && login.usuario() != null) {
-                adicionarCookie(http, response, "Gendaz_session", login.sessionToken(), SESSION_COOKIE_MAX_AGE);
+                limparCookie(http, response, LEGACY_SESSION_COOKIE);
+                adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (BusinessException ex) {
@@ -59,7 +62,8 @@ public class AuthController {
         try {
             LoginResponse login = authService.criarConta(request);
             if (login.sessionToken() != null && login.usuario() != null) {
-                adicionarCookie(http, response, "Gendaz_session", login.sessionToken(), SESSION_COOKIE_MAX_AGE);
+                limparCookie(http, response, LEGACY_SESSION_COOKIE);
+                adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (RuntimeException ex) {
@@ -87,9 +91,10 @@ public class AuthController {
             HttpServletResponse response,
             @Valid @RequestBody TrocarSenhaRequest request
     ) {
-        String sessionToken = CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         authService.trocarSenha(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken, request.senhaAtual(), request.novaSenha(), request.confirmarNovaSenha());
-        limparCookie(http, response, "Gendaz_session");
+        limparCookie(http, response, SESSION_COOKIE);
+        limparCookie(http, response, LEGACY_SESSION_COOKIE);
         return ResponseEntity.ok(new TrocarSenhaResponse("Senha alterada com sucesso."));
     }
 
@@ -99,7 +104,7 @@ public class AuthController {
             HttpServletRequest http,
             HttpServletResponse response
     ) {
-        String sessionToken = CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         try {
             if (sessionToken != null && !sessionToken.isBlank()) {
                 authService.logout(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken);
@@ -109,7 +114,8 @@ public class AuthController {
         } catch (BusinessException ex) {
             log.debug("Logout sem sessao valida (best-effort): {}", ex.getMessage());
         }
-        limparCookie(http, response, "Gendaz_session");
+        limparCookie(http, response, SESSION_COOKIE);
+        limparCookie(http, response, LEGACY_SESSION_COOKIE);
         return ResponseEntity.noContent().build();
     }
 
@@ -118,10 +124,11 @@ public class AuthController {
             HttpServletRequest http,
             HttpServletResponse response
     ) {
-        String sessionToken = CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         RefreshResponse refresh = authService.refresh(sessionToken);
         if (refresh.sessionToken() != null) {
-            adicionarCookie(http, response, "Gendaz_session", refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
+            limparCookie(http, response, LEGACY_SESSION_COOKIE);
+            adicionarCookie(http, response, SESSION_COOKIE, refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }
         return ResponseEntity.ok(refresh);
     }
