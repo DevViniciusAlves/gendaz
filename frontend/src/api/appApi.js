@@ -600,12 +600,31 @@ export const appApi = {
     })
   },
 
-  excluirClientesEmMassa(ids) {
+  ativarClientesEmMassa(ids) {
+    return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'ATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
+      loading: 'Ativando clientes... aguarde',
+      success: 'Clientes ativados com sucesso.',
+      error: 'NÃ£o foi possÃ­vel ativar os clientes.',
+    })
+  },
+
+  desativarClientesEmMassa(ids) {
     return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'DESATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Desativando clientes... aguarde',
       success: 'Clientes desativados com sucesso.',
       error: 'NÃ£o foi possÃ­vel desativar os clientes.',
     })
+  },
+
+  excluirClientesEmMassa(ids) {
+    return comNotificacao(
+      () => Promise.all(ids.map((id) => api.delete(`/clientes/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data))),
+      {
+        loading: 'Excluindo clientes... aguarde',
+        success: 'Clientes excluídos com sucesso.',
+        error: 'Não foi possível excluir os clientes.',
+      },
+    )
   },
 
   criarServico(payload) {

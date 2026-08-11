@@ -83,6 +83,12 @@ export default function Clientes() {
       return
     }
     const config = {
+      ATIVAR: {
+        titulo: 'Ativar clientes',
+        descricao: 'Tem certeza que deseja ativar os clientes selecionados?',
+        confirmLabel: 'Ativar',
+        danger: false,
+      },
       DESATIVAR: {
         titulo: 'Desativar clientes',
         descricao: 'Tem certeza que deseja desativar os clientes selecionados?',
@@ -91,7 +97,7 @@ export default function Clientes() {
       },
       EXCLUIR: {
         titulo: 'Excluir clientes',
-        descricao: 'Tem certeza que deseja excluir os clientes selecionados? Essa aÃ§Ã£o nÃ£o poderÃ¡ ser desfeita.',
+        descricao: 'Tem certeza que deseja excluir os clientes selecionados? Essa ação não poderá ser desfeita.',
         confirmLabel: 'Excluir',
         danger: true,
       },
@@ -101,20 +107,21 @@ export default function Clientes() {
 
   async function executarBulk() {
     if (!bulkModal || bulkExecutando) return
-      setBulkExecutando(true)
-      setErro('')
-      try {
-        if (bulkModal.acao === 'DESATIVAR') {
-          await Promise.all(selecionados.map((id) => appApi.desativarCliente(id)))
-          await reload(true)
-        } else {
-          await appApi.excluirClientesEmMassa(selecionados)
-        await reload(true)
-        window.dispatchEvent(new Event('gendaz:data-changed'))
+    setBulkExecutando(true)
+    setErro('')
+    try {
+      if (bulkModal.acao === 'ATIVAR') {
+        await appApi.ativarClientesEmMassa(selecionados)
+      } else if (bulkModal.acao === 'DESATIVAR') {
+        await appApi.desativarClientesEmMassa(selecionados)
+      } else if (bulkModal.acao === 'EXCLUIR') {
+        await appApi.excluirClientesEmMassa(selecionados)
       }
+      await reload(true)
+      window.dispatchEvent(new Event('gendaz:data-changed'))
       limparSelecao()
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel executar a aÃ§Ã£o em massa.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível executar a ação em massa.')
     } finally {
       setBulkExecutando(false)
     }
@@ -290,6 +297,7 @@ export default function Clientes() {
             onToggleSelection={() => setSelecionando(true)}
             onClearSelection={limparSelecao}
             actions={[
+              { label: 'Ativar', onClick: () => abrirBulk('ATIVAR') },
               { label: 'Desativar', onClick: () => abrirBulk('DESATIVAR') },
               { label: 'Excluir', danger: true, onClick: () => abrirBulk('EXCLUIR') },
             ]}
