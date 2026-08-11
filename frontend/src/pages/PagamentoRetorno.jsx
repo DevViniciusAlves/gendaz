@@ -49,7 +49,7 @@ export default function PagamentoRetorno({ tipo }) {
         statusConta: resultado.statusVerificacao,
       }
       setPendente(novoPendente)
-      localStorage.setItem('agendeasy_pagamento_pendente', JSON.stringify(novoPendente))
+      localStorage.setItem('gendaz_pagamento_pendente', JSON.stringify(novoPendente))
       if (resultado.statusVerificacao === 'APPROVED') {
         limparPagamentoPendente()
       } else if (resultado.mensagem) {

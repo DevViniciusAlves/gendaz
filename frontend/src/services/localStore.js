@@ -75,7 +75,10 @@ export function clearSensitiveStorage() {
   for (let i = 0; i < window.localStorage.length; i += 1) {
     const chave = window.localStorage.key(i)
     if (!chave) continue
-    if (chave === 'agendeasy_pagamento_pendente' || chave === 'gendaz-promocoes-refresh') {
+    if (
+      chave.endsWith('_pagamento_pendente')
+      || chave === 'gendaz-promocoes-refresh'
+    ) {
       chavesRemover.push(chave)
       continue
     }
