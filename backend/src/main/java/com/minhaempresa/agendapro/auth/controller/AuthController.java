@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.web.csrf.CsrfToken;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -123,6 +124,15 @@ public class AuthController {
             adicionarCookie(http, response, "agendapro_session", refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }
         return ResponseEntity.ok(refresh);
+    }
+
+    @GetMapping("/csrf")
+    public ResponseEntity<Map<String, String>> csrf(HttpServletRequest request) {
+        CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if (csrfToken == null) {
+            return ResponseEntity.ok(Map.of("token", ""));
+        }
+        return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
     }
 
     private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {

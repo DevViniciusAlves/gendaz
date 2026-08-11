@@ -15,6 +15,7 @@ const api = axios.create({
 })
 
 let sessionUser = null
+let csrfToken = null
 
 export function setSessionUser(usuario) {
   sessionUser = usuario || null
@@ -24,24 +25,23 @@ export function getSessionUser() {
   return sessionUser
 }
 
+export function setCsrfToken(token) {
+  csrfToken = token || null
+}
+
 export async function garantirCsrfCookie() {
   if (typeof window === 'undefined') return
-  await api.get('/health', { skipUsuarioHeader: true })
+  const response = await api.get('/auth/csrf', { skipUsuarioHeader: true })
+  setCsrfToken(response.data?.token || null)
 }
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const metodo = String(config.method || 'get').toLowerCase()
     const precisaCsrf = ['post', 'put', 'patch', 'delete'].includes(metodo)
-    if (precisaCsrf) {
-      const cookies = document.cookie ? document.cookie.split('; ') : []
-      const xsrf = cookies
-        .map((item) => item.split('='))
-        .find(([nome]) => nome === 'XSRF-TOKEN')
-      if (xsrf?.[1]) {
-        config.headers = config.headers || {}
-        config.headers['X-XSRF-TOKEN'] = decodeURIComponent(xsrf[1])
-      }
+    if (precisaCsrf && csrfToken) {
+      config.headers = config.headers || {}
+      config.headers['X-XSRF-TOKEN'] = csrfToken
     }
   }
   return config
