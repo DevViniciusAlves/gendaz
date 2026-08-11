@@ -11,9 +11,9 @@ test('clearSensitiveStorage remove chaves sensiveis de cache e pendencia', () =>
   const removidas = []
   global.window = {
     localStorage: {
-      length: 4,
+      length: 6,
       key(index) {
-        return ['gendaz_scope_cache_x', 'gendaz_insights_chat_y', 'foo_pagamento_pendente', 'outra-chave'][index] ?? null
+        return ['Gendaz_session', 'meu_gendaz_session', 'gendaz_scope_cache_x', 'gendaz_insights_chat_y', 'foo_pagamento_pendente', 'outra-chave'][index] ?? null
       },
       removeItem(chave) {
         removidas.push(chave)
@@ -23,6 +23,12 @@ test('clearSensitiveStorage remove chaves sensiveis de cache e pendencia', () =>
 
   clearSensitiveStorage()
 
-  assert.deepEqual(removidas.sort(), ['foo_pagamento_pendente', 'gendaz_insights_chat_y', 'gendaz_scope_cache_x'].sort())
+  assert.deepEqual(removidas.sort(), [
+    'Gendaz_session',
+    'meu_gendaz_session',
+    'foo_pagamento_pendente',
+    'gendaz_insights_chat_y',
+    'gendaz_scope_cache_x',
+  ].sort())
   delete global.window
 })
