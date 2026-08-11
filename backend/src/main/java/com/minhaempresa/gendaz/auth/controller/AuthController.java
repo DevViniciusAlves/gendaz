@@ -147,7 +147,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
                 .path("/")
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(Duration.ofSeconds(maxAge))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -158,7 +158,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
                 .path("/")
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(Duration.ZERO)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
