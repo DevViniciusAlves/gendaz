@@ -110,7 +110,7 @@ export default function Clientes() {
         } else {
           await appApi.excluirClientesEmMassa(selecionados)
         await reload(true)
-        window.dispatchEvent(new Event('agendapro:data-changed'))
+        window.dispatchEvent(new Event('gendaz:data-changed'))
       }
       limparSelecao()
     } catch (error) {
@@ -129,7 +129,7 @@ export default function Clientes() {
 
   function confirmarExportacao() {
     if (!clientes.length) {
-      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      window.dispatchEvent(new CustomEvent('gendaz:toast', {
         detail: { type: 'error', message: 'Nenhum registro encontrado para exportação.' },
       }))
       return
@@ -160,7 +160,7 @@ export default function Clientes() {
           columns,
           rows,
         })
-        window.dispatchEvent(new CustomEvent('agendapro:toast', {
+        window.dispatchEvent(new CustomEvent('gendaz:toast', {
           detail: { type: 'success', message: 'Arquivo CSV exportado com sucesso.' },
         }))
       },
@@ -208,7 +208,7 @@ export default function Clientes() {
           setTimeout(() => {
             triggerRefreshAll()
             reload(true)
-            window.dispatchEvent(new Event('agendapro:data-changed'))
+            window.dispatchEvent(new Event('gendaz:data-changed'))
           }, 2000)
         } catch (error) {
           setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel excluir o cliente.')
@@ -420,6 +420,7 @@ export default function Clientes() {
     </section>
   )
 }
+
 
 
 

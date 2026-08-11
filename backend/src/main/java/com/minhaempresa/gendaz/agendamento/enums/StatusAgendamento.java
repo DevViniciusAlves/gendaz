@@ -1,0 +1,6 @@
+package com.minhaempresa.gendaz.agendamento.enums;
+
+public enum StatusAgendamento {
+    PENDENTE, CONFIRMADO, EM_ATENDIMENTO, PAUSADO, CANCELADO, FINALIZADO
+}
+

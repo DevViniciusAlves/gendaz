@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { getSessionUser, modoDemo } from '../api/axiosConfig.js'
 import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
-const CACHE_PREFIX = 'agendapro_scope_cache_'
+const CACHE_PREFIX = 'gendaz_scope_cache_'
 const CACHE_VERSION = 6
 
 function ttlDoEscopo(scope) {
@@ -152,17 +152,17 @@ export function useLocalData(scope = 'full') {
       setLoading(false)
     }
 
-    // Sem polling: a tela carrega ao montar e só reage a ações reais
-    // (agendapro:data-changed), troca de rota (remontagem) e recarga manual.
-    // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
+    // Sem polling: a tela carrega ao montar e sÃ³ reage a aÃ§Ãµes reais
+    // (gendaz:data-changed), troca de rota (remontagem) e recarga manual.
+    // Evita o recarregamento contÃ­nuo do pacote do escopo com o usuÃ¡rio parado.
     function reloadFromEvent() {
       reload(false)
     }
 
-    window.addEventListener('agendapro:data-changed', reloadFromEvent)
+    window.addEventListener('gendaz:data-changed', reloadFromEvent)
 
     return () => {
-      window.removeEventListener('agendapro:data-changed', reloadFromEvent)
+      window.removeEventListener('gendaz:data-changed', reloadFromEvent)
     }
   }, [scope, reload])
 
@@ -177,3 +177,4 @@ export function useLocalData(scope = 'full') {
 
   return [data, updateData, { loading, error, reload }]
 }
+

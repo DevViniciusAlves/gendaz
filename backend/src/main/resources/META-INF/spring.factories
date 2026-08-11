@@ -1,2 +1,3 @@
-org.springframework.boot.env.EnvironmentPostProcessor=\
-com.minhaempresa.agendapro.shared.config.RenderDatabaseEnvironmentPostProcessor
+﻿org.springframework.boot.env.EnvironmentPostProcessor=\
+com.minhaempresa.gendaz.shared.config.RenderDatabaseEnvironmentPostProcessor
+

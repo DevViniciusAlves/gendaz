@@ -19,7 +19,7 @@ let resetTime = Date.now() + 60000
 
 function emitirToast(type, message) {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('agendapro:toast', {
+  window.dispatchEvent(new CustomEvent('gendaz:toast', {
     detail: { type, message },
   }))
 }
@@ -72,3 +72,4 @@ clienteApi.interceptors.response.use(
 )
 
 export default clienteApi
+

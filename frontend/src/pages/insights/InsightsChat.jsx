@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { Bot, HelpCircle, Loader, Send, Sparkles } from 'lucide-react'
 import { getSessionUser } from '../../api/axiosConfig.js'
 
 const SUGESTOES = [
   'Como aumentar meu faturamento?',
   'Quais clientes devo recuperar?',
-  'Qual serviço devo divulgar?',
+  'Qual serviÃ§o devo divulgar?',
 ]
 
 function normalizarTexto(valor) {
@@ -23,7 +23,7 @@ function chaveArmazenamento() {
   const usuario = getSessionUser()
   const empresaId = usuario?.empresaId || 'local'
   const usuarioId = usuario?.id || 'anon'
-  return `agendapro_insights_chat_${empresaId}_${usuarioId}`
+  return `gendaz_insights_chat_${empresaId}_${usuarioId}`
 }
 
 function carregarMensagensSalvas() {
@@ -66,8 +66,8 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
       if (pergunta) setEntrada(pergunta)
     }
 
-    window.addEventListener('agendapro:insights-suggestion', aplicarSugestao)
-    return () => window.removeEventListener('agendapro:insights-suggestion', aplicarSugestao)
+    window.addEventListener('gendaz:insights-suggestion', aplicarSugestao)
+    return () => window.removeEventListener('gendaz:insights-suggestion', aplicarSugestao)
   }, [])
 
   useEffect(() => {
@@ -186,7 +186,7 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
         {
           id: `erro-${Date.now()}`,
           origem: 'ia',
-          texto: error?.response?.data?.mensagem || 'Não foi possível analisar agora.',
+          texto: error?.response?.data?.mensagem || 'NÃ£o foi possÃ­vel analisar agora.',
         },
       ])
     } finally {
@@ -219,7 +219,7 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
                 <Bot size={16} />
                 <strong>gendazIA</strong>
                 <Sparkles size={16} />
-                <p>Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.</p>
+                <p>Pergunte sobre receita, clientes, serviÃ§os, profissionais ou oportunidades do negÃ³cio.</p>
               </div>
             )}
 
@@ -265,8 +265,8 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
             <input
               value={entrada}
               onChange={(e) => setEntrada(e.target.value)}
-              placeholder="Faça uma pergunta à gendazIA..."
-              aria-label="Faça uma pergunta à gendazIA"
+              placeholder="FaÃ§a uma pergunta Ã  gendazIA..."
+              aria-label="FaÃ§a uma pergunta Ã  gendazIA"
               disabled={carregando}
             />
             <button
@@ -283,3 +283,4 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
     </section>
   )
 }
+

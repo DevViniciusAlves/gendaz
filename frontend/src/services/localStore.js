@@ -1,4 +1,4 @@
-import { initialData } from '../data/mockData.js'
+﻿import { initialData } from '../data/mockData.js'
 
 const DATA_VERSION = 4
 let memoryData = structuredClone(initialData)
@@ -62,14 +62,14 @@ export function getData() {
 
 export function clearLocalData() {
   memoryData = structuredClone(initialData)
-  window.dispatchEvent(new Event('agendapro:data-changed'))
+  window.dispatchEvent(new Event('gendaz:data-changed'))
 }
 
 export function clearSensitiveStorage() {
   if (typeof window === 'undefined') return
   const prefixes = [
-    'agendapro_scope_cache_',
-    'agendapro_insights_chat_',
+    'gendaz_scope_cache_',
+    'gendaz_insights_chat_',
   ]
   const chavesRemover = []
   for (let i = 0; i < window.localStorage.length; i += 1) {
@@ -88,7 +88,7 @@ export function clearSensitiveStorage() {
 
 export function setData(data) {
   memoryData = data
-  window.dispatchEvent(new Event('agendapro:data-changed'))
+  window.dispatchEvent(new Event('gendaz:data-changed'))
 }
 
 export function updateCurrentUser(partial) {
@@ -121,3 +121,4 @@ export function todayIso() {
   const timezoneOffset = hoje.getTimezoneOffset() * 60000
   return new Date(hoje.getTime() - timezoneOffset).toISOString().slice(0, 10)
 }
+

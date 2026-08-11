@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 
 export default function OperationToast() {
   const [toast, setToast] = useState(null)
@@ -21,9 +21,9 @@ export default function OperationToast() {
       }
     }
 
-    window.addEventListener('agendapro:toast', onToast)
+    window.addEventListener('gendaz:toast', onToast)
     return () => {
-      window.removeEventListener('agendapro:toast', onToast)
+      window.removeEventListener('gendaz:toast', onToast)
       if (timeoutId) window.clearTimeout(timeoutId)
     }
   }, [])
@@ -40,8 +40,9 @@ export default function OperationToast() {
     <div className={`admin-toast ${classe}`} role="status" aria-live="polite">
       <span>{toast.message}</span>
       {toast.type !== 'loading' && (
-        <button type="button" aria-label="Fechar notificação" onClick={() => setToast(null)}>x</button>
+        <button type="button" aria-label="Fechar notificaÃ§Ã£o" onClick={() => setToast(null)}>x</button>
       )}
     </div>
   )
 }
+

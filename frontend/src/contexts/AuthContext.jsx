@@ -30,7 +30,7 @@ function limparSessaoAdmin() {
 
 function emitirMudancaSessao() {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new Event('agendapro:session-changed'))
+  window.dispatchEvent(new Event('gendaz:session-changed'))
 }
 
 function resolverPlano(usuario, fallbackAtual) {
@@ -348,7 +348,7 @@ export function AuthProvider({ children }) {
         ultimaRenovacaoBemSucedidaRef.current = Date.now()
         // Ao retornar para a aba, após renovar a sessão, sinaliza uma atualização
         // única dos dados das telas abertas (sem polling contínuo).
-        window.dispatchEvent(new Event('agendapro:data-changed'))
+        window.dispatchEvent(new Event('gendaz:data-changed'))
 } catch (error) {
         const statusConta = error?.response?.data?.statusConta
         const motivoInatividade = error?.response?.data?.motivoInatividade
@@ -648,6 +648,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 export function useAuth() {
   return useContext(AuthContext)
 }
+
 
 
 

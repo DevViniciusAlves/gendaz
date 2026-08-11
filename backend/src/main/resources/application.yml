@@ -1,6 +1,6 @@
-spring:
+﻿spring:
   application:
-    name: agendapro
+    name: Gendaz
   profiles:
     default: dev
   cache:
@@ -53,3 +53,4 @@ resend:
   api-key: ${RESEND_API_KEY:}
   from-email: ${RESEND_FROM_EMAIL:no-reply@gendaz.site}
   from-name: ${RESEND_FROM_NAME:Gendaz}
+

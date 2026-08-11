@@ -1,4 +1,4 @@
-# Prompt Mestre Para Fechar Vulnerabilidades Do Gendaz
+﻿# Prompt Mestre Para Fechar Vulnerabilidades Do Gendaz
 
 Voce e um engenheiro senior de seguranca e backend/frontend full-stack com acesso ao repositorio `E:\gendaz`. Sua tarefa e corrigir ponta a ponta as vulnerabilidades confirmadas na auditoria do Gendaz, sem quebrar login, pagamento, admin, Meu Gendaz, GendazIA/Insights, frontend React, cookies de sessao, CORS e os fluxos existentes do SaaS.
 
@@ -43,23 +43,23 @@ git rev-parse HEAD
 2. Leia estes arquivos antes de alterar:
 
 ```text
-backend/src/main/java/com/minhaempresa/agendapro/shared/SecurityHeadersConfig.java
-backend/src/main/java/com/minhaempresa/agendapro/shared/WebConfig.java
-backend/src/main/java/com/minhaempresa/agendapro/auth/interceptor/UsuarioSessionInterceptor.java
-backend/src/main/java/com/minhaempresa/agendapro/auth/service/AuthService.java
-backend/src/main/java/com/minhaempresa/agendapro/auth/controller/AuthController.java
-backend/src/main/java/com/minhaempresa/agendapro/auth/controller/MeuGendazAuthController.java
-backend/src/main/java/com/minhaempresa/agendapro/admin/controller/AdminController.java
-backend/src/main/java/com/minhaempresa/agendapro/admin/service/AdminService.java
-backend/src/main/java/com/minhaempresa/agendapro/config/WebSocketConfig.java
-backend/src/main/java/com/minhaempresa/agendapro/auth/websocket/SessionHandshakeInterceptor.java
-backend/src/main/java/com/minhaempresa/agendapro/pagamento/controller/PagamentoController.java
-backend/src/main/java/com/minhaempresa/agendapro/pagamento/service/PagamentoService.java
-backend/src/main/java/com/minhaempresa/agendapro/pagamento/gateway/CaktoPaymentGateway.java
-backend/src/main/java/com/minhaempresa/agendapro/pagamento/gateway/MercadoPagoPaymentGateway.java
-backend/src/main/java/com/minhaempresa/agendapro/insights/controller/InsightsController.java
-backend/src/main/java/com/minhaempresa/agendapro/insights/service/InsightsService.java
-backend/src/main/java/com/minhaempresa/agendapro/insights/service/InsightsAnalyzer.java
+backend/src/main/java/com/minhaempresa/Gendaz/shared/SecurityHeadersConfig.java
+backend/src/main/java/com/minhaempresa/Gendaz/shared/WebConfig.java
+backend/src/main/java/com/minhaempresa/Gendaz/auth/interceptor/UsuarioSessionInterceptor.java
+backend/src/main/java/com/minhaempresa/Gendaz/auth/service/AuthService.java
+backend/src/main/java/com/minhaempresa/Gendaz/auth/controller/AuthController.java
+backend/src/main/java/com/minhaempresa/Gendaz/auth/controller/MeuGendazAuthController.java
+backend/src/main/java/com/minhaempresa/Gendaz/admin/controller/AdminController.java
+backend/src/main/java/com/minhaempresa/Gendaz/admin/service/AdminService.java
+backend/src/main/java/com/minhaempresa/Gendaz/config/WebSocketConfig.java
+backend/src/main/java/com/minhaempresa/Gendaz/auth/websocket/SessionHandshakeInterceptor.java
+backend/src/main/java/com/minhaempresa/Gendaz/pagamento/controller/PagamentoController.java
+backend/src/main/java/com/minhaempresa/Gendaz/pagamento/service/PagamentoService.java
+backend/src/main/java/com/minhaempresa/Gendaz/pagamento/gateway/CaktoPaymentGateway.java
+backend/src/main/java/com/minhaempresa/Gendaz/pagamento/gateway/MercadoPagoPaymentGateway.java
+backend/src/main/java/com/minhaempresa/Gendaz/insights/controller/InsightsController.java
+backend/src/main/java/com/minhaempresa/Gendaz/insights/service/InsightsService.java
+backend/src/main/java/com/minhaempresa/Gendaz/insights/service/InsightsAnalyzer.java
 frontend/src/api/axiosConfig.js
 frontend/src/api/clienteApi.js
 frontend/src/contexts/AuthContext.jsx
@@ -76,7 +76,7 @@ Problema: `UsuarioSessionInterceptor` atualmente permite passar sem sessao e ain
 
 Implementacao obrigatoria:
 
-1. Fazer cookie `agendapro_session` ser a fonte de verdade para usuario SaaS.
+1. Fazer cookie `Gendaz_session` ser a fonte de verdade para usuario SaaS.
 2. Fazer cookie `agendeasy_admin_session` ser a fonte de verdade para admin.
 3. Remover qualquer autenticacao por `X-Usuario-Id` sem cookie valido.
 4. Permitir `X-Usuario-Id` apenas como informacao auxiliar, nunca como autenticacao.
@@ -222,7 +222,7 @@ Implementacao:
    - URLs de frontend configuradas em ambiente.
    - localhost apenas em dev.
 2. Validar `Origin` no handshake.
-3. Manter cookie `agendapro_session` como fonte de verdade.
+3. Manter cookie `Gendaz_session` como fonte de verdade.
 4. Se sessao invalida, recusar handshake.
 5. Testar que notificacao de sessao invalidada continua funcionando.
 
@@ -438,4 +438,5 @@ So considere concluido quando:
 9. Backend tests passarem.
 10. Frontend build passar.
 11. Login, pagamento, admin e Meu Gendaz continuarem funcionando.
+
 

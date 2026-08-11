@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   AlertCircle,
@@ -28,7 +28,7 @@ function formatCurrency(valor) {
 function badgeImpacto(item) {
   const texto = String(item?.urgencia || item?.impacto || '').toLowerCase()
   if (texto.includes('alta') || texto.includes('urg')) return 'Alto impacto'
-  if (texto.includes('médio') || texto.includes('medio')) return 'Médio impacto'
+  if (texto.includes('mÃ©dio') || texto.includes('medio')) return 'MÃ©dio impacto'
   return 'Baixo impacto'
 }
 
@@ -37,7 +37,7 @@ function iconPorTipo(tipo) {
   if (valor.includes('cliente')) return Users
   if (valor.includes('finance')) return TrendingUp
   if (valor.includes('agenda') || valor.includes('ocios')) return Calendar
-  if (valor.includes('acao') || valor.includes('açao') || valor.includes('ação')) return Wrench
+  if (valor.includes('acao') || valor.includes('aÃ§ao') || valor.includes('aÃ§Ã£o')) return Wrench
   return AlertCircle
 }
 
@@ -48,8 +48,8 @@ function destinoPorTipo(item) {
   if (tipo.includes('cliente') || texto.includes('cliente')) return '/sistema/clientes'
   if (tipo.includes('finance') || texto.includes('cobran') || texto.includes('pagamento') || texto.includes('receita') || texto.includes('faturamento')) return '/sistema/financeiro'
   if (tipo.includes('agenda') || tipo.includes('ocios') || texto.includes('agenda') || texto.includes('ocios')) return '/sistema/agenda'
-  if (tipo.includes('servico') || texto.includes('serviço') || texto.includes('servico')) return '/sistema/servicos'
-  if (tipo.includes('acao') || texto.includes('campanha') || texto.includes('promoç')) return '/sistema/promocoes'
+  if (tipo.includes('servico') || texto.includes('serviÃ§o') || texto.includes('servico')) return '/sistema/servicos'
+  if (tipo.includes('acao') || texto.includes('campanha') || texto.includes('promoÃ§')) return '/sistema/promocoes'
   return '/sistema/dashboard'
 }
 
@@ -57,34 +57,34 @@ function rotuloDestino(destino) {
   const rotulos = {
     '/sistema/clientes': 'Ver clientes',
     '/sistema/financeiro': 'Ver financeiro',
-    '/sistema/agenda': 'Ver horários',
-    '/sistema/servicos': 'Ver serviços',
-    '/sistema/promocoes': 'Ver promoções',
+    '/sistema/agenda': 'Ver horÃ¡rios',
+    '/sistema/servicos': 'Ver serviÃ§os',
+    '/sistema/promocoes': 'Ver promoÃ§Ãµes',
     '/sistema/dashboard': 'Ver mais',
   }
   return rotulos[destino] || 'Ver mais'
 }
 
 function resumoTexto(dashboard) {
-  if (!dashboard) return 'Carregando análise real da empresa...'
+  if (!dashboard) return 'Carregando anÃ¡lise real da empresa...'
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas).length
   const oportunidades = safeArray(dashboard?.oportunidades).length
   const acoes = safeArray(dashboard?.acoes).length
 
-  return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
+  return `Analisei sua empresa nos Ãºltimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendaÃ§Ãµes prioritÃ¡rias.`
 }
 
 function getStatusScore(score) {
-  if (score >= 70) return 'Muito saudável'
-  if (score >= 45) return 'Saudável'
+  if (score >= 70) return 'Muito saudÃ¡vel'
+  if (score >= 45) return 'SaudÃ¡vel'
   return 'Em risco'
 }
 
 function getRisco(score) {
   if (score >= 70) return 'Baixo'
-  if (score >= 45) return 'Médio'
+  if (score >= 45) return 'MÃ©dio'
   return 'Alto'
 }
 
@@ -106,10 +106,10 @@ export default function Insights() {
   const riscoAtual = getRisco(score)
   const riscoAtivos = score >= 70 ? 8 : score >= 45 ? 5 : 2
   const riscoDescricao = score >= 70
-    ? 'Acompanhe os pontos de atenção para manter sua empresa saudável.'
+    ? 'Acompanhe os pontos de atenÃ§Ã£o para manter sua empresa saudÃ¡vel.'
     : score >= 45
-      ? 'Há sinais de atenção. Revise os principais pontos identificados.'
-      : 'O cenário exige ação imediata para reduzir riscos.'
+      ? 'HÃ¡ sinais de atenÃ§Ã£o. Revise os principais pontos identificados.'
+      : 'O cenÃ¡rio exige aÃ§Ã£o imediata para reduzir riscos.'
   const acaoPrincipal = dashboard?.acaoPrioritaria || recomendacoes[0] || null
 
   async function handleSincronizarDados() {
@@ -118,7 +118,7 @@ export default function Insights() {
     try {
       setSincronizando(true)
       await recarregar(30)
-      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      window.dispatchEvent(new CustomEvent('gendaz:toast', {
         detail: {
           type: 'success',
           message: 'Dados sincronizados com sucesso.',
@@ -126,10 +126,10 @@ export default function Insights() {
       }))
     } catch (err) {
       console.error('[insights] erro ao sincronizar dados')
-      window.dispatchEvent(new CustomEvent('agendapro:toast', {
+      window.dispatchEvent(new CustomEvent('gendaz:toast', {
         detail: {
           type: 'error',
-          message: err?.response?.data?.mensagem || err?.message || 'Não foi possível sincronizar os dados.',
+          message: err?.response?.data?.mensagem || err?.message || 'NÃ£o foi possÃ­vel sincronizar os dados.',
         },
       }))
     } finally {
@@ -143,14 +143,14 @@ export default function Insights() {
         <div>
           <span className="section-kicker">Consultoria IA</span>
           <h1>Insights</h1>
-          <p>A IA analisa os dados da sua empresa e recomenda ações para crescer.</p>
+          <p>A IA analisa os dados da sua empresa e recomenda aÃ§Ãµes para crescer.</p>
         </div>
         <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
           {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
         </Button>
       </header>
 
-      {loading && <div className="panel insights-panel">Carregando análise real da empresa...</div>}
+      {loading && <div className="panel insights-panel">Carregando anÃ¡lise real da empresa...</div>}
       {error && <div className="panel insights-panel insights-error">{String(error?.response?.data?.mensagem || error?.message || error)}</div>}
 
       {!loading && !error && (
@@ -159,31 +159,31 @@ export default function Insights() {
             <section className="panel insights-summary-panel">
               <div className="insights-summary-panel__content">
                 <span className="insights-label">Resumo inteligente</span>
-                <h2>{dashboard?.empresaNome ? `Olá, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
+                <h2>{dashboard?.empresaNome ? `OlÃ¡, ${dashboard.empresaNome}.` : 'Resumo inteligente'}</h2>
                 <p>{resumoTexto(dashboard)}</p>
                 <small className="insights-summary-panel__meta">
-                  {dataAnalise ? `Última sincronização: ${dataAnalise}` : 'Aguardando sincronização da empresa vinculada'}
+                  {dataAnalise ? `Ãšltima sincronizaÃ§Ã£o: ${dataAnalise}` : 'Aguardando sincronizaÃ§Ã£o da empresa vinculada'}
                 </small>
                 <div className="insights-summary-actions">
                   <Button variant="secondary" onClick={() => setAnaliseAberta(true)}>
-                    Ver análise completa
+                    Ver anÃ¡lise completa
                   </Button>
                 </div>
               </div>
 
               <div className="insights-summary-metrics">
                 <article className="insights-summary-metric">
-                  <span className="insights-label">Índice Gendaz</span>
+                  <span className="insights-label">Ãndice Gendaz</span>
                   <div className="insights-summary-metric__value">{score}/100</div>
                   <strong>{getStatusScore(score)}</strong>
-                  <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparação disponível'}</small>
+                  <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparaÃ§Ã£o disponÃ­vel'}</small>
                 </article>
               </div>
             </section>
 
             <div className="insights-change-risk-row">
               <section className="panel insights-changes-card">
-                <div className="section-kicker">O que mudou desde a última análise</div>
+                <div className="section-kicker">O que mudou desde a Ãºltima anÃ¡lise</div>
                 <div className="insights-change-grid">
                   {principais.slice(0, 4).map((item, index) => {
                     const Icon = iconPorTipo(item.tipo)
@@ -193,14 +193,14 @@ export default function Insights() {
                           <Icon size={16} />
                         </div>
                         <div className="insights-change-card__content">
-                          <span>{item.titulo || item.tipo || 'Mudança'}</span>
-                          <p>{item.descricao || 'Atualização detectada nos dados da empresa.'}</p>
+                          <span>{item.titulo || item.tipo || 'MudanÃ§a'}</span>
+                          <p>{item.descricao || 'AtualizaÃ§Ã£o detectada nos dados da empresa.'}</p>
                         </div>
                         <strong>{badgeImpacto(item)}</strong>
                       </article>
                     )
                   })}
-                  {principais.length === 0 && <p className="insights-empty">Nenhuma mudança relevante detectada.</p>}
+                  {principais.length === 0 && <p className="insights-empty">Nenhuma mudanÃ§a relevante detectada.</p>}
                 </div>
               </section>
 
@@ -221,13 +221,13 @@ export default function Insights() {
               <div className="insights-principais-grid">
                 {principais.length > 0 ? principais.map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
-                  const tags = ['Crítico', 'Importante', 'Oportunidade']
+                  const tags = ['CrÃ­tico', 'Importante', 'Oportunidade']
                   const destino = destinoPorTipo(item)
                   return (
                     <article key={`${item.tipo || 'principal'}-${item.titulo || index}`} className="insights-core-card">
                       <div className="insights-core-card__top">
                         <span className={`insights-pill insights-pill--${index === 0 ? 'red' : index === 1 ? 'orange' : 'green'}`}>{tags[index] || 'Insight'}</span>
-                        <span className="insights-core-card__action">Ação</span>
+                        <span className="insights-core-card__action">AÃ§Ã£o</span>
                       </div>
                       <div className="insights-core-card__body">
                         <div className="insights-core-card__icon">
@@ -235,7 +235,7 @@ export default function Insights() {
                         </div>
                         <div>
                           <h3>{item.titulo || 'Insight principal'}</h3>
-                          <p>{item.descricao || 'Atualização importante detectada nos dados reais.'}</p>
+                          <p>{item.descricao || 'AtualizaÃ§Ã£o importante detectada nos dados reais.'}</p>
                         </div>
                       </div>
                       <div className="insights-core-card__footer">
@@ -248,7 +248,7 @@ export default function Insights() {
                     </article>
                   )
                 }) : (
-                  <p className="insights-empty">Sem insights principais disponíveis no momento.</p>
+                  <p className="insights-empty">Sem insights principais disponÃ­veis no momento.</p>
                 )}
               </div>
             </section>
@@ -264,7 +264,7 @@ export default function Insights() {
                       </div>
                       <div className="insights-list-item__content">
                         <strong>{item.titulo || item.descricao || 'Oportunidade'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descrição'}</p>
+                        <p>{item.descricao || item.impacto || 'Sem descriÃ§Ã£o'}</p>
                       </div>
                       <div className="insights-list-item__meta">
                         <small>Impacto estimado</small>
@@ -277,34 +277,34 @@ export default function Insights() {
               </section>
 
               <section className="panel insights-section">
-                <div className="section-kicker">Ação mais importante hoje</div>
+                <div className="section-kicker">AÃ§Ã£o mais importante hoje</div>
                 {acaoPrincipal ? (
                   <article className="insights-highlight-card">
                     <div className="insights-highlight-card__icon">
                       <Wand2 size={22} />
                     </div>
                     <div className="insights-highlight-card__content">
-                      <strong>{acaoPrincipal.descricao || acaoPrincipal.titulo || 'Ação prioritária'}</strong>
-                      <p>{acaoPrincipal.impactoEstimado || acaoPrincipal.impacto || acaoPrincipal.urgencia || 'Ação sugerida com base nos dados.'}</p>
+                      <strong>{acaoPrincipal.descricao || acaoPrincipal.titulo || 'AÃ§Ã£o prioritÃ¡ria'}</strong>
+                      <p>{acaoPrincipal.impactoEstimado || acaoPrincipal.impacto || acaoPrincipal.urgencia || 'AÃ§Ã£o sugerida com base nos dados.'}</p>
                       <div className="insights-highlight-card__meta">
                         <div>
                           <small>Impacto estimado</small>
                           <strong>{formatCurrency(acaoPrincipal.impactoEstimado || acaoPrincipal.impacto)}</strong>
                         </div>
                         <div>
-                          <small>Tempo necessário</small>
+                          <small>Tempo necessÃ¡rio</small>
                           <strong>{acaoPrincipal.tempoNecessario || 'Dados insuficientes'}</strong>
                         </div>
                       </div>
                     </div>
                   </article>
                 ) : (
-                  <p className="insights-empty">Nenhuma ação prioritária no momento.</p>
+                  <p className="insights-empty">Nenhuma aÃ§Ã£o prioritÃ¡ria no momento.</p>
                 )}
               </section>
 
               <section className="panel insights-section">
-                <div className="section-kicker">Ações recomendadas pela IA</div>
+                <div className="section-kicker">AÃ§Ãµes recomendadas pela IA</div>
                 <div className="insights-action-list">
                   {recomendacoes.slice(0, 3).map((acao, index) => (
                     <div key={`${acao.descricao || index}`} className="insights-action-row">
@@ -314,12 +314,12 @@ export default function Insights() {
                       </label>
                       <div className="insights-action-row__content">
                         <strong>{acao.descricao}</strong>
-                        <p>{acao.impactoEstimado || acao.urgencia || 'Ação sugerida'}</p>
+                        <p>{acao.impactoEstimado || acao.urgencia || 'AÃ§Ã£o sugerida'}</p>
                       </div>
                       <span className="insights-action-row__impacto">{formatCurrency(acao.impactoEstimado || acao.impacto)}</span>
                     </div>
                   ))}
-                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
+                  {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma aÃ§Ã£o prioritÃ¡ria no momento.</p>}
                 </div>
               </section>
             </div>
@@ -338,10 +338,10 @@ export default function Insights() {
 
       {analiseAberta && (
         <div className="insights-modal-backdrop" role="presentation" onClick={() => setAnaliseAberta(false)}>
-          <div className="panel insights-modal" role="dialog" aria-modal="true" aria-label="Análise completa" onClick={(event) => event.stopPropagation()}>
+          <div className="panel insights-modal" role="dialog" aria-modal="true" aria-label="AnÃ¡lise completa" onClick={(event) => event.stopPropagation()}>
             <div className="insights-modal__head">
               <div>
-                <div className="section-kicker">Análise completa</div>
+                <div className="section-kicker">AnÃ¡lise completa</div>
                 <h2>{dashboard?.empresaNome || 'Empresa vinculada'}</h2>
                 <p>{resumoTexto(dashboard)}</p>
               </div>
@@ -352,9 +352,9 @@ export default function Insights() {
 
             <div className="insights-detail-grid">
               <div>
-                <span>Saúde da empresa</span>
+                <span>SaÃºde da empresa</span>
                 <strong>{score}/100</strong>
-                <p>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</p>
+                <p>{score >= 70 ? 'Empresa saudÃ¡vel' : score >= 45 ? 'AtenÃ§Ã£o necessÃ¡ria' : 'Empresa em risco'}</p>
               </div>
               <div>
                 <span>Impacto total</span>
@@ -364,7 +364,7 @@ export default function Insights() {
               <div>
                 <span>Alertas ativos</span>
                 <strong>{safeArray(dashboard?.alertas).length}</strong>
-                <p>Pontos de atenção detectados na análise.</p>
+                <p>Pontos de atenÃ§Ã£o detectados na anÃ¡lise.</p>
               </div>
               <div>
                 <span>Oportunidades</span>
@@ -372,20 +372,20 @@ export default function Insights() {
                 <p>Oportunidades para crescer identificadas.</p>
               </div>
               <div>
-                <span>Ações recomendadas</span>
+                <span>AÃ§Ãµes recomendadas</span>
                 <strong>{recomendacoes.length}</strong>
-                <p>Recomendações prioritárias pela IA.</p>
+                <p>RecomendaÃ§Ãµes prioritÃ¡rias pela IA.</p>
               </div>
               <div>
-                <span>Histórico</span>
+                <span>HistÃ³rico</span>
                 <strong>{historico.length}</strong>
-                <p>{historico.length > 0 ? 'Recomendações registradas' : 'Sem histórico ainda.'}</p>
+                <p>{historico.length > 0 ? 'RecomendaÃ§Ãµes registradas' : 'Sem histÃ³rico ainda.'}</p>
               </div>
             </div>
 
             {principais.length > 0 && (
               <div className="insights-modal-lista">
-                <div className="section-kicker">Principais achados da análise</div>
+                <div className="section-kicker">Principais achados da anÃ¡lise</div>
                 {principais.map((item, index) => {
                   const Icon = iconPorTipo(item.tipo)
                   const destino = destinoPorTipo(item)
@@ -396,7 +396,7 @@ export default function Insights() {
                       </div>
                       <div className="insights-modal-item__content">
                         <strong>{item.titulo || 'Insight'}</strong>
-                        <p>{item.descricao || 'Sem descrição.'}</p>
+                        <p>{item.descricao || 'Sem descriÃ§Ã£o.'}</p>
                       </div>
                       <div className="insights-modal-item__meta">
                         <small>Impacto</small>
@@ -414,3 +414,4 @@ export default function Insights() {
     </section>
   )
 }
+

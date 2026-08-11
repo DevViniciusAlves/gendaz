@@ -1,5 +1,5 @@
-const CHECKOUT_TTL_MS = 15 * 60 * 1000
-const CHECKOUT_START_KEY = 'agendapro_checkout_inicio'
+﻿const CHECKOUT_TTL_MS = 15 * 60 * 1000
+const CHECKOUT_START_KEY = 'gendaz_checkout_inicio'
 
 function parseData(data) {
   if (!data) return null
@@ -103,3 +103,4 @@ export function checkoutAtivo(pagamento, agora = new Date()) {
 export function checkoutPodeGerarNovo(pagamento, agora = new Date()) {
   return !checkoutAtivo(pagamento, agora)
 }
+

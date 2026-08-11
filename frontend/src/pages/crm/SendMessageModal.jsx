@@ -5,7 +5,7 @@ import { enviarMensagemCrm } from '../../api/crmApi.js'
 
 function emitirToast(type, message) {
   if (typeof window === 'undefined') return
-  window.dispatchEvent(new CustomEvent('agendapro:toast', { detail: { type, message } }))
+  window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
 
 const TEMPLATES = {
@@ -155,3 +155,4 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
     </div>
   )
 }
+
