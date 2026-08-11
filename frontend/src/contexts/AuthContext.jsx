@@ -94,9 +94,11 @@ export function AuthProvider({ children }) {
   const [adminUsuario, setAdminUsuario] = useState(() => adminUsuarioMemory)
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
+  const transicaoSessaoRef = useRef(false)
   
   useSessionWebSocket(() => {
     if (isMeuGendazPath()) return
+    if (transicaoSessaoRef.current) return
     if (!usuario) return
     console.warn('[auth-debug] websocket invalidacao de sessao recebida')
     logout('session_invalidated')
@@ -116,6 +118,7 @@ export function AuthProvider({ children }) {
   }
 
   async function renovarAoRetomarAba({ ignorarThrottle = false } = {}) {
+    if (transicaoSessaoRef.current) return true
     if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return true
     if (contaInativa(usuario)) return true
     if (validacaoInicialEmAndamentoRef.current) return true
@@ -194,6 +197,11 @@ export function AuthProvider({ children }) {
 
     async function validarSessaoInicial() {
       validacaoInicialEmAndamentoRef.current = true
+      if (transicaoSessaoRef.current) {
+        if (mounted) setAuthLoading(false)
+        validacaoInicialEmAndamentoRef.current = false
+        return
+      }
       if (isMeuGendazPath()) {
         if (mounted) setAuthLoading(false)
         validacaoInicialEmAndamentoRef.current = false
@@ -309,6 +317,7 @@ export function AuthProvider({ children }) {
     }
     async function renovarAoRetomarAba() {
       if (isMeuGendazPath()) return
+      if (transicaoSessaoRef.current) return
       if (!usuario?.id || usuario?.perfil === 'SUPER_ADMIN' || adminUsuario) return
       if (contaInativa(usuario)) return
       if (validacaoInicialEmAndamentoRef.current) return
@@ -405,6 +414,7 @@ export function AuthProvider({ children }) {
   }, [adminUsuario, usuario])
 
   async function login(email, senha, { allowAdmin = false } = {}) {
+    transicaoSessaoRef.current = false
     setSessionExpired(false)
     const response = await appApi.login(email, senha)
 
@@ -457,6 +467,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   }
 
   async function criarConta(payload) {
+    transicaoSessaoRef.current = false
     setSessionExpired(false)
     const response = await appApi.criarConta(payload)
     if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
@@ -510,11 +521,12 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return assinatura
   }
 
-  function logout(motivo = 'manual') {
+  async function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
+    transicaoSessaoRef.current = true
     setSessionExpired(motivo === 'session_invalidated')
     if (!isMeuGendazPath()) {
-      appApi.logout().catch(() => {})
+      await appApi.logout().catch(() => {})
     }
     if (motivo === 'manual') {
       setSessionExpired(false)
@@ -526,6 +538,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 
 
   async function adminLogin(email, senha) {
+    transicaoSessaoRef.current = false
     setSessionExpired(false)
     const response = await adminApi.login(email, senha)
     adminSessionTokenMemory = response.token || null
