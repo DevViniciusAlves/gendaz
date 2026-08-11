@@ -13,7 +13,7 @@ public class FinanceiroController {
     private final FinanceiroService financeiroService;
 
     @GetMapping("/resumo")
-    public ResponseEntity<ResumoFinanceiroResponse> resumo(@RequestParam Long empresaId, @RequestParam int mes, @RequestParam int ano) {
+    public ResponseEntity<ResumoFinanceiroResponse> resumo(@RequestParam(required = false) Long empresaId, @RequestParam int mes, @RequestParam int ano) {
         return ResponseEntity.ok(financeiroService.resumo(empresaId, mes, ano));
     }
 }

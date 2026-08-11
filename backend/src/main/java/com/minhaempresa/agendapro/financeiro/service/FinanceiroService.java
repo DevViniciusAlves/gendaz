@@ -30,18 +30,18 @@ public class FinanceiroService {
 
     @Transactional(readOnly = true)
     public ResumoFinanceiroResponse resumo(Long empresaId, int mes, int ano) {
-        validarEmpresaAtual(empresaId);
+        Long empresaResolvida = resolverEmpresaAtual(empresaId);
         LocalDateTime inicio = LocalDate.of(ano, mes, 1).atStartOfDay();
         LocalDateTime fim = inicio.toLocalDate().withDayOfMonth(inicio.toLocalDate().lengthOfMonth()).atTime(LocalTime.MAX);
-        List<PagamentoEntity> pagamentosMes = pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(empresaId, inicio, fim);
+        List<PagamentoEntity> pagamentosMes = pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(empresaResolvida, inicio, fim);
         BigDecimal recebido = pagamentosMes.stream()
                 .filter(p -> p.getStatus() == StatusPagamento.PAGO)
                 .map(PagamentoEntity::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal pendente = pagamentoRepository.findByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE).stream()
+        BigDecimal pendente = pagamentoRepository.findByEmpresaIdAndStatus(empresaResolvida, StatusPagamento.PENDENTE).stream()
                 .map(PagamentoEntity::getValor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        var agendamentos = agendamentoRepository.findByEmpresaId(empresaId);
+        var agendamentos = agendamentoRepository.findByEmpresaId(empresaResolvida);
         long consultasRealizadas = agendamentos.stream().filter(a -> a.getStatus() == StatusAgendamento.FINALIZADO).count();
         List<ItemResumoResponse> clientes = agendamentos.stream()
                 .collect(Collectors.groupingBy(a -> a.getCliente().getNome(), Collectors.counting()))
@@ -75,10 +75,17 @@ public class FinanceiroService {
         return pagamento.getDataPagamento() != null ? pagamento.getDataPagamento() : null;
     }
 
-    private void validarEmpresaAtual(Long empresaId) {
+    private Long resolverEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.getCompanyId();
         if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
+        if (empresaContexto != null) {
+            return empresaContexto;
+        }
+        if (empresaId == null) {
+            throw new BusinessException("Empresa nao identificada.");
+        }
+        return empresaId;
     }
 }

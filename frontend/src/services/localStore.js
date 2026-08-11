@@ -65,6 +65,27 @@ export function clearLocalData() {
   window.dispatchEvent(new Event('agendapro:data-changed'))
 }
 
+export function clearSensitiveStorage() {
+  if (typeof window === 'undefined') return
+  const prefixes = [
+    'agendapro_scope_cache_',
+    'agendapro_insights_chat_',
+  ]
+  const chavesRemover = []
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const chave = window.localStorage.key(i)
+    if (!chave) continue
+    if (chave === 'agendeasy_pagamento_pendente' || chave === 'gendaz-promocoes-refresh') {
+      chavesRemover.push(chave)
+      continue
+    }
+    if (prefixes.some((prefix) => chave.startsWith(prefix))) {
+      chavesRemover.push(chave)
+    }
+  }
+  chavesRemover.forEach((chave) => window.localStorage.removeItem(chave))
+}
+
 export function setData(data) {
   memoryData = data
   window.dispatchEvent(new Event('agendapro:data-changed'))

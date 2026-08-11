@@ -1,4 +1,4 @@
-import api, { getSessionUser, modoDemo } from './axiosConfig.js'
+import api, { garantirCsrfCookie, getSessionUser, modoDemo } from './axiosConfig.js'
 import { emptyData, getData } from '../services/localStore.js'
 
 function empresaIdAtual() {
@@ -431,6 +431,7 @@ export const appApi = {
   },
 
   async login(email, senha) {
+    await garantirCsrfCookie().catch(() => {})
     const response = await api.post('/auth/login', { email, senha })
     return response.data
   },
@@ -444,6 +445,7 @@ export const appApi = {
   },
 
   async criarConta(payload) {
+    await garantirCsrfCookie().catch(() => {})
     const response = await api.post('/auth/criar-conta', payload)
     return response.data
   },
@@ -452,6 +454,7 @@ export const appApi = {
     if (typeof window !== 'undefined' && window.location.pathname.startsWith('/meu-gendaz/')) {
       return { usuario: null, assinatura: null, statusConta: null, sessionToken: null }
     }
+    await garantirCsrfCookie().catch(() => {})
     const response = await api.post('/auth/refresh', null, { skipUsuarioHeader: true, ...options })
     return response.data
   },
@@ -465,10 +468,12 @@ export const appApi = {
   },
 
   logout() {
-    return api.post('/auth/logout', null, {
-      skipUsuarioHeader: true,
-      headers: usuarioHeaders(),
-    }).then((response) => response.data)
+    return garantirCsrfCookie()
+      .catch(() => {})
+      .then(() => api.post('/auth/logout', null, {
+        skipUsuarioHeader: true,
+        headers: usuarioHeaders(),
+      }).then((response) => response.data))
   },
 
   atualizarEmpresa(id, payload) {

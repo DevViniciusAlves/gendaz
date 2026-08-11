@@ -8,6 +8,9 @@ const clienteApi = axios.create({
   baseURL: API_BASE,
   timeout: 25000,
   withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 })
 
 const MAX_REQUESTS = 60

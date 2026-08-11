@@ -1,4 +1,4 @@
-import api from './axiosConfig.js'
+import api, { garantirCsrfCookie } from './axiosConfig.js'
 
 function extrairMensagemErro(error) {
   return error.response?.data?.mensagem
@@ -18,6 +18,7 @@ export const adminApi = {
 
   async login(email, senha) {
     try {
+      await garantirCsrfCookie().catch(() => {})
       const response = await api.post('/admin/auth/login', { email: email.trim().toLowerCase(), senha })
       if (response.data?.admin?.perfil !== 'SUPER_ADMIN') {
         throw new Error('Resposta admin invalida.')

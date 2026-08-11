@@ -9,6 +9,9 @@ const api = axios.create({
   baseURL: normalizarBaseUrl(import.meta.env.VITE_API_URL),
   timeout: 25000,
   withCredentials: true,
+  withXSRFToken: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 })
 
 let sessionUser = null
@@ -19,6 +22,11 @@ export function setSessionUser(usuario) {
 
 export function getSessionUser() {
   return sessionUser
+}
+
+export async function garantirCsrfCookie() {
+  if (typeof window === 'undefined') return
+  await api.get('/health', { skipUsuarioHeader: true })
 }
 
 api.interceptors.request.use((config) => {

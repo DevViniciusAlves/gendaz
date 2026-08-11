@@ -1,7 +1,7 @@
 ﻿import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
-import { clearLocalData, updateCurrentUser } from '../services/localStore.js'
+import { clearLocalData, clearSensitiveStorage, updateCurrentUser } from '../services/localStore.js'
 import { setSessionUser } from '../api/axiosConfig.js'
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
 
@@ -112,6 +112,8 @@ export function AuthProvider({ children }) {
     console.error(`[auth-seguranca] Falha crítica no refresh: ${motivo}. Forçando logout total.`)
     limparSessaoUsuario()
     clearLocalData()
+    clearSensitiveStorage()
+    pendingPaymentMemory = null
     setUsuario(null)
     setSessionExpired(true)
     window.dispatchEvent(new Event('agendeasy:session-expired'))
@@ -423,6 +425,7 @@ export function AuthProvider({ children }) {
         throw new Error('Acesso administrativo deve ser feito pela tela de login do admin.')
       }
       clearLocalData()
+      clearSensitiveStorage()
       limparSessaoUsuario()
       pendingPaymentMemory = null
       setUsuario(null)
@@ -440,7 +443,11 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
         statusConta: response.statusConta,
         motivoInatividade: response.motivoInatividade || 'PAGAMENTO_PENDENTE',
       }
+      clearLocalData()
+      clearSensitiveStorage()
+      limparSessaoUsuario()
       pendingPaymentMemory = pending
+      setUsuario(null)
       return { pendingPayment: true, ...pending }
     }
     if (response.statusConta === 'ACCOUNT_INACTIVE') {
@@ -452,6 +459,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
         motivoInatividade: response.motivoInatividade || 'PAGAMENTO_PENDENTE',
       }
       clearLocalData()
+      clearSensitiveStorage()
       pendingPaymentMemory = null
       salvarUsuarioSessao(userInativo)
       setUsuario(userInativo)
@@ -461,6 +469,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     const plano = response.assinatura?.planoNome || user.plano || null
     const usuarioComPlano = { ...user, plano, assinatura: response.assinatura, statusConta: response.statusConta || 'ACTIVE' }
     clearLocalData()
+    clearSensitiveStorage()
     salvarUsuarioSessao(usuarioComPlano)
     setUsuario(usuarioComPlano)
     return usuarioComPlano
@@ -480,6 +489,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
         statusConta: response.statusConta,
       }
       clearLocalData()
+      clearSensitiveStorage()
       limparSessaoUsuario()
       pendingPaymentMemory = pending
       setUsuario(null)
@@ -494,6 +504,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       statusConta: response.statusConta || 'ACTIVE',
     }
     clearLocalData()
+    clearSensitiveStorage()
     pendingPaymentMemory = null
     salvarUsuarioSessao(usuarioComPlano)
     setUsuario(usuarioComPlano)
@@ -533,6 +544,8 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     }
     limparSessaoUsuario()
     clearLocalData()
+    clearSensitiveStorage()
+    pendingPaymentMemory = null
     setUsuario(null)
   }
 
@@ -540,6 +553,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   async function adminLogin(email, senha) {
     transicaoSessaoRef.current = false
     setSessionExpired(false)
+    clearSensitiveStorage()
     const response = await adminApi.login(email, senha)
     adminSessionTokenMemory = response.token || null
     setAdminUsuario(response.admin)
@@ -589,6 +603,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     }
     limparSessaoUsuario()
     clearLocalData()
+    clearSensitiveStorage()
     impersonationMemory = null
     salvarImpersonationPersistida(null)
     setImpersonation(null)
