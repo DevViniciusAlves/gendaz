@@ -4,12 +4,10 @@ import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
-function isSafariIphone() {
+function isIosBrowser() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent.toLowerCase()
-  const isIos = /iphone|ipod/.test(ua)
-  const isSafari = ua.includes('safari') && !ua.includes('crios') && !ua.includes('fxios') && !ua.includes('edgios') && !ua.includes('chrome')
-  return isIos && isSafari
+  return /iphone|ipod|ipad/.test(ua)
 }
 
 function isErroTransitorio(err) {
@@ -166,7 +164,7 @@ export function ClienteGendazProvider({ children, slug }) {
     if (!slug) return undefined
     clienteApi.defaults.headers.common['X-Meu-Gendaz-Slug'] = slug
     let cancelado = false
-    const delayInicial = isSafariIphone() ? 1400 : 0
+    const delayInicial = isIosBrowser() ? 1400 : 0
 
     const executarSincronizacaoInicial = async () => {
       await new Promise((resolve) => window.setTimeout(resolve, delayInicial))

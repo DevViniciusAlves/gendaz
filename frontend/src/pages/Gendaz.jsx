@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useLocation } from 'react-router-dom'
 import { ArrowLeft, Loader, LogOut } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
@@ -9,12 +9,10 @@ import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 
 const COOLDOWN_SEGUNDOS = 120
 
-function isSafariIphone() {
+function isIosBrowser() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent.toLowerCase()
-  const isIos = /iphone|ipod/.test(ua)
-  const isSafari = ua.includes('safari') && !ua.includes('crios') && !ua.includes('fxios') && !ua.includes('edgios') && !ua.includes('chrome')
-  return isIos && isSafari
+  return /iphone|ipod|ipad/.test(ua)
 }
 
 function GendazAuthGate({ slug, onLogin }) {
@@ -105,8 +103,13 @@ function GendazAuthGate({ slug, onLogin }) {
         codigo: codigo.trim(),
       })
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
-        if (isSafariIphone()) {
-          await new Promise((resolve) => window.setTimeout(resolve, 1200))
+        if (isIosBrowser()) {
+          await new Promise((resolve) => window.setTimeout(resolve, 700))
+          navigate(`/meu-gendaz/${slug}/dashboard`, {
+            replace: true,
+            state: { mobileIosLogin: true },
+          })
+          return
         }
         await onLogin()
         navigate(`/meu-gendaz/${slug}/dashboard`, { replace: true })
@@ -375,6 +378,7 @@ export default function Gendaz() {
 
 function GendazContent({ slug }) {
   const { cliente, cadastroPendente, carregando, perfilAcesso, sincronizarDados } = useContext(ClienteGendazContext)
+  const location = useLocation()
 
   useEffect(() => {
     const tituloAnterior = document.title
@@ -388,6 +392,15 @@ function GendazContent({ slug }) {
     if (!slug) return undefined
     return () => {}
   }, [slug])
+
+  useEffect(() => {
+    if (!location.state?.mobileIosLogin) return undefined
+    const timer = window.setTimeout(() => {
+      void sincronizarDados({ exigirSessao: true })
+      window.history.replaceState({}, '', window.location.pathname)
+    }, 900)
+    return () => window.clearTimeout(timer)
+  }, [location.state, sincronizarDados])
 
   const handleLogin = useCallback(async () => {
     await sincronizarDados({ exigirSessao: true })
