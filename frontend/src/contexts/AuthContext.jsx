@@ -95,6 +95,10 @@ export function AuthProvider({ children }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
   const transicaoSessaoRef = useRef(false)
+
+  useEffect(() => {
+    clearSensitiveStorage()
+  }, [])
   
   useSessionWebSocket(() => {
     if (isMeuGendazPath()) return

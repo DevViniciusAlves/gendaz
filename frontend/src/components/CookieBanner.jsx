@@ -1,13 +1,20 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 
-const STORAGE_KEY = 'agendnew_cookie_consent'
+const STORAGE_KEY = 'gendaz_cookie_consent'
+const LEGACY_STORAGE_KEY = 'agendnew_cookie_consent'
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     const saved = window.localStorage.getItem(STORAGE_KEY)
+    const legacySaved = window.localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (!saved && legacySaved) {
+      window.localStorage.setItem(STORAGE_KEY, legacySaved)
+      window.localStorage.removeItem(LEGACY_STORAGE_KEY)
+      return
+    }
     if (!saved) setVisible(true)
   }, [])
 
@@ -40,4 +47,3 @@ export default function CookieBanner() {
     </div>
   )
 }
-

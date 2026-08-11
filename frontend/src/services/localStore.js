@@ -78,6 +78,7 @@ export function clearSensitiveStorage() {
     if (!chave) continue
     if (
       chave.endsWith('_pagamento_pendente')
+      || chave === 'agendnew_cookie_consent'
       || chave === 'gendaz-promocoes-refresh'
     ) {
       chavesRemover.push(chave)
