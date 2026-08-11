@@ -109,7 +109,12 @@ public class PagamentoController {
             @RequestParam Map<String, String> queryParams,
             @RequestBody(required = false) Map<String, Object> body) {
         if (usarWebhookCakto(body)) {
-            String assinaturaFinal = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
+            String assinaturaFinal = primeiraNaoVazia(
+                    assinaturaCakto,
+                    webhookSecret,
+                    authorization,
+                    extrairSecretWebhookCakto(body)
+            );
             return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinaturaFinal));
         }
         String providerPaymentId = extrairPaymentId(queryParams, body);
@@ -127,7 +132,12 @@ public class PagamentoController {
         if (body == null || body.isEmpty()) {
             throw new com.minhaempresa.agendapro.shared.BusinessException("Webhook da Cakto sem payload valido.");
         }
-        String assinatura = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
+        String assinatura = primeiraNaoVazia(
+                assinaturaCakto,
+                webhookSecret,
+                authorization,
+                extrairSecretWebhookCakto(body)
+        );
         return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinatura));
     }
 
@@ -151,6 +161,30 @@ public class PagamentoController {
     private String primeiraNaoVazia(String... valores) {
         for (String valor : valores) {
             if (valor != null && !valor.isBlank()) return valor;
+        }
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private String extrairSecretWebhookCakto(Map<String, Object> body) {
+        if (body == null || body.isEmpty()) {
+            return null;
+        }
+        Object secret = body.get("secret");
+        if (secret == null) secret = body.get("webhook_secret");
+        if (secret == null) secret = body.get("webhookSecret");
+        if (secret instanceof String texto && !texto.isBlank()) {
+            return texto;
+        }
+
+        Object data = body.get("data");
+        if (data instanceof Map<?, ?> dataMap) {
+            Object nestedSecret = ((Map<String, Object>) dataMap).get("secret");
+            if (nestedSecret == null) nestedSecret = ((Map<String, Object>) dataMap).get("webhook_secret");
+            if (nestedSecret == null) nestedSecret = ((Map<String, Object>) dataMap).get("webhookSecret");
+            if (nestedSecret instanceof String texto && !texto.isBlank()) {
+                return texto;
+            }
         }
         return null;
     }
