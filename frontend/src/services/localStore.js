@@ -68,6 +68,7 @@ export function clearLocalData() {
 export function clearSensitiveStorage() {
   if (typeof window === 'undefined') return
   const prefixes = [
+    'agendapro_scope_cache_',
     'gendaz_scope_cache_',
     'gendaz_insights_chat_',
   ]
