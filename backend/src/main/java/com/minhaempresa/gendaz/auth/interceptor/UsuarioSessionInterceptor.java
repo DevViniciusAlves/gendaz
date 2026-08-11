@@ -118,6 +118,8 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
         }
         return List.of(
                 frontendUrl,
+                "https://gendaz.pages.dev",
+                "https://gendaz-stage.onrender.com",
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:5174",

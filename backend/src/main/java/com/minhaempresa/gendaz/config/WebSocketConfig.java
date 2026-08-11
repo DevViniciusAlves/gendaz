@@ -30,6 +30,8 @@ public class WebSocketConfig implements WebSocketConfigurer {
                         frontendUrl,
                         "https://gendaz.site",
                         "https://www.gendaz.site",
+                        "https://gendaz.pages.dev",
+                        "https://gendaz-stage.onrender.com",
                         "http://localhost:5173",
                         "http://127.0.0.1:5173",
                         "http://localhost:5174",
