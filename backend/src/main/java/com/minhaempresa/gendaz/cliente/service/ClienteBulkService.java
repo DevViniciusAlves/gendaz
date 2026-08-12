@@ -45,12 +45,9 @@ public class ClienteBulkService {
     @Transactional
     public AcaoEmMassaResponse excluir(AcaoEmMassaClienteRequest request) {
         validarQuantidade(request.ids());
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId == null) {
-            companyId = request.empresaId();
-        }
-        if (companyId == null) {
-            throw new BusinessException("Empresa logada nao encontrada.");
+        Long companyId = CompanyContext.requireCompanyId();
+        if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         Set<Long> idsUnicos = new HashSet<>(request.ids());
         List<FalhaAcaoItem> falhas = new ArrayList<>();

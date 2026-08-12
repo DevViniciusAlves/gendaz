@@ -21,6 +21,21 @@ public final class CompanyContext {
         return CURRENT_COMPANY.get() != null;
     }
 
+    public static Long requireCompanyId() {
+        Long companyId = getCompanyId();
+        if (companyId == null) {
+            throw new BusinessException("Empresa autenticada obrigatoria.");
+        }
+        return companyId;
+    }
+
+    public static void exigirEmpresa(Long empresaId) {
+        Long companyId = requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
+            throw new BusinessException("Acesso negado para esta empresa.");
+        }
+    }
+
     public static void clear() {
         CURRENT_COMPANY.remove();
     }

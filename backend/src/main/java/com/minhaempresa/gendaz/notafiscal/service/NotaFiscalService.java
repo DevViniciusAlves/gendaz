@@ -57,8 +57,8 @@ public class NotaFiscalService {
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId != null && empresaId != null && !companyId.equals(empresaId)) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Nota fiscal nao encontrada.");
         }
     }

@@ -27,12 +27,9 @@ public class AgendamentoBulkService {
     @Transactional
     public AcaoEmMassaResponse executar(AcaoEmMassaAgendamentoRequest request) {
         validarQuantidade(request.ids());
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId == null) {
-            companyId = request.empresaId();
-        }
-        if (companyId == null) {
-            throw new BusinessException("Empresa logada nao encontrada.");
+        Long companyId = CompanyContext.requireCompanyId();
+        if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
         Set<Long> idsUnicos = new HashSet<>(request.ids());

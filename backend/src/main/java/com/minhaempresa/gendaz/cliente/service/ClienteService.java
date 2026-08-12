@@ -116,9 +116,9 @@ public class ClienteService {
     @Transactional(readOnly = true)
     public ClienteResponse buscarPorTelefone(String telefone) {
         String telefoneSanitizado = sanitizacaoService.telefone(telefone);
+        Long companyId = CompanyContext.requireCompanyId();
         return clienteRepository.findFirstByTelefone(telefoneSanitizado)
-                .filter(cliente -> com.minhaempresa.gendaz.shared.CompanyContext.getCompanyId() == null
-                        || com.minhaempresa.gendaz.shared.CompanyContext.getCompanyId().equals(cliente.getEmpresa().getId()))
+                .filter(cliente -> cliente.getEmpresa() != null && companyId.equals(cliente.getEmpresa().getId()))
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente nÃ£o encontrado."));
     }
@@ -204,8 +204,8 @@ public class ClienteService {
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId != null && empresaId != null && !companyId.equals(empresaId)) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Cliente nÃ£o encontrado.");
         }
     }

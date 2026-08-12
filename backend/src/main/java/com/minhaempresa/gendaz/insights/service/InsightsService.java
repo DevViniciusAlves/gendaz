@@ -487,8 +487,8 @@ public class InsightsService {
         if (empresaId == null) {
             throw new BusinessException("Empresa nao identificada.");
         }
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (!empresaContexto.equals(empresaId)) {
             throw new BusinessException("Acesso negado para esta empresa.");
         }
     }

@@ -70,16 +70,16 @@ public class ConversaService {
     public ConversaEntity buscarEntidade(Long id) {
         ConversaEntity conversa = conversaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Conversa nÃ£o encontrada."));
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId != null && conversa.getEmpresa() != null && !companyId.equals(conversa.getEmpresa().getId())) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (conversa.getEmpresa() == null || !companyId.equals(conversa.getEmpresa().getId())) {
             throw new ResourceNotFoundException("Conversa nÃ£o encontrada.");
         }
         return conversa;
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId != null && empresaId != null && !companyId.equals(empresaId)) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Conversa nÃ£o encontrada.");
         }
     }

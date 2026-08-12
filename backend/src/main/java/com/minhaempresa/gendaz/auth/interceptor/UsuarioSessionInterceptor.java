@@ -31,11 +31,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/pagamentos/planos/webhook",
             "/api/pagamentos/webhook/stripe",
             "/api/meu-gendaz/auth/solicitar-codigo",
-            "/api/meu-gendaz/auth/validar-codigo",
-            "/api/meu-gendaz/",
-            "/api/meu-gendaz/servicos",
-            "/api/meu-gendaz/profissionais",
-            "/api/meu-gendaz/horarios-disponiveis"
+            "/api/meu-gendaz/auth/validar-codigo"
     );
 
     private final UsuarioRepository usuarioRepository;

@@ -25,12 +25,11 @@ public class CrmController {
             @RequestParam(required = false) String orderBy,
             @RequestParam(required = false) Integer period
     ) {
-        if (empresaId == null) {
-            empresaId = CompanyContext.getCompanyId();
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
-        if (empresaId == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
-        }
+        empresaId = empresaContexto;
         List<CrmClienteResponse> clientes = crmService.listarClientes(empresaId, segment, search, orderBy, period);
         return ResponseEntity.ok(Map.of("clientes", clientes, "total", clientes.size()));
     }
@@ -41,12 +40,11 @@ public class CrmController {
             @RequestParam(required = false) Long empresaId,
             @Valid @RequestBody EnviarMensagemRequest request
     ) {
-        if (empresaId == null) {
-            empresaId = CompanyContext.getCompanyId();
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
-        if (empresaId == null) {
-            return ResponseEntity.badRequest().body(Map.of("success", false, "mensagem", "Empresa nao identificada."));
-        }
+        empresaId = empresaContexto;
         try {
             Map<String, Object> resultado = crmService.enviarMensagem(empresaId, clienteId, request);
             return ResponseEntity.ok(resultado);
@@ -62,12 +60,11 @@ public class CrmController {
             @PathVariable Long clienteId,
             @RequestParam(required = false) Long empresaId
     ) {
-        if (empresaId == null) {
-            empresaId = CompanyContext.getCompanyId();
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
-        if (empresaId == null) {
-            return ResponseEntity.badRequest().build();
-        }
+        empresaId = empresaContexto;
         return ResponseEntity.ok(crmService.historicoContatos(empresaId, clienteId));
     }
 }

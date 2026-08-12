@@ -499,8 +499,8 @@ public class AgendamentoService {
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long companyId = com.minhaempresa.gendaz.shared.CompanyContext.getCompanyId();
-        if (companyId != null && empresaId != null && !companyId.equals(empresaId)) {
+        Long companyId = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Agendamento nao encontrado.");
         }
     }

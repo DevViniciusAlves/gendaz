@@ -1,6 +1,5 @@
 package com.minhaempresa.gendaz.shared;
 
-import com.minhaempresa.gendaz.auth.interceptor.UsuarioSessionInterceptor;
 import com.minhaempresa.gendaz.auth.interceptor.AdminIpWhitelistInterceptor;
 import com.minhaempresa.gendaz.auth.interceptor.AdminTokenInterceptor;
 import com.minhaempresa.gendaz.shared.security.RateLimitInterceptor;
@@ -20,7 +19,6 @@ import java.util.stream.Stream;
 public class WebConfig implements WebMvcConfigurer {
     private final Environment environment;
     private final String frontendUrl;
-    private final UsuarioSessionInterceptor usuarioSessionInterceptor;
     private final AdminIpWhitelistInterceptor adminIpWhitelistInterceptor;
     private final AdminTokenInterceptor adminTokenInterceptor;
     private final RateLimitInterceptor rateLimitInterceptor;
@@ -28,14 +26,12 @@ public class WebConfig implements WebMvcConfigurer {
     public WebConfig(
             Environment environment,
             @Value("${FRONTEND_URL:https://gendaz.site}") String frontendUrl,
-            UsuarioSessionInterceptor usuarioSessionInterceptor,
             AdminIpWhitelistInterceptor adminIpWhitelistInterceptor,
             AdminTokenInterceptor adminTokenInterceptor,
             RateLimitInterceptor rateLimitInterceptor
     ) {
         this.environment = environment;
         this.frontendUrl = frontendUrl;
-        this.usuarioSessionInterceptor = usuarioSessionInterceptor;
         this.adminIpWhitelistInterceptor = adminIpWhitelistInterceptor;
         this.adminTokenInterceptor = adminTokenInterceptor;
         this.rateLimitInterceptor = rateLimitInterceptor;
@@ -90,18 +86,6 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/api/**")
                 .excludePathPatterns("/swagger-ui.html", "/v3/api-docs/**", "/swagger-resources/**");
-        registry.addInterceptor(usuarioSessionInterceptor)
-                .addPathPatterns("/api/**")
-                .excludePathPatterns(
-                        "/api/auth/login",
-                        "/api/auth/csrf",
-                        "/api/auth/criar-conta",
-                        "/api/auth/refresh",
-                        "/api/auth/logout",
-                        "/api/meu-gendaz/auth/refresh",
-                        "/api/public/**",
-                        "/api/health/**"
-                );
         registry.addInterceptor(adminIpWhitelistInterceptor)
                 .addPathPatterns("/admin", "/admin/**", "/api/admin", "/api/admin/**");
         registry.addInterceptor(adminTokenInterceptor)

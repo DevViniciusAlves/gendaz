@@ -75,14 +75,11 @@ public class PromocaoController {
     }
 
     private Long resolverEmpresaId(Long empresaId) {
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null) {
-            if (empresaId != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
                 throw new BusinessException("Empresa da sessao nao corresponde a Promocoes solicitadas.");
             }
-            return empresaContexto;
-        }
-        return empresaId;
+        return empresaContexto;
     }
 }
 

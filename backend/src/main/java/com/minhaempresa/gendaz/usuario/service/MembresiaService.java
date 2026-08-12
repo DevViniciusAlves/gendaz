@@ -451,8 +451,8 @@ public class MembresiaService {
     private long membroId(MembresiaEntity m) { return m.getId(); }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId == null || !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
     }

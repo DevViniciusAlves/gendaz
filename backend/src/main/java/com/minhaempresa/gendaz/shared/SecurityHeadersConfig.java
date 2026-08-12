@@ -1,13 +1,16 @@
 package com.minhaempresa.gendaz.shared;
 
+import com.minhaempresa.gendaz.shared.security.GendazSessionAuthenticationFilter;
+import com.minhaempresa.gendaz.shared.security.MeuGendazSessionAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 public class SecurityHeadersConfig {
@@ -26,7 +29,11 @@ public class SecurityHeadersConfig {
     };
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(
+            HttpSecurity http,
+            GendazSessionAuthenticationFilter gendazSessionAuthenticationFilter,
+            MeuGendazSessionAuthenticationFilter meuGendazSessionAuthenticationFilter
+    ) throws Exception {
         CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         csrfTokenRepository.setCookiePath("/");
         csrfTokenRepository.setCookieCustomizer(cookie -> cookie
@@ -38,10 +45,26 @@ public class SecurityHeadersConfig {
                         .csrfTokenRepository(csrfTokenRepository)
                         .ignoringRequestMatchers(CSRF_IGNORADOS))
                 .addFilterAfter(new com.minhaempresa.gendaz.shared.security.CsrfCookieFilter(), org.springframework.security.web.csrf.CsrfFilter.class)
+                .addFilterBefore(gendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(meuGendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/health", "/api/health").permitAll()
-                        .anyRequest().permitAll())
+                        .requestMatchers(HttpMethod.GET, "/health", "/api/health", "/api/auth/csrf").permitAll()
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/auth/login",
+                                "/api/auth/criar-conta",
+                                "/api/auth/recuperar-senha",
+                                "/api/auth/redefinir-senha",
+                                "/api/auth/logout",
+                                "/api/meu-gendaz/auth/solicitar-codigo",
+                                "/api/meu-gendaz/auth/validar-codigo",
+                                "/api/meu-gendaz/auth/logout"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/meu-gendaz/empresa/*").permitAll()
+                        .requestMatchers("/api/public/**").permitAll()
+                        .requestMatchers("/api/pagamentos/planos/webhook", "/api/pagamentos/webhook/stripe").permitAll()
+                        .requestMatchers("/api/admin/**", "/admin", "/admin/**").permitAll()
+                        .anyRequest().authenticated())
                 .headers(headers -> headers
                         .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000).includeSubDomains(true))
                         .contentTypeOptions(Customizer.withDefaults())

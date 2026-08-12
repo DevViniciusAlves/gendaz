@@ -66,8 +66,8 @@ public class EmpresaService {
 
     @Transactional(readOnly = true)
     public EmpresaEntity buscarEntidade(Long id) {
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId != null && !companyId.equals(id)) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (id == null || !companyId.equals(id)) {
             throw new ResourceNotFoundException("Empresa nao encontrada.");
         }
         return empresaRepository.findById(id)

@@ -76,17 +76,11 @@ public class FinanceiroService {
     }
 
     private Long resolverEmpresaAtual(Long empresaId) {
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
-        if (empresaContexto != null) {
-            return empresaContexto;
-        }
-        if (empresaId == null) {
-            throw new BusinessException("Empresa nao identificada.");
-        }
-        return empresaId;
+        return empresaContexto;
     }
 }
 

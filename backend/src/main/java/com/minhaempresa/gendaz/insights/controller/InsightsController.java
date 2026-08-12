@@ -108,7 +108,7 @@ public class InsightsController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> detalhe(@PathVariable Long id) {
-        var insight = insightsService.obterInsight(id, CompanyContext.getCompanyId());
+        var insight = insightsService.obterInsight(id, CompanyContext.requireCompanyId());
         if (insight == null) {
             return ResponseEntity.notFound().build();
         }
@@ -120,21 +120,15 @@ public class InsightsController {
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
         empresaId = resolverEmpresaId(empresaId);
-        if (empresaId == null) {
-            return ResponseEntity.badRequest().body(List.of());
-        }
         return ResponseEntity.ok(insightsService.obterHistorico(empresaId));
     }
 
     private Long resolverEmpresaId(Long empresaId) {
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null) {
-            if (empresaId != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
                 throw new BusinessException("Empresa da sessÃ£o nao corresponde ao Insights solicitado.");
             }
-            return empresaContexto;
-        }
-        return empresaId;
+        return empresaContexto;
     }
 }
 
