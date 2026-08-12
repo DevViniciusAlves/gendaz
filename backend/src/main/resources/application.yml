@@ -26,7 +26,7 @@ app:
     summary-interval-ms: ${OUTBOUND_AUDIT_SUMMARY_INTERVAL_MS:600000}
 
 payment:
-  provider: ${PAYMENT_PROVIDER:local}
+  provider: ${PAYMENT_PROVIDER:}
   api-key: ${PAYMENT_API_KEY:}
   mercado-pago-access-token: ${MERCADO_PAGO_ACCESS_TOKEN:${PAYMENT_API_KEY:}}
   mercado-pago-public-key: ${MERCADO_PAGO_PUBLIC_KEY:}

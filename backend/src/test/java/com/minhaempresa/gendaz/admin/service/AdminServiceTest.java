@@ -64,7 +64,7 @@ class AdminServiceTest {
                 .perfil(PerfilUsuario.DONO)
                 .status(StatusUsuario.ATIVO)
                 .build();
-        when(usuarioRepository.findByEmail("dono@Gendaz.com")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findAllByEmailIgnoreCase("dono@gendaz.com")).thenReturn(java.util.List.of(usuario));
 
         assertThrows(BusinessException.class, () -> adminService.login(new AdminLoginRequest("dono@Gendaz.com", "SenhaForte123!"), "127.0.0.1", "test"));
         verify(auditService).registrar(eq("ADMIN_LOGIN_FAILED"), eq("SECURITY"), isNull(), isNull(), isNull(), anyString(), isNull(), eq("127.0.0.1"), eq("test"));
@@ -80,7 +80,7 @@ class AdminServiceTest {
                 .perfil(PerfilUsuario.SUPER_ADMIN)
                 .status(StatusUsuario.ATIVO)
                 .build();
-        when(usuarioRepository.findByEmail("admin@Gendaz.com")).thenReturn(Optional.of(admin));
+        when(usuarioRepository.findAllByEmailIgnoreCase("admin@gendaz.com")).thenReturn(java.util.List.of(admin));
         when(usuarioSessionService.renovarSessao(admin)).thenReturn("token-admin");
 
         var response = adminService.login(new AdminLoginRequest("admin@Gendaz.com", "SenhaForte123!"), "127.0.0.1", "test");
@@ -91,7 +91,7 @@ class AdminServiceTest {
 
     @Test
     void deveExigirTokenValidoParaAcessoAdmin() {
-        assertThrows(BusinessException.class, () -> adminService.exigirAdmin("token-invalido"));
+        assertThrows(com.minhaempresa.gendaz.shared.SessaoExpiradaException.class, () -> adminService.exigirAdmin("token-invalido"));
     }
 }
 

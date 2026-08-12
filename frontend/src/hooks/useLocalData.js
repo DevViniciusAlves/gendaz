@@ -5,7 +5,6 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
-const CACHE_PREFIX = 'gendaz_scope_cache_'
 const CACHE_VERSION = 6
 
 function ttlDoEscopo(scope) {
@@ -18,45 +17,19 @@ function chaveCache(scope) {
   return `${scope}:${usuario?.empresaId || 'local'}:${usuario?.id || 'anon'}`
 }
 
-function salvarCacheSession(cacheKey, payload) {
-  try {
-    localStorage.setItem(`${CACHE_PREFIX}${cacheKey}`, JSON.stringify({
-      version: CACHE_VERSION,
-      time: Date.now(),
-      data: payload,
-    }))
-  } catch {
-    return
-  }
-}
-
-function lerCacheSession(cacheKey) {
-  try {
-    const raw = localStorage.getItem(`${CACHE_PREFIX}${cacheKey}`)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!parsed?.data || !parsed?.time) return null
-    if (parsed.version !== CACHE_VERSION) return null
-    return parsed
-  } catch {
-    return null
-  }
-}
-
 function cacheValido(cache, scope) {
   return Boolean(cache && Date.now() - cache.time < ttlDoEscopo(scope))
 }
 
 function cacheDoEscopo(scope) {
   const cacheKey = chaveCache(scope)
-  return cacheLocal.get(cacheKey) || lerCacheSession(cacheKey)
+  return cacheLocal.get(cacheKey)
 }
 
 function salvarCache(scope, payload) {
   const cacheKey = chaveCache(scope)
   const entry = { data: payload, time: Date.now() }
   cacheLocal.set(cacheKey, entry)
-  salvarCacheSession(cacheKey, payload)
   return payload
 }
 

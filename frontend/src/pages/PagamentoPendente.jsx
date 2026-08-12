@@ -80,7 +80,6 @@ export default function PagamentoPendente() {
 
   function salvarPendente(atualizado) {
     setPendente(atualizado)
-    localStorage.setItem('gendaz_pagamento_pendente', JSON.stringify(atualizado))
   }
 
   function abrirCheckout() {

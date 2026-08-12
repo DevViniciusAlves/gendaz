@@ -1,12 +1,12 @@
 package com.minhaempresa.gendaz.shared.security;
 
-import com.minhaempresa.gendaz.auth.service.AuthService;
 import com.minhaempresa.gendaz.admin.service.AdminService;
+import com.minhaempresa.gendaz.auth.service.AuthService;
+import com.minhaempresa.gendaz.shared.CookieHelper;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,6 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 @Component
 public class RateLimitInterceptor implements HandlerInterceptor {
-
     private static final Logger log = LoggerFactory.getLogger(RateLimitInterceptor.class);
 
     private final RateLimitConfig rateLimitConfig;
@@ -34,8 +33,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         String path = request.getRequestURI();
         String method = request.getMethod();
         String ip = getClientIp(request);
-
-        Optional<Long> usuarioIdOpt = getUserIdFromRequest(request);
+        Long usuarioId = getAuthenticatedUserId(request);
 
         boolean allowed = false;
         String reason = "Unknown";
@@ -43,19 +41,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         if (isLoginEndpoint(path, method)) {
             String email = request.getParameter("email");
             String senha = request.getParameter("senha");
-            
-            // Rate limit only counts FAILED login attempts (wrong credentials)
-            // If credentials are valid, don't count toward limit
-            boolean credenciaisValidas = false;
-            if (email != null && !email.isBlank() && senha != null && !senha.isBlank()) {
-                credenciaisValidas = authService.validarCredenciaisLogin(email, senha);
-            }
-            
+            boolean credenciaisValidas = email != null && !email.isBlank() && senha != null && !senha.isBlank()
+                    && authService.validarCredenciaisLogin(email, senha);
             if (credenciaisValidas) {
-                // Valid credentials - allow without consuming rate limit token
                 allowed = true;
             } else {
-                // Invalid credentials - consume rate limit token
                 Bucket bucket = rateLimitConfig.getLoginBucket(ip);
                 ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
                 if (probe.isConsumed()) {
@@ -70,13 +60,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         } else if (isAdminLoginEndpoint(path, method)) {
             String email = request.getParameter("email");
             String senha = request.getParameter("senha");
-            
-            // Rate limit only counts FAILED admin login attempts
-            boolean credenciaisValidas = false;
-            if (email != null && !email.isBlank() && senha != null && !senha.isBlank()) {
-                credenciaisValidas = adminService.validarCredenciaisAdmin(email, senha);
-            }
-            
+            boolean credenciaisValidas = email != null && !email.isBlank() && senha != null && !senha.isBlank()
+                    && adminService.validarCredenciaisAdmin(email, senha);
             if (credenciaisValidas) {
                 allowed = true;
             } else {
@@ -102,8 +87,8 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 reason = "Registrar rate limit exceeded (3 por dia)";
                 log.warn("[rate-limit] registrar bloqueado: IP={} aguarde={}s", ip, waitForRefill);
             }
-        } else if (isHorariosEndpoint(path, method) && usuarioIdOpt.isPresent()) {
-            Bucket bucket = rateLimitConfig.getHorariosBucket(usuarioIdOpt.get());
+        } else if (isHorariosEndpoint(path, method) && usuarioId != null) {
+            Bucket bucket = rateLimitConfig.getHorariosBucket(usuarioId);
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
             if (probe.isConsumed()) {
                 allowed = true;
@@ -111,10 +96,10 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                 reason = "Horarios rate limit exceeded (10 por minuto)";
-                log.warn("[rate-limit] horarios bloqueado: usuario={} aguarde={}s", usuarioIdOpt.get(), waitForRefill);
+                log.warn("[rate-limit] horarios bloqueado: usuario={} aguarde={}s", usuarioId, waitForRefill);
             }
-        } else if (usuarioIdOpt.isPresent()) {
-            Bucket bucket = rateLimitConfig.getApiBucket(usuarioIdOpt.get());
+        } else if (usuarioId != null) {
+            Bucket bucket = rateLimitConfig.getApiBucket(usuarioId);
             ConsumptionProbe probe = bucket.tryConsumeAndReturnRemaining(1);
             if (probe.isConsumed()) {
                 allowed = true;
@@ -122,7 +107,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                 reason = "Sistema estÃ¡ carregando. Aguarde um momento.";
-                log.warn("[rate-limit] API geral bloqueada: usuario={} aguarde={}s", usuarioIdOpt.get(), waitForRefill);
+                log.warn("[rate-limit] API geral bloqueada: usuario={} aguarde={}s", usuarioId, waitForRefill);
             }
         } else {
             allowed = true;
@@ -162,16 +147,15 @@ public class RateLimitInterceptor implements HandlerInterceptor {
         return ip.split(",")[0].trim();
     }
 
-    private Optional<Long> getUserIdFromRequest(HttpServletRequest request) {
-        String userId = request.getHeader("X-Usuario-Id");
-        if (userId != null && !userId.isBlank()) {
-            try {
-                return Optional.of(Long.parseLong(userId.trim()));
-            } catch (NumberFormatException e) {
-                log.warn("[rate-limit] X-Usuario-Id invalido: {}", userId);
-            }
+    private Long getAuthenticatedUserId(HttpServletRequest request) {
+        String sessao = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
+        if (sessao == null || sessao.isBlank()) {
+            return null;
         }
-        return Optional.empty();
+        try {
+            return authService.buscarUsuarioAutenticado(null, sessao).getId();
+        } catch (RuntimeException ex) {
+            return null;
+        }
     }
 }
-

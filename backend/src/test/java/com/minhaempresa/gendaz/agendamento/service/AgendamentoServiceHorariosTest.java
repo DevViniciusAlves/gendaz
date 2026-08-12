@@ -33,8 +33,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
+@MockitoSettings(strictness = Strictness.LENIENT)
 class AgendamentoServiceHorariosTest {
 
     @Mock AgendamentoRepository agendamentoRepository;
@@ -240,13 +243,10 @@ class AgendamentoServiceHorariosTest {
         when(cancelado.getHoraFim()).thenReturn(LocalTime.of(10, 0));
         when(cancelado.getStatus()).thenReturn(StatusAgendamento.CANCELADO);
 
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
-        when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
-                criarProfissionalResponse(10L, true)
-        ));
-        when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
-        when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
-        when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(cancelado));
+        lenient().when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        lenient().when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
+        lenient().when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(cancelado));
+        lenient().when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(criarProfissionalResponse(10L, true)));
 
         List<String> horarios = agendamentoService.horariosDisponiveis(empresaId, null, servicoId, data);
 

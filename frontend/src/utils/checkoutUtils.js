@@ -1,5 +1,5 @@
-﻿const CHECKOUT_TTL_MS = 15 * 60 * 1000
-const CHECKOUT_START_KEY = 'gendaz_checkout_inicio'
+const CHECKOUT_TTL_MS = 15 * 60 * 1000
+const checkoutStartMemory = new Map()
 
 function parseData(data) {
   if (!data) return null
@@ -18,10 +18,6 @@ function getDataReferencia(pagamento) {
   )
 }
 
-function storageDisponivel() {
-  return typeof window !== 'undefined' && window.localStorage
-}
-
 function pagamentoKey(pagamento) {
   const valor = pagamento?.id
     || pagamento?.providerPaymentId
@@ -30,46 +26,25 @@ function pagamentoKey(pagamento) {
   return valor ? String(valor) : null
 }
 
-function lerMapaCheckout() {
-  if (!storageDisponivel()) return {}
-  try {
-    return JSON.parse(localStorage.getItem(CHECKOUT_START_KEY) || '{}') || {}
-  } catch {
-    return {}
-  }
-}
-
-function salvarMapaCheckout(mapa) {
-  if (!storageDisponivel()) return
-  localStorage.setItem(CHECKOUT_START_KEY, JSON.stringify(mapa))
-}
-
 export function registrarInicioCheckout(pagamento, inicio = new Date().toISOString()) {
   const chave = pagamentoKey(pagamento)
   if (!chave) return null
-  const mapa = lerMapaCheckout()
-  if (!mapa[chave]) {
-    mapa[chave] = inicio
-    salvarMapaCheckout(mapa)
+  if (!checkoutStartMemory.has(chave)) {
+    checkoutStartMemory.set(chave, inicio)
   }
-  return mapa[chave]
+  return checkoutStartMemory.get(chave)
 }
 
 export function limparInicioCheckout(pagamento) {
   const chave = pagamentoKey(pagamento)
   if (!chave) return
-  const mapa = lerMapaCheckout()
-  if (mapa[chave]) {
-    delete mapa[chave]
-    salvarMapaCheckout(mapa)
-  }
+  checkoutStartMemory.delete(chave)
 }
 
 export function getInicioCheckout(pagamento) {
   const chave = pagamentoKey(pagamento)
   if (!chave) return null
-  const mapa = lerMapaCheckout()
-  return mapa[chave] || pagamento?.checkoutSolicitadoEm || null
+  return checkoutStartMemory.get(chave) || pagamento?.checkoutSolicitadoEm || null
 }
 
 export function getInicioCheckoutMs(pagamento) {
@@ -103,4 +78,3 @@ export function checkoutAtivo(pagamento, agora = new Date()) {
 export function checkoutPodeGerarNovo(pagamento, agora = new Date()) {
   return !checkoutAtivo(pagamento, agora)
 }
-

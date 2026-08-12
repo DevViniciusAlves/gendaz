@@ -26,12 +26,13 @@ function chaveArmazenamento() {
   return `gendaz_insights_chat_${empresaId}_${usuarioId}`
 }
 
+const chatMemory = new Map()
+
 function carregarMensagensSalvas() {
   try {
-    const raw = localStorage.getItem(chaveArmazenamento())
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed?.mensagens) ? parsed.mensagens : []
+    const chave = chaveArmazenamento()
+    const salvado = chatMemory.get(chave)
+    return Array.isArray(salvado?.mensagens) ? salvado.mensagens : []
   } catch {
     return []
   }
@@ -47,7 +48,7 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
 
   useEffect(() => {
     try {
-      localStorage.setItem(chaveArmazenamento(), JSON.stringify({ mensagens }))
+      chatMemory.set(chaveArmazenamento(), { mensagens })
     } catch {
       // Se o storage falhar, o chat continua funcionando sem persistir.
     }

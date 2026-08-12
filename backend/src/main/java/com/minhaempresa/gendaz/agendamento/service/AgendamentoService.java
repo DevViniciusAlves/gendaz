@@ -217,17 +217,18 @@ public class AgendamentoService {
         if (profissionalId == null) {
             var profissionaisAtivos = profissionalService.listarPorEmpresa(empresaId).stream()
                     .filter(item -> item.status() == com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO)
+                    .map(item -> profissionalService.buscarEntidade(item.id()))
+                    .filter(java.util.Objects::nonNull)
                     .toList();
             boolean todosSistema = !profissionaisAtivos.isEmpty()
                     && profissionaisAtivos.stream().allMatch(item -> {
-                        ProfissionalEntity p = profissionalService.buscarEntidade(item.id());
-                        return p.isSistema();
+                        ProfissionalEntity p = item;
+                        return p != null && p.isSistema();
                     });
             if (todosSistema) {
                 empresaSemProfissionaisReais = true;
             } else if (!profissionaisAtivos.isEmpty()) {
                 profissional = profissionaisAtivos.stream()
-                        .map(item -> profissionalService.buscarEntidade(item.id()))
                         .filter(p -> !p.isSistema())
                         .findFirst()
                         .orElse(null);

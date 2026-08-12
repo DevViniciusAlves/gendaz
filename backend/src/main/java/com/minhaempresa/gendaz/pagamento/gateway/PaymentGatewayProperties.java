@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 @Component
 @ConfigurationProperties(prefix = "payment")
 public class PaymentGatewayProperties {
-    private String provider = "local";
+    private String provider = "";
     private String apiKey = "";
     private String mercadoPagoAccessToken = "";
     private String mercadoPagoPublicKey = "";

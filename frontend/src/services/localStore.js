@@ -66,29 +66,7 @@ export function clearLocalData() {
 }
 
 export function clearSensitiveStorage() {
-  if (typeof window === 'undefined') return
-  const prefixes = [
-    'agendapro_scope_cache_',
-    'gendaz_scope_cache_',
-    'gendaz_insights_chat_',
-  ]
-  const chavesRemover = []
-  for (let i = 0; i < window.localStorage.length; i += 1) {
-    const chave = window.localStorage.key(i)
-    if (!chave) continue
-    if (
-      chave.endsWith('_pagamento_pendente')
-      || chave === 'agendnew_cookie_consent'
-      || chave === 'gendaz-promocoes-refresh'
-    ) {
-      chavesRemover.push(chave)
-      continue
-    }
-    if (prefixes.some((prefix) => chave.startsWith(prefix))) {
-      chavesRemover.push(chave)
-    }
-  }
-  chavesRemover.forEach((chave) => window.localStorage.removeItem(chave))
+  return
 }
 
 export function setData(data) {
