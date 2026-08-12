@@ -63,15 +63,15 @@ public class InsightsService {
         DashboardResponse fallback = construirDashboardLocal(empresaId, dados, "AUTO");
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(appTimezone));
 
-        if (contaNova(dados)) {
-            DashboardResponse respostaContaNova = montarDashboardContaNova(empresaId, dados);
-            salvarDashboard(empresaId, dados, respostaContaNova, "AUTO", agora);
-            return respostaContaNova;
+        InsightEntity ultimo = ultimoDashboard(empresaId);
+        if (!forcar && ultimo != null) {
+            return parseDashboard(ultimo, fallback, agora);
         }
 
-        InsightEntity ultimo = ultimoDashboard(empresaId);
-        if (!forcar && ultimo != null && ultimo.getDataExpiracao() != null && ultimo.getDataExpiracao().isAfter(agora)) {
-            return parseDashboard(ultimo, fallback, agora);
+        if (contaNova(dados)) {
+            DashboardResponse respostaContaNova = montarDashboardContaNova(empresaId, dados);
+            salvarDashboard(empresaId, dados, respostaContaNova, forcar ? "MANUAL" : "AUTO", agora);
+            return respostaContaNova;
         }
 
         DashboardResponse gerado = gerarDashboardNovo(empresaId, periodo, dados, fallback, forcar ? "MANUAL" : "AUTO");
