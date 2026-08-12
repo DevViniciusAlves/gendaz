@@ -14,6 +14,8 @@
         jdbc:
           lob:
             non_contextual_creation: true
+  flyway:
+    enabled: ${FLYWAY_ENABLED:false}
 
 server:
   port: ${PORT:8080}

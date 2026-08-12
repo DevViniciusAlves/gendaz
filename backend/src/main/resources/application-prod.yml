@@ -24,6 +24,12 @@ spring:
       hibernate:
         boot:
           allow_jdbc_metadata_access: ${HIBERNATE_ALLOW_JDBC_METADATA_ACCESS:false}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 42
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:false}
+    locations: classpath:db/migration
   cache:
     type: caffeine
     caffeine:
