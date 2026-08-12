@@ -21,11 +21,13 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private final RateLimitConfig rateLimitConfig;
     private final AuthService authService;
     private final AdminService adminService;
+    private final SecurityMonitoringService securityMonitoringService;
 
-    public RateLimitInterceptor(RateLimitConfig rateLimitConfig, AuthService authService, AdminService adminService) {
+    public RateLimitInterceptor(RateLimitConfig rateLimitConfig, AuthService authService, AdminService adminService, SecurityMonitoringService securityMonitoringService) {
         this.rateLimitConfig = rateLimitConfig;
         this.authService = authService;
         this.adminService = adminService;
+        this.securityMonitoringService = securityMonitoringService;
     }
 
     @Override
@@ -55,6 +57,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                     response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                     reason = "Login rate limit exceeded (5 tentativas por minuto)";
                     log.warn("[rate-limit] login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                    registrarRateLimit(request, ip, path, "RATE_LIMIT_LOGIN", "HIGH", waitForRefill);
                 }
             }
         } else if (isAdminLoginEndpoint(path, method)) {
@@ -74,6 +77,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                     response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                     reason = "Admin login rate limit exceeded (5 tentativas por minuto)";
                     log.warn("[rate-limit] admin login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                    registrarRateLimit(request, ip, path, "RATE_LIMIT_ADMIN_LOGIN", "CRITICAL", waitForRefill);
                 }
             }
         } else if (isRegistrarEndpoint(path, method)) {
@@ -86,6 +90,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                 reason = "Registrar rate limit exceeded (3 por minuto)";
                 log.warn("[rate-limit] registrar bloqueado: IP={} aguarde={}s", ip, waitForRefill);
+                registrarRateLimit(request, ip, path, "RATE_LIMIT_CADASTRO", "HIGH", waitForRefill);
             }
         } else if (isHorariosEndpoint(path, method) && usuarioId != null) {
             Bucket bucket = rateLimitConfig.getHorariosBucket(usuarioId);
@@ -97,6 +102,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                 reason = "Horarios rate limit exceeded (10 por minuto)";
                 log.warn("[rate-limit] horarios bloqueado: usuario={} aguarde={}s", usuarioId, waitForRefill);
+                registrarRateLimit(request, ip, path, "RATE_LIMIT_HORARIOS", "HIGH", waitForRefill);
             }
         } else if (usuarioId != null) {
             Bucket bucket = rateLimitConfig.getApiBucket(usuarioId);
@@ -108,6 +114,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
                 reason = "Sistema estÃ¡ carregando. Aguarde um momento.";
                 log.warn("[rate-limit] API geral bloqueada: usuario={} aguarde={}s", usuarioId, waitForRefill);
+                registrarRateLimit(request, ip, path, "RATE_LIMIT_API", "HIGH", waitForRefill);
             }
         } else {
             allowed = true;
@@ -137,6 +144,18 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private boolean isHorariosEndpoint(String path, String method) {
         return path.contains("/horarios-disponiveis") && "GET".equals(method);
+    }
+
+    private void registrarRateLimit(HttpServletRequest request, String ip, String path, String tipo, String severidade, long waitForRefill) {
+        securityMonitoringService.registrarEvento(
+                tipo,
+                severidade,
+                ip,
+                request.getHeader("User-Agent"),
+                path,
+                "-",
+                "retryAfterSeconds=" + waitForRefill
+        );
     }
 
     private String getClientIp(HttpServletRequest request) {

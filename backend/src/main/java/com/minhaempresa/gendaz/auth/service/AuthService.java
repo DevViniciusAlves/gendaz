@@ -25,6 +25,7 @@ import com.minhaempresa.gendaz.shared.DocumentoUtils;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.membresia.enums.StatusMembresia;
 import com.minhaempresa.gendaz.membresia.repository.MembresiaRepository;
@@ -66,6 +67,7 @@ public class AuthService {
     private final AdminAuditService auditService;
     private final RecaptchaService recaptchaService;
     private final IpTrackingService ipTrackingService;
+    private final SecurityMonitoringService securityMonitoringService;
     private final ProfissionalService profissionalService;
     private final TransactionTemplate transactionTemplate;
     private final MembresiaRepository membresiaRepository;
@@ -289,7 +291,12 @@ public class AuthService {
     public void solicitarRecuperacaoSenha(String email) {
         String normalizado = normalizarEmail(email);
         logRecuperacaoSenha(normalizado);
-        usuarioRepository.findUsuariosPainelByEmailIgnoreCase(normalizado, PERFIS_PAINEL_DIRETOS).forEach(usuario -> {
+        List<UsuarioEntity> usuarios = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(normalizado, PERFIS_PAINEL_DIRETOS);
+        if (usuarios.isEmpty()) {
+            registrarMonitoramentoRecuperacaoSenha(normalizado, "EMAIL_NAO_ENCONTRADO");
+            return;
+        }
+        usuarios.forEach(usuario -> {
             String token = passwordRecoveryService.solicitarRecuperacao(usuario);
             boolean enviado = resendEmailService.enviarRecuperacaoSenha(
                     usuario.getEmail(),
@@ -577,6 +584,13 @@ public class AuthService {
     private void logLoginFalhado(String email, int tentativas) {
         HttpServletRequest request = getCurrentRequest();
         log.warn("[SECURITY] Login falhado - Email: {}, IP: {}, Tentativa: {}, User-Agent: {}", mascararEmail(email), getCurrentClientIp(), tentativas, getUserAgent(request));
+        securityMonitoringService.registrarEvento(
+                "LOGIN_FALHADO",
+                tentativas >= 3 ? "MEDIUM" : "LOW",
+                request,
+                mascararEmail(email),
+                "tentativas=" + tentativas
+        );
     }
 
     private void logLoginBemSucedido(String email) {
@@ -592,6 +606,23 @@ public class AuthService {
     private void logRecuperacaoSenha(String email) {
         HttpServletRequest request = getCurrentRequest();
         log.info("[SECURITY] Recuperacao de senha - Email: {}, IP: {}, User-Agent: {}", mascararEmail(email), getCurrentClientIp(), getUserAgent(request));
+        securityMonitoringService.registrarEvento(
+                "RECUPERACAO_SENHA_SOLICITADA",
+                "LOW",
+                request,
+                mascararEmail(email),
+                "solicitacao_recebida"
+        );
+    }
+
+    private void registrarMonitoramentoRecuperacaoSenha(String email, String detalhe) {
+        securityMonitoringService.registrarEvento(
+                "RECUPERACAO_SENHA_SEM_CONTA",
+                "LOW",
+                getCurrentRequest(),
+                mascararEmail(email),
+                detalhe
+        );
     }
 
     private String getUserAgent(HttpServletRequest request) {

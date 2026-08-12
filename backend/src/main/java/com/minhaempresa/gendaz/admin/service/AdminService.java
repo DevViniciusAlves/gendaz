@@ -31,6 +31,7 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
@@ -60,6 +61,7 @@ public class AdminService {
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
     private final UsuarioSessionService usuarioSessionService;
+    private final SecurityMonitoringService securityMonitoringService;
     private final PagamentoService pagamentoService;
     private final ProfissionalService profissionalService;
 
@@ -82,6 +84,7 @@ public class AdminService {
             AdminAuditService auditService,
             PasswordService passwordService,
             UsuarioSessionService usuarioSessionService,
+            SecurityMonitoringService securityMonitoringService,
             PagamentoService pagamentoService,
             ProfissionalService profissionalService
     ) {
@@ -96,8 +99,42 @@ public class AdminService {
         this.auditService = auditService;
         this.passwordService = passwordService;
         this.usuarioSessionService = usuarioSessionService;
+        this.securityMonitoringService = securityMonitoringService;
         this.pagamentoService = pagamentoService;
         this.profissionalService = profissionalService;
+    }
+
+    public AdminService(
+            UsuarioRepository usuarioRepository,
+            EmpresaRepository empresaRepository,
+            PagamentoPlanoRepository pagamentoPlanoRepository,
+            AssinaturaRepository assinaturaRepository,
+            AdminImpersonationSessionRepository impersonationSessionRepository,
+            ChamadoRepository chamadoRepository,
+            AssinaturaService assinaturaService,
+            PlanoService planoService,
+            AdminAuditService auditService,
+            PasswordService passwordService,
+            UsuarioSessionService usuarioSessionService,
+            PagamentoService pagamentoService,
+            ProfissionalService profissionalService
+    ) {
+        this(
+                usuarioRepository,
+                empresaRepository,
+                pagamentoPlanoRepository,
+                assinaturaRepository,
+                impersonationSessionRepository,
+                chamadoRepository,
+                assinaturaService,
+                planoService,
+                auditService,
+                passwordService,
+                usuarioSessionService,
+                null,
+                pagamentoService,
+                profissionalService
+        );
     }
 
     public AdminService(
@@ -126,6 +163,7 @@ public class AdminService {
                 auditService,
                 passwordService,
                 usuarioSessionService,
+                null,
                 pagamentoService,
                 profissionalService
         );
@@ -156,6 +194,7 @@ public class AdminService {
                 auditService,
                 passwordService,
                 usuarioSessionService,
+                null,
                 pagamentoService,
                 profissionalService
         );
@@ -181,6 +220,7 @@ public class AdminService {
         UsuarioEntity admin = buscarAdminPorEmail(email);
         if (admin == null || admin.getPerfil() != PerfilUsuario.SUPER_ADMIN || admin.getStatus() != StatusUsuario.ATIVO || !passwordService.matches(request.senha(), admin.getSenha())) {
             auditService.registrar("ADMIN_LOGIN_FAILED", "SECURITY", null, null, null, "Falha de login admin", null, ip, userAgent);
+            registrarMonitoramentoAdminLoginFalhado(ip, userAgent, email);
             throw new BusinessException("Credenciais invalidas.");
         }
         String token = usuarioSessionService.renovarSessao(admin);
@@ -677,6 +717,21 @@ public UsuarioEntity exigirAdmin(String token) {
                 empresa.getDataCriacao(),
                 ultimoPagamento == null ? null : ultimoPagamento.getDataPagamento(),
                 ultimoPagamento == null ? null : ultimoPagamento.getValor()
+        );
+    }
+
+    private void registrarMonitoramentoAdminLoginFalhado(String ip, String userAgent, String email) {
+        if (securityMonitoringService == null) {
+            return;
+        }
+        securityMonitoringService.registrarEvento(
+                "ADMIN_LOGIN_FALHADO",
+                "CRITICAL",
+                ip,
+                userAgent,
+                "/api/admin/auth/login",
+                securityMonitoringService.mascararEmail(email),
+                "credenciais_invalidas"
         );
     }
 

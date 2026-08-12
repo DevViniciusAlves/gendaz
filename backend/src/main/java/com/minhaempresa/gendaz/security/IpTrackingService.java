@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.security;
 
 import com.minhaempresa.gendaz.security.entity.IpTrackingEntity;
 import com.minhaempresa.gendaz.security.repository.IpTrackingRepository;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ public class IpTrackingService {
     private static final int DURACAO_BLOQUEIO_HORAS = 24;
 
     private final IpTrackingRepository ipTrackingRepository;
+    private final SecurityMonitoringService securityMonitoringService;
 
     public void registrarTentativaFalhada(String ip) {
         if (ip == null || ip.isBlank()) return;
@@ -46,6 +48,25 @@ public class IpTrackingService {
             tracking.setBloqueadoAte(LocalDateTime.now().plusHours(DURACAO_BLOQUEIO_HORAS));
             tracking.setMotivoBloqueio("Muitas solicitacoes suspeitas de login");
             log.warn("[ip-tracking] IP {} bloqueado por {}h", ip, DURACAO_BLOQUEIO_HORAS);
+            securityMonitoringService.registrarEvento(
+                    "IP_BLOQUEADO_LOGIN_FALHADO",
+                    "HIGH",
+                    ip,
+                    null,
+                    "/api/auth/login",
+                    "-",
+                    "tentativas=" + tracking.getTentativasFalhadas()
+            );
+        } else if (tracking.getTentativasFalhadas() >= 3) {
+            securityMonitoringService.registrarEvento(
+                    "LOGIN_FALHADO_REPETIDO_IP",
+                    "MEDIUM",
+                    ip,
+                    null,
+                    "/api/auth/login",
+                    "-",
+                    "tentativas=" + tracking.getTentativasFalhadas()
+            );
         }
 
         ipTrackingRepository.save(tracking);
