@@ -25,6 +25,40 @@ ALTER TABLE usuarios
 ALTER TABLE usuarios
     ADD COLUMN IF NOT EXISTS sessao_ativa varchar(80);
 
+UPDATE meu_gendaz_acessos mga
+SET
+    nome = COALESCE(NULLIF(src.nome, ''), mga.nome),
+    status = src.status,
+    sessao_ativa = COALESCE(src.sessao_ativa, mga.sessao_ativa),
+    usuario_legado_id = COALESCE(mga.usuario_legado_id, src.usuario_legado_id),
+    data_atualizacao = now()
+FROM (
+    SELECT DISTINCT ON (u.empresa_id, lower(trim(u.email)))
+        u.empresa_id,
+        lower(trim(u.email)) AS email,
+        COALESCE(NULLIF(trim(u.nome), ''), split_part(lower(trim(u.email)), '@', 1), 'Cliente') AS nome,
+        u.status,
+        u.sessao_ativa_meu_gendaz AS sessao_ativa,
+        u.id AS usuario_legado_id
+    FROM usuarios u
+    WHERE u.empresa_id IS NOT NULL
+      AND u.email IS NOT NULL
+      AND (
+            u.sessao_ativa_meu_gendaz IS NOT NULL
+            OR (
+                u.perfil = 'ATENDENTE'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM membresias m
+                    WHERE m.usuario_id = u.id
+                )
+            )
+      )
+    ORDER BY u.empresa_id, lower(trim(u.email)), u.id
+) src
+WHERE mga.empresa_id = src.empresa_id
+  AND lower(trim(mga.email)) = src.email;
+
 INSERT INTO meu_gendaz_acessos (
     empresa_id,
     email,
@@ -36,35 +70,46 @@ INSERT INTO meu_gendaz_acessos (
     data_atualizacao
 )
 SELECT
-    u.empresa_id,
-    lower(trim(u.email)),
-    COALESCE(NULLIF(trim(u.nome), ''), split_part(lower(trim(u.email)), '@', 1), 'Cliente'),
-    u.status,
-    u.sessao_ativa_meu_gendaz,
-    u.id,
-    COALESCE(u.data_criacao, now()),
-    u.data_atualizacao
-FROM usuarios u
-WHERE u.empresa_id IS NOT NULL
-  AND u.email IS NOT NULL
-  AND (
-        u.sessao_ativa_meu_gendaz IS NOT NULL
-        OR (
-            u.perfil = 'ATENDENTE'
-            AND NOT EXISTS (
-                SELECT 1
-                FROM membresias m
-                WHERE m.usuario_id = u.id
+    src.empresa_id,
+    src.email,
+    src.nome,
+    src.status,
+    src.sessao_ativa,
+    src.usuario_legado_id,
+    src.data_criacao,
+    src.data_atualizacao
+FROM (
+    SELECT DISTINCT ON (u.empresa_id, lower(trim(u.email)))
+        u.empresa_id,
+        lower(trim(u.email)) AS email,
+        COALESCE(NULLIF(trim(u.nome), ''), split_part(lower(trim(u.email)), '@', 1), 'Cliente') AS nome,
+        u.status,
+        u.sessao_ativa_meu_gendaz AS sessao_ativa,
+        u.id AS usuario_legado_id,
+        COALESCE(u.data_criacao, now()) AS data_criacao,
+        u.data_atualizacao
+    FROM usuarios u
+    WHERE u.empresa_id IS NOT NULL
+      AND u.email IS NOT NULL
+      AND (
+            u.sessao_ativa_meu_gendaz IS NOT NULL
+            OR (
+                u.perfil = 'ATENDENTE'
+                AND NOT EXISTS (
+                    SELECT 1
+                    FROM membresias m
+                    WHERE m.usuario_id = u.id
+                )
             )
-        )
-  )
-ON CONFLICT (empresa_id, lower(trim(email))) DO UPDATE
-SET
-    nome = COALESCE(NULLIF(EXCLUDED.nome, ''), meu_gendaz_acessos.nome),
-    status = EXCLUDED.status,
-    sessao_ativa = COALESCE(EXCLUDED.sessao_ativa, meu_gendaz_acessos.sessao_ativa),
-    usuario_legado_id = COALESCE(meu_gendaz_acessos.usuario_legado_id, EXCLUDED.usuario_legado_id),
-    data_atualizacao = now();
+      )
+    ORDER BY u.empresa_id, lower(trim(u.email)), u.id
+) src
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM meu_gendaz_acessos mga
+    WHERE mga.empresa_id = src.empresa_id
+      AND lower(trim(mga.email)) = src.email
+);
 
 ALTER TABLE chamados
     ADD COLUMN IF NOT EXISTS meu_gendaz_acesso_id bigint NULL REFERENCES meu_gendaz_acessos(id);
