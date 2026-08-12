@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.SecureRandom;
-import java.util.Arrays;
 import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
@@ -25,22 +24,16 @@ public class CryptoService {
     private static final String PREFIX = "v1:";
 
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Environment environment;
     private final String configuredKey;
     private SecretKeySpec keySpec;
 
     public CryptoService(Environment environment, @Value("${APP_DATA_ENCRYPTION_KEY:}") String configuredKey) {
-        this.environment = environment;
         this.configuredKey = configuredKey;
     }
 
     @PostConstruct
     void inicializar() {
-        boolean prod = Arrays.stream(environment.getActiveProfiles()).anyMatch("prod"::equalsIgnoreCase);
-        if ((configuredKey == null || configuredKey.isBlank())) {
-            if (prod) {
-                throw new IllegalStateException("APP_DATA_ENCRYPTION_KEY obrigatoria em prod.");
-            }
+        if (configuredKey == null || configuredKey.isBlank()) {
             return;
         }
         keySpec = new SecretKeySpec(decodeKey(configuredKey), ALGORITHM);

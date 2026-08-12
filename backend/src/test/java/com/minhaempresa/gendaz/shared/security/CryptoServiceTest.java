@@ -44,13 +44,14 @@ class CryptoServiceTest {
     }
 
     @Test
-    void deveFalharEmProdSemChave() {
+    void deveInicializarSemChaveEFalharSomenteAoUsarCriptografia() {
         Environment environment = org.mockito.Mockito.mock(Environment.class);
         when(environment.getActiveProfiles()).thenReturn(new String[] {"prod"});
         CryptoService service = new CryptoService(environment, "");
 
-        IllegalStateException ex = assertThrows(IllegalStateException.class, service::inicializar);
-        assertTrue(ex.getMessage().contains("obrigatoria em prod"));
+        service.inicializar();
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> service.encrypt("dado sensivel"));
+        assertTrue(ex.getMessage().contains("nao configurada"));
     }
 
     private CryptoService serviceComChaveValida() {
