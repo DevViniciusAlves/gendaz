@@ -78,7 +78,14 @@ api.interceptors.response.use(
     }
 
     const url = String(error.config?.url || '')
-    if (status === 401 && url.includes('/auth/refresh')) {
+    const isPublicAuth = url.includes('/auth/login')
+      || url.includes('/auth/criar-conta')
+      || url.includes('/auth/recuperar-senha')
+      || url.includes('/auth/redefinir-senha')
+      || url.includes('/auth/csrf')
+    const isMeuGendaz = url.includes('/meu-gendaz/')
+    const isAdmin = url.includes('/admin/')
+    if (status === 401 && (url.includes('/auth/refresh') || (!isPublicAuth && !isMeuGendaz && !isAdmin))) {
       window.dispatchEvent(new Event('agendeasy:session-expired'))
     }
 
