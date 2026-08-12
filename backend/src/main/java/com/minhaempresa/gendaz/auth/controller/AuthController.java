@@ -30,7 +30,7 @@ import org.springframework.security.web.csrf.CsrfToken;
 @Slf4j
 public class AuthController {
     private static final int SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
-    private static final String SESSION_COOKIE = "meu_gendaz_session";
+    private static final String SESSION_COOKIE = "Gendaz_session";
     private static final String LEGACY_SESSION_COOKIE = "agendapro_session";
     private final AuthService authService;
 
@@ -147,7 +147,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
                 .path("/")
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(Duration.ofSeconds(maxAge))
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());
@@ -158,7 +158,7 @@ public class AuthController {
                 .httpOnly(true)
                 .secure(deveUsarSecure(request))
                 .path("/")
-                .sameSite("Lax")
+                .sameSite("None")
                 .maxAge(Duration.ZERO)
                 .build();
         response.addHeader("Set-Cookie", cookie.toString());

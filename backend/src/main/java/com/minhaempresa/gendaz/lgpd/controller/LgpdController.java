@@ -26,7 +26,7 @@ public class LgpdController {
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
     ) {
-        String sessionToken = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
         Long usuarioAutenticado = authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId();
         return ResponseEntity.ok(lgpdService.exportar(usuarioAutenticado));
     }
@@ -36,7 +36,7 @@ public class LgpdController {
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest request
     ) {
-        String sessionToken = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
         Long usuarioAutenticado = authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId();
         return ResponseEntity.ok(lgpdService.excluirConta(usuarioAutenticado));
     }

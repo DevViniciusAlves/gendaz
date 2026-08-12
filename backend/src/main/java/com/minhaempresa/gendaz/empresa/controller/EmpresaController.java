@@ -42,7 +42,7 @@ public class EmpresaController {
 
     private void validarNaoAtendente(HttpServletRequest http) {
         Long usuarioId = extrairUsuarioId(http.getHeader("X-Usuario-Id"));
-        String sessao = com.minhaempresa.gendaz.shared.CookieHelper.lerCookie(http, "meu_gendaz_session").orElse(null);
+        String sessao = com.minhaempresa.gendaz.shared.CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
         PerfilUsuario perfil = authService.buscarUsuarioAutenticado(usuarioId, sessao).getPerfil();
         if (perfil == PerfilUsuario.ATENDENTE) {
             throw new BusinessException("Seu perfil nao permite alterar dados da empresa.");

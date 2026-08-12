@@ -52,7 +52,7 @@ public class SessionAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            String sessionToken = CookieHelper.lerCookie(request, "meu_gendaz_session").orElse(null);
+            String sessionToken = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
             if (sessionToken != null && !sessionToken.isBlank()) {
                 try {
                     UsuarioEntity usuario = authService.buscarUsuarioAutenticado(null, sessionToken);

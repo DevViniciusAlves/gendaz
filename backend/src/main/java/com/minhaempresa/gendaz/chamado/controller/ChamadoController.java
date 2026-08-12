@@ -26,7 +26,7 @@ public class ChamadoController {
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest httpRequest
     ) {
-        String sessionToken = CookieHelper.lerCookie(httpRequest, "meu_gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(httpRequest, "Gendaz_session").orElse(null);
         Long usuarioAutenticado = authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId();
         return ResponseEntity.ok(chamadoService.criar(request, usuarioAutenticado));
     }
@@ -37,7 +37,7 @@ public class ChamadoController {
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest httpRequest
     ) {
-        String sessionToken = CookieHelper.lerCookie(httpRequest, "meu_gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(httpRequest, "Gendaz_session").orElse(null);
         Long usuarioAutenticado = authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId();
         return ResponseEntity.ok(chamadoService.listarPorEmpresa(empresaId, usuarioAutenticado));
     }
@@ -49,7 +49,7 @@ public class ChamadoController {
             @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest httpRequest
     ) {
-        String sessionToken = CookieHelper.lerCookie(httpRequest, "meu_gendaz_session").orElse(null);
+        String sessionToken = CookieHelper.lerCookie(httpRequest, "Gendaz_session").orElse(null);
         return ResponseEntity.ok(chamadoService.atualizar(id, request, authService.buscarUsuarioAutenticado(usuarioId, sessionToken)));
     }
 }

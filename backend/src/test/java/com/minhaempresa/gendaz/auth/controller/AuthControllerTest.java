@@ -44,7 +44,7 @@ class AuthControllerTest {
                             put("email", "teste@Gendaz.com");
                             put("senha", "Senha123!");
                         }})))
-                .andExpect(cookie().exists("meu_gendaz_session"))
+                .andExpect(cookie().exists("Gendaz_session"))
                 .andExpect(status().isOk());
     }
 
@@ -55,8 +55,8 @@ class AuthControllerTest {
         when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session", "sessao-antiga")))
-                .andExpect(cookie().exists("meu_gendaz_session"))
+                        .cookie(new jakarta.servlet.http.Cookie("Gendaz_session", "sessao-antiga")))
+                .andExpect(cookie().exists("Gendaz_session"))
                 .andExpect(status().isOk());
     }
 }
