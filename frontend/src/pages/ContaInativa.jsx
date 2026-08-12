@@ -1,4 +1,4 @@
-import { Copy, CreditCard, LockKeyhole, RefreshCw, LogOut, QrCode, AlertCircle, MessageSquare } from 'lucide-react'
+import { CreditCard, LockKeyhole, RefreshCw, LogOut, AlertCircle, MessageSquare } from 'lucide-react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import Button from '../components/Button.jsx'
@@ -26,7 +26,6 @@ export default function ContaInativa() {
   const [tipoMensagem, setTipoMensagem] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [gerando, setGerando] = useState(false)
-  const [copiado, setCopiado] = useState(false)
   const [planoSelecionado, setPlanoSelecionado] = useState(() => String(usuario?.plano || usuario?.assinatura?.planoNome || 'BASICO').toUpperCase())
   const carregadoParaEmpresaRef = useRef(null)
 
@@ -100,7 +99,7 @@ export default function ContaInativa() {
     try {
       const novoPagamento = await appApi.iniciarPagamentoPlano({
         empresaId: usuario.empresaId,
-        metodoPagamento: 'PIX_AUTO',
+        metodoPagamento: 'CREDIT_CARD',
         plano: planoSelecionado,
       }, { skipUsuarioHeader: true })
       registrarInicioCheckout(novoPagamento)
@@ -149,14 +148,7 @@ export default function ContaInativa() {
       setMensagem('Checkout expirado ou indisponível. Gere um novo pagamento para continuar.')
       return
     }
-    window.open(pagamento.checkoutUrl, '_blank', 'noopener,noreferrer')
-  }
-
-  async function copiarPix() {
-    if (!pagamento?.pixCopiaECola) return
-    await navigator.clipboard.writeText(pagamento.pixCopiaECola)
-    setCopiado(true)
-    setTimeout(() => setCopiado(false), 2500)
+    window.location.href = pagamento.checkoutUrl
   }
 
   function trocarPlano(event) {
@@ -270,27 +262,6 @@ export default function ContaInativa() {
                   <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando} style={{ width: '100%' }}>
                     {carregando ? 'Verificando...' : 'Já paguei, verificar'}
                   </Button>
-                )}
-                {(pagamento?.pixCopiaECola || pagamento?.pixQrCodeBase64) && (
-                  <div className="payment-pix-card" style={{ width: '100%' }}>
-                    <div className="payment-pix-header">
-                      <QrCode size={22} />
-                      <strong>Pagamento PIX</strong>
-                    </div>
-                    <div className="payment-pix-body">
-                      {pagamento?.pixQrCodeBase64 && (
-                        <img className="pix-qr-image large" src={`data:image/png;base64,${pagamento.pixQrCodeBase64}`} alt="QR Code PIX" />
-                      )}
-                      <div className="payment-pix-copy">
-                        <small>{pagamento?.pixCopiaECola || 'O código PIX será exibido aqui quando a cobrança for gerada.'}</small>
-                        {pagamento?.pixCopiaECola && (
-                          <button type="button" className="btn btn-secondary" onClick={copiarPix} style={{ marginTop: '8px' }}>
-                            <Copy size={16} /> {copiado ? 'Código copiado' : 'Copiar código PIX'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
                 )}
               </div>
             )}

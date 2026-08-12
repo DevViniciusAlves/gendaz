@@ -29,7 +29,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/public/",
             "/api/health",
             "/api/pagamentos/planos/webhook",
-            "/api/pagamentos/planos/webhook/cakto",
+            "/api/pagamentos/webhook/stripe",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
             "/api/meu-gendaz/",

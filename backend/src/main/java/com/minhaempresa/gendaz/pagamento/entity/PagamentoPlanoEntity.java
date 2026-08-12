@@ -63,9 +63,6 @@ public class PagamentoPlanoEntity {
     @Column(name = "payment_reference", unique = true, length = 120)
     private String paymentReference;
 
-    @Column(name = "cakto_ref_id", length = 120)
-    private String caktoRefId;
-
     @Column(name = "customer_name", length = 120)
     private String customerName;
 
@@ -84,20 +81,17 @@ public class PagamentoPlanoEntity {
     @Column(name = "antifraud_reference", length = 120)
     private String antifraudReference;
 
-    @Column(name = "cakto_offer_id", length = 120)
-    private String caktoOfferId;
-
     @Column(length = 600)
     private String checkoutUrl;
 
-    @Column(name = "pix_copia_cola", length = 600)
-    private String pixCopiaECola;
-
-    @Column(name = "pix_qr_code_base64", length = 4000)
-    private String pixQrCodeBase64;
-
-    @Column(name = "cakto_subscription_id", length = 120)
+    @Column(name = "subscription_id", length = 120)
     private String subscriptionId;
+
+    @Column(name = "stripe_customer_id", length = 120)
+    private String stripeCustomerId;
+
+    @Column(name = "stripe_session_id", length = 120, unique = true)
+    private String stripeSessionId;
 
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;

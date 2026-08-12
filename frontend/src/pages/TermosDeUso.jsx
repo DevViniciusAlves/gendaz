@@ -42,7 +42,7 @@ const secoes = [
     titulo: '6. Planos, pagamentos e assinatura',
     conteudos: [
       'A plataforma pode oferecer planos como Básico e Pro, com condições exibidas no site ou no painel no momento da contratação.',
-      'Pagamentos e assinaturas podem ser processados por gateways externos, como a Cakto, ou por outros fornecedores integrados futuramente.',
+      'Pagamentos e assinaturas podem ser processados pela Stripe ou por outros fornecedores integrados futuramente.',
     ],
   },
   {

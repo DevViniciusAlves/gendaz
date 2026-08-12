@@ -137,7 +137,7 @@ public class OutboundTrafficAuditService {
         if (!enabled) return;
         log.info("[outbound-audit][SUMMARY] intervaloMs={} inicio={}", summaryIntervalMs, LocalDateTime.now().format(TS));
         resumirGrupo("Groq");
-        resumirGrupo("Cakto");
+        resumirGrupo("Stripe");
         resumirGrupo("Resend");
         resumirGrupo("reCAPTCHA");
         resumirGrupo("PostgreSQL");

@@ -14,6 +14,7 @@ import com.minhaempresa.gendaz.auth.service.AuthService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoBulkService;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
+import com.minhaempresa.gendaz.pagamento.service.StripeWebhookService;
 import com.minhaempresa.gendaz.shared.GlobalExceptionHandler;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +32,7 @@ class PagamentoControllerTest {
     @Mock
     private AuthService authService;
     @Mock
-    private com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayProperties paymentGatewayProperties;
+    private StripeWebhookService stripeWebhookService;
 
     private MockMvc mockMvc;
 
@@ -39,7 +40,7 @@ class PagamentoControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(
-                new PagamentoController(pagamentoService, pagamentoBulkService, paymentGatewayProperties, authService)
+                new PagamentoController(pagamentoService, pagamentoBulkService, stripeWebhookService, authService)
         ).setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 

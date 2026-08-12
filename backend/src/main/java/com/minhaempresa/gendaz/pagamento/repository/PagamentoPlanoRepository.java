@@ -17,7 +17,7 @@ public interface PagamentoPlanoRepository extends JpaRepository<PagamentoPlanoEn
     Optional<PagamentoPlanoEntity> findByProviderPaymentId(String providerPaymentId);
     Optional<PagamentoPlanoEntity> findByExternalReference(String externalReference);
     Optional<PagamentoPlanoEntity> findByPaymentReference(String paymentReference);
-    Optional<PagamentoPlanoEntity> findByCaktoRefId(String caktoRefId);
+    Optional<PagamentoPlanoEntity> findByStripeSessionId(String stripeSessionId);
     Optional<PagamentoPlanoEntity> findBySubscriptionId(String subscriptionId);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresaIdAndStatusOrderByDataCriacaoDesc(Long empresaId, StatusPagamento status);

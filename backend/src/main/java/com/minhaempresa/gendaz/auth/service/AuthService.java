@@ -223,10 +223,10 @@ public class AuthService {
             PagamentoPlanoResponse pagamentoPlano = null;
             if (cadastro.cadastroPro()) {
                 try {
-                    pagamentoPlano = pagamentoService.iniciarPagamentoPlanoPro(cadastro.empresaId(), MetodoPagamento.PIX_AUTO);
+                    pagamentoPlano = pagamentoService.iniciarPagamentoPlanoPro(cadastro.empresaId(), MetodoPagamento.CREDIT_CARD);
                 } catch (BusinessException ex) {
                     log.warn("Cadastro Pro criado, mas pagamento inicial nao foi gerado para empresa {}: {}", cadastro.empresaId(), ex.getMessage());
-                    pagamentoPlano = pagamentoService.criarPagamentoPlanoPendente(cadastro.empresaId(), "PRO", MetodoPagamento.PIX_AUTO);
+                    pagamentoPlano = pagamentoService.criarPagamentoPlanoPendente(cadastro.empresaId(), "PRO", MetodoPagamento.CREDIT_CARD);
                 }
             }
 

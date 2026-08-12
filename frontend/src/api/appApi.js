@@ -795,7 +795,9 @@ export const appApi = {
   },
 
   iniciarPagamentoPlano(payload, options = {}) {
-    return api.post('/pagamentos/planos/pro/iniciar', payload, options).then((response) => response.data)
+    const plano = String(payload?.plano || 'PRO').toUpperCase()
+    const endpoint = plano === 'BASICO' ? '/pagamentos/planos/basico/iniciar' : '/pagamentos/planos/pro/iniciar'
+    return api.post(endpoint, payload, options).then((response) => response.data)
   },
 
   iniciarPagamentoPro(payload) {

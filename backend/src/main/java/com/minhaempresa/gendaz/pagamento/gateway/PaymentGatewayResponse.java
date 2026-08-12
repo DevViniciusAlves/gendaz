@@ -8,8 +8,6 @@ public record PaymentGatewayResponse(
         String externalReference,
         String paymentReference,
         String checkoutUrl,
-        String pixCopiaECola,
-        String pixQrCodeBase64,
         LocalDateTime dataExpiracao
 ) {}
 

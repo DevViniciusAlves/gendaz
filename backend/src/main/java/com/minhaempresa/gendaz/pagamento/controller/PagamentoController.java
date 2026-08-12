@@ -9,10 +9,9 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.IniciarPagamentoPlano
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPlanoResponse;
-import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.WebhookPagamentoPlanoRequest;
-import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayProperties;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoBulkService;
+import com.minhaempresa.gendaz.pagamento.service.StripeWebhookService;
 import com.minhaempresa.gendaz.auth.service.AuthService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -20,11 +19,15 @@ import com.minhaempresa.gendaz.shared.CookieHelper;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -34,7 +37,7 @@ import org.springframework.web.bind.annotation.*;
 public class PagamentoController {
     private final PagamentoService pagamentoService;
     private final PagamentoBulkService pagamentoBulkService;
-    private final PaymentGatewayProperties paymentGatewayProperties;
+    private final StripeWebhookService stripeWebhookService;
     private final AuthService authService;
 
     @PostMapping
@@ -80,6 +83,23 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlanoPro(request));
     }
 
+    @PostMapping("/planos/basico/iniciar")
+    public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoBasico(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
+        validarNaoAtendente(http);
+        validarEmpresaAutenticada(http, request.empresaId());
+        return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlano(
+                request.empresaId(),
+                "BASICO",
+                request.metodoPagamento(),
+                request.customerName(),
+                request.customerEmail(),
+                request.customerPhone(),
+                request.customerDocType(),
+                request.customerDocNumber(),
+                request.antifraudProfilingAttemptReference()
+        ));
+    }
+
     @GetMapping("/planos/empresa/{empresaId}")
     public ResponseEntity<List<PagamentoPlanoResponse>> listarPagamentosPlano(@PathVariable Long empresaId, HttpServletRequest http) {
         validarEmpresaAutenticada(http, empresaId);
@@ -104,82 +124,19 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService.consultarPlanoAtual(empresaId));
     }
 
-    @PostMapping("/webhook")
-    public ResponseEntity<PagamentoPlanoResponse> receberWebhook(
-            @RequestHeader(name = "X-Payment-Signature", required = false) String assinatura,
-            @Valid @RequestBody WebhookPagamentoPlanoRequest request) {
-        return ResponseEntity.ok(pagamentoService.processarWebhookPlano(request, assinatura));
-    }
-
-    @PostMapping("/planos/webhook")
-    public ResponseEntity<PagamentoPlanoResponse> receberWebhookMercadoPago(
-            @RequestHeader(name = "x-signature", required = false) String assinatura,
-            @RequestHeader(name = "x-cakto-signature", required = false) String assinaturaCakto,
-            @RequestHeader(name = "x-webhook-secret", required = false) String webhookSecret,
-            @RequestHeader(name = "authorization", required = false) String authorization,
-            @RequestHeader(name = "x-request-id", required = false) String requestId,
-            @RequestParam Map<String, String> queryParams,
-            @RequestBody(required = false) Map<String, Object> body) {
-        if (usarWebhookCakto(body)) {
-            String assinaturaFinal = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
-            return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinaturaFinal));
+    @PostMapping("/webhook/stripe")
+    public ResponseEntity<Void> receberWebhookStripe(
+            @RequestHeader(name = "Stripe-Signature", required = false) String assinatura,
+            HttpServletRequest request) {
+        try {
+            String payload = new String(request.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+            stripeWebhookService.processar(payload, assinatura);
+            return ResponseEntity.ok().build();
+        } catch (BusinessException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, ex.getMessage(), ex);
+        } catch (IOException ex) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nao foi possivel ler webhook Stripe.", ex);
         }
-        String providerPaymentId = extrairPaymentId(queryParams, body);
-        return ResponseEntity.ok(pagamentoService.processarWebhookMercadoPago(providerPaymentId, assinatura, requestId));
-    }
-
-    @PostMapping("/planos/webhook/cakto")
-    public ResponseEntity<PagamentoPlanoResponse> receberWebhookCakto(
-            @RequestHeader(name = "x-cakto-signature", required = false) String assinaturaCakto,
-            @RequestHeader(name = "x-webhook-secret", required = false) String webhookSecret,
-            @RequestHeader(name = "authorization", required = false) String authorization,
-            @RequestParam Map<String, String> queryParams,
-            @RequestBody(required = false) Map<String, Object> body) {
-        log.info("Webhook Cakto recebido");
-        if (body == null || body.isEmpty()) {
-            throw new com.minhaempresa.gendaz.shared.BusinessException("Webhook da Cakto sem payload valido.");
-        }
-        String assinatura = primeiraNaoVazia(assinaturaCakto, webhookSecret, authorization);
-        return ResponseEntity.ok(pagamentoService.processarWebhookCakto(body, assinatura));
-    }
-
-    @SuppressWarnings("unchecked")
-    private String extrairPaymentId(Map<String, String> queryParams, Map<String, Object> body) {
-        String dataId = queryParams.get("data.id");
-        if (dataId == null || dataId.isBlank()) dataId = queryParams.get("data_id");
-        if ((dataId == null || dataId.isBlank()) && body != null) {
-            Object data = body.get("data");
-            if (data instanceof Map<?, ?> dataMap) {
-                Object id = ((Map<String, Object>) dataMap).get("id");
-                if (id != null) dataId = String.valueOf(id);
-            }
-        }
-        if ((dataId == null || dataId.isBlank()) && body != null && body.get("id") != null) {
-            dataId = String.valueOf(body.get("id"));
-        }
-        return dataId;
-    }
-
-    private String primeiraNaoVazia(String... valores) {
-        for (String valor : valores) {
-            if (valor != null && !valor.isBlank()) return valor;
-        }
-        return null;
-    }
-
-    private boolean usarWebhookCakto(Map<String, Object> body) {
-        if ("CAKTO".equalsIgnoreCase(paymentGatewayProperties.getProvider())) {
-            return true;
-        }
-        if (body == null || body.isEmpty()) {
-            return false;
-        }
-        return body.containsKey("payment_reference")
-                || body.containsKey("paymentReference")
-                || body.containsKey("product_id")
-                || body.containsKey("productId")
-                || body.containsKey("sale_status")
-                || body.containsKey("saleStatus");
     }
 
     private void validarNaoAtendente(HttpServletRequest http) {
@@ -197,13 +154,5 @@ public class PagamentoController {
         }
     }
 
-    private Long extrairUsuarioId(String valor) {
-        if (valor == null || valor.isBlank()) return null;
-        try {
-            return Long.valueOf(valor);
-        } catch (NumberFormatException ignored) {
-            return null;
-        }
-    }
 }
 

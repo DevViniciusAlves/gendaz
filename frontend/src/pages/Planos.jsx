@@ -92,7 +92,7 @@ export default function Planos() {
   const navigate = useNavigate()
   const [data] = useLocalData('planos')
   const { usuario, atualizarPlanoAtual, atualizarUsuario } = useAuth()
-  const [metodoPagamento] = useState('PIX')
+  const [metodoPagamento] = useState('CREDIT_CARD')
   const [pagamentoPlano, setPagamentoPlano] = useState(() => usuario?.pagamentoPlano || null)
   const [checkoutSolicitado, setCheckoutSolicitado] = useState(false)
   const [checkoutSolicitadoEm, setCheckoutSolicitadoEm] = useState(null)
@@ -178,7 +178,7 @@ export default function Planos() {
     try {
       const pagamento = await appApi.iniciarPagamentoPro({
         empresaId: usuario.empresaId,
-        metodoPagamento: metodoPagamento === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'PIX_AUTO',
+        metodoPagamento: 'CREDIT_CARD',
         plano: 'PRO',
         customerName: usuario.nome,
         customerEmail: usuario.email,
@@ -218,7 +218,7 @@ export default function Planos() {
     try {
       const pagamento = await appApi.iniciarPagamentoPlano({
         empresaId: usuario.empresaId,
-        metodoPagamento: metodoPagamento === 'CREDIT_CARD' ? 'CREDIT_CARD' : 'PIX_AUTO',
+        metodoPagamento: 'CREDIT_CARD',
         plano: 'BASICO',
         customerName: usuario.nome,
         customerEmail: usuario.email,

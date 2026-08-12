@@ -22,9 +22,7 @@ public class SecurityHeadersConfig {
             "/api/auth/redefinir-senha",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
-            "/api/pagamentos/webhook",
-            "/api/pagamentos/planos/webhook",
-            "/api/pagamentos/planos/webhook/cakto"
+            "/api/pagamentos/webhook/stripe"
     };
 
     @Bean

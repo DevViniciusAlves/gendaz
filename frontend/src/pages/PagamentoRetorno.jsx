@@ -30,7 +30,7 @@ export default function PagamentoRetorno({ tipo }) {
     ? 'Sua conta Pro foi liberada. Entre novamente para acessar o painel.'
     : cancelado
       ? 'O pagamento nao foi concluido. Voce pode voltar para a tela de pagamento e tentar novamente.'
-      : 'Recebemos o retorno da Cakto. Confirme o status para liberar a conta quando o pagamento for aprovado.'
+      : 'Recebemos o retorno da Stripe. Confirme o status para liberar a conta quando o pagamento for aprovado.'
 
   async function consultarStatus() {
     if (!pagamento?.empresaId || !pagamento?.id) {
@@ -82,7 +82,7 @@ export default function PagamentoRetorno({ tipo }) {
           </div>
         )}
 
-        {location.search && <small className="payment-return-note">Retorno recebido da Cakto.</small>}
+        {location.search && <small className="payment-return-note">Retorno recebido da Stripe.</small>}
         {erro && <p className="form-error">{erro}</p>}
 
         <div className="payment-wait-actions">

@@ -1350,7 +1350,7 @@ export default function AdminDashboard() {
               )}
               {modal?.tipo === 'pagamento-desaprovar' && (
                 <label className="field">
-                  <span>ID/transacao da Cakto</span>
+                  <span>ID/transacao da Stripe</span>
                   <input value={transacaoId} onChange={(event) => setTransacaoId(event.target.value)} placeholder="Informe o identificador do pagamento, se houver" />
                 </label>
               )}
