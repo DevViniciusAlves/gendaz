@@ -1,6 +1,6 @@
 ﻿export const demoUsers = [
-  { id: 1, nome: 'Ana Basico', email: 'basico@gendaz.com', senha: 'Senha123!', perfil: 'DONO', plano: 'BASICO', empresaId: 1 },
-  { id: 2, nome: 'Bruno Pro', email: 'pro@gendaz.com', senha: 'Senha123!', perfil: 'DONO', plano: 'PRO', empresaId: 1 },
+  { id: 1, nome: 'Ana Basico', email: 'basico@gendaz.com', perfil: 'DONO', plano: 'BASICO', empresaId: 1 },
+  { id: 2, nome: 'Bruno Pro', email: 'pro@gendaz.com', perfil: 'DONO', plano: 'PRO', empresaId: 1 },
 ]
 
 export const initialData = {

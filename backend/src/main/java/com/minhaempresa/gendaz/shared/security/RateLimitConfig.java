@@ -13,8 +13,8 @@ import org.springframework.stereotype.Component;
 public class RateLimitConfig {
 
     public static class Limits {
-        public static final int LOGIN_PER_HOUR = 5;
-        public static final int REGISTRAR_PER_DAY = 3;
+        public static final int LOGIN_PER_MINUTE = 5;
+        public static final int REGISTRAR_PER_MINUTE = 3;
         public static final int HORARIOS_PER_MINUTE = 10;
         public static final int API_GERAL_PER_MINUTE = 300;
     }
@@ -25,17 +25,19 @@ public class RateLimitConfig {
     private final Map<String, Bucket> apiBuckets = new ConcurrentHashMap<>();
 
     public Bucket getLoginBucket(String ip) {
+        // Corrigido: limita login publico a 5 requisicoes por minuto por IP.
         return loginBuckets.computeIfAbsent(ip, k ->
             Bucket4j.builder()
-                .addLimit(Bandwidth.classic(Limits.LOGIN_PER_HOUR, Refill.intervally(Limits.LOGIN_PER_HOUR, Duration.ofHours(1))))
+                .addLimit(Bandwidth.classic(Limits.LOGIN_PER_MINUTE, Refill.intervally(Limits.LOGIN_PER_MINUTE, Duration.ofMinutes(1))))
                 .build()
         );
     }
 
     public Bucket getRegistrarBucket(String ip) {
+        // Corrigido: limita criacao de conta publica a 3 requisicoes por minuto por IP.
         return registrarBuckets.computeIfAbsent(ip, k ->
             Bucket4j.builder()
-                .addLimit(Bandwidth.classic(Limits.REGISTRAR_PER_DAY, Refill.intervally(Limits.REGISTRAR_PER_DAY, Duration.ofDays(1))))
+                .addLimit(Bandwidth.classic(Limits.REGISTRAR_PER_MINUTE, Refill.intervally(Limits.REGISTRAR_PER_MINUTE, Duration.ofMinutes(1))))
                 .build()
         );
     }

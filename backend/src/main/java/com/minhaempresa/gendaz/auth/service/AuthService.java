@@ -93,6 +93,7 @@ public class AuthService {
             UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(email);
 
             if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO) {
+                logLoginFalhado(email, 0);
                 throw new BusinessException("E-mail ou senha invalidos.");
             }
 
@@ -125,11 +126,13 @@ public class AuthService {
                     usuario.setBloqueadoAte(LocalDateTime.now().plusHours(5));
                     usuarioRepository.save(usuario);
                     log.warn("[login] usuario {} bloqueado por 5h apos {} tentativas", mascararEmail(email), usuario.getTentativasLoginFalhadas());
+                    logLoginFalhado(email, usuario.getTentativasLoginFalhadas());
                     throw new BusinessException("Tentativas de senha esgotadas. Sua conta foi bloqueada temporariamente. Tente novamente em 5 horas.");
                 }
 
                 usuarioRepository.save(usuario);
                 log.warn("[login] senha invalida para {} (tentativa {})", mascararEmail(email), usuario.getTentativasLoginFalhadas());
+                logLoginFalhado(email, usuario.getTentativasLoginFalhadas());
                 ipTrackingService.registrarTentativaFalhada(getCurrentClientIp());
                 throw new BusinessException("E-mail ou senha invalidos.");
             }
@@ -195,6 +198,7 @@ public class AuthService {
             }
             String sessionToken = usuarioSessionService.renovarSessao(usuario);
             registrarAuditoriaAutenticacao("USER_LOGIN_SUCCESS", usuario, "Login realizado com sucesso");
+            logLoginBemSucedido(email);
             log.info("Login concluido para {} em {} ms", mascararEmail(email), duracaoMs(inicio));
             return new LoginResponse("Login realizado com sucesso.", mapper.toResponse(usuario), assinatura, null, "ACTIVE", sessionToken);
         } catch (BusinessException ex) {
@@ -284,6 +288,7 @@ public class AuthService {
     @Transactional
     public void solicitarRecuperacaoSenha(String email) {
         String normalizado = normalizarEmail(email);
+        logRecuperacaoSenha(normalizado);
         usuarioRepository.findUsuariosPainelByEmailIgnoreCase(normalizado, PERFIS_PAINEL_DIRETOS).forEach(usuario -> {
             String token = passwordRecoveryService.solicitarRecuperacao(usuario);
             boolean enviado = resendEmailService.enviarRecuperacaoSenha(
@@ -325,6 +330,7 @@ public class AuthService {
         passwordService.validarSenha(novaSenha);
         usuario.setSenha(passwordService.hash(novaSenha));
         usuarioRepository.save(usuario);
+        logAlteracaoSenha(usuario.getId());
         usuarioSessionService.encerrarSessao(usuario.getId(), sessionToken);
     }
 
@@ -567,10 +573,41 @@ public class AuthService {
         return (System.nanoTime() - inicio) / 1_000_000;
     }
 
-    private String getCurrentClientIp() {
+    // Corrigido: logs estruturados de eventos de seguranca sem expor e-mail completo.
+    private void logLoginFalhado(String email, int tentativas) {
+        HttpServletRequest request = getCurrentRequest();
+        log.warn("[SECURITY] Login falhado - Email: {}, IP: {}, Tentativa: {}, User-Agent: {}", mascararEmail(email), getCurrentClientIp(), tentativas, getUserAgent(request));
+    }
+
+    private void logLoginBemSucedido(String email) {
+        HttpServletRequest request = getCurrentRequest();
+        log.info("[SECURITY] Login bem-sucedido - Email: {}, IP: {}, User-Agent: {}", mascararEmail(email), getCurrentClientIp(), getUserAgent(request));
+    }
+
+    private void logAlteracaoSenha(Long usuarioId) {
+        HttpServletRequest request = getCurrentRequest();
+        log.info("[SECURITY] Alteracao de senha - UsuarioId: {}, IP: {}, User-Agent: {}", usuarioId, getCurrentClientIp(), getUserAgent(request));
+    }
+
+    private void logRecuperacaoSenha(String email) {
+        HttpServletRequest request = getCurrentRequest();
+        log.info("[SECURITY] Recuperacao de senha - Email: {}, IP: {}, User-Agent: {}", mascararEmail(email), getCurrentClientIp(), getUserAgent(request));
+    }
+
+    private String getUserAgent(HttpServletRequest request) {
+        if (request == null) return "unknown";
+        String userAgent = request.getHeader("User-Agent");
+        return userAgent == null || userAgent.isBlank() ? "unknown" : userAgent;
+    }
+
+    private HttpServletRequest getCurrentRequest() {
         ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        if (attrs == null) return "unknown";
-        HttpServletRequest request = attrs.getRequest();
+        return attrs == null ? null : attrs.getRequest();
+    }
+
+    private String getCurrentClientIp() {
+        HttpServletRequest request = getCurrentRequest();
+        if (request == null) return "unknown";
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty()) {
             ip = request.getRemoteAddr();

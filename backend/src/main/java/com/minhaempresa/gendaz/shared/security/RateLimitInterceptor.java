@@ -53,7 +53,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 } else {
                     long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                     response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
-                    reason = "Login rate limit exceeded (5 tentativas invalidas por hora)";
+                    reason = "Login rate limit exceeded (5 tentativas por minuto)";
                     log.warn("[rate-limit] login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
                 }
             }
@@ -72,7 +72,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 } else {
                     long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                     response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
-                    reason = "Admin login rate limit exceeded (5 tentativas invalidas por hora)";
+                    reason = "Admin login rate limit exceeded (5 tentativas por minuto)";
                     log.warn("[rate-limit] admin login bloqueado: IP={} aguarde={}s", ip, waitForRefill);
                 }
             }
@@ -84,7 +84,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             } else {
                 long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
-                reason = "Registrar rate limit exceeded (3 por dia)";
+                reason = "Registrar rate limit exceeded (3 por minuto)";
                 log.warn("[rate-limit] registrar bloqueado: IP={} aguarde={}s", ip, waitForRefill);
             }
         } else if (isHorariosEndpoint(path, method) && usuarioId != null) {

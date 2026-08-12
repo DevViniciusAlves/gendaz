@@ -34,7 +34,8 @@ public class SecurityHeadersConfig {
             GendazSessionAuthenticationFilter gendazSessionAuthenticationFilter,
             MeuGendazSessionAuthenticationFilter meuGendazSessionAuthenticationFilter
     ) throws Exception {
-        CookieCsrfTokenRepository csrfTokenRepository = CookieCsrfTokenRepository.withHttpOnlyFalse();
+        // Corrigido: HttpOnly=true para evitar roubo do cookie CSRF via XSS.
+        CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
         csrfTokenRepository.setCookiePath("/");
         csrfTokenRepository.setCookieCustomizer(cookie -> cookie
                 .sameSite("None")
