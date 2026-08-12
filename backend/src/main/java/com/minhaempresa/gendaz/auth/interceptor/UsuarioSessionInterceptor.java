@@ -13,15 +13,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
-import org.springframework.security.web.csrf.CsrfToken;
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class UsuarioSessionInterceptor implements HandlerInterceptor {
     private static final List<String> ROTAS_PUBLICAS = List.of(
             "/api/auth/login",
@@ -64,18 +61,6 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
         if (sessao == null || sessao.isBlank()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
             return false;
-        }
-
-        String method = request.getMethod();
-        if (Set.of("POST", "PUT", "PATCH", "DELETE").contains(method)) {
-            String csrfTokenHeader = request.getHeader("X-XSRF-TOKEN");
-            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-
-            if (csrfToken == null || csrfTokenHeader == null || !csrfTokenHeader.equals(csrfToken.getToken())) {
-                log.warn("CSRF token invalido para requisicao {} {}", method, request.getRequestURI());
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "CSRF token invalido");
-                return false;
-            }
         }
 
         Optional<UsuarioEntity> usuarioDaSessao = usuarioRepository.findBySessaoAtiva(sessao);
@@ -133,8 +118,6 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
         }
         return List.of(
                 frontendUrl,
-                "https://gendaz.pages.dev",
-                "https://gendaz-stage.onrender.com",
                 "http://localhost:5173",
                 "http://127.0.0.1:5173",
                 "http://localhost:5174",

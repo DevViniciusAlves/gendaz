@@ -67,14 +67,6 @@ export function clearLocalData() {
 
 export function clearSensitiveStorage() {
   if (typeof window === 'undefined') return
-  if (window.localStorage) {
-    window.localStorage.removeItem('Gendaz_session')
-    window.localStorage.removeItem('meu_gendaz_session')
-  }
-  if (window.sessionStorage) {
-    window.sessionStorage.removeItem('Gendaz_session')
-    window.sessionStorage.removeItem('meu_gendaz_session')
-  }
   const prefixes = [
     'agendapro_scope_cache_',
     'gendaz_scope_cache_',

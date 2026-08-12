@@ -25,7 +25,7 @@ public class SessionHandshakeInterceptor implements HandshakeInterceptor {
                                    WebSocketHandler wsHandler, Map<String, Object> attributes) {
         if (request instanceof ServletServerHttpRequest) {
             HttpServletRequest servletRequest = ((ServletServerHttpRequest) request).getServletRequest();
-            CookieHelper.lerCookie(servletRequest, "meu_gendaz_session")
+            CookieHelper.lerCookie(servletRequest, "Gendaz_session")
                     .flatMap(usuarioRepository::findBySessaoAtiva)
                     .ifPresent(usuario -> attributes.put("userId", usuario.getId()));
         }

@@ -49,18 +49,14 @@ public class WebConfig implements WebMvcConfigurer {
                         Arrays.stream(frontendUrl.split(",")),
                         Stream.of(
                                 "https://gendaz.site",
-                                "https://www.gendaz.site",
-                                "https://gendaz.pages.dev",
-                                "https://gendaz-stage.onrender.com"
+                                "https://www.gendaz.site"
                         )
                 ).toList()
                 : List.of(
                         "http://localhost:5173",
                         "http://127.0.0.1:5173",
                         "http://localhost:5174",
-                        "http://127.0.0.1:5174",
-                        "https://gendaz.pages.dev",
-                        "https://gendaz-stage.onrender.com"
+                        "http://127.0.0.1:5174"
                 );
 
         Set<String> origens = new LinkedHashSet<>();
@@ -104,10 +100,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/auth/logout",
                         "/api/meu-gendaz/auth/refresh",
                         "/api/public/**",
-                        "/api/health/**",
-                        "/api/pagamentos/webhook",
-                        "/api/pagamentos/planos/webhook",
-                        "/api/pagamentos/planos/webhook/cakto"
+                        "/api/health/**"
                 );
         registry.addInterceptor(adminIpWhitelistInterceptor)
                 .addPathPatterns("/admin", "/admin/**", "/api/admin", "/api/admin/**");
