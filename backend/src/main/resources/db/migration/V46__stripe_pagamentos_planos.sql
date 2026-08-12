@@ -5,10 +5,21 @@ ALTER TABLE pagamentos_planos
 ALTER TABLE pagamentos_planos
     ADD COLUMN IF NOT EXISTS subscription_id VARCHAR(120);
 
-UPDATE pagamentos_planos
-SET subscription_id = cakto_subscription_id
-WHERE subscription_id IS NULL
-  AND cakto_subscription_id IS NOT NULL;
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_schema = current_schema()
+          AND table_name = 'pagamentos_planos'
+          AND column_name = 'cakto_subscription_id'
+    ) THEN
+        UPDATE pagamentos_planos
+        SET subscription_id = cakto_subscription_id
+        WHERE subscription_id IS NULL
+          AND cakto_subscription_id IS NOT NULL;
+    END IF;
+END $$;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_pagamentos_planos_stripe_session_id
     ON pagamentos_planos(stripe_session_id)

@@ -14,8 +14,8 @@ BEGIN
           AND array_length(con.conkey, 1) = 1
           AND EXISTS (
               SELECT 1
-              FROM unnest(con.conkey) AS attnum
-              JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = attnum
+              FROM unnest(con.conkey) AS key_column(attnum_value)
+              JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = key_column.attnum_value
               WHERE att.attname = 'email'
           )
     LOOP
