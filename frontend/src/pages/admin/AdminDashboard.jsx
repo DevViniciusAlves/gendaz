@@ -408,10 +408,20 @@ export default function AdminDashboard() {
 
   async function confirmarImpersonacao() {
     if (!modal) return
+    if (!modal.usuarioId) {
+      setErro('Usuario responsavel da empresa nao encontrado para inspecao.')
+      return
+    }
     setCarregandoAcao(true)
     try {
-      const session = await adminApi.impersonar(modal.empresaId, motivo.trim() || null)
-      iniciarImpersonacao(session)
+      const session = await adminApi.startImpersonation({ empresaId: modal.empresaId, usuarioId: modal.usuarioId })
+      iniciarImpersonacao({
+        ...session,
+        empresa: modal.empresa,
+        usuarioNome: modal.responsavel,
+        usuarioEmail: modal.email,
+        plano: modal.plano,
+      })
       setModal(null)
       navigate('/sistema/dashboard')
     } catch (error) {

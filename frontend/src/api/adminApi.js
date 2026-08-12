@@ -70,9 +70,20 @@ export const adminApi = {
     return api.get('/planos').then((response) => response.data)
   },
 
-  impersonar(empresaId, motivo) {
-    const payload = motivo ? { motivo } : {}
-    return api.post(`/admin/empresas/${empresaId}/impersonar`, payload).then((response) => response.data)
+  startImpersonation({ empresaId, usuarioId }) {
+    return api.post('/admin/impersonation/start', { empresaId, usuarioId }).then((response) => response.data)
+  },
+
+  currentImpersonation() {
+    return api.get('/admin/impersonation/current').then((response) => response.data)
+  },
+
+  endImpersonation() {
+    return api.post('/admin/impersonation/end', {}).then((response) => response.data)
+  },
+
+  impersonar(empresaId, usuarioId) {
+    return this.startImpersonation({ empresaId, usuarioId })
   },
 
   ativarEmpresa(empresaId, motivo) {
@@ -111,7 +122,7 @@ export const adminApi = {
     return api.patch(`/admin/chamados/${chamadoId}/status`, { status }).then((response) => response.data)
   },
 
-  encerrarImpersonacao(sessionId) {
-    return api.post(`/admin/impersonacoes/${sessionId}/encerrar`, {}).then((response) => response.data)
+  encerrarImpersonacao() {
+    return this.endImpersonation()
   },
 }

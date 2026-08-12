@@ -1,5 +1,7 @@
 package com.minhaempresa.gendaz.shared.security;
 
+import com.minhaempresa.gendaz.admin.entity.AdminImpersonationSessionEntity;
+import com.minhaempresa.gendaz.admin.service.AdminImpersonationService;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.CookieHelper;
@@ -35,6 +37,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
     );
 
     private final UsuarioRepository usuarioRepository;
+    private final AdminImpersonationService adminImpersonationService;
 
     @Value("${FRONTEND_URL:https://gendaz.site}")
     private String frontendUrl;
@@ -53,18 +56,35 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String session = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
-            if (session == null || session.isBlank()) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
-                return;
+            UsuarioEntity usuario = null;
+            boolean impersonation = false;
+            AdminImpersonationSessionEntity impersonationSession = null;
+
+            if (session != null && !session.isBlank()) {
+                usuario = usuarioRepository.findBySessaoAtiva(session).orElse(null);
+                if (usuario == null) {
+                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao invalida.");
+                    return;
+                }
+            } else {
+                String impersonationToken = CookieHelper.lerCookie(request, "Gendaz_impersonation_session").orElse(null);
+                impersonationSession = adminImpersonationService.validar(impersonationToken).orElse(null);
+                if (impersonationSession != null) {
+                    usuario = usuarioRepository.findById(impersonationSession.getUsuarioImpersonadoId()).orElse(null);
+                    impersonation = true;
+                }
             }
 
-            UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(session).orElse(null);
             if (usuario == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao invalida.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
                 return;
             }
             if (!usuarioAtivo(usuario)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Usuario ou conta indisponivel.");
+                return;
+            }
+            if (impersonation && (usuario.getEmpresa() == null || !impersonationSession.getEmpresaId().equals(usuario.getEmpresa().getId()))) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Sessao de impersonacao invalida.");
                 return;
             }
             if (!origemPermitida(request)) {
@@ -75,10 +95,20 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             if (usuario.getEmpresa() != null) {
                 CompanyContext.setCompanyId(usuario.getEmpresa().getId());
             }
+            List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()));
+            if (impersonation) {
+                authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN_IMPERSONATION"));
+                request.setAttribute("adminImpersonation", true);
+                request.setAttribute("impersonationAdminId", impersonationSession.getAdminUsuarioId());
+                request.setAttribute("impersonationSessionId", impersonationSession.getId());
+                request.setAttribute("impersonationUsuarioId", impersonationSession.getUsuarioImpersonadoId());
+                request.setAttribute("impersonationEmpresaId", impersonationSession.getEmpresaId());
+            }
             Authentication authentication = new UsernamePasswordAuthenticationToken(
                     usuario.getId(),
                     null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()))
+                    authorities
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);

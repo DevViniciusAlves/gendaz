@@ -300,6 +300,7 @@ public UsuarioEntity exigirAdmin(String token) {
             PagamentoPlanoEntity ultimoPagamento = pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresa.getId()).stream().findFirst().orElse(null);
             return new AdminEmpresaUsuarioResponse(
                     empresa.getId(),
+                    dono == null ? null : dono.getId(),
                     empresa.getNomeFantasia(),
                     empresa.getDocumento(),
                     dono == null ? null : dono.getNome(),
@@ -409,11 +410,17 @@ public UsuarioEntity exigirAdmin(String token) {
                 .orElseGet(() -> usuarioRepository.findByEmpresaId(empresaId).stream().findFirst()
                         .orElseThrow(() -> new ResourceNotFoundException("Usuario da empresa nao encontrado.")));
         AdminImpersonationSessionEntity session = impersonationSessionRepository.save(AdminImpersonationSessionEntity.builder()
-                .admin(admin)
-                .empresa(empresa)
-                .motivo(motivo)
-                .ip(ip)
-                .userAgent(userAgent)
+                .adminUsuarioId(admin.getId())
+                .usuarioImpersonadoId(dono.getId())
+                .empresaId(empresa.getId())
+                .sessionTokenHash("legacy-" + UUID.randomUUID())
+                .status("ENCERRADA")
+                .ipInicio(ip)
+                .userAgentInicio(userAgent)
+                .criadoEm(LocalDateTime.now())
+                .expiraEm(LocalDateTime.now())
+                .encerradoEm(LocalDateTime.now())
+                .motivoEncerramento("LEGACY")
                 .build());
         auditService.registrar("IMPERSONACAO_INICIADA", "SECURITY", admin, null, empresa, "Super Admin acessou conta de empresa", motivo, ip, userAgent);
         log.info("Sessao de impersonacao {} criada para empresa {}", session.getId(), empresa.getId());
@@ -428,8 +435,8 @@ public UsuarioEntity exigirAdmin(String token) {
                 dono.getNome(),
                 dono.getEmail(),
                 empresa.getNomeFantasia(),
-                session.getMotivo(),
-                session.getDataInicio()
+                motivo,
+                session.getCriadoEm()
         );
     }
 
@@ -507,11 +514,13 @@ public UsuarioEntity exigirAdmin(String token) {
     @Transactional
     public void encerrarImpersonacao(String token, Long sessionId, String ip, String userAgent) {
         UsuarioEntity admin = exigirAdmin(token);
-        AdminImpersonationSessionEntity session = impersonationSessionRepository.findByIdAndAdminIdAndAtivaTrue(sessionId, admin.getId())
+        AdminImpersonationSessionEntity session = impersonationSessionRepository.findByIdAndAdminUsuarioIdAndStatus(sessionId, admin.getId(), "ATIVA")
                 .orElseThrow(() -> new ResourceNotFoundException("Sessao de impersonacao nao encontrada."));
-        session.setAtiva(false);
-        session.setDataFim(LocalDateTime.now());
-        auditService.registrar("IMPERSONACAO_ENCERRADA", "SECURITY", admin, null, session.getEmpresa(), "Super Admin saiu da conta acessada", session.getMotivo(), ip, userAgent);
+        session.setStatus("ENCERRADA");
+        session.setEncerradoEm(LocalDateTime.now());
+        session.setMotivoEncerramento("MANUAL");
+        EmpresaEntity empresa = empresaRepository.findById(session.getEmpresaId()).orElse(null);
+        auditService.registrar("IMPERSONACAO_ENCERRADA", "SECURITY", admin, null, empresa, "Super Admin saiu da conta acessada", "MANUAL", ip, userAgent);
     }
 
     @Transactional(readOnly = true)
@@ -705,6 +714,7 @@ public UsuarioEntity exigirAdmin(String token) {
         PagamentoPlanoEntity ultimoPagamento = pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresa.getId()).stream().findFirst().orElse(null);
         return new AdminEmpresaUsuarioResponse(
                 empresa.getId(),
+                dono == null ? null : dono.getId(),
                 empresa.getNomeFantasia(),
                 empresa.getDocumento(),
                 dono == null ? null : dono.getNome(),

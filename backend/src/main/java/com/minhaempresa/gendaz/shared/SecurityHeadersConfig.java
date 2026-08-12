@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.shared;
 
+import com.minhaempresa.gendaz.shared.security.AdminImpersonationGuardFilter;
 import com.minhaempresa.gendaz.shared.security.GendazSessionAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.MeuGendazSessionAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
@@ -32,7 +33,8 @@ public class SecurityHeadersConfig {
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             GendazSessionAuthenticationFilter gendazSessionAuthenticationFilter,
-            MeuGendazSessionAuthenticationFilter meuGendazSessionAuthenticationFilter
+            MeuGendazSessionAuthenticationFilter meuGendazSessionAuthenticationFilter,
+            AdminImpersonationGuardFilter adminImpersonationGuardFilter
     ) throws Exception {
         // Corrigido: HttpOnly=true para evitar roubo do cookie CSRF via XSS.
         CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
@@ -47,6 +49,7 @@ public class SecurityHeadersConfig {
                         .ignoringRequestMatchers(CSRF_IGNORADOS))
                 .addFilterAfter(new com.minhaempresa.gendaz.shared.security.CsrfCookieFilter(), org.springframework.security.web.csrf.CsrfFilter.class)
                 .addFilterBefore(gendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(adminImpersonationGuardFilter, GendazSessionAuthenticationFilter.class)
                 .addFilterBefore(meuGendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth

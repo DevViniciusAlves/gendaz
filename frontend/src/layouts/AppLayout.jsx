@@ -60,7 +60,7 @@ export default function AppLayout() {
         <div className="app-main">
           {impersonation && (
             <div className="impersonation-banner">
-              <strong>Voce esta acessando a conta de {impersonation.empresa} como Super Admin.</strong>
+              <strong>Voce esta visualizando esta conta como administrador.</strong>
               <button type="button" onClick={sairDaContaAcessada}>Sair da conta e voltar ao Admin</button>
             </div>
           )}

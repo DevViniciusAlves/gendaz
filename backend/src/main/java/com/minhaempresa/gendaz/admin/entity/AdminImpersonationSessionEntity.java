@@ -1,7 +1,5 @@
 package com.minhaempresa.gendaz.admin.entity;
 
-import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
-import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -12,44 +10,42 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "admin_impersonation_sessions", indexes = {
-        @Index(name = "idx_impersonation_admin", columnList = "admin_id"),
-        @Index(name = "idx_impersonation_empresa", columnList = "empresa_id")
-})
+@Table(name = "admin_impersonation_sessions")
 public class AdminImpersonationSessionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "admin_id", nullable = false)
-    private UsuarioEntity admin;
+    @Column(name = "admin_usuario_id", nullable = false)
+    private Long adminUsuarioId;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "empresa_id", nullable = false)
-    private EmpresaEntity empresa;
+    @Column(name = "usuario_impersonado_id", nullable = false)
+    private Long usuarioImpersonadoId;
 
-    @Column(nullable = false, length = 1000)
-    private String motivo;
+    @Column(name = "empresa_id", nullable = false)
+    private Long empresaId;
 
-    @Column(nullable = false)
-    private LocalDateTime dataInicio;
+    @Column(name = "session_token_hash", nullable = false, length = 128, unique = true)
+    private String sessionTokenHash;
 
-    private LocalDateTime dataFim;
+    @Column(nullable = false, length = 30)
+    private String status;
 
-    @Column(length = 120)
-    private String ip;
+    @Column(name = "ip_inicio", length = 100)
+    private String ipInicio;
 
-    @Column(length = 600)
-    private String userAgent;
+    @Column(name = "user_agent_inicio", length = 500)
+    private String userAgentInicio;
 
-    @Column(nullable = false)
-    private boolean ativa;
+    @Column(name = "criado_em", nullable = false)
+    private LocalDateTime criadoEm;
 
-    @PrePersist
-    void prePersist() {
-        dataInicio = LocalDateTime.now();
-        ativa = true;
-    }
+    @Column(name = "expira_em", nullable = false)
+    private LocalDateTime expiraEm;
+
+    @Column(name = "encerrado_em")
+    private LocalDateTime encerradoEm;
+
+    @Column(name = "motivo_encerramento", length = 100)
+    private String motivoEncerramento;
 }
-

@@ -577,6 +577,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       ...payload,
       admin: adminAtual,
       modoProxy: true,
+      active: true,
     }
     impersonationMemory = impersonationData
     salvarImpersonationPersistida(impersonationData)
@@ -586,7 +587,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
       id: payload?.usuarioId,
       perfil: 'DONO',
       empresaId: payload?.empresaId,
-      nome: payload?.usuarioNome || payload?.nome,
+      nome: payload?.usuarioNome || payload?.nome || 'Usuario impersonado',
       email: payload?.usuarioEmail || payload?.email,
       plano: payload?.plano,
       statusConta: 'ACTIVE',
@@ -598,9 +599,9 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 
   async function encerrarImpersonacao() {
     const contexto = impersonationMemory || lerImpersonationPersistida()
-    if (contexto?.sessionId) {
+    if (contexto) {
       try {
-        await adminApi.encerrarImpersonacao(contexto.sessionId)
+        await adminApi.encerrarImpersonacao()
       } catch {
         // mantem o encerramento local mesmo se o backend falhar
       }

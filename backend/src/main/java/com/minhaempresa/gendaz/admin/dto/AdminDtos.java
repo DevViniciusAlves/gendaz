@@ -38,6 +38,7 @@ public final class AdminDtos {
 
     public record AdminEmpresaUsuarioResponse(
             Long empresaId,
+            Long usuarioId,
             String empresa,
             String documento,
             String responsavel,
