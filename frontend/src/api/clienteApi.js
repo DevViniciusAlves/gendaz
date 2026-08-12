@@ -16,6 +16,33 @@ const clienteApi = axios.create({
 const MAX_REQUESTS = 60
 let requestCount = 0
 let resetTime = Date.now() + 60000
+let csrfToken = null
+let csrfPromise = null
+
+function precisaCsrf(config) {
+  const metodo = String(config.method || 'get').toLowerCase()
+  if (!['post', 'put', 'patch', 'delete'].includes(metodo)) return false
+  const url = String(config.url || '')
+  return !url.includes('/auth/solicitar-codigo')
+    && !url.includes('/auth/validar-codigo')
+    && !url.includes('/auth/logout')
+}
+
+async function garantirCsrfToken() {
+  if (csrfToken) return csrfToken
+  if (!csrfPromise) {
+    csrfPromise = axios.get(`${API_BASE}/auth/csrf`, {
+      timeout: 10000,
+      withCredentials: true,
+    }).then((response) => {
+      csrfToken = response.data?.token || null
+      return csrfToken
+    }).finally(() => {
+      csrfPromise = null
+    })
+  }
+  return csrfPromise
+}
 
 function emitirToast(type, message) {
   if (typeof window === 'undefined') return
@@ -24,7 +51,7 @@ function emitirToast(type, message) {
   }))
 }
 
-clienteApi.interceptors.request.use((config) => {
+clienteApi.interceptors.request.use(async (config) => {
   const now = Date.now()
   if (now > resetTime) {
     requestCount = 0
@@ -35,6 +62,14 @@ clienteApi.interceptors.request.use((config) => {
     return Promise.reject(new Error('RATE_LIMIT_EXCEEDED'))
   }
   requestCount++
+
+  if (precisaCsrf(config)) {
+    const token = await garantirCsrfToken()
+    if (token) {
+      config.headers = config.headers || {}
+      config.headers['X-XSRF-TOKEN'] = token
+    }
+  }
 
   return config
 })
@@ -59,6 +94,9 @@ clienteApi.interceptors.response.use(
 
     const status = error.response?.status
     const skipLogout = error.config?.skipMeuGendazLogout === true
+    if (status === 403 && precisaCsrf(error.config || {})) {
+      csrfToken = null
+    }
     if (status === 401 && !skipLogout) {
        window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
     }
