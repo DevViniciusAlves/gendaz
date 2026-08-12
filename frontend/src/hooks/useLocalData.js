@@ -133,9 +133,11 @@ export function useLocalData(scope = 'full') {
     }
 
     window.addEventListener('gendaz:data-changed', reloadFromEvent)
+    window.addEventListener('gendaz:session-changed', reloadFromEvent)
 
     return () => {
       window.removeEventListener('gendaz:data-changed', reloadFromEvent)
+      window.removeEventListener('gendaz:session-changed', reloadFromEvent)
     }
   }, [scope, reload])
 
