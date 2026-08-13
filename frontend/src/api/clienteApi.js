@@ -25,11 +25,11 @@ function precisaCsrf(config) {
   const url = String(config.url || '')
   return !url.includes('/auth/solicitar-codigo')
     && !url.includes('/auth/validar-codigo')
-    && !url.includes('/auth/logout')
 }
 
 async function garantirCsrfToken() {
   if (csrfToken) return csrfToken
+
   if (!csrfPromise) {
     csrfPromise = axios.get(`${API_BASE}/auth/csrf`, {
       timeout: 10000,

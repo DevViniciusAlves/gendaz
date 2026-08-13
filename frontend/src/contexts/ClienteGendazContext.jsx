@@ -381,8 +381,11 @@ export function ClienteGendazProvider({ children, slug }) {
   }, [])
 
   const logout = useCallback(async () => {
-    await clienteApi.post('/meu-gendaz/auth/logout')
-    limparEstadoSessao()
+    try {
+      await clienteApi.post('/meu-gendaz/auth/logout', null, { skipMeuGendazLogout: true })
+    } finally {
+      limparEstadoSessao()
+    }
   }, [limparEstadoSessao])
 
   const value = {

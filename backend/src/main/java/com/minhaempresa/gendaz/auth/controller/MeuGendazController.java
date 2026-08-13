@@ -339,15 +339,10 @@ public class MeuGendazController {
         String cookieName = nomeCookie(slug);
         String session = CookieHelper.lerCookie(request, cookieName).orElse(null);
         if (session != null && !session.isBlank()) {
-            MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findBySessaoAtiva(session)
-                    .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida."));
-            if (acesso.getEmpresa() == null || !empresa.getId().equals(acesso.getEmpresa().getId())) {
-                throw new SessaoExpiradaException("Sessao invalida para esta loja.");
-            }
-            usuarioSessionService.encerrarSessaoMeuGendaz(acesso.getId(), session);
-            if (acesso.getEmpresa().getAgendamentoSlug() != null && !acesso.getEmpresa().getAgendamentoSlug().isBlank()) {
-                cookieName = nomeCookie(acesso.getEmpresa().getAgendamentoSlug());
-            }
+            meuGendazAcessoRepository.findBySessaoAtiva(session)
+                    .filter(acesso -> acesso.getEmpresa() != null)
+                    .filter(acesso -> empresa.getId().equals(acesso.getEmpresa().getId()))
+                    .ifPresent(acesso -> usuarioSessionService.encerrarSessaoMeuGendaz(acesso.getId(), session));
         }
         cookieService.limparCookie(request, response, cookieName);
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
