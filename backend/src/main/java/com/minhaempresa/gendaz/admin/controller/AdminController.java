@@ -7,14 +7,13 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoRespons
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.SalvarProfissionalRequest;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
+import com.minhaempresa.gendaz.shared.CookieService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import java.time.Duration;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
