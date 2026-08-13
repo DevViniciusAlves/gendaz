@@ -1,7 +1,9 @@
 package com.minhaempresa.gendaz.agendamento.dto;
 
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
+import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import jakarta.validation.constraints.NotNull;
+
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,7 +27,7 @@ public final class AgendamentoDtos {
 
     public record RemarcarAgendamentoRequest(@NotNull LocalDate data, @NotNull LocalTime horaInicio) {}
 
-    public record FinalizarAgendamentoRequest(Boolean pagamentoRealizado) {}
+    public record FinalizarAgendamentoRequest(Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {}
 
     public record AtualizarAgendamentoRequest(
             @NotNull Long clienteId,

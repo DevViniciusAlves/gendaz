@@ -2044,35 +2044,123 @@ tbody tr:hover { background: #fffaf5; }
    GRÁFICO RECEITA MÊS (NOVO COMPONENTE)
    ============================================= */
 .gendaz-receita-mes-shell {
+  position: relative;
   width: 100%;
-  height: 240px;
+  min-width: 0;
+  height: clamp(220px, 28vw, 300px);
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
   font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  overflow: hidden;
+}
+
+.gendaz-receita-mes-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+.gendaz-receita-grid-row line {
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 1;
+  stroke-dasharray: 4 8;
+}
+
+.gendaz-receita-grid-row text,
+.gendaz-receita-x-label {
+  fill: rgba(255, 255, 255, 0.46);
+  font-size: 11px;
+  letter-spacing: -0.01em;
+}
+
+.gendaz-receita-area {
+  fill: url(#receitaMesAreaGradient);
+  opacity: 0;
+  animation: receitaAreaIn 760ms ease forwards;
+}
+
+.gendaz-receita-line {
+  fill: none;
+  stroke: #ff6d24;
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 6px 14px rgba(255, 109, 36, 0.18));
+  stroke-dasharray: 1600;
+  stroke-dashoffset: 1600;
+  animation: receitaLineIn 980ms cubic-bezier(.22,.8,.24,1) forwards;
+}
+
+.gendaz-receita-hit-area {
+  fill: transparent;
+  stroke: transparent;
+  cursor: pointer;
+  outline: none;
+}
+
+.gendaz-receita-active-dot {
+  fill: #ff6d24;
+  stroke: rgba(255, 255, 255, 0.92);
+  stroke-width: 2.5;
+}
+
+.gendaz-receita-tooltip rect {
+  fill: rgba(10, 10, 10, 0.96);
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+}
+
+.gendaz-receita-tooltip-date {
+  fill: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+}
+
+.gendaz-receita-tooltip-value {
+  fill: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
 }
 
 .gendaz-receita-mes-empty {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 8px;
   padding: 24px;
   text-align: center;
+  pointer-events: none;
   color: rgba(255, 255, 255, 0.6);
   font-size: 14px;
 }
 
 .gendaz-receita-mes-empty p {
   margin: 0;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.8);
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.86);
 }
 
 .gendaz-receita-mes-empty small {
+  max-width: 360px;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.48);
+}
+
+@keyframes receitaLineIn {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes receitaAreaIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 /* Admin-specific styles */
@@ -3361,6 +3449,39 @@ tbody tr:hover { background: #fffaf5; }
 
 .financeiro-panel h2 {
   margin: 0;
+}
+
+.financeiro-payment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.financeiro-payment-toggle {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-soft);
+}
+
+.financeiro-payment-toggle span {
+  color: var(--text);
+}
+
+.financeiro-payment-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+}
+
+.financeiro-payment-toggle strong {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 @media (max-width: 980px) {
@@ -14328,6 +14449,18 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+@media (max-width: 768px) {
+  .app-shell .content .promo-usage-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell .content .promo-usage-summary-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
 
 
 
@@ -19682,7 +19815,823 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+.app-shell .dashboard-page .receita-chart-panel {
+  padding: clamp(16px, 2.1vw, 24px) !important;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.052) 0%, rgba(255, 255, 255, 0.022) 100%) !important;
+  border-color: rgba(255, 255, 255, 0.11) !important;
+}
 
+.app-shell .dashboard-page .receita-chart-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 14px !important;
+  border: 0 !important;
+}
 
+.app-shell .dashboard-page .receita-chart-copy {
+  min-width: 0;
+}
+
+.app-shell .dashboard-page .receita-chart-copy .section-kicker {
+  color: rgba(255, 255, 255, 0.55) !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.app-shell .dashboard-page .receita-chart-copy h2 {
+  margin: 6px 0 10px !important;
+  color: #ffffff !important;
+  font-size: clamp(17px, 1.8vw, 22px) !important;
+}
+
+.app-shell .dashboard-page .receita-chart-total {
+  display: block;
+  margin: 0 0 8px;
+  color: #ffffff !important;
+  font-size: clamp(30px, 4.4vw, 52px) !important;
+  line-height: 0.96 !important;
+  letter-spacing: -0.055em;
+  white-space: normal;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.app-shell .dashboard-page .receita-chart-subtitle {
+  max-width: 520px;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.48) !important;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.app-shell .dashboard-page .receita-chart-periodo {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.app-shell .dashboard-page .receita-chart-periodo small {
+  color: rgba(255, 255, 255, 0.66) !important;
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .app-shell .dashboard-page .receita-chart-head {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .app-shell .dashboard-page .receita-chart-periodo {
+    align-self: flex-start;
+  }
+
+  .gendaz-receita-mes-shell {
+    height: 232px;
+  }
+}
+
+@media (max-width: 414px) {
+  .app-shell .dashboard-page .receita-chart-panel {
+    padding: 14px 10px 12px !important;
+  }
+
+  .app-shell .dashboard-page .receita-chart-total {
+    font-size: clamp(27px, 11vw, 36px) !important;
+  }
+
+  .gendaz-receita-mes-shell {
+    height: 218px;
+    margin-inline: -4px;
+  }
+
+  .gendaz-receita-grid-row text,
+  .gendaz-receita-x-label {
+    font-size: 10px;
+  }
+}
+
+:root[data-theme='light'] .app-shell .dashboard-page .receita-chart-copy .section-kicker,
+:root[data-theme='light'] .app-shell .dashboard-page .receita-chart-subtitle,
+:root[data-theme='light'] .app-shell .dashboard-page .receita-chart-periodo small {
+  color: rgba(17, 24, 39, 0.56) !important;
+}
+
+:root[data-theme='light'] .gendaz-receita-grid-row text,
+:root[data-theme='light'] .gendaz-receita-x-label {
+  fill: rgba(17, 24, 39, 0.56);
+}
+
+:root[data-theme='light'] .app-shell .dashboard-page .receita-chart-copy h2,
+:root[data-theme='light'] .app-shell .dashboard-page .receita-chart-total,
+:root[data-theme='light'] .gendaz-receita-mes-empty p {
+  color: #111827 !important;
+}
+
+:root[data-theme='light'] .gendaz-receita-grid-row line {
+  stroke: rgba(17, 24, 39, 0.10);
+}
+
+:root[data-theme='light'] .gendaz-receita-mes-empty small {
+  color: rgba(17, 24, 39, 0.54);
+}
+
+/* ============================================================
+   Responsividade consolidada - projeto Gendaz
+   Breakpoints base: 1280 / 1024 / 768 / 640 / 480 / 414 / 375 / 360 / 320
+   ============================================================ */
+html {
+  max-width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  max-width: 100%;
+}
+
+img,
+svg,
+canvas,
+video,
+iframe {
+  max-width: 100%;
+}
+
+.app-shell,
+.app-main,
+.content,
+.page,
+.panel,
+.metric-card,
+.table-wrap,
+.modal,
+.gendaz-shell,
+.gendaz-main,
+.gendaz-page,
+.gendaz-card,
+.gendaz-panel,
+.admin-shell,
+.admin-content,
+.admin-page,
+.marketing-page,
+.booking-page,
+.login-screen,
+.criar-conta-screen,
+.payment-page,
+.legal-page {
+  min-width: 0;
+}
+
+.app-shell *,
+.gendaz-shell *,
+.admin-shell *,
+.marketing-page *,
+.booking-page * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.btn,
+.btn-primary,
+.btn-secondary,
+.icon-btn,
+.gendaz-btn,
+.gendaz-fab,
+.admin-shell button,
+.app-shell button,
+.booking-page button {
+  touch-action: manipulation;
+}
+
+.modal-backdrop {
+  min-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal {
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.modal-header {
+  gap: 12px;
+}
+
+.modal-header h2 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 1024px) {
+  body {
+    min-width: 0 !important;
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .sidebar {
+    position: sticky;
+    top: 0;
+    z-index: 25;
+    height: auto !important;
+    max-height: none;
+    padding: 12px 16px 10px !important;
+    border-right: 0 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .app-shell .sidebar-logo-wrapper {
+    min-height: 0 !important;
+    padding: 4px 0 8px !important;
+  }
+
+  .app-shell .sidebar .sidebar-logo {
+    max-width: 138px !important;
+    max-height: 62px !important;
+    transform: none !important;
+  }
+
+  .app-shell .sidebar .nav-label,
+  .app-shell .sidebar-foot {
+    display: none !important;
+  }
+
+  .app-shell .sidebar nav {
+    display: flex !important;
+    gap: 8px !important;
+    margin-top: 0 !important;
+    padding: 2px 2px 6px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .app-shell .sidebar nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .app-shell .page {
+    padding: 0 !important;
+  }
+
+  .app-shell .sidebar a {
+    flex: 0 0 auto;
+    min-height: 42px !important;
+    padding: 0 12px !important;
+    border-left: 0 !important;
+    border-radius: 999px !important;
+    white-space: nowrap;
+  }
+
+  .app-shell .sidebar a.active {
+    padding-left: 12px !important;
+  }
+
+  .app-shell .topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .dashboard-grid,
+  .app-shell .dashboard-grid,
+  .agenda-header,
+  .chat-layout,
+  .settings-summary-grid,
+  .support-grid,
+  .plans-grid,
+  .plans-grid.detailed,
+  .booking-schedule-grid,
+  .booking-preview-grid,
+  .payment-steps,
+  .marketing-features__mosaic,
+  .marketing-features__spotlight-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0 !important;
+  }
+
+  .content,
+  .app-shell .content,
+  .gendaz-main,
+  .admin-content {
+    padding-inline: 16px !important;
+  }
+
+  .topbar,
+  .app-shell .topbar,
+  .page-title,
+  .row-title,
+  .panel-head,
+  .filters,
+  .table-actions,
+  .chat-actions,
+  .message-form,
+  .confirm-actions,
+  .export-period,
+  .booking-actions,
+  .payment-status-card,
+  .legal-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .topbar-actions,
+  .page-title-actions,
+  .account-badges,
+  .delivery-action,
+  .mass-action-toolbar,
+  .crm-actions-bar,
+  .gendaz-actions,
+  .gendaz-card__actions,
+  .admin-shell .page-title-actions {
+    width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    justify-content: flex-start;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .app-shell .btn,
+  .gendaz-btn,
+  .admin-shell .btn,
+  .booking-page .btn {
+    min-height: 44px;
+    white-space: normal;
+  }
+
+  .form-grid,
+  .app-shell .form-grid,
+  .export-period,
+  .demo-accounts,
+  .payment-status-card,
+  .payment-steps {
+    grid-template-columns: 1fr !important;
+  }
+
+  .field input,
+  .field select,
+  .field textarea,
+  input,
+  select,
+  textarea {
+    max-width: 100%;
+  }
+
+  .dropdown-panel,
+  .notification-panel,
+  .account-panel,
+  .action-menu-panel {
+    width: min(320px, calc(100vw - 32px)) !important;
+    max-width: calc(100vw - 32px) !important;
+  }
+
+  .data-table th,
+  .data-table td {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .modal-backdrop {
+    align-items: end;
+    place-items: end center;
+    padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+  }
+
+  .modal {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 24px - env(safe-area-inset-bottom));
+    border-radius: 20px 20px 16px 16px !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .content,
+  .app-shell .content,
+  .admin-content {
+    padding: 14px 16px 18px !important;
+  }
+
+  .panel,
+  .metric-card,
+  .dashboard-summary-card,
+  .table-wrap,
+  .settings-card,
+  .support-card,
+  .plan-card,
+  .booking-card,
+  .payment-pro-card,
+  .payment-checkout-card,
+  .login-panel,
+  .criar-conta-panel,
+  .legal-card {
+    padding: 16px !important;
+  }
+
+  .page-title h1,
+  .dashboard-hero h1,
+  .marketing-page h1,
+  .booking-page h1,
+  .payment-pro-card h1 {
+    font-size: clamp(1.75rem, 9vw, 2.35rem) !important;
+    line-height: 1.08 !important;
+  }
+
+  .marketing-page .hero-section-new {
+    min-height: auto !important;
+    padding: 46px 16px 34px !important;
+    overflow: hidden !important;
+  }
+
+  .marketing-features__head,
+  .marketing-features__grid,
+  .marketing-features__mosaic,
+  .marketing-features__spotlight-grid,
+  .marketing-testimonials__head,
+  .marketing-testimonials__grid {
+    width: calc(100% - 32px) !important;
+  }
+
+  .marketing-features__mosaic,
+  .marketing-features__spotlight-grid,
+  .marketing-testimonials__grid,
+  .marketing-page .storytelling-steps-compact,
+  .marketing-page .marketing-depoimentos-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .feature-spotlight-card,
+  .feature-mosaic-card {
+    min-height: auto !important;
+  }
+
+  .booking-page .booking-schedule-grid,
+  .booking-page .booking-time-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .booking-page .booking-hour-chip,
+  .booking-page .booking-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell .sidebar {
+    padding-inline: 12px !important;
+  }
+
+  .app-shell .sidebar a span {
+    display: inline;
+    font-size: 12px;
+  }
+
+  .content,
+  .app-shell .content,
+  .admin-content {
+    padding-inline: 14px !important;
+  }
+
+  .modal-backdrop {
+    padding-inline: 10px;
+  }
+
+  .dropdown-panel,
+  .notification-panel,
+  .account-panel,
+  .action-menu-panel {
+    left: auto !important;
+    right: 0 !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+
+  .payment-pro-card,
+  .login-panel,
+  .criar-conta-panel,
+  .gendaz-auth__card {
+    padding: 18px 16px !important;
+  }
+}
+
+@media (max-width: 414px) {
+  .content,
+  .app-shell .content,
+  .admin-content {
+    padding-inline: 12px !important;
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .gendaz-btn,
+  .admin-shell button {
+    width: 100%;
+  }
+
+  .icon-btn,
+  .action-menu-btn,
+  .mass-action-icon-button {
+    width: 42px !important;
+    min-width: 42px !important;
+  }
+}
+
+@media (max-width: 375px) {
+  .content,
+  .app-shell .content,
+  .admin-content,
+  .gendaz-main {
+    padding-inline: 10px !important;
+  }
+
+  .panel,
+  .metric-card,
+  .gendaz-card,
+  .gendaz-panel,
+  .modal,
+  .table-wrap {
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell .sidebar a {
+    padding-inline: 10px !important;
+  }
+
+  .page-title h1,
+  .gendaz-page__header h1,
+  .marketing-page h1 {
+    font-size: 1.55rem !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .content,
+  .app-shell .content,
+  .admin-content,
+  .gendaz-main {
+    padding-inline: 8px !important;
+  }
+
+  .app-shell .sidebar a,
+  .gendaz-mobile-nav__link {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .chat-layout {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell .page {
+    padding: 0 !important;
+  }
+
+  .app-shell .chat-layout,
+  .app-shell .agenda-header,
+  .app-shell .dashboard-grid,
+  .app-shell .schedule-grid,
+  .app-shell .settings-grid,
+  .app-shell .plans-grid.detailed {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@supports (min-height: 100dvh) {
+  .app-shell,
+  .gendaz-shell,
+  .login-screen,
+  .criar-conta-screen,
+  .payment-page,
+  .booking-page,
+  .legal-page {
+    min-height: 100dvh;
+  }
+
+  .sidebar,
+  .gendaz-sidebar,
+  .admin-gendaz-sidebar {
+    height: 100dvh;
+  }
+}
+
+/* Meu Gendaz mobile app navigation */
+.gendaz-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .gendaz-shell {
+    display: block !important;
+    min-height: 100dvh;
+  }
+
+  .gendaz-shell .gendaz-sidebar {
+    display: none !important;
+  }
+
+  .gendaz-main {
+    width: 100%;
+    padding: 16px 16px calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gendaz-mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 80;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 8px max(8px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+    background: rgba(10, 10, 10, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  .gendaz-mobile-nav__link,
+  .gendaz-mobile-more__link {
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 0;
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.68);
+    background: transparent;
+    text-decoration: none;
+    font-size: 11px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .gendaz-mobile-nav__link.is-active,
+  .gendaz-mobile-more__link.is-active {
+    color: #111111;
+    background: #f5f5f5;
+  }
+
+  .gendaz-mobile-more {
+    position: relative;
+    min-width: 0;
+  }
+
+  .gendaz-mobile-more summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .gendaz-mobile-more summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .gendaz-mobile-more__panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 10px);
+    width: min(220px, calc(100vw - 24px));
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: rgba(17, 17, 17, 0.98);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+  }
+
+  .gendaz-mobile-more__link {
+    min-height: 44px;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0 12px;
+    font-size: 13px;
+    text-align: left;
+  }
+
+  .gendaz-fab {
+    right: 16px;
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    min-width: 52px;
+    width: 52px;
+    height: 52px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .gendaz-fab span {
+    display: none;
+  }
+
+  .gendaz-chat {
+    min-height: calc(100dvh - 150px);
+    max-height: none;
+  }
+
+  .gendaz-chat__message {
+    max-width: 92%;
+  }
+
+  .gendaz-chat__form {
+    grid-template-columns: 1fr !important;
+  }
+
+  .gendaz-agenda-actions .gendaz-btn,
+  .gendaz-card__actions .gendaz-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell .modal[style],
+  .app-shell .modal-card[style] {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .app-shell .modal > div[style],
+  .app-shell .modal-card > form,
+  .app-shell .modal-card > div[style] {
+    max-width: 100%;
+  }
+
+  .app-shell .modal table,
+  .app-shell .modal-card table {
+    min-width: 560px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell .modal-header + div[style],
+  .app-shell .modal-card > form {
+    padding-inline: 16px !important;
+  }
+
+  .app-shell .modal-header + div[style] > div[style]:last-child,
+  .app-shell .modal-card form > div[style]:last-child,
+  .app-shell .modal-card > div[style]:last-child {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .gendaz-main {
+    padding-inline: 12px !important;
+  }
+
+  .gendaz-mobile-nav {
+    padding-inline: 6px;
+  }
+
+  .gendaz-mobile-nav__link {
+    min-height: 46px;
+    font-size: 10px;
+  }
+}
 
 

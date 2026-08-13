@@ -25,6 +25,29 @@ public final class PagamentoDtos {
 
     public record AtualizarStatusPagamentoRequest(@NotNull StatusPagamento status) {}
 
+    public record MarcarPagamentoPagoRequest(
+            @NotNull MetodoPagamento metodoPagamento,
+            Integer parcelas
+    ) {}
+
+    public record FormasPagamentoEmpresaResponse(
+            Long empresaId,
+            boolean pixAtivo,
+            boolean debitoAtivo,
+            boolean creditoAtivo,
+            boolean parceladoAtivo,
+            boolean dinheiroAtivo,
+            int maxParcelas
+    ) {}
+
+    public record AtualizarFormasPagamentoEmpresaRequest(
+            boolean pixAtivo,
+            boolean debitoAtivo,
+            boolean creditoAtivo,
+            boolean parceladoAtivo,
+            boolean dinheiroAtivo
+    ) {}
+
     public record IniciarPagamentoPlanoRequest(
             @NotNull Long empresaId,
             @NotNull MetodoPagamento metodoPagamento,
@@ -90,6 +113,7 @@ public final class PagamentoDtos {
             Long empresaId,
             BigDecimal valor,
             MetodoPagamento metodoPagamento,
+            Integer parcelas,
             StatusPagamento status,
             LocalDateTime dataPagamento
     ) {}
@@ -97,7 +121,9 @@ public final class PagamentoDtos {
     public record AcaoEmMassaPagamentoRequest(
             @NotNull @Size(max = 10) List<Long> ids,
             @NotNull String acao,
-            Long empresaId
+            Long empresaId,
+            MetodoPagamento metodoPagamento,
+            Integer parcelas
     ) {}
 
     public record AcaoEmMassaResponse(

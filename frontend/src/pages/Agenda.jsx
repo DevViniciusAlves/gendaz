@@ -106,6 +106,8 @@ export default function Agenda() {
   const [confirmacao, setConfirmacao] = useState(null)
   const [confirmandoAcao, setConfirmandoAcao] = useState(false)
   const [finalizacaoPagamento, setFinalizacaoPagamento] = useState(null)
+  const [formasPagamento, setFormasPagamento] = useState(null)
+  const [parcelasCredito, setParcelasCredito] = useState(null)
   const [selecionando, setSelecionando] = useState(false)
   const [selecionados, setSelecionados] = useState([])
   const [bulkModal, setBulkModal] = useState(null)
@@ -117,6 +119,12 @@ export default function Agenda() {
   useEffect(() => {
     reload(true)
   }, [refreshTrigger, reload])
+
+  useEffect(() => {
+    appApi.buscarFormasPagamento()
+      .then(setFormasPagamento)
+      .catch(() => setFormasPagamento({ pixAtivo: true, debitoAtivo: true, creditoAtivo: true, parceladoAtivo: false, dinheiroAtivo: true, maxParcelas: 12 }))
+  }, [])
 
   const termoBusca = busca.trim().toLowerCase()
 
@@ -522,13 +530,28 @@ export default function Agenda() {
     }
   }
 
-  async function finalizarAtendimentoDireto(agendamento, pagamentoRealizado = true) {
+  const metodosFinalizacao = [
+    formasPagamento?.pixAtivo && { label: 'Pix', metodoPagamento: 'PIX' },
+    formasPagamento?.debitoAtivo && { label: 'Débito', metodoPagamento: 'DEBITO' },
+    formasPagamento?.creditoAtivo && { label: 'Crédito', metodoPagamento: 'CREDITO' },
+    formasPagamento?.dinheiroAtivo && { label: 'Dinheiro', metodoPagamento: 'DINHEIRO' },
+  ].filter(Boolean)
+
+  function selecionarPagamentoFinalizacao(metodoPagamento) {
+    if (metodoPagamento === 'CREDITO' && formasPagamento?.parceladoAtivo) {
+      setParcelasCredito({ contexto: 'agenda', metodoPagamento })
+      return
+    }
+    finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? 1 : null })
+  }
+
+  async function finalizarAtendimentoDireto(agendamento, pagamentoRealizado = true, pagamento = {}) {
     if (acaoId) return
     setAcaoId(agendamento.id)
     setErroAcao('')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
-      await appApi.finalizarAgendamento(agendamento.id, pagamentoRealizado)
+      await appApi.finalizarAgendamento(agendamento.id, pagamentoRealizado, pagamento)
       setAcaoId(null)
       setFinalizacaoPagamento(null)
       reload(true).catch((error) => {
@@ -744,26 +767,45 @@ export default function Agenda() {
           </form>
         )}
       </Modal>
-      <Modal title="Finalizar atendimento" open={Boolean(finalizacaoPagamento)} onClose={() => setFinalizacaoPagamento(null)}>
-        <div className="form-grid">
-          <p className="panel-description">O pagamento foi realizado?</p>
+      <Modal title="Finalizar atendimento" open={Boolean(finalizacaoPagamento)} onClose={() => { setFinalizacaoPagamento(null); setParcelasCredito(null) }}>
+        <div className="form-grid single">
+          <p className="panel-description">Como o cliente realizou o pagamento?</p>
+          {!parcelasCredito ? (
+            <div className="payment-methods">
+              {metodosFinalizacao.map((metodo) => (
+                <button
+                  key={metodo.metodoPagamento}
+                  type="button"
+                  disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                  onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
+                >
+                  {metodo.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
+              >
+                Não foi pago
+              </button>
+            </div>
+          ) : (
+            <div className="payment-methods">
+              {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
+                <button
+                  key={parcela}
+                  type="button"
+                  disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                  onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
+                >
+                  {parcela}x
+                </button>
+              ))}
+            </div>
+          )}
           <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-            <Button variant="secondary" type="button" onClick={() => setFinalizacaoPagamento(null)}>Voltar</Button>
-            <Button
-              type="button"
-              disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
-              onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true)}
-            >
-              Sim
-            </Button>
-            <Button
-              variant="secondary"
-              type="button"
-              disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
-              onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
-            >
-              Não
-            </Button>
+            <Button variant="secondary" type="button" onClick={() => parcelasCredito ? setParcelasCredito(null) : setFinalizacaoPagamento(null)}>Voltar</Button>
           </div>
         </div>
       </Modal>

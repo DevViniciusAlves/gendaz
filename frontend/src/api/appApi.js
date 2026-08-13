@@ -722,8 +722,9 @@ export const appApi = {
     })
   },
 
-  finalizarAgendamento(id, pagamentoRealizado = true) {
-    return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`, { pagamentoRealizado }).then((response) => response.data), {
+  finalizarAgendamento(id, pagamentoRealizado = true, pagamento = {}) {
+    const payload = { pagamentoRealizado, ...pagamento }
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`, payload).then((response) => response.data), {
       loading: 'Finalizando agendamento... aguarde',
       success: pagamentoRealizado ? 'Agendamento finalizado e pagamento aprovado.' : 'Agendamento finalizado com pagamento pendente.',
       error: 'NÃ£o foi possÃ­vel finalizar o agendamento.',
@@ -786,11 +787,23 @@ export const appApi = {
     })
   },
 
-  marcarPagamentoPago(id) {
-    return comNotificacao(() => api.patch(`/pagamentos/${id}/marcar-pago`).then((response) => response.data), {
+  marcarPagamentoPago(id, payload = {}) {
+    return comNotificacao(() => api.patch(`/pagamentos/${id}/marcar-pago`, payload).then((response) => response.data), {
       loading: 'Marcando pagamento como pago... aguarde',
       success: 'Pagamento marcado como pago.',
       error: 'NÃ£o foi possÃ­vel atualizar o pagamento.',
+    })
+  },
+
+  buscarFormasPagamento() {
+    return api.get('/financeiro/formas-pagamento', { params: { empresaId: empresaIdAtual() } }).then((response) => response.data)
+  },
+
+  atualizarFormasPagamento(payload) {
+    return comNotificacao(() => api.put('/financeiro/formas-pagamento', payload, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
+      loading: 'Salvando formas de pagamento... aguarde',
+      success: 'Formas de pagamento atualizadas.',
+      error: 'NÃ£o foi possÃ­vel salvar as formas de pagamento.',
     })
   },
 
@@ -802,8 +815,8 @@ export const appApi = {
     })
   },
 
-  acaoEmMassaPagamentos(ids, acao) {
-    return comNotificacao(() => api.post('/pagamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
+  acaoEmMassaPagamentos(ids, acao, extra = {}) {
+    return comNotificacao(() => api.post('/pagamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
       loading: 'Processando pagamentos... aguarde',
       success: 'Pagamentos processados com sucesso.',
       error: 'NÃ£o foi possÃ­vel processar os pagamentos.',

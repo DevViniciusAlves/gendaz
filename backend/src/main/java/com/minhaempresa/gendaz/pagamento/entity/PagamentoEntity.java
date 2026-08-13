@@ -38,8 +38,11 @@ public class PagamentoEntity {
     private BigDecimal valor;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = true)
     private MetodoPagamento metodoPagamento;
+
+    @Column(name = "parcelas")
+    private Integer parcelas;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

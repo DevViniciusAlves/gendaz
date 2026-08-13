@@ -15,6 +15,7 @@ import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AtualizarStatusPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.CriarPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.IniciarPagamentoPlanoRequest;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.MarcarPagamentoPagoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPlanoResponse;
@@ -58,6 +59,7 @@ public class PagamentoService {
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
     private final PaymentGateway paymentGateway;
     private final AdminAuditService auditService;
+    private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final PagamentoMapper mapper = new PagamentoMapper();
 
     @Transactional
@@ -83,15 +85,31 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoResponse marcarPago(Long id) {
-        return atualizarStatus(id, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO));
+    public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
+        PagamentoEntity pagamento = buscarEntidade(id);
+        formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
+        MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
+        pagamento.setStatus(StatusPagamento.PAGO);
+        pagamento.setMetodoPagamento(metodo);
+        pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, request.parcelas()));
+        pagamento.setDataPagamento(LocalDateTime.now());
+        return mapper.toResponse(pagamentoRepository.save(pagamento));
     }
 
     @Transactional
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
         PagamentoEntity pagamento = buscarEntidade(id);
         pagamento.setStatus(request.status());
-        pagamento.setDataPagamento(request.status() == StatusPagamento.PAGO ? LocalDateTime.now() : null);
+        if (request.status() == StatusPagamento.PAGO) {
+            if (pagamento.getMetodoPagamento() == null) {
+                throw new BusinessException("Informe a forma de pagamento para marcar como pago.");
+            }
+            pagamento.setDataPagamento(LocalDateTime.now());
+        } else {
+            pagamento.setDataPagamento(null);
+            pagamento.setMetodoPagamento(null);
+            pagamento.setParcelas(null);
+        }
         return mapper.toResponse(pagamentoRepository.save(pagamento));
     }
 

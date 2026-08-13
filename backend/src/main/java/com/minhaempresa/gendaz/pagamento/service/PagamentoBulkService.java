@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class PagamentoBulkService {
     private final PagamentoRepository pagamentoRepository;
+    private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
 
     @Transactional
     public AcaoEmMassaResponse executar(AcaoEmMassaPagamentoRequest request) {
@@ -47,11 +48,17 @@ public class PagamentoBulkService {
                 }
                 switch (acao) {
                     case "MARCAR_COMO_PAGO" -> {
+                        formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());
+                        var metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
                         pagamento.setStatus(StatusPagamento.PAGO);
+                        pagamento.setMetodoPagamento(metodo);
+                        pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, request.parcelas()));
                         pagamento.setDataPagamento(LocalDateTime.now());
                     }
                     case "MARCAR_COMO_PENDENTE" -> {
                         pagamento.setStatus(StatusPagamento.PENDENTE);
+                        pagamento.setMetodoPagamento(null);
+                        pagamento.setParcelas(null);
                         pagamento.setDataPagamento(null);
                     }
                     case "EXCLUIR" -> {

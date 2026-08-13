@@ -985,3 +985,30 @@
     padding-top: 14px;
   }
 }
+
+@media (max-width: 768px) {
+  .insights-page--new {
+    padding: 14px 0 22px;
+  }
+
+  .insights-sidebar {
+    height: auto;
+    max-height: none;
+  }
+
+  .insights-ai-chat__body {
+    max-height: min(58dvh, 520px);
+  }
+}
+
+@media (max-width: 480px) {
+  .insights-summary-panel,
+  .insights-panel,
+  .insights-core-card {
+    padding: 14px;
+  }
+
+  .insights-summary-metric__value {
+    font-size: 28px;
+  }
+}

@@ -39,7 +39,7 @@ const inputStyle = {
 export default function CrmFilters({ filtros, onFiltroChange, onLimpar }) {
   return (
     <div style={{
-      width: 260,
+      width: 'min(260px, 100%)',
       flexShrink: 0,
       background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
       border: '1px solid var(--line)',

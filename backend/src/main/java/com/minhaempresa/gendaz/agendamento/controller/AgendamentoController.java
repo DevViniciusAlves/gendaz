@@ -115,7 +115,12 @@ public class AgendamentoController {
     @PatchMapping("/{id}/finalizar")
     public ResponseEntity<AgendamentoResponse> finalizar(@PathVariable Long id, @RequestBody(required = false) FinalizarAgendamentoRequest request) {
         Boolean pagamentoRealizado = request == null ? null : request.pagamentoRealizado();
-        return ResponseEntity.ok(agendamentoService.finalizar(id, pagamentoRealizado));
+        return ResponseEntity.ok(agendamentoService.finalizar(
+                id,
+                pagamentoRealizado,
+                request == null ? null : request.metodoPagamento(),
+                request == null ? null : request.parcelas()
+        ));
     }
 
     @PatchMapping("/{id}/iniciar")

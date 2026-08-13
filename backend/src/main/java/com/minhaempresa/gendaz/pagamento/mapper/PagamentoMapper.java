@@ -22,6 +22,7 @@ public class PagamentoMapper {
                 pagamento.getEmpresa().getId(),
                 pagamento.getValor(),
                 pagamento.getMetodoPagamento(),
+                pagamento.getParcelas(),
                 pagamento.getStatus(),
                 pagamento.getDataPagamento()
         );

@@ -21,6 +21,7 @@ import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
@@ -61,7 +62,9 @@ public class AgendamentoService {
     private final SanitizacaoService sanitizacaoService;
     private final ResendEmailService resendEmailService;
     private final MeuGendazPromocaoService meuGendazPromocaoService;
+    private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final AgendamentoMapper mapper = new AgendamentoMapper();
+
 
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
@@ -310,13 +313,24 @@ public class AgendamentoService {
     }
 
     @Transactional
-    public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado) {
+    public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
         pagamentoRepository.findByAgendamento_Id(id).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
-            pagamento.setStatus(pago ? StatusPagamento.PAGO : StatusPagamento.PENDENTE);
-            pagamento.setDataPagamento(pago ? LocalDateTime.now(ZoneId.of(appTimezone)) : null);
+            if (pago) {
+                formaPagamentoEmpresaService.validarPagamentoManual(agendamento.getEmpresa().getId(), metodoPagamento, parcelas);
+                MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(metodoPagamento);
+                pagamento.setStatus(StatusPagamento.PAGO);
+                pagamento.setMetodoPagamento(metodo);
+                pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, parcelas));
+                pagamento.setDataPagamento(LocalDateTime.now(ZoneId.of(appTimezone)));
+            } else {
+                pagamento.setStatus(StatusPagamento.PENDENTE);
+                pagamento.setMetodoPagamento(null);
+                pagamento.setParcelas(null);
+                pagamento.setDataPagamento(null);
+            }
             pagamentoRepository.save(pagamento);
         }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
         return mapper.toResponse(agendamentoRepository.save(agendamento));

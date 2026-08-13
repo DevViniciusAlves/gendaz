@@ -664,8 +664,9 @@ export default function Promocoes() {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12, marginBottom: 16 }}>
+            <div className="promo-usage-summary-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 12, marginBottom: 16 }}>
               <div className="panel"><strong>{resumo.totalClientesUsaram}</strong><div>Clientes</div></div>
+
               <div className="panel"><strong>{resumo.totalUsos}</strong><div>Usos</div></div>
               <div className="panel"><strong>{resumo.totalNotificacoesEnviadas}</strong><div>Enviadas</div></div>
               <div className="panel"><strong>{resumo.totalNotificacoesErros}</strong><div>Erros</div></div>

@@ -5,6 +5,8 @@ public enum MetodoPagamento {
     PIX_AUTO,
     CREDIT_CARD,
     CARTAO,
+    DEBITO,
+    CREDITO,
     DINHEIRO,
     BOLETO,
     OUTRO

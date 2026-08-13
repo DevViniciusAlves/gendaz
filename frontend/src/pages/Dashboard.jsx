@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState, useMemo, useRef } from 'react'
+import { useContext, useEffect, useState, useMemo } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
-import { BarChart2, CalendarDays, CheckCircle, Circle, CreditCard, MessageCircle, RefreshCw, TrendingUp, UserPlus, Wrench } from 'lucide-react'
+import { BarChart2, CalendarDays, CheckCircle, Circle, CreditCard, RefreshCw, Wrench } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import ScrollReveal from '../components/ScrollReveal.jsx'
@@ -112,18 +112,6 @@ function resumirReceitaMensal(dados) {
   }
 }
 
-function suavizarPontos(pontos, largura, altura) {
-  if (pontos.length < 2) return ''
-  const curvas = [`M ${pontos[0].x} ${pontos[0].y}`]
-  for (let i = 0; i < pontos.length - 1; i++) {
-    const atual = pontos[i]
-    const proximo = pontos[i + 1]
-    const pontoMeio = (atual.x + proximo.x) / 2
-    curvas.push(`C ${pontoMeio} ${atual.y}, ${pontoMeio} ${proximo.y}, ${proximo.x} ${proximo.y}`)
-  }
-  return curvas.join(' ')
-}
-
 function formatoCompactoReceita(valor) {
   if (!valor || valor <= 0) return 'R$ 0'
   if (valor >= 1000) {
@@ -209,6 +197,10 @@ export default function Dashboard() {
     : []
   const receitaDiasBase = buildReceitaMes(pagamentosVisiveis)
   const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
+  const resumoReceitaMes = useMemo(
+    () => resumirReceitaMensal(receitaDias),
+    [receitaDias]
+  )
   const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
     ? resumoDashboard.proximosAgendamentos
     : agendamentosVisiveis
@@ -351,23 +343,21 @@ export default function Dashboard() {
           </div>
 
            {canFinanceiro && (
-             <ScrollReveal className="panel receita-chart-panel" delay={0}>
-               <div className="panel-head">
-                 <div>
-                   <span className="section-kicker">Financeiro</span>
-                   <h2>Receita do mês</h2>
-                   <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
-                 </div>
-                 <div className="receita-chart-periodo">
-                   <div className="receita-chart-periodo-head">
-                     <TrendingUp size={16} color="var(--primary)" />
-                     <small>{mesAtual}</small>
-                   </div>
-                 </div>
-               </div>
-               <GraficoReceitaMes dados={receitaDias} />
-             </ScrollReveal>
-           )}
+              <ScrollReveal className="panel receita-chart-panel" delay={0}>
+                <div className="panel-head receita-chart-head">
+                  <div className="receita-chart-copy">
+                    <span className="section-kicker">Financeiro</span>
+                    <h2>Receita do mês</h2>
+                    <strong className="receita-chart-total">{currency(resumoReceitaMes.total)}</strong>
+                    <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
+                  </div>
+                  <div className="receita-chart-periodo">
+                    <small>{mesAtual}</small>
+                  </div>
+                </div>
+                <GraficoReceitaMes dados={receitaDias} formatarEixoY={formatoCompactoReceita} />
+              </ScrollReveal>
+            )}
 
           <div className="dashboard-grid">
             <ScrollReveal className="panel" delay={0}>

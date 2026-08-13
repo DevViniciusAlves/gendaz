@@ -98,6 +98,7 @@ export function metodoPagamentoLegivel(metodo) {
     PIX_AUTO: 'PIX automático',
     CREDIT_CARD: 'Cartão',
     CARTAO: 'Cartão',
+    CREDITO: 'Crédito',
     DEBIT_CARD: 'Cartão de débito',
     DEBITO: 'Débito',
     DINHEIRO: 'Dinheiro',

@@ -9,6 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ResumoFinanceiroResponse;
 import com.minhaempresa.gendaz.financeiro.service.FinanceiroService;
+import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
+
 import java.math.BigDecimal;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -21,12 +23,16 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 class FinanceiroControllerTest {
     @Mock
     private FinanceiroService financeiroService;
+    @Mock
+    private FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private MockMvc mockMvc;
+
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(new FinanceiroController(financeiroService)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new FinanceiroController(financeiroService, formaPagamentoEmpresaService)).build();
+
     }
 
     @Test

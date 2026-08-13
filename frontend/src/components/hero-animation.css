@@ -404,13 +404,15 @@
 }
 
 @media (max-width: 780px) {
+  .hero-animation,
   .hero-product-visual {
     width: 100%;
+    max-width: 100%;
     height: auto;
-    transform: none;
+    transform: none !important;
     display: grid;
     gap: 14px;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   .hero-mockup-card {
@@ -420,6 +422,7 @@
     left: auto;
     bottom: auto;
     width: 100%;
+    max-width: 100%;
     height: auto;
   }
 
@@ -448,5 +451,31 @@
   .hero-float-table-head span:nth-child(4),
   .hero-float-table-row span:nth-child(3) {
     display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-animation,
+  .hero-product-visual {
+    gap: 12px;
+  }
+
+  .hero-mockup-card-agenda,
+  .hero-mockup-card-overview,
+  .hero-mockup-card-finance {
+    min-height: 0;
+  }
+
+  .hero-agenda-filters,
+  .hero-overview-metrics,
+  .hero-finance-summary,
+  .hero-overview-bottom,
+  .hero-float-table-head,
+  .hero-float-table-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mockup-chip-row {
+    justify-content: flex-start;
   }
 }

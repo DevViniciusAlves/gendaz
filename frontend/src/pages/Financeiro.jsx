@@ -8,13 +8,14 @@ import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import Button from '../components/Button.jsx'
 import DashboardCard from '../components/DashboardCard.jsx'
 import ExportCsvModal from '../components/ExportCsvModal.jsx'
+import Modal from '../components/Modal.jsx'
 import Pagination from '../components/Pagination.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { usePendentes } from '../contexts/PendentesContext.jsx'
 import { currency, todayIso } from '../services/localStore.js'
-import { dataHojeDdMmAAAA, exportarCsv, formatarData, metodoPagamentoLegivel, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
+import { dataHojeDdMmAAAA, exportarCsv, formatarData, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
 
 const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])
 
@@ -48,11 +49,21 @@ function statusSimples(statusAtual) {
   return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
-function metodoLegivel(metodoAtual) {
+function metodoLegivel(metodoAtual, parcelas) {
+  if (!metodoAtual) return '—'
   if (metodoAtual === 'PIX_AUTO') return 'PIX automático'
-  if (metodoAtual === 'CREDIT_CARD' || metodoAtual === 'CARTAO') return 'Cartão'
+  if (metodoAtual === 'CREDIT_CARD' || metodoAtual === 'CARTAO' || metodoAtual === 'CREDITO') return `Crédito${parcelas ? ` · ${parcelas}x` : ''}`
+  if (metodoAtual === 'DEBITO') return 'Débito'
   return metodoAtual || '-'
 }
+
+const FORMAS_PAGAMENTO = [
+  ['pixAtivo', 'Pix'],
+  ['debitoAtivo', 'Débito'],
+  ['creditoAtivo', 'Crédito'],
+  ['parceladoAtivo', 'Parcelado'],
+  ['dinheiroAtivo', 'Dinheiro'],
+]
 
 export default function Financeiro() {
   const [data, , { reload }] = useLocalData('financeiro')
@@ -71,11 +82,20 @@ export default function Financeiro() {
   const [bulkExecutando, setBulkExecutando] = useState(false)
   const [erroPagamentos, setErroPagamentos] = useState('')
   const [exportModal, setExportModal] = useState(false)
+  const [formasPagamento, setFormasPagamento] = useState(null)
+  const [salvandoFormas, setSalvandoFormas] = useState(false)
+  const [pagamentoManual, setPagamentoManual] = useState(null)
   const itensPorPaginaPagamentos = 10
 
   useEffect(() => {
     reload(true)
   }, [refreshTrigger, reload])
+
+  useEffect(() => {
+    appApi.buscarFormasPagamento()
+      .then(setFormasPagamento)
+      .catch(() => setFormasPagamento({ pixAtivo: true, debitoAtivo: true, creditoAtivo: true, parceladoAtivo: false, dinheiroAtivo: true, maxParcelas: 12 }))
+  }, [])
 
   const pagamentosDoMes = useMemo(() => {
     const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
@@ -94,6 +114,7 @@ export default function Financeiro() {
         const matchesMetodo = metodoPagamento === 'todos'
           || item.metodoPagamento === metodoPagamento
           || (metodoPagamento === 'PIX' && item.metodoPagamento === 'PIX_AUTO')
+          || (metodoPagamento === 'CREDITO' && ['CREDIT_CARD', 'CARTAO'].includes(item.metodoPagamento))
         const textoProtocolo = String(item.protocolo || item.agendamento?.protocolo || '').toLowerCase()
         const matchesProtocolo = !protocoloPagamento.trim()
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
@@ -185,7 +206,7 @@ export default function Financeiro() {
         item.servicoNome || item.servico?.nome || '',
         item.profissionalNome || item.agendamento?.profissionalNome || 'Sem preferência',
         currency(item.valor || 0),
-        metodoPagamentoLegivel(item.metodoPagamento),
+        metodoLegivel(item.metodoPagamento, item.parcelas),
         statusPagamentoLegivel(item.status),
         item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
         item.dataPagamento ? formatarData(item.dataPagamento) : '',
@@ -228,6 +249,11 @@ export default function Financeiro() {
     setBulkExecutando(true)
     setErroPagamentos('')
     try {
+      if (bulkModal.acao === 'MARCAR_COMO_PAGO') {
+        setPagamentoManual({ tipo: 'bulk' })
+        setBulkModal(null)
+        return
+      }
       await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, bulkModal.acao)
       if (bulkModal.acao === 'MARCAR_COMO_PAGO') {
         atualizarContagem()
@@ -239,15 +265,54 @@ export default function Financeiro() {
     } finally {
       setBulkExecutando(false)
     }
+
+  }
+
+  async function salvarFormasPagamento(chave, valor) {
+    if (!formasPagamento || salvandoFormas) return
+    const proximo = { ...formasPagamento, [chave]: valor }
+    if (chave === 'creditoAtivo' && !valor) proximo.parceladoAtivo = false
+    setFormasPagamento(proximo)
+    setSalvandoFormas(true)
+    try {
+      const salvo = await appApi.atualizarFormasPagamento(proximo)
+      setFormasPagamento(salvo)
+    } catch (error) {
+      setFormasPagamento(formasPagamento)
+    } finally {
+      setSalvandoFormas(false)
+    }
+  }
+
+  function metodosAtivos() {
+    return [
+      formasPagamento?.pixAtivo && { label: 'Pix', metodoPagamento: 'PIX' },
+      formasPagamento?.debitoAtivo && { label: 'Débito', metodoPagamento: 'DEBITO' },
+      formasPagamento?.creditoAtivo && { label: 'Crédito', metodoPagamento: 'CREDITO' },
+      formasPagamento?.dinheiroAtivo && { label: 'Dinheiro', metodoPagamento: 'DINHEIRO' },
+    ].filter(Boolean)
+  }
+
+  async function confirmarPagamentoManual(metodoPagamento, parcelas = null) {
+    if (!pagamentoManual) return
+    const payload = { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? (parcelas || 1) : null }
+    if (pagamentoManual.tipo === 'bulk') {
+      await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, 'MARCAR_COMO_PAGO', payload)
+      limparSelecaoPagamentos()
+    } else {
+      await appApi.marcarPagamentoPago(pagamentoManual.id, payload)
+    }
+    setPagamentoManual(null)
+    atualizarContagem()
+    await reload(true)
   }
 
   async function alterarStatusPagamento(id, novoStatus) {
     if (novoStatus === 'PAGO') {
-      await appApi.marcarPagamentoPago(id)
-      atualizarContagem()
-    } else {
-      await appApi.atualizarStatusPagamento(id, novoStatus)
+      setPagamentoManual({ tipo: 'single', id })
+      return
     }
+    await appApi.atualizarStatusPagamento(id, novoStatus)
     await reload(true)
   }
 
@@ -269,6 +334,24 @@ export default function Financeiro() {
         <DashboardCard title="Total recebido" value={currency(recebido)} />
         <DashboardCard title="Total pendente" value={currency(pendente)} />
       </div>
+
+      <section className="panel financeiro-panel financeiro-payment-config">
+        <h2>Formas de pagamento</h2>
+        <div className="financeiro-payment-grid">
+          {FORMAS_PAGAMENTO.map(([chave, label]) => (
+            <label key={chave} className="financeiro-payment-toggle">
+              <span>{label}</span>
+              <input
+                type="checkbox"
+                checked={Boolean(formasPagamento?.[chave])}
+                disabled={salvandoFormas || (chave === 'parceladoAtivo' && !formasPagamento?.creditoAtivo)}
+                onChange={(e) => salvarFormasPagamento(chave, e.target.checked)}
+              />
+              <strong>{formasPagamento?.[chave] ? 'ATIVO' : 'DESATIVADO'}</strong>
+            </label>
+          ))}
+        </div>
+      </section>
 
       <div className="financeiro-controls" style={{ marginBottom: '2rem' }}>
         <label className="field compact-field financeiro-month-field">
@@ -327,7 +410,8 @@ export default function Financeiro() {
           <select value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
             <option value="todos">Todos os metodos</option>
             <option value="PIX">PIX</option>
-            <option value="CARTAO">Cartao</option>
+            <option value="DEBITO">Débito</option>
+            <option value="CREDITO">Crédito</option>
             <option value="DINHEIRO">Dinheiro</option>
             <option value="BOLETO">Boleto</option>
             <option value="OUTRO">Outro</option>
@@ -390,6 +474,7 @@ export default function Financeiro() {
             { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
             { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
             { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
+            { key: 'metodoPagamento', label: 'FORMA', render: (row) => metodoLegivel(row.metodoPagamento, row.parcelas) },
             { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
             {
               key: 'acao',
@@ -415,6 +500,35 @@ export default function Financeiro() {
           onPageChange={setPaginaPagamento}
         />
       </section>
+
+      <Modal title="Marcar como pago" open={Boolean(pagamentoManual)} onClose={() => setPagamentoManual(null)}>
+        <div className="form-grid single">
+          <p className="panel-description">Selecione a forma de pagamento utilizada.</p>
+          {!pagamentoManual?.creditoParcelado ? (
+            <div className="payment-methods">
+              {metodosAtivos().map((metodo) => (
+                <button
+                  key={metodo.metodoPagamento}
+                  type="button"
+                  onClick={() => metodo.metodoPagamento === 'CREDITO' && formasPagamento?.parceladoAtivo
+                    ? setPagamentoManual({ ...pagamentoManual, creditoParcelado: true })
+                    : confirmarPagamentoManual(metodo.metodoPagamento)}
+                >
+                  {metodo.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="payment-methods">
+              {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
+                <button key={parcela} type="button" onClick={() => confirmarPagamentoManual('CREDITO', parcela)}>
+                  {parcela}x
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </Modal>
 
       <BulkConfirmModal
         open={Boolean(bulkModal)}

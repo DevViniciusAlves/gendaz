@@ -6,7 +6,9 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaPagamentoR
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.CriarPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.IniciarPagamentoPlanoRequest;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.MarcarPagamentoPagoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
+
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
@@ -53,8 +55,8 @@ public class PagamentoController {
     }
 
     @PatchMapping("/{id}/marcar-pago")
-    public ResponseEntity<PagamentoResponse> marcarPago(@PathVariable Long id) {
-        return ResponseEntity.ok(pagamentoService.marcarPago(id));
+    public ResponseEntity<PagamentoResponse> marcarPago(@PathVariable Long id, @Valid @RequestBody MarcarPagamentoPagoRequest request) {
+        return ResponseEntity.ok(pagamentoService.marcarPago(id, request));
     }
 
     @PatchMapping("/{id}/status")
