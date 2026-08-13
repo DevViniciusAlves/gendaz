@@ -25,7 +25,6 @@ class MeuGendazAuthControllerTest {
     @Mock
     private MeuGendazAuthService authService;
 
-    @Mock
     private CookieService cookieService;
 
     private MockMvc mockMvc;
@@ -33,6 +32,7 @@ class MeuGendazAuthControllerTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        cookieService = new CookieService("test");
         mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazAuthController(authService, cookieService)).build();
     }
 

@@ -24,13 +24,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class AuthControllerTest {
     @Mock AuthService authService;
-    @Mock CookieService cookieService;
+    private CookieService cookieService;
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        cookieService = new CookieService("test");
         mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, cookieService)).build();
     }
 

@@ -21,13 +21,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class AdminControllerTest {
     @Mock AdminService adminService;
-    @Mock CookieService cookieService;
+    private CookieService cookieService;
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        cookieService = new CookieService("test");
         mockMvc = MockMvcBuilders.standaloneSetup(new AdminController(adminService, cookieService)).build();
     }
 
