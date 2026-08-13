@@ -151,15 +151,15 @@ public class DashboardService {
         boolean temServico = servicoRepository.countAtivosByEmpresaId(empresaId) > 0;
         boolean temProfissional = profissionalRepository.countAtivosByEmpresaId(empresaId) > 0;
         boolean temLinkAgendamento = empresa.getAgendamentoSlug() != null && !empresa.getAgendamentoSlug().isBlank();
-        boolean planoPro = assinaturaService.buscarAtualPorEmpresa(empresaId)
+        boolean planoComProfissionais = assinaturaService.buscarAtualPorEmpresa(empresaId)
                 .map(AssinaturaEntity::getPlano)
-                .map(plano -> "PRO".equalsIgnoreCase(plano.getNome()))
+                .map(plano -> "PRO".equalsIgnoreCase(plano.getNome()) || "BASICO".equalsIgnoreCase(plano.getNome()))
                 .orElse(false);
 
         List<PrimeiroPassoItem> etapas = new ArrayList<>();
         etapas.add(new PrimeiroPassoItem("servico", "Cadastrar um servico", "Crie seu primeiro servico", "/sistema/servicos", temServico));
         etapas.add(new PrimeiroPassoItem("horario-servico", "Definir horarios do servico", "Configure a disponibilidade", "/sistema/configuracoes", temServico));
-        if (planoPro) {
+        if (planoComProfissionais) {
             etapas.add(new PrimeiroPassoItem("profissional", "Cadastrar um profissional", "Adicione quem realiza os servicos", "/sistema/profissionais", temProfissional));
             etapas.add(new PrimeiroPassoItem("horario-profissional", "Definir horarios do profissional", "Configure a agenda de trabalho", "/sistema/configuracoes", temProfissional));
         }

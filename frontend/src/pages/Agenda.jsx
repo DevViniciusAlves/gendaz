@@ -103,8 +103,7 @@ export default function Agenda() {
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
   const profissionaisAtivosLista = useMemo(() => profissionaisAtivos(data.profissionais), [data.profissionais])
-  const planoEhPro = usuario?.plano === 'PRO'
-  const temProfissionais = planoEhPro && profissionaisAtivosLista.length > 0
+  const temProfissionais = profissionaisAtivosLista.length > 0
   const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
   const [dataFiltro, setDataFiltro] = useState('')
   const [profissionalId, setProfissionalId] = useState('todos')
