@@ -1,7 +1,7 @@
 package com.minhaempresa.gendaz.auth.controller;
 
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -20,7 +20,9 @@ import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoServic
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
+import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,13 +45,17 @@ class MeuGendazControllerTest {
     @Mock private MeuGendazPromocaoService meuGendazPromocaoService;
     @Mock private UsuarioSessionService usuarioSessionService;
     @Mock private SanitizacaoService sanitizacaoService;
+    private CookieService cookieService;
 
     private MockMvc mockMvc;
+
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
+        cookieService = new CookieService("prod");
         mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazController(
+
                 meuGendazAcessoRepository,
                 empresaRepository,
                 clienteRepository,
@@ -61,17 +67,21 @@ class MeuGendazControllerTest {
                 insightsService,
                 meuGendazPromocaoService,
                 usuarioSessionService,
-                sanitizacaoService
+                sanitizacaoService,
+                cookieService
         )).build();
+
     }
 
     @Test
     void deveEncerrarSessaoELimparCookieNoLogout() throws Exception {
-        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa Teste").build();
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa Teste").agendamentoSlug("gendaz-pro").build();
+
         MeuGendazAcessoEntity acesso = MeuGendazAcessoEntity.builder().id(10L).email("cliente@teste.com").nome("Cliente").empresa(empresa).sessaoAtiva("sessao-meu-gendaz").build();
 
         when(empresaRepository.findByAgendamentoSlug(anyString())).thenReturn(Optional.of(empresa));
-        when(meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(anyLong(), anyString())).thenReturn(Optional.of(acesso));
+        when(meuGendazAcessoRepository.findBySessaoAtiva(anyString())).thenReturn(Optional.of(acesso));
+
 
         mockMvc.perform(post("/api/meu-gendaz/auth/logout")
                         .header("X-Meu-Gendaz-Slug", "gendaz-pro")

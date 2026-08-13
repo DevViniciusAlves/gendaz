@@ -14,5 +14,9 @@ public interface MeuGendazAcessoRepository extends JpaRepository<MeuGendazAcesso
 
     @EntityGraph(attributePaths = {"empresa"})
     Optional<MeuGendazAcessoEntity> findByEmpresaIdAndSessaoAtiva(Long empresaId, String sessaoAtiva);
+
+    @EntityGraph(attributePaths = {"empresa"})
+    Optional<MeuGendazAcessoEntity> findBySessaoAtiva(String sessaoAtiva);
 }
+
 

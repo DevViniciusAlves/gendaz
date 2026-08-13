@@ -23,25 +23,27 @@ import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CookieHelper;
+import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
 import jakarta.servlet.http.HttpServletRequest;
+
 import jakarta.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -68,6 +70,7 @@ public class MeuGendazController {
     private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final UsuarioSessionService usuarioSessionService;
     private final SanitizacaoService sanitizacaoService;
+    private final CookieService cookieService;
 
     private String slugAtual(HttpServletRequest request) {
         String slug = request.getHeader("X-Meu-Gendaz-Slug");
@@ -330,29 +333,23 @@ public class MeuGendazController {
 
     @PostMapping("/auth/logout")
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
-        try {
-            String slug = slugAtual(request);
-            EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
-                    .orElseThrow(() -> new BusinessException("Loja nao encontrada."));
-            String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
-            if (session != null) {
-                MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
-                if (acesso != null) {
-                    usuarioSessionService.encerrarSessaoMeuGendaz(acesso.getId(), session);
-                }
+        String slug = slugAtual(request);
+        EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
+                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+        String cookieName = nomeCookie(slug);
+        String session = CookieHelper.lerCookie(request, cookieName).orElse(null);
+        if (session != null && !session.isBlank()) {
+            MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findBySessaoAtiva(session)
+                    .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida."));
+            if (acesso.getEmpresa() == null || !empresa.getId().equals(acesso.getEmpresa().getId())) {
+                throw new SessaoExpiradaException("Sessao invalida para esta loja.");
             }
-        } catch (Exception e) {
-            log.warn("[meu-gendaz] erro no logout: {}", e.getMessage());
+            usuarioSessionService.encerrarSessaoMeuGendaz(acesso.getId(), session);
+            if (acesso.getEmpresa().getAgendamentoSlug() != null && !acesso.getEmpresa().getAgendamentoSlug().isBlank()) {
+                cookieName = nomeCookie(acesso.getEmpresa().getAgendamentoSlug());
+            }
         }
-        String slug = request.getHeader("X-Meu-Gendaz-Slug");
-        String cookieName = slug == null || slug.isBlank() ? "meu_gendaz_session" : nomeCookie(slug.trim().toLowerCase());
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(cookieName, "")
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
-                .sameSite("None");
-        ResponseCookie clearCookie = builder.maxAge(Duration.ZERO).build();
-        response.addHeader("Set-Cookie", clearCookie.toString());
+        cookieService.limparCookie(request, response, cookieName);
         return ResponseEntity.ok(Map.of("mensagem", "Logout realizado."));
     }
 

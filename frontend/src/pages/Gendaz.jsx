@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useContext } from 'react'
 import { useNavigate, useParams, useLocation } from 'react-router-dom'
-import { ArrowLeft, Loader, LogOut } from 'lucide-react'
+import { ArrowLeft, Loader, LogOut, Mail } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
@@ -156,53 +156,61 @@ function GendazAuthGate({ slug, onLogin }) {
   }
 
   return (
-    <main className="gendaz-auth">
-      <section className="gendaz-auth__card">
-        <div className="gendaz-auth__brand">
-          <img src={logoMeuGendaz} alt="Meu Gendaz" className="gendaz-auth__logo" />
+    <main className="gendaz-auth gendaz-auth--login">
+      <section className="gendaz-auth__card login-card-v2">
+        <div className="login-card-header gendaz-auth__header">
+          <div className="login-brand-v2 gendaz-auth__brand">
+            <img src={logoMeuGendaz} alt="Meu Gendaz" className="gendaz-auth__logo" />
+          </div>
         </div>
         <span className="gendaz-kicker">Meu gendaz</span>
-        <h1>{nomeEmpresa ? `Entrar em ${nomeEmpresa}` : 'Entrar sem senha'}</h1>
-        <p>Use qualquer e-mail para receber um codigo de acesso.</p>
+        <h1 className="login-title-v2">{nomeEmpresa ? `Entrar em ${nomeEmpresa}` : 'Entrar sem senha'}</h1>
+        <p className="login-helper-v2 gendaz-auth__text">Use qualquer e-mail para receber um codigo de acesso.</p>
 
-        {erro && <p className="gendaz-auth__error">{erro}</p>}
+        {erro && <p className="login-error-v2">{erro}</p>}
 
         {etapa === 'email' ? (
-          <form className="gendaz-auth__form" onSubmit={entrarComEmail}>
-            <label>
-              <span>E-mail</span>
-              <input
-                value={email}
-                onChange={(event) => {
-                  const novoEmail = event.target.value
-                  setEmail(novoEmail)
-                  if (ultimoEmailSolicitado && novoEmail.trim().toLowerCase() !== ultimoEmailSolicitado) {
-                    setCodigoSolicitado(false)
-                  }
-                }}
-                placeholder="voce@exemplo.com"
-                type="email"
-                autoComplete="email"
-              />
+          <form className="login-form-v2 gendaz-auth__form" onSubmit={entrarComEmail}>
+            <label className="login-field-v2">
+              <span className="login-label-v2">E-mail</span>
+              <div className="login-input-wrap-v2">
+                <Mail size={16} className="login-input-icon-left" />
+                <input
+                  value={email}
+                  onChange={(event) => {
+                    const novoEmail = event.target.value
+                    setEmail(novoEmail)
+                    if (ultimoEmailSolicitado && novoEmail.trim().toLowerCase() !== ultimoEmailSolicitado) {
+                      setCodigoSolicitado(false)
+                    }
+                  }}
+                  placeholder="voce@exemplo.com"
+                  type="email"
+                  autoComplete="email"
+                />
+              </div>
             </label>
-            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={carregando || bloqueado}>
+            <button className="login-submit-v2" type="submit" disabled={carregando || bloqueado}>
               {carregando ? 'Enviando...' : 'Continuar'}
             </button>
           </form>
         ) : (
-          <form className="gendaz-auth__form" onSubmit={confirmarCodigo}>
-            <label>
-              <span>Digite o codigo enviado para seu e-mail</span>
-              <input
-                value={codigo}
-                onChange={(event) => setCodigo(event.target.value.replace(/\D/g, '').slice(0, 6))}
-                placeholder="000000"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                maxLength={6}
-              />
+          <form className="login-form-v2 gendaz-auth__form" onSubmit={confirmarCodigo}>
+            <label className="login-field-v2">
+              <span className="login-label-v2">Digite o codigo enviado para seu e-mail</span>
+              <div className="login-input-wrap-v2">
+                <Mail size={16} className="login-input-icon-left" />
+                <input
+                  value={codigo}
+                  onChange={(event) => setCodigo(event.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="000000"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                />
+              </div>
             </label>
-            <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={carregando || bloqueado}>
+            <button className="login-submit-v2" type="submit" disabled={carregando || bloqueado}>
               {carregando ? 'Validando...' : 'Confirmar'}
             </button>
             <button
@@ -243,7 +251,7 @@ function GendazCadastroGate({ slug }) {
 
   async function sair() {
     await logout()
-    navigate('/login', { replace: true })
+    navigate(`/meu-gendaz/${slug}`, { replace: true })
   }
 
   async function entrar(event) {

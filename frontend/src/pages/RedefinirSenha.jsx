@@ -1,8 +1,6 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { Lock } from 'lucide-react'
-import Button from '../components/Button.jsx'
-import Input from '../components/Input.jsx'
 import { appApi } from '../api/appApi.js'
 
 export default function RedefinirSenha() {
@@ -73,9 +71,9 @@ export default function RedefinirSenha() {
           {erro && <p className="login-error-v2">{erro}</p>}
           {mensagem && <p className="login-success-v2 reset-success-v2">{mensagem}</p>}
 
-          <Button type="submit" className="reset-submit-btn-v2" disabled={carregando}>
+          <button type="submit" className="login-submit-v2" disabled={carregando}>
             {carregando ? 'Salvando...' : 'Redefinir senha'}
-          </Button>
+          </button>
         </form>
 
         <p className="login-links-v2 reset-links-v2">

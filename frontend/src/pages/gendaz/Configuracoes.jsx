@@ -125,8 +125,7 @@ export default function Configuracoes() {
   async function handleLogout() {
     setAbrirLogout(false)
     await logout()
-    navigate('dashboard', { replace: true })
-    window.location.reload()
+    navigate('..', { replace: true })
   }
 
   return (
