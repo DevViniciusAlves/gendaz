@@ -79,7 +79,7 @@ const plans = [
     extra: '7 dias grátis',
     descricao: 'Para organizar conversas, agenda, clientes e serviços no mesmo painel.',
     beneficios: ['Dashboard', 'Agendamentos', 'Cadastro de clientes', 'Cadastro de serviços', 'Promoções', 'Confirmação de agendamento', 'Cancelamento e remarcação'],
-    naoInclui: ['Profissionais', 'CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
+    naoInclui: ['CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
     cta: 'Começar no Básico',
   },
   {

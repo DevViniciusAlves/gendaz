@@ -24,7 +24,7 @@ const planosBase = [
       'Confirmação de agendamento',
       'Cancelamento e remarcação',
     ],
-    naoInclui: ['Profissionais', 'CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
+    naoInclui: ['CRM', 'Insights', 'Financeiro', 'Relatórios', 'Configurações avançadas'],
     cta: 'Comecar no Basico',
     precoFallback: 39.00,
   },
