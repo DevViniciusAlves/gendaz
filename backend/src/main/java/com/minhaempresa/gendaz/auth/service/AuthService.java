@@ -90,6 +90,7 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
+        log.info("[LOGIN-SERVICE] chegou no AuthService email={}", mascararEmail(email));
         log.info("Login solicitado para {}", mascararEmail(email));
         try {
             UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(email);
