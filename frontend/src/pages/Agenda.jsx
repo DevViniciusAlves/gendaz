@@ -99,8 +99,6 @@ export default function Agenda() {
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
   const profissionaisAtivosLista = useMemo(() => profissionaisAtivos(data.profissionais), [data.profissionais])
-  const profissionaisCriacaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, form.data)), [profissionaisAtivosLista, form.data])
-  const profissionaisEdicaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, edicao?.data)), [profissionaisAtivosLista, edicao?.data])
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && profissionaisAtivosLista.length > 0
   const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
@@ -131,6 +129,8 @@ export default function Agenda() {
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 9
+  const profissionaisCriacaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, form.data)), [profissionaisAtivosLista, form.data])
+  const profissionaisEdicaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, edicao?.data)), [profissionaisAtivosLista, edicao?.data])
 
   useEffect(() => {
     reload(true)

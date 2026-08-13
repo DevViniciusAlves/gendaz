@@ -132,21 +132,21 @@ button { cursor: pointer; }
 }
 
 .dia-trabalho-btn {
-  min-height: 54px;
+  min-height: 40px;
   border: 1px solid var(--line, #404040);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface-soft, rgba(255, 255, 255, 0.06));
   color: var(--text, #fff);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 1px;
   transition: border-color .16s ease, background .16s ease, color .16s ease;
 }
 
 .dia-trabalho-btn strong {
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1;
 }
 
@@ -172,7 +172,7 @@ button { cursor: pointer; }
 
 @media (max-width: 420px) {
   .dias-trabalho-grid {
-    grid-template-columns: repeat(4, minmax(52px, 1fr));
+    grid-template-columns: repeat(4, minmax(44px, 1fr));
   }
 }
 

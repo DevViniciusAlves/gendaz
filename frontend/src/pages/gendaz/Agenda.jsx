@@ -26,6 +26,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const hoje = new Date()
   const dataHoje = hoje.toISOString().slice(0, 10)
   const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
+  const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
   const [salvando, setSalvando] = useState(false)
@@ -303,9 +304,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
 }
 
 export default function Agenda() {
-  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro, profissionais } = useContext(ClienteGendazContext)
-  const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
-  const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
+  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro } = useContext(ClienteGendazContext)
   const [showNovo, setShowNovo] = useState(false)
   const [modalReagendar, setModalReagendar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)

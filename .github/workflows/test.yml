@@ -33,20 +33,198 @@ jobs:
           cache: maven
           cache-dependency-path: backend/pom.xml
 
+      # ==========================================================
+      # RODAR TESTES
+      # ==========================================================
       - name: Rodar testes
         working-directory: backend
-        run: mvn --batch-mode clean test
-
-      - name: Criar Issue se os testes falharem
-        if: failure()
+        shell: bash
         run: |
-          gh issue create \
-            --title "🐛 Testes automáticos do backend falharam" \
-            --body "O GitHub Actions encontrou uma falha nos testes do backend.
+          set -o pipefail
+          mvn --batch-mode \
+              -Dstyle.color=never \
+              clean test 2>&1 | tee maven-test.log
 
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-
-            Verifique a execução do GitHub Actions para identificar o erro."
+      # ==========================================================
+      # GROQ ANALISA O ERRO E CRIA A TASK
+      # ==========================================================
+      - name: Analisar erro com Groq e criar Issue
+        if: failure()
+        shell: bash
         env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        run: |
+          # Pega as últimas 250 linhas do Maven
+          tail -n 250 backend/maven-test.log > error-log.txt
+
+          # Prompt da IA
+          cat > prompt.txt <<'EOF'
+          Você é um Tech Lead Java/Spring Boot.
+
+          Sua função é analisar um erro encontrado automaticamente
+          nos testes e criar uma TASK REAL para um desenvolvedor
+          Backend Java Júnior investigar e corrigir.
+
+          REGRAS IMPORTANTES:
+
+          - NÃO forneça código pronto.
+          - NÃO forneça a solução.
+          - NÃO invente informações.
+          - NÃO invente arquivo, classe, método ou linha.
+          - Use arquivo e linha somente se aparecerem no log/stack trace.
+          - Explique de forma simples para um desenvolvedor Júnior.
+          - A task deve ensinar o desenvolvedor a investigar.
+          - Identifique o erro mais provável e a origem quando possível.
+          - Diferencie erro de teste, configuração, banco, Spring, Java ou regra de negócio.
+          - Se houver vários erros, priorize a causa raiz.
+          - Ignore mensagens irrelevantes do Maven.
+
+          Gere EXATAMENTE neste formato:
+
+          TITLE: [BACKEND] título curto e objetivo
+
+          BODY:
+
+          ## 🐛 Problema encontrado
+
+          Descrição simples do problema.
+
+          ## 📍 Localização
+
+          **Arquivo:** arquivo identificado ou "Não identificado automaticamente"
+          **Classe:** classe identificada ou "Não identificada automaticamente"
+          **Método:** método identificado ou "Não identificado automaticamente"
+          **Linha:** linha identificada ou "Não identificada automaticamente"
+
+          ## ❌ Erro
+
+          Nome/tipo do erro e mensagem principal.
+
+          ## 🔎 O que aconteceu
+
+          Explique resumidamente o comportamento encontrado.
+
+          ## 🎯 Sua tarefa
+
+          Explique exatamente o que o desenvolvedor precisa investigar
+          e corrigir, SEM explicar a solução.
+
+          ## 🧠 O que investigar
+
+          Liste os pontos que devem ser analisados.
+
+          ## 📚 Conceitos para estudar
+
+          Liste somente conceitos Java/Spring/JPA/SQL realmente
+          relacionados ao problema.
+
+          ## 💡 Dicas
+
+          Dê dicas de investigação sem entregar a solução.
+
+          ## ✅ Critérios de aceitação
+
+          Liste o que precisa estar funcionando para considerar
+          a task concluída.
+
+          ## 🧪 Validação
+
+          Explique quais testes precisam passar depois da correção.
+
+          ## 📊 Dificuldade
+
+          Classifique como:
+          🟢 Júnior
+          🟡 Júnior/Intermediário
+          🔴 Intermediário+
+
+          LOG DOS TESTES:
+          EOF
+
+          cat error-log.txt >> prompt.txt
+
+          # Cria requisição para Groq
+          jq -n \
+            --arg model "openai/gpt-oss-120b" \
+            --rawfile input prompt.txt \
+            '{
+              model: $model,
+              input: $input
+            }' > request.json
+
+          # Envia para Groq
+          curl --fail --silent --show-error \
+            https://api.groq.com/openai/v1/responses \
+            -H "Authorization: Bearer $GROQ_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d @request.json \
+            > response.json
+
+          # Extrai texto retornado pela IA
+          jq -r '
+            [
+              .output[]?
+              | select(.type == "message")
+              | .content[]?
+              | select(.type == "output_text")
+              | .text
+            ]
+            | join("\n")
+          ' response.json > ai-task.txt
+
+          # Extrai título
+          TITLE=$(sed -n 's/^TITLE:[[:space:]]*//p' ai-task.txt | head -n 1)
+
+          if [ -z "$TITLE" ]; then
+            TITLE="[BACKEND] Investigar falha nos testes automáticos"
+          fi
+
+          # Extrai corpo
+          awk '
+            /^BODY:[[:space:]]*$/ {
+              body=1
+              next
+            }
+
+            body {
+              print
+            }
+          ' ai-task.txt > issue-body.md
+
+          # Caso a IA não retorne corpo corretamente
+          if [ ! -s issue-body.md ]; then
+            cat > issue-body.md <<EOF
+          ## 🐛 Falha encontrada nos testes
+
+          A análise automática da Groq não conseguiu gerar a task detalhada.
+
+          Verifique diretamente a execução do GitHub Actions:
+
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          fi
+
+          # Informações adicionais
+          cat >> issue-body.md <<EOF
+
+          ---
+
+          ### 🤖 Informações da detecção automática
+
+          **Branch:** \`${{ github.ref_name }}\`
+
+          **Commit:** \`${{ github.sha }}\`
+
+          **GitHub Action:**
+          ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+          ---
+          Task criada automaticamente pelos testes do Gendaz.
+          EOF
+
+          # Cria a Issue
+          gh issue create \
+            --title "$TITLE" \
+            --body-file issue-body.md
