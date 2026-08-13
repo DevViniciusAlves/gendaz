@@ -26,10 +26,6 @@ function normalizarPlano(planoParam) {
   return 'BASICO'
 }
 
-function somenteDigitos(valor) {
-  return String(valor || '').replace(/\D/g, '')
-}
-
 function normalizarTexto(valor) {
   return String(valor || '').trim().replace(/\s+/g, ' ')
 }
@@ -39,73 +35,6 @@ function senhaForte(senha) {
     && /[A-Z]/.test(senha)
     && /\d/.test(senha)
     && /[^A-Za-z0-9]/.test(senha)
-}
-
-function formatarCpf(valor) {
-  const digitos = somenteDigitos(valor).slice(0, 11)
-  return digitos
-    .replace(/^(\d{3})(\d)/, '$1.$2')
-    .replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/^(\d{3})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3-$4')
-}
-
-function formatarCnpj(valor) {
-  const digitos = somenteDigitos(valor).slice(0, 14)
-  return digitos
-    .replace(/^(\d{2})(\d)/, '$1.$2')
-    .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-    .replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, '$1.$2.$3/$4')
-    .replace(/^(\d{2})\.(\d{3})\.(\d{3})\/(\d{4})(\d)/, '$1.$2.$3/$4-$5')
-}
-
-function formatarDocumento(tipo, valor) {
-  return tipo === 'CPF' ? formatarCpf(valor) : formatarCnpj(valor)
-}
-
-function validarCpf(cpf) {
-  if (cpf.length !== 11) return false
-  if (/^(\d)\1{10}$/.test(cpf)) return false
-
-  let soma = 0
-  for (let i = 0; i < 9; i += 1) {
-    soma += Number(cpf[i]) * (10 - i)
-  }
-  let resto = soma % 11
-  const digito1 = resto < 2 ? 0 : 11 - resto
-  if (digito1 !== Number(cpf[9])) return false
-
-  soma = 0
-  for (let i = 0; i < 10; i += 1) {
-    soma += Number(cpf[i]) * (11 - i)
-  }
-  resto = soma % 11
-  const digito2 = resto < 2 ? 0 : 11 - resto
-  return digito2 === Number(cpf[10])
-}
-
-function validarCnpj(cnpj) {
-  if (cnpj.length !== 14) return false
-  if (/^(\d)\1{13}$/.test(cnpj)) return false
-
-  const pesos1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-  const pesos2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
-
-  let soma = pesos1.reduce((total, peso, index) => total + Number(cnpj[index]) * peso, 0)
-  let resto = soma % 11
-  const digito1 = resto < 2 ? 0 : 11 - resto
-  if (digito1 !== Number(cnpj[12])) return false
-
-  soma = pesos2.reduce((total, peso, index) => total + Number(cnpj[index]) * peso, 0)
-  resto = soma % 11
-  const digito2 = resto < 2 ? 0 : 11 - resto
-  return digito2 === Number(cnpj[13])
-}
-
-function documentoValido(tipo, valor) {
-  const documento = somenteDigitos(valor)
-  if (tipo === 'CPF') return validarCpf(documento)
-  if (tipo === 'CNPJ') return validarCnpj(documento)
-  return false
 }
 
 function mensagemErroCadastro(error) {
@@ -129,8 +58,6 @@ export default function CriarConta() {
     nomeProprietario: '',
     email: '',
     telefone: '',
-    documentoTipo: 'CNPJ',
-    documentoNumero: '',
     senha: '',
     confirmarSenha: '',
     aceiteTermos: false,
@@ -147,11 +74,6 @@ export default function CriarConta() {
     setForm((prev) => ({ ...prev, [campo]: valor }))
   }
 
-  function handleDocumentoChange(valor) {
-    const digitado = somenteDigitos(valor)
-    set('documentoNumero', formatarDocumento(form.documentoTipo, digitado))
-  }
-
   async function handleSubmit(event) {
     event.preventDefault()
     if (carregando) return
@@ -165,8 +87,6 @@ export default function CriarConta() {
       setErro('Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999')
       return
     }
-    const documento = somenteDigitos(form.documentoNumero)
-
     if (!form.aceiteTermos) {
       setErro('Voce precisa aceitar os termos para continuar.')
       return
@@ -186,10 +106,6 @@ export default function CriarConta() {
     const telValidationError = validarTelefone(form.telefone)
     if (telValidationError) {
       setErro(telValidationError)
-      return
-    }
-    if (!documentoValido(form.documentoTipo, documento)) {
-      setErro(form.documentoTipo === 'CPF' ? 'CPF invalido.' : 'CNPJ invalido.')
       return
     }
     if (form.senha.length < 8 || form.senha.length > 72) {
@@ -212,8 +128,6 @@ export default function CriarConta() {
         nomeProprietario,
         email,
         telefone,
-        documentoTipo: form.documentoTipo,
-        documentoNumero: documento,
         senha: form.senha,
         confirmarSenha: form.confirmarSenha,
         plano,
@@ -320,36 +234,6 @@ export default function CriarConta() {
                 onChange={(e) => set('telefone', aplicarMascara(e.target.value))}
                 required
               />
-            </div>
-          </div>
-
-          <div className="cc-doc-row-v2 cc-full-v2">
-            <div className="login-field-v2 cc-doc-select-v2">
-              <label className="login-label-v2">Tipo</label>
-              <div className="login-input-wrap-v2">
-                <select
-                  value={form.documentoTipo}
-                  onChange={(e) => set('documentoTipo', e.target.value)}
-                  required
-                >
-                  <option value="CNPJ">CNPJ</option>
-                  <option value="CPF">CPF</option>
-                </select>
-              </div>
-            </div>
-            <div className="login-field-v2 cc-doc-input-v2">
-              <label className="login-label-v2">{form.documentoTipo === 'CPF' ? 'CPF' : 'CNPJ'}</label>
-              <div className="login-input-wrap-v2">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder={form.documentoTipo === 'CPF' ? '000.000.000-00' : '00.000.000/0000-00'}
-                  maxLength={form.documentoTipo === 'CPF' ? 14 : 18}
-                  value={form.documentoNumero}
-                  onChange={(e) => handleDocumentoChange(e.target.value)}
-                  required
-                />
-              </div>
             </div>
           </div>
 

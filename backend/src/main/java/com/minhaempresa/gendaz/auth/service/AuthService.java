@@ -258,7 +258,7 @@ public class AuthService {
                             planoNome,
                             dataCadastro,
                             cadastro.empresaId(),
-                            request.documentoNumero(),
+                            documento.isBlank() ? null : documento,
                             cadastro.usuario().getId()
                     );
                 } catch (Exception e) {
@@ -455,7 +455,7 @@ public class AuthService {
         if (empresaRepository.findByNomeFantasiaNormalizado(nomeEmpresa).isPresent()) {
             throw new ConflictException("Este nome de empresa ja esta cadastrado.");
         }
-        if (empresaRepository.existsByDocumento(documento)) {
+        if (!documento.isBlank() && empresaRepository.existsByDocumento(documento)) {
             throw new ConflictException("Este documento ja esta cadastrado.");
         }
         validarEmailDisponivelParaPainel(email);
@@ -464,7 +464,7 @@ public class AuthService {
             boolean cadastroPro = "PRO".equalsIgnoreCase(planoEscolhido.getNome());
             EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia(nomeEmpresa)
-                .documento(documento)
+                .documento(documento.isBlank() ? null : documento)
                 .telefone(telefone)
                 .email(email)
                 .status(cadastroPro ? StatusEmpresa.PENDENTE_PAGAMENTO : StatusEmpresa.ATIVA)
@@ -515,7 +515,10 @@ public class AuthService {
         if (telefone.length() < 10 || telefone.length() > 15) {
             throw new BusinessException("Telefone deve ter entre 10 e 15 digitos.");
         }
-        DocumentoUtils.validar(request.documentoTipo(), request.documentoNumero());
+        String documento = DocumentoUtils.normalizar(request.documentoNumero());
+        if (!documento.isBlank()) {
+            DocumentoUtils.validar(request.documentoTipo(), documento);
+        }
         if (!request.senha().equals(request.confirmarSenha())) {
             throw new BusinessException("As senhas nÃ£o coincidem.");
         }
