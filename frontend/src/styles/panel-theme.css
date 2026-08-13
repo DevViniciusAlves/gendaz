@@ -1493,6 +1493,7 @@
 
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-header,
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-title-block,
+:root[data-theme='light'] .app-shell .financeiro-page .financeiro-top-row,
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-controls,
 :root[data-theme='light'] .app-shell .financeiro-page .financeiro-month-field {
   background: #ffffff !important;

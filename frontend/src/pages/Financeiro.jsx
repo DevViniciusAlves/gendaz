@@ -335,8 +335,7 @@ export default function Financeiro() {
         <DashboardCard title="Total pendente" value={currency(pendente)} />
       </div>
 
-      <section className="panel financeiro-panel financeiro-payment-config">
-        <h2>Formas de pagamento</h2>
+      <div className="financeiro-top-row">
         <div className="financeiro-payment-grid">
           {FORMAS_PAGAMENTO.map(([chave, label]) => (
             <label key={chave} className="financeiro-payment-toggle">
@@ -347,41 +346,40 @@ export default function Financeiro() {
                 disabled={salvandoFormas || (chave === 'parceladoAtivo' && !formasPagamento?.creditoAtivo)}
                 onChange={(e) => salvarFormasPagamento(chave, e.target.checked)}
               />
-              <strong>{formasPagamento?.[chave] ? 'ATIVO' : 'DESATIVADO'}</strong>
             </label>
           ))}
         </div>
-      </section>
 
-      <div className="financeiro-controls" style={{ marginBottom: '2rem' }}>
-        <label className="field compact-field financeiro-month-field">
-          <span>Mês</span>
-          <input
-            type="month"
-            value={mes}
-            onChange={(e) => setMes(e.target.value)}
-            aria-label="Filtrar financeiro por mês"
-          />
-        </label>
+        <div className="financeiro-controls">
+          <label className="field compact-field financeiro-month-field">
+            <span>Mês</span>
+            <input
+              type="month"
+              value={mes}
+              onChange={(e) => setMes(e.target.value)}
+              aria-label="Filtrar financeiro por mês"
+            />
+          </label>
 
-        <Button
-          variant="secondary"
-          icon={Download}
-          onClick={() => setExportModal(true)}
-          className="financeiro-refresh-btn"
-        >
-          Exportar CSV
-        </Button>
+          <Button
+            variant="secondary"
+            icon={Download}
+            onClick={() => setExportModal(true)}
+            className="financeiro-refresh-btn"
+          >
+            Exportar CSV
+          </Button>
 
-        <Button
-          variant="secondary"
-          icon={RefreshCw}
-          onClick={recarregar}
-          disabled={recarregando}
-          className="financeiro-refresh-btn"
-        >
-          {recarregando ? 'Recarregando...' : 'Recarregar'}
-        </Button>
+          <Button
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={recarregar}
+            disabled={recarregando}
+            className="financeiro-refresh-btn"
+          >
+            {recarregando ? 'Recarregando...' : 'Recarregar'}
+          </Button>
+        </div>
       </div>
 
       <section className="panel financeiro-panel">

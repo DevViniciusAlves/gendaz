@@ -1,0 +1,44 @@
+name: Testes Backend
+
+on:
+  push:
+    branches: [main, stage]
+  pull_request:
+    branches: [main, stage]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Rodar testes
+        run: mvn --batch-mode clean test
+
+      - name: Criar Issue se falhar
+        if: failure()
+        run: |
+          gh issue create \
+            --title "🐛 Testes do backend falharam" \
+            --body "Os testes automáticos falharam.
+
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+
+            Verifique o GitHub Actions."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -2058,7 +2058,8 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-receita-mes-svg {
   display: block;
   width: 100%;
-  height: 100%;
+  height: auto;
+  aspect-ratio: 760 / 280;
   min-width: 0;
   overflow: hidden;
   touch-action: manipulation;
@@ -3409,12 +3410,17 @@ tbody tr:hover { background: #fffaf5; }
   max-width: 640px;
 }
 
-.financeiro-controls {
-  display: grid;
-  grid-template-columns: minmax(180px, 230px) auto;
-  align-items: end;
+.financeiro-top-row {
+  display: flex;
+  align-items: center;
   gap: 12px;
-  justify-self: end;
+}
+
+.financeiro-controls {
+  display: flex;
+  align-items: end;
+  gap: 10px;
+  margin-left: auto;
 }
 
 .financeiro-month-field {
@@ -3426,8 +3432,8 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .financeiro-month-field input {
-  min-height: 44px;
-  height: 44px;
+  min-height: 36px;
+  height: 36px;
 }
 
 .financeiro-refresh-btn {
@@ -3452,36 +3458,31 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .financeiro-payment-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 10px;
+  display: flex;
+  gap: 6px;
+  flex: 1;
 }
 
 .financeiro-payment-toggle {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
   align-items: center;
-  gap: 6px 10px;
-  padding: 12px;
+  gap: 6px;
+  padding: 6px 10px;
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: 8px;
   background: var(--surface-soft);
+  white-space: nowrap;
 }
 
 .financeiro-payment-toggle span {
   color: var(--text);
+  font-size: 13px;
 }
 
 .financeiro-payment-toggle input {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   accent-color: var(--primary);
-}
-
-.financeiro-payment-toggle strong {
-  grid-column: 1 / -1;
-  color: var(--muted);
-  font-size: 11px;
 }
 
 @media (max-width: 980px) {
@@ -3490,10 +3491,14 @@ tbody tr:hover { background: #fffaf5; }
     align-items: stretch;
   }
 
+  .financeiro-top-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .financeiro-controls {
-    grid-template-columns: minmax(0, 1fr);
-    justify-self: start;
-    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
   }
 
   .financeiro-refresh-btn {

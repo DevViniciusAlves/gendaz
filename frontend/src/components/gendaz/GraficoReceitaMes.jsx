@@ -95,7 +95,7 @@ function GraficoReceitaMes({ dados, formatarEixoY }) {
         viewBox={`0 0 ${width} ${height}`}
         role="img"
         aria-label="Gráfico de receita confirmada por dia do mês"
-        preserveAspectRatio="none"
+        preserveAspectRatio="xMidYMid meet"
         onMouseLeave={limparTooltip}
       >
         <defs>
