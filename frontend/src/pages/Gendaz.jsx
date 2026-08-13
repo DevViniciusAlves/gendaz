@@ -6,6 +6,7 @@ import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/Cliente
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
+import OperationToast from '../components/OperationToast.jsx'
 
 const COOLDOWN_SEGUNDOS = 120
 
@@ -242,6 +243,7 @@ function GendazCadastroGate({ slug }) {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [salvando, setSalvando] = useState(false)
+  const [saindo, setSaindo] = useState(false)
   const [erro, setErro] = useState('')
 
   useEffect(() => {
@@ -250,8 +252,16 @@ function GendazCadastroGate({ slug }) {
   }, [perfilAcesso])
 
   async function sair() {
-    await logout()
-    navigate(`/meu-gendaz/${slug}`, { replace: true })
+    setSaindo(true)
+    window.dispatchEvent(new CustomEvent('gendaz:toast', {
+      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+    }))
+    try {
+      await logout()
+      navigate(`/meu-gendaz/${slug}`, { replace: true })
+    } finally {
+      setSaindo(false)
+    }
   }
 
   async function entrar(event) {
@@ -343,11 +353,11 @@ function GendazCadastroGate({ slug }) {
               autoComplete="tel"
             />
           </label>
-          <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
+          <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando || saindo}>
             {salvando ? <><Loader size={16} /> Entrando...</> : 'Entrar'}
           </button>
-          <button className="gendaz-btn gendaz-btn--voltar" type="button" onClick={() => void sair()} disabled={salvando}>
-            <LogOut size={16} /> Sair
+          <button className="gendaz-btn gendaz-btn--voltar" type="button" onClick={() => void sair()} disabled={salvando || saindo}>
+            {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
           </button>
           <small>O e-mail vem do login. Nome e telefone seguem a regra do sistema.</small>
         </form>
@@ -379,6 +389,7 @@ export default function Gendaz() {
   if (!slug) return null
   return (
     <ClienteGendazProvider slug={slug}>
+      <OperationToast />
       <GendazContent slug={slug} />
     </ClienteGendazProvider>
   )

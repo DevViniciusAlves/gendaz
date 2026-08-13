@@ -16,6 +16,7 @@ export default function Configuracoes() {
   const [erros, setErros] = useState({})
   const [perfilIncompleto, setPerfilIncompleto] = useState(false)
   const [abrirLogout, setAbrirLogout] = useState(false)
+  const [saindo, setSaindo] = useState(false)
 
   useEffect(() => {
     if (cliente) {
@@ -123,9 +124,17 @@ export default function Configuracoes() {
   }
 
   async function handleLogout() {
+    setSaindo(true)
     setAbrirLogout(false)
-    await logout()
-    navigate('..', { replace: true })
+    window.dispatchEvent(new CustomEvent('gendaz:toast', {
+      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+    }))
+    try {
+      await logout()
+      navigate('..', { replace: true })
+    } finally {
+      setSaindo(false)
+    }
   }
 
   return (
@@ -221,8 +230,8 @@ export default function Configuracoes() {
         <article className="gendaz-panel">
           <div className="gendaz-panel__head"><LogOut size={18} /><h2>Sair da conta</h2></div>
           <p>Sua sessao pode permanecer salva por longo periodo no mesmo dispositivo.</p>
-          <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={() => setAbrirLogout(true)}>
-            <LogOut size={16} /> Sair
+          <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={() => setAbrirLogout(true)} disabled={saindo}>
+            {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
           </button>
         </article>
       </div>
@@ -238,11 +247,11 @@ export default function Configuracoes() {
             </div>
             <p className="gendaz-modal__texto">Tem certeza que deseja sair da sua conta no Meu Gendaz?</p>
             <div className="gendaz-modal__actions">
-              <button type="button" className="gendaz-btn gendaz-btn--ghost" onClick={() => setAbrirLogout(false)}>
+              <button type="button" className="gendaz-btn gendaz-btn--ghost" onClick={() => setAbrirLogout(false)} disabled={saindo}>
                 Cancelar
               </button>
-              <button type="button" className="gendaz-btn gendaz-btn--danger" onClick={handleLogout}>
-                <LogOut size={16} /> Sair
+              <button type="button" className="gendaz-btn gendaz-btn--danger" onClick={handleLogout} disabled={saindo}>
+                {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
               </button>
             </div>
           </div>
