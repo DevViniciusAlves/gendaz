@@ -2,16 +2,15 @@ package com.minhaempresa.gendaz.admin.controller;
 
 import com.minhaempresa.gendaz.admin.service.AdminImpersonationService;
 import com.minhaempresa.gendaz.shared.CookieHelper;
+import com.minhaempresa.gendaz.shared.CookieService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,11 +22,12 @@ public class AdminImpersonationController {
     private static final int MAX_AGE_SECONDS = 60 * 30;
 
     private final AdminImpersonationService service;
+    private final CookieService cookieService;
 
     @PostMapping("/start")
     public ResponseEntity<StartResponse> start(@Valid @RequestBody StartRequest body, HttpServletRequest request, HttpServletResponse response) {
         AdminImpersonationService.StartImpersonationResult result = service.iniciar(tokenAdmin(request), body.empresaId(), body.usuarioId(), request);
-        adicionarCookie(request, response, COOKIE_NAME, result.rawToken(), MAX_AGE_SECONDS);
+        cookieService.adicionarCookie(request, response, COOKIE_NAME, result.rawToken(), MAX_AGE_SECONDS);
         return ResponseEntity.ok(new StartResponse(true, result.sessionId(), result.empresaId(), result.usuarioId(), true, result.expiraEm()));
     }
 
@@ -41,38 +41,8 @@ public class AdminImpersonationController {
     @PostMapping("/end")
     public ResponseEntity<Void> end(HttpServletRequest request, HttpServletResponse response) {
         service.encerrarPorToken(CookieHelper.lerCookie(request, COOKIE_NAME).orElse(null), request);
-        limparCookie(request, response, COOKIE_NAME);
+        cookieService.limparCookie(request, response, COOKIE_NAME);
         return ResponseEntity.noContent().build();
-    }
-
-    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        ResponseCookie cookie = ResponseCookie.from(nome, valor)
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofSeconds(maxAge))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private void limparCookie(HttpServletRequest request, HttpServletResponse response, String nome) {
-        ResponseCookie cookie = ResponseCookie.from(nome, "")
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ZERO)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private boolean deveUsarSecure(HttpServletRequest request) {
-        String forwardedProto = request.getHeader("X-Forwarded-Proto");
-        if (forwardedProto != null) {
-            return "https".equalsIgnoreCase(forwardedProto);
-        }
-        return request.isSecure();
     }
 
     private String tokenAdmin(HttpServletRequest request) {

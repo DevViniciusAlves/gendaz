@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
     private static final int SESSION_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
     private final AdminService adminService;
+    private final CookieService cookieService;
 
     @GetMapping("/access")
     public ResponseEntity<Void> access() {
@@ -40,7 +41,7 @@ public class AdminController {
     public ResponseEntity<AdminLoginResponse> login(@Valid @RequestBody AdminLoginRequest request, HttpServletRequest http, HttpServletResponse response) {
         AdminLoginResponse login = adminService.login(request, ip(http), userAgent(http));
         if (login.token() != null) {
-            adicionarCookie(http, response, "agendeasy_admin_session", login.token(), 900);
+            cookieService.adicionarCookie(http, response, "agendeasy_admin_session", login.token(), 900);
         }
         return ResponseEntity.ok(new AdminLoginResponse(null, login.admin()));
     }
@@ -203,11 +204,12 @@ public class AdminController {
 
     @PostMapping("/auth/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
-        limparCookie(request, response, "agendeasy_admin_session");
+        cookieService.limparCookie(request, response, "agendeasy_admin_session");
         return ResponseEntity.noContent().build();
     }
 
     private String ip(HttpServletRequest request) {
+
         String forwarded = request.getHeader("X-Forwarded-For");
         if (forwarded != null && !forwarded.isBlank()) {
             return forwarded.split(",")[0].trim();
@@ -217,36 +219,6 @@ public class AdminController {
 
     private String userAgent(HttpServletRequest request) {
         return request.getHeader("User-Agent");
-    }
-
-    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        ResponseCookie cookie = ResponseCookie.from(nome, valor)
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofSeconds(maxAge))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private void limparCookie(HttpServletRequest request, HttpServletResponse response, String nome) {
-        ResponseCookie cookie = ResponseCookie.from(nome, "")
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ZERO)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private boolean deveUsarSecure(HttpServletRequest request) {
-        String forwardedProto = request.getHeader("X-Forwarded-Proto");
-        if (forwardedProto != null) {
-            return "https".equalsIgnoreCase(forwardedProto);
-        }
-        return request.isSecure();
     }
 
     private String tokenAdmin(HttpServletRequest request) {

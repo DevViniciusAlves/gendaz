@@ -1,25 +1,16 @@
 package com.minhaempresa.gendaz.auth.controller;
 
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.CriarContaRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.RefreshResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.RecuperacaoSenhaResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.RedefinirSenhaRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.SolicitarRecuperacaoSenhaRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.TrocarSenhaRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.TrocarSenhaResponse;
+import com.minhaempresa.gendaz.auth.dto.AuthDtos.*;
 import com.minhaempresa.gendaz.auth.service.AuthService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CookieHelper;
+import com.minhaempresa.gendaz.shared.CookieService;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.time.Duration;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.web.csrf.CsrfToken;
@@ -33,14 +24,15 @@ public class AuthController {
     private static final String SESSION_COOKIE = "Gendaz_session";
     private static final String LEGACY_SESSION_COOKIE = "agendapro_session";
     private final AuthService authService;
+    private final CookieService cookieService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody LoginRequest request, HttpServletRequest http, HttpServletResponse response) {
         try {
             LoginResponse login = authService.login(request);
             if (login.sessionToken() != null && login.usuario() != null) {
-                limparCookie(http, response, LEGACY_SESSION_COOKIE);
-                adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
+                cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
+                cookieService.adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (BusinessException ex) {
@@ -62,8 +54,8 @@ public class AuthController {
         try {
             LoginResponse login = authService.criarConta(request);
             if (login.sessionToken() != null && login.usuario() != null) {
-                limparCookie(http, response, LEGACY_SESSION_COOKIE);
-                adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
+                cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
+                cookieService.adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (RuntimeException ex) {
@@ -93,8 +85,8 @@ public class AuthController {
     ) {
         String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         authService.trocarSenha(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken, request.senhaAtual(), request.novaSenha(), request.confirmarNovaSenha());
-        limparCookie(http, response, SESSION_COOKIE);
-        limparCookie(http, response, LEGACY_SESSION_COOKIE);
+        cookieService.limparCookie(http, response, SESSION_COOKIE);
+        cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
         return ResponseEntity.ok(new TrocarSenhaResponse("Senha alterada com sucesso."));
     }
 
@@ -114,8 +106,8 @@ public class AuthController {
         } catch (BusinessException ex) {
             log.debug("Logout sem sessao valida (best-effort): {}", ex.getMessage());
         }
-        limparCookie(http, response, SESSION_COOKIE);
-        limparCookie(http, response, LEGACY_SESSION_COOKIE);
+        cookieService.limparCookie(http, response, SESSION_COOKIE);
+        cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
         return ResponseEntity.noContent().build();
     }
 
@@ -127,8 +119,8 @@ public class AuthController {
         String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         RefreshResponse refresh = authService.refresh(sessionToken);
         if (refresh.sessionToken() != null) {
-            limparCookie(http, response, LEGACY_SESSION_COOKIE);
-            adicionarCookie(http, response, SESSION_COOKIE, refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
+            cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
+            cookieService.adicionarCookie(http, response, SESSION_COOKIE, refresh.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }
         return ResponseEntity.ok(refresh);
     }
@@ -142,36 +134,6 @@ public class AuthController {
         return ResponseEntity.ok(Map.of("token", csrfToken.getToken()));
     }
 
-    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        ResponseCookie cookie = ResponseCookie.from(nome, valor)
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ofSeconds(maxAge))
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private void limparCookie(HttpServletRequest request, HttpServletResponse response, String nome) {
-        ResponseCookie cookie = ResponseCookie.from(nome, "")
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None")
-                .maxAge(Duration.ZERO)
-                .build();
-        response.addHeader("Set-Cookie", cookie.toString());
-    }
-
-    private boolean deveUsarSecure(HttpServletRequest request) {
-        String forwardedProto = request.getHeader("X-Forwarded-Proto");
-        if (forwardedProto != null) {
-            return "https".equalsIgnoreCase(forwardedProto);
-        }
-        return request.isSecure();
-    }
-
     private String mascararEmail(String email) {
         if (email == null || email.isBlank() || !email.contains("@")) {
             return "***";
@@ -183,4 +145,5 @@ public class AuthController {
         return visivel + "@" + dominio;
     }
 }
+
 

@@ -1,18 +1,15 @@
 package com.minhaempresa.gendaz.auth.controller;
 
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazAuthResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazCodigoResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazSolicitarCodigoRequest;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazValidarCodigoRequest;
+import com.minhaempresa.gendaz.auth.dto.AuthDtos.*;
 import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CookieHelper;
+import com.minhaempresa.gendaz.shared.CookieService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class MeuGendazAuthController {
     private static final int SESSION_COOKIE_MAX_AGE = (int) Duration.ofDays(90).getSeconds();
     private final MeuGendazAuthService authService;
+    private final CookieService cookieService;
 
     @PostMapping("/solicitar-codigo")
     public ResponseEntity<MeuGendazCodigoResponse> solicitarCodigo(
@@ -43,7 +41,7 @@ public class MeuGendazAuthController {
     ) {
         MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
         String cookieName = nomeCookie(request.slug());
-        adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
         // O sessionToken nÃ£o deve ser retornado no JSON para evitar armazenamento no client side.
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
@@ -61,20 +59,9 @@ public class MeuGendazAuthController {
                 .orElseThrow(() -> new BusinessException("Sessao expirada ou invalida."));
         MeuGendazAuthResponse auth = authService.refreshSessao(slug, sessionToken);
         String cookieName = nomeCookie(slug);
-        adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
         // O sessionToken nÃ£o deve ser retornado no JSON para evitar armazenamento no client side.
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
-    }
-
-
-    private void adicionarCookie(HttpServletRequest request, HttpServletResponse response, String nome, String valor, int maxAge) {
-        ResponseCookie.ResponseCookieBuilder builder = ResponseCookie.from(nome, valor)
-                .httpOnly(true)
-                .secure(deveUsarSecure(request))
-                .path("/")
-                .sameSite("None");
-        ResponseCookie cookie = builder.maxAge(Duration.ofSeconds(maxAge)).build();
-        response.addHeader("Set-Cookie", cookie.toString());
     }
 
     private String nomeCookie(String slug) {
@@ -85,13 +72,6 @@ public class MeuGendazAuthController {
         return "meu_gendaz_session_" + normalizado;
     }
 
-    private boolean deveUsarSecure(HttpServletRequest request) {
-        String forwardedProto = request.getHeader("X-Forwarded-Proto");
-        if (forwardedProto != null) {
-            return "https".equalsIgnoreCase(forwardedProto);
-        }
-        return request.isSecure();
-    }
     private String getClientIp(HttpServletRequest request) {
         String ip = request.getHeader("X-Forwarded-For");
         if (ip == null || ip.isEmpty()) {
@@ -100,4 +80,5 @@ public class MeuGendazAuthController {
         return ip.split(",")[0].trim();
     }
 }
+
 
