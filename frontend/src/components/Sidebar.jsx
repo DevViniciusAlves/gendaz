@@ -9,12 +9,12 @@ const items = [
   { key: 'dashboard',     to: '/sistema/dashboard',     label: 'Dashboard',      icon: Home,          mobile: true },
   { key: 'agenda',        to: '/sistema/agenda',        label: 'Agenda',         icon: CalendarDays,  mobile: true },
   { key: 'clientes',      to: '/sistema/clientes',      label: 'Clientes',       icon: Users,         mobile: true },
-  { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3,     mobile: true },
   { key: 'profissionais', to: '/sistema/profissionais', label: 'Profissionais',  icon: UserRoundCog },
   { key: 'servicos',      to: '/sistema/servicos',      label: 'Serviços',       icon: Wrench },
   { key: 'crm',           to: '/sistema/crm',           label: 'CRM',            icon: MessageCircle },
   { key: 'insights',      to: '/sistema/insights',      label: 'Insights',       icon: Sparkles },
   { key: 'promocoes',     to: '/sistema/promocoes',     label: 'Promoções',      icon: Gift },
+  { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3,     mobile: true },
   { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
   { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
 ]
