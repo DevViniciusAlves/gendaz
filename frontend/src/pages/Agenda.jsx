@@ -18,6 +18,10 @@ import '../styles/agenda.css'
 const PROFISSIONAL_AUTOMATICO_VALUE = 'atendimento-principal'
 const AGENDA_TIMEZONE = 'America/Cuiaba'
 
+function emitirToast(type, message) {
+  window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
+}
+
 const novoFormulario = {
   clienteId: '',
   servicoId: '',
@@ -590,18 +594,22 @@ export default function Agenda() {
     if (acaoId) return
     setAcaoId(agendamento.id)
     setErroAcao('')
+    emitirToast('loading', pagamentoRealizado ? 'Pagamento sendo efetuado, aguarde...' : 'Atendimento finalizando, aguarde...')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.finalizarAgendamento(agendamento.id, pagamentoRealizado, pagamento)
       setAcaoId(null)
       setFinalizacaoPagamento(null)
+      emitirToast('success', 'Agendamento finalizado com sucesso.')
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
       setAcaoId(null)
-      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.')
+      const mensagem = error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.'
+      setErroAcao(mensagem)
+      emitirToast('error', mensagem)
     }
   }
 

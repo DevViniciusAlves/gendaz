@@ -38,6 +38,34 @@ function pertenceAoMes(pagamento, mes) {
   return valorTextoPagamento(pagamento).startsWith(mes)
 }
 
+function ehCreditoParcelado(pagamento) {
+  const metodo = pagamento?.metodoPagamento
+  return ['CREDITO', 'CREDIT_CARD', 'CARTAO'].includes(metodo) && Number(pagamento?.parcelas || 0) > 1
+}
+
+function adicionarMeses(dataTexto, meses) {
+  const [ano, mes, dia] = String(dataTexto || '').slice(0, 10).split('-').map(Number)
+  if (!ano || !mes || !dia) return dataTexto
+  const data = new Date(ano, mes - 1 + meses, dia, 12, 0, 0, 0)
+  return data.toISOString().slice(0, 10)
+}
+
+function expandirParcelasPagamento(pagamento) {
+  if (!ehCreditoParcelado(pagamento)) return [pagamento]
+  const parcelas = Number(pagamento.parcelas)
+  const valorTotal = Number(pagamento.valor || 0)
+  const valorParcela = Number((valorTotal / parcelas).toFixed(2))
+  const dataBase = valorTextoPagamento(pagamento).slice(0, 10)
+  return Array.from({ length: parcelas }, (_, index) => ({
+    ...pagamento,
+    id: `${pagamento.id}-parcela-${index + 1}`,
+    pagamentoId: pagamento.id,
+    parcelaAtual: index + 1,
+    valor: index === parcelas - 1 ? Number((valorTotal - (valorParcela * (parcelas - 1))).toFixed(2)) : valorParcela,
+    dataPagamento: adicionarMeses(dataBase, index),
+  }))
+}
+
 function ordenarMaisRecente(a, b) {
   const dataA = valorTextoPagamento(a)
   const dataB = valorTextoPagamento(b)
@@ -49,10 +77,13 @@ function statusSimples(statusAtual) {
   return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
-function metodoLegivel(metodoAtual, parcelas) {
+function metodoLegivel(metodoAtual, parcelas, parcelaAtual) {
   if (!metodoAtual) return '—'
   if (metodoAtual === 'PIX_AUTO') return 'PIX automático'
-  if (metodoAtual === 'CREDIT_CARD' || metodoAtual === 'CARTAO' || metodoAtual === 'CREDITO') return `Crédito${parcelas ? ` · ${parcelas}x` : ''}`
+  if (metodoAtual === 'CREDIT_CARD' || metodoAtual === 'CARTAO' || metodoAtual === 'CREDITO') {
+    if (parcelas && parcelaAtual) return `Crédito · ${parcelaAtual}/${parcelas}`
+    return `Crédito${parcelas ? ` · ${parcelas}x` : ''}`
+  }
   if (metodoAtual === 'DEBITO') return 'Débito'
   return metodoAtual || '-'
 }
@@ -97,16 +128,16 @@ export default function Financeiro() {
       .catch(() => setFormasPagamento({ pixAtivo: true, debitoAtivo: true, creditoAtivo: true, parceladoAtivo: false, dinheiroAtivo: true, maxParcelas: 12 }))
   }, [])
 
-  const pagamentosDoMes = useMemo(() => {
+  const pagamentosExpandidos = useMemo(() => {
     const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
-    return pagamentos
-      .filter((item) => pertenceAoMes(item, mes))
-      .sort(ordenarMaisRecente)
-  }, [data.pagamentos, mes])
+    return pagamentos.flatMap(expandirParcelasPagamento)
+  }, [data.pagamentos])
 
-  const pagamentosFiltrados = useMemo(() => {
-    const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
-    return pagamentos
+  const pagamentosDoMes = useMemo(() => pagamentosExpandidos
+    .filter((item) => pertenceAoMes(item, mes))
+    .sort(ordenarMaisRecente), [pagamentosExpandidos, mes])
+
+  const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
       .filter((item) => {
         const matchesStatus = statusPagamento === 'todos' || item.status === statusPagamento
         const dataBase = String(item.dataPagamento || item.data || item.dataCriacao || '')
@@ -120,8 +151,7 @@ export default function Financeiro() {
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
         return matchesStatus && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
-      .sort(ordenarMaisRecente)
-  }, [data.pagamentos, metodoPagamento, periodoPagamento, protocoloPagamento, statusPagamento])
+      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)
@@ -181,8 +211,7 @@ export default function Financeiro() {
   }
 
   async function exportarFinanceiro({ modo, dataInicial, dataFinal }) {
-    const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
-    const registros = pagamentos.filter((item) => {
+    const registros = pagamentosExpandidos.filter((item) => {
       if (modo !== 'periodo') return true
       const dataBase = String(
         item.dataPagamento || item.pagoEm || item.createdAt || item.data || item.dataCriacao || item.updatedAt || item.agendamento?.data || '',
@@ -206,7 +235,7 @@ export default function Financeiro() {
         item.servicoNome || item.servico?.nome || '',
         item.profissionalNome || item.agendamento?.profissionalNome || 'Sem preferência',
         currency(item.valor || 0),
-        metodoLegivel(item.metodoPagamento, item.parcelas),
+        metodoLegivel(item.metodoPagamento, item.parcelas, item.parcelaAtual),
         statusPagamentoLegivel(item.status),
         item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
         item.dataPagamento ? formatarData(item.dataPagamento) : '',
@@ -450,10 +479,10 @@ export default function Financeiro() {
               render: (row) => (
                 <input
                   type="checkbox"
-                  checked={pagamentosSelecionados.includes(row.id)}
-                  onChange={() => alternarPagamentoSelecionado(row.id)}
-                  disabled={!pagamentosSelecionados.includes(row.id) && totalSelecionadosPagamentos >= 10}
-                  aria-label={`Selecionar pagamento ${row.id}`}
+                  checked={pagamentosSelecionados.includes(row.pagamentoId || row.id)}
+                  onChange={() => alternarPagamentoSelecionado(row.pagamentoId || row.id)}
+                  disabled={!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10}
+                  aria-label={`Selecionar pagamento ${row.pagamentoId || row.id}`}
                 />
               ),
             }] : []),
@@ -472,7 +501,7 @@ export default function Financeiro() {
             { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
             { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
             { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
-            { key: 'metodoPagamento', label: 'FORMA', render: (row) => metodoLegivel(row.metodoPagamento, row.parcelas) },
+            { key: 'metodoPagamento', label: 'FORMA', render: (row) => metodoLegivel(row.metodoPagamento, row.parcelas, row.parcelaAtual) },
             { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
             {
               key: 'acao',
@@ -480,9 +509,9 @@ export default function Financeiro() {
               render: (row) => (
                 <ActionMenu
                   actions={[
-                    { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.id, 'PAGO') },
-                    { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.id, 'CANCELADO') },
-                    { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluirPagamento(row.id) },
+                    { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') },
+                    { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') },
+                    { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluirPagamento(row.pagamentoId || row.id) },
                   ]}
                 />
               ),
