@@ -159,6 +159,13 @@ export default function Header() {
     setNotificationsOpen(false)
   }
 
+  function sair() {
+    window.dispatchEvent(new CustomEvent('gendaz:toast', {
+      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+    }))
+    logout()
+  }
+
   return (
     <header className="topbar">
       <div>
@@ -202,7 +209,7 @@ export default function Header() {
                 Minha conta
               </Link>
               <ThemeToggle />
-              <button onClick={logout}>
+              <button onClick={sair}>
                 <LogOut size={16} />
                 Sair
               </button>

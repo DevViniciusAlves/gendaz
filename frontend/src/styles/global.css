@@ -20537,9 +20537,274 @@ iframe {
   }
 }
 
-/* Meu Gendaz mobile app navigation */
+/* Painel Gendaz e Meu Gendaz - navegação mobile app-like */
+.app-mobile-nav,
 .gendaz-mobile-nav {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: block !important;
+    min-height: 100dvh;
+  }
+
+  .app-shell .sidebar {
+    display: none !important;
+  }
+
+  .app-shell .app-main {
+    width: 100%;
+  }
+
+  .app-shell .content {
+    width: 100%;
+    padding: 16px 16px calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 60;
+    margin: 0;
+    padding: 14px 16px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .app-shell .page {
+    width: 100%;
+    padding: 0 !important;
+    gap: 16px !important;
+  }
+
+  .app-shell .page-title,
+  .app-shell .dashboard-hero,
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .settings-card,
+  .app-shell .client-panel,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .plan-card,
+  .app-shell .report-filters,
+  .app-shell .filters,
+  .app-shell .search-shell {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .app-shell .dashboard-hero,
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .settings-card,
+  .app-shell .client-panel,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .plan-card,
+  .app-shell .report-filters,
+  .app-shell .filters,
+  .app-shell .search-shell {
+    padding: 16px !important;
+    border-radius: 18px !important;
+  }
+
+  .app-shell .operation-metrics,
+  .app-shell .metric-grid,
+  .app-shell .delivery-stats,
+  .app-shell .dashboard-grid,
+  .app-shell .agenda-header,
+  .app-shell .schedule-grid,
+  .app-shell .settings-summary-grid,
+  .app-shell .settings-grid,
+  .app-shell .plans-grid,
+  .app-shell .plans-grid.detailed,
+  .app-shell .support-grid,
+  .app-shell .chat-layout,
+  .app-shell .form-grid,
+  .app-shell .report-filters,
+  .app-shell .booking-schedule-grid,
+  .app-shell .booking-preview-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .topbar-actions,
+  .app-shell .page-title-actions,
+  .app-shell .row-title,
+  .app-shell .panel-head,
+  .app-shell .filters,
+  .app-shell .table-actions,
+  .app-shell .delivery-action,
+  .app-shell .chat-actions,
+  .app-shell .message-form,
+  .app-shell .account-badges,
+  .app-shell .mass-action-toolbar,
+  .app-shell .schedule-actions {
+    width: 100%;
+    flex-wrap: wrap;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+  }
+
+  .app-shell .row-title,
+  .app-shell .page-title,
+  .app-shell .panel-head,
+  .app-shell .filters,
+  .app-shell .table-actions {
+    flex-direction: column !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .btn,
+  .app-shell .btn-primary,
+  .app-shell .btn-secondary {
+    min-height: 44px !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .schedule-actions .btn-action-card,
+  .app-shell .schedule-actions .action-menu-btn {
+    min-height: 42px !important;
+  }
+
+  .app-mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 85;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 2px;
+    padding: 8px max(8px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+    background: rgba(10, 10, 10, 0.96);
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.38);
+    backdrop-filter: blur(18px) saturate(120%);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  .app-mobile-nav__link,
+  .app-mobile-more__link {
+    position: relative;
+    min-width: 0;
+    min-height: 48px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    border: 0;
+    border-radius: 14px;
+    color: rgba(255, 255, 255, 0.68);
+    background: transparent;
+    text-decoration: none;
+    font-size: 11px;
+    line-height: 1.1;
+    text-align: center;
+  }
+
+  .app-mobile-nav__link.is-active,
+  .app-mobile-more__link.is-active {
+    color: #111111;
+    background: #f5f5f5;
+  }
+
+  .app-mobile-nav .badge-pendentes,
+  .app-mobile-more .badge-pendentes {
+    position: absolute;
+    top: 4px;
+    right: 14px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    font-size: 10px;
+  }
+
+  .app-mobile-more {
+    position: relative;
+    min-width: 0;
+  }
+
+  .app-mobile-more summary {
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .app-mobile-more summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .app-mobile-more__panel {
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + 10px);
+    width: min(236px, calc(100vw - 24px));
+    display: grid;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 18px;
+    background: rgba(17, 17, 17, 0.98);
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.48);
+  }
+
+  .app-mobile-more__link {
+    min-height: 44px;
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 0 12px;
+    font-size: 13px;
+    text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .app-shell .content {
+    padding: 14px 14px calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .topbar {
+    padding-inline: 14px !important;
+  }
+
+  .app-shell .dashboard-hero,
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .settings-card,
+  .app-shell .client-panel,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .plan-card,
+  .app-shell .report-filters,
+  .app-shell .filters,
+  .app-shell .search-shell {
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .app-shell .content {
+    padding-inline: 12px !important;
+  }
+
+  .app-mobile-nav {
+    padding-inline: 6px;
+  }
+
+  .app-mobile-nav__link {
+    min-height: 46px;
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 340px) {
+  .app-mobile-nav__link span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 @media (max-width: 768px) {
@@ -20686,6 +20951,70 @@ iframe {
   .app-shell .modal table,
   .app-shell .modal-card table {
     min-width: 560px;
+  }
+
+  .app-shell .modal .data-table,
+  .app-shell .modal-card .data-table {
+    min-width: 560px !important;
+    display: table;
+  }
+
+  .app-shell .modal .data-table thead,
+  .app-shell .modal-card .data-table thead {
+    display: table-header-group;
+  }
+
+  .app-shell .modal .data-table tbody,
+  .app-shell .modal-card .data-table tbody {
+    display: table-row-group;
+  }
+
+  .app-shell .modal .data-table tr,
+  .app-shell .modal-card .data-table tr {
+    display: table-row;
+  }
+
+  .app-shell .modal .data-table td,
+  .app-shell .modal-card .data-table td {
+    display: table-cell;
+  }
+
+  .app-shell .data-table {
+    min-width: 0 !important;
+  }
+
+  .app-shell .data-table thead {
+    display: none;
+  }
+
+  .app-shell .data-table,
+  .app-shell .data-table tbody,
+  .app-shell .data-table tr,
+  .app-shell .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .app-shell .data-table tr {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .app-shell .data-table td {
+    max-width: 100% !important;
+    padding: 6px 0 !important;
+    border: 0 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+
+  .app-shell .data-table td .cell-truncate {
+    display: block;
+    max-width: 100%;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
   }
 }
 
