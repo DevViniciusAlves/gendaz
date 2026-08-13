@@ -4,7 +4,21 @@ import { CalendarPlus, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
 
+function diaSemanaIso(data) {
+  if (!data) return null
+  const [ano, mes, dia] = String(data).split('-').map(Number)
+  const local = ano && mes && dia ? new Date(ano, mes - 1, dia, 12) : null
+  const dias = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+  return local ? dias[local.getDay()] : null
+}
+
+function trabalhaNaData(profissional, data) {
+  const dia = diaSemanaIso(data)
+  return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
+}
+
 function NovoAgendamentoModal({ onFechar, onCriar }) {
+
   const { servicos, profissionais } = useContext(ClienteGendazContext)
   const location = useLocation()
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
@@ -18,7 +32,14 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const [erro, setErro] = useState('')
 
   useEffect(() => {
+    if (form.profissionalId && !profissionaisDisponiveis.some((profissional) => String(profissional.id) === String(form.profissionalId))) {
+      setForm((prev) => ({ ...prev, profissionalId: profissionaisDisponiveis[0]?.id ? String(profissionaisDisponiveis[0].id) : '', hora: '' }))
+    }
+  }, [form.profissionalId, profissionaisDisponiveis])
+
+  useEffect(() => {
     if (!form.servicoId || !form.profissionalId || !form.data) {
+
       setHorarios([])
       return
     }
@@ -112,9 +133,9 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Profissional *</span>
             <select value={form.profissionalId} onChange={(e) => setForm({ ...form, profissionalId: e.target.value, cupomCodigo: '' })} required>
               <option value="">Selecione um profissional</option>
-              {profissionaisAtivos.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
+              {profissionaisDisponiveis.map((p) => <option key={p.id} value={p.id}>{p.nome || `Profissional ${p.id}`}</option>)}
             </select>
-            {profissionaisAtivos.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível.</small>}
+            {profissionaisDisponiveis.length === 0 && <small className="gendaz-texto-aviso">Nenhum profissional disponível nesta data. Escolha outro dia.</small>}
           </label>
           <label>
             <span>Data *</span>
@@ -284,6 +305,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
 export default function Agenda() {
   const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro, profissionais } = useContext(ClienteGendazContext)
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
+  const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [showNovo, setShowNovo] = useState(false)
   const [modalReagendar, setModalReagendar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)

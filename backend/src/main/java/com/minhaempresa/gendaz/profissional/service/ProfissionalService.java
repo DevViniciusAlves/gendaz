@@ -5,6 +5,7 @@ import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.SalvarProfissionalRequest;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
+import com.minhaempresa.gendaz.profissional.enums.DiaSemana;
 import com.minhaempresa.gendaz.profissional.mapper.ProfissionalMapper;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -12,9 +13,13 @@ import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
+import java.time.LocalDate;
+import java.util.EnumSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -36,16 +41,20 @@ public class ProfissionalService {
         contextoInicio.put("nome", request.nome());
         contextoInicio.put("especialidade", request.especialidade());
         contextoInicio.put("telefone", request.telefone());
-        contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
+            contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
         contextoInicio.put("sistema", false);
+        contextoInicio.put("diasTrabalho", request.diasTrabalho());
+
         log.debug("[profissional-debug] inicio criacao profissional {}", contextoInicio);
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            Set<DiaSemana> diasTrabalho = normalizarDiasTrabalho(request.diasTrabalho(), StatusCadastro.ATIVO);
             ProfissionalEntity profissional = ProfissionalEntity.builder()
                     .nome(sanitizacaoService.textoObrigatorio(request.nome()))
                     .especialidade(sanitizacaoService.texto(request.especialidade()))
                     .telefone(sanitizacaoService.telefone(request.telefone()))
                     .status(StatusCadastro.ATIVO)
+                    .diasTrabalho(diasTrabalho)
                     .empresa(empresa)
                     .build();
             ProfissionalEntity salvo = profissionalRepository.save(profissional);
@@ -82,6 +91,7 @@ public class ProfissionalService {
         profissional.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
         profissional.setEspecialidade(sanitizacaoService.texto(request.especialidade()));
         profissional.setTelefone(sanitizacaoService.telefone(request.telefone()));
+        profissional.setDiasTrabalho(normalizarDiasTrabalho(request.diasTrabalho(), profissional.getStatus()));
         return mapper.toResponse(profissionalRepository.save(profissional));
     }
 
@@ -89,6 +99,9 @@ public class ProfissionalService {
     public ProfissionalResponse alterarStatus(Long id, StatusCadastro status) {
         ProfissionalEntity profissional = buscarEntidade(id);
         validarNaoSistema(profissional);
+        if (status == StatusCadastro.ATIVO && diasEfetivos(profissional).isEmpty()) {
+            throw new BusinessException("Selecione pelo menos um dia de trabalho.");
+        }
         profissional.setStatus(status);
         return mapper.toResponse(profissionalRepository.save(profissional));
     }
@@ -99,6 +112,7 @@ public class ProfissionalService {
         profissional.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
         profissional.setEspecialidade(sanitizacaoService.texto(request.especialidade()));
         profissional.setTelefone(sanitizacaoService.telefone(request.telefone()));
+        profissional.setDiasTrabalho(normalizarDiasTrabalho(request.diasTrabalho(), profissional.getStatus()));
         return mapper.toResponse(profissionalRepository.save(profissional));
     }
 
@@ -137,8 +151,41 @@ public class ProfissionalService {
                         .especialidade(null)
                         .status(StatusCadastro.ATIVO)
                         .sistema(true)
+                        .diasTrabalho(todosDias())
                         .empresa(empresa)
                         .build()));
+    }
+
+    public boolean trabalhaNoDia(ProfissionalEntity profissional, LocalDate data) {
+        if (profissional == null || data == null) {
+            return false;
+        }
+        return diasEfetivos(profissional).contains(DiaSemana.from(data.getDayOfWeek()));
+    }
+
+    public void validarTrabalhoNoDia(ProfissionalEntity profissional, LocalDate data) {
+        if (!trabalhaNoDia(profissional, data)) {
+            throw new BusinessException("Este profissional nao atende no dia selecionado.");
+        }
+    }
+
+    private Set<DiaSemana> normalizarDiasTrabalho(Set<DiaSemana> dias, StatusCadastro status) {
+        Set<DiaSemana> normalizados = dias == null ? todosDias() : new LinkedHashSet<>(dias);
+        if (status == StatusCadastro.ATIVO && normalizados.isEmpty()) {
+            throw new BusinessException("Selecione pelo menos um dia de trabalho.");
+        }
+        return normalizados;
+    }
+
+    private Set<DiaSemana> diasEfetivos(ProfissionalEntity profissional) {
+        if (profissional.getDiasTrabalho() == null || profissional.getDiasTrabalho().isEmpty()) {
+            return profissional.isSistema() ? todosDias() : Set.of();
+        }
+        return profissional.getDiasTrabalho();
+    }
+
+    private Set<DiaSemana> todosDias() {
+        return new LinkedHashSet<>(EnumSet.allOf(DiaSemana.class));
     }
 
     private void validarNaoSistema(ProfissionalEntity profissional) {

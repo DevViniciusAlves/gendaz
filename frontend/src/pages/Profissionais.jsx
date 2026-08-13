@@ -11,7 +11,18 @@ import ActionMenu from '../components/ActionMenu.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
-const formInicial = { nome: '', especialidade: '', telefone: '' }
+const DIAS_TRABALHO = [
+  { valor: 'SEGUNDA', letra: 'S', label: 'Seg', nome: 'Segunda' },
+  { valor: 'TERCA', letra: 'T', label: 'Ter', nome: 'Terça' },
+  { valor: 'QUARTA', letra: 'Q', label: 'Qua', nome: 'Quarta' },
+  { valor: 'QUINTA', letra: 'Q', label: 'Qui', nome: 'Quinta' },
+  { valor: 'SEXTA', letra: 'S', label: 'Sex', nome: 'Sexta' },
+  { valor: 'SABADO', letra: 'S', label: 'Sáb', nome: 'Sábado' },
+  { valor: 'DOMINGO', letra: 'D', label: 'Dom', nome: 'Domingo' },
+]
+
+const DIAS_PADRAO = DIAS_TRABALHO.map((dia) => dia.valor)
+const formInicial = { nome: '', especialidade: '', telefone: '', diasTrabalho: DIAS_PADRAO }
 
 export default function Profissionais() {
   const [data, , { reload }] = useLocalData('profissionais')
@@ -44,6 +55,7 @@ export default function Profissionais() {
       nome: profissional.nome || '',
       especialidade: profissional.especialidade || '',
       telefone: profissional.telefone || '',
+      diasTrabalho: Array.isArray(profissional.diasTrabalho) ? profissional.diasTrabalho : DIAS_PADRAO,
     })
     setErroEditar('')
     setModalEditar(true)
@@ -58,6 +70,7 @@ export default function Profissionais() {
       const telErr = validarTelefone(f.telefone)
       if (telErr) return telErr
     }
+    if (!Array.isArray(f.diasTrabalho) || f.diasTrabalho.length === 0) return 'Selecione pelo menos um dia de trabalho.'
     return ''
   }
 
@@ -66,7 +79,46 @@ export default function Profissionais() {
       nome: f.nome.trim().replace(/\s+/g, ' '),
       especialidade: f.especialidade.trim().replace(/\s+/g, ' ') || null,
       telefone: f.telefone ? (padronizarTelefone(f.telefone) || null) : null,
+      diasTrabalho: Array.isArray(f.diasTrabalho) ? f.diasTrabalho : [],
     }
+  }
+
+  function alternarDia(setter, valor) {
+    setter((atual) => {
+      const diasAtuais = Array.isArray(atual.diasTrabalho) ? atual.diasTrabalho : []
+      const diasTrabalho = diasAtuais.includes(valor)
+        ? diasAtuais.filter((dia) => dia !== valor)
+        : [...diasAtuais, valor]
+      return { ...atual, diasTrabalho }
+    })
+  }
+
+  function DiasTrabalhoSelector({ value, onToggle }) {
+    const selecionados = Array.isArray(value) ? value : []
+    return (
+      <div className="field field-wide dias-trabalho-field">
+        <span>Dias de trabalho</span>
+        <div className="dias-trabalho-grid">
+          {DIAS_TRABALHO.map((dia) => {
+            const ativo = selecionados.includes(dia.valor)
+            return (
+              <button
+                key={dia.valor}
+                type="button"
+                className={ativo ? 'dia-trabalho-btn ativo' : 'dia-trabalho-btn'}
+                aria-pressed={ativo}
+                aria-label={`${dia.nome} ${ativo ? 'selecionado' : 'não selecionado'}`}
+                title={dia.nome}
+                onClick={() => onToggle(dia.valor)}
+              >
+                <strong>{dia.letra}</strong>
+                <small>{dia.label}</small>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+    )
   }
 
   async function recarregar() {
@@ -191,6 +243,7 @@ export default function Profissionais() {
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required />
           <Input label="Especialidade" helper="Digite apenas letras." maxLength={80} value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value.replace(/[^\p{L}\s]/gu, '') })} />
           <Input label="Telefone (opcional)" helper={form.telefone ? (validarTelefone(form.telefone) || ' Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={form.telefone} onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })} />
+          <DiasTrabalhoSelector value={form.diasTrabalho} onToggle={(dia) => alternarDia(setForm, dia)} />
           {erro && <p className="form-error field-wide">{erro}</p>}
           <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
         </form>
@@ -202,6 +255,7 @@ export default function Profissionais() {
             <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={edicao.nome} onChange={(e) => setEdicao({ ...edicao, nome: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required />
             <Input label="Especialidade" helper="Digite apenas letras." maxLength={80} value={edicao.especialidade} onChange={(e) => setEdicao({ ...edicao, especialidade: e.target.value.replace(/[^\p{L}\s]/gu, '') })} />
             <Input label="Telefone (opcional)" helper={edicao.telefone ? (validarTelefone(edicao.telefone) || ' Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={edicao.telefone} onChange={(e) => setEdicao({ ...edicao, telefone: aplicarMascara(e.target.value) })} />
+            <DiasTrabalhoSelector value={edicao.diasTrabalho} onToggle={(dia) => alternarDia(setEdicao, dia)} />
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar altera��es'}</Button>
           </form>

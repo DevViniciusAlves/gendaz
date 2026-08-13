@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.profissional.mapper;
 
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
+import java.util.LinkedHashSet;
 
 public class ProfissionalMapper {
     public ProfissionalResponse toResponse(ProfissionalEntity profissional) {
@@ -12,7 +13,8 @@ public class ProfissionalMapper {
                 profissional.getTelefone(),
                 profissional.getStatus(),
                 profissional.getEmpresa().getId(),
-                profissional.isSistema()
+                profissional.isSistema(),
+                new LinkedHashSet<>(profissional.getDiasTrabalho())
         );
     }
 }

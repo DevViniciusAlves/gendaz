@@ -1,8 +1,11 @@
 package com.minhaempresa.gendaz.profissional.entity;
 
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.profissional.enums.DiaSemana;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import jakarta.persistence.*;
+import java.util.LinkedHashSet;
+import java.util.Set;
 import lombok.*;
 
 @Getter
@@ -29,6 +32,13 @@ public class ProfissionalEntity {
 
     @Column(nullable = false)
     private boolean sistema;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "profissional_dias_trabalho", joinColumns = @JoinColumn(name = "profissional_id"))
+    @Enumerated(EnumType.STRING)
+    @Column(name = "dia_semana", nullable = false)
+    @Builder.Default
+    private Set<DiaSemana> diasTrabalho = new LinkedHashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id")

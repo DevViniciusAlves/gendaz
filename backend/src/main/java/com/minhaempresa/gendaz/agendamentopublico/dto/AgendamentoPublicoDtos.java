@@ -8,10 +8,13 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import com.minhaempresa.gendaz.profissional.enums.DiaSemana;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Set;
 
 public final class AgendamentoPublicoDtos {
     private AgendamentoPublicoDtos() {}
@@ -37,7 +40,9 @@ public final class AgendamentoPublicoDtos {
     public record BookingProfissionalResponse(
             Long id,
             String nome,
-            String especialidade
+            String especialidade,
+            StatusCadastro status,
+            Set<DiaSemana> diasTrabalho
     ) {}
 
     public record CriarAgendamentoPublicoRequest(

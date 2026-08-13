@@ -2,9 +2,15 @@ name: Testes Backend
 
 on:
   push:
-    branches: [main, stage]
+    branches:
+      - main
+      - stage
+
   pull_request:
-    branches: [main, stage]
+    branches:
+      - main
+      - stage
+
   workflow_dispatch:
 
 permissions:
@@ -25,20 +31,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
+          cache-dependency-path: backend/pom.xml
 
       - name: Rodar testes
+        working-directory: backend
         run: mvn --batch-mode clean test
 
-      - name: Criar Issue se falhar
+      - name: Criar Issue se os testes falharem
         if: failure()
         run: |
           gh issue create \
-            --title "🐛 Testes do backend falharam" \
-            --body "Os testes automáticos falharam.
+            --title "🐛 Testes automáticos do backend falharam" \
+            --body "O GitHub Actions encontrou uma falha nos testes do backend.
 
             Branch: ${{ github.ref_name }}
             Commit: ${{ github.sha }}
 
-            Verifique o GitHub Actions."
+            Verifique a execução do GitHub Actions para identificar o erro."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

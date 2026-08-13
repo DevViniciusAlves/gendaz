@@ -1,10 +1,12 @@
 package com.minhaempresa.gendaz.profissional.dto;
 
+import com.minhaempresa.gendaz.profissional.enums.DiaSemana;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.Set;
 
 public final class ProfissionalDtos {
     private ProfissionalDtos() {}
@@ -13,7 +15,8 @@ public final class ProfissionalDtos {
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String nome,
             @Size(max = 80) @Pattern(regexp = "^$|^[\\p{L}\\s]+$", message = "Especialidade deve conter apenas letras.") String especialidade,
             @Pattern(regexp = "^$|^\\d{10,15}$", message = "Telefone deve conter entre 10 e 15 digitos.") String telefone,
-            @NotNull Long empresaId
+            @NotNull Long empresaId,
+            Set<DiaSemana> diasTrabalho
     ) {}
 
     public record ProfissionalResponse(
@@ -23,7 +26,8 @@ public final class ProfissionalDtos {
             String telefone,
             StatusCadastro status,
             Long empresaId,
-            boolean sistema
+            boolean sistema,
+            Set<DiaSemana> diasTrabalho
     ) {}
 }
 

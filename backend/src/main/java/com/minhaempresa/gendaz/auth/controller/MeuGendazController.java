@@ -183,15 +183,24 @@ public class MeuGendazController {
     }
 
     @GetMapping("/profissionais")
-    public ResponseEntity<?> profissionais(HttpServletRequest request) {
+    public ResponseEntity<?> profissionais(@RequestParam(required = false) String data, HttpServletRequest request) {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
             Long empresaId = getEmpresaId(cliente);
-            return ResponseEntity.ok(profissionalService.listarPorEmpresa(empresaId));
+            var profissionais = profissionalService.listarPorEmpresa(empresaId);
+            if (data != null && !data.isBlank()) {
+                java.time.LocalDate dataParsed = java.time.LocalDate.parse(data);
+                profissionais = profissionais.stream()
+                        .filter(profissional -> profissional.diasTrabalho() != null
+                                && profissional.diasTrabalho().contains(com.minhaempresa.gendaz.profissional.enums.DiaSemana.from(dataParsed.getDayOfWeek())))
+                        .toList();
+            }
+            return ResponseEntity.ok(profissionais);
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         }
     }
+
 
     @GetMapping("/horarios-disponiveis")
     public ResponseEntity<?> horariosDisponiveis(

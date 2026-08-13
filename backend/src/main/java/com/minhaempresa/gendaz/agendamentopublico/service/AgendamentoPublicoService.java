@@ -29,6 +29,7 @@ import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.LinkedHashSet;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -192,7 +193,13 @@ public class AgendamentoPublicoService {
     }
 
     private BookingProfissionalResponse toProfissional(ProfissionalEntity profissional) {
-        return new BookingProfissionalResponse(profissional.getId(), profissional.getNome(), profissional.getEspecialidade());
+        return new BookingProfissionalResponse(
+                profissional.getId(),
+                profissional.getNome(),
+                profissional.getEspecialidade(),
+                profissional.getStatus(),
+                new LinkedHashSet<>(profissional.getDiasTrabalho())
+        );
     }
 
     private String normalizarNome(String valor) {

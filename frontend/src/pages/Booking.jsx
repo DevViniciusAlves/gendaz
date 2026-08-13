@@ -36,6 +36,19 @@ function diaSemanaParaIndice(diaSemana) {
   return mapa[diaSemana] ?? null
 }
 
+function diaSemanaIso(data) {
+  if (!data) return null
+  const [ano, mes, dia] = String(data).split('-').map(Number)
+  const local = ano && mes && dia ? new Date(ano, mes - 1, dia, 12) : null
+  const dias = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+  return local ? dias[local.getDay()] : null
+}
+
+function trabalhaNaData(profissional, data) {
+  const dia = diaSemanaIso(data)
+  return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
+}
+
 function formatarHorarioAtendimento(item) {
   if (!item) return null
 
@@ -68,6 +81,7 @@ export default function Booking() {
 
   const profissionais = booking?.profissionais || []
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
+  const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, data))
   const exigeProfissional = profissionaisAtivos.length > 0
   const servicoSelecionado = useMemo(
     () => (booking?.servicos || []).find((servico) => String(servico.id) === String(servicoId)) || null,
@@ -86,7 +100,7 @@ export default function Booking() {
         const response = await appApi.carregarBooking(slugOuEmpresaId)
         setBooking(response)
         setServicoId(response.servicos?.[0]?.id ? String(response.servicos[0].id) : '')
-        const profissionalInicial = (response.profissionais || []).find((profissional) => profissional.status === 'ATIVO')
+        const profissionalInicial = (response.profissionais || []).find((profissional) => profissional.status === 'ATIVO' && trabalhaNaData(profissional, hoje))
         setProfissionalId(profissionalInicial?.id ? String(profissionalInicial.id) : '')
       } catch (error) {
         setErro(error.response?.data?.mensagem || 'Agendamento indisponível no momento.')
@@ -97,6 +111,14 @@ export default function Booking() {
 
     carregar()
   }, [slugOuEmpresaId])
+
+  useEffect(() => {
+    if (!exigeProfissional || !profissionalId) return
+    if (!profissionaisDisponiveis.some((profissional) => String(profissional.id) === String(profissionalId))) {
+      setProfissionalId(profissionaisDisponiveis[0]?.id ? String(profissionaisDisponiveis[0].id) : '')
+      setHoraInicio('')
+    }
+  }, [data, exigeProfissional, profissionalId, profissionaisDisponiveis])
 
   useEffect(() => {
     async function carregarHorarios() {
@@ -145,7 +167,7 @@ export default function Booking() {
     setErro('')
     setSucesso('')
     setServicoId(booking?.servicos?.[0]?.id ? String(booking.servicos[0].id) : '')
-    const profissionalInicial = (booking?.profissionais || []).find((profissional) => profissional.status === 'ATIVO')
+    const profissionalInicial = (booking?.profissionais || []).find((profissional) => profissional.status === 'ATIVO' && trabalhaNaData(profissional, hoje))
     setProfissionalId(profissionalInicial?.id ? String(profissionalInicial.id) : '')
     setData(hoje)
     setHoraInicio('')
@@ -164,7 +186,7 @@ export default function Booking() {
       return
     }
     if (exigeProfissional && !profissionalId) {
-      setErro('Escolha um profissional para continuar.')
+      setErro(profissionaisDisponiveis.length === 0 ? 'Nenhum profissional disponível nesta data. Escolha outro dia.' : 'Escolha um profissional para continuar.')
       return
     }
 
@@ -393,12 +415,13 @@ export default function Booking() {
                     required
                   >
                     <option value="">Selecione</option>
-                    {profissionaisAtivos.map((profissional) => (
+                    {profissionaisDisponiveis.map((profissional) => (
                       <option key={profissional.id} value={profissional.id}>
                         {profissional.nome}
                       </option>
                     ))}
                   </select>
+                  {profissionaisDisponiveis.length === 0 && <small className="field-hint limit-reached">Nenhum profissional disponível nesta data. Escolha outro dia.</small>}
                 </label>
               ) : (
                 <div className="booking-note">

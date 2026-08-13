@@ -67,6 +67,19 @@ function interpretarDataLivre(texto) {
   return null
 }
 
+function diaSemanaIso(data) {
+  if (!data) return null
+  const [ano, mes, dia] = String(data).split('-').map(Number)
+  const local = ano && mes && dia ? new Date(ano, mes - 1, dia, 12) : null
+  const dias = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+  return local ? dias[local.getDay()] : null
+}
+
+function trabalhaNaData(profissional, data) {
+  const dia = diaSemanaIso(data)
+  return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
+}
+
 function interpretarHoraLivre(texto) {
   const t = normalizarTexto(texto).trim()
   if (!t) return null
@@ -268,6 +281,11 @@ export default function AssistenteIA() {
         }
         try {
           setCarregando(true)
+          const profissionalAtual = profissionaisAtivos.find((item) => Number(item.id) === Number(dadosFluxo.profissionalId))
+          if (!trabalhaNaData(profissionalAtual, dataInterpretada)) {
+            adicionarMensagem('ia', 'Esse profissional não atende nessa data. Escolha outro profissional ou outra data.')
+            return
+          }
           const listaHorarios = await buscarHorarios(dadosFluxo.servicoId, dadosFluxo.profissionalId, dataInterpretada)
           const disponiveis = Array.isArray(listaHorarios) ? listaHorarios.filter((item) => item?.disponivel !== false).map((item) => item.horario || item) : []
           setHorarios(disponiveis)

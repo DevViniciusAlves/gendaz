@@ -85,8 +85,9 @@ public class AgendamentoService {
             ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
             ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
             ProfissionalEntity profissional = request.profissionalId() == null
-                    ? profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)
+                    ? profissionalParaSemPreferencia(empresa, request.data())
                     : profissionalService.buscarEntidade(request.profissionalId());
+            validarProfissionalAgendamento(empresa, profissional, request.data());
             LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
             validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
             validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
@@ -222,7 +223,9 @@ public class AgendamentoService {
                     .filter(item -> item.status() == com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO)
                     .map(item -> profissionalService.buscarEntidade(item.id()))
                     .filter(java.util.Objects::nonNull)
+                    .filter(item -> profissionalService.trabalhaNoDia(item, data))
                     .toList();
+
             boolean todosSistema = !profissionaisAtivos.isEmpty()
                     && profissionaisAtivos.stream().allMatch(item -> {
                         ProfissionalEntity p = item;
@@ -238,9 +241,13 @@ public class AgendamentoService {
             }
         } else {
             profissional = profissionalService.buscarEntidade(profissionalId);
+            if (!profissionalService.trabalhaNoDia(profissional, data)) {
+                return List.of();
+            }
         }
 
         HorarioAtendimentoEntity horario = horarioAtendimentoService.obterHorarioEfetivo(empresaId, data);
+
         if (!horario.isAtivo() || horario.getHoraInicio() == null || horario.getHoraFim() == null) {
             return List.of();
         }
@@ -362,8 +369,10 @@ public class AgendamentoService {
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         LocalTime horaFim = request.horaInicio().plusMinutes(agendamento.getServico().getDuracaoMinutos());
+        validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
         validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
+
         agendamento.setData(request.data());
         agendamento.setHoraInicio(request.horaInicio());
         agendamento.setHoraFim(horaFim);
@@ -395,6 +404,7 @@ public class AgendamentoService {
         ProfissionalEntity profissional = profissionalService.buscarEntidade(request.profissionalId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
 
+        validarProfissionalAgendamento(empresa, profissional, request.data());
         LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
         validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
@@ -439,6 +449,32 @@ public class AgendamentoService {
         if (agendaBlockedDayService.diaBloqueado(empresaId, profissionalId, data)) {
             throw new BusinessException("A agenda esta bloqueada para esta data.");
         }
+    }
+
+    private ProfissionalEntity profissionalParaSemPreferencia(EmpresaEntity empresa, LocalDate data) {
+        var profissional = profissionalRepositoryDisponivel(empresa.getId(), data).stream()
+                .filter(item -> !item.isSistema())
+                .findFirst()
+                .orElse(null);
+        return profissional != null ? profissional : profissionalService.buscarOuCriarAtendimentoPrincipal(empresa);
+    }
+
+    private List<ProfissionalEntity> profissionalRepositoryDisponivel(Long empresaId, LocalDate data) {
+        return profissionalService.listarPorEmpresa(empresaId).stream()
+                .filter(item -> item.status() == com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO)
+                .map(item -> profissionalService.buscarEntidade(item.id()))
+                .filter(item -> profissionalService.trabalhaNoDia(item, data))
+                .toList();
+    }
+
+    private void validarProfissionalAgendamento(EmpresaEntity empresa, ProfissionalEntity profissional, LocalDate data) {
+        if (profissional == null || empresa == null || profissional.getEmpresa() == null || !profissional.getEmpresa().getId().equals(empresa.getId())) {
+            throw new BusinessException("Profissional nao pertence a empresa informada.");
+        }
+        if (profissional.getStatus() != com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO) {
+            throw new BusinessException("Profissional indisponivel.");
+        }
+        profissionalService.validarTrabalhoNoDia(profissional, data);
     }
 
     private void validarConflitoHorario(Long profissionalId, LocalDate data, LocalTime horaInicio, LocalTime horaFim, Long ignorarId) {

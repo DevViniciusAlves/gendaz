@@ -71,11 +71,11 @@ class AgendamentoServiceHorariosTest {
 
     private ProfissionalEntity criarProfissional(Long id, Long empresaId, boolean sistema) {
         EmpresaEntity empresa = criarEmpresa(empresaId);
-        return ProfissionalEntity.builder().id(id).nome(sistema ? "Sem preferÃªncia" : "Dra. Marina").status(StatusCadastro.ATIVO).sistema(sistema).empresa(empresa).build();
+        return ProfissionalEntity.builder().id(id).nome(sistema ? "Sem preferÃªncia" : "Dra. Marina").status(StatusCadastro.ATIVO).sistema(sistema).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
     }
 
     private ProfissionalResponse criarProfissionalResponse(Long id, boolean sistema) {
-        return new ProfissionalResponse(id, sistema ? "Sem preferÃªncia" : "Dra. Marina", null, null, StatusCadastro.ATIVO, 1L, sistema);
+        return new ProfissionalResponse(id, sistema ? "Sem preferÃªncia" : "Dra. Marina", null, null, StatusCadastro.ATIVO, 1L, sistema, java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class));
     }
 
     @Test
@@ -92,6 +92,7 @@ class AgendamentoServiceHorariosTest {
                 criarProfissionalResponse(10L, true)
         ));
         when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
+        when(profissionalService.trabalhaNoDia(eq(sistema), any())).thenReturn(true);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of());
 
@@ -118,6 +119,7 @@ class AgendamentoServiceHorariosTest {
 
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
+        when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByProfissionalIdAndData(profissionalId, data)).thenReturn(List.of());
 
@@ -148,6 +150,7 @@ class AgendamentoServiceHorariosTest {
                 criarProfissionalResponse(10L, true)
         ));
         when(profissionalService.buscarEntidade(10L)).thenReturn(sistema);
+        when(profissionalService.trabalhaNoDia(eq(sistema), any())).thenReturn(true);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(agendado));
 
@@ -207,6 +210,7 @@ class AgendamentoServiceHorariosTest {
         when(clienteService.buscarEntidade(clienteId)).thenReturn(cliente);
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
+        when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);

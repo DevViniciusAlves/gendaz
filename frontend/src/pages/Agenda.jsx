@@ -64,12 +64,26 @@ function primeiroId(lista) {
   return Array.isArray(lista) ? (lista[0]?.id ?? '') : ''
 }
 
+function diaSemanaIso(data) {
+  if (!data) return null
+  const [ano, mes, dia] = String(data).split('-').map(Number)
+  const local = ano && mes && dia ? new Date(ano, mes - 1, dia, 12) : null
+  const dias = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
+  return local ? dias[local.getDay()] : null
+}
+
+function trabalhaNaData(profissional, data) {
+  const dia = diaSemanaIso(data)
+  return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
+}
+
 function profissionaisAtivos(lista) {
   return (lista || []).filter((item) => item?.status === 'ATIVO')
 }
 
 function montarFormularioInicial(dados) {
-  const ativos = profissionaisAtivos(dados.profissionais)
+    const ativos = profissionaisAtivos(dados.profissionais).filter((item) => trabalhaNaData(item, todayIso()))
+
   return {
     ...novoFormulario,
     clienteId: primeiroId(dados.clientes),
@@ -85,6 +99,8 @@ export default function Agenda() {
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
   const profissionaisAtivosLista = useMemo(() => profissionaisAtivos(data.profissionais), [data.profissionais])
+  const profissionaisCriacaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, form.data)), [profissionaisAtivosLista, form.data])
+  const profissionaisEdicaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, edicao?.data)), [profissionaisAtivosLista, edicao?.data])
   const planoEhPro = usuario?.plano === 'PRO'
   const temProfissionais = planoEhPro && profissionaisAtivosLista.length > 0
   const buscaAgendaPlaceholder = temProfissionais ? 'Cliente, serviço ou profissional' : 'Cliente ou serviço'
@@ -181,9 +197,9 @@ export default function Agenda() {
     const servicosAtivosAtuais = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
     const clientePadrao = primeiroId(data.clientes)
     const servicoPadrao = primeiroId(servicosAtivosAtuais)
-    const profissionalPadrao = primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE
-
     setForm((current) => {
+      const profissionaisDoDia = profissionaisAtivosLista.filter((item) => trabalhaNaData(item, current.data))
+      const profissionalPadrao = primeiroId(profissionaisDoDia) || PROFISSIONAL_AUTOMATICO_VALUE
       let atualizou = false
       const proximo = { ...current }
 
@@ -198,7 +214,7 @@ export default function Agenda() {
       }
 
       if (temProfissionais) {
-        if (!String(proximo.profissionalId ?? '').trim()) {
+        if (!String(proximo.profissionalId ?? '').trim() || (proximo.profissionalId !== PROFISSIONAL_AUTOMATICO_VALUE && !profissionaisDoDia.some((item) => Number(item.id) === Number(proximo.profissionalId)))) {
           proximo.profissionalId = profissionalPadrao
           atualizou = true
         }
@@ -210,6 +226,26 @@ export default function Agenda() {
       return atualizou ? proximo : current
     })
   }, [data.clientes, data.servicos, modalCriar, profissionaisAtivosLista, temProfissionais])
+
+  useEffect(() => {
+    if (!modalCriar || !temProfissionais) return
+    const atual = String(form.profissionalId ?? '')
+    const valido = atual === PROFISSIONAL_AUTOMATICO_VALUE || profissionaisCriacaoDisponiveis.some((item) => String(item.id) === atual)
+    if (!valido) {
+      setForm((current) => ({ ...current, profissionalId: primeiroId(profissionaisCriacaoDisponiveis) || '' }))
+      setErroCriar('Nenhum profissional disponível nesta data. Escolha outro dia.')
+    }
+  }, [form.profissionalId, modalCriar, profissionaisCriacaoDisponiveis, temProfissionais])
+
+  useEffect(() => {
+    if (!modalEditar || !edicao || !temProfissionais) return
+    const atual = String(edicao.profissionalId ?? '')
+    if (atual && !profissionaisEdicaoDisponiveis.some((item) => String(item.id) === atual)) {
+      setEdicao((current) => ({ ...current, profissionalId: primeiroId(profissionaisEdicaoDisponiveis) || '' }))
+      setErroEditar('Nenhum profissional disponível nesta data. Escolha outro dia.')
+    }
+  }, [edicao, modalEditar, profissionaisEdicaoDisponiveis, temProfissionais])
+
 
   const promocoesAplicaveis = useMemo(() => {
     const servicoAtual = Number(form.servicoId)
@@ -297,6 +333,10 @@ export default function Agenda() {
 
     if (!clienteId || !servicoId) return 'Cliente e serviço são obrigatórios.'
     if (temProfissionais && !profissionalId) return 'Cliente, serviço e profissional são obrigatórios.'
+    if (temProfissionais && profissionalId !== PROFISSIONAL_AUTOMATICO_VALUE) {
+      const profissional = profissionaisAtivosLista.find((item) => Number(item.id) === Number(profissionalId))
+      if (!profissional || !trabalhaNaData(profissional, data)) return 'Este profissional não atende no dia selecionado.'
+    }
     const hoje = todayIso()
     if (!data || data < hoje || data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
     if (!horaInicio || horaInicio < '00:00' || horaInicio > '23:59') return 'Horário inválido.'
@@ -324,7 +364,8 @@ export default function Agenda() {
     setForm({
       ...montarFormularioInicial(data),
       servicoId: primeiroId(servicosAtivos),
-      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista) || PROFISSIONAL_AUTOMATICO_VALUE : null,
+      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista.filter((item) => trabalhaNaData(item, todayIso()))) || PROFISSIONAL_AUTOMATICO_VALUE : null,
+
     })
     setPromocoes([])
     setErroCriar('')
@@ -727,11 +768,13 @@ export default function Agenda() {
                   cupomCodigo: '',
                 })}
               >
-                {profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
+                {profissionaisCriacaoDisponiveis.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}
               </select>
             </label>
           )}
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+          {temProfissionais && profissionaisCriacaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
+
           <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
           <label className="field">
             <span>Adicionar cupom</span>
@@ -756,10 +799,11 @@ export default function Agenda() {
             <label className="field"><span>Cliente</span><select value={edicao.clienteId} onChange={(e) => setEdicao({ ...edicao, clienteId: Number(e.target.value) })}>{(Array.isArray(data.clientes) ? data.clientes : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             <label className="field"><span>Serviço</span><select value={edicao.servicoId} onChange={(e) => setEdicao({ ...edicao, servicoId: Number(e.target.value) })}>{(Array.isArray(data.servicos) ? data.servicos : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             {temProfissionais && (
-              <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisAtivosLista.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
+              <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisEdicaoDisponiveis.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
             <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
+            {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
             <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}

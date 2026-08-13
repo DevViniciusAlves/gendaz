@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.agendamento.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -52,7 +53,7 @@ class AgendamentoServiceTest {
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
         ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).build();
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).build();
-        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").empresa(empresa).build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
         when(clienteService.buscarEntidade(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidade(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
