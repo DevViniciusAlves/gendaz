@@ -29,8 +29,12 @@ public class InsightsController {
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
-        DashboardResponse dashboard = insightsService.gerarDashboard(empresaId, periodo);
-        return ResponseEntity.ok(dashboard);
+        return insightsService.buscarUltimoDashboardPersistido(empresaId)
+                .<ResponseEntity<?>>map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.ok(Map.of(
+                        "sincronizado", false,
+                        "mensagem", "Nenhuma analise sincronizada ainda. Clique em Sincronizar dados para gerar sua primeira analise."
+                )));
     }
 
     @GetMapping("/resumo")
@@ -60,8 +64,17 @@ public class InsightsController {
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
         ResponseEntity<?> response = dashboard(periodo, empresaId);
-        if (!response.getStatusCode().is2xxSuccessful() || !(response.getBody() instanceof DashboardResponse dashboard)) {
+        if (!response.getStatusCode().is2xxSuccessful()) {
             return response;
+        }
+        if (!(response.getBody() instanceof DashboardResponse dashboard)) {
+            return ResponseEntity.ok(Map.of(
+                    "sincronizado", false,
+                    "scoreGeral", 0,
+                    "alertas", List.of(),
+                    "oportunidades", List.of(),
+                    "acoes", List.of()
+            ));
         }
         return ResponseEntity.ok(Map.of(
                 "scoreGeral", dashboard.scoreGeral(),
@@ -77,8 +90,11 @@ public class InsightsController {
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
         ResponseEntity<?> response = dashboard(periodo, empresaId);
-        if (!response.getStatusCode().is2xxSuccessful() || !(response.getBody() instanceof DashboardResponse dashboard)) {
+        if (!response.getStatusCode().is2xxSuccessful()) {
             return response;
+        }
+        if (!(response.getBody() instanceof DashboardResponse dashboard)) {
+            return ResponseEntity.ok(List.of());
         }
         return ResponseEntity.ok(dashboard.oportunidades());
     }

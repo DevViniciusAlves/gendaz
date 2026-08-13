@@ -90,7 +90,8 @@ function getRisco(score) {
 
 export default function Insights() {
   const navigate = useNavigate()
-  const { dashboard, historico, loading, error, recarregar, analisar } = useInsights()
+  const { dashboard, historico, loading, error, semSnapshot, recarregar, analisar } = useInsights()
+
   const [chatAberto, setChatAberto] = useState(true)
   const [analiseAberta, setAnaliseAberta] = useState(false)
   const [sincronizando, setSincronizando] = useState(false)
@@ -153,8 +154,38 @@ export default function Insights() {
       {loading && <div className="panel insights-panel">Carregando anÃ¡lise real da empresa...</div>}
       {error && <div className="panel insights-panel insights-error">{String(error?.response?.data?.mensagem || error?.message || error)}</div>}
 
-      {!loading && !error && (
+      {!loading && !error && semSnapshot && (
         <div className="insights-layout">
+          <div className="insights-main">
+            <section className="panel insights-summary-panel">
+              <div className="insights-summary-panel__content">
+                <span className="insights-label">Resumo inteligente</span>
+                <h2>Nenhuma anÃ¡lise sincronizada ainda.</h2>
+                <p>Sincronize os dados da sua empresa para gerar seus primeiros insights.</p>
+                <small className="insights-summary-panel__meta">Aguardando primeira sincronizaÃ§Ã£o manual</small>
+                <div className="insights-summary-actions">
+                  <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
+                    {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
+                  </Button>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <aside className="insights-sidebar">
+            <InsightsChat
+              aberto={chatAberto}
+              onToggle={() => setChatAberto((value) => !value)}
+              onEnviar={analisar}
+              historico={historico}
+            />
+          </aside>
+        </div>
+      )}
+
+      {!loading && !error && !semSnapshot && (
+        <div className="insights-layout">
+
           <div className="insights-main">
             <section className="panel insights-summary-panel">
               <div className="insights-summary-panel__content">

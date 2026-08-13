@@ -2,9 +2,7 @@ package com.minhaempresa.gendaz.insights.service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.RamoEmpresa;
-import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.insights.client.GroqClient;
 import com.minhaempresa.gendaz.insights.dto.InsightsDtos.ChatMessageRequest;
 import com.minhaempresa.gendaz.insights.dto.InsightsDtos.DashboardResponse;
@@ -40,43 +38,38 @@ public class InsightsService {
     private final InsightsAnalyzer analyzer;
     private final GroqClient groqClient;
     private final InsightRepository insightRepository;
-    private final EmpresaRepository empresaRepository;
     private final ObjectMapper objectMapper;
 
     @Value("${app.timezone:America/Cuiaba}")
     private String appTimezone;
 
-    @Transactional
-    public DashboardResponse gerarDashboard(Long empresaId, Integer periodo) {
-        return obterDashboard(empresaId, periodo, false);
+    @Transactional(readOnly = true)
+    public Optional<DashboardResponse> buscarUltimoDashboardPersistido(Long empresaId) {
+        validarAcessoEmpresa(empresaId);
+        log.info("[INSIGHTS] empresa={} acao=READ_SNAPSHOT", empresaId);
+        Optional<InsightEntity> ultimo = ultimoDashboard(empresaId);
+        log.info("[INSIGHTS] empresa={} acao=READ_SNAPSHOT snapshotEncontrado={}", empresaId, ultimo.isPresent());
+        return ultimo.flatMap(this::parseDashboard);
     }
 
     @Transactional
     public DashboardResponse recalcularDashboard(Long empresaId, Integer periodo) {
-        return obterDashboard(empresaId, periodo, true);
-    }
-
-    @Transactional
-    public DashboardResponse obterDashboard(Long empresaId, Integer periodo, boolean forcar) {
         validarAcessoEmpresa(empresaId);
+        log.info("[INSIGHTS] empresa={} acao=SYNC_START", empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, periodo);
-        DashboardResponse fallback = construirDashboardLocal(empresaId, dados, "AUTO");
+        DashboardResponse fallback = construirDashboardLocal(empresaId, dados, "MANUAL");
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(appTimezone));
 
-        InsightEntity ultimo = ultimoDashboard(empresaId);
-        if (!forcar && ultimo != null) {
-            return parseDashboard(ultimo, fallback, agora);
-        }
-
+        DashboardResponse gerado;
         if (contaNova(dados)) {
-            DashboardResponse respostaContaNova = montarDashboardContaNova(empresaId, dados);
-            salvarDashboard(empresaId, dados, respostaContaNova, forcar ? "MANUAL" : "AUTO", agora);
-            return respostaContaNova;
+            gerado = montarDashboardContaNova(empresaId, dados);
+        } else {
+            gerado = gerarDashboardNovo(empresaId, periodo, dados, fallback, "MANUAL");
         }
 
-        DashboardResponse gerado = gerarDashboardNovo(empresaId, periodo, dados, fallback, forcar ? "MANUAL" : "AUTO");
-        salvarDashboard(empresaId, dados, gerado, forcar ? "MANUAL" : "AUTO", agora);
-        return gerado;
+        InsightEntity salvo = salvarDashboard(empresaId, dados, gerado, "MANUAL", agora);
+        log.info("[INSIGHTS] empresa={} acao=SYNC_SAVED snapshotId={}", empresaId, salvo.getId());
+        return parseDashboard(salvo).orElse(gerado);
     }
 
     @Transactional(readOnly = true)
@@ -216,17 +209,9 @@ public class InsightsService {
                 .toList();
     }
 
-    @Transactional
     @Scheduled(cron = "0 0 6 * * *", zone = "${app.timezone:America/Cuiaba}")
     public void analisarEmpresasAgendado() {
-        for (EmpresaEntity empresa : empresaRepository.findAll()) {
-            try {
-                DashboardResponse dashboard = obterDashboard(empresa.getId(), 30, false);
-                log.info("[insights] analise diaria gerada empresa={} origem=SCHEDULED", empresa.getId());
-            } catch (Exception e) {
-                log.error("[insights] erro ao gerar analise diaria empresa={}: {}", empresa.getId(), e.getMessage());
-            }
-        }
+        log.info("[INSIGHTS] acao=SCHEDULED_SKIP_DASHBOARD motivo=snapshot_dashboard_apenas_manual");
     }
 
     private DashboardResponse gerarDashboardNovo(Long empresaId, Integer periodo, Map<String, Object> dados, DashboardResponse fallback, String origem) {
@@ -434,37 +419,35 @@ public class InsightsService {
         return ramo + " - " + display;
     }
 
-    private InsightEntity ultimoDashboard(Long empresaId) {
-        return insightRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
-                .filter(item -> "dashboard".equalsIgnoreCase(item.getTipo()))
-                .findFirst()
-                .orElse(null);
+    private Optional<InsightEntity> ultimoDashboard(Long empresaId) {
+        return insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(empresaId, "dashboard");
     }
 
-    private DashboardResponse parseDashboard(InsightEntity insight, DashboardResponse fallback, LocalDateTime agora) {
+    private Optional<DashboardResponse> parseDashboard(InsightEntity insight) {
         try {
             if (insight.getResposta() == null || insight.getResposta().isBlank()) {
-                return fallback;
+                return Optional.empty();
             }
-            return objectMapper.readValue(insight.getResposta(), DashboardResponse.class);
+            return Optional.of(objectMapper.readValue(insight.getResposta(), DashboardResponse.class));
         } catch (Exception e) {
-            return fallback;
+            log.warn("[INSIGHTS] empresa={} acao=READ_SNAPSHOT_PARSE_ERROR snapshotId={}: {}", insight.getEmpresaId(), insight.getId(), e.getMessage());
+            return Optional.empty();
         }
     }
 
-    private void salvarDashboard(Long empresaId, Map<String, Object> dados, DashboardResponse dashboard, String origem, LocalDateTime agora) {
+    private InsightEntity salvarDashboard(Long empresaId, Map<String, Object> dados, DashboardResponse dashboard, String origem, LocalDateTime agora) {
         InsightEntity insight = InsightEntity.builder()
                 .empresaId(empresaId)
                 .tipo("dashboard")
-                .pergunta("AUTOMATICO - Dashboard")
+                .pergunta("MANUAL - Dashboard")
                 .resposta(serializar(dashboard))
                 .payloadJson(serializar(dados))
                 .origem(origem)
                 .dataReferencia(agora)
-                .dataExpiracao(agora.plusHours(24))
+                .dataExpiracao(null)
                 .dataCriacao(agora)
                 .build();
-        insightRepository.save(insight);
+        return insightRepository.saveAndFlush(insight);
     }
 
     private List<Map<String, String>> historicoParaGroq(List<ChatMessageRequest> historico) {

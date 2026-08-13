@@ -3,7 +3,9 @@ import { analisarPerguntaInsightsComHistorico, recalcularInsights } from '../api
 import { persistirCacheLocal, useLocalData } from './useLocalData.js'
 
 function normalizarDashboard(data) {
-  return data?.dashboard || data?.dashboardResumo || data?.resumo || null
+  const dashboard = data?.dashboard || data?.dashboardResumo || data?.resumo || null
+  if (!dashboard || dashboard?.sincronizado === false || !dashboard?.geradoEm) return null
+  return dashboard
 }
 
 export function useInsights() {
@@ -12,6 +14,7 @@ export function useInsights() {
 
   const dashboardBase = useMemo(() => normalizarDashboard(data), [data])
   const dashboard = dashboardAtual || dashboardBase
+  const semSnapshot = !loading && !dashboard
   const historico = useMemo(() => {
     if (Array.isArray(data?.historico)) return data.historico
     return data?.mensagens || []
@@ -42,6 +45,7 @@ export function useInsights() {
     historico,
     loading,
     error,
+    semSnapshot,
     recarregar,
     analisar,
   }

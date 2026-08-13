@@ -8,7 +8,7 @@ const cacheEmAndamento = new Map()
 const CACHE_VERSION = 6
 
 function ttlDoEscopo(scope) {
-  if (scope === 'insights') return 365 * 24 * 60 * 60 * 1000
+  if (scope === 'insights') return 60 * 1000
   return 24 * 60 * 60 * 1000
 }
 
