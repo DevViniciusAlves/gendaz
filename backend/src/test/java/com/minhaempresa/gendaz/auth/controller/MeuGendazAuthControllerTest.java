@@ -10,8 +10,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazAuthResponse;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazCodigoResponse;
-import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazSolicitarCodigoRequest;
 import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
+import com.minhaempresa.gendaz.shared.CookieService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,12 +25,15 @@ class MeuGendazAuthControllerTest {
     @Mock
     private MeuGendazAuthService authService;
 
+    @Mock
+    private CookieService cookieService;
+
     private MockMvc mockMvc;
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazAuthController(authService)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazAuthController(authService, cookieService)).build();
     }
 
     @Test
@@ -76,4 +79,3 @@ class MeuGendazAuthControllerTest {
                 .andExpect(cookie().exists("meu_gendaz_session_gendaz-pro"));
     }
 }
-

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminLoginResponse;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminUsuarioResponse;
 import com.minhaempresa.gendaz.admin.service.AdminService;
+import com.minhaempresa.gendaz.shared.CookieService;
 import java.util.HashMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,13 +21,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class AdminControllerTest {
     @Mock AdminService adminService;
+    @Mock CookieService cookieService;
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(new AdminController(adminService)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new AdminController(adminService, cookieService)).build();
     }
 
     @Test
@@ -44,4 +46,3 @@ class AdminControllerTest {
                 .andExpect(status().isOk());
     }
 }
-

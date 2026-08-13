@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginResponse;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.RefreshResponse;
 import com.minhaempresa.gendaz.auth.service.AuthService;
+import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
@@ -23,13 +24,14 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class AuthControllerTest {
     @Mock AuthService authService;
+    @Mock CookieService cookieService;
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService)).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(new AuthController(authService, cookieService)).build();
     }
 
     @Test
@@ -60,4 +62,3 @@ class AuthControllerTest {
                 .andExpect(status().isOk());
     }
 }
-
