@@ -19,12 +19,16 @@ let resetTime = Date.now() + 60000
 let csrfToken = null
 let csrfPromise = null
 
+function ehAuthPublicoMeuGendaz(config) {
+  const url = String(config?.url || '')
+  return url.includes('/meu-gendaz/auth/solicitar-codigo')
+    || url.includes('/meu-gendaz/auth/validar-codigo')
+}
+
 function precisaCsrf(config) {
   const metodo = String(config.method || 'get').toLowerCase()
   if (!['post', 'put', 'patch', 'delete'].includes(metodo)) return false
-  const url = String(config.url || '')
-  return !url.includes('/auth/solicitar-codigo')
-    && !url.includes('/auth/validar-codigo')
+  return !ehAuthPublicoMeuGendaz(config)
 }
 
 async function garantirCsrfToken() {
@@ -94,11 +98,12 @@ clienteApi.interceptors.response.use(
 
     const status = error.response?.status
     const skipLogout = error.config?.skipMeuGendazLogout === true
+    const authPublicoMeuGendaz = ehAuthPublicoMeuGendaz(error.config)
     if (status === 403 && precisaCsrf(error.config || {})) {
       csrfToken = null
     }
-    if (status === 401 && !skipLogout) {
-       window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
+    if (status === 401 && !skipLogout && !authPublicoMeuGendaz) {
+      window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
     }
 
     if (status === 429) {

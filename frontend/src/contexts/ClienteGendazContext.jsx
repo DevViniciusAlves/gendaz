@@ -118,7 +118,6 @@ export function ClienteGendazProvider({ children, slug }) {
       if (houve401) {
         if (exigirSessao) {
           limparEstadoSessao()
-          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         }
         setCarregando(false)
         return
@@ -146,7 +145,6 @@ export function ClienteGendazProvider({ children, slug }) {
       if (err?.response?.status === 401) {
         if (exigirSessao) {
           limparEstadoSessao()
-          window.dispatchEvent(new CustomEvent('meu-gendaz:logout'))
         }
         setCarregando(false)
         return

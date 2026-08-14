@@ -9,6 +9,7 @@ import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 import OperationToast from '../components/OperationToast.jsx'
 
 const COOLDOWN_SEGUNDOS = 120
+const TOAST_LOGOUT_ID = 'meu-gendaz-logout'
 
 function isIosBrowser() {
   if (typeof navigator === 'undefined') return false
@@ -74,7 +75,9 @@ function GendazAuthGate({ slug, onLogin }) {
     if (!email.trim()) return
     setCarregando(true)
     try {
-      await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { slug, email: email.trim() })
+      await clienteApi.post('/meu-gendaz/auth/solicitar-codigo', { slug, email: email.trim() }, {
+        skipMeuGendazLogout: true,
+      })
       setUltimoEmailSolicitado(emailAtualNormalizado())
       setCodigoSolicitado(true)
       setEtapa('codigo')
@@ -104,6 +107,8 @@ function GendazAuthGate({ slug, onLogin }) {
         slug,
         email: email.trim(),
         codigo: codigo.trim(),
+      }, {
+        skipMeuGendazLogout: true,
       })
       if (response.data?.mensagem && response.data?.status === 'PENDING_REGISTRATION') {
         await onLogin()
@@ -262,12 +267,15 @@ function GendazCadastroGate({ slug }) {
   async function sair() {
     setSaindo(true)
     window.dispatchEvent(new CustomEvent('gendaz:toast', {
-      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+      detail: { id: TOAST_LOGOUT_ID, type: 'loading', message: 'Saindo da conta... aguarde' },
     }))
     try {
       await logout()
       navigate(`/meu-gendaz/${slug}`, { replace: true })
     } finally {
+      window.dispatchEvent(new CustomEvent('gendaz:toast-dismiss', {
+        detail: { id: TOAST_LOGOUT_ID },
+      }))
       setSaindo(false)
     }
   }

@@ -6,6 +6,8 @@ import { appApi } from '../api/appApi.js'
 import { PLANOS } from '../services/localStore.js'
 import ThemeToggle from './ThemeToggle.jsx'
 
+const TOAST_LOGOUT_ID = 'app-logout'
+
 function hojeISO() {
   return new Date().toISOString().slice(0, 10)
 }
@@ -159,11 +161,17 @@ export default function Header() {
     setNotificationsOpen(false)
   }
 
-  function sair() {
+  async function sair() {
     window.dispatchEvent(new CustomEvent('gendaz:toast', {
-      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+      detail: { id: TOAST_LOGOUT_ID, type: 'loading', message: 'Saindo da conta... aguarde' },
     }))
-    logout()
+    try {
+      await logout()
+    } finally {
+      window.dispatchEvent(new CustomEvent('gendaz:toast-dismiss', {
+        detail: { id: TOAST_LOGOUT_ID },
+      }))
+    }
   }
 
   return (

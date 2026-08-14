@@ -4,6 +4,8 @@ import { Bell, LogOut, Shield, UserRound, Loader, AlertCircle, X } from 'lucide-
 import { useNavigate } from 'react-router-dom'
 import { aplicarMascara, padronizarTelefone, validarTelefone } from '../../utils/phoneUtils.js'
 
+const TOAST_LOGOUT_ID = 'meu-gendaz-logout'
+
 export default function Configuracoes() {
   const navigate = useNavigate()
   const { cliente, configuracoes, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout } = useContext(ClienteGendazContext)
@@ -127,12 +129,15 @@ export default function Configuracoes() {
     setSaindo(true)
     setAbrirLogout(false)
     window.dispatchEvent(new CustomEvent('gendaz:toast', {
-      detail: { type: 'loading', message: 'Saindo da conta... aguarde' },
+      detail: { id: TOAST_LOGOUT_ID, type: 'loading', message: 'Saindo da conta... aguarde' },
     }))
     try {
       await logout()
       navigate('..', { replace: true })
     } finally {
+      window.dispatchEvent(new CustomEvent('gendaz:toast-dismiss', {
+        detail: { id: TOAST_LOGOUT_ID },
+      }))
       setSaindo(false)
     }
   }

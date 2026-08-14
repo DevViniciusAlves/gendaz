@@ -6,25 +6,45 @@ export default function OperationToast() {
   useEffect(() => {
     let timeoutId = null
 
+    function limparTimeout() {
+      if (timeoutId) {
+        window.clearTimeout(timeoutId)
+        timeoutId = null
+      }
+    }
+
     function onToast(event) {
       const detail = event?.detail || {}
       const type = detail.type || 'success'
+      limparTimeout()
       setToast({
+        id: detail.id || null,
         type,
         message: detail.message || '',
       })
-      if (timeoutId) window.clearTimeout(timeoutId)
       if (type !== 'loading') {
         timeoutId = window.setTimeout(() => {
           setToast(null)
+          timeoutId = null
         }, 2600)
       }
     }
 
+    function onDismiss(event) {
+      const id = event?.detail?.id || null
+      setToast((atual) => {
+        if (id && atual?.id !== id) return atual
+        limparTimeout()
+        return null
+      })
+    }
+
     window.addEventListener('gendaz:toast', onToast)
+    window.addEventListener('gendaz:toast-dismiss', onDismiss)
     return () => {
       window.removeEventListener('gendaz:toast', onToast)
-      if (timeoutId) window.clearTimeout(timeoutId)
+      window.removeEventListener('gendaz:toast-dismiss', onDismiss)
+      limparTimeout()
     }
   }, [])
 
