@@ -153,6 +153,7 @@ export default function Dashboard() {
   const agendamentosVisiveis = Array.isArray(data.agendamentos) ? data.agendamentos : []
   const conversasVisiveis = Array.isArray(data.conversas) ? data.conversas : []
   const servicosVisiveis = Array.isArray(data.servicos) ? data.servicos : []
+  const isPlanoBasico = String(usuario?.plano || '').toUpperCase() === 'BASICO'
   const allowed = PLANOS[usuario?.plano]?.rotas || []
   const canFinanceiro = allowed.includes('financeiro')
   const hoje = todayIso()
@@ -415,7 +416,7 @@ export default function Dashboard() {
                 )}
               </ScrollReveal>
 
-              {canFinanceiro && (
+              {canFinanceiro && !isPlanoBasico && (
                 <ScrollReveal className="panel" delay={0}>
                   <div className="panel-head">
                     <div>
