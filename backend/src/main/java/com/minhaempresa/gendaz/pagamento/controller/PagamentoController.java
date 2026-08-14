@@ -14,10 +14,8 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPla
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoBulkService;
 import com.minhaempresa.gendaz.pagamento.service.StripeWebhookService;
-import com.minhaempresa.gendaz.auth.service.AuthService;
-import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
-import com.minhaempresa.gendaz.shared.CookieHelper;
+import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import jakarta.validation.Valid;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,17 +38,17 @@ public class PagamentoController {
     private final PagamentoService pagamentoService;
     private final PagamentoBulkService pagamentoBulkService;
     private final StripeWebhookService stripeWebhookService;
-    private final AuthService authService;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     @PostMapping
     public ResponseEntity<PagamentoResponse> criar(@Valid @RequestBody CriarPagamentoRequest request, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, request.empresaId());
+        validarEmpresaAutenticada(request.empresaId());
         return ResponseEntity.ok(pagamentoService.criar(request));
     }
 
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<List<PagamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(pagamentoService.listarPorEmpresa(empresaId));
     }
 
@@ -67,28 +65,28 @@ public class PagamentoController {
     @PostMapping("/acoes-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaPagamentoRequest request, HttpServletRequest http) {
         if (request.empresaId() != null) {
-            validarEmpresaAutenticada(http, request.empresaId());
+            validarEmpresaAutenticada(request.empresaId());
         }
         return ResponseEntity.ok(pagamentoBulkService.executar(request));
     }
 
     @GetMapping("/pendentes/contagem")
     public ResponseEntity<Map<String, Long>> contarPendentes(@RequestParam Long empresaId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(Map.of("count", pagamentoService.contarPendentes(empresaId)));
     }
 
     @PostMapping("/planos/pro/iniciar")
     public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPro(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
-        validarNaoAtendente(http);
-        validarEmpresaAutenticada(http, request.empresaId());
+        validarNaoAtendente();
+        validarEmpresaAutenticada(request.empresaId());
         return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlanoPro(request));
     }
 
     @PostMapping("/planos/basico/iniciar")
     public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoBasico(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
-        validarNaoAtendente(http);
-        validarEmpresaAutenticada(http, request.empresaId());
+        validarNaoAtendente();
+        validarEmpresaAutenticada(request.empresaId());
         return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlano(
                 request.empresaId(),
                 "BASICO",
@@ -104,25 +102,25 @@ public class PagamentoController {
 
     @GetMapping("/planos/empresa/{empresaId}")
     public ResponseEntity<List<PagamentoPlanoResponse>> listarPagamentosPlano(@PathVariable Long empresaId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(pagamentoService.listarPagamentosPlano(empresaId));
     }
 
     @GetMapping("/planos/empresa/{empresaId}/{pagamentoId}")
     public ResponseEntity<PagamentoPlanoResponse> consultarPagamentoPlano(@PathVariable Long empresaId, @PathVariable Long pagamentoId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(pagamentoService.consultarPagamentoPlano(empresaId, pagamentoId));
     }
 
     @GetMapping("/planos/empresa/{empresaId}/{pagamentoId}/verificar")
     public ResponseEntity<VerificarPagamentoPlanoResponse> verificarPagamentoPlano(@PathVariable Long empresaId, @PathVariable Long pagamentoId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(pagamentoService.verificarPagamentoPlano(empresaId, pagamentoId));
     }
 
     @GetMapping("/planos/empresa/{empresaId}/atual")
     public ResponseEntity<AssinaturaResponse> consultarPlanoAtual(@PathVariable Long empresaId, HttpServletRequest http) {
-        validarEmpresaAutenticada(http, empresaId);
+        validarEmpresaAutenticada(empresaId);
         return ResponseEntity.ok(pagamentoService.consultarPlanoAtual(empresaId));
     }
 
@@ -141,19 +139,15 @@ public class PagamentoController {
         }
     }
 
-    private void validarNaoAtendente(HttpServletRequest http) {
-        String sessao = CookieHelper.lerCookie(http, "Gendaz_session").orElse(null);
-        PerfilUsuario perfil = authService.buscarUsuarioAutenticado(null, sessao).getPerfil();
+    private void validarNaoAtendente() {
+        PerfilUsuario perfil = usuarioAutenticadoProvider.exigirPerfil();
         if (perfil == PerfilUsuario.ATENDENTE) {
             throw new BusinessException("Seu perfil nao permite comprar ou editar planos.");
         }
     }
 
-    private void validarEmpresaAutenticada(HttpServletRequest http, Long empresaId) {
-        UsuarioEntity usuario = authService.buscarUsuarioAutenticado(null, CookieHelper.lerCookie(http, "Gendaz_session").orElse(null));
-        if (usuario.getEmpresa() == null || !usuario.getEmpresa().getId().equals(empresaId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
-        }
+    private void validarEmpresaAutenticada(Long empresaId) {
+        usuarioAutenticadoProvider.exigirEmpresa(empresaId);
     }
 
 }

@@ -2,7 +2,6 @@ package com.minhaempresa.gendaz.shared.security;
 
 import com.minhaempresa.gendaz.admin.service.AdminService;
 import com.minhaempresa.gendaz.auth.service.AuthService;
-import com.minhaempresa.gendaz.shared.CookieHelper;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
 import jakarta.servlet.http.HttpServletRequest;
@@ -11,6 +10,8 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -161,14 +162,17 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     }
 
     private Long getAuthenticatedUserId(HttpServletRequest request) {
-        String sessao = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
-        if (sessao == null || sessao.isBlank()) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated() || authentication.getPrincipal() == null) {
             return null;
         }
-        try {
-            return authService.buscarUsuarioAutenticado(null, sessao).getId();
-        } catch (RuntimeException ex) {
-            return null;
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Long id) {
+            return id;
         }
+        if (principal instanceof Number number) {
+            return number.longValue();
+        }
+        return null;
     }
 }
