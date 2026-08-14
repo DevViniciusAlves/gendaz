@@ -92,17 +92,12 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(
-            @RequestHeader(value = "X-Usuario-Id", required = false) Long usuarioId,
             HttpServletRequest http,
             HttpServletResponse response
     ) {
         String sessionToken = CookieHelper.lerCookie(http, SESSION_COOKIE).orElse(null);
         try {
-            if (sessionToken != null && !sessionToken.isBlank()) {
-                authService.logout(authService.buscarUsuarioAutenticado(usuarioId, sessionToken).getId(), sessionToken);
-            } else if (usuarioId != null) {
-                authService.logout(usuarioId, null);
-            }
+            authService.logout(sessionToken);
         } catch (BusinessException ex) {
             log.debug("Logout sem sessao valida (best-effort): {}", ex.getMessage());
         }

@@ -1,6 +1,9 @@
 package com.minhaempresa.gendaz.auth.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
@@ -14,6 +17,7 @@ import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
+import jakarta.servlet.http.Cookie;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -58,8 +62,32 @@ class AuthControllerTest {
         when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new jakarta.servlet.http.Cookie("Gendaz_session", "sessao-antiga")))
+                        .cookie(new Cookie("Gendaz_session", "sessao-antiga")))
                 .andExpect(cookie().exists("Gendaz_session"))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void logoutSemCookieComXUsuarioIdNaoEncerraSessao() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .header("X-Usuario-Id", "2"))
+                .andExpect(cookie().maxAge("Gendaz_session", 0))
+                .andExpect(cookie().maxAge("agendapro_session", 0))
+                .andExpect(status().isNoContent());
+
+        verify(authService).logout(null);
+        verify(authService, never()).logout(anyString());
+    }
+
+    @Test
+    void logoutComCookieUsaSomenteTokenDaSessaoMesmoComXUsuarioIdDivergente() throws Exception {
+        mockMvc.perform(post("/api/auth/logout")
+                        .cookie(new Cookie("Gendaz_session", "token-atacante"))
+                        .header("X-Usuario-Id", "2"))
+                .andExpect(cookie().maxAge("Gendaz_session", 0))
+                .andExpect(cookie().maxAge("agendapro_session", 0))
+                .andExpect(status().isNoContent());
+
+        verify(authService).logout("token-atacante");
     }
 }

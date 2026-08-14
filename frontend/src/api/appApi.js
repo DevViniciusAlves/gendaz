@@ -495,7 +495,6 @@ export const appApi = {
       .catch(() => {})
       .then(() => api.post('/auth/logout', null, {
         skipUsuarioHeader: true,
-        headers: usuarioHeaders(),
       }).then((response) => response.data))
   },
 

@@ -339,12 +339,12 @@ public class AuthService {
         usuario.setSenha(passwordService.hash(novaSenha));
         usuarioRepository.save(usuario);
         logAlteracaoSenha(usuario.getId());
-        usuarioSessionService.encerrarSessao(usuario.getId(), sessionToken);
+        usuarioSessionService.encerrarSessao(sessionToken);
     }
 
     @Transactional
-    public void logout(Long usuarioId, String sessionToken) {
-        usuarioSessionService.encerrarSessao(usuarioId, sessionToken);
+    public void logout(String sessionToken) {
+        usuarioSessionService.encerrarSessao(sessionToken);
     }
 
     @Transactional

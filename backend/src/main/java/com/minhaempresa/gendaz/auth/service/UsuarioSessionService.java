@@ -102,17 +102,17 @@ public class UsuarioSessionService {
     }
 
     @Transactional
-    public void encerrarSessao(Long usuarioId, String sessao) {
-        if (usuarioId == null) {
+    public void encerrarSessao(String sessao) {
+        if (sessao == null || sessao.isBlank()) {
             return;
         }
-        UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
-        if (sessao == null || sessao.equals(usuario.getSessaoAtiva())) {
-            usuario.setSessaoAtiva(null);
-            usuarioRepository.save(usuario);
-        }
+        usuarioRepository.findBySessaoAtiva(sessao)
+                .ifPresent(usuario -> {
+                    usuario.setSessaoAtiva(null);
+                    usuarioRepository.save(usuario);
+                });
     }
+
 
     @Transactional
     public synchronized String criarSessaoMeuGendaz(MeuGendazAcessoEntity acesso) {
@@ -148,15 +148,16 @@ public class UsuarioSessionService {
 
     @Transactional
     public void encerrarSessaoMeuGendaz(Long acessoId, String sessao) {
-        if (acessoId == null) {
+        if (acessoId == null || sessao == null || sessao.isBlank()) {
             return;
         }
         MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findById(acessoId)
                 .orElseThrow(() -> new SessaoExpiradaException("Acesso do Meu Gendaz invalido."));
-        if (sessao == null || sessao.equals(acesso.getSessaoAtiva())) {
+        if (sessao.equals(acesso.getSessaoAtiva())) {
             acesso.setSessaoAtiva(null);
             meuGendazAcessoRepository.save(acesso);
         }
     }
+
 }
 
