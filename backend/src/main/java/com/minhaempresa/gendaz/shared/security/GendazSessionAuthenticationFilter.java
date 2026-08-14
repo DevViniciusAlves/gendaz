@@ -70,7 +70,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
                 String impersonationToken = CookieHelper.lerCookie(request, "Gendaz_impersonation_session").orElse(null);
                 impersonationSession = adminImpersonationService.validar(impersonationToken).orElse(null);
                 if (impersonationSession != null) {
-                    usuario = usuarioRepository.findById(impersonationSession.getUsuarioImpersonadoId()).orElse(null);
+                    usuario = usuarioRepository.findByIdComEmpresa(impersonationSession.getUsuarioImpersonadoId()).orElse(null);
                     impersonation = true;
                 }
             }

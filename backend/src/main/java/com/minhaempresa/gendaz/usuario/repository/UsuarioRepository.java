@@ -36,6 +36,9 @@ public interface UsuarioRepository extends JpaRepository<UsuarioEntity, Long> {
     List<UsuarioEntity> findByEmpresaIdAndPerfil(Long empresaId, PerfilUsuario perfil);
     @EntityGraph(attributePaths = {"empresa"})
     Optional<UsuarioEntity> findBySessaoAtiva(String sessaoAtiva);
+    @EntityGraph(attributePaths = {"empresa"})
+    @Query("select u from UsuarioEntity u where u.id = :id")
+    Optional<UsuarioEntity> findByIdComEmpresa(@Param("id") Long id);
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select u from UsuarioEntity u where u.id = :id")
     Optional<UsuarioEntity> findByIdForUpdate(@Param("id") Long id);
