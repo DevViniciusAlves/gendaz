@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.util.List;
@@ -27,25 +28,30 @@ public class AgendaBlockedDayService {
 
     @Transactional(readOnly = true)
     public List<DiaBloqueadoResponse> listar(Long empresaId) {
-        return repository.findByEmpresaIdOrderByDataAsc(empresaId).stream().map(mapper::toResponse).toList();
+        Long empresaAutenticadaId = CompanyContext.requireCompanyId();
+        CompanyContext.exigirEmpresa(empresaId);
+        return repository.findByEmpresaIdOrderByDataAsc(empresaAutenticadaId).stream().map(mapper::toResponse).toList();
     }
 
     @Transactional
     public DiaBloqueadoResponse bloquear(BloquearDiaRequest request) {
+        Long empresaAutenticadaId = CompanyContext.requireCompanyId();
+        CompanyContext.exigirEmpresa(request.empresaId());
+
         if (request.data().isBefore(LocalDate.now())) {
             throw new BusinessException("Nao e possivel bloquear uma data passada.");
         }
 
-        EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+        EmpresaEntity empresa = empresaService.buscarEntidade(empresaAutenticadaId);
         ProfissionalEntity profissional = null;
         if (request.profissionalId() != null) {
             profissional = profissionalService.buscarEntidade(request.profissionalId());
-            if (!profissional.getEmpresa().getId().equals(empresa.getId())) {
+            if (profissional.getEmpresa() == null || !profissional.getEmpresa().getId().equals(empresaAutenticadaId)) {
                 throw new BusinessException("Profissional nao pertence a empresa informada.");
             }
         }
 
-        if (diaBloqueado(empresa.getId(), profissional == null ? null : profissional.getId(), request.data())) {
+        if (diaBloqueado(empresaAutenticadaId, profissional == null ? null : profissional.getId(), request.data())) {
             throw new BusinessException("Este dia ja esta bloqueado.");
         }
 
@@ -60,11 +66,11 @@ public class AgendaBlockedDayService {
 
     @Transactional
     public void desbloquear(Long id, Long empresaId) {
-        AgendaBlockedDayEntity entity = repository.findById(id)
+        Long empresaAutenticadaId = CompanyContext.requireCompanyId();
+        CompanyContext.exigirEmpresa(empresaId);
+
+        AgendaBlockedDayEntity entity = repository.findByIdAndEmpresaId(id, empresaAutenticadaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dia bloqueado nao encontrado."));
-        if (empresaId != null && !empresaId.equals(entity.getEmpresa().getId())) {
-            throw new BusinessException("Bloqueio nao pertence a empresa informada.");
-        }
         repository.delete(entity);
     }
 
