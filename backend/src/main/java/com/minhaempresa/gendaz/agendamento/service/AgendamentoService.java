@@ -27,6 +27,7 @@ import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
@@ -203,11 +204,14 @@ public class AgendamentoService {
 
     @Transactional(readOnly = true)
     public List<AgendamentoResponse> listarPorCliente(Long clienteId) {
-        return agendamentoRepository.findByClienteId(clienteId).stream().map(mapper::toResponse).toList();
+        Long companyId = CompanyContext.requireCompanyId();
+        clienteService.buscarEntidade(clienteId);
+        return agendamentoRepository.findByEmpresaIdAndClienteId(companyId, clienteId).stream().map(mapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<AgendamentoResponse> listarPorCliente(Long empresaId, Long clienteId) {
+
         validarEmpresaAtual(empresaId);
         return agendamentoRepository.findByEmpresaIdAndClienteId(empresaId, clienteId).stream().map(mapper::toResponse).toList();
     }
@@ -549,7 +553,7 @@ public class AgendamentoService {
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long companyId = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
+        Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
             throw new ResourceNotFoundException("Agendamento nao encontrado.");
         }

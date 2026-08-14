@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface MensagemRepository extends JpaRepository<MensagemEntity, Long> {
     @EntityGraph(attributePaths = {"conversa"})
+    List<MensagemEntity> findByConversaIdAndConversaEmpresaIdOrderByDataEnvioAsc(Long conversaId, Long empresaId);
+
+    @EntityGraph(attributePaths = {"conversa"})
     List<MensagemEntity> findByConversaIdOrderByDataEnvioAsc(Long conversaId);
 
     @Transactional

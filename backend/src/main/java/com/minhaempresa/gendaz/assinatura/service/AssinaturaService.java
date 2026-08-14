@@ -9,6 +9,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -30,6 +31,7 @@ public class AssinaturaService {
 
     @Transactional(readOnly = true)
     public List<AssinaturaResponse> listarPorEmpresa(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return assinaturaRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
     }
 
@@ -103,6 +105,7 @@ public class AssinaturaService {
 
     @Transactional
     public AssinaturaResponse buscarAtualResponsePorEmpresa(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return buscarAtualPorEmpresa(empresaId)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
@@ -257,6 +260,13 @@ public class AssinaturaService {
                         empresa.setStatus(StatusEmpresa.INATIVA);
                         assinaturaRepository.flush();
                     });
+        }
+    }
+
+    private void validarEmpresaAtual(Long empresaId) {
+        Long companyId = CompanyContext.requireCompanyId();
+        if (empresaId == null || !companyId.equals(empresaId)) {
+            throw new ResourceNotFoundException("Assinatura nao encontrada.");
         }
     }
 

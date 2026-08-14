@@ -11,6 +11,7 @@ import com.minhaempresa.gendaz.mensagem.enums.DirecaoMensagem;
 import com.minhaempresa.gendaz.mensagem.enums.TipoMensagem;
 import com.minhaempresa.gendaz.mensagem.mapper.MensagemMapper;
 import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
+import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -29,7 +30,9 @@ public class MensagemService {
 
     @Transactional(readOnly = true)
     public List<MensagemResponse> listarPorConversa(Long conversaId) {
-        return mensagemRepository.findByConversaIdOrderByDataEnvioAsc(conversaId).stream().map(mapper::toResponse).toList();
+        Long companyId = CompanyContext.requireCompanyId();
+        conversaService.buscarEntidade(conversaId);
+        return mensagemRepository.findByConversaIdAndConversaEmpresaIdOrderByDataEnvioAsc(conversaId, companyId).stream().map(mapper::toResponse).toList();
     }
 
     @Transactional
