@@ -1,7 +1,12 @@
 package com.minhaempresa.gendaz.auth.service;
 
+import com.minhaempresa.gendaz.auth.config.MeuGendazSecurityProperties;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazAuthResponse;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazCodigoResponse;
+import com.minhaempresa.gendaz.auth.entity.MeuGendazOtpChallengeEntity;
+import com.minhaempresa.gendaz.auth.repository.MeuGendazOtpChallengeRepository;
+import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
+import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
 import com.minhaempresa.gendaz.cliente.service.ClienteEmailBloqueadoService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
@@ -10,12 +15,13 @@ import com.minhaempresa.gendaz.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
+import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.Optional;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -27,111 +33,112 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class MeuGendazAuthService {
     private static final int CODIGO_TAMANHO = 6;
-    private static final int MAX_TENTATIVAS = 5;
-    private static final Duration EXPIRACAO_CODIGO = Duration.ofMinutes(10);
-    private static final Duration REENVIO_1 = Duration.ofSeconds(30);
-    private static final Duration REENVIO_2 = Duration.ofSeconds(120);
 
     private final MeuGendazAcessoRepository meuGendazAcessoRepository;
+    private final MeuGendazOtpChallengeRepository challengeRepository;
     private final EmpresaRepository empresaRepository;
+    private final ClienteRepository clienteRepository;
     private final ResendEmailService resendEmailService;
     private final UsuarioSessionService usuarioSessionService;
     private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
+    private final MeuGendazSecurityProperties securityProperties;
+    private final MeuGendazTokenHashService tokenHashService;
+    private final PersistentRateLimitService persistentRateLimitService;
     private final SecureRandom secureRandom = new SecureRandom();
-    private final Map<String, CodigoLoginState> estados = new ConcurrentHashMap<>();
 
+    @Transactional
     public MeuGendazCodigoResponse solicitarCodigo(String slug, String email, String ip) {
         EmpresaEntity empresa = buscarEmpresa(slug);
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        MeuGendazAcessoEntity acesso = buscarAcesso(empresa, normalizado);
-        CodigoLoginState state = estados.computeIfAbsent(chaveEstado(empresa.getId(), normalizado), key -> new CodigoLoginState());
-        synchronized (state) {
-            state.limparSeExpirado();
-            LocalDateTime agora = LocalDateTime.now();
-            if (state.bloqueadoAte != null && agora.isBefore(state.bloqueadoAte)) {
-                throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde um tempo e tente novamente.");
-            }
-            if (state.ultimaSolicitacao != null) {
-                long segundos = Duration.between(state.ultimaSolicitacao, agora).getSeconds();
-                if (state.solicitacoes == 0 && segundos < REENVIO_1.toSeconds()) {
-                    throw new BusinessException("Aguarde 30 segundos para solicitar um novo codigo.");
-                }
-                if (state.solicitacoes == 1 && segundos < REENVIO_2.toSeconds()) {
-                    throw new BusinessException("Aguarde 120 segundos para solicitar um novo codigo.");
-                }
-                if (state.solicitacoes >= 2) {
-                    state.bloqueadoAte = agora.plusHours(24);
-                    throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde 24 horas para tentar novamente.");
-                }
-            }
+        aplicarRateLimitSolicitacao(empresa.getId(), normalizado, ip);
 
-            state.codigo = gerarCodigo();
-            state.codigoHash = hashCodigo(state.codigo, normalizado, empresa.getId());
-            state.geradoEm = agora;
-            state.ultimaSolicitacao = agora;
-            state.expiraEm = agora.plus(EXPIRACAO_CODIGO);
-            state.reenviarDisponivelEm = agora.plus(state.solicitacoes == 0 ? REENVIO_1 : REENVIO_2);
-            state.tentativas = 0;
-            state.usado = false;
-            state.solicitacoes++;
+        LocalDateTime agora = LocalDateTime.now();
+        MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizado)
+                .orElseGet(() -> MeuGendazOtpChallengeEntity.builder()
+                        .empresa(empresa)
+                        .email(normalizado)
+                        .build());
 
-            boolean enviado = resendEmailService.enviarCodigoMeuGendaz(acesso.getEmail(), acesso.getNome(), state.codigo);
-            if (!enviado) {
-                throw new BusinessException("Nao foi possivel enviar o codigo agora.");
-            }
+        validarCooldownEJanela(challenge, agora);
 
-            log.info("[meu-gendaz] codigo enviado para {}", mascararEmail(normalizado));
-            return new MeuGendazCodigoResponse("Enviamos um codigo para o seu e-mail.", normalizado, false);
+        String codigo = gerarCodigo();
+        String otpHash = tokenHashService.hashOtp(codigo, normalizado, empresa.getId());
+        String nomeEmail = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado)
+                .map(ClienteEntity::getNome)
+                .orElseGet(() -> meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado)
+                        .map(MeuGendazAcessoEntity::getNome)
+                        .orElse(nomePadrao(normalizado)));
+
+        boolean enviado = resendEmailService.enviarCodigoMeuGendaz(normalizado, nomeEmail, codigo);
+        if (!enviado) {
+            throw new BusinessException("Nao foi possivel enviar o codigo agora.");
         }
+
+        registrarOtpEmitido(challenge, otpHash, agora);
+        challengeRepository.save(challenge);
+
+        log.info("[meu-gendaz] codigo enviado para {} empresaId={}", mascararEmail(normalizado), empresa.getId());
+        return new MeuGendazCodigoResponse("Enviamos um codigo para o seu e-mail.", normalizado, false);
+    }
+
+    @Transactional
+    public MeuGendazAuthResponse validarCodigo(String slug, String email, String codigo, String ip) {
+        EmpresaEntity empresa = buscarEmpresa(slug);
+        String normalizado = normalizarEmail(email);
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
+        persistentRateLimitService.consumir("OTP_VALIDATE_IP:" + normalizarIp(ip), securityProperties.getOtp().getMaxValidatePerIp10m(), Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
+
+        MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizado)
+                .orElseThrow(() -> new BusinessException("Solicite um novo codigo."));
+        LocalDateTime agora = LocalDateTime.now();
+        if (challenge.getBloqueadoAte() != null && agora.isBefore(challenge.getBloqueadoAte())) {
+            throw new BusinessException("Muitas tentativas. Aguarde um momento e tente novamente.");
+        }
+        if (challenge.getOtpHash() == null || challenge.getOtpExpiraEm() == null || !agora.isBefore(challenge.getOtpExpiraEm())) {
+            throw new BusinessException("O codigo expirou. Solicite um novo.");
+        }
+        String codigoInformado = limparCodigo(codigo);
+        String hashInformado = tokenHashService.hashOtp(codigoInformado, normalizado, empresa.getId());
+        if (!tokenHashService.matches(challenge.getOtpHash(), hashInformado)) {
+            challenge.setTentativasFalhas(challenge.getTentativasFalhas() + 1);
+            if (challenge.getTentativasFalhas() >= securityProperties.getOtp().getMaxAttempts()) {
+                challenge.setOtpHash(null);
+                challenge.setBloqueadoAte(agora.plus(securityProperties.getOtp().blockDuration()));
+                challengeRepository.save(challenge);
+                throw new BusinessException("Codigo bloqueado apos muitas tentativas. Solicite um novo codigo.");
+            }
+            challengeRepository.save(challenge);
+            throw new BusinessException("Codigo invalido.");
+        }
+
+        challenge.setOtpHash(null);
+        challenge.setOtpExpiraEm(null);
+        challenge.setValidadoEm(agora);
+        challenge.setTentativasFalhas(0);
+
+        Optional<ClienteEntity> cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado);
+        if (cliente.isPresent()) {
+            MeuGendazAcessoEntity acesso = buscarOuCriarAcessoDefinitivo(empresa, normalizado, cliente.get().getNome());
+            challenge.setOnboardingSessionHash(null);
+            challenge.setOnboardingSessionExpiraEm(null);
+            challengeRepository.save(challenge);
+            String sessionToken = usuarioSessionService.criarSessaoMeuGendaz(acesso);
+            return new MeuGendazAuthResponse("Login realizado com sucesso.", normalizado, sessionToken, "ACTIVE");
+        }
+
+        String onboardingToken = UUID.randomUUID().toString();
+        challenge.setOnboardingSessionHash(tokenHashService.hashToken(onboardingToken));
+        challenge.setOnboardingSessionExpiraEm(agora.plus(securityProperties.getOnboarding().ttl()));
+        challengeRepository.save(challenge);
+        return new MeuGendazAuthResponse("Codigo validado. Complete seu cadastro.", normalizado, onboardingToken, "PENDING_REGISTRATION");
     }
 
     @Transactional
     public MeuGendazAuthResponse validarCodigo(String slug, String email, String codigo) {
-        EmpresaEntity empresa = buscarEmpresa(slug);
-        String normalizado = normalizarEmail(email);
-        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        MeuGendazAcessoEntity acesso = buscarAcesso(empresa, normalizado);
-        CodigoLoginState state = estados.get(chaveEstado(empresa.getId(), normalizado));
-        if (state == null) {
-            throw new BusinessException("Solicite um novo codigo.");
-        }
-        synchronized (state) {
-            state.limparSeExpirado();
-            LocalDateTime agora = LocalDateTime.now();
-            if (state.bloqueadoAte != null && agora.isBefore(state.bloqueadoAte)) {
-                throw new BusinessException("Voce fez muitas solicitacoes suspeitas. Aguarde um tempo e tente novamente.");
-            }
-            if (state.usado) {
-                throw new BusinessException("Este codigo ja foi utilizado.");
-            }
-            if (state.expiraEm == null || agora.isAfter(state.expiraEm)) {
-                throw new BusinessException("O codigo expirou. Solicite um novo.");
-            }
-
-            String codigoInformado = limparCodigo(codigo);
-            if (!state.codigoHash.equals(hashCodigo(codigoInformado, normalizado, empresa.getId()))) {
-                state.tentativas++;
-                if (state.tentativas >= MAX_TENTATIVAS) {
-                    state.usado = true;
-                    throw new BusinessException("Codigo bloqueado apos muitas tentativas. Solicite um novo codigo.");
-                }
-                throw new BusinessException("Codigo invalido.");
-            }
-
-            state.usado = true;
-            String sessionToken = usuarioSessionService.criarSessaoMeuGendaz(acesso);
-            return new MeuGendazAuthResponse("Login realizado com sucesso.", normalizado, sessionToken, "ACTIVE");
-        }
+        return validarCodigo(slug, email, codigo, "unknown");
     }
 
-    /**
-     * Renova/valida a sessÃ£o do Meu Gendaz de forma idempotente (mesmo padrÃ£o do painel Gendaz),
-     * mas usando o slot prÃ³prio de sessÃ£o do Meu Gendaz (nÃ£o interfere no painel).
-     * Resolve o usuÃ¡rio pelo token informado â€” nÃ£o depende do e-mail no request.
-     * Se o token informado ainda Ã© o ativo, mantÃ©m o mesmo token â€” evita race de rotaÃ§Ã£o
-     * em refreshes concorrentes (ex: F5). SÃ³ gera um token novo se o informado nÃ£o for mais o ativo.
-     */
     @Transactional
     public MeuGendazAuthResponse refreshSessao(String slug, String sessionToken) {
         EmpresaEntity empresa = buscarEmpresa(slug);
@@ -150,23 +157,25 @@ public class MeuGendazAuthService {
         return new MeuGendazAuthResponse("Sessao renovada com sucesso.", acesso.getEmail(), sessaoRenovada, "ACTIVE");
     }
 
-    private EmpresaEntity buscarEmpresa(String slug) {
-        String normalizado = normalizarSlug(slug);
-        if (normalizado.isBlank()) {
-            throw new BusinessException("Slug da empresa invalido.");
-        }
-        return empresaRepository.findByAgendamentoSlug(normalizado)
-                .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
+    @Transactional
+    public MeuGendazAcessoEntity buscarOuCriarAcessoDefinitivo(EmpresaEntity empresa, String email, String nome) {
+        String normalizado = normalizarEmail(email);
+        return meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado)
+                .map(acesso -> {
+                    if (nome != null && !nome.isBlank()) {
+                        acesso.setNome(nome.trim());
+                    }
+                    if (acesso.getStatus() == null) {
+                        acesso.setStatus(StatusUsuario.ATIVO);
+                    }
+                    return meuGendazAcessoRepository.save(acesso);
+                })
+                .orElseGet(() -> salvarAcessoDefinitivo(empresa, normalizado, nome));
     }
 
-    private MeuGendazAcessoEntity buscarAcesso(EmpresaEntity empresa, String email) {
-        return meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), email)
-                .orElseGet(() -> salvarAcesso(empresa, email));
-    }
-
-    private MeuGendazAcessoEntity salvarAcesso(EmpresaEntity empresa, String email) {
+    private MeuGendazAcessoEntity salvarAcessoDefinitivo(EmpresaEntity empresa, String email, String nome) {
         MeuGendazAcessoEntity novoAcesso = MeuGendazAcessoEntity.builder()
-                .nome(nomePadrao(email))
+                .nome(nome == null || nome.isBlank() ? nomePadrao(email) : nome.trim())
                 .email(email)
                 .status(StatusUsuario.ATIVO)
                 .empresa(empresa)
@@ -179,16 +188,55 @@ public class MeuGendazAuthService {
         }
     }
 
+    private void aplicarRateLimitSolicitacao(Long empresaId, String email, String ip) {
+        persistentRateLimitService.consumir("OTP_EMAIL:" + empresaId + ":" + email, securityProperties.getOtp().getMaxRequestsPerEmailHour(), Duration.ofHours(1), securityProperties.getOtp().blockDuration());
+        persistentRateLimitService.consumir("OTP_IP:" + normalizarIp(ip), securityProperties.getOtp().getMaxRequestsPerIp10m(), Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
+    }
+
+    private void validarCooldownEJanela(MeuGendazOtpChallengeEntity challenge, LocalDateTime agora) {
+        if (challenge.getBloqueadoAte() != null && agora.isBefore(challenge.getBloqueadoAte())) {
+            throw new BusinessException("Muitas tentativas. Aguarde um momento e tente novamente.");
+        }
+        if (challenge.getReenviarDisponivelEm() != null && agora.isBefore(challenge.getReenviarDisponivelEm())) {
+            throw new BusinessException("Aguarde " + Math.max(1, Duration.between(agora, challenge.getReenviarDisponivelEm()).getSeconds()) + " segundos para solicitar um novo codigo.");
+        }
+    }
+
+    private void registrarOtpEmitido(MeuGendazOtpChallengeEntity challenge, String otpHash, LocalDateTime agora) {
+        challenge.setOtpHash(otpHash);
+        challenge.setOtpExpiraEm(agora.plus(securityProperties.getOtp().ttl()));
+        challenge.setTentativasFalhas(0);
+        challenge.setUltimaSolicitacao(agora);
+        challenge.setReenviarDisponivelEm(agora.plus(securityProperties.getOtp().resendCooldown()));
+        if (challenge.getJanelaSolicitacoesInicio() == null || !agora.isBefore(challenge.getJanelaSolicitacoesInicio().plusHours(1))) {
+            challenge.setJanelaSolicitacoesInicio(agora);
+            challenge.setSolicitacoesNaJanela(0);
+        }
+        challenge.setSolicitacoesNaJanela(challenge.getSolicitacoesNaJanela() + 1);
+        challenge.setValidadoEm(null);
+        challenge.setOnboardingSessionHash(null);
+        challenge.setOnboardingSessionExpiraEm(null);
+    }
+
+    private EmpresaEntity buscarEmpresa(String slug) {
+        String normalizado = normalizarSlug(slug);
+        if (normalizado.isBlank()) {
+            throw new BusinessException("Slug da empresa invalido.");
+        }
+        return empresaRepository.findByAgendamentoSlug(normalizado)
+                .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
+    }
+
     private String normalizarSlug(String slug) {
         return slug == null ? "" : slug.trim().toLowerCase();
     }
 
-    private String chaveEstado(Long empresaId, String email) {
-        return empresaId + ":" + email;
-    }
-
     private String normalizarEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase();
+    }
+
+    private String normalizarIp(String ip) {
+        return ip == null || ip.isBlank() ? "unknown" : ip.trim();
     }
 
     private String limparCodigo(String codigo) {
@@ -197,11 +245,7 @@ public class MeuGendazAuthService {
 
     private String gerarCodigo() {
         int numero = secureRandom.nextInt(1_000_000);
-        return String.format("%06d", numero);
-    }
-
-    private String hashCodigo(String codigo, String email, Long empresaId) {
-        return Integer.toHexString((codigo + ":" + email + ":" + empresaId).hashCode());
+        return String.format("%0" + CODIGO_TAMANHO + "d", numero);
     }
 
     private String nomePadrao(String email) {
@@ -225,29 +269,4 @@ public class MeuGendazAuthService {
         String visivel = local.length() <= 2 ? local.charAt(0) + "*" : local.substring(0, 2) + "***";
         return visivel + "@" + dominio;
     }
-
-    private static final class CodigoLoginState {
-        private String codigo;
-        private String codigoHash;
-        private LocalDateTime geradoEm;
-        private LocalDateTime expiraEm;
-        private LocalDateTime ultimaSolicitacao;
-        private LocalDateTime reenviarDisponivelEm;
-        private LocalDateTime bloqueadoAte;
-        private int tentativas;
-        private int solicitacoes;
-        private boolean usado;
-
-        private void limparSeExpirado() {
-            if (expiraEm != null && LocalDateTime.now().isAfter(expiraEm)) {
-                codigo = null;
-                codigoHash = null;
-                geradoEm = null;
-                expiraEm = null;
-                tentativas = 0;
-                usado = false;
-            }
-        }
-    }
 }
-

@@ -22,19 +22,21 @@ public class RateLimitInterceptor implements HandlerInterceptor {
     private final AuthService authService;
     private final AdminService adminService;
     private final SecurityMonitoringService securityMonitoringService;
+    private final ClientIpResolver clientIpResolver;
 
-    public RateLimitInterceptor(RateLimitConfig rateLimitConfig, AuthService authService, AdminService adminService, SecurityMonitoringService securityMonitoringService) {
+    public RateLimitInterceptor(RateLimitConfig rateLimitConfig, AuthService authService, AdminService adminService, SecurityMonitoringService securityMonitoringService, ClientIpResolver clientIpResolver) {
         this.rateLimitConfig = rateLimitConfig;
         this.authService = authService;
         this.adminService = adminService;
         this.securityMonitoringService = securityMonitoringService;
+        this.clientIpResolver = clientIpResolver;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String path = request.getRequestURI();
         String method = request.getMethod();
-        String ip = getClientIp(request);
+        String ip = clientIpResolver.resolve(request);
         Long usuarioId = getAuthenticatedUserId(request);
 
         boolean allowed = false;
@@ -156,14 +158,6 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 "-",
                 "retryAfterSeconds=" + waitForRefill
         );
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty()) {
-            ip = request.getRemoteAddr();
-        }
-        return ip.split(",")[0].trim();
     }
 
     private Long getAuthenticatedUserId(HttpServletRequest request) {

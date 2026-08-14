@@ -5,6 +5,7 @@ import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CookieHelper;
 import com.minhaempresa.gendaz.shared.CookieService;
+import com.minhaempresa.gendaz.shared.security.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -21,15 +22,17 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class MeuGendazAuthController {
     private static final int SESSION_COOKIE_MAX_AGE = (int) Duration.ofDays(90).getSeconds();
+    private static final int ONBOARDING_COOKIE_MAX_AGE = (int) Duration.ofMinutes(20).getSeconds();
     private final MeuGendazAuthService authService;
     private final CookieService cookieService;
+    private final ClientIpResolver clientIpResolver;
 
     @PostMapping("/solicitar-codigo")
     public ResponseEntity<MeuGendazCodigoResponse> solicitarCodigo(
             @Valid @RequestBody MeuGendazSolicitarCodigoRequest request,
             HttpServletRequest http
     ) {
-        MeuGendazCodigoResponse response = authService.solicitarCodigo(request.slug(), request.email(), getClientIp(http));
+        MeuGendazCodigoResponse response = authService.solicitarCodigo(request.slug(), request.email(), clientIpResolver.resolve(http));
         return ResponseEntity.ok(response);
     }
 
@@ -39,9 +42,16 @@ public class MeuGendazAuthController {
             HttpServletRequest http,
             HttpServletResponse response
     ) {
-        MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo());
+        MeuGendazAuthResponse auth = authService.validarCodigo(request.slug(), request.email(), request.codigo(), clientIpResolver.resolve(http));
         String cookieName = nomeCookie(request.slug());
-        cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        String onboardingCookieName = nomeOnboardingCookie(request.slug());
+        if ("PENDING_REGISTRATION".equals(auth.status())) {
+            cookieService.limparCookie(http, response, cookieName);
+            cookieService.adicionarCookie(http, response, onboardingCookieName, auth.sessionToken(), ONBOARDING_COOKIE_MAX_AGE);
+        } else {
+            cookieService.limparCookie(http, response, onboardingCookieName);
+            cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
+        }
         // O sessionToken nÃ£o deve ser retornado no JSON para evitar armazenamento no client side.
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
@@ -65,19 +75,21 @@ public class MeuGendazAuthController {
     }
 
     private String nomeCookie(String slug) {
+        String normalizado = normalizarSlug(slug);
+        return "meu_gendaz_session_" + normalizado;
+    }
+
+    private String nomeOnboardingCookie(String slug) {
+        String normalizado = normalizarSlug(slug);
+        return "meu_gendaz_onboarding_" + normalizado;
+    }
+
+    private String normalizarSlug(String slug) {
         String normalizado = slug == null ? "" : slug.trim().toLowerCase();
         if (normalizado.isBlank()) {
             throw new IllegalArgumentException("Slug da empresa invalido.");
         }
-        return "meu_gendaz_session_" + normalizado;
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty()) {
-            ip = request.getRemoteAddr();
-        }
-        return ip.split(",")[0].trim();
+        return normalizado;
     }
 }
 

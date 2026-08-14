@@ -83,6 +83,8 @@ function GendazAuthGate({ slug, onLogin }) {
       setCodigo('')
     } catch (error) {
       const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Nao foi possivel enviar o codigo.'
+      const retryAfter = Number(error.response?.headers?.['retry-after'] || 0)
+      if (retryAfter > 0) setReenviarEm(retryAfter)
       if (mensagem.toLowerCase().includes('30')) setReenviarEm(30)
       if (mensagem.toLowerCase().includes('120')) setReenviarEm(120)
       if (mensagem.toLowerCase().includes('bloque')) setBloqueado(true)
@@ -103,6 +105,10 @@ function GendazAuthGate({ slug, onLogin }) {
         email: email.trim(),
         codigo: codigo.trim(),
       })
+      if (response.data?.mensagem && response.data?.status === 'PENDING_REGISTRATION') {
+        await onLogin()
+        return
+      }
       if (response.data?.mensagem && response.data?.status === 'ACTIVE') {
         if (isIosBrowser()) {
           await new Promise((resolve) => window.setTimeout(resolve, 700))
@@ -119,6 +125,8 @@ function GendazAuthGate({ slug, onLogin }) {
       }
     } catch (error) {
       const mensagem = error.response?.data?.mensagem || error.response?.data?.message || error.message || 'Codigo invalido.'
+      const retryAfter = Number(error.response?.headers?.['retry-after'] || 0)
+      if (retryAfter > 0) setReenviarEm(retryAfter)
       setErro(mensagem)
       setTentativas((atual) => {
         const next = atual + 1

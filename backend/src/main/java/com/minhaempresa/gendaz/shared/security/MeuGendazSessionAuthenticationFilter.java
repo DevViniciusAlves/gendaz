@@ -92,6 +92,9 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
         if ("GET".equalsIgnoreCase(method) && uri.startsWith("/api/meu-gendaz/empresa/")) {
             return true;
         }
+        if (("GET".equalsIgnoreCase(method) || "PATCH".equalsIgnoreCase(method)) && "/api/meu-gendaz/perfil".equals(uri)) {
+            return true;
+        }
         return "POST".equalsIgnoreCase(method) && List.of(
                 "/api/meu-gendaz/auth/solicitar-codigo",
                 "/api/meu-gendaz/auth/validar-codigo",

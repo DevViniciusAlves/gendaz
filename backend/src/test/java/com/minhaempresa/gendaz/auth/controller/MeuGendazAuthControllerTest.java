@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazAuthResponse;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.MeuGendazCodigoResponse;
 import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
 import com.minhaempresa.gendaz.shared.CookieService;
+import com.minhaempresa.gendaz.shared.security.ClientIpResolver;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,8 @@ class MeuGendazAuthControllerTest {
     private MeuGendazAuthService authService;
 
     private CookieService cookieService;
+    @Mock
+    private ClientIpResolver clientIpResolver;
 
     private MockMvc mockMvc;
 
@@ -33,7 +36,8 @@ class MeuGendazAuthControllerTest {
     void setup() {
         MockitoAnnotations.openMocks(this);
         cookieService = new CookieService("test");
-        mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazAuthController(authService, cookieService)).build();
+        when(clientIpResolver.resolve(any())).thenReturn("127.0.0.1");
+        mockMvc = MockMvcBuilders.standaloneSetup(new MeuGendazAuthController(authService, cookieService, clientIpResolver)).build();
     }
 
     @Test
@@ -53,7 +57,7 @@ class MeuGendazAuthControllerTest {
 
     @Test
     void deveValidarCodigoEGravarCookieDaSessao() throws Exception {
-        when(authService.validarCodigo(anyString(), anyString(), anyString()))
+        when(authService.validarCodigo(anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(new MeuGendazAuthResponse("Login realizado com sucesso.", "cliente@teste.com", "sessao-meu-gendaz", "ACTIVE"));
 
         mockMvc.perform(post("/api/meu-gendaz/auth/validar-codigo")

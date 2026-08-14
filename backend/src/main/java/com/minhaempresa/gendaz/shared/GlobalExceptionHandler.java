@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.minhaempresa.gendaz.shared.security.RateLimitExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
@@ -45,6 +46,14 @@ public class GlobalExceptionHandler {
         ex.getBindingResult().getFieldErrors().forEach(error -> campos.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest()
                 .body(ValidationErrorResponse.of("Existem campos invÃƒÂ¡lidos.", request.getRequestURI(), campos));
+    }
+
+    @ExceptionHandler(RateLimitExceededException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException ex, HttpServletRequest request) {
+        String mensagem = ex.getReason() != null ? ex.getReason() : "Muitas tentativas. Aguarde um momento e tente novamente.";
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header("Retry-After", String.valueOf(ex.getRetryAfterSeconds()))
+                .body(ApiErrorResponse.of(429, "Too Many Requests", mensagem, request.getRequestURI()));
     }
 
     @ExceptionHandler(ResponseStatusException.class)

@@ -21,6 +21,8 @@ import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoServic
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
+import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
+import com.minhaempresa.gendaz.auth.service.MeuGendazOnboardingService;
 import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 
@@ -45,6 +47,8 @@ class MeuGendazControllerTest {
     @Mock private InsightsService insightsService;
     @Mock private MeuGendazPromocaoService meuGendazPromocaoService;
     @Mock private UsuarioSessionService usuarioSessionService;
+    @Mock private MeuGendazAuthService meuGendazAuthService;
+    @Mock private MeuGendazOnboardingService onboardingService;
     @Mock private SanitizacaoService sanitizacaoService;
     private CookieService cookieService;
 
@@ -68,6 +72,8 @@ class MeuGendazControllerTest {
                 insightsService,
                 meuGendazPromocaoService,
                 usuarioSessionService,
+                meuGendazAuthService,
+                onboardingService,
                 sanitizacaoService,
                 cookieService
         )).build();

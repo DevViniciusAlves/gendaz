@@ -24,6 +24,8 @@ import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
+import com.minhaempresa.gendaz.auth.config.MeuGendazSecurityProperties;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import java.time.LocalDate;
@@ -46,6 +48,8 @@ public class AgendamentoPublicoService {
     private final HorarioAtendimentoService horarioAtendimentoService;
     private final AssinaturaRepository assinaturaRepository;
     private final SanitizacaoService sanitizacaoService;
+    private final PersistentRateLimitService persistentRateLimitService;
+    private final MeuGendazSecurityProperties securityProperties;
 
     @Transactional(readOnly = true)
     public BookingEmpresaResponse carregar(String slugOuEmpresaId) {
@@ -79,7 +83,13 @@ public class AgendamentoPublicoService {
 
     @Transactional(readOnly = true)
     public List<String> horarios(String slugOuEmpresaId, Long profissionalId, Long servicoId, LocalDate data) {
+        return horarios(slugOuEmpresaId, profissionalId, servicoId, data, "unknown");
+    }
+
+    @Transactional
+    public List<String> horarios(String slugOuEmpresaId, Long profissionalId, Long servicoId, LocalDate data, String ip) {
         EmpresaEntity empresa = buscarEmpresaAtiva(slugOuEmpresaId);
+        persistentRateLimitService.consumir("BOOKING_GET_IP:" + normalizarIp(ip) + ":" + empresa.getId(), securityProperties.getPublicBooking().getMaxGetPerIpMinute(), java.time.Duration.ofMinutes(1), java.time.Duration.ofMinutes(2));
         ZoneId zoneId = resolverZoneId(empresa.getTimezone());
         LocalDate hojeEmpresa = LocalDate.now(zoneId);
         if (data.isBefore(hojeEmpresa)) {
@@ -99,7 +109,18 @@ public class AgendamentoPublicoService {
 
     @Transactional
     public AgendamentoPublicoResponse agendar(String slugOuEmpresaId, CriarAgendamentoPublicoRequest request) {
+        return agendar(slugOuEmpresaId, request, "unknown");
+    }
+
+    @Transactional
+    public AgendamentoPublicoResponse agendar(String slugOuEmpresaId, CriarAgendamentoPublicoRequest request, String ip) {
         EmpresaEntity empresa = buscarEmpresaAtiva(slugOuEmpresaId);
+        String telefone = sanitizacaoService.telefone(request.clienteTelefone());
+        if (telefone == null) {
+            throw new BusinessException("Telefone Ã© obrigatÃ³rio");
+        }
+        persistentRateLimitService.consumir("BOOKING_POST_IP:" + normalizarIp(ip) + ":" + empresa.getId(), securityProperties.getPublicBooking().getMaxPostPerIp10m(), java.time.Duration.ofMinutes(10), java.time.Duration.ofMinutes(10));
+        persistentRateLimitService.consumir("BOOKING_PHONE:" + empresa.getId() + ":" + telefone, securityProperties.getPublicBooking().getMaxPostPerPhoneHour(), java.time.Duration.ofHours(1), java.time.Duration.ofMinutes(30));
         validarRecursoDaEmpresa(empresa.getId(), request.servicoId(), request.profissionalId());
 
         ClienteEntity cliente = buscarOuCriarCliente(empresa, request);
@@ -214,6 +235,10 @@ public class AgendamentoPublicoService {
     private String normalizarObservacao(String valor) {
         String observacao = valor == null ? "" : valor.trim().replaceAll("\\s+", " ");
         return observacao.isBlank() ? null : observacao;
+    }
+
+    private String normalizarIp(String ip) {
+        return ip == null || ip.isBlank() ? "unknown" : ip.trim();
     }
 
     private ZoneId resolverZoneId(String timezone) {
