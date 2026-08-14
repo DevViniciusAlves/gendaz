@@ -507,9 +507,10 @@ public class MeuGendazController {
     public ResponseEntity<?> notificacoes(HttpServletRequest request) {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
+            var notificacoes = meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente);
             return ResponseEntity.ok(Map.of(
-                    "totalNotificacoes", meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente).size(),
-                    "notificacoes", meuGendazPromocaoService.listarNotificacoesNaoLidas(cliente)
+                    "totalNotificacoes", notificacoes.size(),
+                    "notificacoes", notificacoes
             ));
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));

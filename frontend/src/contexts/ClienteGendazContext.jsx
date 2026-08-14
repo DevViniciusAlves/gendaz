@@ -4,6 +4,8 @@ import { meuGendazPromocoesApi } from '../api/meuGendazPromocoesApi.js'
 
 export const ClienteGendazContext = createContext()
 
+const BENEFICIOS_FRESHNESS_MS = 5000
+
 function isIosBrowser() {
   if (typeof navigator === 'undefined') return false
   const ua = navigator.userAgent.toLowerCase()
@@ -47,6 +49,9 @@ export function ClienteGendazProvider({ children, slug }) {
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
   const sincronizandoRef = useRef(null)
+  const beneficiosEmAndamentoRef = useRef(null)
+  const beneficiosAtualizadoEmRef = useRef(0)
+
 
   const limparEstadoSessao = useCallback(() => {
     setCliente(null)
@@ -55,6 +60,7 @@ export function ClienteGendazProvider({ children, slug }) {
     setDashboard(null)
     setAgendamentos([])
     setBeneficios({ promocoes: [], cupons: [] })
+    beneficiosAtualizadoEmRef.current = 0
     setConfiguracoes(null)
     setServicos([])
     setProfissionais([])
@@ -216,17 +222,32 @@ export function ClienteGendazProvider({ children, slug }) {
     }
   }, [cliente])
 
-  const carregarBeneficios = useCallback(async () => {
-    const [promosRes, cuponsRes, notifRes] = await Promise.allSettled([
+  const carregarBeneficios = useCallback(async ({ usarCacheRecente = false } = {}) => {
+    if (beneficiosEmAndamentoRef.current) {
+      return beneficiosEmAndamentoRef.current
+    }
+
+    if (usarCacheRecente && Date.now() - beneficiosAtualizadoEmRef.current < BENEFICIOS_FRESHNESS_MS) {
+      return
+    }
+
+    const promessa = Promise.allSettled([
       meuGendazPromocoesApi.listar(),
       meuGendazPromocoesApi.usados(),
       meuGendazPromocoesApi.notificacoes(),
-    ])
-    setBeneficios({
-      promocoes: promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : [],
-      cupons: cuponsRes.status === 'fulfilled' && Array.isArray(cuponsRes.value) ? cuponsRes.value : [],
-      notificacoes: notifRes.status === 'fulfilled' ? (Array.isArray(notifRes.value?.notificacoes) ? notifRes.value.notificacoes : []) : [],
+    ]).then(([promosRes, cuponsRes, notifRes]) => {
+      setBeneficios((prev) => ({
+        promocoes: promosRes.status === 'fulfilled' && Array.isArray(promosRes.value) ? promosRes.value : prev.promocoes || [],
+        cupons: cuponsRes.status === 'fulfilled' && Array.isArray(cuponsRes.value) ? cuponsRes.value : prev.cupons || [],
+        notificacoes: notifRes.status === 'fulfilled' ? (Array.isArray(notifRes.value?.notificacoes) ? notifRes.value.notificacoes : prev.notificacoes || []) : prev.notificacoes || [],
+      }))
+      beneficiosAtualizadoEmRef.current = Date.now()
+    }).finally(() => {
+      beneficiosEmAndamentoRef.current = null
     })
+
+    beneficiosEmAndamentoRef.current = promessa
+    return promessa
   }, [])
 
   useEffect(() => {
@@ -264,12 +285,11 @@ export function ClienteGendazProvider({ children, slug }) {
     if (!cliente) return undefined
 
     let ativo = true
-    let timer = null
 
     const atualizarBeneficios = async () => {
       if (!ativo) return
       try {
-        await carregarBeneficios()
+        await carregarBeneficios({ usarCacheRecente: true })
       } catch {
         /* silencioso */
       }
@@ -287,13 +307,9 @@ export function ClienteGendazProvider({ children, slug }) {
 
     window.addEventListener('focus', lidarFocus)
     document.addEventListener('visibilitychange', lidarVisibilidade)
-    timer = setInterval(() => {
-      void atualizarBeneficios()
-    }, 15 * 1000)
 
     return () => {
       ativo = false
-      if (timer) clearInterval(timer)
       window.removeEventListener('focus', lidarFocus)
       document.removeEventListener('visibilitychange', lidarVisibilidade)
     }

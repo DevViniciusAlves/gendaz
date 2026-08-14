@@ -15,17 +15,21 @@ export default function Beneficios() {
   const [copiado, setCopiado] = useState(null)
 
   useEffect(() => {
+    let ativo = true
     const carregar = async () => {
       try {
         setCarregando(true)
-        await carregarBeneficios()
+        await carregarBeneficios({ usarCacheRecente: true })
       } catch (err) {
-        setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar benefícios.')
+        if (ativo) setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar benefícios.')
       } finally {
-        setCarregando(false)
+        if (ativo) setCarregando(false)
       }
     }
     carregar()
+    return () => {
+      ativo = false
+    }
   }, [carregarBeneficios])
 
   async function handleUsarCupom(cupomCodigo) {
