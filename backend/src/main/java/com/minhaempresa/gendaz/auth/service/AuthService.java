@@ -212,6 +212,7 @@ public class AuthService {
         }
     }
 
+    @Transactional
     public LoginResponse criarConta(CriarContaRequest request) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
@@ -222,25 +223,19 @@ public class AuthService {
 
         log.info("Cadastro solicitado para {}", mascararEmail(email));
         try {
-            CadastroContaCriada cadastro = transactionTemplate.execute(status -> criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario, documento));
-            if (cadastro == null) {
-                throw new BusinessException("NÃ£o foi possÃ­vel criar a conta.");
-            }
-
+            CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario, documento);
+            
             PagamentoPlanoResponse pagamentoPlano = null;
             if (cadastro.cadastroPro()) {
-                try {
-                    // Usar caminho interno para onboarding que não exige CompanyContext
-                    pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
-                            cadastro.empresaId(),
-                            "PRO",
-                            MetodoPagamento.CREDIT_CARD,
-                            null, null, null, null, null, null
-                    );
-                } catch (BusinessException ex) {
-                    log.warn("Cadastro Pro criado, mas pagamento inicial não foi gerado para empresa {}: {}", cadastro.empresaId(), ex.getMessage());
-                    pagamentoPlano = pagamentoService.criarPagamentoPlanoPendente(cadastro.empresaId(), "PRO", MetodoPagamento.CREDIT_CARD);
-                }
+                pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
+                        cadastro.empresaId(),
+                        "PRO",
+                        MetodoPagamento.CREDIT_CARD,
+                        cadastro.usuario().getNome(),
+                        cadastro.usuario().getEmail(),
+                        cadastro.usuario().getEmpresa().getTelefone(),
+                        null, null, null
+                );
             }
 
             if (cadastro.usuario() != null) {

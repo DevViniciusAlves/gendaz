@@ -27,11 +27,15 @@ public class StripePaymentGateway implements PaymentGateway {
 
     @Override
     public PaymentGatewayResponse criarPagamentoPlano(PagamentoPlanoEntity pagamento) {
+        return criarPagamentoPlano(pagamento, pagamento.getEmpresa().getStripeCustomerId());
+    }
+
+    @Override
+    public PaymentGatewayResponse criarPagamentoPlano(PagamentoPlanoEntity pagamento, String stripeCustomerId) {
         validarConfiguracao(pagamento);
         Stripe.apiKey = stripeProperties.getSecretKey();
 
         String plano = pagamento.getPlano().getNome();
-        SessionCreateParams.CustomerCreation customerCreation = SessionCreateParams.CustomerCreation.ALWAYS;
         SessionCreateParams.LineItem lineItem = SessionCreateParams.LineItem.builder()
                 .setPrice(stripeProperties.priceIdParaPlano(plano))
                 .setQuantity(1L)
@@ -41,7 +45,6 @@ public class StripePaymentGateway implements PaymentGateway {
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                 .setSuccessUrl(paymentGatewayProperties.getSuccessUrl())
                 .setCancelUrl(paymentGatewayProperties.getCancelUrl())
-                .setCustomerCreation(customerCreation)
                 .addLineItem(lineItem)
                 .putMetadata("empresaId", String.valueOf(pagamento.getEmpresa().getId()))
                 .putMetadata("pagamentoPlanoId", String.valueOf(pagamento.getId()))
@@ -49,22 +52,24 @@ public class StripePaymentGateway implements PaymentGateway {
                 .putMetadata("externalReference", pagamento.getExternalReference())
                 .putMetadata("plano", plano);
 
-        if (pagamento.getCustomerEmail() != null && !pagamento.getCustomerEmail().isBlank()) {
+        if (stripeCustomerId != null && !stripeCustomerId.isBlank()) {
+            params.setCustomer(stripeCustomerId);
+        } else if (pagamento.getCustomerEmail() != null && !pagamento.getCustomerEmail().isBlank()) {
             params.setCustomerEmail(pagamento.getCustomerEmail());
         }
 
         try {
             Session session = Session.create(params.build());
-            String stripeCustomerId = session.getCustomer();
+            String newStripeCustomerId = session.getCustomer();
             
             // Reutilizar stripeCustomerId na EmpresaEntity se ainda não estiver definido
-            if (pagamento.getEmpresa().getStripeCustomerId() == null && stripeCustomerId != null) {
-                pagamento.getEmpresa().setStripeCustomerId(stripeCustomerId);
+            if (pagamento.getEmpresa().getStripeCustomerId() == null && newStripeCustomerId != null) {
+                pagamento.getEmpresa().setStripeCustomerId(newStripeCustomerId);
                 empresaRepository.save(pagamento.getEmpresa());
             }
             
             pagamento.setStripeSessionId(session.getId());
-            pagamento.setStripeCustomerId(stripeCustomerId);
+            pagamento.setStripeCustomerId(newStripeCustomerId);
             return new PaymentGatewayResponse(
                     "STRIPE",
                     session.getId(),

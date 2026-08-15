@@ -158,6 +158,7 @@ public class PagamentoService {
             String antifraudProfilingAttemptReference
     ) {
         validarMetodoPagamentoPlano(metodoPagamento);
+        validarEmpresaOnboarding(empresaId);
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
         PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
@@ -172,7 +173,7 @@ public class PagamentoService {
         );
         pagamento = pagamentoPlanoRepository.save(pagamento);
 
-        PaymentGatewayResponse gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento);
+        PaymentGatewayResponse gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento, empresa.getStripeCustomerId());
         pagamento.setProvider(gatewayResponse.provider());
         pagamento.setProviderPaymentId(gatewayResponse.providerPaymentId());
         pagamento.setExternalReference(preferir(gatewayResponse.externalReference(), pagamento.getExternalReference()));
