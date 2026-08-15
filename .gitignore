@@ -11,3 +11,4 @@ frontend/.local-*.log
 .env
 .DS_Store
 Thumbs.db
+.m2-clean-test/

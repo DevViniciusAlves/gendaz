@@ -34,7 +34,7 @@ export default function PagamentoRetorno({ tipo }) {
 
   async function consultarStatus() {
     if (!pagamento?.empresaId || !pagamento?.id) {
-      setErro('Nao encontramos um pagamento pendente neste navegador. Volte para a tela de pagamento.')
+      setErro('Não encontramos um pagamento pendente neste navegador. Volte para a tela de pagamento.')
       return
     }
     setErro('')
@@ -51,11 +51,13 @@ export default function PagamentoRetorno({ tipo }) {
       setPendente(novoPendente)
       if (resultado.statusVerificacao === 'APPROVED') {
         limparPagamentoPendente()
+        // Redirecionar para login após confirmação do backend
+        navigate('/login')
       } else if (resultado.mensagem) {
         setErro(resultado.mensagem)
       }
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'Nao foi possivel consultar o pagamento.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível consultar o pagamento.')
     } finally {
       setCarregando(false)
     }

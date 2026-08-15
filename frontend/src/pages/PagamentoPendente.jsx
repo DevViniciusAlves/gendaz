@@ -89,15 +89,18 @@ export default function PagamentoPendente() {
     setTipoMensagem('')
     setGerando(true)
     try {
-      const novoPagamento = await appApi.iniciarPagamentoPro({
-        empresaId,
-        metodoPagamento: 'CREDIT_CARD',
-        plano: pendente?.assinatura?.planoNome || 'PRO',
-      })
-      registrarInicioCheckout(novoPagamento)
-      setPendente({ ...pendente, pagamentoPlano: novoPagamento })
-      setTipoMensagem('success')
-      setMensagem('Checkout gerado. Continue pela Stripe para concluir.')
+       const novoPagamento = await appApi.iniciarPagamentoPro({
+         empresaId,
+         metodoPagamento: 'CREDIT_CARD',
+         plano: pendente?.assinatura?.planoNome || 'PRO',
+       })
+       if (novoPagamento.checkoutUrl) {
+         // Redirecionar imediatamente para a checkoutUrl retornada pelo backend
+         window.location.href = novoPagamento.checkoutUrl
+       } else {
+         setTipoMensagem('error')
+         setMensagem('Não foi possível gerar o link de pagamento. Tente novamente.')
+       }
     } catch (error) {
       setTipoMensagem('error')
       setMensagem(error.response?.data?.mensagem || 'Nao foi possivel gerar o checkout. Tente novamente em instantes.')
