@@ -1,24 +1,29 @@
 package com.minhaempresa.gendaz.pagamento.gateway;
 
+import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
+import com.stripe.model.Subscription;
 import com.stripe.param.checkout.SessionCreateParams;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
+@Slf4j
 @ConditionalOnProperty(name = "payment.provider", havingValue = "STRIPE", matchIfMissing = true)
 @RequiredArgsConstructor
 public class StripePaymentGateway implements PaymentGateway {
     private final StripeProperties stripeProperties;
     private final PaymentGatewayProperties paymentGatewayProperties;
+    private final EmpresaRepository empresaRepository;
 
     @Override
     public PaymentGatewayResponse criarPagamentoPlano(PagamentoPlanoEntity pagamento) {
@@ -50,8 +55,16 @@ public class StripePaymentGateway implements PaymentGateway {
 
         try {
             Session session = Session.create(params.build());
+            String stripeCustomerId = session.getCustomer();
+            
+            // Reutilizar stripeCustomerId na EmpresaEntity se ainda não estiver definido
+            if (pagamento.getEmpresa().getStripeCustomerId() == null && stripeCustomerId != null) {
+                pagamento.getEmpresa().setStripeCustomerId(stripeCustomerId);
+                empresaRepository.save(pagamento.getEmpresa());
+            }
+            
             pagamento.setStripeSessionId(session.getId());
-            pagamento.setStripeCustomerId(session.getCustomer());
+            pagamento.setStripeCustomerId(stripeCustomerId);
             return new PaymentGatewayResponse(
                     "STRIPE",
                     session.getId(),
@@ -65,9 +78,30 @@ public class StripePaymentGateway implements PaymentGateway {
         }
     }
 
+    /**
+     * Método legado inseguro. Não deve ser usado.
+     * Webhook Stripe deve usar assinatura via Stripe-Signature e webhookSecret.
+     */
     @Override
+    @Deprecated
     public boolean validarWebhook(String assinatura, PaymentGatewayWebhook webhook) {
-        return false;
+        throw new BusinessException("Método legado desativado. Use o webhook Stripe assinado.");
+    }
+
+    @Override
+    public void cancelarSubscription(String subscriptionId) {
+        if (subscriptionId == null || subscriptionId.isBlank()) {
+            throw new BusinessException("Subscription ID não pode ser vazio.");
+        }
+        
+        Stripe.apiKey = stripeProperties.getSecretKey();
+        try {
+            Subscription subscription = Subscription.retrieve(subscriptionId);
+            subscription.cancel();
+            log.info("Subscription Stripe cancelada: subscriptionId={}", subscriptionId);
+        } catch (Exception ex) {
+            throw new BusinessException("Falha ao cancelar subscription Stripe: " + ex.getMessage());
+        }
     }
 
     @Override

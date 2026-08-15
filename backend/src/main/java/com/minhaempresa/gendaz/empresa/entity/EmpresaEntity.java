@@ -41,6 +41,9 @@ public class EmpresaEntity {
     @Column(name = "timezone", nullable = false, length = 60)
     private String timezone;
 
+    @Column(name = "stripe_customer_id", length = 120)
+    private String stripeCustomerId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "ramo", length = 50)
     private RamoEmpresa ramo;

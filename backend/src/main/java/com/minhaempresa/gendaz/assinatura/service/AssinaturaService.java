@@ -240,15 +240,8 @@ public class AssinaturaService {
             }
         }
 
-        // Ativa assinaturas PENDENTE_PAGAMENTO cujo periodo ja comecou
-        todas.stream()
-                .filter(a -> a.getStatus() == StatusAssinatura.PENDENTE_PAGAMENTO
-                        && a.getDataInicio() != null
-                        && !a.getDataInicio().isAfter(hoje))
-                .forEach(a -> {
-                    a.setStatus(StatusAssinatura.ATIVA);
-                    assinaturaRepository.save(a);
-                });
+        // Removido: transição PENDENTE_PAGAMENTO → ATIVA baseada apenas na data é incorreta.
+        // Assinatura paga só pode ser ativada por pagamento aprovado ou ação administrativa explícita.
 
         List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
         if (fila.isEmpty()) {

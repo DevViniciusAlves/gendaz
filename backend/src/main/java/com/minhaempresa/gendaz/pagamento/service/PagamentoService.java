@@ -11,6 +11,7 @@ import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
+import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AtualizarStatusPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.CriarPagamentoRequest;
@@ -20,15 +21,19 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoRespons
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoCobrancaEntity;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
+import com.minhaempresa.gendaz.pagamento.entity.StripeWebhookEventEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGateway;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayResponse;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayWebhook;
 import com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper;
+import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoCobrancaRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.gendaz.pagamento.repository.StripeWebhookEventRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -54,13 +59,16 @@ public class PagamentoService {
     private final AgendamentoService agendamentoService;
     private final ClienteService clienteService;
     private final EmpresaService empresaService;
+    private final EmpresaRepository empresaRepository;
     private final PlanoService planoService;
     private final AssinaturaService assinaturaService;
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
+    private final PagamentoPlanoCobrancaRepository pagamentoPlanoCobrancaRepository;
     private final PaymentGateway paymentGateway;
     private final AdminAuditService auditService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final PagamentoMapper mapper = new PagamentoMapper();
+
 
     @Transactional
     public PagamentoResponse criar(CriarPagamentoRequest request) {
@@ -130,7 +138,51 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoPlanoResponse iniciarPagamentoPlanoPro(Long empresaId, MetodoPagamento metodoPagamento) {
-        return iniciarPagamentoPlano(empresaId, "PRO", metodoPagamento, null, null, null, null, null, null);
+        return iniciarPagamentoPlanoOnboarding(empresaId, "PRO", metodoPagamento, null, null, null, null, null, null);
+    }
+
+    /**
+     * Caminho interno para onboarding que não exige CompanyContext.
+     * Valida empresa/plano criados pelo próprio servidor.
+     */
+    @Transactional
+    public PagamentoPlanoResponse iniciarPagamentoPlanoOnboarding(
+            Long empresaId,
+            String planoNome,
+            MetodoPagamento metodoPagamento,
+            String customerName,
+            String customerEmail,
+            String customerPhone,
+            String customerDocType,
+            String customerDocNumber,
+            String antifraudProfilingAttemptReference
+    ) {
+        validarMetodoPagamentoPlano(metodoPagamento);
+        EmpresaEntity empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+        PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
+
+        if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
+            throw new BusinessException("Você já possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
+        }
+
+        PagamentoPlanoEntity pagamento = novoPagamentoPlano(
+                empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
+                customerDocType, customerDocNumber, antifraudProfilingAttemptReference
+        );
+        pagamento = pagamentoPlanoRepository.save(pagamento);
+
+        PaymentGatewayResponse gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento);
+        pagamento.setProvider(gatewayResponse.provider());
+        pagamento.setProviderPaymentId(gatewayResponse.providerPaymentId());
+        pagamento.setExternalReference(preferir(gatewayResponse.externalReference(), pagamento.getExternalReference()));
+        pagamento.setPaymentReference(preferir(gatewayResponse.paymentReference(), pagamento.getPaymentReference()));
+        pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
+        pagamento.setDataExpiracao(gatewayResponse.dataExpiracao());
+
+        log.info("Checkout Stripe gerado: pagamento={}, empresa={}, plano={}, session={}",
+                pagamento.getId(), empresaId, plano.getNome(), pagamento.getStripeSessionId());
+        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
     }
 
     @Transactional
@@ -221,7 +273,7 @@ public class PagamentoService {
     public VerificarPagamentoPlanoResponse verificarPagamentoPlano(Long empresaId, Long pagamentoId) {
         validarEmpresaAtual(empresaId);
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findByIdAndEmpresaId(pagamentoId, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Nao encontramos um pagamento para esta conta."));
+                .orElseThrow(() -> new ResourceNotFoundException("Não encontramos um pagamento para esta conta."));
         if (pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
             pagamento = sincronizarPagamentoComGateway(pagamento);
         }
@@ -266,6 +318,33 @@ public class PagamentoService {
                     aplicarStatusPagamentoPlano(pagamento, status);
                     return pagamentoPlanoRepository.save(pagamento);
                 });
+    }
+
+    @Transactional
+    public boolean eventoJaProcessado(String eventId) {
+        return pagamentoPlanoRepository.existsByStripeEventId(eventId);
+    }
+
+    @Transactional
+    public void processarInvoiceStripe(String eventId, String invoiceId, String subscriptionId, StatusPagamento status) {
+        if (eventId == null || invoiceId == null || subscriptionId == null) {
+            throw new BusinessException("Dados do evento Stripe inválidos.");
+        }
+        
+        // Idempotência: verificar se o evento já foi processado
+        if (pagamentoPlanoRepository.existsByStripeEventId(eventId)) {
+            log.info("Evento Stripe já processado: eventId={}", eventId);
+            return;
+        }
+        
+        // Registrar evento para idempotência
+        PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findBySubscriptionId(subscriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado para subscriptionId: " + subscriptionId));
+        
+        pagamento.setStripeEventId(eventId);
+        pagamento.setStripeInvoiceId(invoiceId);
+        aplicarStatusPagamentoPlano(pagamento, status);
+        pagamentoPlanoRepository.save(pagamento);
     }
 
     @Transactional
@@ -327,7 +406,16 @@ public class PagamentoService {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.getCompanyId();
         if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+        }
+    }
+
+    private void validarEmpresaOnboarding(Long empresaId) {
+        // Bypass para onboarding: valida apenas se a empresa existe e foi criada recentemente
+        EmpresaEntity empresa = empresaRepository.findById(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+        if (empresa.getStatus() != StatusEmpresa.PENDENTE_PAGAMENTO && empresa.getStatus() != StatusEmpresa.ATIVA) {
+            throw new BusinessException("Empresa não está em estado válido para onboarding.");
         }
     }
 
@@ -395,6 +483,19 @@ public class PagamentoService {
     private PagamentoPlanoEntity liberarContaPorPagamentoAprovado(PagamentoPlanoEntity pagamento, String origem) {
         EmpresaEntity empresa = pagamento.getEmpresa();
         AssinaturaEntity assinatura = pagamento.getAssinatura();
+        
+        // Regra absoluta: BLOQUEADA é soberana. Nenhum processo automático pode alterar StatusEmpresa.
+        if (empresa.getStatus() == StatusEmpresa.BLOQUEADA) {
+            log.warn("Conta BLOQUEADA não pode ser liberada automaticamente por pagamento aprovado. empresa={}, pagamento={}", empresa.getId(), pagamento.getId());
+            return pagamento;
+        }
+        
+        // Regra: conta ENCERRADA (LGPD) não pode ser reativada por webhook ou pagamento.
+        if (empresa.getStatus() == StatusEmpresa.ENCERRADA) {
+            log.warn("Conta ENCERRADA não pode ser reativada por pagamento aprovado. empresa={}, pagamento={}", empresa.getId(), pagamento.getId());
+            return pagamento;
+        }
+        
         boolean mudou = pagamento.getStatus() != StatusPagamento.PAYMENT_APPROVED
                 || pagamento.getDataPagamento() == null
                 || empresa.getStatus() != StatusEmpresa.ATIVA

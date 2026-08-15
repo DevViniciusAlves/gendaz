@@ -65,7 +65,18 @@ public class StripeWebhookService {
 
     private void processarInvoice(Event event, StatusPagamento status) {
         Invoice invoice = desserializar(event, Invoice.class);
-        pagamentoService.aplicarStatusPorSubscriptionStripe(invoice.getSubscription(), status);
+        String eventId = event.getId();
+        String invoiceId = invoice.getId();
+        String subscriptionId = invoice.getSubscription();
+        
+        // Idempotência: verificar se o evento já foi processado
+        if (pagamentoService.eventoJaProcessado(eventId)) {
+            log.info("Evento Stripe já processado: eventId={}, type={}", eventId, event.getType());
+            return;
+        }
+        
+        // Processar invoice e registrar evento
+        pagamentoService.processarInvoiceStripe(eventId, invoiceId, subscriptionId, status);
     }
 
     private void processarSubscription(Event event, StatusPagamento status) {

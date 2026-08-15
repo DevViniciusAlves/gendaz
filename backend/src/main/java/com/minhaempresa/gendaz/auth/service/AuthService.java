@@ -230,9 +230,15 @@ public class AuthService {
             PagamentoPlanoResponse pagamentoPlano = null;
             if (cadastro.cadastroPro()) {
                 try {
-                    pagamentoPlano = pagamentoService.iniciarPagamentoPlanoPro(cadastro.empresaId(), MetodoPagamento.CREDIT_CARD);
+                    // Usar caminho interno para onboarding que não exige CompanyContext
+                    pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
+                            cadastro.empresaId(),
+                            "PRO",
+                            MetodoPagamento.CREDIT_CARD,
+                            null, null, null, null, null, null
+                    );
                 } catch (BusinessException ex) {
-                    log.warn("Cadastro Pro criado, mas pagamento inicial nao foi gerado para empresa {}: {}", cadastro.empresaId(), ex.getMessage());
+                    log.warn("Cadastro Pro criado, mas pagamento inicial não foi gerado para empresa {}: {}", cadastro.empresaId(), ex.getMessage());
                     pagamentoPlano = pagamentoService.criarPagamentoPlanoPendente(cadastro.empresaId(), "PRO", MetodoPagamento.CREDIT_CARD);
                 }
             }

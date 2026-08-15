@@ -93,6 +93,12 @@ public class PagamentoPlanoEntity {
     @Column(name = "stripe_session_id", length = 120, unique = true)
     private String stripeSessionId;
 
+    @Column(name = "stripe_invoice_id", length = 120, unique = true)
+    private String stripeInvoiceId;
+
+    @Column(name = "stripe_event_id", length = 120, unique = true)
+    private String stripeEventId;
+
     private LocalDateTime dataCriacao;
     private LocalDateTime dataAtualizacao;
     private LocalDateTime dataExpiracao;

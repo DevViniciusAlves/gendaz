@@ -22,6 +22,7 @@ import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.notafiscal.repository.NotaFiscalRepository;
 import com.minhaempresa.gendaz.notificacao.repository.NotificacaoRepository;
+import com.minhaempresa.gendaz.pagamento.gateway.PaymentGateway;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
@@ -35,11 +36,14 @@ import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class LgpdService {
     private final UsuarioService usuarioService;
     private final UsuarioRepository usuarioRepository;
@@ -60,6 +64,7 @@ public class LgpdService {
     private final AssinaturaService assinaturaService;
     private final FinanceiroService financeiroService;
     private final AuditLogRepository auditLogRepository;
+    private final PaymentGateway paymentGateway;
     private final UsuarioMapper usuarioMapper = new UsuarioMapper();
 
     @Transactional(readOnly = true)
@@ -117,8 +122,12 @@ public class LgpdService {
             meuGendazAcessoRepository.save(acesso);
         });
 
-        empresa.setStatus(StatusEmpresa.INATIVA);
+        // Estado terminal para LGPD: impede reativação por webhook ou pagamento
+        empresa.setStatus(StatusEmpresa.ENCERRADA);
         empresaRepository.save(empresa);
+        
+        // Cancelar subscription Stripe para impedir renovação futura
+        cancelarSubscriptionStripe(empresa);
 
         return new ExcluirContaResponse(
                 "Conta desativada com sucesso. Os acessos foram revogados e os dados permanecem sujeitos as regras de retencao legal.",
@@ -137,6 +146,25 @@ public class LgpdService {
             throw new BusinessException("Usuario nao possui empresa vinculada.");
         }
         return usuario.getEmpresa().getId();
+    }
+
+    private void cancelarSubscriptionStripe(EmpresaEntity empresa) {
+        if (empresa.getStripeCustomerId() == null || empresa.getStripeCustomerId().isBlank()) {
+            log.info("Nenhuma subscription Stripe para cancelar: empresa={}", empresa.getId());
+            return;
+        }
+        
+        try {
+            List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findByEmpresaIdAndSubscriptionIdNotNull(empresa.getId());
+            for (PagamentoPlanoEntity pagamento : pagamentos) {
+                if (pagamento.getSubscriptionId() != null && !pagamento.getSubscriptionId().isBlank()) {
+                    paymentGateway.cancelarSubscription(pagamento.getSubscriptionId());
+                    log.info("Subscription Stripe cancelada: empresa={}, subscriptionId={}", empresa.getId(), pagamento.getSubscriptionId());
+                }
+            }
+        } catch (Exception ex) {
+            log.error("Falha ao cancelar subscription Stripe para empresa {}: {}", empresa.getId(), ex.getMessage(), ex);
+        }
     }
 
     private AuditoriaExportada toAuditoria(AuditLogEntity log) {
