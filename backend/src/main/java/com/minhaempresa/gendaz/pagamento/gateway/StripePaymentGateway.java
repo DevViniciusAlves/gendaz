@@ -5,6 +5,12 @@ import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.stripe.Stripe;
 import com.stripe.exception.StripeException;
+import com.stripe.model.Customer;
+import com.stripe.model.CustomerCollection;
+import com.stripe.net.RequestOptions;
+import com.stripe.param.CustomerCreateParams;
+import com.stripe.param.CustomerListParams;
+import java.util.Map;
 import com.stripe.model.checkout.Session;
 import com.stripe.model.Subscription;
 import com.stripe.param.checkout.SessionCreateParams;
@@ -43,10 +49,13 @@ public class StripePaymentGateway implements PaymentGateway {
                 .setQuantity(1L)
                 .build();
 
+        String customerId = resolverOuCriarStripeCustomer(pagamento.getEmpresa(), pagamento.getCustomerEmail(), pagamento.getCustomerName());
+
         SessionCreateParams.Builder params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                 .setSuccessUrl(successUrlComSessionId())
                 .setCancelUrl(paymentGatewayProperties.getCancelUrl())
+                .setCustomer(customerId)
                 .addLineItem(lineItem)
                 .putMetadata("empresaId", String.valueOf(pagamento.getEmpresa().getId()))
                 .putMetadata("pagamentoPlanoId", String.valueOf(pagamento.getId()))
@@ -54,24 +63,11 @@ public class StripePaymentGateway implements PaymentGateway {
                 .putMetadata("externalReference", pagamento.getExternalReference())
                 .putMetadata("plano", plano);
 
-        if (stripeCustomerId != null && !stripeCustomerId.isBlank()) {
-            params.setCustomer(stripeCustomerId);
-        } else if (pagamento.getCustomerEmail() != null && !pagamento.getCustomerEmail().isBlank()) {
-            params.setCustomerEmail(pagamento.getCustomerEmail());
-        }
-
         try {
             Session session = Session.create(params.build());
-            String newStripeCustomerId = session.getCustomer();
-            
-            // Reutilizar stripeCustomerId na EmpresaEntity se ainda não estiver definido
-            if (pagamento.getEmpresa().getStripeCustomerId() == null && newStripeCustomerId != null) {
-                pagamento.getEmpresa().setStripeCustomerId(newStripeCustomerId);
-                empresaRepository.save(pagamento.getEmpresa());
-            }
             
             pagamento.setStripeSessionId(session.getId());
-            pagamento.setStripeCustomerId(newStripeCustomerId);
+            pagamento.setStripeCustomerId(customerId);
             return new PaymentGatewayResponse(
                     "STRIPE",
                     session.getId(),
@@ -82,6 +78,44 @@ public class StripePaymentGateway implements PaymentGateway {
             );
         } catch (StripeException ex) {
             throw new BusinessException("Nao foi possivel criar checkout Stripe. Tente novamente em instantes.");
+        }
+    }
+
+    private String resolverOuCriarStripeCustomer(com.minhaempresa.gendaz.empresa.entity.EmpresaEntity empresa, String email, String nome) {
+        if (empresa.getStripeCustomerId() != null) {
+            return empresa.getStripeCustomerId();
+        }
+
+        try {
+            CustomerListParams listParams = CustomerListParams.builder().setEmail(email).build();
+            CustomerCollection customers = Customer.list(listParams);
+            for (Customer customer : customers.getData()) {
+                if (customer.getMetadata() != null &&
+                    String.valueOf(empresa.getId()).equals(customer.getMetadata().get("gendazEmpresaId"))) {
+                    empresa.setStripeCustomerId(customer.getId());
+                    empresaRepository.save(empresa);
+                    return customer.getId();
+                }
+            }
+        } catch (StripeException e) {
+            log.warn("Erro ao buscar customer Stripe por email: {}", e.getMessage());
+        }
+
+        try {
+            CustomerCreateParams createParams = CustomerCreateParams.builder()
+                    .setEmail(email)
+                    .setName(nome)
+                    .putMetadata("gendazEmpresaId", String.valueOf(empresa.getId()))
+                    .build();
+            RequestOptions options = RequestOptions.builder()
+                    .setIdempotencyKey("gendaz-customer-empresa-" + empresa.getId())
+                    .build();
+            Customer customer = Customer.create(createParams, options);
+            empresa.setStripeCustomerId(customer.getId());
+            empresaRepository.save(empresa);
+            return customer.getId();
+        } catch (StripeException e) {
+            throw new BusinessException("Falha ao criar Customer no Stripe.");
         }
     }
 
