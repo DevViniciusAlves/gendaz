@@ -127,7 +127,11 @@ public class AssinaturaService {
         LocalDate hoje = LocalDate.now();
         List<AssinaturaEntity> fila = buscarFilaAtiva(empresa.getId());
 
-        if (fila.size() >= LIMITE_PLANOS_ATIVOS) {
+        long contagemPlanosAdicionais = fila.stream()
+                .filter(a -> assinaturaVinculada == null || !a.getId().equals(assinaturaVinculada.getId()))
+                .count();
+
+        if (contagemPlanosAdicionais >= LIMITE_PLANOS_ATIVOS) {
             throw new BusinessException("Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
         }
 
