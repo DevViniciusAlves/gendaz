@@ -154,23 +154,8 @@ public class AssinaturaService {
             return assinaturaRepository.save(alvo);
         }
 
-        // 3) Comprou durante o teste gratuito: cancela o teste e comeca hoje
-        boolean somenteTeste = !fila.isEmpty() && fila.stream().allMatch(a -> a.getStatus() == StatusAssinatura.TESTE);
-        if (somenteTeste) {
-            fila.forEach(a -> {
-                a.setStatus(StatusAssinatura.CANCELADA);
-                a.setDataFim(hoje);
-                assinaturaRepository.save(a);
-            });
-            AssinaturaEntity nova = AssinaturaEntity.builder()
-                    .empresa(empresa)
-                    .plano(plano)
-                    .status(StatusAssinatura.ATIVA)
-                    .dataInicio(hoje)
-                    .dataFim(hoje.plusMonths(MESES_POR_PERIODO))
-                    .build();
-            return assinaturaRepository.save(nova);
-        }
+        // 3) Comprou durante o teste gratuito: o teste continua vigente e o plano pago entra na fila.
+        // A regra que cancelava o teste foi removida para preservar os dias restantes.
 
         // 4) Padrao: nova assinatura ATIVA encadeada apos o ultimo plano da fila
         AssinaturaEntity nova = AssinaturaEntity.builder()
