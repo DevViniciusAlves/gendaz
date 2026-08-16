@@ -294,6 +294,48 @@ public class PagamentoService {
     }
 
     @Transactional
+    public VerificarPagamentoPlanoResponse verificarStatusPagamentoPublico(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) {
+            throw new BusinessException("Session ID inválido.");
+        }
+
+        PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findByStripeSessionId(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado."));
+
+        // Se já está aprovado, retorna status atual
+        if (pagamento.getStatus() == StatusPagamento.PAYMENT_APPROVED) {
+            return criarRespostaVerificacao(pagamento, "APPROVED", "Pagamento aprovado.");
+        }
+
+        // Caso contrário, sincroniza com Stripe
+        sincronizarPagamentoComGateway(pagamento);
+
+        if (pagamento.getStatus() == StatusPagamento.PAYMENT_APPROVED) {
+            liberarContaPorPagamentoAprovado(pagamento, "VERIFICACAO_PUBLICA");
+            pagamento = pagamentoPlanoRepository.save(pagamento);
+            return criarRespostaVerificacao(pagamento, "APPROVED", "Pagamento aprovado! Sua conta foi liberada.");
+        }
+
+        return switch (pagamento.getStatus()) {
+            case PAYMENT_REJECTED -> criarRespostaVerificacao(pagamento, "REJECTED", "Pagamento recusado.");
+            case PAYMENT_CANCELED -> criarRespostaVerificacao(pagamento, "CANCELED", "Pagamento cancelado.");
+            case PAYMENT_EXPIRED -> criarRespostaVerificacao(pagamento, "EXPIRED", "Pagamento expirado.");
+            default -> criarRespostaVerificacao(pagamento, "PENDING", "Aguardando confirmação.");
+        };
+    }
+
+    private VerificarPagamentoPlanoResponse criarRespostaVerificacao(PagamentoPlanoEntity pagamento, String statusVerificacao, String mensagem) {
+        PagamentoPlanoResponse response = mapper.toPlanoResponse(pagamento);
+        return new VerificarPagamentoPlanoResponse(
+                statusVerificacao,
+                mensagem,
+                pagamento.getEmpresa().getStatus(),
+                pagamento.getAssinatura() == null ? null : pagamento.getAssinatura().getStatus(),
+                response
+        );
+    }
+
+    @Transactional
     public PagamentoPlanoEntity registrarCheckoutStripeConcluido(String stripeSessionId, String subscriptionId, String stripeCustomerId, Long pagamentoPlanoId, String paymentReference) {
         PagamentoPlanoEntity pagamento = localizarPagamentoStripe(stripeSessionId, pagamentoPlanoId, paymentReference)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado."));

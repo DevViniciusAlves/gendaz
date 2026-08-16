@@ -851,6 +851,10 @@ export const appApi = {
     return api.get(`/pagamentos/planos/empresa/${empresaId}/${pagamentoId}/verificar`, options).then((response) => response.data)
   },
 
+  verificarPagamentoPublico(sessionId) {
+    return api.post('/public/pagamentos/stripe/checkout/status', { sessionId }).then((response) => response.data)
+  },
+
   consultarPlanoAtual(empresaId = empresaIdAtual(), options = {}) {
     return api.get(`/pagamentos/planos/empresa/${empresaId}/atual`, options).then((response) => response.data)
   },

@@ -51,23 +51,41 @@ public class StripeWebhookService {
 
     private void processarCheckoutSessionCompleted(Event event) {
         Session session = desserializar(event, Session.class);
+        
+        // Idempotência
+        if (pagamentoService.eventoJaProcessado(event.getId())) {
+             log.info("Evento checkout.session.completed já processado: {}", event.getId());
+             return;
+        }
+
         Map<String, String> metadata = session.getMetadata();
         Long pagamentoPlanoId = parseLong(metadata == null ? null : metadata.get("pagamentoPlanoId"));
         String paymentReference = metadata == null ? null : metadata.get("paymentReference");
-        pagamentoService.registrarCheckoutStripeConcluido(
-                session.getId(),
-                session.getSubscription(),
-                session.getCustomer(),
-                pagamentoPlanoId,
-                paymentReference
-        );
+        
+        String status = session.getStatus();
+        String paymentStatus = session.getPaymentStatus();
+        
+        log.info("Processando checkout.session.completed: id={}, status={}, paymentStatus={}, pagamentoPlanoId={}", 
+                 session.getId(), status, paymentStatus, pagamentoPlanoId);
+
+        if ("complete".equalsIgnoreCase(status) && "paid".equalsIgnoreCase(paymentStatus)) {
+            pagamentoService.registrarCheckoutStripeConcluido(
+                    session.getId(),
+                    session.getSubscription(),
+                    session.getCustomer(),
+                    pagamentoPlanoId,
+                    paymentReference
+            );
+        } else {
+            log.warn("Checkout Session completada mas nao paga ou incompleta: status={}, paymentStatus={}", status, paymentStatus);
+        }
     }
 
     private void processarInvoice(Event event, StatusPagamento status) {
         Invoice invoice = desserializar(event, Invoice.class);
         String eventId = event.getId();
         String invoiceId = invoice.getId();
-        String subscriptionId = invoice.getSubscription();
+        String subscriptionId = (String) new com.google.gson.Gson().fromJson(invoice.toJson(), java.util.Map.class).get("subscription");
         
         // Idempotência: verificar se o evento já foi processado
         if (pagamentoService.eventoJaProcessado(eventId)) {

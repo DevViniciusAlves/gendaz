@@ -118,6 +118,8 @@ public final class PagamentoDtos {
             LocalDateTime dataPagamento
     ) {}
 
+    public record StripeCheckoutStatusRequest(@NotNull String sessionId) {}
+
     public record AcaoEmMassaPagamentoRequest(
             @NotNull @Size(max = 10) List<Long> ids,
             @NotNull String acao,

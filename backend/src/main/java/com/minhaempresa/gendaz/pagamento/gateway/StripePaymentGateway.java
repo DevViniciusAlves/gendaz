@@ -11,6 +11,8 @@ import com.stripe.param.checkout.SessionCreateParams;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.Optional;
+import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -43,7 +45,7 @@ public class StripePaymentGateway implements PaymentGateway {
 
         SessionCreateParams.Builder params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
-                .setSuccessUrl(paymentGatewayProperties.getSuccessUrl())
+                .setSuccessUrl(successUrlComSessionId())
                 .setCancelUrl(paymentGatewayProperties.getCancelUrl())
                 .addLineItem(lineItem)
                 .putMetadata("empresaId", String.valueOf(pagamento.getEmpresa().getId()))
@@ -81,6 +83,52 @@ public class StripePaymentGateway implements PaymentGateway {
         } catch (StripeException ex) {
             throw new BusinessException("Nao foi possivel criar checkout Stripe. Tente novamente em instantes.");
         }
+    }
+
+    private String successUrlComSessionId() {
+        String url = paymentGatewayProperties.getSuccessUrl();
+        if (url == null || url.isBlank()) {
+            throw new BusinessException("PAYMENT_SUCCESS_URL nao configurada.");
+        }
+        if (url.contains("{CHECKOUT_SESSION_ID}")) {
+            return url;
+        }
+        return url + (url.contains("?") ? "&" : "?") + "session_id={CHECKOUT_SESSION_ID}";
+    }
+
+    @Override
+    public Optional<PaymentGatewayWebhook> consultarPagamentoPlano(PagamentoPlanoEntity pagamento) {
+        if (pagamento.getStripeSessionId() == null || pagamento.getStripeSessionId().isBlank()) {
+            return Optional.empty();
+        }
+        Stripe.apiKey = stripeProperties.getSecretKey();
+        try {
+            Session session = Session.retrieve(pagamento.getStripeSessionId());
+            if (session != null) {
+                StatusPagamento status = StatusPagamento.PAYMENT_PENDING;
+                if ("complete".equals(session.getStatus()) && "paid".equals(session.getPaymentStatus())) {
+                    status = StatusPagamento.PAYMENT_APPROVED;
+                } else if ("expired".equals(session.getStatus())) {
+                    status = StatusPagamento.PAYMENT_EXPIRED;
+                } else if ("open".equals(session.getStatus())) {
+                    status = StatusPagamento.PAYMENT_PENDING;
+                } else {
+                    status = StatusPagamento.PAYMENT_CANCELED;
+                }
+                
+                return Optional.of(new PaymentGatewayWebhook(
+                    session.getId(),
+                    session.getId(),
+                    pagamento.getExternalReference(),
+                    pagamento.getPaymentReference(),
+                    status,
+                    pagamento.getValor()
+                ));
+            }
+        } catch (StripeException ex) {
+            log.warn("Erro ao consultar session {} na Stripe: {}", pagamento.getStripeSessionId(), ex.getMessage());
+        }
+        return Optional.empty();
     }
 
     /**
