@@ -3,7 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
+import { normalizarParaApi, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 function dataLocalISO() {
   const agora = new Date()
@@ -195,9 +196,9 @@ export default function Booking() {
       setErro(telValidationError || 'Informe um nome válido.')
       return
     }
-    const telefone = padronizarTelefone(cliente.telefone)
+    const telefone = normalizarParaApi(cliente.telefone)
     if (!telefone) {
-      setErro('Telefone inválido. Formato correto: +55 (DDD) 99999-9999')
+      setErro('Telefone inválido. Confira o formato do país selecionado.')
       return
     }
 
@@ -467,19 +468,14 @@ export default function Booking() {
                 />
               </label>
 
-              <label className="field">
-                <span>Telefone</span>
-                <input
-                  inputMode="numeric"
-                  value={cliente.telefone}
-                  onChange={(event) => setCliente({ ...cliente, telefone: aplicarMascara(event.target.value) })}
-                  maxLength={19}
-                  required
-                />
-                <small className={validarTelefone(cliente.telefone) ? "field-hint limit-reached" : "field-hint"}>
-                  {cliente.telefone ? (validarTelefone(cliente.telefone) || ' Pronto para confirmar') : 'Formato correto: +55 (DDD) 99999-9999'}
-                </small>
-              </label>
+              <InternationalPhoneInput
+                label="Telefone"
+                value={cliente.telefone}
+                onChangeValue={(valor) => setCliente({ ...cliente, telefone: valor || '' })}
+                defaultCountry="BR"
+                required
+                helper={cliente.telefone ? (validarTelefone(cliente.telefone) || ' Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
+              />
             </div>
 
             <label className="field field-wide">

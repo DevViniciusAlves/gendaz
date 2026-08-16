@@ -2,8 +2,12 @@ package com.minhaempresa.gendaz.shared;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class TelefoneInternacionalValidator implements ConstraintValidator<TelefoneInternacional, String> {
+
+    @Autowired
+    private PhoneNumberService phoneNumberService;
 
     @Override
     public void initialize(TelefoneInternacional constraintAnnotation) {
@@ -14,8 +18,7 @@ public class TelefoneInternacionalValidator implements ConstraintValidator<Telef
         if (value == null || value.isBlank()) {
             return true;
         }
-        String digitos = value.replaceAll("\\D", "");
-        return digitos.length() >= 11 && digitos.length() <= 14;
+        return phoneNumberService.valido(value);
     }
 }
 

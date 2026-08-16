@@ -4,7 +4,8 @@ import { ArrowLeft, Loader, LogOut, Mail } from 'lucide-react'
 import clienteApi from '../api/clienteApi.js'
 import { ClienteGendazContext, ClienteGendazProvider } from '../contexts/ClienteGendazContext.jsx'
 import GendazLayout from '../components/gendaz/GendazLayout.jsx'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import logoMeuGendaz from '../assets/logos/meugendazpngpreto.png'
 import OperationToast from '../components/OperationToast.jsx'
 
@@ -261,7 +262,7 @@ function GendazCadastroGate({ slug }) {
 
   useEffect(() => {
     setNome(perfilAcesso?.nome || '')
-    setTelefone(aplicarMascara(perfilAcesso?.telefone || ''))
+    setTelefone(normalizarParaInput(perfilAcesso?.telefone || ''))
   }, [perfilAcesso])
 
   async function sair() {
@@ -286,7 +287,7 @@ function GendazCadastroGate({ slug }) {
 
     const nomeLimpo = nome.trim()
     const emailLimpo = perfilAcesso?.email?.trim() || ''
-    const telefonePadrao = padronizarTelefone(telefone)
+    const telefonePadrao = normalizarParaApi(telefone)
 
     if (!nomeLimpo || nomeLimpo.length < 3) {
       setErro('Nome deve ter pelo menos 3 caracteres.')
@@ -357,18 +358,13 @@ function GendazCadastroGate({ slug }) {
               autoComplete="name"
             />
           </label>
-          <label>
-            <span>Telefone</span>
-            <input
-              value={telefone}
-              onChange={(event) => setTelefone(aplicarMascara(event.target.value))}
-              placeholder="XX XXXXXXXXX"
-              type="tel"
-              inputMode="numeric"
-              maxLength={19}
-              autoComplete="tel"
-            />
-          </label>
+          <InternationalPhoneInput
+            label="Telefone"
+            value={telefone}
+            onChangeValue={(valor) => setTelefone(valor || '')}
+            defaultCountry="BR"
+            helper={telefone ? (validarTelefone(telefone) || ' Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
+          />
           <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando || saindo}>
             {salvando ? <><Loader size={16} /> Entrando...</> : 'Entrar'}
           </button>

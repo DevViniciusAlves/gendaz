@@ -1,5 +1,6 @@
 import StatusBadge from './StatusBadge.jsx'
 import { currency } from '../services/localStore.js'
+import { exibirTelefone } from '../utils/phoneUtils.js'
 
 export default function ClientPanel({ cliente, agendamentos }) {
   if (!cliente) return <aside className="client-panel">Selecione uma conversa.</aside>
@@ -7,7 +8,7 @@ export default function ClientPanel({ cliente, agendamentos }) {
   return (
     <aside className="client-panel">
       <h2>{cliente.nome}</h2>
-      <span>{cliente.telefone}</span>
+      <span>{exibirTelefone(cliente.telefone)}</span>
       <dl>
         <div><dt>Total gasto</dt><dd>{currency(cliente.totalGasto)}</dd></div>
         <div><dt>Último atendimento</dt><dd>{historico[0]?.data || 'Sem registro'}</dd></div>

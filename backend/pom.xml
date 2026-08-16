@@ -113,6 +113,11 @@
             <artifactId>stripe-java</artifactId>
             <version>25.6.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>8.13.52</version>
+        </dependency>
     </dependencies>
 
     <build>

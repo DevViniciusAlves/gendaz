@@ -29,6 +29,7 @@ import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.SalvarProfissio
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
 import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
@@ -64,6 +65,9 @@ public class AdminService {
     private final SecurityMonitoringService securityMonitoringService;
     private final PagamentoService pagamentoService;
     private final ProfissionalService profissionalService;
+
+    @Autowired
+    private PhoneNumberService phoneNumberService;
 
     @Value("${app.frontend-url:https://gendaz.site}")
     private String frontendUrl;
@@ -667,27 +671,7 @@ public UsuarioEntity exigirAdmin(String token) {
     }
 
     private String normalizarTelefone(String valor) {
-        if (valor == null || valor.isBlank()) {
-            return null;
-        }
-        String digitos = valor.replaceAll("\\D", "");
-        if (digitos.isEmpty()) {
-            return null;
-        }
-        if (!digitos.startsWith("55")) {
-            digitos = "55" + digitos;
-        }
-        if (digitos.length() == 12 && digitos.startsWith("55")) {
-            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
-        }
-        if (digitos.length() != 13) {
-            throw new BusinessException("Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999");
-        }
-        int ddd = Integer.parseInt(digitos.substring(2, 4));
-        if (ddd < 11 || ddd > 99) {
-            throw new BusinessException("DDD invalido. Deve ser entre 11 e 99.");
-        }
-        return digitos;
+        return phoneNumberService.normalizarOpcional(valor);
     }
 
     private String normalizarEmail(String valor) {

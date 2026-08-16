@@ -2,7 +2,8 @@ import { useContext, useState, useEffect } from 'react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Bell, LogOut, Shield, UserRound, Loader, AlertCircle, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../../utils/phoneUtils.js'
+import { normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone } from '../../utils/phoneUtils.js'
+import InternationalPhoneInput from '../../components/InternationalPhoneInput.jsx'
 
 const TOAST_LOGOUT_ID = 'meu-gendaz-logout'
 
@@ -24,11 +25,11 @@ export default function Configuracoes() {
     if (cliente) {
       setFormData({
         nome: cliente.nome || '',
-        telefone: aplicarMascara(cliente.telefone || ''),
+        telefone: normalizarParaInput(cliente.telefone || ''),
         email: cliente.email || '',
       })
       const nomeOk = cliente.nome && cliente.nome.trim().length >= 3 && cliente.nome !== 'Cliente'
-      const telOk = !validarTelefone(cliente.telefone || '')
+      const telOk = !validarTelefone(normalizarParaInput(cliente.telefone || ''))
       const emailOk = cliente.email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cliente.email)
       setPerfilIncompleto(!nomeOk || !telOk || !emailOk)
     }
@@ -83,7 +84,7 @@ export default function Configuracoes() {
 
     try {
       setSalvando(true)
-      const telefone = padronizarTelefone(formData.telefone)
+      const telefone = normalizarParaApi(formData.telefone) || formData.telefone
       await atualizarPerfil({
         nome: formData.nome.trim(),
         email: formData.email.trim().toLowerCase(),
@@ -172,19 +173,15 @@ export default function Configuracoes() {
               <input type="text" value={formData.nome} onChange={(e) => setFormData({ ...formData, nome: e.target.value })} placeholder="Seu nome completo" required />
               {erros.nome && <small className="gendaz-texto-erro">{erros.nome}</small>}
             </label>
-            <label>
-              <span>Telefone *</span>
-              <input
-                type="tel"
-                value={formData.telefone}
-                onChange={(e) => setFormData({ ...formData, telefone: aplicarMascara(e.target.value) })}
-                placeholder="65 993360300"
-                maxLength={19}
-                required
-              />
-              {erros.telefone && <small className="gendaz-texto-erro">{erros.telefone}</small>}
-              <small>Use apenas o código da cidade + número.</small>
-            </label>
+            <InternationalPhoneInput
+              label="Telefone *"
+              value={formData.telefone}
+              onChangeValue={(valor) => setFormData({ ...formData, telefone: valor || '' })}
+              defaultCountry="BR"
+              error={erros.telefone}
+              helper={`Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
+              required
+            />
             <label>
               <span>E-mail</span>
               <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required />

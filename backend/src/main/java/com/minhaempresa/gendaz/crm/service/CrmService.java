@@ -99,9 +99,13 @@ public class CrmService {
                     }
                     if (search != null && !search.isBlank()) {
                         String termo = search.toLowerCase();
+                        String termoDigitos = termo.replaceAll("\\D", "");
                         boolean match = crm.nome().toLowerCase().contains(termo)
                                 || crm.telefone().toLowerCase().contains(termo)
                                 || crm.email().toLowerCase().contains(termo);
+                        if (!match && !termoDigitos.isEmpty()) {
+                            match = crm.telefone().replaceAll("\\D", "").contains(termoDigitos);
+                        }
                         if (!match) return false;
                     }
                     return true;

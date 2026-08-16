@@ -8,7 +8,8 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { PLANOS } from '../services/localStore.js'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 
 const DIAS_ATENDIMENTO = [
   { value: 'SEGUNDA', label: 'Seg', fullLabel: 'Segunda' },
@@ -125,7 +126,7 @@ export default function Configuracoes() {
   useEffect(() => {
     setEmpresa({
       ...data.empresa,
-      telefone: aplicarMascara(data.empresa?.telefone || ''),
+      telefone: normalizarParaInput(data.empresa?.telefone || ''),
     })
   }, [data.empresa])
 
@@ -166,9 +167,9 @@ export default function Configuracoes() {
     setErro('')
     setSalvo(false)
 
-    const telefone = padronizarTelefone(empresa.telefone)
+    const telefone = normalizarParaApi(empresa.telefone)
     if (!telefone) {
-      setErro('Telefone deve ter entre 16 e 19 caracteres.')
+      setErro('Telefone invalido. Confira o formato do pais selecionado.')
       return
     }
 
@@ -389,15 +390,12 @@ export default function Configuracoes() {
           </div>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
           <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
-          <Input
+<InternationalPhoneInput
             label="Telefone"
-            helper={perfilAtendente ? 'Somente o dono pode alterar este dado.' : (empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : 'Use codigo da cidade + numero.')}
-            inputMode="numeric"
-            maxLength={19}
-            neutralLimit
+            helper={perfilAtendente ? 'Somente o dono pode alterar este dado.' : (empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`)}
             value={empresa?.telefone || ''}
-            readOnly={perfilAtendente}
-            onChange={perfilAtendente ? undefined : (e) => setEmpresa({ ...empresa, telefone: aplicarMascara(e.target.value) })}
+            disabled={perfilAtendente}
+            onChangeValue={(valor) => setEmpresa((atual) => ({ ...(atual || {}), telefone: valor || '' }))}
           />
           <label className="field">
             <span>Fuso horário</span>

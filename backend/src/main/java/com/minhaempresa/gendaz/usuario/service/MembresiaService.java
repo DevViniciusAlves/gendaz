@@ -22,6 +22,7 @@ import com.minhaempresa.gendaz.auth.service.PasswordService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.usuario.dto.MembresiaDtos.AceitarConviteRequest;
@@ -64,6 +65,7 @@ public class MembresiaService {
     private final ResendEmailService resendEmailService;
     private final PasswordService passwordService;
     private final AdminAuditService auditService;
+    private final PhoneNumberService phoneNumberService;
     private final SecureRandom secureRandom = new SecureRandom();
     @Value("${app.frontend-url:${FRONTEND_URL:https://gendaz.site}}")
     private String frontendUrl;
@@ -87,7 +89,7 @@ public class MembresiaService {
     public ConviteEmpresaResponse criarConvite(Long empresaId, Long usuarioAtualId, String nomeBruto, String telefoneBruto, String emailBruto) {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         String nome = sanitizacaoService.textoObrigatorio(nomeBruto);
-        String telefone = sanitizacaoService.telefone(telefoneBruto);
+        String telefone = phoneNumberService.normalizarOpcional(telefoneBruto);
         String email = sanitizacaoService.email(emailBruto);
         if (email == null || !email.contains("@")) {
             throw new BusinessException("Email invalido.");

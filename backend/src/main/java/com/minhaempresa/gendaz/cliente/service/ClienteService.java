@@ -26,13 +26,16 @@ import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 
 @Service
 @RequiredArgsConstructor
@@ -52,21 +55,20 @@ public class ClienteService {
     private final MeuGendazPromocaoNotificacaoRepository meuGendazPromocaoNotificacaoRepository;
     private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
     private final SanitizacaoService sanitizacaoService;
+    private final PhoneNumberService phoneNumberService;
     private final AdminAuditService auditService;
+
     private final ClienteMapper mapper = new ClienteMapper();
 
     @Transactional
     public ClienteResponse salvar(SalvarClienteRequest request) {
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
         contextoInicio.put("empresaId", request.empresaId());
-        contextoInicio.put("nome", request.nome());
-        contextoInicio.put("telefone", request.telefone());
-        contextoInicio.put("email", request.email());
         log.debug("[cliente-debug] inicio criacao cliente {}", contextoInicio);
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
             String nome = sanitizacaoService.textoObrigatorio(request.nome());
-            String telefone = sanitizacaoService.telefone(request.telefone());
+            String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
             String email = sanitizacaoService.email(request.email());
             validarCamposObrigatorios(nome, telefone, email);
             validarDuplicidade(empresa.getId(), telefone, email, null);
@@ -83,18 +85,12 @@ public class ClienteService {
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("clienteId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
-            contextoSucesso.put("nome", salvo.getNome());
-            contextoSucesso.put("telefone", salvo.getTelefone());
-            contextoSucesso.put("email", salvo.getEmail());
             log.info("[cliente-debug] cliente criado com sucesso {}", contextoSucesso);
             auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", salvo.getNome(), null, null);
             return mapper.toResponse(salvo);
         } catch (Exception e) {
             Map<String, Object> contexto = new LinkedHashMap<>();
             contexto.put("empresaId", request.empresaId());
-            contexto.put("nome", request.nome());
-            contexto.put("telefone", request.telefone());
-            contexto.put("email", request.email());
             log.error("[cliente-debug] erro ao criar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
             throw e;
         }
@@ -115,10 +111,9 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public ClienteResponse buscarPorTelefone(String telefone) {
-        String telefoneSanitizado = sanitizacaoService.telefone(telefone);
+        String telefoneNormalizado = phoneNumberService.normalizarObrigatorio(telefone);
         Long companyId = CompanyContext.requireCompanyId();
-        return clienteRepository.findFirstByTelefone(telefoneSanitizado)
-                .filter(cliente -> cliente.getEmpresa() != null && companyId.equals(cliente.getEmpresa().getId()))
+        return clienteRepository.findFirstByEmpresaIdAndTelefone(companyId, telefoneNormalizado)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente nÃ£o encontrado."));
     }
@@ -128,7 +123,7 @@ public class ClienteService {
         ClienteEntity cliente = buscarEntidade(id);
         validarEmpresa(cliente, request.empresaId());
         String nome = sanitizacaoService.textoObrigatorio(request.nome());
-        String telefone = sanitizacaoService.telefone(request.telefone());
+        String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
         String email = sanitizacaoService.email(request.email());
         validarCamposObrigatorios(nome, telefone, email);
         validarDuplicidade(cliente.getEmpresa().getId(), telefone, email, cliente.getId());
@@ -223,10 +218,8 @@ public class ClienteService {
     }
 
     private void validarDuplicidade(Long empresaId, String telefone, String email, Long ignorarClienteId) {
-        boolean telefoneExiste = ignorarClienteId == null
-                ? clienteRepository.existsByEmpresaIdAndTelefone(empresaId, telefone)
-                : clienteRepository.existsByEmpresaIdAndTelefoneAndIdNot(empresaId, telefone, ignorarClienteId);
-        if (telefoneExiste) {
+        Optional<ClienteEntity> clienteComMesmoTelefone = clienteRepository.findFirstByEmpresaIdAndTelefone(empresaId, telefone);
+        if (clienteComMesmoTelefone.isPresent() && (ignorarClienteId == null || !clienteComMesmoTelefone.get().getId().equals(ignorarClienteId))) {
             throw new BusinessException("Ja existe um cliente com este telefone.");
         }
 

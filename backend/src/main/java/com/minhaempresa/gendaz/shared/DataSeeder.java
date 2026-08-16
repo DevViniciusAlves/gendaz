@@ -80,7 +80,7 @@ public class DataSeeder implements CommandLineRunner {
         EmpresaEntity empresaBasico = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Gendaz Matriz")
                 .documento("12345678000190")
-                .telefone("(65) 99336-0300")
+                .telefone("5565993360300")
                 .email("contato@Gendaz.com")
                 .status(StatusEmpresa.ATIVA)
                 .build());
@@ -88,7 +88,7 @@ public class DataSeeder implements CommandLineRunner {
         EmpresaEntity empresaPro = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Gendaz Premium")
                 .documento("98765432000100")
-                .telefone("(65) 98888-0000")
+                .telefone("5565988880000")
                 .email("premium@Gendaz.com")
                 .status(StatusEmpresa.ATIVA)
                 .build());
@@ -152,7 +152,7 @@ public class DataSeeder implements CommandLineRunner {
         EmpresaEntity empresaTeste = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("AgendNew Testes")
                 .documento("11222333000181")
-                .telefone("(65) 99999-0000")
+                .telefone("5565999990000")
                 .email("teste@agendnew.com")
                 .status(StatusEmpresa.ATIVA)
                 .build());
@@ -199,7 +199,7 @@ public class DataSeeder implements CommandLineRunner {
     private void seedDemoData(EmpresaEntity empresa) {
         ClienteEntity cliente = clienteRepository.save(ClienteEntity.builder()
                 .nome(empresa.getNomeFantasia() + " Cliente")
-                .telefone("(65) 99911-1111")
+                .telefone("5565999111111")
                 .email("cliente@" + empresa.getId() + ".com")
                 .observacoes("Cliente de teste.")
                 .empresa(empresa)
@@ -217,7 +217,7 @@ public class DataSeeder implements CommandLineRunner {
         ProfissionalEntity profissional = profissionalRepository.save(ProfissionalEntity.builder()
                 .nome("Dra. Marina")
                 .especialidade("Clinica geral")
-                .telefone("(65) 98888-1111")
+                .telefone("5565988881111")
                 .status(StatusCadastro.ATIVO)
                 .empresa(empresa)
                 .build());

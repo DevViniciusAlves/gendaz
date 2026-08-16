@@ -24,15 +24,11 @@ public class ProfissionalController {
     public ResponseEntity<ProfissionalResponse> criar(@Valid @RequestBody SalvarProfissionalRequest request) {
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("empresaId", request.empresaId());
-        contexto.put("nome", request.nome());
-        contexto.put("especialidade", request.especialidade());
-        contexto.put("telefone", request.telefone());
         log.debug("[profissional-debug] clique em criar profissional {}", contexto);
         try {
             ProfissionalResponse response = profissionalService.salvar(request);
             Map<String, Object> retorno = new LinkedHashMap<>();
             retorno.put("profissionalId", response.id());
-            retorno.put("nome", response.nome());
             retorno.put("empresaId", request.empresaId());
             log.info("[profissional-debug] resposta criar profissional sucesso {}", retorno);
             return ResponseEntity.ok(response);
@@ -52,15 +48,11 @@ public class ProfissionalController {
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("profissionalId", id);
         contexto.put("empresaId", request.empresaId());
-        contexto.put("nome", request.nome());
-        contexto.put("especialidade", request.especialidade());
-        contexto.put("telefone", request.telefone());
         log.debug("[profissional-debug] clique em atualizar profissional {}", contexto);
         try {
             ProfissionalResponse response = profissionalService.atualizar(id, request);
             Map<String, Object> retorno = new LinkedHashMap<>();
             retorno.put("profissionalId", response.id());
-            retorno.put("nome", response.nome());
             retorno.put("empresaId", request.empresaId());
             log.info("[profissional-debug] resposta atualizar profissional sucesso {}", retorno);
             return ResponseEntity.ok(response);

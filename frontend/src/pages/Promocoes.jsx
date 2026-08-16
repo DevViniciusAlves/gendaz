@@ -5,6 +5,7 @@ import { clientesApi } from '../api/clientesApi.js'
 import { servicosApi } from '../api/servicosApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Button from '../components/Button.jsx'
+import { exibirTelefone } from '../utils/phoneUtils.js'
 
 const emptyForm = {
   codigo: '',
@@ -634,7 +635,7 @@ export default function Promocoes() {
                         />
                         <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
                           <strong style={{ fontSize: 13, lineHeight: 1.1 }}>{cliente.nome}</strong>
-                          <small style={{ lineHeight: 1.1 }}>{cliente.email || cliente.telefone || 'Sem contato'}</small>
+                          <small style={{ lineHeight: 1.1 }}>{cliente.email || exibirTelefone(cliente.telefone) || 'Sem contato'}</small>
                         </span>
                       </label>
                     ))}

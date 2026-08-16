@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class EmpresaService {
     private final EmpresaRepository empresaRepository;
     private final SanitizacaoService sanitizacaoService;
     private final RamoDeteccaoService ramoDeteccaoService;
+    private final PhoneNumberService phoneNumberService;
     private final EmpresaMapper mapper = new EmpresaMapper();
 
     @Transactional
@@ -35,7 +37,7 @@ public class EmpresaService {
         EmpresaEntity empresa = EmpresaEntity.builder()
                 .nomeFantasia(sanitizacaoService.textoObrigatorio(request.nomeFantasia()))
                 .documento(sanitizacaoService.texto(request.documento()))
-                .telefone(sanitizacaoService.telefone(request.telefone()))
+                .telefone(phoneNumberService.normalizarOpcional(request.telefone()))
                 .email(sanitizacaoService.email(request.email()))
                 .status(StatusEmpresa.ATIVA)
                 .timezone(TimezoneEnum.AMERICA_CUIABA.getValue())
@@ -55,9 +57,11 @@ public class EmpresaService {
         validarDadosObrigatorios(request.nomeFantasia(), request.email());
         EmpresaEntity empresa = buscarEntidade(id);
         validarCamposBloqueados(empresa, request);
-        String telefone = sanitizacaoService.telefone(request.telefone());
-        if (telefone != null && !telefone.isBlank() && (telefone.length() < 10 || telefone.length() > 15)) {
-            throw new BusinessException("Telefone deve ter de 10 a 15 digitos.");
+        String telefone = phoneNumberService.normalizarOpcional(request.telefone());
+        if (telefone != null && !telefone.isBlank()
+                && !telefone.equals(empresa.getTelefone())
+                && empresaRepository.existsByTelefoneAndIdNot(telefone, id)) {
+            throw new ConflictException("Este numero ja esta cadastrado em outra conta.");
         }
         empresa.setTelefone(telefone);
         empresa.setTimezone(resolverTimezone(empresa.getTimezone(), request.timezone()));

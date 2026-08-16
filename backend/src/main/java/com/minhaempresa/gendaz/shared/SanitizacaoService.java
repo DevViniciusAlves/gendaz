@@ -5,6 +5,12 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SanitizacaoService {
+    private final PhoneNumberService phoneNumberService;
+
+    public SanitizacaoService(PhoneNumberService phoneNumberService) {
+        this.phoneNumberService = phoneNumberService;
+    }
+
     public String texto(String valor) {
         if (valor == null) {
             return null;
@@ -24,17 +30,6 @@ public class SanitizacaoService {
     }
 
     public String telefone(String valor) {
-        if (valor == null) {
-            return null;
-        }
-        String digitos = valor.replaceAll("\\D", "");
-        if (digitos.isEmpty()) {
-            return null;
-        }
-        if (digitos.length() < 10 || digitos.length() > 14) {
-            return null;
-        }
-        return digitos;
+        return phoneNumberService.normalizarOpcional(valor);
     }
 }
-

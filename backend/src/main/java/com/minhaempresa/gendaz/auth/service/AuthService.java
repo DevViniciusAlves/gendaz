@@ -21,6 +21,7 @@ import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.DocumentoUtils;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
@@ -69,6 +70,7 @@ public class AuthService {
     private final IpTrackingService ipTrackingService;
     private final SecurityMonitoringService securityMonitoringService;
     private final ProfissionalService profissionalService;
+    private final PhoneNumberService phoneNumberService;
     private final TransactionTemplate transactionTemplate;
     private final MembresiaRepository membresiaRepository;
     private final UsuarioMapper mapper = new UsuarioMapper();
@@ -216,7 +218,7 @@ public class AuthService {
     public LoginResponse criarConta(CriarContaRequest request) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
-        String telefone = normalizarTelefone(request.telefone());
+        String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
         String nomeEmpresa = normalizarTexto(request.nomeEmpresa());
         String nomeProprietario = normalizarTexto(request.nomeProprietario());
         String documento = DocumentoUtils.normalizar(request.documentoNumero());
@@ -255,7 +257,7 @@ public class AuthService {
                     resendEmailService.sendNewCustomerNotification(
                             cadastro.usuario().getNome(),
                             cadastro.usuario().getEmail(),
-                            request.telefone(),
+                            phoneNumberService.formatarExibicao(telefone),
                             request.nomeEmpresa(),
                             planoNome,
                             dataCadastro,
@@ -504,7 +506,7 @@ public class AuthService {
     }
 
     private void validarCadastro(CriarContaRequest request) {
-        String telefone = normalizarTelefone(request.telefone());
+        phoneNumberService.normalizarObrigatorio(request.telefone());
         if (normalizarTexto(request.nomeProprietario()).length() < 2 || normalizarTexto(request.nomeProprietario()).length() > 80) {
             throw new BusinessException("Nome do usuÃ¡rio deve ter entre 2 e 80 caracteres.");
         }
@@ -513,9 +515,6 @@ public class AuthService {
         }
         if (normalizarEmail(request.email()).length() > 120) {
             throw new BusinessException("E-mail deve ter no maximo 120 caracteres.");
-        }
-        if (telefone.length() < 10 || telefone.length() > 15) {
-            throw new BusinessException("Telefone deve ter entre 10 e 15 digitos.");
         }
         String documento = DocumentoUtils.normalizar(request.documentoNumero());
         if (!documento.isBlank()) {
@@ -539,22 +538,6 @@ public class AuthService {
 
     private String normalizarEmail(String email) {
         return email == null ? "" : email.trim().toLowerCase();
-    }
-
-    private String normalizarTelefone(String telefone) {
-        if (telefone == null) return null;
-        String digitos = telefone.replaceAll("\\D", "");
-        if (digitos.isEmpty()) return null;
-        if (!digitos.startsWith("55")) {
-            digitos = "55" + digitos;
-        }
-        if (digitos.length() == 12 && digitos.startsWith("55")) {
-            digitos = digitos.substring(0, 4) + "9" + digitos.substring(4);
-        }
-        if (digitos.length() != 13) return null;
-        int ddd = Integer.parseInt(digitos.substring(2, 4));
-        if (ddd < 11 || ddd > 99) return null;
-        return digitos;
     }
 
     private String normalizarTexto(String texto) {

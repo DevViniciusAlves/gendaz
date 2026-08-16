@@ -13,7 +13,8 @@ import BulkActionsToolbar from '../components/BulkActionsToolbar.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
-import { aplicarMascara, exibirTelefone, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { exibirTelefone, normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import { exportarCsv, formatarData, dataHojeDdMmAAAA } from '../utils/csvExport.js'
 
 const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
@@ -178,7 +179,7 @@ export default function Clientes() {
     setClienteEditando(cliente.id)
     setForm({
       nome: cliente.nome || '',
-      telefone: aplicarMascara(cliente.telefone || ''),
+      telefone: normalizarParaInput(cliente.telefone || ''),
       email: cliente.email || '',
       observacoes: cliente.observacoes || '',
     })
@@ -241,7 +242,7 @@ export default function Clientes() {
       setErro(telValidationError)
       return
     }
-    const telefone = padronizarTelefone(form.telefone)
+    const telefone = normalizarParaApi(form.telefone)
     if (!telefone) {
       setErro('Telefone invalido. Use codigo da cidade + numero.')
       return
@@ -376,14 +377,11 @@ export default function Clientes() {
       <Modal title={clienteEditando ? 'Editar cliente' : 'Cadastrar cliente'} open={modal} onClose={() => setModal(false)}>
         <form className="form-grid" onSubmit={salvar}>
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: limparNome(e.target.value) })} required />
-          <Input
+          <InternationalPhoneInput
             label="Telefone"
-            helper={form.telefone ? (validarTelefone(form.telefone) || 'Pronto para confirmar') : 'Use codigo da cidade + numero.'}
-            inputMode="numeric"
-            maxLength={19}
-            neutralLimit
+            helper={form.telefone ? (validarTelefone(form.telefone) || 'Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
             value={form.telefone}
-            onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })}
+            onChangeValue={(valor) => setForm({ ...form, telefone: valor || '' })}
             required
           />
           <Input label="E-mail" helper="Use um e-mail vÃ¡lido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />

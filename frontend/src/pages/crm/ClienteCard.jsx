@@ -1,4 +1,5 @@
 import { Mail, Phone } from 'lucide-react'
+import { exibirTelefone } from '../../utils/phoneUtils.js'
 
 const SEGMENTO_COLORS = {
   at_risk: { bg: '#fee2e2', text: '#dc2626', dot: '#dc2626' },
@@ -79,7 +80,7 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
           <div className="crm-card-contact">
             {cliente.telefone && (
               <span>
-                <Phone size={10} /> {cliente.telefone}
+                <Phone size={10} /> {exibirTelefone(cliente.telefone)}
               </span>
             )}
             {cliente.email && (

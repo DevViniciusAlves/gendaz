@@ -38,10 +38,7 @@ public class ProfissionalService {
     public ProfissionalResponse salvar(SalvarProfissionalRequest request) {
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
         contextoInicio.put("empresaId", request.empresaId());
-        contextoInicio.put("nome", request.nome());
-        contextoInicio.put("especialidade", request.especialidade());
-        contextoInicio.put("telefone", request.telefone());
-            contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
+        contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
         contextoInicio.put("sistema", false);
         contextoInicio.put("diasTrabalho", request.diasTrabalho());
 
@@ -61,18 +58,12 @@ public class ProfissionalService {
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("profissionalId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
-            contextoSucesso.put("nome", salvo.getNome());
-            contextoSucesso.put("especialidade", salvo.getEspecialidade());
-            contextoSucesso.put("telefone", salvo.getTelefone());
             contextoSucesso.put("sistema", salvo.isSistema());
             log.info("[profissional-debug] profissional criado com sucesso {}", contextoSucesso);
             return mapper.toResponse(salvo);
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
             contextoErro.put("empresaId", request.empresaId());
-            contextoErro.put("nome", request.nome());
-            contextoErro.put("especialidade", request.especialidade());
-            contextoErro.put("telefone", request.telefone());
             log.error("[profissional-debug] erro ao criar profissional. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
             throw e;
         }

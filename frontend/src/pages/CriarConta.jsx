@@ -1,8 +1,9 @@
 import { useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, Phone, FileText, Check } from 'lucide-react'
+import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { normalizarParaApi, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import logoSvg from '../assets/logos/gendaz-logo-branco.png'
 
 const PLANOS_INFO = {
@@ -82,9 +83,9 @@ export default function CriarConta() {
     const nomeEmpresa = normalizarTexto(form.nomeEmpresa)
     const nomeProprietario = normalizarTexto(form.nomeProprietario)
     const email = String(form.email || '').trim().toLowerCase()
-    const telefone = padronizarTelefone(form.telefone)
+    const telefone = normalizarParaApi(form.telefone)
     if (!telefone) {
-      setErro('Telefone deve ter 13 digitos. Formato: +55 (DDD) 99999-9999')
+      setErro('Telefone invalido. Confira o formato do pais selecionado.')
       return
     }
     if (!form.aceiteTermos) {
@@ -222,19 +223,14 @@ export default function CriarConta() {
           </div>
 
           <div className="login-field-v2">
-            <label className="login-label-v2">Telefone</label>
-            <div className="login-input-wrap-v2">
-              <Phone size={16} className="login-input-icon-left" />
-              <input
-                type="tel"
-                inputMode="numeric"
-                placeholder="+55 (65) 99999-9999"
-                maxLength={19}
-                value={form.telefone}
-                onChange={(e) => set('telefone', aplicarMascara(e.target.value))}
-                required
-              />
-            </div>
+            <InternationalPhoneInput
+              label="Telefone"
+              value={form.telefone}
+              onChangeValue={(valor) => set('telefone', valor || '')}
+              defaultCountry="BR"
+              helper={form.telefone ? (validarTelefone(form.telefone) || ' Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
+              required
+            />
           </div>
 
           <div className="login-field-v2">

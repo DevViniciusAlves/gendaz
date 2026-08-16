@@ -53,10 +53,6 @@ public class AgendamentoPublicoController {
             @Valid @RequestBody CriarAgendamentoPublicoRequest request,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> erroValidador = validarTelefoneRequest(request.clienteTelefone());
-        if (erroValidador != null) {
-            return erroValidador;
-        }
         try {
             return ResponseEntity.ok(service.agendar(slugOuEmpresaId, request, clientIpResolver.resolve(httpRequest)));
         } catch (com.minhaempresa.gendaz.shared.BusinessException e) {
@@ -70,34 +66,11 @@ public class AgendamentoPublicoController {
             @Valid @RequestBody CriarAgendamentoPublicoRequest request,
             HttpServletRequest httpRequest
     ) {
-        ResponseEntity<?> erroValidador = validarTelefoneRequest(request.clienteTelefone());
-        if (erroValidador != null) {
-            return erroValidador;
-        }
         try {
             return ResponseEntity.ok(service.agendar(slugOuEmpresaId, request, clientIpResolver.resolve(httpRequest)));
         } catch (com.minhaempresa.gendaz.shared.BusinessException e) {
             return ResponseEntity.badRequest().body(java.util.Map.of("erro", "TELEFONE_INVALIDO", "mensagem", e.getMessage()));
         }
-    }
-
-    private ResponseEntity<?> validarTelefoneRequest(String telefone) {
-        if (telefone == null || telefone.isBlank()) {
-            return ResponseEntity.badRequest().body(java.util.Map.of(
-                    "erro", "TELEFONE_INVALIDO",
-                    "mensagem", "Telefone Ã© obrigatÃ³rio"
-            ));
-        }
-
-        String digitos = telefone.replaceAll("\\D", "");
-        if (digitos.length() < 11 || digitos.length() > 14) {
-            return ResponseEntity.badRequest().body(java.util.Map.of(
-                    "erro", "TELEFONE_INVALIDO",
-                    "mensagem", "Telefone invalido. Use codigo da cidade + numero. Voce informou apenas " + digitos.length() + " digitos."
-            ));
-        }
-
-        return null;
     }
 }
 

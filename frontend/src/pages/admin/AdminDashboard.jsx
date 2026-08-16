@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
 import { formatoCompactoReceita } from '../../utils/formatters.js'
+import { normalizarParaApi, exibirTelefone } from '../../utils/phoneUtils.js'
+import InternationalPhoneInput from '../../components/InternationalPhoneInput.jsx'
 import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
@@ -495,7 +497,7 @@ export default function AdminDashboard() {
       const payload = {
         nomeFantasia: empresaEdicao.nomeFantasia.trim(),
         documento: String(empresaEdicao.documento || '').replace(/\D/g, ''),
-        telefone: String(empresaEdicao.telefone || '').replace(/[^\d()+\-\s]/g, '').trim(),
+        telefone: normalizarParaApi(empresaEdicao.telefone || ''),
         email: empresaEdicao.email.trim().toLowerCase(),
         planoId: null,
         diasPlano: null,
@@ -867,7 +869,7 @@ export default function AdminDashboard() {
                   <td>{item.empresa}</td>
                   <td>{item.responsavel}</td>
                   <td>{item.email}</td>
-                  <td>{item.telefone}</td>
+                  <td>{item.telefone ? exibirTelefone(item.telefone) : '-'}</td>
                   <td>{rotuloPlano(item.plano)}</td>
                   <td><StatusBadge status={item.statusEmpresa} /></td>
                   <td><StatusBadge status={item.statusAssinatura} /></td>
@@ -940,7 +942,7 @@ export default function AdminDashboard() {
                   <td>{item.empresa}</td>
                   <td>{item.responsavel || '-'}</td>
                   <td>{item.email || '-'}</td>
-                  <td>{item.telefone || '-'}</td>
+                  <td>{item.telefone ? exibirTelefone(item.telefone) : '-'}</td>
                   <td>{rotuloPlano(item.plano)}</td>
                   <td>{moeda(item.valor)}</td>
                   <td>{item.gateway}</td>
@@ -984,7 +986,7 @@ export default function AdminDashboard() {
                   <td>{item.empresa}</td>
                   <td>{item.responsavel || '-'}</td>
                   <td>{item.email || '-'}</td>
-                  <td>{item.telefone || '-'}</td>
+                  <td>{item.telefone ? exibirTelefone(item.telefone) : '-'}</td>
                   <td>{rotuloPlano(item.plano)}</td>
                   <td>{moeda(item.valor)}</td>
                   <td><StatusBadge status={item.status} /></td>
@@ -1145,15 +1147,12 @@ export default function AdminDashboard() {
                     placeholder="Somente numeros"
                   />
                 </label>
-                <label className="field">
-                  <span>Telefone</span>
-                  <input
-                    maxLength={15}
-                    value={empresaEdicao.telefone}
-                    onChange={(event) => setEmpresaEdicao((atual) => ({ ...atual, telefone: event.target.value.replace(/\D/g, '') }))}
-                    placeholder="Somente numeros"
-                  />
-                </label>
+                <InternationalPhoneInput
+                  label="Telefone"
+                  value={empresaEdicao.telefone}
+                  onChangeValue={(valor) => setEmpresaEdicao((atual) => ({ ...atual, telefone: valor || '' }))}
+                  helper="País, DDI e número no formato do país selecionado."
+                />
                 <label className="field">
                   <span>E-mail</span>
                   <input

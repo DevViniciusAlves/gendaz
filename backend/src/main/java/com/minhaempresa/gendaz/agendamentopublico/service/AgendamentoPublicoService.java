@@ -24,6 +24,7 @@ import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
 import com.minhaempresa.gendaz.auth.config.MeuGendazSecurityProperties;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
@@ -50,6 +51,7 @@ public class AgendamentoPublicoService {
     private final SanitizacaoService sanitizacaoService;
     private final PersistentRateLimitService persistentRateLimitService;
     private final MeuGendazSecurityProperties securityProperties;
+    private final PhoneNumberService phoneNumberService;
 
     @Transactional(readOnly = true)
     public BookingEmpresaResponse carregar(String slugOuEmpresaId) {
@@ -115,10 +117,7 @@ public class AgendamentoPublicoService {
     @Transactional
     public AgendamentoPublicoResponse agendar(String slugOuEmpresaId, CriarAgendamentoPublicoRequest request, String ip) {
         EmpresaEntity empresa = buscarEmpresaAtiva(slugOuEmpresaId);
-        String telefone = sanitizacaoService.telefone(request.clienteTelefone());
-        if (telefone == null) {
-            throw new BusinessException("Telefone Ã© obrigatÃ³rio");
-        }
+        String telefone = phoneNumberService.normalizarObrigatorio(request.clienteTelefone());
         persistentRateLimitService.consumir("BOOKING_POST_IP:" + normalizarIp(ip) + ":" + empresa.getId(), securityProperties.getPublicBooking().getMaxPostPerIp10m(), java.time.Duration.ofMinutes(10), java.time.Duration.ofMinutes(10));
         persistentRateLimitService.consumir("BOOKING_PHONE:" + empresa.getId() + ":" + telefone, securityProperties.getPublicBooking().getMaxPostPerPhoneHour(), java.time.Duration.ofHours(1), java.time.Duration.ofMinutes(30));
         validarRecursoDaEmpresa(empresa.getId(), request.servicoId(), request.profissionalId());

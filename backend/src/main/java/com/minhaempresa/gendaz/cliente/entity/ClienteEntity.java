@@ -53,17 +53,18 @@ public class ClienteEntity {
 
     public void setTelefone(String telefone) {
         this.telefone = telefone;
-        validarTelefone();
     }
 
+    // Invariante defensiva APENAS do formato canônico de persistência (somente dígitos,
+    // no máximo 15). A validação semântica real do número (país, plano de numeração)
+    // ocorre antes, no PhoneNumberService. A Entity não conhece DDD, DDI nem país.
     public void validarTelefone() {
         if (telefone == null || telefone.isBlank()) {
-            throw new BusinessException("Telefone Ã© obrigatÃ³rio");
+            throw new BusinessException("Telefone é obrigatório");
         }
-
         String digitos = telefone.replaceAll("\\D", "");
-        if (digitos.length() < 11 || digitos.length() > 14) {
-            throw new BusinessException("Telefone invalido. Use codigo da cidade + numero. Voce informou apenas " + digitos.length() + " digitos.");
+        if (digitos.length() > 15) {
+            throw new BusinessException("Telefone inválido. Confira o país e o número informado.");
         }
     }
 

@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.admin.dto;
 
+import com.minhaempresa.gendaz.shared.TelefoneInternacional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -90,7 +91,7 @@ public final class AdminDtos {
     public record AdminAtualizarEmpresaRequest(
             @NotBlank @Size(min = 2, max = 100, message = "Informe um nome fantasia valido.") String nomeFantasia,
             @Pattern(regexp = "^$|^[0-9]{11,14}$", message = "Informe um documento valido.") String documento,
-            @Pattern(regexp = "^$|^[0-9()+\\-\\s]{10,20}$", message = "Informe um telefone valido.") String telefone,
+            @Size(max = 20) @TelefoneInternacional String telefone,
             @NotBlank @Email @Size(max = 120, message = "Informe um e-mail valido.") String email,
             Long planoId,
             Integer diasPlano,

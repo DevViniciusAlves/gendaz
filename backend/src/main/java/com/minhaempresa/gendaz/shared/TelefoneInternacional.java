@@ -9,7 +9,7 @@ import java.lang.annotation.*;
 @Target({ElementType.FIELD, ElementType.PARAMETER, ElementType.RECORD_COMPONENT})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface TelefoneInternacional {
-    String message() default "O telefone deve conter codigo da cidade + numero.";
+    String message() default "Número de telefone inválido. Confira o país e o número informado.";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
 }

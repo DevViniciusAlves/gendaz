@@ -3,10 +3,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import Modal from '../components/Modal.jsx'
 import BulkConfirmModal from '../components/BulkConfirmModal.jsx'
 import Table from '../components/Table.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
+import { obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
 
 function formatDate(value) {
   if (!value) return '-'
@@ -25,6 +27,7 @@ export default function UsuariosEmpresa() {
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [email, setEmail] = useState('')
+  const [erroTelefone, setErroTelefone] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [confirmacao, setConfirmacao] = useState(null)
   const [executandoExclusao, setExecutandoExclusao] = useState(false)
@@ -91,14 +94,23 @@ export default function UsuariosEmpresa() {
   async function criarConvite(event) {
     event.preventDefault()
     setSalvando(true)
+    setErroTelefone('')
+    const erroTel = telefone.trim() ? validarTelefone(telefone, 'BR', true) : 'Telefone é obrigatório.'
+    if (erroTel) {
+      setErroTelefone(erroTel)
+      setSalvando(false)
+      return
+    }
     try {
       await appApi.criarConviteUsuario({ nome, telefone, email })
       setNome('')
       setTelefone('')
       setEmail('')
+      setErroTelefone('')
       setModalOpen(false)
       await carregar()
     } catch (err) {
+      // Erro 400/404 não fecha o modal e não apaga os campos preenchidos.
       setError(err.response?.data?.mensagem || 'Nao foi possivel criar o convite.')
     } finally {
       setSalvando(false)
@@ -181,11 +193,20 @@ export default function UsuariosEmpresa() {
       <Modal title="Adicionar usuário" open={modalOpen && !perfilAtendente} onClose={() => setModalOpen(false)}>
         <form onSubmit={criarConvite} className="modal-body">
           <Input label="Nome" value={nome} onChange={(e) => setNome(e.target.value)} />
-          <Input label="Telefone" value={telefone} onChange={(e) => setTelefone(e.target.value)} />
+          <InternationalPhoneInput
+            label="Telefone"
+            value={telefone}
+            onChangeValue={(valor) => setTelefone(valor || '')}
+            defaultCountry="BR"
+            error={erroTelefone}
+            helper={telefone ? (validarTelefone(telefone, 'BR', true) || ' Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
+            required
+          />
           <Input label="E-mail" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          {error && <p className="form-error">{error}</p>}
           <div className="modal-actions">
             <Button variant="secondary" onClick={() => setModalOpen(false)}>Cancelar</Button>
-            <Button type="submit" loading={salvando} disabled={limiteAtingido || perfilAtendente}>Criar convite</Button>
+            <Button type="submit" loading={salvando} disabled={limiteAtingido || perfilAtendente || Boolean(validarTelefone(telefone, 'BR', true))}>Criar convite</Button>
           </div>
         </form>
       </Modal>

@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.usuario.dto;
 import com.minhaempresa.gendaz.membresia.enums.FuncaoMembresia;
 import com.minhaempresa.gendaz.membresia.enums.StatusMembresia;
 import com.minhaempresa.gendaz.convite.enums.StatusConviteEmpresa;
+import com.minhaempresa.gendaz.shared.TelefoneInternacional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -39,7 +40,7 @@ public final class MembresiaDtos {
 
     public record CriarConviteRequest(
             @NotBlank @Size(min = 2, max = 80) String nome,
-            @NotBlank @Size(max = 19) String telefone,
+            @NotBlank @Size(max = 20) @TelefoneInternacional String telefone,
             @Email @NotBlank @Size(max = 120) String email
     ) {}
 

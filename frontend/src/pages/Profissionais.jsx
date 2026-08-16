@@ -9,7 +9,8 @@ import StatusBadge from '../components/StatusBadge.jsx'
 import Table from '../components/Table.jsx'
 import ActionMenu from '../components/ActionMenu.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { aplicarMascara, padronizarTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone, exibirTelefone } from '../utils/phoneUtils.js'
+import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 
 const DIAS_TRABALHO = [
   { valor: 'SEGUNDA', letra: 'S', label: 'Seg', nome: 'Segunda' },
@@ -54,7 +55,7 @@ export default function Profissionais() {
       id: profissional.id,
       nome: profissional.nome || '',
       especialidade: profissional.especialidade || '',
-      telefone: profissional.telefone || '',
+      telefone: normalizarParaInput(profissional.telefone || ''),
       diasTrabalho: Array.isArray(profissional.diasTrabalho) ? profissional.diasTrabalho : DIAS_PADRAO,
     })
     setErroEditar('')
@@ -78,7 +79,7 @@ export default function Profissionais() {
     return {
       nome: f.nome.trim().replace(/\s+/g, ' '),
       especialidade: f.especialidade.trim().replace(/\s+/g, ' ') || null,
-      telefone: f.telefone ? (padronizarTelefone(f.telefone) || null) : null,
+      telefone: f.telefone ? (normalizarParaApi(f.telefone) || null) : null,
       diasTrabalho: Array.isArray(f.diasTrabalho) ? f.diasTrabalho : [],
     }
   }
@@ -225,7 +226,7 @@ export default function Profissionais() {
       <Table columns={[
         { key: 'nome', label: 'NOME' },
         { key: 'especialidade', label: 'ESPECIALIDADE' },
-        { key: 'telefone', label: 'TELEFONE' },
+        { key: 'telefone', label: 'TELEFONE', render: (row) => <span>{exibirTelefone(row.telefone)}</span> },
         { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
         { key: 'acao', label: 'A��ES', render: (row) => (
           <ActionMenu
@@ -242,7 +243,7 @@ export default function Profissionais() {
         <form className="form-grid" onSubmit={salvar}>
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required />
           <Input label="Especialidade" helper="Digite apenas letras." maxLength={80} value={form.especialidade} onChange={(e) => setForm({ ...form, especialidade: e.target.value.replace(/[^\p{L}\s]/gu, '') })} />
-          <Input label="Telefone (opcional)" helper={form.telefone ? (validarTelefone(form.telefone) || ' Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={form.telefone} onChange={(e) => setForm({ ...form, telefone: aplicarMascara(e.target.value) })} />
+          <InternationalPhoneInput label="Telefone (opcional)" helper={form.telefone ? (validarTelefone(form.telefone) || ' Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`} value={form.telefone} onChangeValue={(valor) => setForm({ ...form, telefone: valor || '' })} />
           <DiasTrabalhoSelector value={form.diasTrabalho} onToggle={(dia) => alternarDia(setForm, dia)} />
           {erro && <p className="form-error field-wide">{erro}</p>}
           <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
@@ -254,7 +255,7 @@ export default function Profissionais() {
           <form className="form-grid" onSubmit={salvarEdicao}>
             <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={edicao.nome} onChange={(e) => setEdicao({ ...edicao, nome: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required />
             <Input label="Especialidade" helper="Digite apenas letras." maxLength={80} value={edicao.especialidade} onChange={(e) => setEdicao({ ...edicao, especialidade: e.target.value.replace(/[^\p{L}\s]/gu, '') })} />
-            <Input label="Telefone (opcional)" helper={edicao.telefone ? (validarTelefone(edicao.telefone) || ' Formato correto') : 'Formato: +55 (DDD) 99999-9999'} inputMode="numeric" maxLength={19} value={edicao.telefone} onChange={(e) => setEdicao({ ...edicao, telefone: aplicarMascara(e.target.value) })} />
+            <InternationalPhoneInput label="Telefone (opcional)" helper={edicao.telefone ? (validarTelefone(edicao.telefone) || ' Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`} value={edicao.telefone} onChangeValue={(valor) => setEdicao({ ...edicao, telefone: valor || '' })} />
             <DiasTrabalhoSelector value={edicao.diasTrabalho} onToggle={(dia) => alternarDia(setEdicao, dia)} />
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar altera��es'}</Button>

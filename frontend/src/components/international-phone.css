@@ -1,0 +1,219 @@
+/* Estilos para o componente InternationalPhoneInput (react-phone-number-input)
+   alinhados ao design system do Gendaz (.field / inputs globais). */
+
+.international-phone {
+  position: relative;
+}
+
+.international-phone .PhoneInput {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.international-phone .PhoneInputCountry {
+  position: static;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 104px;
+  min-height: 42px;
+  padding: 0 10px;
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  box-shadow: none;
+}
+
+.international-phone .PhoneInputCountry:hover {
+  border-color: var(--primary);
+}
+
+.international-phone .PhoneInputCountry--active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.international-phone .PhoneInputCountryIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 20px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.international-phone .PhoneInputCountryIcon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.international-phone .PhoneInputCountryIcon--border {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+}
+
+.international-phone .PhoneInputCountrySelectArrow {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.international-phone .PhoneInputInput {
+  flex: 1;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 13px;
+  color: var(--text);
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  outline: none;
+  font-size: 14px;
+  inset: auto;
+  box-shadow: none;
+}
+
+.international-phone .PhoneInputInput::placeholder {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+.international-phone .PhoneInputInput:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.international-phone[data-error='true'] .PhoneInputCountry,
+.international-phone[data-error='true'] .PhoneInputInput {
+  border-color: var(--danger, #e5484d);
+}
+
+.international-phone[data-error='true'] .PhoneInputInput:focus {
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.12);
+}
+
+/* Dropdown de países */
+.international-phone .PhoneInputCountrySelect {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.international-phone .PhoneInputCountrySelect:focus-visible {
+  opacity: 0;
+}
+
+/* Ajustes responsivos */
+@media (max-width: 420px) {
+  .international-phone .PhoneInput {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .international-phone .PhoneInputCountry {
+    justify-content: flex-start;
+    min-width: 100%;
+  }
+}
+
+/* Contextos escuros: forçam fundo/borda consistentes com os inputs globais */
+.booking-page .international-phone .PhoneInputCountry,
+.booking-page .international-phone .PhoneInputInput,
+.login-screen .international-phone .PhoneInputCountry,
+.login-screen .international-phone .PhoneInputInput,
+.criar-conta-screen .international-phone .PhoneInputCountry,
+.criar-conta-screen .international-phone .PhoneInputInput,
+.admin-login-screen .international-phone .PhoneInputCountry,
+.admin-login-screen .international-phone .PhoneInputInput,
+.gendaz-auth .international-phone .PhoneInputCountry,
+.gendaz-auth .international-phone .PhoneInputInput,
+.gendaz-shell .international-phone .PhoneInputCountry,
+.gendaz-shell .international-phone .PhoneInputInput,
+.app-shell .content .international-phone .PhoneInputCountry,
+.app-shell .content .international-phone .PhoneInputInput,
+.admin-shell .international-phone .PhoneInputCountry,
+.admin-shell .international-phone .PhoneInputInput {
+  background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  -webkit-text-fill-color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.booking-page .international-phone .PhoneInputInput::placeholder,
+.login-screen .international-phone .PhoneInputInput::placeholder,
+.criar-conta-screen .international-phone .PhoneInputInput::placeholder,
+.admin-login-screen .international-phone .PhoneInputInput::placeholder,
+.gendaz-auth .international-phone .PhoneInputInput::placeholder,
+.gendaz-shell .international-phone .PhoneInputInput::placeholder,
+.app-shell .content .international-phone .PhoneInputInput::placeholder,
+.admin-shell .international-phone .PhoneInputInput::placeholder {
+  color: rgba(226, 233, 247, 0.42);
+  -webkit-text-fill-color: rgba(226, 233, 247, 0.42);
+}
+
+.booking-page .international-phone .PhoneInputInput:focus,
+.login-screen .international-phone .PhoneInputInput:focus,
+.criar-conta-screen .international-phone .PhoneInputInput:focus,
+.admin-login-screen .international-phone .PhoneInputInput:focus,
+.gendaz-auth .international-phone .PhoneInputInput:focus,
+.gendaz-shell .international-phone .PhoneInputInput:focus,
+.app-shell .content .international-phone .PhoneInputInput:focus,
+.admin-shell .international-phone .PhoneInputInput:focus {
+  border-color: rgba(var(--primary-rgb), 0.48);
+  box-shadow: 0 0 0 4px rgba(var(--primary-rgb), 0.10);
+}
+
+.booking-page .international-phone .PhoneInputCountrySelectArrow,
+.login-screen .international-phone .PhoneInputCountrySelectArrow,
+.criar-conta-screen .international-phone .PhoneInputCountrySelectArrow,
+.admin-login-screen .international-phone .PhoneInputCountrySelectArrow,
+.gendaz-auth .international-phone .PhoneInputCountrySelectArrow,
+.gendaz-shell .international-phone .PhoneInputCountrySelectArrow,
+.app-shell .content .international-phone .PhoneInputCountrySelectArrow,
+.admin-shell .international-phone .PhoneInputCountrySelectArrow,
+.booking-page .international-phone .PhoneInputCountry,
+.login-screen .international-phone .PhoneInputCountry,
+.criar-conta-screen .international-phone .PhoneInputCountry,
+.gendaz-auth .international-phone .PhoneInputCountry,
+.gendaz-shell .international-phone .PhoneInputCountry,
+.app-shell .content .international-phone .PhoneInputCountry,
+.admin-shell .international-phone .PhoneInputCountry {
+  color: rgba(255, 255, 255, 0.72);
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.72);
+}
+
+/* Telas de autenticação (login/criar conta): inputs mais altos, sem ícone à esquerda */
+.login-screen .international-phone .PhoneInputInput,
+.criar-conta-screen .international-phone .PhoneInputInput,
+.admin-login-screen .international-phone .PhoneInputInput,
+.gendaz-auth .international-phone .PhoneInputInput,
+.gendaz-shell .international-phone .PhoneInputInput {
+  min-height: 48px;
+  padding-left: 14px;
+}
+
+.login-screen .international-phone .PhoneInputCountry,
+.criar-conta-screen .international-phone .PhoneInputCountry,
+.admin-login-screen .international-phone .PhoneInputCountry,
+.gendaz-auth .international-phone .PhoneInputCountry,
+.gendaz-shell .international-phone .PhoneInputCountry {
+  min-height: 48px;
+}
+
+/* Variante escura explícita para telas sem âncora no tema global */
+.international-phone.international-phone--dark .PhoneInputCountry,
+.international-phone.international-phone--dark .PhoneInputInput {
+  background: var(--bg);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  color: #ffffff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
