@@ -6145,14 +6145,10 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   gap: 24px;
   padding: 42px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 26px;
-  background: #141414;
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.28),
-    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
-    0 0 28px rgba(var(--primary-rgb), 0.08);
-  backdrop-filter: blur(18px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 24px;
+  background: #0a0a0a;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
 }
 
 .payment-empty-card {
@@ -6183,13 +6179,13 @@ tbody tr:hover { background: #fffaf5; }
   width: max-content;
   padding: 10px 16px;
   border-radius: 10px;
-  color: #dbe8ff;
-  background: rgba(var(--primary-rgb), 0.14);
-  border: 1px solid rgba(var(--primary-rgb), 0.26);
-  font-size: 13px;
-  font-weight: 900;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .payment-pro-card h1 {
@@ -6253,12 +6249,17 @@ tbody tr:hover { background: #fffaf5; }
   font-weight: 800;
 }
 
-.payment-step.done span,
 .payment-step.active span {
-  color: #0b1020;
-  border-color: rgba(var(--primary-rgb), 0.42);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 100%);
-  box-shadow: 0 10px 24px rgba(var(--primary-rgb), 0.18);
+  color: #ffffff;
+  border-color: rgba(255, 94, 41, 0.5);
+  background: #ff5e29;
+  box-shadow: 0 10px 24px rgba(255, 94, 41, 0.22);
+}
+
+.payment-step.done span {
+  color: #0d0c0c;
+  border-color: rgba(255, 255, 255, 0.42);
+  background: #ffffff;
 }
 
 .payment-step.done strong,
@@ -6272,12 +6273,9 @@ tbody tr:hover { background: #fffaf5; }
   gap: 18px;
   align-items: center;
   padding: 20px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 18px;
   background: #141414;
-  box-shadow:
-    0 18px 50px rgba(0, 0, 0, 0.22),
-    0 0 24px rgba(0, 0, 0, 0.08);
 }
 
 .payment-status-icon {
@@ -6335,12 +6333,9 @@ tbody tr:hover { background: #fffaf5; }
   display: grid;
   gap: 18px;
   padding: 28px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.10);
   border-radius: 18px;
   background: #141414;
-  box-shadow:
-    0 14px 40px rgba(0, 0, 0, 0.2),
-    0 0 24px rgba(0, 0, 0, 0.08);
 }
 
 .payment-checkout-card > svg {
@@ -6368,9 +6363,14 @@ tbody tr:hover { background: #fffaf5; }
 
 .payment-back-link {
   justify-self: center;
-  color: #dbe8ff;
-  font-weight: 800;
+  color: rgba(255, 255, 255, 0.6);
+  font-weight: 700;
   text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.payment-back-link:hover {
+  color: #ffffff;
 }
 
 .payment-logout-button {
@@ -6543,10 +6543,8 @@ tbody tr:hover { background: #fffaf5; }
 
 .payment-info-card {
   color: rgba(255, 255, 255, 0.68);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
-    rgba(20, 22, 30, 0.92);
-  border: 1px solid rgba(var(--primary-rgb), 0.18);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .payment-client-grid {
@@ -6601,9 +6599,9 @@ tbody tr:hover { background: #fffaf5; }
 
 .payment-page .btn-primary,
 .payment-page .btn:not(.btn-secondary):not(.btn-ghost) {
-  color: #0b1020;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 55%, var(--color-primary) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  background: #ff5e29;
+  border: 1px solid rgba(255, 94, 41, 0.5);
   box-shadow: none;
 }
 
@@ -6611,33 +6609,28 @@ tbody tr:hover { background: #fffaf5; }
 .payment-page .btn-primary:hover,
 .payment-page .btn:not(.btn-secondary):not(.btn-ghost):hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  background: #db4412;
+  box-shadow: 0 8px 24px rgba(255, 94, 41, 0.22);
 }
 
 
 .payment-page .btn-secondary {
-  color: #ffffff;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.025)),
-    rgba(17, 19, 24, 0.94);
-  border: 1px solid rgba(var(--primary-rgb), 0.22);
-  box-shadow:
-    0 10px 28px rgba(0, 0, 0, 0.18),
-    0 0 24px rgba(var(--primary-rgb), 0.05);
+  color: #0d0c0c;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
 .payment-page .btn-secondary:hover {
-  border-color: rgba(var(--primary-rgb), 0.42);
-  box-shadow:
-    0 14px 34px rgba(0, 0, 0, 0.22),
-    0 0 28px rgba(var(--primary-rgb), 0.14);
+  background: #f2f2f2;
+  border-color: #ffffff;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.2);
 }
 
 .payment-page .btn-primary:focus-visible,
 .payment-page .btn-secondary:focus-visible {
   outline: none;
   box-shadow:
-    0 0 0 3px rgba(var(--primary-rgb), 0.18),
+    0 0 0 3px rgba(255, 94, 41, 0.18),
     0 14px 34px rgba(0, 0, 0, 0.22);
 }
 
@@ -6694,21 +6687,21 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: 16px;
   display: grid;
   place-items: center;
-  color: var(--primary);
-  background: var(--primary-soft);
-  border: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .payment-return-icon.success {
-  color: #a05520;
-  background: #fff0e6;
-  border-color: #ffd4b0;
+  color: #ffffff;
+  background: rgba(255, 94, 41, 0.12);
+  border-color: rgba(255, 94, 41, 0.35);
 }
 
 .payment-return-icon.danger {
-  color: var(--danger);
-  background: color-mix(in srgb, var(--danger) 10%, transparent);
-  border-color: color-mix(in srgb, var(--danger) 20%, transparent);
+  color: #ffffff;
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
 }
 
 .payment-return-note {
@@ -6716,8 +6709,24 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 12px;
 }
 
+.payment-wait-panel {
+  width: min(440px, 100%);
+  text-align: center;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+  background: #0a0a0a;
+  border-color: rgba(255, 255, 255, 0.10);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.7);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
 .payment-wait-panel h1 {
   margin: 0;
+  color: #ffffff;
+  font-size: 30px;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
 }
 
 .payment-wait-panel p {
@@ -6809,16 +6818,27 @@ tbody tr:hover { background: #fffaf5; }
 
 .payment-wait-actions .btn-primary,
 .payment-wait-actions .btn:not(.btn-secondary):not(.btn-ghost) {
-  color: #0b1020;
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary) 55%, var(--color-primary) 100%);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  background: #ff5e29;
+  border: 1px solid rgba(255, 94, 41, 0.5);
   box-shadow: none;
 }
 
 .payment-wait-actions .btn-primary:hover,
 .payment-wait-actions .btn:not(.btn-secondary):not(.btn-ghost):hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  background: #db4412;
+  box-shadow: 0 8px 24px rgba(255, 94, 41, 0.22);
+}
+
+.payment-wait-actions .btn-secondary {
+  color: #0d0c0c;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.payment-wait-actions .btn-secondary:hover {
+  background: #f2f2f2;
 }
 
 @media (width <= 720px) {
