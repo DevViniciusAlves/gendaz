@@ -42,9 +42,15 @@ export default function PagamentoPendente() {
   const timerCheckout = useCheckoutTimer(pagamento)
 
   function abrirCheckout() {
-    if (!checkoutAtivoAtual) {
+    if (!checkoutAtivoAtual || !pagamento?.checkoutUrl) {
       setTipoMensagem('error')
       setMensagem('Checkout expirado ou indisponivel. Gere uma nova cobranca para continuar.')
+      return
+    }
+    const novaGuia = window.open('about:blank', '_blank')
+    if (novaGuia) {
+      novaGuia.opener = null
+      novaGuia.location.href = pagamento.checkoutUrl
       return
     }
     window.location.href = pagamento.checkoutUrl
@@ -88,6 +94,12 @@ export default function PagamentoPendente() {
     setMensagem('')
     setTipoMensagem('')
     setGerando(true)
+
+    const novaGuia = window.open('about:blank', '_blank')
+    if (novaGuia) {
+      novaGuia.opener = null
+    }
+
     try {
        const novoPagamento = await appApi.iniciarPagamentoPro({
          empresaId,
@@ -95,13 +107,22 @@ export default function PagamentoPendente() {
          plano: pendente?.assinatura?.planoNome || 'PRO',
        })
        if (novoPagamento.checkoutUrl) {
-         // Redirecionar imediatamente para a checkoutUrl retornada pelo backend
+         if (novaGuia && !novaGuia.closed) {
+           novaGuia.location.href = novoPagamento.checkoutUrl
+           return
+         }
          window.location.href = novoPagamento.checkoutUrl
        } else {
+         if (novaGuia && !novaGuia.closed) {
+           novaGuia.close()
+         }
          setTipoMensagem('error')
          setMensagem('Não foi possível gerar o link de pagamento. Tente novamente.')
        }
     } catch (error) {
+      if (novaGuia && !novaGuia.closed) {
+        novaGuia.close()
+      }
       setTipoMensagem('error')
       setMensagem(error.response?.data?.mensagem || 'Nao foi possivel gerar o checkout. Tente novamente em instantes.')
     } finally {

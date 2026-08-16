@@ -133,14 +133,6 @@ export default function CriarConta() {
 
     setCarregando(true)
 
-    let checkoutWindow = null
-    if (plano === 'PRO') {
-      checkoutWindow = window.open('about:blank', '_blank')
-      if (checkoutWindow) {
-        checkoutWindow.opener = null
-      }
-    }
-
     try {
       const resultado = await criarConta({
         nomeEmpresa,
@@ -153,26 +145,12 @@ export default function CriarConta() {
         aceiteTermos: form.aceiteTermos,
       })
 
-      if (plano === 'PRO' && resultado?.checkoutUrl) {
-        if (checkoutWindow && !checkoutWindow.closed) {
-          checkoutWindow.location.href = resultado.checkoutUrl
-          navigate('/pagamento-pendente')
-          return
-        } else {
-           window.location.href = resultado.checkoutUrl
-           return
-        }
-      }
-
       if (resultado?.pendingPayment) {
         navigate('/pagamento-pendente')
         return
       }
       navigate('/sistema/dashboard')
     } catch (error) {
-      if (checkoutWindow && !checkoutWindow.closed) {
-        checkoutWindow.close()
-      }
       setErro(mensagemErroCadastro(error))
     } finally {
       setCarregando(false)
