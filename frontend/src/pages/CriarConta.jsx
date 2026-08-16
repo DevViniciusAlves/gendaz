@@ -80,13 +80,56 @@ export default function CriarConta() {
     if (carregando) return
     setErro('')
 
-    // ... (validações mantidas)
+    const nomeEmpresa = normalizarTexto(form.nomeEmpresa)
+    const nomeProprietario = normalizarTexto(form.nomeProprietario)
+    const email = String(form.email || '').trim().toLowerCase()
+    const telefone = normalizarParaApi(form.telefone)
+
+    if (!telefone) {
+      setErro('Telefone invalido. Confira o formato do pais selecionado.')
+      return
+    }
+
+    if (!form.aceiteTermos) {
+      setErro('Voce precisa aceitar os termos para continuar.')
+      return
+    }
+
+    if (nomeEmpresa.length < 2 || nomeEmpresa.length > 100) {
+      setErro('Nome da empresa deve ter entre 2 e 100 caracteres.')
+      return
+    }
+
+    if (nomeProprietario.length < 2 || nomeProprietario.length > 80) {
+      setErro('Nome do responsavel deve ter entre 2 e 80 caracteres.')
+      return
+    }
+
+    if (email.length > 120) {
+      setErro('E-mail deve ter no maximo 120 caracteres.')
+      return
+    }
+
     const telValidationError = validarTelefone(form.telefone)
     if (telValidationError) {
       setErro(telValidationError)
       return
     }
-    // ... (resto das validações)
+
+    if (form.senha.length < 8 || form.senha.length > 72) {
+      setErro('A senha deve ter entre 8 e 72 caracteres.')
+      return
+    }
+
+    if (!senhaForte(form.senha)) {
+      setErro('A senha deve ter letra maiuscula, letra minuscula, numero e caractere especial.')
+      return
+    }
+
+    if (form.senha !== form.confirmarSenha) {
+      setErro('As senhas nao coincidem.')
+      return
+    }
 
     setCarregando(true)
 
