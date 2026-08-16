@@ -74,18 +74,23 @@ export default function PagamentoRetorno({ tipo }) {
   }, [sessionId])
 
   return (
-    <main className="login-screen">
-      <section className="login-panel payment-wait-panel">
-        <img src={logoWhite} alt="gendaz" className="payment-wait-logo" />
-        <span className="section-kicker">Plano Pro</span>
-        <div className={aprovado ? 'payment-return-icon success' : cancelado ? 'payment-return-icon danger' : 'payment-return-icon'}>
-          {aprovado ? <CheckCircle2 size={28} /> : <AlertCircle size={28} />}
+    <main className="payment-result-screen">
+      <section className="payment-result-card">
+        <div className="payment-result-header">
+          <img src={logoWhite} alt="gendaz" className="payment-result-logo" />
         </div>
-        <h1>{titulo}</h1>
-        <p>{mensagem || descricao}</p>
+
+        <span className="payment-result-badge">Plano Pro</span>
+
+        <div className={aprovado ? 'payment-result-icon success' : cancelado ? 'payment-result-icon danger' : 'payment-result-icon'}>
+          {aprovado ? <CheckCircle2 size={26} /> : <AlertCircle size={26} />}
+        </div>
+
+        <h1 className="payment-result-title">{titulo}</h1>
+        <p className="payment-result-description">{mensagem || descricao}</p>
 
         {pagamento && (
-          <div className="payment-wait-card">
+          <div className="payment-result-status">
             <div>
               <small>Status atual</small>
               <strong>{statusTexto[pagamento.status] || pagamento.status}</strong>
@@ -94,16 +99,20 @@ export default function PagamentoRetorno({ tipo }) {
           </div>
         )}
 
-        {erro && <p className="form-error">{erro}</p>}
+        {erro && <p className="payment-result-error">{erro}</p>}
 
-        <div className="payment-wait-actions">
+        <div className="payment-result-actions">
+          {aprovado ? (
+            <Link to="/login" className="btn btn-primary">Entrar na conta</Link>
+          ) : (pagamento && (
+            <Link to="/pagamento-pendente" className="btn btn-primary">Voltar ao pagamento</Link>
+          ))}
+          <Link to="/" className="btn btn-secondary">Voltar ao site</Link>
           {!aprovado && (
-            <Button type="button" onClick={() => consultarStatus()} disabled={carregando}>
-              <RefreshCw size={16} /> {carregando ? 'Verificando...' : 'Ja paguei, verificar'}
+            <Button type="button" variant="ghost" onClick={() => consultarStatus()} disabled={carregando}>
+              <RefreshCw size={15} /> {carregando ? 'Verificando...' : 'Ja paguei, verificar'}
             </Button>
           )}
-          {aprovado ? <Link to="/login" className="btn btn-primary">Entrar na conta</Link> : (pagamento && <Link to="/pagamento-pendente" className="btn btn-secondary">Voltar ao pagamento</Link>)}
-          <Link to="/" className="btn btn-secondary">Voltar ao site</Link>
         </div>
       </section>
     </main>
