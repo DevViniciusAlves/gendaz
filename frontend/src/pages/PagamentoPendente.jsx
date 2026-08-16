@@ -56,33 +56,45 @@ export default function PagamentoPendente() {
     window.location.href = pagamento.checkoutUrl
   }
 
-  async function verificarStatus() {
-    if (!pagamento?.empresaId || !pagamento?.id) {
-      setTipoMensagem('error')
-      setMensagem('Nao encontramos um pagamento aprovado para esta conta.')
-      return
-    }
-    setMensagem('')
-    setTipoMensagem('')
-    setCarregando(true)
-    try {
-      const resultado = await appApi.verificarPagamentoPlano(pagamento.empresaId, pagamento.id)
-      const atualizado = { ...pendente, pagamentoPlano: resultado.pagamento, assinatura: resultado.assinatura || pendente?.assinatura }
-      setPendente(atualizado)
-      setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
-      setMensagem(resultado.mensagem || mensagemPadrao(resultado.pagamento?.status))
-      if (resultado.statusVerificacao === 'APPROVED') {
-        limparInicioCheckout(pagamento)
-        limparPagamentoPendente()
-        setTimeout(() => navigate('/login'), 1800)
-      }
-    } catch (error) {
-      setTipoMensagem('error')
-      setMensagem(error.response?.data?.mensagem || 'Nao encontramos um pagamento aprovado para esta conta.')
-    } finally {
-      setCarregando(false)
-    }
+function extrairSessionId(checkoutUrl) {
+  if (!checkoutUrl) return null
+  try {
+    const url = new URL(checkoutUrl)
+    const params = new URLSearchParams(url.search)
+    return params.get('session_id') || null
+  } catch {
+    return null
   }
+}
+
+async function verificarStatus() {
+  const sessionId = extrairSessionId(pagamento?.checkoutUrl)
+  if (!sessionId) {
+    setTipoMensagem('error')
+    setMensagem('Não foi possível verificar o pagamento. Tente novamente ou acesse o link de pagamento novamente.')
+    return
+  }
+  setMensagem('')
+  setTipoMensagem('')
+  setCarregando(true)
+  try {
+    const resultado = await appApi.verificarPagamentoPublico(sessionId)
+    const atualizado = { ...pendente, pagamentoPlano: { ...pendente.pagamentoPlano, status: resultado.statusVerificacao === 'APPROVED' ? 'PAYMENT_APPROVED' : pendente.pagamentoPlano.status } }
+    setPendente(atualizado)
+    setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
+    setMensagem(resultado.mensagem || mensagemPadrao(resultado.statusVerificacao === 'APPROVED' ? 'PAYMENT_APPROVED' : pendente.pagamentoPlano.status))
+    if (resultado.statusVerificacao === 'APPROVED') {
+      limparInicioCheckout(pagamento)
+      limparPagamentoPendente()
+      setTimeout(() => navigate('/login'), 1800)
+    }
+  } catch (error) {
+    setTipoMensagem('error')
+    setMensagem(error.response?.data?.mensagem || 'Não foi possível verificar o pagamento. Tente novamente.')
+  } finally {
+    setCarregando(false)
+  }
+}
 
   async function gerarCheckout() {
     const empresaId = pagamento?.empresaId || pendente?.assinatura?.empresaId
