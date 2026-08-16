@@ -41,20 +41,16 @@ export default function PagamentoRetorno({ tipo }) {
     setErro('')
     setCarregando(true)
     try {
-      let resultado
-      if (sid) {
-        resultado = await appApi.verificarPagamentoPublico(sid)
-      } else if (pagamento?.empresaId && pagamento?.id) {
-        resultado = await appApi.verificarPagamentoPlano(pagamento.empresaId, pagamento.id)
-      } else {
-        setErro('Não encontramos um pagamento pendente.')
-        setCarregando(false)
+      if (!sid) {
+        setErro('Não encontramos a sessão do pagamento.')
         return
       }
-      
+
+      const resultado = await appApi.verificarPagamentoPublico(sid)
+
       setStatus(resultado.statusVerificacao)
       setMensagem(resultado.mensagem)
-      
+
       if (resultado.statusVerificacao === 'APPROVED') {
         limparPagamentoPendente()
       }
