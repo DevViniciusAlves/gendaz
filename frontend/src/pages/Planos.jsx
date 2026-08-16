@@ -1,5 +1,5 @@
 import { Check, ExternalLink, RefreshCw, ShieldCheck, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
 import ScrollReveal from '../components/ScrollReveal.jsx'
@@ -92,6 +92,9 @@ export default function Planos() {
   const navigate = useNavigate()
   const [data] = useLocalData('planos')
   const { usuario, atualizarPlanoAtual, atualizarUsuario } = useAuth()
+  const empresaId = usuario?.empresaId
+  const usuarioRef = useRef(usuario)
+  usuarioRef.current = usuario
   const [metodoPagamento] = useState('CREDIT_CARD')
   const [pagamentoPlano, setPagamentoPlano] = useState(() => usuario?.pagamentoPlano || null)
   const [checkoutSolicitado, setCheckoutSolicitado] = useState(false)
@@ -133,31 +136,41 @@ export default function Planos() {
     ? statusPagamentoTexto.PAYMENT_PENDING
     : statusPagamentoTexto[pagamentoPlano?.status] || pagamentoPlano?.status
 
-  useEffect(() => {
-    if (!usuario?.empresaId) return
-    atualizarPlanoAtual().catch(() => null)
-    appApi.listarAssinaturas(usuario.empresaId)
-      .then((lista) => setFilaAssinaturas(Array.isArray(lista) ? lista : []))
-      .catch(() => null)
-    appApi.listarPagamentosPlano(usuario.empresaId)
-      .then((pagamentos) => {
-        const lista = Array.isArray(pagamentos) ? pagamentos : []
-        const planoAtual = String(usuario?.plano || usuario?.pagamentoPlano?.planoNome || usuario?.pagamentoPlano?.plano || '').toUpperCase()
-        const pendenteMesmoPlano = lista.find((item) => {
-          const planoItem = String(item?.planoNome || item?.plano || '').toUpperCase()
-          return item?.status === 'PAYMENT_PENDING' && planoItem === planoAtual
-        })
-        const pendenteRecente = lista.find((item) => item?.status === 'PAYMENT_PENDING')
-        const pagamentoAtual = pendenteMesmoPlano || pendenteRecente || lista[0] || usuario?.pagamentoPlano || null
-        const checkoutAindaValido = Boolean(pagamentoAtual?.checkoutUrl) && !checkoutExpirado(pagamentoAtual)
-        const inicioCheckout = checkoutAindaValido ? registrarInicioCheckout(pagamentoAtual, getInicioCheckout(pagamentoAtual) || new Date().toISOString()) : null
+  const sincronizarDadosPlanos = useCallback(async () => {
+    const empresaAtual = usuarioRef.current?.empresaId
+    if (!empresaAtual) return
 
-        setPagamentoPlano(pagamentoAtual)
-        setCheckoutSolicitado((atual) => checkoutAindaValido || atual)
-        setCheckoutSolicitadoEm(checkoutAindaValido ? inicioCheckout : null)
-      })
-      .catch(() => null)
-  }, [usuario?.empresaId, usuario?.pagamentoPlano, usuario?.plano, atualizarPlanoAtual])
+    await atualizarPlanoAtual().catch(() => null)
+    if (usuarioRef.current?.empresaId !== empresaAtual) return
+
+    const listaAssinaturas = await appApi.listarAssinaturas(empresaAtual).catch(() => [])
+    if (usuarioRef.current?.empresaId !== empresaAtual) return
+    setFilaAssinaturas(Array.isArray(listaAssinaturas) ? listaAssinaturas : [])
+
+    const pagamentos = await appApi.listarPagamentosPlano(empresaAtual).catch(() => [])
+    if (usuarioRef.current?.empresaId !== empresaAtual) return
+
+    const listaPagamentos = Array.isArray(pagamentos) ? pagamentos : []
+    const usuarioAtual = usuarioRef.current
+    const planoAtual = String(usuarioAtual?.plano || usuarioAtual?.pagamentoPlano?.planoNome || usuarioAtual?.pagamentoPlano?.plano || '').toUpperCase()
+    const pendenteMesmoPlano = listaPagamentos.find((item) => {
+      const planoItem = String(item?.planoNome || item?.plano || '').toUpperCase()
+      return item?.status === 'PAYMENT_PENDING' && planoItem === planoAtual
+    })
+    const pendenteRecente = listaPagamentos.find((item) => item?.status === 'PAYMENT_PENDING')
+    const pagamentoAtual = pendenteMesmoPlano || pendenteRecente || listaPagamentos[0] || usuarioAtual?.pagamentoPlano || null
+    const checkoutAindaValido = Boolean(pagamentoAtual?.checkoutUrl) && !checkoutExpirado(pagamentoAtual)
+    const inicioCheckout = checkoutAindaValido ? registrarInicioCheckout(pagamentoAtual, getInicioCheckout(pagamentoAtual) || new Date().toISOString()) : null
+
+    setPagamentoPlano(pagamentoAtual)
+    setCheckoutSolicitado((atual) => checkoutAindaValido || atual)
+    setCheckoutSolicitadoEm(checkoutAindaValido ? inicioCheckout : null)
+  }, [empresaId, atualizarPlanoAtual])
+
+  useEffect(() => {
+    if (!empresaId) return
+    sincronizarDadosPlanos()
+  }, [empresaId, sincronizarDadosPlanos])
 
   async function iniciarPagamentoPro() {
     if (!usuario) {
@@ -252,7 +265,7 @@ export default function Planos() {
         limparInicioCheckout(pagamento)
         setCheckoutSolicitado(false)
         setCheckoutSolicitadoEm(null)
-        await atualizarPlanoAtual()
+        await sincronizarDadosPlanos()
       } else if (resultado.mensagem) {
         setErro(resultado.mensagem)
       }

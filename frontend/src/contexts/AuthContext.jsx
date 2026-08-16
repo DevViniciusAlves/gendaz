@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useMemo, useRef, useState } from 'react'
+﻿import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
 import { clearLocalData, clearSensitiveStorage, updateCurrentUser } from '../services/localStore.js'
@@ -515,26 +515,44 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return usuarioComPlano
   }
 
-  async function atualizarPlanoAtual() {
-    if (!usuario?.empresaId) return null
-    const assinatura = await appApi.consultarPlanoAtual(usuario.empresaId)
-    const statusConta = assinatura?.status === 'EXPIRADA'
-      ? 'ACCOUNT_INACTIVE'
-      : assinatura?.status === 'ATIVA' || assinatura?.status === 'TESTE'
-        ? 'ACTIVE'
-        : usuario.statusConta
-    const updated = normalizarUsuarioSessao({
-      ...usuario,
-      plano: assinatura?.planoNome || usuario.plano,
-      assinatura,
-      statusConta,
-    }, usuario)
-    if (updated) {
-      salvarUsuarioSessao(updated)
-      setUsuario(updated)
+  const empresaId = usuario?.empresaId
+
+  const atualizarPlanoAtual = useCallback(async () => {
+    if (!empresaId) return null
+
+    let assinatura = null
+    try {
+      assinatura = await appApi.consultarPlanoAtual(empresaId)
+    } catch {
+      return null
     }
+
+    setUsuario((atual) => {
+      if (!atual || atual.empresaId !== empresaId) return atual
+
+      const statusConta = assinatura?.status === 'EXPIRADA'
+        ? 'ACCOUNT_INACTIVE'
+        : assinatura?.status === 'ATIVA' || assinatura?.status === 'TESTE'
+          ? 'ACTIVE'
+          : atual.statusConta
+
+      const updated = normalizarUsuarioSessao({
+        ...atual,
+        plano: assinatura?.planoNome || atual.plano,
+        assinatura,
+        statusConta,
+      }, atual)
+
+      if (updated) {
+        salvarUsuarioSessao(updated)
+        return updated
+      }
+
+      return atual
+    })
+
     return assinatura
-  }
+  }, [empresaId])
 
   async function logout(motivo = 'manual') {
     console.log('[auth-debug] logout executado')
@@ -646,7 +664,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     impersonation,
     iniciarImpersonacao,
     encerrarImpersonacao,
-  }), [usuario, authLoading, adminUsuario, impersonation, sessionExpired])
+  }), [usuario, authLoading, adminUsuario, impersonation, sessionExpired, atualizarPlanoAtual])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
