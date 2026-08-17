@@ -38,6 +38,7 @@ import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.context.request.RequestContextHolder;
@@ -453,18 +454,40 @@ public class AuthService {
 
     private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario, String documento) {
         validarCadastro(request);
-        if (empresaRepository.existsByTelefone(telefone)) {
+        // DIAGNOSTICO - Falso conflito de unicidade
+        Optional<EmpresaEntity> empByTel = empresaRepository.findByTelefone(telefone);
+        Optional<EmpresaEntity> empByName = empresaRepository.findByNomeFantasiaNormalizado(nomeEmpresa);
+        List<UsuarioEntity> usersByEmail = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
+        boolean docExists = !documento.isBlank() && empresaRepository.existsByDocumento(documento);
+
+        String diagLog = String.format("[CADASTRO-DIAG] telefoneNormalizado=%s telefoneExiste=%b telefoneEmpresaId=%s nomeNormalizado='%s' nomeExiste=%b nomeEmpresaId=%s emailNormalizado=%s emailQtd=%d emailUsuarioIds=%s documentoExiste=%b",
+              telefone, empByTel.isPresent(), empByTel.map(e -> e.getId().toString()).orElse("null"),
+              nomeEmpresa, empByName.isPresent(), empByName.map(e -> e.getId().toString()).orElse("null"),
+              mascararEmail(email), usersByEmail.size(),
+              usersByEmail.stream().map(u -> u.getId().toString()).toList(),
+              docExists);
+
+        if (empByTel.isPresent()) {
+            log.warn(diagLog);
             throw new ConflictException("Este numero ja esta cadastrado.");
         }
-        if (empresaRepository.findByNomeFantasiaNormalizado(nomeEmpresa).isPresent()) {
+        if (empByName.isPresent()) {
+            log.warn(diagLog);
             throw new ConflictException("Este nome de empresa ja esta cadastrado.");
         }
-        if (!documento.isBlank() && empresaRepository.existsByDocumento(documento)) {
+        if (docExists) {
+            log.warn(diagLog);
             throw new ConflictException("Este documento ja esta cadastrado.");
         }
-        validarEmailDisponivelParaPainel(email);
+        if (!usersByEmail.isEmpty()) {
+            log.warn(diagLog);
+            throw new ConflictException("Este e-mail ja esta cadastrado.");
+        }
 
-            PlanoEntity planoEscolhido = planoService.buscarPorNomePermitido(request.plano());
+        log.info("[CADASTRO-DIAG] validacoesUnicidade=OK iniciandoCriacao=true");
+        // FIM DIAGNOSTICO
+
+        PlanoEntity planoEscolhido = planoService.buscarPorNomePermitido(request.plano());
             boolean cadastroPro = "PRO".equalsIgnoreCase(planoEscolhido.getNome());
             EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia(nomeEmpresa)

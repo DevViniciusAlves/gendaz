@@ -11,6 +11,8 @@ public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
 
     boolean existsByTelefone(String telefone);
 
+    Optional<EmpresaEntity> findByTelefone(String telefone);
+
     boolean existsByTelefoneAndIdNot(String telefone, Long idNot);
 
     @Query("select e from EmpresaEntity e where lower(trim(e.nomeFantasia)) = lower(trim(:nomeFantasia))")
