@@ -58,10 +58,10 @@ export default function ContaInativa() {
         }
 
         setAssinatura(assinaturaAtual || null)
-      } catch (error) {
-        if (!ativo) return
-        setMensagem(error?.response?.data?.mensagem || error?.message || 'Não foi possível carregar as informações da conta.')
-        setTipoMensagem('error')
+       } catch (error) {
+         if (!ativo) return
+         setMensagem('Não foi possível carregar as informações do plano. Tente novamente.')
+         setTipoMensagem('error')
       } finally {
         if (ativo) setCarregando(false)
       }
@@ -106,9 +106,9 @@ export default function ContaInativa() {
       salvarPagamento(novoPagamento)
       setTipoMensagem('success')
       setMensagem('Cobrança gerada com sucesso. Conclua o pagamento para reativar a conta.')
-    } catch (error) {
-      setTipoMensagem('error')
-      setMensagem(error?.response?.data?.mensagem || error?.message || 'Não foi possível gerar o pagamento. Tente novamente em instantes.')
+       } catch (error) {
+         setTipoMensagem('error')
+         setMensagem('Não foi possível iniciar o pagamento. Tente novamente.');
     } finally {
       setGerando(false)
     }
@@ -134,9 +134,9 @@ export default function ContaInativa() {
         atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoSelecionado, motivoInatividade: null })
         setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
       }
-    } catch (error) {
-      setTipoMensagem('error')
-      setMensagem(error?.response?.data?.mensagem || error?.message || 'Não encontramos um pagamento aprovado para esta conta.')
+       } catch (error) {
+         setTipoMensagem('error')
+         setMensagem('Não foi possível verificar o pagamento. Tente novamente.');
     } finally {
       setCarregando(false)
     }

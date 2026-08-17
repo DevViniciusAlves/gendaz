@@ -79,7 +79,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
                 return;
             }
-            if (!usuarioAtivo(usuario)) {
+            if (!usuarioAtivo(usuario, request)) {
                 response.sendError(HttpServletResponse.SC_FORBIDDEN, "Usuario ou conta indisponivel.");
                 return;
             }
@@ -135,13 +135,33 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         return PUBLIC_PREFIXES.stream().anyMatch(uri::startsWith);
     }
 
-    private boolean usuarioAtivo(UsuarioEntity usuario) {
+    private boolean usuarioAtivo(UsuarioEntity usuario, HttpServletRequest request) {
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
             return false;
         }
-        return usuario.getPerfil() == PerfilUsuario.SUPER_ADMIN
-                || usuario.getEmpresa() == null
-                || usuario.getEmpresa().getStatus() == StatusEmpresa.ATIVA;
+        if (usuario.getPerfil() == PerfilUsuario.SUPER_ADMIN || usuario.getEmpresa() == null) {
+            return true;
+        }
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.ATIVA) {
+            return true;
+        }
+        // Permitir acesso apenas para rotas de reativação se a empresa estiver INATIVA
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.INATIVA) {
+            return isReactivationRoute(request);
+        }
+        return false;
+    }
+
+    private boolean isReactivationRoute(HttpServletRequest request) {
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        
+        // Rotas permitidas para reativação
+        boolean isPlanoAtualRoute = "GET".equalsIgnoreCase(method) && uri.matches("/api/pagamentos/planos/empresa/\\d+/atual$");
+        boolean isIniciarBasicoRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/basico/iniciar".equals(uri);
+        boolean isIniciarProRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/pro/iniciar".equals(uri);
+        
+        return isPlanoAtualRoute || isIniciarBasicoRoute || isIniciarProRoute;
     }
 
     private boolean origemPermitida(HttpServletRequest request) {
