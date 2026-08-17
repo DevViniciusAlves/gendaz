@@ -5,19 +5,28 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
-import com.minhaempresa.gendaz.auth.dto.LoginRequest;
-import com.minhaempresa.gendaz.auth.dto.LoginResponse;
+import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
+import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginRequest;
+import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginResponse;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
+import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
+import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
+import com.minhaempresa.gendaz.security.IpTrackingService;
+import com.minhaempresa.gendaz.security.RecaptchaService;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
+import java.util.List;
 import java.util.Optional;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -29,20 +38,38 @@ class AuthServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
-
     @Mock
     private UsuarioSessionService usuarioSessionService;
+    @Mock
+    private PasswordService passwordService;
+    @Mock
+    private SecurityMonitoringService securityMonitoringService;
+    @Mock
+    private AssinaturaService assinaturaService;
+    @Mock
+    private PagamentoService pagamentoService;
+    @Mock
+    private EmpresaRepository empresaRepository;
+    @Mock
+    private RecaptchaService recaptchaService;
+    @Mock
+    private IpTrackingService ipTrackingService;
 
     @InjectMocks
     private AuthService authService;
 
+    @BeforeEach
+    void setup() {
+        lenient().when(passwordService.matches(anyString(), anyString())).thenReturn(true);
+    }
+
     @Test
     void loginEmpresaInativaDeveCriarSessao() {
         UsuarioEntity usuario = usuario(StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findByEmailAndEmpresaStatus(anyString(), any())).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findUsuariosPainelByEmailIgnoreCase(anyString(), any())).thenReturn(java.util.List.of(usuario));
         when(usuarioSessionService.renovarSessao(any())).thenReturn("token-valido");
 
-        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123"));
+        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
 
         assertEquals("ACCOUNT_INACTIVE", response.statusConta());
         assertNotNull(response.sessionToken());
@@ -51,9 +78,9 @@ class AuthServiceTest {
     @Test
     void loginEmpresaBloqueadaNaoDeveCriarSessao() {
         UsuarioEntity usuario = usuario(StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA);
-        when(usuarioRepository.findByEmailAndEmpresaStatus(anyString(), any())).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findUsuariosPainelByEmailIgnoreCase(anyString(), any())).thenReturn(java.util.List.of(usuario));
 
-        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123"));
+        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
 
         assertEquals("ACCOUNT_INACTIVE", response.statusConta());
         assertNull(response.sessionToken());
@@ -62,15 +89,11 @@ class AuthServiceTest {
     @Test
     void loginEmpresaComAssinaturaExpiradaDeveCriarSessao() {
         UsuarioEntity usuario = usuario(StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        AssinaturaEntity assinatura = AssinaturaEntity.builder()
-                .status(StatusAssinatura.EXPIRADA)
-                .build();
-        usuario.setAssinaturaAtual(assinatura);
         
-        when(usuarioRepository.findByEmailAndEmpresaStatus(anyString(), any())).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findUsuariosPainelByEmailIgnoreCase(anyString(), any())).thenReturn(java.util.List.of(usuario));
         when(usuarioSessionService.renovarSessao(any())).thenReturn("token-valido");
 
-        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123"));
+        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
 
         assertEquals("ACCOUNT_INACTIVE", response.statusConta());
         assertNotNull(response.sessionToken());

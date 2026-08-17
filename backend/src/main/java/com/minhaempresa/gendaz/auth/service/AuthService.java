@@ -177,6 +177,7 @@ public class AuthService {
                         usuario.getEmpresa().setStatus(StatusEmpresa.INATIVA);
                         empresaRepository.save(usuario.getEmpresa());
                     }
+                    String sessionToken = usuarioSessionService.renovarSessao(usuario);
                     log.info("Login redirecionado para conta inativa por teste expirado para {}", mascararEmail(email));
                     return new LoginResponse(
                             "Seu periodo gratuito terminou. Faca o pagamento para continuar usando o AgendNew.",
@@ -184,22 +185,37 @@ public class AuthService {
                             assinatura,
                             pagamentoPlano,
                             "ACCOUNT_INACTIVE",
-                            null,
+                            sessionToken,
                             "PAGAMENTO_PENDENTE"
                     );
                 }
                 if (usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
-                    log.info("Login redirecionado para conta inativa para {}", mascararEmail(email));
-                    String motivo = usuario.getEmpresa().getStatus() == StatusEmpresa.BLOQUEADA ? "ADMIN_SUSPENSAO" : "PAGAMENTO_PENDENTE";
-                    return new LoginResponse(
-                            "Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o AgendNew.",
-                            mapper.toResponse(usuario),
-                            assinatura,
-                            pagamentoPlano,
-                            "ACCOUNT_INACTIVE",
-                            null,
-                            motivo
-                    );
+                    if (usuario.getEmpresa().getStatus() == StatusEmpresa.INATIVA) {
+                        String sessionToken = usuarioSessionService.renovarSessao(usuario);
+                        log.info("Login redirecionado para conta inativa para {}", mascararEmail(email));
+                        String motivo = "PAGAMENTO_PENDENTE";
+                        return new LoginResponse(
+                                "Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o AgendNew.",
+                                mapper.toResponse(usuario),
+                                assinatura,
+                                pagamentoPlano,
+                                "ACCOUNT_INACTIVE",
+                                sessionToken,
+                                motivo
+                        );
+                    } else {
+                        log.info("Login redirecionado para conta bloqueada para {}", mascararEmail(email));
+                        String motivo = "ADMIN_SUSPENSAO";
+                        return new LoginResponse(
+                                "Sua conta encontra-se suspensa. Entre em contato com o suporte.",
+                                mapper.toResponse(usuario),
+                                assinatura,
+                                pagamentoPlano,
+                                "ACCOUNT_INACTIVE",
+                                null,
+                                motivo
+                        );
+                    }
                 }
             }
             String sessionToken = usuarioSessionService.renovarSessao(usuario);
