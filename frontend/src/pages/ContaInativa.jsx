@@ -1,7 +1,6 @@
-import { CreditCard, LockKeyhole, RefreshCw, LogOut, AlertCircle, MessageSquare } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
+import { CreditCard, LockKeyhole, RefreshCw, LogOut, AlertCircle, MessageSquare, ExternalLink } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
-import Button from '../components/Button.jsx'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoGendaz from '../assets/logos/gendaz-logo-branco.png'
@@ -172,26 +171,30 @@ export default function ContaInativa() {
 
   if (carregando && !assinatura) {
     return (
-      <main className="payment-page">
-        <section className="payment-pro-card payment-empty-card">
-          <img src={logoGendaz} alt="gendaz" className="payment-pro-logo" />
-          <h1>Carregando conta inativa</h1>
-          <p>Aguarde alguns instantes enquanto verificamos sua assinatura.</p>
+      <main className="login-screen-v2 conta-inativa-screen">
+        <section className="login-card-v2 conta-inativa-card conta-inativa-empty">
+          <div className="conta-inativa-brand">
+            <img src={logoGendaz} alt="gendaz" className="login-brand-logo" />
+          </div>
+          <h1 className="conta-inativa-title">Carregando conta inativa</h1>
+          <p className="conta-inativa-copy">Aguarde alguns instantes enquanto verificamos sua assinatura.</p>
         </section>
       </main>
     )
   }
 
   return (
-    <main className="payment-page">
-      <section className="payment-pro-card">
-        <img src={logoGendaz} alt="gendaz" className="payment-pro-logo" />
+    <main className="login-screen-v2 conta-inativa-screen">
+      <section className="login-card-v2 conta-inativa-card">
+        <div className="conta-inativa-brand">
+          <img src={logoGendaz} alt="gendaz" className="login-brand-logo" />
+        </div>
 
         {isAdminSuspensao ? (
           <>
-            <span className="payment-plan-badge" style={{ background: 'rgba(220, 38, 38, 0.14)', borderColor: 'rgba(220, 38, 38, 0.26)', color: '#fca5a5' }}>Conta suspensa</span>
-            <h1>Conta suspensa</h1>
-            <p className="payment-pro-copy">
+            <span className="conta-inativa-badge" style={{ background: 'rgba(220, 38, 38, 0.14)', borderColor: 'rgba(220, 38, 38, 0.26)', color: '#fca5a5' }}>Conta suspensa</span>
+            <h1 className="conta-inativa-title">Conta suspensa</h1>
+            <p className="conta-inativa-copy">
               Sua conta foi suspensa pelo administrador. Entre em contato com o suporte para mais informações.
             </p>
 
@@ -206,7 +209,7 @@ export default function ContaInativa() {
             </div>
 
             <div className="payment-checkout-card" style={{ textAlign: 'center' }}>
-              <MessageSquare size={48} style={{ color: 'var(--color-primary)', marginBottom: '16px' }} />
+              <MessageSquare size={48} style={{ color: '#ff5e29', marginBottom: '16px' }} />
               <strong style={{ display: 'block', fontSize: '22px', marginBottom: '8px' }}>Fale com o suporte</strong>
               <p style={{ color: 'rgba(255, 255, 255, 0.68)', marginBottom: '24px' }}>
                 Nossa equipe está à disposição para ajudar a resolver sua situação.
@@ -216,63 +219,65 @@ export default function ContaInativa() {
               </a>
             </div>
 
-            <Button type="button" className="payment-logout-button" onClick={sairDaConta}>
-              <LogOut size={18} /> Sair da conta
-            </Button>
+            <button type="button" className="inactive-account-card white" onClick={sairDaConta}>
+              <LogOut size={18} className="inactive-account-icon" />
+              <span className="inactive-account-label">Sair da conta</span>
+            </button>
           </>
         ) : (
           <>
-            <span className="payment-plan-badge">Conta inativa</span>
-            <h1>Conta inativa</h1>
-            <p className="payment-pro-copy">
+            <span className="conta-inativa-badge">Conta inativa</span>
+            <h1 className="conta-inativa-title">Conta inativa</h1>
+            <p className="conta-inativa-copy">
               Escolha uma opção para reativar sua conta:
             </p>
 
-             <div className="inactive-account-cards">
-               <div className="inactive-account-card orange">
-                 <CreditCard size={24} />
-                 <div style={{ width: '100%' }}>
-                   <h3>Escolher Plano</h3>
-                   <div className="field">
-                     <select value={planoSelecionado} onChange={trocarPlano} style={{ width: '100%' }}>
-                       <option value="BASICO">Básico</option>
-                       <option value="PRO">Pro</option>
-                     </select>
-                   </div>
-                 </div>
-               </div>
+            <div className="inactive-account-cards">
+              <div className="inactive-account-card orange">
+                <CreditCard size={18} className="inactive-account-icon" />
+                <div className="inactive-account-body">
+                  <span className="inactive-account-label">Escolher Plano</span>
+                  <div className="inactive-account-select">
+                    <select value={planoSelecionado} onChange={trocarPlano} aria-label="Plano">
+                      <option value="BASICO">Básico</option>
+                      <option value="PRO">Pro</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
 
-               <div className="inactive-account-card" onClick={gerarPagamento} style={{ cursor: gerando ? 'wait' : 'pointer' }}>
-                 <LockKeyhole size={24} />
-                 <h3>Gerar Pagamento</h3>
-               </div>
+              <button type="button" className="inactive-account-card white" onClick={gerarPagamento} disabled={gerando}>
+                {gerando ? <RefreshCw size={18} className="inactive-account-icon animate-spin" /> : <LockKeyhole size={18} className="inactive-account-icon" />}
+                <span className="inactive-account-label">{gerando ? 'Gerando pagamento...' : 'Gerar Pagamento'}</span>
+              </button>
 
-               <div className="inactive-account-card orange" onClick={sairDaConta}>
-                 <LogOut size={24} />
-                 <h3>Sair da Conta</h3>
-               </div>
-             </div>
+              <button type="button" className="inactive-account-card orange" onClick={sairDaConta}>
+                <LogOut size={18} className="inactive-account-icon" />
+                <span className="inactive-account-label">Sair da Conta</span>
+              </button>
+            </div>
 
-             {pagamento && (
-               <div className="inactive-account-actions">
-                  {checkoutAtivoAtual && (
-                    <Button type="button" variant="secondary" onClick={abrirCheckout} style={{ width: '100%', marginBottom: '14px' }}>
-                      Abrir checkout
-                    </Button>
-                  )}
-                  {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
-                    <small className="plan-checkout-expired-note" style={{ display: 'block', textAlign: 'center' }}>Checkout expirado. Gere um novo pagamento.</small>
-                  )}
-                  {pagamento?.id && (
-                    <Button type="button" variant="secondary" className="orange" onClick={verificarPagamento} disabled={verificando} style={{ width: '100%' }}>
-                      <RefreshCw className={verificando ? 'animate-spin' : ''} />
-                      {verificando ? 'Verificando pagamento...' : 'Já paguei, verificar'}
-                    </Button>
-                  )}
-               </div>
-             )}
+            {pagamento && (
+              <div className="inactive-account-actions">
+                {checkoutAtivoAtual && (
+                  <button type="button" className="inactive-account-card white" onClick={abrirCheckout}>
+                    <ExternalLink size={18} className="inactive-account-icon" />
+                    <span className="inactive-account-label">Abrir checkout</span>
+                  </button>
+                )}
+                {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
+                  <small className="inactive-account-expired-note">Checkout expirado. Gere um novo pagamento.</small>
+                )}
+                {pagamento?.id && (
+                  <button type="button" className="inactive-account-card orange" onClick={verificarPagamento} disabled={verificando}>
+                    <RefreshCw size={18} className={`inactive-account-icon ${verificando ? 'animate-spin' : ''}`} />
+                    <span className="inactive-account-label">{verificando ? 'Verificando pagamento...' : 'Já paguei, verificar'}</span>
+                  </button>
+                )}
+              </div>
+            )}
 
-            {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
+            {mensagem && <div className={`conta-inativa-feedback ${tipoMensagem}`}>{mensagem}</div>}
           </>
         )}
       </section>
