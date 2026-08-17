@@ -39,11 +39,13 @@ public class AdminSessionService {
         String token = Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
         String tokenHash = calcularHash(token);
 
+        LocalDateTime agora = LocalDateTime.now();
+
         AdminSessionEntity session = AdminSessionEntity.builder()
                 .admin(admin)
                 .tokenHash(tokenHash)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusMinutes(15)) // A sessão administrativa possui TTL curto de 15 minutos por decisão de segurança, devido ao alto privilégio do Painel Admin.
+                .createdAt(agora)
+                .expiresAt(agora.plusMinutes(15)) // TTL curto de 15 minutos por decisão de segurança (alto privilégio do Painel Admin)
                 .ip(ip)
                 .userAgent(userAgent)
                 .build();
@@ -54,6 +56,10 @@ public class AdminSessionService {
 
     @Transactional(readOnly = true)
     public UsuarioEntity validarSessao(String token) {
+        if (token == null || token.isBlank()) {
+            throw new SessaoExpiradaException("Sessão admin inválida.");
+        }
+
         String tokenHash = calcularHash(token);
         Optional<AdminSessionEntity> sessionOpt = adminSessionRepository.findByTokenHash(tokenHash);
 
@@ -67,7 +73,9 @@ public class AdminSessionService {
             throw new SessaoExpiradaException("Sessão admin revogada.");
         }
 
-        if (session.getExpiresAt().isBefore(LocalDateTime.now())) {
+        LocalDateTime agora = LocalDateTime.now();
+
+        if (!session.getExpiresAt().isAfter(agora)) {
             throw new SessaoExpiradaException("Sessão admin expirada.");
         }
 

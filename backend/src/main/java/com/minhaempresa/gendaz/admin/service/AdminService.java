@@ -62,6 +62,7 @@ public class AdminService {
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
     private final UsuarioSessionService usuarioSessionService;
+    private final SecurityMonitoringService securityMonitoringService;
     private final AdminSessionService adminSessionService;
     private final PagamentoService pagamentoService;
     private final ProfissionalService profissionalService;
@@ -139,7 +140,8 @@ public class AdminService {
                 usuarioSessionService,
                 null,
                 pagamentoService,
-                profissionalService
+                profissionalService,
+                null
         );
     }
 
@@ -171,7 +173,8 @@ public class AdminService {
                 usuarioSessionService,
                 null,
                 pagamentoService,
-                profissionalService
+                profissionalService,
+                null
         );
     }
 
@@ -202,7 +205,8 @@ public class AdminService {
                 usuarioSessionService,
                 null,
                 pagamentoService,
-                profissionalService
+                profissionalService,
+                null
         );
     }
 

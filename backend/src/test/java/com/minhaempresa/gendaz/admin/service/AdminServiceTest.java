@@ -17,6 +17,7 @@ import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
@@ -36,8 +37,10 @@ class AdminServiceTest {
     private final AdminAuditService auditService = mock(AdminAuditService.class);
     private final PasswordService passwordService = new PasswordService();
     private final UsuarioSessionService usuarioSessionService = mock(UsuarioSessionService.class);
+    private final SecurityMonitoringService securityMonitoringService = mock(SecurityMonitoringService.class);
     private final PagamentoService pagamentoService = mock(PagamentoService.class);
     private final ProfissionalService profissionalService = mock(ProfissionalService.class);
+    private final AdminSessionService adminSessionService = mock(AdminSessionService.class);
     private final AdminService adminService = new AdminService(
             usuarioRepository,
             empresaRepository,
@@ -50,8 +53,10 @@ class AdminServiceTest {
             auditService,
             passwordService,
             usuarioSessionService,
+            securityMonitoringService,
             pagamentoService,
-            profissionalService
+            profissionalService,
+            adminSessionService
     );
 
     @Test
@@ -81,7 +86,7 @@ class AdminServiceTest {
                 .status(StatusUsuario.ATIVO)
                 .build();
         when(usuarioRepository.findAllByEmailIgnoreCase("admin@gendaz.com")).thenReturn(java.util.List.of(admin));
-        when(usuarioSessionService.renovarSessao(admin)).thenReturn("token-admin");
+        when(adminSessionService.criarSessao(admin, "127.0.0.1", "test")).thenReturn("token-admin");
 
         var response = adminService.login(new AdminLoginRequest("admin@Gendaz.com", "SenhaForte123!"), "127.0.0.1", "test");
 
@@ -91,6 +96,11 @@ class AdminServiceTest {
 
     @Test
     void deveExigirTokenValidoParaAcessoAdmin() {
+        doThrow(new com.minhaempresa.gendaz.shared.SessaoExpiradaException(
+                "Sessão admin inválida."
+        )).when(adminSessionService)
+                .validarSessao("token-invalido");
+
         assertThrows(com.minhaempresa.gendaz.shared.SessaoExpiradaException.class, () -> adminService.exigirAdmin("token-invalido"));
     }
 }
