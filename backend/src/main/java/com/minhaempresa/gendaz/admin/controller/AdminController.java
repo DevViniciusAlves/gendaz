@@ -203,6 +203,14 @@ public class AdminController {
 
     @PostMapping("/auth/logout")
     public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        String token = tokenAdmin(request);
+        if (token != null && !token.isBlank()) {
+            try {
+                adminService.logout(token);
+            } catch (Exception e) {
+                // Ignore exception to ensure logout is idempotent and cookie is cleaned anyway
+            }
+        }
         cookieService.limparCookie(request, response, "agendeasy_admin_session");
         return ResponseEntity.noContent().build();
     }

@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.shared;
 
+import com.minhaempresa.gendaz.shared.security.AdminAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.AdminImpersonationGuardFilter;
 import com.minhaempresa.gendaz.shared.security.GendazSessionAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.MeuGendazSessionAuthenticationFilter;
@@ -34,8 +35,10 @@ public class SecurityHeadersConfig {
             HttpSecurity http,
             GendazSessionAuthenticationFilter gendazSessionAuthenticationFilter,
             MeuGendazSessionAuthenticationFilter meuGendazSessionAuthenticationFilter,
-            AdminImpersonationGuardFilter adminImpersonationGuardFilter
+            AdminImpersonationGuardFilter adminImpersonationGuardFilter,
+            AdminAuthenticationFilter adminAuthenticationFilter
     ) throws Exception {
+
         // Corrigido: HttpOnly=true para evitar roubo do cookie CSRF via XSS.
         CookieCsrfTokenRepository csrfTokenRepository = new CookieCsrfTokenRepository();
         csrfTokenRepository.setCookiePath("/");
@@ -48,6 +51,7 @@ public class SecurityHeadersConfig {
                         .csrfTokenRepository(csrfTokenRepository)
                         .ignoringRequestMatchers(CSRF_IGNORADOS))
                 .addFilterAfter(new com.minhaempresa.gendaz.shared.security.CsrfCookieFilter(), org.springframework.security.web.csrf.CsrfFilter.class)
+                .addFilterBefore(adminAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(gendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(adminImpersonationGuardFilter, GendazSessionAuthenticationFilter.class)
                 .addFilterBefore(meuGendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
@@ -68,7 +72,9 @@ public class SecurityHeadersConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/meu-gendaz/perfil").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/pagamentos/planos/webhook", "/api/pagamentos/webhook/stripe").permitAll()
-                        .requestMatchers("/api/admin/**", "/admin", "/admin/**").permitAll()
+                        .requestMatchers("/api/admin/auth/login", "/api/admin/access").permitAll()
+                        .requestMatchers("/api/admin", "/api/admin/**").hasRole("SUPER_ADMIN")
+                        .requestMatchers("/admin", "/admin/**").permitAll()
                         .anyRequest().authenticated())
                 .headers(headers -> headers
                         .httpStrictTransportSecurity(hsts -> hsts.maxAgeInSeconds(31536000).includeSubDomains(true))

@@ -62,7 +62,7 @@ public class AdminService {
     private final AdminAuditService auditService;
     private final PasswordService passwordService;
     private final UsuarioSessionService usuarioSessionService;
-    private final SecurityMonitoringService securityMonitoringService;
+    private final AdminSessionService adminSessionService;
     private final PagamentoService pagamentoService;
     private final ProfissionalService profissionalService;
 
@@ -90,7 +90,8 @@ public class AdminService {
             UsuarioSessionService usuarioSessionService,
             SecurityMonitoringService securityMonitoringService,
             PagamentoService pagamentoService,
-            ProfissionalService profissionalService
+            ProfissionalService profissionalService,
+            AdminSessionService adminSessionService
     ) {
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
@@ -106,6 +107,7 @@ public class AdminService {
         this.securityMonitoringService = securityMonitoringService;
         this.pagamentoService = pagamentoService;
         this.profissionalService = profissionalService;
+        this.adminSessionService = adminSessionService;
     }
 
     public AdminService(
@@ -227,25 +229,28 @@ public class AdminService {
             registrarMonitoramentoAdminLoginFalhado(ip, userAgent, email);
             throw new BusinessException("Credenciais invalidas.");
         }
-        String token = usuarioSessionService.renovarSessao(admin);
+        String token = adminSessionService.criarSessao(admin, ip, userAgent);
         auditService.registrar("ADMIN_LOGIN_SUCCESS", "SECURITY", admin, admin, null, "Login admin realizado", null, ip, userAgent);
         return new AdminLoginResponse(token, new AdminUsuarioResponse(admin.getId(), admin.getNome(), admin.getEmail(), admin.getPerfil().name()));
     }
 
-public UsuarioEntity exigirAdmin(String token) {
+    public UsuarioEntity exigirAdmin(String token) {
         if (token == null || token.isBlank()) {
             throw new SessaoExpiradaException("Acesso admin nao autorizado.");
         }
-        UsuarioEntity admin = usuarioRepository.findBySessaoAtiva(token).orElse(null);
-        if (admin == null || admin.getPerfil() != PerfilUsuario.SUPER_ADMIN || admin.getStatus() != StatusUsuario.ATIVO) {
-            throw new SessaoExpiradaException("Acesso admin nao autorizado.");
-        }
-        return admin;
+        return adminSessionService.validarSessao(token);
     }
 
     @Transactional(readOnly = true)
     public UsuarioEntity refresh(String token) {
         return exigirAdmin(token);
+    }
+
+    @Transactional
+    public void logout(String token) {
+        if (token != null && !token.isBlank()) {
+            adminSessionService.revogarSessao(token);
+        }
     }
 
     @Transactional(readOnly = true)

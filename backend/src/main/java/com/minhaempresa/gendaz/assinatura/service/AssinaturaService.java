@@ -236,7 +236,7 @@ public class AssinaturaService {
         if (fila.isEmpty()) {
             todas.stream()
                     .map(AssinaturaEntity::getEmpresa)
-                    .filter(empresa -> empresa != null && empresa.getStatus() != StatusEmpresa.INATIVA)
+                    .filter(empresa -> empresa != null && empresa.getStatus() == StatusEmpresa.ATIVA)
                     .findFirst()
                     .ifPresent(empresa -> {
                         empresa.setStatus(StatusEmpresa.INATIVA);
