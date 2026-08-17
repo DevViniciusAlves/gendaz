@@ -158,10 +158,11 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         
         // Rotas permitidas para reativação
         boolean isPlanoAtualRoute = "GET".equalsIgnoreCase(method) && uri.matches("/api/pagamentos/planos/empresa/\\d+/atual$");
+        boolean isVerificarPagamentoRoute = "GET".equalsIgnoreCase(method) && uri.matches("/api/pagamentos/planos/empresa/\\d+/\\d+/verificar$");
         boolean isIniciarBasicoRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/basico/iniciar".equals(uri);
         boolean isIniciarProRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/pro/iniciar".equals(uri);
         
-        return isPlanoAtualRoute || isIniciarBasicoRoute || isIniciarProRoute;
+        return isPlanoAtualRoute || isVerificarPagamentoRoute || isIniciarBasicoRoute || isIniciarProRoute;
     }
 
     private boolean origemPermitida(HttpServletRequest request) {

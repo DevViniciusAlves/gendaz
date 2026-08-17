@@ -26,6 +26,7 @@ export default function ContaInativa() {
   const [tipoMensagem, setTipoMensagem] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [gerando, setGerando] = useState(false)
+  const [verificando, setVerificando] = useState(false)
   const [planoSelecionado, setPlanoSelecionado] = useState(() => String(usuario?.plano || usuario?.assinatura?.planoNome || 'BASICO').toUpperCase())
   const carregadoParaEmpresaRef = useRef(null)
 
@@ -59,12 +60,14 @@ export default function ContaInativa() {
 
         setAssinatura(assinaturaAtual || null)
        } catch (error) {
-         if (!ativo) return
-         setMensagem('Não foi possível carregar as informações do plano. Tente novamente.')
-         setTipoMensagem('error')
-      } finally {
-        if (ativo) setCarregando(false)
-      }
+          if (!ativo) return
+          if (error.response?.status !== 404) {
+            setMensagem('Não foi possível carregar as informações do plano. Tente novamente.')
+            setTipoMensagem('error')
+          }
+       } finally {
+         if (ativo) setCarregando(false)
+       }
     }
     carregar()
     return () => {
@@ -114,32 +117,32 @@ export default function ContaInativa() {
     }
   }
 
-  async function verificarPagamento() {
-    if (!usuario?.empresaId || !pagamento?.id) {
-      setTipoMensagem('error')
-      setMensagem('Não encontramos um pagamento pendente para esta conta.')
-      return
-    }
-    setMensagem('')
-    setTipoMensagem('')
-    setCarregando(true)
-    try {
-      const resultado = await appApi.verificarPagamentoPlano(usuario.empresaId, pagamento.id, { skipUsuarioHeader: true })
-      salvarPagamento(resultado.pagamento)
-      setAssinatura((atual) => resultado.assinatura || atual)
-      setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
-      setMensagem(resultado.mensagem || 'Status atualizado com sucesso.')
-      if (resultado.statusVerificacao === 'APPROVED') {
-        limparInicioCheckout(pagamento)
-        atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoSelecionado, motivoInatividade: null })
-        setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
-      }
-       } catch (error) {
-         setTipoMensagem('error')
-         setMensagem('Não foi possível verificar o pagamento. Tente novamente.');
-    } finally {
-      setCarregando(false)
-    }
+   async function verificarPagamento() {
+     if (!usuario?.empresaId || !pagamento?.id) {
+       setTipoMensagem('error')
+       setMensagem('Não encontramos um pagamento pendente para esta conta.')
+       return
+     }
+     setMensagem('')
+     setTipoMensagem('')
+     setVerificando(true)
+     try {
+       const resultado = await appApi.verificarPagamentoPlano(usuario.empresaId, pagamento.id, { skipUsuarioHeader: true })
+       salvarPagamento(resultado.pagamento)
+       setAssinatura((atual) => resultado.assinatura || atual)
+       setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
+       setMensagem(resultado.mensagem || 'Status atualizado com sucesso.')
+       if (resultado.statusVerificacao === 'APPROVED') {
+         limparInicioCheckout(pagamento)
+         atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoSelecionado, motivoInatividade: null })
+         setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
+       }
+        } catch (error) {
+          setTipoMensagem('error')
+          setMensagem('Não foi possível verificar o pagamento. Tente novamente.');
+     } finally {
+       setVerificando(false)
+     }
   }
 
   async function abrirCheckout() {
@@ -148,7 +151,9 @@ export default function ContaInativa() {
       setMensagem('Checkout expirado ou indisponível. Gere um novo pagamento para continuar.')
       return
     }
-    window.location.href = pagamento.checkoutUrl
+    if (pagamento.checkoutUrl) {
+      window.open(pagamento.checkoutUrl, '_blank', 'noopener,noreferrer')
+    }
   }
 
   function trocarPlano(event) {
@@ -223,48 +228,49 @@ export default function ContaInativa() {
               Escolha uma opção para reativar sua conta:
             </p>
 
-            <div className="inactive-account-cards">
-              <div className="inactive-account-card">
-                <CreditCard size={24} />
-                <div style={{ width: '100%' }}>
-                  <h3>Escolher Plano</h3>
-                  <div className="field">
-                    <select value={planoSelecionado} onChange={trocarPlano} style={{ width: '100%' }}>
-                      <option value="BASICO">Básico</option>
-                      <option value="PRO">Pro</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
+             <div className="inactive-account-cards">
+               <div className="inactive-account-card orange">
+                 <CreditCard size={24} />
+                 <div style={{ width: '100%' }}>
+                   <h3>Escolher Plano</h3>
+                   <div className="field">
+                     <select value={planoSelecionado} onChange={trocarPlano} style={{ width: '100%' }}>
+                       <option value="BASICO">Básico</option>
+                       <option value="PRO">Pro</option>
+                     </select>
+                   </div>
+                 </div>
+               </div>
 
-              <div className="inactive-account-card" onClick={gerarPagamento} style={{ cursor: gerando ? 'wait' : 'pointer' }}>
-                <LockKeyhole size={24} />
-                <h3>Gerar Pagamento</h3>
-              </div>
+               <div className="inactive-account-card" onClick={gerarPagamento} style={{ cursor: gerando ? 'wait' : 'pointer' }}>
+                 <LockKeyhole size={24} />
+                 <h3>Gerar Pagamento</h3>
+               </div>
 
-              <div className="inactive-account-card" onClick={sairDaConta}>
-                <LogOut size={24} />
-                <h3>Sair da Conta</h3>
-              </div>
-            </div>
+               <div className="inactive-account-card orange" onClick={sairDaConta}>
+                 <LogOut size={24} />
+                 <h3>Sair da Conta</h3>
+               </div>
+             </div>
 
-            {pagamento && (
-              <div className="inactive-account-actions">
-                {checkoutAtivoAtual && (
-                  <Button type="button" variant="secondary" icon={RefreshCw} onClick={abrirCheckout} style={{ width: '100%' }}>
-                    Abrir checkout
-                  </Button>
-                )}
-                {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
-                  <small className="plan-checkout-expired-note" style={{ display: 'block', textAlign: 'center' }}>Checkout expirado. Gere um novo pagamento.</small>
-                )}
-                {pagamento?.id && (
-                  <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarPagamento} disabled={carregando} style={{ width: '100%' }}>
-                    {carregando ? 'Verificando...' : 'Já paguei, verificar'}
-                  </Button>
-                )}
-              </div>
-            )}
+             {pagamento && (
+               <div className="inactive-account-actions">
+                  {checkoutAtivoAtual && (
+                    <Button type="button" variant="secondary" onClick={abrirCheckout} style={{ width: '100%', marginBottom: '14px' }}>
+                      Abrir checkout
+                    </Button>
+                  )}
+                  {pagamento?.checkoutUrl && checkoutExpiradoAtual && (
+                    <small className="plan-checkout-expired-note" style={{ display: 'block', textAlign: 'center' }}>Checkout expirado. Gere um novo pagamento.</small>
+                  )}
+                  {pagamento?.id && (
+                    <Button type="button" variant="secondary" className="orange" onClick={verificarPagamento} disabled={verificando} style={{ width: '100%' }}>
+                      <RefreshCw className={verificando ? 'animate-spin' : ''} />
+                      {verificando ? 'Verificando pagamento...' : 'Já paguei, verificar'}
+                    </Button>
+                  )}
+               </div>
+             )}
 
             {mensagem && <div className={`payment-feedback ${tipoMensagem}`}>{mensagem}</div>}
           </>
