@@ -74,12 +74,6 @@ export default function ContaInativa() {
     }
   }, [navigate, atualizarUsuario, usuario?.empresaId, isAdminSuspensao])
 
-  useEffect(() => {
-    if (usuario?.statusConta === 'ACTIVE') {
-      navigate('/sistema/dashboard', { replace: true })
-    }
-  }, [usuario?.statusConta, navigate])
-
   function salvarPagamento(atualizado) {
     setPagamento(atualizado)
   }

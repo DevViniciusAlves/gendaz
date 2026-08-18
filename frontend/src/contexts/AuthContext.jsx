@@ -1,7 +1,7 @@
 ﻿import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { adminApi } from '../api/adminApi.js'
-import { clearLocalData, clearSensitiveStorage, updateCurrentUser } from '../services/localStore.js'
+import { clearLocalData, clearSensitiveStorage } from '../services/localStore.js'
 import { setSessionUser } from '../api/axiosConfig.js'
 import { useSessionWebSocket } from '../hooks/useSessionWebSocket.js'
 
@@ -642,8 +642,23 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
   }
 
   function atualizarUsuario(partial) {
-    const updated = updateCurrentUser(partial)
-    if (updated) setUsuario(updated)
+    setUsuario((atual) => {
+      if (!atual) return atual
+
+      const updated = normalizarUsuarioSessao(
+        {
+          ...atual,
+          ...partial,
+        },
+        atual,
+      )
+
+      if (!updated) return atual
+
+      salvarUsuarioSessao(updated)
+
+      return updated
+    })
   }
 
   const value = useMemo(() => ({
