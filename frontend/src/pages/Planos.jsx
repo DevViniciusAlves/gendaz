@@ -6,7 +6,7 @@ import ScrollReveal from '../components/ScrollReveal.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
 import { useLocalData } from '../hooks/useLocalData.js'
-import { checkoutExpirado, getInicioCheckout, limparInicioCheckout, registrarInicioCheckout } from '../utils/checkoutUtils.js'
+import { checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const planosBase = [
   {
@@ -98,7 +98,6 @@ export default function Planos() {
   const [metodoPagamento] = useState('CREDIT_CARD')
   const [pagamentoPlano, setPagamentoPlano] = useState(() => usuario?.pagamentoPlano || null)
   const [checkoutSolicitado, setCheckoutSolicitado] = useState(false)
-  const [checkoutSolicitadoEm, setCheckoutSolicitadoEm] = useState(null)
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState('')
   const [filaAssinaturas, setFilaAssinaturas] = useState([])
@@ -112,9 +111,8 @@ export default function Planos() {
     }
   }), [data.planos])
 
-  const pagamentoCheckoutPlano = pagamentoPlano
-    ? { ...pagamentoPlano, checkoutSolicitadoEm: checkoutSolicitadoEm || getInicioCheckout(pagamentoPlano) }
-    : null
+  const timerPlano = useCheckoutTimer(checkoutSolicitado ? pagamentoPlano : null)
+  const checkoutValidoPlano = checkoutSolicitado && Boolean(pagamentoPlano?.checkoutUrl) && !timerPlano.expirou
 
   const filaAtiva = useMemo(() => {
     const hoje = hojeISO()
@@ -130,8 +128,6 @@ export default function Planos() {
   const planoVigente = String(usuario?.plano || usuario?.assinatura?.planoNome || '').toUpperCase()
   const limiteAtingido = filaAtiva.length >= 2
   const proximoPlano = filaAtiva.find((item) => String(item.planoNome || '').toUpperCase() !== planoVigente) || null
-  const timerPlano = useCheckoutTimer(checkoutSolicitado ? pagamentoCheckoutPlano : null)
-  const checkoutValidoPlano = checkoutSolicitado && Boolean(pagamentoPlano?.checkoutUrl) && !timerPlano.expirou
   const statusPagamentoPlano = pagamentoPlano?.status === 'PAYMENT_PENDING'
     ? statusPagamentoTexto.PAYMENT_PENDING
     : statusPagamentoTexto[pagamentoPlano?.status] || pagamentoPlano?.status
@@ -160,11 +156,9 @@ export default function Planos() {
     const pendenteRecente = listaPagamentos.find((item) => item?.status === 'PAYMENT_PENDING')
     const pagamentoAtual = pendenteMesmoPlano || pendenteRecente || listaPagamentos[0] || usuarioAtual?.pagamentoPlano || null
     const checkoutAindaValido = Boolean(pagamentoAtual?.checkoutUrl) && !checkoutExpirado(pagamentoAtual)
-    const inicioCheckout = checkoutAindaValido ? registrarInicioCheckout(pagamentoAtual, getInicioCheckout(pagamentoAtual) || new Date().toISOString()) : null
 
     setPagamentoPlano(pagamentoAtual)
     setCheckoutSolicitado((atual) => checkoutAindaValido || atual)
-    setCheckoutSolicitadoEm(checkoutAindaValido ? inicioCheckout : null)
   }, [empresaId, atualizarPlanoAtual])
 
   useEffect(() => {
@@ -200,9 +194,7 @@ export default function Planos() {
         customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
-      const inicioCheckout = registrarInicioCheckout(pagamento)
       setPagamentoPlano(pagamento)
-      setCheckoutSolicitadoEm(inicioCheckout)
       setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
@@ -240,9 +232,7 @@ export default function Planos() {
         customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
-      const inicioCheckout = registrarInicioCheckout(pagamento)
       setPagamentoPlano(pagamento)
-      setCheckoutSolicitadoEm(inicioCheckout)
       setCheckoutSolicitado(true)
       atualizarUsuario({ pagamentoPlano: pagamento })
     } catch (error) {
@@ -262,9 +252,7 @@ export default function Planos() {
       setPagamentoPlano(pagamento)
       atualizarUsuario({ pagamentoPlano: pagamento })
       if (resultado.statusVerificacao === 'APPROVED') {
-        limparInicioCheckout(pagamento)
         setCheckoutSolicitado(false)
-        setCheckoutSolicitadoEm(null)
         await sincronizarDadosPlanos()
       } else if (resultado.mensagem) {
         setErro(resultado.mensagem)

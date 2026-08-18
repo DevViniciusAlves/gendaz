@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoGendaz from '../assets/logos/gendaz-logo-branco.png'
-import { checkoutAtivo, checkoutExpirado, limparInicioCheckout, registrarInicioCheckout } from '../utils/checkoutUtils.js'
+import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const statusView = {
   PAYMENT_PENDING: { label: 'Pagamento pendente', tone: 'pending' },
@@ -98,7 +98,6 @@ export default function ContaInativa() {
         metodoPagamento: 'CREDIT_CARD',
         plano: planoSelecionado,
       }, { skipUsuarioHeader: true })
-      registrarInicioCheckout(novoPagamento)
       salvarPagamento(novoPagamento)
       setTipoMensagem('success')
       setMensagem('Cobrança gerada com sucesso. Conclua o pagamento para reativar a conta.')
@@ -126,7 +125,6 @@ export default function ContaInativa() {
        setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
        setMensagem(resultado.mensagem || 'Status atualizado com sucesso.')
        if (resultado.statusVerificacao === 'APPROVED') {
-         limparInicioCheckout(pagamento)
          atualizarUsuario({ statusConta: 'ACTIVE', assinatura: resultado.assinatura, plano: resultado.assinatura?.planoNome || planoSelecionado, motivoInatividade: null })
          setTimeout(() => navigate('/sistema/dashboard', { replace: true }), 1800)
        }

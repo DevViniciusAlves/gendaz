@@ -1,10 +1,13 @@
 function parseData(data) {
-  if (!data) return null
+  if (data == null) return null
   const valor = data instanceof Date ? data : new Date(data)
   return Number.isNaN(valor.getTime()) ? null : valor
 }
 
 export function getDataExpiracao(pagamento) {
+  if (pagamento?.dataExpiracaoEpoch != null) {
+    return parseData(Number(pagamento.dataExpiracaoEpoch))
+  }
   return parseData(pagamento?.dataExpiracao)
 }
 
@@ -21,7 +24,7 @@ export function checkoutExpirado(pagamento, agora = new Date()) {
     return agora.getTime() >= dataExpiracao.getTime()
   }
 
-  // Se não tem data de expiração, considera expirado por segurança
+  // Se não tem deadline confiável, considera expirado por segurança
   return true
 }
 

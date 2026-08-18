@@ -6,7 +6,7 @@ import { appApi } from '../api/appApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import logoWhite from '../assets/logos/gendaz-logo-branco.png'
 import { useCheckoutTimer } from '../hooks/useCheckoutTimer.js'
-import { checkoutAtivo, checkoutExpirado, limparInicioCheckout, registrarInicioCheckout } from '../utils/checkoutUtils.js'
+import { checkoutAtivo, checkoutExpirado } from '../utils/checkoutUtils.js'
 
 const statusView = {
   PAYMENT_PENDING: { label: 'Aguardando pagamento', tone: 'pending' },
@@ -73,7 +73,6 @@ export default function PagamentoPendente() {
       setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
       setMensagem(resultado.mensagem || mensagemPadrao(resultado.statusVerificacao === 'APPROVED' ? 'PAYMENT_APPROVED' : pendente.pagamentoPlano.status))
       if (resultado.statusVerificacao === 'APPROVED') {
-        limparInicioCheckout(pagamento)
         limparPagamentoPendente()
         setTimeout(() => navigate('/login'), 1800)
       }
