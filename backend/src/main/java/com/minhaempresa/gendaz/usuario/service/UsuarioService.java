@@ -9,6 +9,7 @@ import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.AtualizarUsuarioRequest;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.CriarUsuarioRequest;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
@@ -33,6 +34,7 @@ public class UsuarioService {
     private final PasswordService passwordService;
     private final ResendEmailService resendEmailService;
     private final SanitizacaoService sanitizacaoService;
+    private final SecurityMonitoringService securityMonitoringService;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
     @Transactional
@@ -64,7 +66,7 @@ public class UsuarioService {
                 empresa.getNomeFantasia()
         );
         if (!emailBoasVindas) {
-            log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", salvo.getEmail());
+            log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
         }
         return mapper.toResponse(salvo);
     }

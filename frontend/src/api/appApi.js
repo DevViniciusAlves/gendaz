@@ -981,9 +981,30 @@ export const appApi = {
     return comNotificacao(() => api.put('/configuracoes/horario-atendimento', { horarios }, {
       headers: usuarioHeaders(),
     }).then((response) => response.data), {
-      loading: 'Salvando horÃ¡rios... aguarde',
-      success: 'HorÃ¡rios salvos com sucesso.',
-      error: 'NÃ£o foi possÃ­vel salvar os horÃ¡rios.',
+      loading: 'Salvando horários... aguarde',
+      success: 'Horários salvos com sucesso.',
+      error: 'Não foi possível salvar os horários.',
+    })
+  },
+
+  exportarDadosLgpd() {
+    return comNotificacao(() => api.get('/lgpd/exportar', {
+      headers: usuarioHeaders(),
+      responseType: 'blob',
+    }).then((response) => response.data), {
+      loading: 'Exportando dados, aguarde...',
+      success: 'Dados exportados com sucesso.',
+      error: 'Não foi possível exportar os dados.',
+    })
+  },
+
+  excluirContaLgpd() {
+    return comNotificacao(() => api.delete('/lgpd/excluir-conta', {
+      headers: usuarioHeaders(),
+    }).then((response) => response.data), {
+      loading: 'Encerrando conta, aguarde...',
+      success: 'Conta encerrada com sucesso.',
+      error: 'Não foi possível encerrar a conta.',
     })
   },
 }

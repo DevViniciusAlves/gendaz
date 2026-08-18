@@ -9,8 +9,10 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> {
+    List<AuditLogEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
+    List<AuditLogEntity> findByTipoContainingIgnoreCaseAndDataCriacaoBetweenAndEmpresaIdOrderByDataCriacaoDesc(String tipo, LocalDateTime inicio, LocalDateTime fim, Long empresaId);
     List<AuditLogEntity> findTop200ByOrderByDataCriacaoDesc();
-    List<AuditLogEntity> findByTipoContainingIgnoreCaseAndDataCriacaoBetweenOrderByDataCriacaoDesc(String tipo, LocalDateTime inicio, LocalDateTime fim);
+
 
     @Modifying
     @Query("update AuditLogEntity a set a.usuario = null where a.usuario.id = :usuarioId")

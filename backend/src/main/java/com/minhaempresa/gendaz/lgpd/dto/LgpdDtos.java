@@ -14,6 +14,7 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.ProfissionalResponse;
 import com.minhaempresa.gendaz.servico.dto.ServicoDtos.ServicoResponse;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
+import com.minhaempresa.gendaz.mensagem.dto.MensagemDtos.MensagemResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -31,6 +32,7 @@ public final class LgpdDtos {
             List<ProfissionalResponse> profissionais,
             List<AgendamentoResponse> agendamentos,
             List<ConversaResponse> conversas,
+            List<MensagemResponse> mensagens,
             List<PagamentoResponse> pagamentos,
             List<PagamentoPlanoResponse> pagamentosPlano,
             List<NotaFiscalResponse> notasFiscais,
@@ -44,6 +46,6 @@ public final class LgpdDtos {
 
     public record AuditoriaExportada(Long id, String tipo, String severidade, String descricao, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
 
-    public record ExcluirContaResponse(String mensagem, Long empresaId, String statusEmpresa) {}
+    public record ExcluirContaResponse(String mensagem, Long empresaId, String statusEmpresa, String stripeStatus) {}
 }
 

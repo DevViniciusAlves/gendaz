@@ -1,4 +1,4 @@
-import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, Send } from 'lucide-react'
+import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, Send, AlertTriangle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -121,6 +121,8 @@ export default function Configuracoes() {
   const [statusHorario, setStatusHorario] = useState('')
   const [erroHorario, setErroHorario] = useState('')
   const [salvandoHorario, setSalvandoHorario] = useState(false)
+  const [exportandoDados, setExportandoDados] = useState(false)
+  const [encerrandoConta, setEncerrandoConta] = useState(false)
   const ramoEmpresa = empresa?.ramoDisplayName || (empresa?.ramo ? empresa.ramo.replaceAll('_', ' ') : 'Não identificado')
 
   useEffect(() => {
@@ -641,6 +643,73 @@ export default function Configuracoes() {
           </div>
         </form>
       </section>
+
+      {/* Seção LGPD */}
+      {!perfilAtendente && (
+        <section className="panel settings-form-panel">
+          <div className="panel-head settings-form-head">
+            <div>
+              <span className="section-kicker">Privacidade e Dados</span>
+              <h2>Gerenciamento de dados</h2>
+              <p>Exporte os dados da empresa ou encerre a conta. O encerramento revoga o acesso de todos os usuários vinculados.</p>
+            </div>
+            <AlertTriangle size={22} color="var(--danger)" />
+          </div>
+          <div className="settings-form-actions field-wide" style={{ justifyContent: 'flex-start', gap: 16 }}>
+            <Button
+              variant="secondary"
+              icon={Download}
+              disabled={exportandoDados || encerrandoConta}
+              onClick={async () => {
+                if (exportandoDados || encerrandoConta) return
+                if (!window.confirm('Tem certeza que deseja exportar os dados da empresa?')) return
+                setExportandoDados(true)
+                try {
+                  const dados = await appApi.exportarDadosLgpd()
+                  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json;charset=utf-8' })
+                  const url = window.URL.createObjectURL(blob)
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.setAttribute('download', `gendaz-dados-empresa-${new Date().toISOString().split('T')[0]}.json`)
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                  window.URL.revokeObjectURL(url)
+                } catch (err) {
+                  setErro(err?.response?.data?.mensagem || 'Não foi possível exportar os dados.')
+                } finally {
+                  setExportandoDados(false)
+                }
+              }}
+            >
+              {exportandoDados ? 'Exportando dados, aguarde...' : 'Exportar dados'}
+            </Button>
+            <Button
+              variant="danger"
+              icon={AlertTriangle}
+              disabled={exportandoDados || encerrandoConta}
+              onClick={async () => {
+                if (exportandoDados || encerrandoConta) return
+                if (!window.confirm('Tem certeza que deseja encerrar a conta? Esta ação encerrará o acesso da empresa e dos usuários vinculados.')) return
+                setEncerrandoConta(true)
+                try {
+                  const res = await appApi.excluirContaLgpd()
+                  if (res?.stripeStatus === 'FALHA_AO_CANCELAR') {
+                    setErro('Conta encerrada, mas o cancelamento da cobrança recorrente falhou. Entre em contato pelo suporte para regularizar.')
+                  }
+                  logout()
+                  navigate('/login', { replace: true })
+                } catch (err) {
+                  setErro(err?.response?.data?.mensagem || 'Não foi possível encerrar a conta.')
+                  setEncerrandoConta(false)
+                }
+              }}
+            >
+              {encerrandoConta ? 'Encerrando conta, aguarde...' : 'Encerrar conta'}
+            </Button>
+          </div>
+        </section>
+      )}
     </section>
   )
 }

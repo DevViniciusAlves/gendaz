@@ -33,6 +33,7 @@ import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
 import com.minhaempresa.gendaz.usuario.mapper.UsuarioMapper;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
+import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -70,13 +71,21 @@ public class LgpdService {
     @Transactional(readOnly = true)
     public ExportacaoDadosResponse exportar(Long usuarioId) {
         UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
+        if (usuario.getPerfil() != PerfilUsuario.DONO) {
+            throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");
+        }
         Long empresaId = obterEmpresaId(usuario);
         EmpresaEntity empresa = buscarEmpresa(empresaId);
         AssinaturaResponse assinatura = assinaturaService.buscarAtualResponsePorEmpresa(empresaId);
         ResumoFinanceiroResponse financeiro = financeiroService.resumo(empresaId, java.time.LocalDate.now().getMonthValue(), java.time.LocalDate.now().getYear());
-        List<AuditoriaExportada> auditoria = auditLogRepository.findTop200ByOrderByDataCriacaoDesc().stream()
-                .filter(log -> log.getEmpresa() != null && log.getEmpresa().getId().equals(empresaId))
+        List<AuditoriaExportada> auditoria = auditLogRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .limit(200)
                 .map(this::toAuditoria)
+                .toList();
+
+        List<com.minhaempresa.gendaz.mensagem.dto.MensagemDtos.MensagemResponse> mensagens = conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream()
+                .flatMap(c -> mensagemRepository.findByConversaIdOrderByDataEnvioAsc(c.getId()).stream())
+                .map(m -> new com.minhaempresa.gendaz.mensagem.mapper.MensagemMapper().toResponse(m))
                 .toList();
 
         return new ExportacaoDadosResponse(
@@ -90,6 +99,7 @@ public class LgpdService {
                 profissionalRepository.findByEmpresaId(empresaId).stream().map(p -> new com.minhaempresa.gendaz.profissional.mapper.ProfissionalMapper().toResponse(p)).toList(),
                 agendamentoRepository.findByEmpresaId(empresaId).stream().map(a -> new com.minhaempresa.gendaz.agendamento.mapper.AgendamentoMapper().toResponse(a)).toList(),
                 conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream().map(c -> new com.minhaempresa.gendaz.conversa.mapper.ConversaMapper().toResponse(c)).toList(),
+                mensagens,
                 pagamentoRepository.findByEmpresaId(empresaId).stream().map(p -> new com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper().toResponse(p)).toList(),
                 pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream().map(p -> new com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper().toPlanoResponse(p)).toList(),
                 notaFiscalRepository.findByEmpresaId(empresaId).stream().map(n -> new com.minhaempresa.gendaz.notafiscal.mapper.NotaFiscalMapper().toResponse(n)).toList(),
@@ -103,6 +113,9 @@ public class LgpdService {
     @Transactional
     public ExcluirContaResponse excluirConta(Long usuarioId) {
         UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
+        if (usuario.getPerfil() != PerfilUsuario.DONO) {
+            throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");
+        }
         if (usuario.getEmpresa() == null) {
             throw new BusinessException("Usuario sem empresa nao pode solicitar exclusao da conta.");
         }
@@ -127,12 +140,13 @@ public class LgpdService {
         empresaRepository.save(empresa);
         
         // Cancelar subscription Stripe para impedir renovação futura
-        cancelarSubscriptionStripe(empresa);
+        String stripeStatus = cancelarSubscriptionStripe(empresa);
 
         return new ExcluirContaResponse(
-                "Conta desativada com sucesso. Os acessos foram revogados e os dados permanecem sujeitos as regras de retencao legal.",
+                "Conta encerrada com sucesso. Os acessos foram revogados e as cobranças futuras canceladas.",
                 empresa.getId(),
-                empresa.getStatus().name()
+                empresa.getStatus().name(),
+                stripeStatus
         );
     }
 
@@ -148,24 +162,29 @@ public class LgpdService {
         return usuario.getEmpresa().getId();
     }
 
-    private void cancelarSubscriptionStripe(EmpresaEntity empresa) {
+    private String cancelarSubscriptionStripe(EmpresaEntity empresa) {
         if (empresa.getStripeCustomerId() == null || empresa.getStripeCustomerId().isBlank()) {
             log.info("Nenhuma subscription Stripe para cancelar: empresa={}", empresa.getId());
-            return;
+            return "NENHUMA_ASSINATURA";
         }
         
         try {
             List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findByEmpresaIdAndSubscriptionIdNotNull(empresa.getId());
+            boolean algumCancelado = false;
             for (PagamentoPlanoEntity pagamento : pagamentos) {
                 if (pagamento.getSubscriptionId() != null && !pagamento.getSubscriptionId().isBlank()) {
                     paymentGateway.cancelarSubscription(pagamento.getSubscriptionId());
+                    algumCancelado = true;
                     log.info("Subscription Stripe cancelada: empresa={}, subscriptionId={}", empresa.getId(), pagamento.getSubscriptionId());
                 }
             }
+            return algumCancelado ? "CANCELADO" : "NENHUMA_ASSINATURA_ATIVA";
         } catch (Exception ex) {
             log.error("Falha ao cancelar subscription Stripe para empresa {}: {}", empresa.getId(), ex.getMessage(), ex);
+            return "FALHA_AO_CANCELAR";
         }
     }
+
 
     private AuditoriaExportada toAuditoria(AuditLogEntity log) {
         return new AuditoriaExportada(

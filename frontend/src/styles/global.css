@@ -829,6 +829,8 @@ button { cursor: pointer; }
 .btn-secondary { color: var(--text); background: var(--surface-solid); border: 1px solid var(--line); }
 .btn-secondary:hover { background: var(--bg); border-color: #cbd5e1; }
 .btn-ghost { color: var(--brand); background: #ffffff; border: 1px solid var(--line); }
+.btn-danger { color: #ffffff; background: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover:not(:disabled) { background: color-mix(in srgb, var(--danger) 85%, #000000); border-color: color-mix(in srgb, var(--danger) 85%, #000000); box-shadow: 0 8px 24px rgba(220, 38, 38, 0.18); }
 .icon-btn { width: 38px; height: 38px; padding: 0; color: var(--primary); background: #ffffff; border: 1px solid var(--line); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: var(--radius-sm); transition: transform 0.2s, box-shadow 0.2s; }
 .icon-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
 
