@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
+import ConfirmacaoModal from '../components/ConfirmacaoModal.jsx'
 import Input from '../components/Input.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
@@ -123,6 +124,7 @@ export default function Configuracoes() {
   const [salvandoHorario, setSalvandoHorario] = useState(false)
   const [exportandoDados, setExportandoDados] = useState(false)
   const [encerrandoConta, setEncerrandoConta] = useState(false)
+  const [confirmacao, setConfirmacao] = useState(null)
   const ramoEmpresa = empresa?.ramoDisplayName || (empresa?.ramo ? empresa.ramo.replaceAll('_', ' ') : 'Não identificado')
 
   useEffect(() => {
@@ -293,6 +295,43 @@ export default function Configuracoes() {
       setErroHorario(error.response?.data?.mensagem || Object.values(error.response?.data?.campos || {})[0] || 'Não foi possível salvar os horários.')
     } finally {
       setSalvandoHorario(false)
+    }
+  }
+
+  async function confirmarExportacao() {
+    setConfirmacao(null)
+    setExportandoDados(true)
+    try {
+      const dados = await appApi.exportarDadosLgpd()
+      const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json;charset=utf-8' })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `gendaz-dados-empresa-${new Date().toISOString().split('T')[0]}.json`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      setErro(err?.response?.data?.mensagem || 'Não foi possível exportar os dados.')
+    } finally {
+      setExportandoDados(false)
+    }
+  }
+
+  async function confirmarEncerramento() {
+    setConfirmacao(null)
+    setEncerrandoConta(true)
+    try {
+      const res = await appApi.excluirContaLgpd()
+      if (res?.stripeStatus === 'FALHA_AO_CANCELAR') {
+        setErro('Conta encerrada, mas o cancelamento da cobrança recorrente falhou. Entre em contato pelo suporte para regularizar.')
+      }
+      logout()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setErro(err?.response?.data?.mensagem || 'Não foi possível encerrar a conta.')
+      setEncerrandoConta(false)
     }
   }
 
@@ -660,27 +699,7 @@ export default function Configuracoes() {
               variant="secondary"
               icon={Download}
               disabled={exportandoDados || encerrandoConta}
-              onClick={async () => {
-                if (exportandoDados || encerrandoConta) return
-                if (!window.confirm('Tem certeza que deseja exportar os dados da empresa?')) return
-                setExportandoDados(true)
-                try {
-                  const dados = await appApi.exportarDadosLgpd()
-                  const blob = new Blob([JSON.stringify(dados, null, 2)], { type: 'application/json;charset=utf-8' })
-                  const url = window.URL.createObjectURL(blob)
-                  const link = document.createElement('a')
-                  link.href = url
-                  link.setAttribute('download', `gendaz-dados-empresa-${new Date().toISOString().split('T')[0]}.json`)
-                  document.body.appendChild(link)
-                  link.click()
-                  document.body.removeChild(link)
-                  window.URL.revokeObjectURL(url)
-                } catch (err) {
-                  setErro(err?.response?.data?.mensagem || 'Não foi possível exportar os dados.')
-                } finally {
-                  setExportandoDados(false)
-                }
-              }}
+              onClick={() => setConfirmacao('exportar')}
             >
               {exportandoDados ? 'Exportando dados, aguarde...' : 'Exportar dados'}
             </Button>
@@ -688,26 +707,33 @@ export default function Configuracoes() {
               variant="danger"
               icon={AlertTriangle}
               disabled={exportandoDados || encerrandoConta}
-              onClick={async () => {
-                if (exportandoDados || encerrandoConta) return
-                if (!window.confirm('Tem certeza que deseja encerrar a conta? Esta ação encerrará o acesso da empresa e dos usuários vinculados.')) return
-                setEncerrandoConta(true)
-                try {
-                  const res = await appApi.excluirContaLgpd()
-                  if (res?.stripeStatus === 'FALHA_AO_CANCELAR') {
-                    setErro('Conta encerrada, mas o cancelamento da cobrança recorrente falhou. Entre em contato pelo suporte para regularizar.')
-                  }
-                  logout()
-                  navigate('/login', { replace: true })
-                } catch (err) {
-                  setErro(err?.response?.data?.mensagem || 'Não foi possível encerrar a conta.')
-                  setEncerrandoConta(false)
-                }
-              }}
+              onClick={() => setConfirmacao('encerrar')}
             >
               {encerrandoConta ? 'Encerrando conta, aguarde...' : 'Encerrar conta'}
             </Button>
           </div>
+
+          <ConfirmacaoModal
+            open={confirmacao === 'exportar'}
+            titulo="Exportar dados"
+            tipo="neutral"
+            acaoLabel="Exportar dados"
+            mensagem="Tem certeza que deseja exportar os dados da empresa? Um arquivo JSON com todos os dados será baixado."
+            carregando={exportandoDados}
+            onCancelar={() => setConfirmacao(null)}
+            onConfirmar={confirmarExportacao}
+          />
+
+          <ConfirmacaoModal
+            open={confirmacao === 'encerrar'}
+            titulo="Encerrar conta"
+            tipo="danger"
+            acaoLabel="Encerrar conta"
+            mensagem="Tem certeza que deseja encerrar a conta? Esta ação encerrará o acesso da empresa e de todos os usuários vinculados."
+            carregando={encerrandoConta}
+            onCancelar={() => setConfirmacao(null)}
+            onConfirmar={confirmarEncerramento}
+          />
         </section>
       )}
     </section>

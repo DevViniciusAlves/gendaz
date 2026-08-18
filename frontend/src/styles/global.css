@@ -21393,4 +21393,76 @@ iframe {
   }
 }
 
+/* ============================================================
+   BTN DANGER — precedência sobre o gradiente padrão do app-shell
+   (o seletor .app-shell .btn:not(.btn-secondary):not(.btn-ghost)
+   sobrescrevia a cor vermelha dos botões danger)
+   ============================================================ */
+
+.app-shell .btn-danger,
+.admin-shell .btn-danger {
+  color: #ffffff;
+  background: var(--danger);
+  border: 1px solid var(--danger);
+  box-shadow: none;
+}
+
+.app-shell .btn-danger svg,
+.admin-shell .btn-danger svg {
+  color: currentColor;
+  stroke: currentColor;
+  fill: none;
+}
+
+.app-shell .btn-danger:hover:not(:disabled),
+.admin-shell .btn-danger:hover:not(:disabled) {
+  color: #ffffff;
+  background: color-mix(in srgb, var(--danger) 85%, #000000);
+  border-color: color-mix(in srgb, var(--danger) 85%, #000000);
+  box-shadow: 0 8px 24px rgba(220, 38, 38, 0.18);
+}
+
+/* ============================================================
+   MODAL DE CONFIRMAÇÃO (design próprio do SaaS)
+   ============================================================ */
+
+.confirm-modal {
+  width: min(420px, 100%);
+}
+
+.confirm-modal-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 12px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--danger) 12%, transparent);
+  color: var(--danger);
+}
+
+.confirm-modal-icon.is-neutral {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.confirm-modal h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+.confirm-modal-message {
+  margin: 0 0 20px 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
 
