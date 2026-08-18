@@ -92,7 +92,8 @@ public final class PagamentoDtos {
             String stripeCustomerId,
             LocalDateTime dataCriacao,
             LocalDateTime dataExpiracao,
-            LocalDateTime dataPagamento
+            LocalDateTime dataPagamento,
+            Long dataExpiracaoEpoch
     ) {}
 
     public record VerificarPagamentoPlanoResponse(

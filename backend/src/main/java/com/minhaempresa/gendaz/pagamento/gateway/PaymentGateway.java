@@ -9,6 +9,7 @@ public interface PaymentGateway {
     boolean validarWebhook(String assinatura, PaymentGatewayWebhook webhook);
     PaymentGatewayWebhook consultarPagamentoWebhook(String providerPaymentId, String assinatura, String requestId);
     void cancelarSubscription(String subscriptionId);
+    void expirarCheckoutSession(String sessionId);
 
     default Optional<PaymentGatewayWebhook> consultarPagamentoPlano(PagamentoPlanoEntity pagamento) {
         return Optional.empty();

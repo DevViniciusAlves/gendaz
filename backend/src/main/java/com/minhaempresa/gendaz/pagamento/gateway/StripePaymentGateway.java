@@ -64,7 +64,10 @@ public class StripePaymentGateway implements PaymentGateway {
                 .putMetadata("plano", plano);
 
         try {
-            Session session = Session.create(params.build());
+            RequestOptions options = RequestOptions.builder()
+                    .setIdempotencyKey("checkout-plano-" + pagamento.getId())
+                    .build();
+            Session session = Session.create(params.build(), options);
             
             pagamento.setStripeSessionId(session.getId());
             pagamento.setStripeCustomerId(customerId);
@@ -176,6 +179,21 @@ public class StripePaymentGateway implements PaymentGateway {
     }
 
     @Override
+    public void expirarCheckoutSession(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) return;
+        Stripe.apiKey = stripeProperties.getSecretKey();
+        try {
+            Session session = Session.retrieve(sessionId);
+            if ("open".equals(session.getStatus())) {
+                session.expire();
+                log.info("Checkout Stripe expirado: sessionId={}", sessionId);
+            }
+        } catch (StripeException ex) {
+            log.error("Erro ao expirar session Stripe {}: {}", sessionId, ex.getMessage());
+        }
+    }
+
+    @Override
     public void cancelarSubscription(String subscriptionId) {
         if (subscriptionId == null || subscriptionId.isBlank()) {
             throw new BusinessException("Subscription ID não pode ser vazio.");
@@ -188,6 +206,25 @@ public class StripePaymentGateway implements PaymentGateway {
             log.info("Subscription Stripe cancelada: subscriptionId={}", subscriptionId);
         } catch (Exception ex) {
             throw new BusinessException("Falha ao cancelar subscription Stripe: " + ex.getMessage());
+        }
+    }
+
+    @Override
+    public void expirarCheckoutSession(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+        Stripe.apiKey = stripeProperties.getSecretKey();
+        try {
+            Session session = Session.retrieve(sessionId);
+            if ("open".equals(session.getStatus())) {
+                session.expire();
+                log.info("Checkout Session Stripe expirada: sessionId={}", sessionId);
+            } else {
+                log.info("Checkout Session Stripe com status terminal: sessionId={}, status={}", sessionId, session.getStatus());
+            }
+        } catch (StripeException ex) {
+            log.warn("Erro ao expirar session {} na Stripe: {}", sessionId, ex.getMessage());
         }
     }
 

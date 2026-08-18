@@ -27,7 +27,9 @@ public class StripeWebhookService {
         Event event = construirEvento(payload, sigHeader);
         switch (event.getType()) {
             case "checkout.session.completed" -> processarCheckoutSessionCompleted(event);
+            case "checkout.session.expired" -> processarCheckoutSessionExpired(event);
             case "invoice.payment_succeeded" -> processarInvoice(event, StatusPagamento.PAYMENT_APPROVED);
+
             case "invoice.payment_failed" -> processarInvoice(event, StatusPagamento.PAYMENT_REJECTED);
             case "customer.subscription.deleted" -> processarSubscription(event, StatusPagamento.PAYMENT_CANCELED);
             case "customer.subscription.updated" -> processarSubscriptionUpdated(event);
@@ -81,7 +83,28 @@ public class StripeWebhookService {
         }
     }
 
+    private void processarCheckoutSessionExpired(Event event) {
+        Session session = desserializar(event, Session.class);
+        
+        // Idempotência
+        if (pagamentoService.eventoJaProcessado(event.getId())) {
+             log.info("Evento checkout.session.expired já processado: {}", event.getId());
+             return;
+        }
+
+        log.info("Processando checkout.session.expired: id={}", session.getId());
+        
+        // Registrar evento para idempotência e expirar
+        pagamentoPlanoRepository.findByStripeSessionId(session.getId())
+            .ifPresent(pagamento -> {
+                pagamento.setStripeEventId(event.getId());
+                pagamentoPlanoRepository.save(pagamento);
+                pagamentoService.expirarCheckoutPorTimeout(pagamento);
+            });
+    }
+
     private void processarInvoice(Event event, StatusPagamento status) {
+
         Invoice invoice = desserializar(event, Invoice.class);
         String eventId = event.getId();
         String invoiceId = invoice.getId();

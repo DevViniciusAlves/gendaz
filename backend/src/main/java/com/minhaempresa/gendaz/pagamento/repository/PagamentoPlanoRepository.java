@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface PagamentoPlanoRepository extends JpaRepository<PagamentoPlanoEntity, Long> {
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
+    List<PagamentoPlanoEntity> findByStatusAndDataExpiracaoBefore(StatusPagamento status, LocalDateTime dataExpiracao);
+    @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     List<PagamentoPlanoEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     List<PagamentoPlanoEntity> findByEmpresaIdAndStatusOrderByDataCriacaoDesc(Long empresaId, StatusPagamento status);
@@ -22,9 +24,12 @@ public interface PagamentoPlanoRepository extends JpaRepository<PagamentoPlanoEn
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresaIdAndStatusOrderByDataCriacaoDesc(Long empresaId, StatusPagamento status);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
+    Optional<PagamentoPlanoEntity> findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(Long empresaId, Long planoId, StatusPagamento status);
+    @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndPlano_NomeOrderByDataCriacaoDesc(String email, String planoNome);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndStatusOrderByDataCriacaoDesc(String email, StatusPagamento status);
+    List<PagamentoPlanoEntity> findByStatusAndDataExpiracaoBefore(StatusPagamento status, LocalDateTime agora);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     List<PagamentoPlanoEntity> findByAssinaturaId(Long assinaturaId);
     boolean existsByStripeEventId(String stripeEventId);

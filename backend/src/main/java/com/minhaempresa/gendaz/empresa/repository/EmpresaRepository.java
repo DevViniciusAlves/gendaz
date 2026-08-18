@@ -6,7 +6,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.Lock;
+
 public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
+    
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select e from EmpresaEntity e where e.id = :id")
+    Optional<EmpresaEntity> findByIdWithLock(@Param("id") Long id);
+
     boolean existsByDocumento(String documento);
 
     boolean existsByTelefone(String telefone);

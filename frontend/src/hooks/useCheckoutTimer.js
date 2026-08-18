@@ -1,23 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getInicioCheckout, getInicioCheckoutMs, registrarInicioCheckout } from '../utils/checkoutUtils.js'
-
-const LIMITE_CHECKOUT_MS = 15 * 60 * 1000
-
-function parseData(valor) {
-  if (!valor) return null
-  const data = valor instanceof Date ? valor : new Date(valor)
-  return Number.isNaN(data.getTime()) ? null : data
-}
-
-function normalizarInicioCheckout(pagamento, agoraMs = Date.now()) {
-  const inicioPersistido = getInicioCheckoutMs(pagamento)
-  if (inicioPersistido) {
-    return Math.min(inicioPersistido, agoraMs)
-  }
-
-  const dataCriacao = parseData(pagamento?.dataCriacao)
-  return dataCriacao ? Math.min(dataCriacao.getTime(), agoraMs) : null
-}
+import { getDataExpiracao } from '../utils/checkoutUtils.js'
 
 export function useCheckoutTimer(pagamento) {
   const [tempoRestante, setTempoRestante] = useState(null)
@@ -30,21 +12,16 @@ export function useCheckoutTimer(pagamento) {
       return
     }
 
-    const inicioCheckout = normalizarInicioCheckout(pagamento)
-    if (!inicioCheckout) {
+    const dataExpiracao = getDataExpiracao(pagamento)
+    if (!dataExpiracao) {
       setExpirou(true)
       setTempoRestante(null)
       return
     }
-    if (!getInicioCheckout(pagamento)) {
-      registrarInicioCheckout(pagamento, new Date(inicioCheckout).toISOString())
-    }
-
-    const expiracaoCalculada = inicioCheckout + LIMITE_CHECKOUT_MS
 
     const calcularTempo = () => {
       const agora = Date.now()
-      const resto = expiracaoCalculada - agora
+      const resto = dataExpiracao.getTime() - agora
 
       if (resto <= 0) {
         setTempoRestante(0)
@@ -65,14 +42,7 @@ export function useCheckoutTimer(pagamento) {
     }, 1000)
 
     return () => clearInterval(intervalo)
-  }, [
-    pagamento?.checkoutUrl,
-    pagamento?.id,
-    pagamento?.providerPaymentId,
-    pagamento?.paymentReference,
-    pagamento?.dataCriacao,
-    pagamento?.checkoutSolicitadoEm,
-  ])
+  }, [pagamento])
 
   const minutos = tempoRestante ? Math.max(0, Math.floor(tempoRestante / 1000 / 60)) : 0
   const segundos = tempoRestante ? Math.max(0, Math.floor((tempoRestante / 1000) % 60)) : 0

@@ -65,6 +65,7 @@ public class PagamentoService {
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
     private final PagamentoPlanoCobrancaRepository pagamentoPlanoCobrancaRepository;
     private final PaymentGateway paymentGateway;
+    private final PaymentGatewayProperties paymentGatewayProperties;
     private final AdminAuditService auditService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final PagamentoMapper mapper = new PagamentoMapper();
@@ -122,23 +123,131 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoPlanoResponse iniciarPagamentoPlanoPro(IniciarPagamentoPlanoRequest request) {
-        return iniciarPagamentoPlano(
-                request.empresaId(),
-                request.plano() == null ? "PRO" : request.plano(),
-                request.metodoPagamento(),
-                request.customerName(),
-                request.customerEmail(),
-                request.customerPhone(),
-                request.customerDocType(),
-                request.customerDocNumber(),
-                request.antifraudProfilingAttemptReference()
-        );
+    public void expirarCheckoutPorTimeout(PagamentoPlanoEntity pagamento) {
+        if (pagamento == null) return;
+        
+        // Recarregar o PagamentoPlano atual para confirmar estado
+        pagamento = pagamentoPlanoRepository.findById(pagamento.getId()).orElse(pagamento);
+        
+        if (pagamento.getStatus() != StatusPagamento.PAYMENT_PENDING) {
+            log.info("Tentativa de expirar checkout id={} ignorada pois status já é terminal: {}", pagamento.getId(), pagamento.getStatus());
+            return;
+        }
+
+        // Verificar o estado real da Stripe antes de expirar
+        try {
+            Optional<PaymentGatewayWebhook> stripeInfo = paymentGateway.consultarPagamentoPlano(pagamento);
+            if (stripeInfo.isPresent()) {
+                PaymentGatewayWebhook info = stripeInfo.get();
+                if (info.status() == StatusPagamento.PAYMENT_APPROVED) {
+                    log.info("Evitando expiração do checkout id={} pois o pagamento foi concluído na Stripe.", pagamento.getId());
+                    liberarContaPorPagamentoAprovado(pagamento, "CORRIDA_TIMEOUT");
+                    pagamentoPlanoRepository.save(pagamento);
+                    return;
+                }
+            }
+        } catch (Exception ex) {
+            log.warn("Erro ao consultar Stripe para checkout id={} antes de expirar: {}", pagamento.getId(), ex.getMessage());
+        }
+
+        // Invalidar a Session Stripe se ainda estiver aberta
+        if (pagamento.getStripeSessionId() != null) {
+            try {
+                paymentGateway.expirarCheckoutSession(pagamento.getStripeSessionId());
+            } catch (Exception ex) {
+                log.warn("Falha ao invalidar Session Stripe {} para checkout id={}: {}", pagamento.getStripeSessionId(), pagamento.getId(), ex.getMessage());
+            }
+        }
+
+        // Marcar PAYMENT_EXPIRED pelo caminho isolado de timeout
+        pagamento.setStatus(StatusPagamento.PAYMENT_EXPIRED);
+        pagamentoPlanoRepository.save(pagamento);
+
+        log.info("Checkout expirado por timeout: pagamentoId={}, empresaId={}, plano={}", 
+                 pagamento.getId(), pagamento.getEmpresa().getId(), pagamento.getPlano().getNome());
     }
 
     @Transactional
-    public PagamentoPlanoResponse iniciarPagamentoPlanoPro(Long empresaId, MetodoPagamento metodoPagamento) {
-        return iniciarPagamentoPlanoOnboarding(empresaId, "PRO", metodoPagamento, null, null, null, null, null, null);
+    public PagamentoPlanoEntity obterOuCriarCheckoutCentralizado(
+            Long empresaId,
+            String planoNome,
+            MetodoPagamento metodoPagamento,
+            String customerName,
+            String customerEmail,
+            String customerPhone,
+            String customerDocType,
+            String customerDocNumber,
+            String antifraudProfilingAttemptReference,
+            boolean isOnboarding
+    ) {
+        // 1. Adquirir proteção de concorrência usando pessimistic lock
+        EmpresaEntity empresa = empresaRepository.findByIdWithLock(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+
+        if (!isOnboarding) {
+            validarEmpresaAtual(empresaId);
+        } else {
+            validarEmpresaOnboarding(empresaId);
+        }
+        validarMetodoPagamentoPlano(metodoPagamento);
+
+        PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
+
+        if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
+            throw new BusinessException("Você já possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
+        }
+
+        // 2. Procurar PAYMENT_PENDING do mesmo plano
+        Optional<PagamentoPlanoEntity> pendenteOpt = pagamentoPlanoRepository
+                .findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(empresaId, plano.getId(), StatusPagamento.PAYMENT_PENDING);
+
+        if (pendenteOpt.isPresent()) {
+            PagamentoPlanoEntity pendente = pendenteOpt.get();
+            
+            // 3. Validar prazo do backend
+            if (pendente.getDataExpiracao() != null && pendente.getDataExpiracao().isAfter(LocalDateTime.now())) {
+                // Validar que existe checkoutUrl e stripeSessionId utilizáveis
+                if (pendente.getCheckoutUrl() != null && !pendente.getCheckoutUrl().isBlank()
+                        && pendente.getStripeSessionId() != null && !pendente.getStripeSessionId().isBlank()) {
+                    log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}, session={}",
+                            pendente.getId(), empresaId, plano.getNome(), pendente.getStripeSessionId());
+                    return pendente;
+                }
+            } else {
+                // Se o prazo venceu, finalizar a expiração com segurança
+                log.info("Checkout pendente encontrado, porém vencido. Expirando com segurança: pagamentoId={}", pendente.getId());
+                expirarCheckoutPorTimeout(pendente);
+            }
+        }
+
+        // 4. Se não existir ou estava vencido, criar um novo checkout
+        PagamentoPlanoEntity pagamento = novoPagamentoPlano(
+                empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
+                customerDocType, customerDocNumber, antifraudProfilingAttemptReference
+        );
+        
+        // TTL de 15 minutos definido em um único lugar no backend
+        int ttlMinutes = paymentGatewayProperties.getCheckout().getTtlMinutes();
+        pagamento.setDataExpiracao(LocalDateTime.now().plusMinutes(ttlMinutes));
+        pagamento = pagamentoPlanoRepository.save(pagamento);
+
+        PaymentGatewayResponse gatewayResponse;
+        if (isOnboarding) {
+            gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento, empresa.getStripeCustomerId());
+        } else {
+            gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento);
+        }
+
+        pagamento.setProvider(gatewayResponse.provider());
+        pagamento.setProviderPaymentId(gatewayResponse.providerPaymentId());
+        pagamento.setExternalReference(preferir(gatewayResponse.externalReference(), pagamento.getExternalReference()));
+        pagamento.setPaymentReference(preferir(gatewayResponse.paymentReference(), pagamento.getPaymentReference()));
+        pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
+        
+        pagamento = pagamentoPlanoRepository.save(pagamento);
+        log.info("Checkout criado: pagamentoId={}, empresaId={}, plano={}, session={}",
+                pagamento.getId(), empresaId, plano.getNome(), pagamento.getStripeSessionId());
+        return pagamento;
     }
 
     /**
@@ -157,33 +266,11 @@ public class PagamentoService {
             String customerDocNumber,
             String antifraudProfilingAttemptReference
     ) {
-        validarMetodoPagamentoPlano(metodoPagamento);
-        validarEmpresaOnboarding(empresaId);
-        EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
-        PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
-
-        if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
-            throw new BusinessException("Você já possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
-        }
-
-        PagamentoPlanoEntity pagamento = novoPagamentoPlano(
-                empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
-                customerDocType, customerDocNumber, antifraudProfilingAttemptReference
+        PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
+                empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
+                customerDocType, customerDocNumber, antifraudProfilingAttemptReference, true
         );
-        pagamento = pagamentoPlanoRepository.save(pagamento);
-
-        PaymentGatewayResponse gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento, empresa.getStripeCustomerId());
-        pagamento.setProvider(gatewayResponse.provider());
-        pagamento.setProviderPaymentId(gatewayResponse.providerPaymentId());
-        pagamento.setExternalReference(preferir(gatewayResponse.externalReference(), pagamento.getExternalReference()));
-        pagamento.setPaymentReference(preferir(gatewayResponse.paymentReference(), pagamento.getPaymentReference()));
-        pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
-        pagamento.setDataExpiracao(gatewayResponse.dataExpiracao());
-
-        log.info("Checkout Stripe gerado: pagamento={}, empresa={}, plano={}, session={}",
-                pagamento.getId(), empresaId, plano.getNome(), pagamento.getStripeSessionId());
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
+        return mapper.toPlanoResponse(pagamento);
     }
 
     @Transactional
@@ -203,32 +290,11 @@ public class PagamentoService {
             String customerDocNumber,
             String antifraudProfilingAttemptReference
     ) {
-        validarEmpresaAtual(empresaId);
-        validarMetodoPagamentoPlano(metodoPagamento);
-        EmpresaEntity empresa = empresaService.buscarEntidade(empresaId);
-        PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
-
-        if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
-            throw new BusinessException("Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
-        }
-
-        PagamentoPlanoEntity pagamento = novoPagamentoPlano(
-                empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
-                customerDocType, customerDocNumber, antifraudProfilingAttemptReference
+        PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
+                empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
+                customerDocType, customerDocNumber, antifraudProfilingAttemptReference, false
         );
-        pagamento = pagamentoPlanoRepository.save(pagamento);
-
-        PaymentGatewayResponse gatewayResponse = paymentGateway.criarPagamentoPlano(pagamento);
-        pagamento.setProvider(gatewayResponse.provider());
-        pagamento.setProviderPaymentId(gatewayResponse.providerPaymentId());
-        pagamento.setExternalReference(preferir(gatewayResponse.externalReference(), pagamento.getExternalReference()));
-        pagamento.setPaymentReference(preferir(gatewayResponse.paymentReference(), pagamento.getPaymentReference()));
-        pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
-        pagamento.setDataExpiracao(gatewayResponse.dataExpiracao());
-
-        log.info("Checkout Stripe gerado: pagamento={}, empresa={}, plano={}, session={}",
-                pagamento.getId(), empresaId, plano.getNome(), pagamento.getStripeSessionId());
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
+        return mapper.toPlanoResponse(pagamento);
     }
 
     @Transactional

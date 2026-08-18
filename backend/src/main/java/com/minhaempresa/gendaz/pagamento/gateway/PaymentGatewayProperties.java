@@ -15,5 +15,12 @@ public class PaymentGatewayProperties {
     private String webhookSecret = "";
     private String successUrl = "https://gendaz.site/sistema/planos";
     private String cancelUrl = "https://gendaz.site/sistema/planos";
+    private CheckoutProperties checkout = new CheckoutProperties();
+
+    @Getter
+    @Setter
+    public static class CheckoutProperties {
+        private int ttlMinutes = 15;
+    }
 }
 
