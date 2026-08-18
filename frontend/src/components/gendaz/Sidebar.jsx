@@ -1,4 +1,4 @@
-﻿import { NavLink } from 'react-router-dom'
+﻿import { NavLink, useParams } from 'react-router-dom'
 import { CalendarDays, LayoutDashboard, MessageCircle, Settings2, History, LifeBuoy, Ticket, MoreHorizontal } from 'lucide-react'
 import logoSidebar from '../../assets/logos/meugendazpngpreto.png'
 
@@ -16,6 +16,15 @@ const primaryMobileItems = items.filter((item) => item.mobile)
 const moreMobileItems = items.filter((item) => !item.mobile)
 
 export default function Sidebar() {
+  const { slug } = useParams()
+
+  const basePath = `/meu-gendaz/${slug}`
+
+  const resolveTo = (to) =>
+    to === '.'
+      ? `${basePath}/dashboard`
+      : `${basePath}/${to}`
+
   return (
     <>
       <aside className="gendaz-sidebar">
@@ -25,7 +34,12 @@ export default function Sidebar() {
         <span className="nav-label">Navegacao</span>
         <nav>
           {items.map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'gendaz-sidebar__link is-active' : 'gendaz-sidebar__link')}>
+            <NavLink
+              key={to}
+              to={resolveTo(to)}
+              end={end}
+              className={({ isActive }) => (isActive ? 'gendaz-sidebar__link is-active' : 'gendaz-sidebar__link')}
+            >
               <Icon size={18} />
               <span>{label}</span>
             </NavLink>
@@ -34,7 +48,12 @@ export default function Sidebar() {
       </aside>
       <nav className="gendaz-mobile-nav" aria-label="Navegacao Meu Gendaz">
         {primaryMobileItems.map(({ to, label, icon: Icon, end }) => (
-          <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'gendaz-mobile-nav__link is-active' : 'gendaz-mobile-nav__link')}>
+          <NavLink
+            key={to}
+            to={resolveTo(to)}
+            end={end}
+            className={({ isActive }) => (isActive ? 'gendaz-mobile-nav__link is-active' : 'gendaz-mobile-nav__link')}
+          >
             <Icon size={18} />
             <span>{label}</span>
           </NavLink>
@@ -46,7 +65,12 @@ export default function Sidebar() {
           </summary>
           <div className="gendaz-mobile-more__panel">
             {moreMobileItems.map(({ to, label, icon: Icon, end }) => (
-              <NavLink key={to} to={to} end={end} className={({ isActive }) => (isActive ? 'gendaz-mobile-more__link is-active' : 'gendaz-mobile-more__link')}>
+              <NavLink
+                key={to}
+                to={resolveTo(to)}
+                end={end}
+                className={({ isActive }) => (isActive ? 'gendaz-mobile-more__link is-active' : 'gendaz-mobile-more__link')}
+              >
                 <Icon size={18} />
                 <span>{label}</span>
               </NavLink>
