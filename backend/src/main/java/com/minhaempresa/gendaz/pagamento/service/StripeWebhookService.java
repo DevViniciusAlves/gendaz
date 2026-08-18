@@ -95,12 +95,7 @@ public class StripeWebhookService {
         log.info("Processando checkout.session.expired: id={}", session.getId());
         
         // Registrar evento para idempotência e expirar
-        pagamentoPlanoRepository.findByStripeSessionId(session.getId())
-            .ifPresent(pagamento -> {
-                pagamento.setStripeEventId(event.getId());
-                pagamentoPlanoRepository.save(pagamento);
-                pagamentoService.expirarCheckoutPorTimeout(pagamento);
-            });
+        pagamentoService.expirarCheckoutPorSessionStripe(session.getId(), event.getId());
     }
 
     private void processarInvoice(Event event, StatusPagamento status) {

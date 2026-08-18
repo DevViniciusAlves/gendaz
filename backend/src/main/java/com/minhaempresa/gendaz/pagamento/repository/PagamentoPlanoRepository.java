@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.pagamento.repository;
 
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,7 +30,6 @@ public interface PagamentoPlanoRepository extends JpaRepository<PagamentoPlanoEn
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndPlano_NomeOrderByDataCriacaoDesc(String email, String planoNome);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     Optional<PagamentoPlanoEntity> findFirstByEmpresa_EmailIgnoreCaseAndStatusOrderByDataCriacaoDesc(String email, StatusPagamento status);
-    List<PagamentoPlanoEntity> findByStatusAndDataExpiracaoBefore(StatusPagamento status, LocalDateTime agora);
     @EntityGraph(attributePaths = {"empresa", "plano", "assinatura"})
     List<PagamentoPlanoEntity> findByAssinaturaId(Long assinaturaId);
     boolean existsByStripeEventId(String stripeEventId);

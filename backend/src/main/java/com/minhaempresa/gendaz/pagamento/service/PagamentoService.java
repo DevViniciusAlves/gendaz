@@ -27,7 +27,9 @@ import com.minhaempresa.gendaz.pagamento.entity.StripeWebhookEventEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGateway;
+import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayProperties;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayResponse;
+
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGatewayWebhook;
 import com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoCobrancaRepository;
@@ -279,6 +281,21 @@ public class PagamentoService {
     }
 
     @Transactional
+    public PagamentoPlanoResponse iniciarPagamentoPlanoPro(IniciarPagamentoPlanoRequest request) {
+        return iniciarPagamentoPlano(
+                request.empresaId(),
+                "PRO",
+                request.metodoPagamento(),
+                request.customerName(),
+                request.customerEmail(),
+                request.customerPhone(),
+                request.customerDocType(),
+                request.customerDocNumber(),
+                request.antifraudProfilingAttemptReference()
+        );
+    }
+
+    @Transactional
     public PagamentoPlanoResponse iniciarPagamentoPlano(
             Long empresaId,
             String planoNome,
@@ -432,6 +449,19 @@ public class PagamentoService {
     @Transactional
     public boolean eventoJaProcessado(String eventId) {
         return pagamentoPlanoRepository.existsByStripeEventId(eventId);
+    }
+
+    @Transactional
+    public void expirarCheckoutPorSessionStripe(String stripeSessionId, String eventId) {
+        if (stripeSessionId == null || stripeSessionId.isBlank()) {
+            return;
+        }
+        pagamentoPlanoRepository.findByStripeSessionId(stripeSessionId)
+                .ifPresent(pagamento -> {
+                    pagamento.setStripeEventId(eventId);
+                    pagamentoPlanoRepository.save(pagamento);
+                    expirarCheckoutPorTimeout(pagamento);
+                });
     }
 
     @Transactional

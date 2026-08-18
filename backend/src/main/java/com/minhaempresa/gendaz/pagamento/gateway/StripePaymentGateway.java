@@ -179,21 +179,6 @@ public class StripePaymentGateway implements PaymentGateway {
     }
 
     @Override
-    public void expirarCheckoutSession(String sessionId) {
-        if (sessionId == null || sessionId.isBlank()) return;
-        Stripe.apiKey = stripeProperties.getSecretKey();
-        try {
-            Session session = Session.retrieve(sessionId);
-            if ("open".equals(session.getStatus())) {
-                session.expire();
-                log.info("Checkout Stripe expirado: sessionId={}", sessionId);
-            }
-        } catch (StripeException ex) {
-            log.error("Erro ao expirar session Stripe {}: {}", sessionId, ex.getMessage());
-        }
-    }
-
-    @Override
     public void cancelarSubscription(String subscriptionId) {
         if (subscriptionId == null || subscriptionId.isBlank()) {
             throw new BusinessException("Subscription ID não pode ser vazio.");
