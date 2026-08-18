@@ -136,7 +136,7 @@ local-dev-
 - Usar migrations controladas.
 - Não usar `ddl-auto=update` em produção sem avaliação explícita.
 - Não criar migrations destrutivas sem backup e plano de rollback.
-- E-mails, telefones e documentos são dados sensíveis.
+- E-mails, telefones e dados de identificação fiscal (CPF/CNPJ/documento) são dados sensíveis; a plataforma não coleta CPF/CNPJ/documento em seus fluxos atuais.
 - Criptografia direta de colunas usadas em login/busca/unicidade deve ser feita somente com estratégia segura.
 
 Estratégia recomendada para criptografia futura de e-mail/telefone:

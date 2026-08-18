@@ -79,7 +79,6 @@ public class DataSeeder implements CommandLineRunner {
 
         EmpresaEntity empresaBasico = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Gendaz Matriz")
-                .documento("12345678000190")
                 .telefone("5565993360300")
                 .email("contato@Gendaz.com")
                 .status(StatusEmpresa.ATIVA)
@@ -87,7 +86,6 @@ public class DataSeeder implements CommandLineRunner {
 
         EmpresaEntity empresaPro = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Gendaz Premium")
-                .documento("98765432000100")
                 .telefone("5565988880000")
                 .email("premium@Gendaz.com")
                 .status(StatusEmpresa.ATIVA)
@@ -151,7 +149,6 @@ public class DataSeeder implements CommandLineRunner {
 
         EmpresaEntity empresaTeste = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("AgendNew Testes")
-                .documento("11222333000181")
                 .telefone("5565999990000")
                 .email("teste@agendnew.com")
                 .status(StatusEmpresa.ATIVA)

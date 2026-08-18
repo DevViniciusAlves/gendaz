@@ -560,11 +560,11 @@ public class ResendEmailService {
 
     public boolean sendNewCustomerNotification(String nomeCliente, String emailCliente, String telefoneCliente,
                                                 String nomeEmpresa, String plano, String dataCadastro,
-                                                Long empresaId, String cpfCnpj, Long usuarioId) {
+                                                Long empresaId, Long usuarioId) {
         try {
             String assunto = "Novo cliente cadastrado na Gendaz";
             String html = montarHtmlNovoCliente(nomeCliente, emailCliente, telefoneCliente, nomeEmpresa,
-                    plano, dataCadastro, empresaId, cpfCnpj, usuarioId);
+                    plano, dataCadastro, empresaId, usuarioId);
             return enviarEmail(adminNotificationEmail, assunto, html);
         } catch (Exception e) {
             log.error("[resend] erro ao montar email novo cliente: {}", e.getMessage(), e);
@@ -574,7 +574,7 @@ public class ResendEmailService {
 
     private String montarHtmlNovoCliente(String nomeCliente, String emailCliente, String telefoneCliente,
                                           String nomeEmpresa, String plano, String dataCadastro,
-                                          Long empresaId, String cpfCnpj, Long usuarioId) {
+                                          Long empresaId, Long usuarioId) {
         String dataFormatada = dataCadastro != null && dataCadastro.length() >= 10 ? dataCadastro.substring(0, 10) : "-";
         String horaFormatada = dataCadastro != null && dataCadastro.length() > 11 ? dataCadastro.substring(11) : "-";
 
@@ -608,10 +608,6 @@ public class ResendEmailService {
                     <td style=\"padding:8px 0;\">%s</td>
                   </tr>
                   <tr>
-                    <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">CPF/CNPJ:</td>
-                    <td style=\"padding:8px 0;\">%s</td>
-                  </tr>
-                  <tr>
                     <td style=\"padding:8px 0; color:#6b7280; font-weight:700;\">ID do usuario:</td>
                     <td style=\"padding:8px 0;\">%d</td>
                   </tr>
@@ -631,7 +627,6 @@ public class ResendEmailService {
                         safe(nomeCliente, "Nao informado"),
                         safe(emailCliente, "Nao informado"),
                         safe(telefoneCliente, "Nao informado"),
-                        safe(cpfCnpj, "Nao informado"),
                         usuarioId != null ? usuarioId : 0L,
                         safe(dataFormatada, "-"),
                         safe(horaFormatada, "-")

@@ -38,7 +38,6 @@ class EmpresaServicePhoneFlowTest {
         return EmpresaEntity.builder()
                 .id(7L)
                 .nomeFantasia("Minha Empresa")
-                .documento(null)
                 .telefone("5565993360300")
                 .email("contato@empresa.com")
                 .status(StatusEmpresa.ATIVA)
@@ -58,7 +57,7 @@ class EmpresaServicePhoneFlowTest {
     }
 
     private AtualizarEmpresaRequest request(String telefone) {
-        return new AtualizarEmpresaRequest("Minha Empresa", null, telefone, "contato@empresa.com", "America/Cuiaba", StatusEmpresa.ATIVA);
+        return new AtualizarEmpresaRequest("Minha Empresa", telefone, "contato@empresa.com", "America/Cuiaba", StatusEmpresa.ATIVA);
     }
 
     @Test
@@ -66,7 +65,6 @@ class EmpresaServicePhoneFlowTest {
         EmpresaEntity empresa = empresa();
         when(empresaRepository.findById(7L)).thenReturn(Optional.of(empresa));
         when(sanitizacaoService.textoObrigatorio("Minha Empresa")).thenReturn("Minha Empresa");
-        when(sanitizacaoService.texto(null)).thenReturn(null);
         when(sanitizacaoService.email("contato@empresa.com")).thenReturn("contato@empresa.com");
         when(empresaRepository.save(any(EmpresaEntity.class))).thenReturn(empresa);
 
@@ -82,7 +80,6 @@ class EmpresaServicePhoneFlowTest {
         EmpresaEntity empresa = empresa();
         when(empresaRepository.findById(7L)).thenReturn(Optional.of(empresa));
         when(sanitizacaoService.textoObrigatorio("Minha Empresa")).thenReturn("Minha Empresa");
-        when(sanitizacaoService.texto(null)).thenReturn(null);
         when(sanitizacaoService.email("contato@empresa.com")).thenReturn("contato@empresa.com");
 
         // telefone de outra empresa

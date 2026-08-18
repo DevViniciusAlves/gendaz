@@ -26,6 +26,11 @@ app:
   outbound-audit:
     enabled: ${OUTBOUND_AUDIT_ENABLED:false}
     summary-interval-ms: ${OUTBOUND_AUDIT_SUMMARY_INTERVAL_MS:600000}
+  insights:
+    cleanup-delay-ms: ${INSIGHTS_CLEANUP_DELAY_MS:3600000}
+  audit-logs:
+    retention-days: ${AUDIT_LOGS_RETENTION_DAYS:365}
+    cleanup-delay-ms: ${AUDIT_LOGS_CLEANUP_DELAY_MS:86400000}
 
 payment:
   provider: ${PAYMENT_PROVIDER:STRIPE}

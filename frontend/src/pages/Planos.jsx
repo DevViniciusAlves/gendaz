@@ -190,8 +190,6 @@ export default function Planos() {
         customerName: usuario.nome,
         customerEmail: usuario.email,
         customerPhone: usuario.telefone,
-        customerDocType: usuario.documento ? 'cpf' : '',
-        customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
       setPagamentoPlano(pagamento)
@@ -228,8 +226,6 @@ export default function Planos() {
         customerName: usuario.nome,
         customerEmail: usuario.email,
         customerPhone: usuario.telefone,
-        customerDocType: usuario.documento ? 'cpf' : '',
-        customerDocNumber: usuario.documento || '',
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
       })
       setPagamentoPlano(pagamento)

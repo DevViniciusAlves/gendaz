@@ -38,7 +38,6 @@ class UsuarioRepositoryTest {
     void findByIdComEmpresaCarregaEmpresaInicializada() {
         EmpresaEntity empresa = EmpresaEntity.builder()
                 .nomeFantasia("Empresa Teste")
-                .documento("12345678000190")
                 .email("empresa@gendaz.test")
                 .status(StatusEmpresa.ATIVA)
                 .build();

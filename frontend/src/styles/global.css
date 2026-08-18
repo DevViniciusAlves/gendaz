@@ -5111,11 +5111,7 @@ tbody tr:hover { background: #fffaf5; }
   row-gap: 18px;
 }
 
-.documento-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
+
 
 /* Card plano selecionado */
 .plano-selecionado-card {
@@ -5268,7 +5264,6 @@ tbody tr:hover { background: #fffaf5; }
 
 .criar-conta-screen .cc-termos-label,
 .criar-conta-screen .field,
-.criar-conta-screen .documento-grid,
 .criar-conta-screen .plano-selecionado-info,
 .criar-conta-screen .plano-selecionado-check {
   color: rgba(255,255,255,.88);
@@ -5303,11 +5298,7 @@ tbody tr:hover { background: #fffaf5; }
   row-gap: 18px;
 }
 
-.documento-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
+
 
 /* Card plano selecionado */
 .plano-selecionado-card {
@@ -5460,7 +5451,6 @@ tbody tr:hover { background: #fffaf5; }
 
 .criar-conta-screen .cc-termos-label,
 .criar-conta-screen .field,
-.criar-conta-screen .documento-grid,
 .criar-conta-screen .plano-selecionado-info,
 .criar-conta-screen .plano-selecionado-check {
   color: rgba(255,255,255,.88);

@@ -49,8 +49,6 @@ public class PagamentoMapper {
                 pagamento.getCustomerName(),
                 pagamento.getCustomerEmail(),
                 pagamento.getCustomerPhone(),
-                pagamento.getCustomerDocType(),
-                pagamento.getCustomerDocNumber(),
                 pagamento.getAntifraudReference(),
                 pagamento.getCheckoutUrl(),
                 pagamento.getSubscriptionId(),

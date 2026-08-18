@@ -26,9 +26,10 @@ Legenda de regra atual:
 | Pagamentos de plano/assinatura | `pagamentos_planos`, `pagamentos_planos_cobrancas` | Cobrança e histórico de assinatura | Contrato; cobrança | Mantidos | Mantém após encerramento | Prazo fiscal/contratual não definido formalmente |
 | Notas fiscais/registros fiscais | `notas_fiscais` | Obrigação fiscal | Obrigação legal/fiscal | Mantidos | Mantém após encerramento | Prazo de conservação fiscal não definido formalmente |
 | Chamados/suporte | `chamados` | Suporte e registro de solicitações | Contrato; suporte | Mantidos | Mantém após encerramento | Prazo de retenção não definido formalmente |
-| Auditoria | `audit_logs` | Segurança, auditoria e resolução de incidentes | Segurança | Mantidos | Mantém após encerramento | Prazo de retenção não definido formalmente |
+| Auditoria | `audit_logs` | Segurança, auditoria e resolução de incidentes | Segurança | Mantidos | Limpeza programada com retenção configurável (`app.audit-logs.retention-days`, padrão técnico atual 365 dias) | Prazo definitivo sujeito a decisão (padrão atual é valor técnico configurável) |
 | Meu Gendaz (acessos) | `meu_gendaz_acessos` | Portal do cliente | Operação do tenant | Sessões revogadas | Mantém após encerramento | Prazo de retenção não definido formalmente |
-| Meu Gendaz (OTP) | `meu_gendaz_otp_challenges` | Autenticação por código | Segurança/autenticação | — | Limpeza programada de desafios expirados (default: expirados há mais de 1 dia) | TTL exato do OTP precisa ser validado |
+| Meu Gendaz (OTP) | `meu_gendaz_otp_challenges` | Autenticação por código | Segurança/autenticação | — | Limpeza programada de desafios expirados (default: expirados há mais de 1 dia). TTL do código: 10 min; máx. 5 tentativas; cooldown e bloqueio configuráveis | Definido em código (`MeuGendazSecurityProperties`) |
+| Insights (IA) | `insights` | Dashboard/insights gerados (IA) com `data_expiracao` +24h | Operação do tenant | N/A | Limpeza programada de insights expirados por `data_expiracao` (`InsightsCleanupScheduler`, padrão 1h) | Snapshot de dashboard não mantém histórico indefinido |
 | Backups | Infraestrutura do provedor (Render/Neon) | Recuperação de desastres | Operacional | Cópias podem existir em backups | PENDENTE DE DEFINIÇÃO | Comportamento real de backup/retenção de snapshots não comprovado neste repositório |
 
 > **PENDENTE DE DEFINIÇÃO** (exige decisão jurídica/de negócio): prazos definitivos de retenção
@@ -42,7 +43,7 @@ Somente fornecedores confirmados no código-fonte:
 
 | Terceiro | Função | Dados enviados | Origem da chamada | Persistência local | Região/localização | Comportamento no encerramento |
 |---|---|---|---|---|---|---|
-| **Stripe** | Processamento de pagamentos de planos e assinaturas | Nome/e-mail/telefone do cliente pagador, identificadores de plano, referências de pagamento | `StripePaymentGateway` (backend) | `pagamentos_planos`, `stripe_customer_id` em `empresas` | Fora do Brasil (internacional), conforme infraestrutura da Stripe | Assinatura cancelada no encerramento (`cancelarSubscription`); falha registrada com status `FALHA_AO_CANCELAR` |
+| **Stripe** | Processamento de pagamentos de planos e assinaturas | Nome e e-mail do cliente pagador, identificadores de plano, referências de pagamento | `StripePaymentGateway` (backend) | `pagamentos_planos`, `stripe_customer_id` em `empresas` | Fora do Brasil (internacional), conforme infraestrutura da Stripe | Assinatura cancelada no encerramento (`cancelarSubscription`); falha registrada com status `FALHA_AO_CANCELAR` |
 | **Render** | Hospedagem do backend e da base de dados | Todo o tráfego da aplicação | Infraestrutura | — | Fora do Brasil, conforme infraestrutura da Render | Fora do escopo da aplicação; sujeito à política do provedor |
 | **Neon** | PostgreSQL (banco de dados gerenciado) | Dados persistidos da aplicação | Conexão JDBC | — | Fora do Brasil, conforme infraestrutura da Neon | Dados persistem enquanto existirem; exclusão depende da política do provedor |
 | **Resend** | Envio de e-mails transacionais | E-mail do destinatário e conteúdo da mensagem | `ResendEmailService` (backend) | Não persiste localmente | Internacional, conforme infraestrutura da Resend | N/A (mensagens já enviadas) |
@@ -52,6 +53,7 @@ Somente fornecedores confirmados no código-fonte:
 Observações:
 - WhatsApp service (`WHATSAPP_SERVICE_URL`) existe apenas como configuração de exemplo no `.env.example`; **não há uso no código backend**.
 - CAKTO aparece apenas em migrations e `.env.example` como gateway legado; o provedor ativo é definido por `PAYMENT_PROVIDER` (default `STRIPE`).
+- **reCAPTCHA**: `RecaptchaService` e as propriedades `recaptcha.*` existem no backend, mas **não há integração no frontend** (nenhum widget/script `g-recaptcha` carregado). O uso em produção não está comprovado; tratado como configuração inativa.
 - A Política de Privacidade informa a possibilidade de processamento internacional **sem afirmar mecanismo contratual não comprovado**.
 
 ---

@@ -3,7 +3,6 @@ package com.minhaempresa.gendaz.auth.dto;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
-import com.minhaempresa.gendaz.empresa.enums.TipoDocumento;
 import com.minhaempresa.gendaz.shared.TelefoneInternacional;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.Email;
@@ -37,8 +36,6 @@ public final class AuthDtos {
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome do proprietario deve conter apenas letras.") String nomeProprietario,
             @Email @NotBlank @Size(max = 120) String email,
             @NotBlank @Size(max = 20) @TelefoneInternacional String telefone,
-            TipoDocumento documentoTipo,
-            @Size(max = 14) String documentoNumero,
             @NotBlank @Size(min = 8, max = 72) String senha,
             @NotBlank @Size(min = 8, max = 72) String confirmarSenha,
             @NotBlank String plano,

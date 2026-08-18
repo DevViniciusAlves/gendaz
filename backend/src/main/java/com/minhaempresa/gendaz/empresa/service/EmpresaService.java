@@ -14,7 +14,6 @@ import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
-import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,12 +30,8 @@ public class EmpresaService {
     @Transactional
     public EmpresaResponse criar(CriarEmpresaRequest request) {
         validarDadosObrigatorios(request.nomeFantasia(), request.email());
-        if (request.documento() != null && !request.documento().isBlank() && empresaRepository.existsByDocumento(request.documento())) {
-            throw new ConflictException("Ja existe empresa com este documento.");
-        }
         EmpresaEntity empresa = EmpresaEntity.builder()
                 .nomeFantasia(sanitizacaoService.textoObrigatorio(request.nomeFantasia()))
-                .documento(sanitizacaoService.texto(request.documento()))
                 .telefone(phoneNumberService.normalizarOpcional(request.telefone()))
                 .email(sanitizacaoService.email(request.email()))
                 .status(StatusEmpresa.ATIVA)
@@ -90,9 +85,6 @@ public class EmpresaService {
     private void validarCamposBloqueados(EmpresaEntity empresa, AtualizarEmpresaRequest request) {
         if (!empresa.getNomeFantasia().equals(sanitizacaoService.textoObrigatorio(request.nomeFantasia()))) {
             throw new BusinessException("Nome fantasia deve ser alterado por solicitacao ao suporte.");
-        }
-        if (!Objects.equals(empresa.getDocumento(), sanitizacaoService.texto(request.documento()))) {
-            throw new BusinessException("Documento deve ser alterado por solicitacao ao suporte.");
         }
         if (!empresa.getEmail().equals(sanitizacaoService.email(request.email()))) {
             throw new BusinessException("E-mail da empresa deve ser alterado por solicitacao ao suporte.");

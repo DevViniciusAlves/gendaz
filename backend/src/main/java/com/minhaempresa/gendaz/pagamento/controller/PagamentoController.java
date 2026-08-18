@@ -87,15 +87,13 @@ public class PagamentoController {
     public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoBasico(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
         validarNaoAtendente();
         validarEmpresaAutenticada(request.empresaId());
-        return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlano(
+return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlano(
                 request.empresaId(),
                 "BASICO",
                 request.metodoPagamento(),
                 request.customerName(),
                 request.customerEmail(),
                 request.customerPhone(),
-                request.customerDocType(),
-                request.customerDocNumber(),
                 request.antifraudProfilingAttemptReference()
         ));
     }

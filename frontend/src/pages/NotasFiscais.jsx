@@ -34,7 +34,7 @@ export default function NotasFiscais() {
         ...nota,
         status: 'EMITIDA',
         numeroFake: nota.numeroFake === 'Aguardando número' ? `NF-e CORR.${String(id).padStart(3, '0')}` : nota.numeroFake,
-        diagnostico: 'Cadastro corrigido e documento autorizado.',
+        diagnostico: 'Cadastro corrigido e nota autorizada.',
       } : nota),
     }))
   }
@@ -62,7 +62,7 @@ export default function NotasFiscais() {
     <section className="page">
       <div className="page-title row-title">
         <div>
-          <span className="section-kicker">Documentos fiscais</span>
+          <span className="section-kicker">Emissão de notas</span>
           <h1>Notas Fiscais</h1>
           <p>Fluxo de emissão, download e correção de nota com foco operacional.</p>
         </div>

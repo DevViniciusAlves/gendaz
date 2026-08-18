@@ -139,8 +139,6 @@ if (-not $Email) {
 $nomeEmpresa = "Empresa Teste Pag"
 $nomeProprietario = "Proprietario Teste"
 $telefone = "11999999999"
-$documentoTipo = "CPF"
-$documentoNumero = "12345678909"
 $aceiteTermos = $true
 
 Write-Step "Criando conta $Plano (email: $Email)"
@@ -149,8 +147,6 @@ $criarBody = @{
     nomeProprietario = $nomeProprietario
     email            = $Email
     telefone         = $telefone
-    documentoTipo    = $documentoTipo
-    documentoNumero  = $documentoNumero
     senha            = $Senha
     confirmarSenha   = $Senha
     plano            = $Plano

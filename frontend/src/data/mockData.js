@@ -8,7 +8,6 @@ export const initialData = {
   empresa: {
     id: 1,
     nomeFantasia: 'gendaz Matriz',
-    documento: '12.345.678/0001-90',
     telefone: '(65) 99999-0000',
     email: 'contato@gendaz.com',
     ramo: 'BARBERSHOP',
@@ -62,10 +61,10 @@ export const initialData = {
     { id: 4, clienteId: 4, clienteNome: 'Casa Midori', valor: 234.7, metodoPagamento: 'BOLETO', status: 'PENDENTE', dataPagamento: null },
   ],
   notasFiscais: [
-    { id: 1, clienteId: 3, clienteNome: 'Kaito BistrÃ´', pedido: '#1048', valor: 299.8, status: 'EMITIDA', numeroFake: 'NF-e 000.001', protocolo: 'BAK260615A', diagnostico: 'Documento processado sem erros.', dataEmissao: '2026-06-15T10:10:00' },
-    { id: 2, clienteId: 2, clienteNome: 'Nori Garden', pedido: '#1047', valor: 179.8, status: 'EMITIDA', numeroFake: 'NF-e 000.002', protocolo: 'BAK260614F', diagnostico: 'Documento processado sem erros.', dataEmissao: '2026-06-15T12:20:00' },
-    { id: 3, clienteId: 2, clienteNome: 'Nori Garden', pedido: '#1044', valor: 117.4, status: 'REPROVADA', numeroFake: 'Aguardando nÃºmero', protocolo: 'BAK260611P', diagnostico: 'CNPJ do destinatÃ¡rio invÃ¡lido ou incompleto.', dataEmissao: '2026-06-15T13:40:00' },
-    { id: 4, clienteId: 4, clienteNome: 'Casa Midori', pedido: '#1045', valor: 149.9, status: 'REPROVADA', numeroFake: 'Aguardando nÃºmero', protocolo: 'BAK260612R', diagnostico: 'CNPJ do destinatÃ¡rio invÃ¡lido ou incompleto.', dataEmissao: '2026-06-14T15:40:00' },
+    { id: 1, clienteId: 3, clienteNome: 'Kaito BistrÃ´', pedido: '#1048', valor: 299.8, status: 'EMITIDA', numeroFake: 'NF-e 000.001', protocolo: 'BAK260615A', diagnostico: 'Processamento autorizado.', dataEmissao: '2026-06-15T10:10:00' },
+    { id: 2, clienteId: 2, clienteNome: 'Nori Garden', pedido: '#1047', valor: 179.8, status: 'EMITIDA', numeroFake: 'NF-e 000.002', protocolo: 'BAK260614F', diagnostico: 'Processamento autorizado.', dataEmissao: '2026-06-15T12:20:00' },
+    { id: 3, clienteId: 2, clienteNome: 'Nori Garden', pedido: '#1044', valor: 117.4, status: 'REPROVADA', numeroFake: 'Aguardando nÃºmero', protocolo: 'BAK260611P', diagnostico: 'Processamento rejeitado.', dataEmissao: '2026-06-15T13:40:00' },
+    { id: 4, clienteId: 4, clienteNome: 'Casa Midori', pedido: '#1045', valor: 149.9, status: 'REPROVADA', numeroFake: 'Aguardando nÃºmero', protocolo: 'BAK260612R', diagnostico: 'Processamento rejeitado.', dataEmissao: '2026-06-14T15:40:00' },
   ],
   entregas: [
     { id: 1, protocolo: 'BAK5103246', clienteId: 2, clienteNome: 'Nori Garden', responsavel: 'Caio Mendes', endereco: 'Rua das Flores, 100', status: 'NOVO', observacoes: 'Kit pÃ³s-atendimento', dataPrevisao: '2026-06-17', horaInicio: '18:00', horaFim: '19:00', total: 524.3 },

@@ -10,7 +10,6 @@ public class EmpresaMapper {
         return new EmpresaResponse(
                 empresa.getId(),
                 empresa.getNomeFantasia(),
-                empresa.getDocumento(),
                 empresa.getTelefone(),
                 empresa.getEmail(),
                 empresa.getStatus(),

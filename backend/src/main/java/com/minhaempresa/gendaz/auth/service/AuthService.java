@@ -22,7 +22,6 @@ import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.shared.PhoneNumberService;
-import com.minhaempresa.gendaz.shared.DocumentoUtils;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
@@ -238,11 +237,10 @@ public class AuthService {
         String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
         String nomeEmpresa = normalizarTexto(request.nomeEmpresa());
         String nomeProprietario = normalizarTexto(request.nomeProprietario());
-        String documento = DocumentoUtils.normalizar(request.documentoNumero());
 
         log.info("Cadastro solicitado para {}", mascararEmail(email));
         try {
-            CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario, documento);
+            CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
             
             PagamentoPlanoResponse pagamentoPlano = null;
             if (cadastro.cadastroPro()) {
@@ -253,7 +251,7 @@ public class AuthService {
                         cadastro.usuario().getNome(),
                         cadastro.usuario().getEmail(),
                         cadastro.usuario().getEmpresa().getTelefone(),
-                        null, null, null
+                        null
                 );
             }
 
@@ -279,7 +277,6 @@ public class AuthService {
                             planoNome,
                             dataCadastro,
                             cadastro.empresaId(),
-                            documento.isBlank() ? null : documento,
                             cadastro.usuario().getId()
                     );
                 } catch (Exception e) {
@@ -468,20 +465,18 @@ public class AuthService {
         return null;
     }
 
-    private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario, String documento) {
+    private CadastroContaCriada criarContaBase(CriarContaRequest request, String email, String telefone, String nomeEmpresa, String nomeProprietario) {
         validarCadastro(request);
         // DIAGNOSTICO - Falso conflito de unicidade
         Optional<EmpresaEntity> empByTel = empresaRepository.findByTelefone(telefone);
         Optional<EmpresaEntity> empByName = empresaRepository.findByNomeFantasiaNormalizado(nomeEmpresa);
         List<UsuarioEntity> usersByEmail = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
-        boolean docExists = !documento.isBlank() && empresaRepository.existsByDocumento(documento);
 
-        String diagLog = String.format("[CADASTRO-DIAG] telefoneNormalizado=%s telefoneExiste=%b telefoneEmpresaId=%s nomeNormalizado='%s' nomeExiste=%b nomeEmpresaId=%s emailNormalizado=%s emailQtd=%d emailUsuarioIds=%s documentoExiste=%b",
+        String diagLog = String.format("[CADASTRO-DIAG] telefoneNormalizado=%s telefoneExiste=%b telefoneEmpresaId=%s nomeNormalizado='%s' nomeExiste=%b nomeEmpresaId=%s emailNormalizado=%s emailQtd=%d emailUsuarioIds=%s",
               telefone, empByTel.isPresent(), empByTel.map(e -> e.getId().toString()).orElse("null"),
               nomeEmpresa, empByName.isPresent(), empByName.map(e -> e.getId().toString()).orElse("null"),
               mascararEmail(email), usersByEmail.size(),
-              usersByEmail.stream().map(u -> u.getId().toString()).toList(),
-              docExists);
+              usersByEmail.stream().map(u -> u.getId().toString()).toList());
 
         if (empByTel.isPresent()) {
             log.warn(diagLog);
@@ -490,10 +485,6 @@ public class AuthService {
         if (empByName.isPresent()) {
             log.warn(diagLog);
             throw new ConflictException("Este nome de empresa ja esta cadastrado.");
-        }
-        if (docExists) {
-            log.warn(diagLog);
-            throw new ConflictException("Este documento ja esta cadastrado.");
         }
         if (!usersByEmail.isEmpty()) {
             log.warn(diagLog);
@@ -507,7 +498,6 @@ public class AuthService {
             boolean cadastroPro = "PRO".equalsIgnoreCase(planoEscolhido.getNome());
             EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia(nomeEmpresa)
-                .documento(documento.isBlank() ? null : documento)
                 .telefone(telefone)
                 .email(email)
                 .status(cadastroPro ? StatusEmpresa.PENDENTE_PAGAMENTO : StatusEmpresa.ATIVA)
@@ -554,10 +544,6 @@ public class AuthService {
         }
         if (normalizarEmail(request.email()).length() > 120) {
             throw new BusinessException("E-mail deve ter no maximo 120 caracteres.");
-        }
-        String documento = DocumentoUtils.normalizar(request.documentoNumero());
-        if (!documento.isBlank()) {
-            DocumentoUtils.validar(request.documentoTipo(), documento);
         }
         if (!request.senha().equals(request.confirmarSenha())) {
             throw new BusinessException("As senhas nÃ£o coincidem.");

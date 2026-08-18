@@ -179,7 +179,6 @@ export default function Configuracoes() {
 
     await appApi.atualizarEmpresa(empresa.id, {
       nomeFantasia: data.empresa.nomeFantasia,
-      documento: data.empresa.documento,
       telefone,
       email: data.empresa.email,
       timezone: empresa?.timezone || 'America/Cuiaba',
@@ -430,7 +429,6 @@ export default function Configuracoes() {
             <span className="settings-ramo-badge">Automático</span>
           </div>
           <Input label="Nome fantasia" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." maxLength={100} value={empresa?.nomeFantasia || ''} readOnly />
-          <Input label="CNPJ / documento" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." inputMode="numeric" maxLength={14} value={empresa?.documento || ''} readOnly />
 <InternationalPhoneInput
             label="Telefone"
             helper={perfilAtendente ? 'Somente o dono pode alterar este dado.' : (empresa?.telefone ? (validarTelefone(empresa.telefone) || 'Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`)}

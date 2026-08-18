@@ -55,8 +55,6 @@ public final class PagamentoDtos {
             @Size(max = 120) String customerName,
             @Size(max = 120) String customerEmail,
             @Size(max = 20) String customerPhone,
-            @Size(max = 20) String customerDocType,
-            @Size(max = 20) String customerDocNumber,
             @Size(max = 120) String antifraudProfilingAttemptReference
     ) {}
 
@@ -80,11 +78,9 @@ public final class PagamentoDtos {
             String providerPaymentId,
             String externalReference,
             String paymentReference,
-            String customerName,
+String customerName,
             String customerEmail,
             String customerPhone,
-            String customerDocType,
-            String customerDocNumber,
             String antifraudProfilingAttemptReference,
             String checkoutUrl,
             String subscriptionId,

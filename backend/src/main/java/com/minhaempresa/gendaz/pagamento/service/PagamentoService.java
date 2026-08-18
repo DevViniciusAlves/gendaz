@@ -177,8 +177,6 @@ public class PagamentoService {
             String customerName,
             String customerEmail,
             String customerPhone,
-            String customerDocType,
-            String customerDocNumber,
             String antifraudProfilingAttemptReference,
             boolean isOnboarding
     ) {
@@ -225,7 +223,7 @@ public class PagamentoService {
         // 4. Se não existir ou estava vencido, criar um novo checkout
         PagamentoPlanoEntity pagamento = novoPagamentoPlano(
                 empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
-                customerDocType, customerDocNumber, antifraudProfilingAttemptReference
+                antifraudProfilingAttemptReference
         );
         
         // TTL de 15 minutos definido em um único lugar no backend
@@ -264,20 +262,18 @@ public class PagamentoService {
             String customerName,
             String customerEmail,
             String customerPhone,
-            String customerDocType,
-            String customerDocNumber,
             String antifraudProfilingAttemptReference
     ) {
         PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
                 empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
-                customerDocType, customerDocNumber, antifraudProfilingAttemptReference, true
+                antifraudProfilingAttemptReference, true
         );
         return mapper.toPlanoResponse(pagamento);
     }
 
     @Transactional
     public PagamentoPlanoResponse iniciarPagamentoPlano(Long empresaId, String planoNome, MetodoPagamento metodoPagamento) {
-        return iniciarPagamentoPlano(empresaId, planoNome, metodoPagamento, null, null, null, null, null, null);
+        return iniciarPagamentoPlano(empresaId, planoNome, metodoPagamento, null, null, null, null);
     }
 
     @Transactional
@@ -289,8 +285,6 @@ public class PagamentoService {
                 request.customerName(),
                 request.customerEmail(),
                 request.customerPhone(),
-                request.customerDocType(),
-                request.customerDocNumber(),
                 request.antifraudProfilingAttemptReference()
         );
     }
@@ -303,13 +297,11 @@ public class PagamentoService {
             String customerName,
             String customerEmail,
             String customerPhone,
-            String customerDocType,
-            String customerDocNumber,
             String antifraudProfilingAttemptReference
     ) {
         PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
                 empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
-                customerDocType, customerDocNumber, antifraudProfilingAttemptReference, false
+                antifraudProfilingAttemptReference, false
         );
         return mapper.toPlanoResponse(pagamento);
     }
@@ -325,7 +317,7 @@ public class PagamentoService {
         validarMetodoPagamentoPlano(metodoPagamento);
         EmpresaEntity empresa = empresaService.buscarEntidade(empresaId);
         PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
-        PagamentoPlanoEntity pagamento = novoPagamentoPlano(empresa, plano, metodoPagamento, null, null, null, null, null, null);
+        PagamentoPlanoEntity pagamento = novoPagamentoPlano(empresa, plano, metodoPagamento, null, null, null, null);
         return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
     }
 
@@ -565,8 +557,6 @@ public class PagamentoService {
             String customerName,
             String customerEmail,
             String customerPhone,
-            String customerDocType,
-            String customerDocNumber,
             String antifraudProfilingAttemptReference
     ) {
         String paymentReference = gerarPaymentReference();
@@ -583,8 +573,6 @@ public class PagamentoService {
                 .customerName(normalizarTextoOpcional(customerName))
                 .customerEmail(normalizarTextoOpcional(customerEmail))
                 .customerPhone(normalizarTextoOpcional(customerPhone))
-                .customerDocType(normalizarTextoOpcional(customerDocType))
-                .customerDocNumber(normalizarTextoOpcional(customerDocNumber))
                 .antifraudReference(normalizarTextoOpcional(antifraudProfilingAttemptReference))
                 .build();
     }

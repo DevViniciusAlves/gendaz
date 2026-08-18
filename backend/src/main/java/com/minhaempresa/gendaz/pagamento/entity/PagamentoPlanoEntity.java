@@ -72,12 +72,6 @@ public class PagamentoPlanoEntity {
     @Column(name = "customer_phone", length = 20)
     private String customerPhone;
 
-    @Column(name = "customer_doc_type", length = 20)
-    private String customerDocType;
-
-    @Column(name = "customer_doc_number", length = 20)
-    private String customerDocNumber;
-
     @Column(name = "antifraud_reference", length = 120)
     private String antifraudReference;
 

@@ -159,7 +159,7 @@ export default function AdminDashboard() {
   const [modal, setModal] = useState(null)
   const [motivo, setMotivo] = useState('')
   const [transacaoId, setTransacaoId] = useState('')
-  const [empresaEdicao, setEmpresaEdicao] = useState({ nomeFantasia: '', documento: '', telefone: '', email: '' })
+  const [empresaEdicao, setEmpresaEdicao] = useState({ nomeFantasia: '', telefone: '', email: '' })
   const [assinaturas, setAssinaturas] = useState([])
   const [adicionandoPlano, setAdicionandoPlano] = useState(false)
   const [novaAssinatura, setNovaAssinatura] = useState({ planoId: '', dias: 30 })
@@ -367,7 +367,6 @@ export default function AdminDashboard() {
     setTransacaoId('')
     setEmpresaEdicao({
       nomeFantasia: item?.empresa || '',
-      documento: item?.documento || '',
       telefone: item?.telefone || '',
       email: item?.emailEmpresa || item?.email || '',
     })
@@ -496,7 +495,6 @@ export default function AdminDashboard() {
     try {
       const payload = {
         nomeFantasia: empresaEdicao.nomeFantasia.trim(),
-        documento: String(empresaEdicao.documento || '').replace(/\D/g, ''),
         telefone: normalizarParaApi(empresaEdicao.telefone || ''),
         email: empresaEdicao.email.trim().toLowerCase(),
         planoId: null,
@@ -1136,15 +1134,6 @@ export default function AdminDashboard() {
                     value={empresaEdicao.nomeFantasia}
                     onChange={(event) => setEmpresaEdicao((atual) => ({ ...atual, nomeFantasia: event.target.value }))}
                     placeholder="Nome da empresa"
-                  />
-                </label>
-                <label className="field">
-                  <span>Documento</span>
-                  <input
-                    maxLength={14}
-                    value={empresaEdicao.documento}
-                    onChange={(event) => setEmpresaEdicao((atual) => ({ ...atual, documento: event.target.value.replace(/\D/g, '') }))}
-                    placeholder="Somente numeros"
                   />
                 </label>
                 <InternationalPhoneInput

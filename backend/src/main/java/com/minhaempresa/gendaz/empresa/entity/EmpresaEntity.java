@@ -23,9 +23,6 @@ public class EmpresaEntity {
     @Column(nullable = false)
     private String nomeFantasia;
 
-    @Column(unique = true)
-    private String documento;
-
     private String telefone;
 
     @Column(nullable = false)

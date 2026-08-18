@@ -25,9 +25,9 @@ public class LgpdController {
     }
 
     @DeleteMapping("/excluir-conta")
-    public ResponseEntity<ExcluirContaResponse> excluirConta() {
+    public ResponseEntity<ExcluirContaResponse> encerrarConta() {
         Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();
-        return ResponseEntity.ok(lgpdService.excluirConta(usuarioAutenticado));
+        return ResponseEntity.ok(lgpdService.encerrarConta(usuarioAutenticado));
     }
 }
 

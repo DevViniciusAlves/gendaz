@@ -15,8 +15,6 @@ public interface EmpresaRepository extends JpaRepository<EmpresaEntity, Long> {
     @Query("select e from EmpresaEntity e where e.id = :id")
     Optional<EmpresaEntity> findByIdWithLock(@Param("id") Long id);
 
-    boolean existsByDocumento(String documento);
-
     boolean existsByTelefone(String telefone);
 
     Optional<EmpresaEntity> findByTelefone(String telefone);

@@ -21,7 +21,6 @@ export function emptyData(usuario = null) {
     empresa: {
       id: usuario?.empresaId || null,
       nomeFantasia: usuario?.empresaNome || '',
-      documento: '',
       telefone: '',
       email: usuario?.email || '',
       ramo: null,

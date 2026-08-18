@@ -13,6 +13,9 @@ public interface AuditLogRepository extends JpaRepository<AuditLogEntity, Long> 
     List<AuditLogEntity> findByTipoContainingIgnoreCaseAndDataCriacaoBetweenAndEmpresaIdOrderByDataCriacaoDesc(String tipo, LocalDateTime inicio, LocalDateTime fim, Long empresaId);
     List<AuditLogEntity> findTop200ByOrderByDataCriacaoDesc();
 
+    @Modifying
+    @Query("delete from AuditLogEntity a where a.dataCriacao < :limite")
+    int deleteBefore(@Param("limite") LocalDateTime limite);
 
     @Modifying
     @Query("update AuditLogEntity a set a.usuario = null where a.usuario.id = :usuarioId")

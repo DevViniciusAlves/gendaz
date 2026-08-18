@@ -89,7 +89,7 @@ public class LgpdService {
                 .toList();
 
         return new ExportacaoDadosResponse(
-                new EmpresaExportada(empresa.getId(), empresa.getNomeFantasia(), empresa.getDocumento(), empresa.getTelefone(), empresa.getEmail(), empresa.getStatus().name(), empresa.getDataCriacao()),
+                new EmpresaExportada(empresa.getId(), empresa.getNomeFantasia(), empresa.getTelefone(), empresa.getEmail(), empresa.getStatus().name(), empresa.getDataCriacao()),
                 usuarioMapper.toResponse(usuario),
                 assinatura,
                 financeiro,
@@ -111,7 +111,7 @@ public class LgpdService {
     }
 
     @Transactional
-    public ExcluirContaResponse excluirConta(Long usuarioId) {
+    public ExcluirContaResponse encerrarConta(Long usuarioId) {
         UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
         if (usuario.getPerfil() != PerfilUsuario.DONO) {
             throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");

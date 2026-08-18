@@ -41,7 +41,6 @@ public final class AdminDtos {
             Long empresaId,
             Long usuarioId,
             String empresa,
-            String documento,
             String responsavel,
             String email,
             String emailEmpresa,
@@ -88,9 +87,8 @@ public final class AdminDtos {
             @NotBlank @Size(min = 8, max = 500, message = "Informe um motivo com pelo menos 8 caracteres.") String motivo
     ) {}
 
-    public record AdminAtualizarEmpresaRequest(
+public record AdminAtualizarEmpresaRequest(
             @NotBlank @Size(min = 2, max = 100, message = "Informe um nome fantasia valido.") String nomeFantasia,
-            @Pattern(regexp = "^$|^[0-9]{11,14}$", message = "Informe um documento valido.") String documento,
             @Size(max = 20) @TelefoneInternacional String telefone,
             @NotBlank @Email @Size(max = 120, message = "Informe um e-mail valido.") String email,
             Long planoId,

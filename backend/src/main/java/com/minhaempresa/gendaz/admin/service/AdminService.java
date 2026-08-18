@@ -315,7 +315,6 @@ public class AdminService {
                     empresa.getId(),
                     dono == null ? null : dono.getId(),
                     empresa.getNomeFantasia(),
-                    empresa.getDocumento(),
                     dono == null ? null : dono.getNome(),
                     dono == null ? empresa.getEmail() : dono.getEmail(),
                     empresa.getEmail(),
@@ -489,16 +488,10 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
 
         String nomeFantasia = normalizarTextoObrigatorio(request.nomeFantasia());
-        String documento = normalizarDocumento(request.documento());
         String telefone = normalizarTelefone(request.telefone());
         String email = normalizarEmail(request.email());
 
-        if (documento != null && !documento.isBlank() && !Objects.equals(empresa.getDocumento(), documento) && empresaRepository.existsByDocumento(documento)) {
-            throw new ConflictException("Ja existe empresa com este documento.");
-        }
-
         empresa.setNomeFantasia(nomeFantasia);
-        empresa.setDocumento(documento);
         empresa.setTelefone(telefone);
         empresa.setEmail(email);
         EmpresaEntity salva = empresaRepository.save(empresa);
@@ -672,13 +665,6 @@ public class AdminService {
         return normalizado;
     }
 
-    private String normalizarDocumento(String valor) {
-        if (valor == null || valor.isBlank()) {
-            return null;
-        }
-        return valor.replaceAll("\\D", "");
-    }
-
     private String normalizarTelefone(String valor) {
         return phoneNumberService.normalizarOpcional(valor);
     }
@@ -709,7 +695,6 @@ public class AdminService {
                 empresa.getId(),
                 dono == null ? null : dono.getId(),
                 empresa.getNomeFantasia(),
-                empresa.getDocumento(),
                 dono == null ? null : dono.getNome(),
                 dono == null ? empresa.getEmail() : dono.getEmail(),
                 empresa.getEmail(),

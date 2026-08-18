@@ -42,7 +42,7 @@ public final class LgpdDtos {
             List<AuditoriaExportada> auditoria
     ) {}
 
-    public record EmpresaExportada(Long id, String nomeFantasia, String documento, String telefone, String email, String status, LocalDateTime dataCriacao) {}
+    public record EmpresaExportada(Long id, String nomeFantasia, String telefone, String email, String status, LocalDateTime dataCriacao) {}
 
     public record AuditoriaExportada(Long id, String tipo, String severidade, String descricao, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
 
