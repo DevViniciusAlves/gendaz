@@ -9,7 +9,12 @@ import org.springframework.data.jpa.repository.EntityGraph;
 public interface ClienteRepository extends JpaRepository<ClienteEntity, Long> {
     @EntityGraph(attributePaths = {"empresa"})
     List<ClienteEntity> findByEmpresaId(Long empresaId);
+    
+    @EntityGraph(attributePaths = {"empresa"})
+    List<ClienteEntity> findByEmpresaIdAndStatusNot(Long empresaId, StatusCadastro status);
+
     long countByEmpresaId(Long empresaId);
+    long countByEmpresaIdAndStatusNot(Long empresaId, StatusCadastro status);
     @EntityGraph(attributePaths = {"empresa"})
     Optional<ClienteEntity> findFirstByTelefone(String telefone);
     @EntityGraph(attributePaths = {"empresa"})

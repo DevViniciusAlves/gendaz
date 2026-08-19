@@ -99,7 +99,7 @@ public class ClienteService {
     @Transactional(readOnly = true)
     public List<ClienteResponse> listarPorEmpresa(Long empresaId) {
         validarEmpresaAtual(empresaId);
-        return clienteRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
+        return clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO).stream().map(mapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
@@ -142,6 +142,13 @@ public class ClienteService {
         ClienteEntity cliente = buscarEntidade(id);
         validarEmpresa(cliente, empresaId);
 
+        if (cliente.getStatus() == StatusCadastro.EXCLUIDO) {
+            return;
+        }
+
+        // Bloqueio Meu Gendaz usando o e-mail ORIGINAL
+        clienteEmailBloqueadoService.bloquear(cliente.getEmpresa(), cliente.getEmail(), "Cliente excluido pelo painel Gendaz");
+
         // Apenas limpa vínculos operacionais, preservando financeiros/agendamentos/fiscais
         for (ConversaEntity conversa : conversaRepository.findByClienteId(id)) {
             mensagemRepository.deleteByConversaId(conversa.getId());
@@ -153,15 +160,13 @@ public class ClienteService {
         meuGendazPromocaoNotificacaoRepository.deleteByClienteId(id);
         
         // Anonimização
-        cliente.setNome("Cliente excluído");
-        cliente.setTelefone("00000000000");
+        // Mantém NOME ORIGINAL
+        cliente.setTelefone("0000000" + cliente.getId());
         cliente.setEmail("excluido-" + cliente.getId() + "@gendaz.site");
         cliente.setObservacoes("");
         cliente.setStatus(StatusCadastro.EXCLUIDO);
         
         clienteRepository.save(cliente);
-
-        clienteEmailBloqueadoService.bloquear(cliente.getEmpresa(), cliente.getEmail(), "Cliente excluido pelo painel Gendaz");
         
         auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", cliente.getNome(), null, null);
     }

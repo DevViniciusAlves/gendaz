@@ -86,6 +86,9 @@ public class AgendamentoService {
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
             ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+            if (cliente.getStatus() == com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO) {
+                throw new BusinessException("Não é possível agendar para um cliente excluído.");
+            }
             ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
             ProfissionalEntity profissional = request.profissionalId() == null
                     ? profissionalParaSemPreferencia(empresa, request.data())

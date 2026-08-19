@@ -6,6 +6,7 @@ const LABELS = {
   ATIVA_PAGAMENTO: 'Ativa',
   ATIVO: 'Ativo',
   INATIVO: 'Inativo',
+  EXCLUIDO: 'Excluído',
   TESTE: 'Teste',
   EXPIRADA: 'Expirada',
   CANCELADA: 'Cancelada',
