@@ -324,12 +324,13 @@ export const appApi = {
       },
       financeiro: async () => {
         const periodo = periodoAtual()
-        const [empresa, pagamentosBase, financeiro] = await Promise.all([
+        const [empresa, agendamentosBase, pagamentosBase, financeiro] = await Promise.all([
           api.get(`/empresas/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/financeiro/resumo?empresaId=${empresaId}&mes=${periodo.mes}&ano=${periodo.ano}`).then((response) => response.data),
         ])
-        return { empresa, clientesBase: [], servicosBase: [], agendamentosBase: [], pagamentosBase, financeiro }
+        return { empresa, clientesBase: [], servicosBase: [], agendamentosBase, pagamentosBase, financeiro }
       },
       relatorios: async () => {
         const [empresa, clientesBase, servicosBase, agendamentosBase] = await Promise.all([
