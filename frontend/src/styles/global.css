@@ -16827,14 +16827,25 @@ tbody tr:hover { background: #fffaf5; }
     flex: 1;
     min-width: 0;
   }
-
-  .gendaz-modal {
-    width: 95vw;
-  }
+}
 
   .gendaz-pagination {
     flex-direction: column;
     gap: 10px;
+  }
+}
+
+@media (max-width: 768px) {
+  .gendaz-modal-overlay {
+    padding: 16px;
+  }
+
+  .gendaz-modal {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
   }
 }
 
@@ -21338,20 +21349,53 @@ iframe {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .gendaz-shell {
-    display: block !important;
-    min-height: 100dvh;
+    grid-template-columns: 1fr !important;
   }
-
-  .gendaz-shell .gendaz-sidebar {
+  .gendaz-sidebar {
     display: none !important;
   }
-
   .gendaz-main {
-    width: 100%;
-    padding: 16px 16px calc(92px + env(safe-area-inset-bottom)) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
+}
+
+@media (max-width: 768px) {
+  .gendaz-mobile-nav {
+    height: calc(80px + env(safe-area-inset-bottom)) !important;
+    padding-bottom: env(safe-area-inset-bottom) !important;
+  }
+  .gendaz-main {
+    padding-bottom: calc(80px + env(safe-area-inset-bottom) + 24px) !important;
+  }
+  .gendaz-fab {
+    bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+  .gendaz-panel {
+    padding: 14px !important;
+  }
+}
+
+.hero-new-title {
+  font-size: clamp(20px, 5.5vw, 24px) !important;
+}
+
+@media (max-width: 480px) {
+  .gendaz-modal__actions {
+    flex-direction: column;
+  }
+  .gendaz-btn {
+    width: 100%;
+  }
+}
+
+input, select, textarea {
+  font-size: 16px !important;
+}
 
   .gendaz-mobile-nav {
     position: fixed;
@@ -21466,32 +21510,18 @@ iframe {
 }
 
 @media (max-width: 768px) {
-  .app-shell .modal[style],
-  .app-shell .modal-card[style] {
-    min-width: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
+  .gendaz-modal-overlay {
+    padding: 16px;
   }
 
-  .app-shell .modal > div[style],
-  .app-shell .modal-card > form,
-  .app-shell .modal-card > div[style] {
+  .gendaz-modal {
+    width: 100%;
     max-width: 100%;
+    min-width: 0;
+    max-height: calc(100dvh - 32px);
+    overflow-y: auto;
   }
-
-  .app-shell .modal table,
-  .app-shell .modal-card table {
-    min-width: 560px;
-  }
-
-  .app-shell .modal .data-table,
-  .app-shell .modal-card .data-table {
-    min-width: 560px !important;
-    display: table;
-  }
-
-  .app-shell .modal .data-table thead,
-  .app-shell .modal-card .data-table thead {
+}
     display: table-header-group;
   }
 
