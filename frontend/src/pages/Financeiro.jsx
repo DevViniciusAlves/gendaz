@@ -118,6 +118,13 @@ export default function Financeiro() {
   const [pagamentoManual, setPagamentoManual] = useState(null)
   const itensPorPaginaPagamentos = 10
 
+  const agendamentoMap = useMemo(() => {
+    const agendamentos = Array.isArray(data.agendamentos) ? data.agendamentos : []
+    const map = new Map()
+    agendamentos.forEach((a) => map.set(a.id, a))
+    return map
+  }, [data.agendamentos])
+
   useEffect(() => {
     reload(true)
   }, [refreshTrigger, reload])
@@ -500,7 +507,29 @@ export default function Financeiro() {
             },
             { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
             { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
-            { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
+            { key: 'valor', label: 'VALOR', render: (row) => {
+              const ag = agendamentoMap.get(row.agendamentoId || row.pagamentoId || row.id) || row.agendamento || {}
+              const cupomCodigo = ag.cupomCodigo || row.cupomCodigo
+              const desconto = ag.valorDesconto ?? row.valorDesconto
+              const valorOriginal = ag.valorOriginal ?? row.valorOriginal
+              const temCupom = cupomCodigo && desconto != null && Number(desconto) > 0
+              if (temCupom) {
+                return (
+                  <div className="financeiro-valor-desconto">
+                    <span className="financeiro-valor-original">{currency(valorOriginal ?? row.valor)}</span>
+                    <span className="financeiro-valor-final">{currency(row.valor)}</span>
+                  </div>
+                )
+              }
+              return currency(row.valor)
+            }},
+            { key: 'cupomCodigo', label: 'CUPOM', render: (row) => {
+              const ag = agendamentoMap.get(row.agendamentoId || row.pagamentoId || row.id) || row.agendamento || {}
+              const cupom = ag.cupomCodigo || row.cupomCodigo
+              return cupom
+                ? <span className="financeiro-cupom-tag">{cupom}</span>
+                : <span className="financeiro-cupom-vazio">SEM CUPOM</span>
+            }},
             { key: 'metodoPagamento', label: 'FORMA', render: (row) => metodoLegivel(row.metodoPagamento, row.parcelas, row.parcelaAtual) },
             { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
             {

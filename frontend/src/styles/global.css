@@ -3728,6 +3728,45 @@ tbody tr:hover { background: #fffaf5; }
   }
 }
 
+.financeiro-valor-desconto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.3;
+}
+
+.financeiro-valor-original {
+  text-decoration: line-through;
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 12px;
+}
+
+.financeiro-valor-final {
+  color: #86efac;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.financeiro-cupom-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(251, 191, 36, 0.18);
+  color: #fbbf24;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.financeiro-cupom-vazio {
+  color: var(--muted);
+  font-size: 12px;
+  opacity: 0.6;
+}
+
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
 .form-grid.single { grid-template-columns: 1fr; }
 .field-wide { grid-column: 1 / -1; }
