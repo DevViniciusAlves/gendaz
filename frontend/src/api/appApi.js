@@ -990,7 +990,6 @@ export const appApi = {
   exportarDadosLgpd() {
     return comNotificacao(() => api.get('/lgpd/exportar', {
       headers: usuarioHeaders(),
-      responseType: 'blob',
     }).then((response) => response.data), {
       loading: 'Exportando dados, aguarde...',
       success: 'Dados exportados com sucesso.',

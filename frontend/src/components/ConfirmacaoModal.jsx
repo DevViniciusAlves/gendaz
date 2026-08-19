@@ -1,4 +1,5 @@
 import { AlertTriangle, Download, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import Button from './Button.jsx'
 
 export default function ConfirmacaoModal({ open, titulo, mensagem, tipo = 'danger', acaoLabel = 'Confirmar', carregando = false, onConfirmar, onCancelar }) {
@@ -6,7 +7,7 @@ export default function ConfirmacaoModal({ open, titulo, mensagem, tipo = 'dange
 
   const Icone = tipo === 'danger' ? AlertTriangle : Download
 
-  return (
+  return createPortal(
     <div className="modal-backdrop" role="presentation">
       <section className="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-titulo">
         <div className="modal-header">
@@ -26,6 +27,7 @@ export default function ConfirmacaoModal({ open, titulo, mensagem, tipo = 'dange
           </Button>
         </div>
       </section>
-    </div>
+    </div>,
+    document.body,
   )
 }
