@@ -479,10 +479,10 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return usuarioComPlano
   }
 
-  async function criarConta(payload) {
+  async function criarConta(payload, options = {}) {
     transicaoSessaoRef.current = false
     setSessionExpired(false)
-    const response = await appApi.criarConta(payload)
+    const response = await appApi.criarConta(payload, options)
     if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
       const pending = {
         email: payload.email,

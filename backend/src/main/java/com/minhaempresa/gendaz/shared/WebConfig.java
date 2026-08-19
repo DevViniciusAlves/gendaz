@@ -73,7 +73,9 @@ public class WebConfig implements WebMvcConfigurer {
                         "X-Requested-With",
                         "X-Meu-Gendaz-Slug",
                         "X-Usuario-Id",
-                        "X-XSRF-TOKEN"
+                        "X-XSRF-TOKEN",
+                        "X-Idempotency-Key",
+                        "X-Request-Id"
                 )
 
                 .exposedHeaders("Set-Cookie", "Retry-After")

@@ -1,6 +1,17 @@
 ﻿import api, { garantirCsrfCookie, getSessionUser, modoDemo } from './axiosConfig.js'
 import { emptyData, getData } from '../services/localStore.js'
 
+export function gerarUuid() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
 function empresaIdAtual() {
   const usuario = getSessionUser()
   return usuario?.empresaId || null
@@ -467,9 +478,16 @@ export const appApi = {
     return api.post('/meu-gendaz/auth/validar-codigo', { email, codigo }).then((response) => response.data)
   },
 
-  async criarConta(payload) {
+  async criarConta(payload, options = {}) {
     await garantirCsrfCookie().catch(() => {})
-    const response = await api.post('/auth/criar-conta', payload)
+    const idempotencyKey = options.idempotencyKey || gerarUuid()
+    const requestId = gerarUuid()
+    const response = await api.post('/auth/criar-conta', payload, {
+      headers: {
+        'X-Idempotency-Key': idempotencyKey,
+        'X-Request-Id': requestId,
+      },
+    })
     return response.data
   },
 

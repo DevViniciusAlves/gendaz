@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { normalizarParaApi, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
+import { gerarUuid } from '../api/appApi.js'
 import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import logoSvg from '../assets/logos/gendaz-logo-branco.png'
 
@@ -47,6 +48,14 @@ function mensagemErroCadastro(error) {
   return 'Nao foi possivel criar a conta.'
 }
 
+function fingerprintFormulario({ nomeEmpresa, nomeProprietario, email, telefone, plano, aceiteTermos }) {
+  return JSON.stringify([nomeEmpresa, nomeProprietario, email, telefone, plano, aceiteTermos])
+}
+
+function aguardar(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
 export default function CriarConta() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
@@ -69,15 +78,55 @@ export default function CriarConta() {
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [mostrarConfirmarSenha, setMostrarConfirmarSenha] = useState(false)
 
+  const submitEmAndamentoRef = useRef(false)
+  const idempotenciaRef = useRef(null)
+
   const planoAtual = PLANOS_INFO[plano]
 
   function set(campo, valor) {
     setForm((prev) => ({ ...prev, [campo]: valor }))
   }
 
+  async function enviarCadastro({ nomeEmpresa, nomeProprietario, email, telefone, tentativas }) {
+    const idempotencyKey = idempotenciaRef.current?.key
+
+    try {
+      const resultado = await criarConta({
+        nomeEmpresa,
+        nomeProprietario,
+        email,
+        telefone,
+        senha: form.senha,
+        confirmarSenha: form.confirmarSenha,
+        plano,
+        aceiteTermos: form.aceiteTermos,
+      }, { idempotencyKey })
+
+      idempotenciaRef.current = null
+
+      if (resultado?.pendingPayment) {
+        navigate('/pagamento-pendente')
+        return
+      }
+      navigate('/sistema/dashboard')
+    } catch (error) {
+      const data = error.response?.data
+      const codigo = data?.erro
+      if (codigo === 'IDEMPOTENCY_IN_PROGRESS' && tentativas < 3) {
+        setErro('Seu cadastro ainda esta sendo processado. Aguarde alguns instantes...')
+        await aguardar(2500)
+        return enviarCadastro({ nomeEmpresa, nomeProprietario, email, telefone, tentativas: tentativas + 1 })
+      }
+      setErro(mensagemErroCadastro(error))
+      if (error.response) {
+        idempotenciaRef.current = null
+      }
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
-    if (carregando) return
+    if (submitEmAndamentoRef.current) return
     setErro('')
 
     const nomeEmpresa = normalizarTexto(form.nomeEmpresa)
@@ -131,28 +180,21 @@ export default function CriarConta() {
       return
     }
 
+    const fingerprint = fingerprintFormulario({ nomeEmpresa, nomeProprietario, email, telefone, plano, aceiteTermos: form.aceiteTermos })
+    if (idempotenciaRef.current && idempotenciaRef.current.fingerprint !== fingerprint) {
+      idempotenciaRef.current = null
+    }
+    if (!idempotenciaRef.current) {
+      idempotenciaRef.current = { key: gerarUuid(), fingerprint }
+    }
+
+    submitEmAndamentoRef.current = true
     setCarregando(true)
 
     try {
-      const resultado = await criarConta({
-        nomeEmpresa,
-        nomeProprietario,
-        email,
-        telefone,
-        senha: form.senha,
-        confirmarSenha: form.confirmarSenha,
-        plano,
-        aceiteTermos: form.aceiteTermos,
-      })
-
-      if (resultado?.pendingPayment) {
-        navigate('/pagamento-pendente')
-        return
-      }
-      navigate('/sistema/dashboard')
-    } catch (error) {
-      setErro(mensagemErroCadastro(error))
+      await enviarCadastro({ nomeEmpresa, nomeProprietario, email, telefone, tentativas: 0 })
     } finally {
+      submitEmAndamentoRef.current = false
       setCarregando(false)
     }
   }

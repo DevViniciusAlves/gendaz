@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.minhaempresa.gendaz.auth.idempotencia.exception.IdempotenciaException;
 import com.minhaempresa.gendaz.shared.security.RateLimitExceededException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -26,6 +27,15 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleConflict(ConflictException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ApiErrorResponse.of(409, "Conflito", ex.getMessage(), request.getRequestURI()));
+    }
+
+    @ExceptionHandler(IdempotenciaException.class)
+    public ResponseEntity<ApiErrorResponse> handleIdempotencia(IdempotenciaException ex, HttpServletRequest request) {
+        ResponseEntity.BodyBuilder builder = ResponseEntity.status(HttpStatus.CONFLICT);
+        if ("IDEMPOTENCY_IN_PROGRESS".equals(ex.getCodigo())) {
+            builder.header("Retry-After", "2");
+        }
+        return builder.body(ApiErrorResponse.of(409, ex.getCodigo(), ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(BusinessException.class)

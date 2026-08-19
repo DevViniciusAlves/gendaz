@@ -4,7 +4,9 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
+import org.springframework.stereotype.Component;
 
+@Component
 public class PagamentoMapper {
     public PagamentoResponse toResponse(PagamentoEntity pagamento) {
         Long agendamentoId = pagamento.getAgendamento() == null ? null : pagamento.getAgendamento().getId();

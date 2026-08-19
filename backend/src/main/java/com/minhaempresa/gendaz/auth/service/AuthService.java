@@ -9,6 +9,10 @@ import com.minhaempresa.gendaz.auth.dto.AuthDtos.CriarContaRequest;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginRequest;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginResponse;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.RefreshResponse;
+import com.minhaempresa.gendaz.auth.idempotencia.entity.CadastroIdempotenciaEntity;
+import com.minhaempresa.gendaz.auth.idempotencia.exception.IdempotenciaException;
+import com.minhaempresa.gendaz.auth.idempotencia.service.CadastroIdempotenciaService;
+import com.minhaempresa.gendaz.auth.idempotencia.service.ReservaResultado;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.security.IpTrackingService;
 import com.minhaempresa.gendaz.security.RecaptchaService;
@@ -39,6 +43,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Objects;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
@@ -73,6 +78,7 @@ public class AuthService {
     private final PhoneNumberService phoneNumberService;
     private final TransactionTemplate transactionTemplate;
     private final MembresiaRepository membresiaRepository;
+    private final CadastroIdempotenciaService cadastroIdempotenciaService;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
     public boolean validarCredenciaisLogin(String email, String senha) {
@@ -243,79 +249,143 @@ public class AuthService {
         }
     }
 
-    @Transactional
-    public LoginResponse criarConta(CriarContaRequest request) {
+@Transactional
+    public LoginResponse criarConta(CriarContaRequest request, String idempotencyKey, String requestId) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
         String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
         String nomeEmpresa = normalizarTexto(request.nomeEmpresa());
         String nomeProprietario = normalizarTexto(request.nomeProprietario());
+        String requestIdFinal = (requestId == null || requestId.isBlank())
+                ? UUID.randomUUID().toString() : requestId.trim();
 
-        log.info("Cadastro solicitado para {}", mascararEmail(email));
+        log.info("Cadastro solicitado para {} requestId={}", mascararEmail(email), requestIdFinal);
+
+        boolean idempotenciaAtiva = idempotencyKey != null && !idempotencyKey.isBlank();
+        CadastroIdempotenciaEntity idempotencia = null;
+        if (idempotenciaAtiva) {
+            String keyHash = cadastroIdempotenciaService.calcularKeyHash(idempotencyKey);
+            String fingerprint = cadastroIdempotenciaService.calcularFingerprint(
+                    email,
+                    telefone,
+                    nomeEmpresa,
+                    nomeProprietario,
+                    normalizarPlano(request.plano()),
+                    Boolean.TRUE.equals(request.aceiteTermos()));
+            log.info("[IDEMPOTENCIA] requestId={} keyHash={} fingerprint={} plano={} email={}",
+                    requestIdFinal, keyHash, fingerprint, normalizarPlano(request.plano()), mascararEmail(email));
+
+            ReservaResultado reserva = cadastroIdempotenciaService.reservarChave(keyHash, fingerprint, requestIdFinal);
+            idempotencia = reserva.registro();
+            switch (reserva.tipo()) {
+                case COMPLETADO -> {
+                    log.info("[IDEMPOTENCIA] replay concluido requestId={} keyHash={} resultado=COMPLETED",
+                            requestIdFinal, keyHash);
+                    return cadastroIdempotenciaService.recuperarResultado(idempotencia);
+                }
+                case EM_PROCESSAMENTO -> {
+                    log.warn("[IDEMPOTENCIA] em processamento requestId={} keyHash={} resultado=PROCESSING",
+                            requestIdFinal, keyHash);
+                    throw new IdempotenciaException("IDEMPOTENCY_IN_PROGRESS", "Seu cadastro ainda esta sendo processado.");
+                }
+                case RESERVADO -> log.info("[IDEMPOTENCIA] reserva ok requestId={} keyHash={} resultado=RESERVED",
+                        requestIdFinal, keyHash);
+                default -> throw new IllegalStateException("Tipo de reserva de idempotencia desconhecido: " + reserva.tipo());
+            }
+        }
+
         try {
-            CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
-            
-            PagamentoPlanoResponse pagamentoPlano = null;
-            if (cadastro.cadastroPro()) {
-                pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
-                        cadastro.empresaId(),
-                        "PRO",
-                        MetodoPagamento.CREDIT_CARD,
-                        cadastro.usuario().getNome(),
-                        cadastro.usuario().getEmail(),
-                        cadastro.usuario().getEmpresa().getTelefone(),
-                        null
-                );
+            LoginResponse resultado = executarCriacaoConta(request, email, telefone, nomeEmpresa, nomeProprietario);
+            if (idempotencia != null) {
+                String keyHash = idempotencia.getKeyHash();
+                Long empresaId = resultado.usuario() == null ? null : resultado.usuario().empresaId();
+                Long usuarioId = resultado.usuario() == null ? null : resultado.usuario().id();
+                Long assinaturaId = resultado.assinatura() == null ? null : resultado.assinatura().id();
+                Long pagamentoId = resultado.pagamentoPlano() == null ? null : resultado.pagamentoPlano().id();
+                cadastroIdempotenciaService.marcarCompletado(keyHash, empresaId, usuarioId, assinaturaId, pagamentoId, resultado.statusConta());
+                log.info("[IDEMPOTENCIA] concluido requestId={} keyHash={} resultado=COMPLETED statusConta={}",
+                        requestIdFinal, keyHash, resultado.statusConta());
             }
-
-            if (cadastro.usuario() != null) {
-                boolean emailBoasVindas = resendEmailService.enviarBoasVindas(
-                        cadastro.usuario().getEmail(),
-                        cadastro.usuario().getNome(),
-                        cadastro.usuario().getEmpresa() == null ? "Gendaz" : cadastro.usuario().getEmpresa().getNomeFantasia()
-                );
-                if (!emailBoasVindas) {
-                    log.warn("Email de boas-vindas nao enviado para {}", mascararEmail(cadastro.usuario().getEmail()));
-                }
-
-                String planoNome = cadastro.assinatura() != null && cadastro.assinatura().getPlano() != null
-                        ? cadastro.assinatura().getPlano().getNome() : request.plano();
-                String dataCadastro = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
-                try {
-                    resendEmailService.sendNewCustomerNotification(
-                            cadastro.usuario().getNome(),
-                            cadastro.usuario().getEmail(),
-                            phoneNumberService.formatarExibicao(telefone),
-                            request.nomeEmpresa(),
-                            planoNome,
-                            dataCadastro,
-                            cadastro.empresaId(),
-                            cadastro.usuario().getId()
-                    );
-                } catch (Exception e) {
-                    log.error("[admin-notification] erro ao enviar notificacao de novo cliente: {}", e.getMessage(), e);
-                }
-            }
-
-            log.info("Cadastro concluido para {} em {} ms", mascararEmail(email), duracaoMs(inicio));
-            if (cadastro.cadastroPro()) {
-                return new LoginResponse(
-                        "Cadastro criado. A conta Pro aguarda confirmaÃ§Ã£o de pagamento.",
-                        mapper.toResponse(cadastro.usuario()),
-                        assinaturaService.toResponse(cadastro.assinatura()),
-                        pagamentoPlano,
-                        "ACCOUNT_PENDING_PAYMENT",
-                        null,
-                        "PAGAMENTO_PENDENTE"
-                );
-            }
-            String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
-            registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
-            return new LoginResponse("Conta criada com sucesso. Seu teste grÃ¡tis de 7 dias comeÃ§ou.", mapper.toResponse(cadastro.usuario()), assinaturaService.toResponse(cadastro.assinatura()), null, "ACTIVE", sessionToken, null);
+            return resultado;
         } catch (RuntimeException ex) {
+            if (idempotencia != null) {
+                cadastroIdempotenciaService.marcarFalha(idempotencia.getKeyHash());
+                log.error("[IDEMPOTENCIA] falhou requestId={} keyHash={} resultado=FAILED",
+                        requestIdFinal, idempotencia.getKeyHash());
+            }
             log.error("Cadastro falhou para {} em {} ms. Causa real abaixo.", mascararEmail(email), duracaoMs(inicio), ex);
             throw ex;
         }
+    }
+
+    private LoginResponse executarCriacaoConta(CriarContaRequest request, String email, String telefone,
+                                               String nomeEmpresa, String nomeProprietario) {
+        CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
+
+        PagamentoPlanoResponse pagamentoPlano = null;
+        if (cadastro.cadastroPro()) {
+            pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
+                    cadastro.empresaId(),
+                    "PRO",
+                    MetodoPagamento.CREDIT_CARD,
+                    cadastro.usuario().getNome(),
+                    cadastro.usuario().getEmail(),
+                    cadastro.usuario().getEmpresa().getTelefone(),
+                    null
+            );
+        }
+
+        if (cadastro.usuario() != null) {
+            boolean emailBoasVindas = resendEmailService.enviarBoasVindas(
+                    cadastro.usuario().getEmail(),
+                    cadastro.usuario().getNome(),
+                    cadastro.usuario().getEmpresa() == null ? "Gendaz" : cadastro.usuario().getEmpresa().getNomeFantasia()
+            );
+            if (!emailBoasVindas) {
+                log.warn("Email de boas-vindas nao enviado para {}", mascararEmail(cadastro.usuario().getEmail()));
+            }
+
+            String planoNome = cadastro.assinatura() != null && cadastro.assinatura().getPlano() != null
+                    ? cadastro.assinatura().getPlano().getNome() : request.plano();
+            String dataCadastro = java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            try {
+                resendEmailService.sendNewCustomerNotification(
+                        cadastro.usuario().getNome(),
+                        cadastro.usuario().getEmail(),
+                        phoneNumberService.formatarExibicao(telefone),
+                        request.nomeEmpresa(),
+                        planoNome,
+                        dataCadastro,
+                        cadastro.empresaId(),
+                        cadastro.usuario().getId()
+                );
+            } catch (Exception e) {
+                log.error("[admin-notification] erro ao enviar notificacao de novo cliente: {}", e.getMessage(), e);
+            }
+        }
+
+        log.info("Cadastro concluido para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
+        if (cadastro.cadastroPro()) {
+            return new LoginResponse(
+                    "Cadastro criado. A conta Pro aguarda confirmacao de pagamento.",
+                    mapper.toResponse(cadastro.usuario()),
+                    assinaturaService.toResponse(cadastro.assinatura()),
+                    pagamentoPlano,
+                    "ACCOUNT_PENDING_PAYMENT",
+                    null,
+                    "PAGAMENTO_PENDENTE"
+            );
+        }
+        String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
+        registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
+        return new LoginResponse("Conta criada com sucesso. Seu teste gratis de 7 dias comecou.", mapper.toResponse(cadastro.usuario()), assinaturaService.toResponse(cadastro.assinatura()), null, "ACTIVE", sessionToken, null);
+    }
+
+    private String normalizarPlano(String plano) {
+        if (plano == null) {
+            return "";
+        }
+        return plano.trim().toUpperCase();
     }
 
     @Transactional
@@ -557,11 +627,6 @@ public class AuthService {
                 .versaoTermos(VERSAO_TERMOS)
                 .versaoPolitica(VERSAO_PRIVACIDADE)
                 .build());
-
-        boolean boasVindasEnviado = resendEmailService.enviarBoasVindas(email, nomeProprietario, nomeEmpresa);
-        if (!boasVindasEnviado) {
-            log.warn("Email de boas-vindas nao enviado para {}", mascararEmail(email));
-        }
 
         AssinaturaEntity assinatura = cadastroPro
                 ? assinaturaService.criarPendentePagamento(empresa, planoEscolhido)

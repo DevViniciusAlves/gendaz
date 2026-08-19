@@ -50,16 +50,22 @@ public class AuthController {
     }
 
     @PostMapping("/criar-conta")
-    public ResponseEntity<LoginResponse> criarConta(@Valid @RequestBody CriarContaRequest request, HttpServletRequest http, HttpServletResponse response) {
+    public ResponseEntity<LoginResponse> criarConta(
+            @Valid @RequestBody CriarContaRequest request,
+            @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
+            @RequestHeader(value = "X-Request-Id", required = false) String requestId,
+            HttpServletRequest http,
+            HttpServletResponse response
+    ) {
         try {
-            LoginResponse login = authService.criarConta(request);
+            LoginResponse login = authService.criarConta(request, idempotencyKey, requestId);
             if (login.sessionToken() != null && login.usuario() != null) {
                 cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);
                 cookieService.adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (RuntimeException ex) {
-            log.error("Erro real no POST /api/auth/criar-conta para email={}", mascararEmail(request.email()), ex);
+            log.error("Erro real no POST /api/auth/criar-conta para email={} requestId={}", mascararEmail(request.email()), requestId, ex);
             throw ex;
         }
     }
