@@ -15,6 +15,7 @@ import CriarConta from '../pages/CriarConta.jsx'
 import PagamentoPendente from '../pages/PagamentoPendente.jsx'
 import PagamentoRetorno from '../pages/PagamentoRetorno.jsx'
 import ContaInativa from '../pages/ContaInativa.jsx'
+import ContaEncerrada from '../pages/ContaEncerrada.jsx'
 import SessionExpiredScreen from '../pages/SessionExpiredScreen.jsx'
 import TermosDeUso from '../pages/TermosDeUso.jsx'
 import PoliticaPrivacidade from '../pages/PoliticaPrivacidade.jsx'
@@ -46,6 +47,9 @@ import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
   if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === 'CONTA_ENCERRADA') {
+    return <Navigate to="/conta-encerrada" replace />
+  }
   return usuario ? children : <Navigate to="/login" replace />
 }
 
@@ -56,6 +60,9 @@ function ClientRoute({ children }) {
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
     return <Navigate to="/admin/dashboard" replace />
+  }
+  if (usuario.statusConta === 'ACCOUNT_INACTIVE' && usuario.motivoInatividade === 'CONTA_ENCERRADA' && !impersonation) {
+    return <Navigate to="/conta-encerrada" replace />
   }
   if (usuario.statusConta === 'ACCOUNT_INACTIVE' && !impersonation) {
     return <Navigate to="/conta-inativa" replace />
@@ -69,6 +76,9 @@ function PlanRoute({ routeKey, children }) {
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) {
     return <Navigate to="/admin/dashboard" replace />
   }
+  if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === 'CONTA_ENCERRADA' && !impersonation) {
+    return <Navigate to="/conta-encerrada" replace />
+  }
   if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && !impersonation) {
     return <Navigate to="/conta-inativa" replace />
   }
@@ -77,6 +87,17 @@ function PlanRoute({ routeKey, children }) {
 }
 
 function ContaInativaRoute({ children }) {
+  const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
+  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
+  if (!usuario) return <Navigate to="/login" replace />
+  if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
+    return <Navigate to="/admin/dashboard" replace />
+  }
+  return children
+}
+
+function ContaEncerradaRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
   if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
@@ -116,6 +137,7 @@ export default function AppRoutes() {
       <Route path="/pagamento/sucesso" element={<PagamentoRetorno tipo="sucesso" />} />
       <Route path="/pagamento/cancelado" element={<PagamentoRetorno tipo="cancelado" />} />
       <Route path="/conta-inativa" element={<ContaInativaRoute><ContaInativa /></ContaInativaRoute>} />
+      <Route path="/conta-encerrada" element={<ContaEncerradaRoute><ContaEncerrada /></ContaEncerradaRoute>} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
       <Route path="/meu-gendaz/:slug/*" element={<Gendaz />}>

@@ -1006,6 +1006,19 @@ export const appApi = {
       error: 'Não foi possível encerrar a conta.',
     })
   },
+
+  reativarConta() {
+    return comNotificacao(async () => {
+      await garantirCsrfCookie().catch(() => {})
+      return api.post('/lgpd/reativar-conta', null, {
+        headers: usuarioHeaders(),
+      }).then((response) => response.data)
+    }, {
+      loading: 'Reativando conta, aguarde...',
+      success: 'Conta reativada com sucesso.',
+      error: 'Não foi possível reativar a conta.',
+    })
+  },
 }
 
 

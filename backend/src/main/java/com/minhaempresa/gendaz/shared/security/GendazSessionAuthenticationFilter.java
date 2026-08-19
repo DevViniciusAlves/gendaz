@@ -149,8 +149,17 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         if (usuario.getEmpresa().getStatus() == StatusEmpresa.INATIVA) {
             return isReactivationRoute(request);
         }
-        // Empresa ENCERRADA ou BLOQUEADA está bloqueada
+        // Empresa ENCERRADA permite somente a reativação explícita do dono.
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
+            return isReativarContaRoute(request);
+        }
+        // Empresa BLOQUEADA fica totalmente bloqueada
         return false;
+    }
+
+    private boolean isReativarContaRoute(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod())
+                && "/api/lgpd/reativar-conta".equals(request.getRequestURI());
     }
 
     private boolean isReactivationRoute(HttpServletRequest request) {

@@ -159,6 +159,19 @@ public class AuthService {
                 AssinaturaEntity assinaturaAtual = assinaturaService.buscarAtualPorEmpresa(usuario.getEmpresa().getId()).orElse(null);
                 assinatura = assinaturaAtual == null ? null : assinaturaService.toResponse(assinaturaAtual);
                 pagamentoPlano = pagamentoService.buscarUltimoPagamentoPlanoPendente(usuario.getEmpresa().getId()).orElse(null);
+                if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
+                    String sessionToken = usuarioSessionService.renovarSessao(usuario);
+                    log.info("Login redirecionado para conta encerrada para {}", mascararEmail(email));
+                    return new LoginResponse(
+                            "Esta conta foi encerrada. Voce pode reativa-la para voltar a utilizar o gendaz.",
+                            mapper.toResponse(usuario),
+                            assinatura,
+                            null,
+                            "ACCOUNT_INACTIVE",
+                            sessionToken,
+                            "CONTA_ENCERRADA"
+                    );
+                }
                 if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
                     log.info("Login pendente de pagamento para {}", mascararEmail(email));
                     return new LoginResponse(
@@ -369,7 +382,25 @@ public class AuthService {
         if (sessionToken == null || sessionToken.isBlank()) {
             throw new BusinessException("SessÃ£o nÃ£o encontrada.");
         }
-        UsuarioEntity usuario = buscarUsuarioAutenticado(null, sessionToken);
+        UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
+                .orElseThrow(() -> new SessaoExpiradaException("UsuÃ¡rio autenticado invÃ¡lido."));
+        if (usuario.getStatus() != StatusUsuario.ATIVO) {
+            throw new BusinessException("UsuÃ¡rio inativo.");
+        }
+        boolean sessaoRestritaEncerrada = usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                && usuario.getEmpresa() != null
+                && usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA;
+        if (!sessaoRestritaEncerrada) {
+            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                    && usuario.getEmpresa() != null
+                    && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+                throw new BusinessException("Conta indisponÃ­vel. Entre em contato com o suporte.");
+            }
+            if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
+                    && usuario.getEmpresa() != null) {
+                garantirMembresiaAtivaOuCriar(usuario);
+            }
+        }
         String novaSessao = usuarioSessionService.renovarSessao(usuario, sessionToken);
         AssinaturaResponse assinatura = usuario.getEmpresa() == null
                 ? null
@@ -437,6 +468,9 @@ public class AuthService {
         if (usuario.getEmpresa() == null) {
             return "ACTIVE";
         }
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
+            return "ACCOUNT_INACTIVE";
+        }
         if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
             return "ACCOUNT_PENDING_PAYMENT";
         }
@@ -452,6 +486,9 @@ public class AuthService {
     private String calcularMotivoInatividade(UsuarioEntity usuario, AssinaturaResponse assinatura) {
         if (usuario.getEmpresa() == null) {
             return null;
+        }
+        if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
+            return "CONTA_ENCERRADA";
         }
         if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
             return "PAGAMENTO_PENDENTE";

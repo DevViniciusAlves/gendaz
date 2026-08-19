@@ -20,6 +20,9 @@ export default function Login() {
   }
 
   if (usuario) {
+    if (usuario.statusConta === 'ACCOUNT_INACTIVE' && usuario.motivoInatividade === 'CONTA_ENCERRADA') {
+      return <Navigate to="/conta-encerrada" replace />
+    }
     if (usuario.statusConta === 'ACCOUNT_INACTIVE') {
       return <Navigate to="/conta-inativa" replace />
     }
@@ -41,6 +44,10 @@ export default function Login() {
         return
       }
       if (resultado?.statusConta === 'ACCOUNT_INACTIVE') {
+        if (resultado?.motivoInatividade === 'CONTA_ENCERRADA') {
+          navigate('/conta-encerrada')
+          return
+        }
         navigate('/conta-inativa')
         return
       }

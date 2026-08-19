@@ -39,6 +39,9 @@ export default function AppLayout() {
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) {
     return <Navigate to="/admin/dashboard" replace />
   }
+  if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === 'CONTA_ENCERRADA' && !impersonation) {
+    return <Navigate to="/conta-encerrada" replace />
+  }
   if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && !impersonation) {
     return <Navigate to="/conta-inativa" replace />
   }

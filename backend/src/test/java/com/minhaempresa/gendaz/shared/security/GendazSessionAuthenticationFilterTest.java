@@ -137,6 +137,48 @@ class GendazSessionAuthenticationFilterTest {
         verify(adminImpersonationService, never()).validar(anyString());
     }
 
+    @Test
+    void empresaEncerradaPermiteSomenteReativarConta() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(usuarioRepository.findBySessaoAtiva("sessao-encerrada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ENCERRADA)));
+
+        MockHttpServletResponse painel = new MockHttpServletResponse();
+        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessao-encerrada");
+        filter.doFilterInternal(reqPainel, painel, new MockFilterChain());
+        assertEquals(403, painel.getStatus());
+
+        MockHttpServletResponse exportar = new MockHttpServletResponse();
+        MockHttpServletRequest reqExportar = requestComCookie("GET", "/api/lgpd/exportar", "Gendaz_session", "sessao-encerrada");
+        filter.doFilterInternal(reqExportar, exportar, new MockFilterChain());
+        assertEquals(403, exportar.getStatus());
+
+        MockHttpServletResponse financeiro = new MockHttpServletResponse();
+        MockHttpServletRequest reqFinanceiro = requestComCookie("GET", "/api/pagamentos/planos/empresa/30/atual", "Gendaz_session", "sessao-encerrada");
+        filter.doFilterInternal(reqFinanceiro, financeiro, new MockFilterChain());
+        assertEquals(403, financeiro.getStatus());
+
+        MockHttpServletResponse reativar = new MockHttpServletResponse();
+        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessao-encerrada");
+        filter.doFilterInternal(reqReativar, reativar, new MockFilterChain());
+        assertEquals(200, reativar.getStatus());
+    }
+
+    @Test
+    void empresaBloqueadaBloqueiaInclusiveReativarConta() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(usuarioRepository.findBySessaoAtiva("sessao-bloqueada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA)));
+
+        MockHttpServletResponse painel = new MockHttpServletResponse();
+        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessao-bloqueada");
+        filter.doFilterInternal(reqPainel, painel, new MockFilterChain());
+        assertEquals(403, painel.getStatus());
+
+        MockHttpServletResponse reativar = new MockHttpServletResponse();
+        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessao-bloqueada");
+        filter.doFilterInternal(reqReativar, reativar, new MockFilterChain());
+        assertEquals(403, reativar.getStatus());
+    }
+
     private GendazSessionAuthenticationFilter filtro() {
         GendazSessionAuthenticationFilter filter = new GendazSessionAuthenticationFilter(usuarioRepository, adminImpersonationService);
         ReflectionTestUtils.setField(filter, "frontendUrl", "https://gendaz.site");
@@ -144,7 +186,12 @@ class GendazSessionAuthenticationFilterTest {
     }
 
     private MockHttpServletRequest getComCookie(String nome, String valor) {
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard");
+        return requestComCookie("GET", "/api/dashboard", nome, valor);
+    }
+
+    private MockHttpServletRequest requestComCookie(String method, String uri, String nome, String valor) {
+        MockHttpServletRequest request = new MockHttpServletRequest(method, uri);
+        request.addHeader("Origin", "http://localhost:5173");
         request.setCookies(new Cookie(nome, valor));
         return request;
     }

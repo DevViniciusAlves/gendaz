@@ -58,5 +58,7 @@ public final class LgpdDtos {
     public record AuditoriaExportada(Long id, String tipo, String severidade, String descricao, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
 
     public record ExcluirContaResponse(String mensagem, Long empresaId, String statusEmpresa, String stripeStatus) {}
+
+    public record ReativarContaResponse(String mensagem, Long empresaId, String statusEmpresa) {}
 }
 

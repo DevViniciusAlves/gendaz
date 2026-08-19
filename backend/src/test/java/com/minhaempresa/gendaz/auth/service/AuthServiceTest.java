@@ -72,6 +72,7 @@ class AuthServiceTest {
         LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
 
         assertEquals("ACCOUNT_INACTIVE", response.statusConta());
+        assertEquals("PAGAMENTO_PENDENTE", response.motivoInatividade());
         assertNotNull(response.sessionToken());
     }
 
@@ -83,7 +84,21 @@ class AuthServiceTest {
         LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
 
         assertEquals("ACCOUNT_INACTIVE", response.statusConta());
+        assertEquals("ADMIN_SUSPENSAO", response.motivoInatividade());
         assertNull(response.sessionToken());
+    }
+
+    @Test
+    void loginEmpresaEncerradaDeveCriarSessaoRestritaComMotivoProprio() {
+        UsuarioEntity usuario = usuario(StatusUsuario.ATIVO, StatusEmpresa.ENCERRADA);
+        when(usuarioRepository.findUsuariosPainelByEmailIgnoreCase(anyString(), any())).thenReturn(java.util.List.of(usuario));
+        when(usuarioSessionService.renovarSessao(any())).thenReturn("token-restrito");
+
+        LoginResponse response = authService.login(new LoginRequest("usuario@test.com", "senha123", null));
+
+        assertEquals("ACCOUNT_INACTIVE", response.statusConta());
+        assertEquals("CONTA_ENCERRADA", response.motivoInatividade());
+        assertNotNull(response.sessionToken());
     }
 
     @Test

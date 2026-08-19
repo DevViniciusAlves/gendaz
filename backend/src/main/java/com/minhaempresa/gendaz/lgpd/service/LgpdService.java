@@ -21,6 +21,7 @@ import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ExcluirContaResponse;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ExportacaoDadosResponse;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.MeuGendazExportado;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.PlanoExportado;
+import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ReativarContaResponse;
 import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.notafiscal.repository.NotaFiscalRepository;
@@ -38,6 +39,7 @@ import com.minhaempresa.gendaz.usuario.mapper.UsuarioMapper;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
+import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
 import java.util.List;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
@@ -70,6 +72,7 @@ public class LgpdService {
     private final FinanceiroService financeiroService;
     private final AuditLogRepository auditLogRepository;
     private final PaymentGateway paymentGateway;
+    private final UsuarioSessionService usuarioSessionService;
     private final UsuarioMapper usuarioMapper = new UsuarioMapper();
 
     @Transactional(readOnly = true)
@@ -182,6 +185,38 @@ public class LgpdService {
                 empresa.getStatus().name(),
                 stripeStatus
         );
+    }
+
+    @Transactional
+    public ReativarContaResponse reativarConta(Long usuarioId) {
+        UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
+        if (usuario.getPerfil() != PerfilUsuario.DONO) {
+            throw new BusinessException("Acesso negado: apenas o dono pode reativar a conta.");
+        }
+        if (usuario.getEmpresa() == null) {
+            throw new BusinessException("Usuario sem empresa nao pode reativar a conta.");
+        }
+        EmpresaEntity empresa = buscarEmpresa(usuario.getEmpresa().getId());
+        if (empresa.getStatus() != StatusEmpresa.ENCERRADA) {
+            throw new BusinessException("Esta conta nao esta encerrada.");
+        }
+
+        // Decisao sempre pela vigencia real do plano/trial existente (somente leitura das regras atuais).
+        boolean planoVigente = assinaturaService.buscarAtualPorEmpresa(empresa.getId()).isPresent();
+        StatusEmpresa novoStatus = planoVigente ? StatusEmpresa.ATIVA : StatusEmpresa.INATIVA;
+        empresa.setStatus(novoStatus);
+        empresaRepository.save(empresa);
+
+        // Encerra a sessao restrita usada para a reativacao: o dono fara novo login normal.
+        if (usuario.getSessaoAtiva() != null && !usuario.getSessaoAtiva().isBlank()) {
+            usuarioSessionService.encerrarSessao(usuario.getSessaoAtiva());
+        }
+
+        String mensagem = novoStatus == StatusEmpresa.ATIVA
+                ? "Conta reativada com sucesso. Faca login novamente para utilizar o gendaz."
+                : "Conta reativada. Seu plano expirou: faca login para regularizar o pagamento.";
+        log.info("[LGPD] Conta encerrada reativada pelo DONO: empresa={}, novoStatus={}", empresa.getId(), novoStatus);
+        return new ReativarContaResponse(mensagem, empresa.getId(), novoStatus.name());
     }
 
     private EmpresaEntity buscarEmpresa(Long empresaId) {
