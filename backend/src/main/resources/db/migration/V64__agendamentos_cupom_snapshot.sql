@@ -19,25 +19,83 @@ alter table if exists agendamentos
 
 -- 2) FK preservadora: excluir a promocao NAO apaga o agendamento,
 --    apenas limpa a referencia (o snapshot textual/financeiro fica).
-alter table if exists agendamentos
-    add constraint if not exists fk_agendamentos_promocao_origem
-        foreign key (promocao_origem_id)
-        references promocoes(id)
-        on delete set null;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'fk_agendamentos_promocao_origem'
+          AND conrelid = 'public.agendamentos'::regclass
+    ) THEN
+        ALTER TABLE public.agendamentos
+            ADD CONSTRAINT fk_agendamentos_promocao_origem
+            FOREIGN KEY (promocao_origem_id)
+            REFERENCES public.promocoes(id)
+            ON DELETE SET NULL;
+    END IF;
+END
+$$;
 
 -- 3) CHECKs seguros (consideram NULL dos registros antigos).
-alter table if exists agendamentos
-    add constraint if not exists ck_agendamentos_valor_original_ge_0
-        check (valor_original is null or valor_original >= 0);
-alter table if exists agendamentos
-    add constraint if not exists ck_agendamentos_valor_desconto_ge_0
-        check (valor_desconto is null or valor_desconto >= 0);
-alter table if exists agendamentos
-    add constraint if not exists ck_agendamentos_valor_final_ge_0
-        check (valor_final is null or valor_final >= 0);
-alter table if exists agendamentos
-    add constraint if not exists ck_agendamentos_valor_final_le_original
-        check (valor_final is null or valor_original is null or valor_final <= valor_original);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'ck_agendamentos_valor_original_ge_0'
+          AND conrelid = 'public.agendamentos'::regclass
+    ) THEN
+        ALTER TABLE agendamentos
+            ADD CONSTRAINT ck_agendamentos_valor_original_ge_0
+            CHECK (valor_original is null or valor_original >= 0);
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'ck_agendamentos_valor_desconto_ge_0'
+          AND conrelid = 'public.agendamentos'::regclass
+    ) THEN
+        ALTER TABLE agendamentos
+            ADD CONSTRAINT ck_agendamentos_valor_desconto_ge_0
+            CHECK (valor_desconto is null or valor_desconto >= 0);
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'ck_agendamentos_valor_final_ge_0'
+          AND conrelid = 'public.agendamentos'::regclass
+    ) THEN
+        ALTER TABLE agendamentos
+            ADD CONSTRAINT ck_agendamentos_valor_final_ge_0
+            CHECK (valor_final is null or valor_final >= 0);
+    END IF;
+END
+$$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'ck_agendamentos_valor_final_le_original'
+          AND conrelid = 'public.agendamentos'::regclass
+    ) THEN
+        ALTER TABLE agendamentos
+            ADD CONSTRAINT ck_agendamentos_valor_final_le_original
+            CHECK (valor_final is null or valor_original is null or valor_final <= valor_original);
+    END IF;
+END
+$$;
 
 -- 4) Reforco no banco da regra de uso aplicada pelo codigo:
 --    um cliente nao pode usar novamente a mesma promocao.
@@ -74,9 +132,20 @@ begin
     end if;
 end $$;
 
-alter table if exists meu_gendaz_promocao_uso
-    add constraint if not exists uk_meu_gendaz_promocao_uso_promocao_cliente
-        unique (promocao_id, cliente_id);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint
+        WHERE conname = 'uk_meu_gendaz_promocao_uso_promocao_cliente'
+          AND conrelid = 'public.meu_gendaz_promocao_uso'::regclass
+    ) THEN
+        ALTER TABLE meu_gendaz_promocao_uso
+            ADD CONSTRAINT uk_meu_gendaz_promocao_uso_promocao_cliente
+            UNIQUE (promocao_id, cliente_id);
+    END IF;
+END
+$$;
 
 create unique index if not exists uk_meu_gendaz_promocao_uso_agendamento
     on meu_gendaz_promocao_uso (agendamento_id)
