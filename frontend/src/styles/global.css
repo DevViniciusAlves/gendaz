@@ -21673,19 +21673,22 @@ iframe {
 /* Landing Page Responsive Fixes */
 @media (max-width: 768px) {
   .hero-section-new {
-    padding: 40px 16px 60px !important;
+    padding: 30px 14px 50px !important;
     min-height: auto !important;
   }
   .hero-new-title {
-    font-size: 32px !important;
+    font-size: clamp(16px, 4.2vw, 26px) !important;
+    line-height: 1.25 !important;
+    max-width: 100% !important;
   }
   .hero-line {
-    white-space: normal !important;
+    display: block !important;
+    white-space: nowrap !important;
   }
   .hero-new-buttons {
     flex-direction: column !important;
     width: 100% !important;
-    gap: 12px !important;
+    gap: 10px !important;
   }
   .hero-new-buttons a, .hero-new-buttons Link {
     width: 100% !important;
@@ -21696,5 +21699,50 @@ iframe {
 @media (max-width: 768px) {
   .features-grid-container {
     grid-template-columns: 1fr !important;
+  }
+}
+
+/* ============================================================
+   AJUSTES RESPONSIVOS MOBILE - Escala, Landing, Dropdown, Nav
+   ============================================================ */
+
+@media (max-width: 480px) {
+  .hero-new-title {
+    font-size: clamp(24px, 7vw, 32px) !important;
+    line-height: 1.1 !important;
+  }
+  .hero-new-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 10px !important;
+  }
+  .hero-new-buttons a, .hero-new-buttons .primary-link, .hero-new-buttons .secondary-link {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .dropdown-panel {
+    position: fixed !important;
+    top: 70px !important;
+    right: 16px !important;
+    width: calc(100vw - 32px) !important;
+    max-height: calc(100dvh - 150px) !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain !important;
+  }
+  .app-shell .content {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom)) !important;
+  }
+  .panel, .card {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+  .page-title h1 {
+    font-size: 22px !important;
+  }
+  input, select, textarea {
+    font-size: 16px !important;
   }
 }
