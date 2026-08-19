@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.cliente.repository;
 
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
