@@ -76,7 +76,7 @@ public class ClienteBulkService {
             throw new BusinessException("Selecione pelo menos um item.");
         }
         if (ids.size() > 10) {
-            throw new BusinessException("VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.");
+            throw new BusinessException("Você pode selecionar no máximo 10 itens por vez.");
         }
     }
 }

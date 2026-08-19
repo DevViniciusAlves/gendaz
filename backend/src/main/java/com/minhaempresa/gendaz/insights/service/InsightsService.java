@@ -81,7 +81,7 @@ public class InsightsService {
                 Responda sempre em portugues do Brasil.
                 Use apenas os dados fornecidos.
                 Escreva de forma humana, natural e direta, como uma pessoa experiente conversando com o dono do negocio.
-                Nao use tom robÃ³tico, nem frases prontas de IA, nem expressÃµes repetidas como "com base nos dados fornecidos".
+                Nao use tom robótico, nem frases prontas de IA, nem expressões repetidas como "com base nos dados fornecidos".
                 Evite listas numeradas, marcadores e asteriscos quando der para responder em texto corrido.
                 Se precisar listar pontos, faca isso de forma curta, simples e bem conversada.
                 Nao invente numeros.
@@ -235,9 +235,9 @@ public class InsightsService {
                 Diretrizes por ramo:
                 - BARBERSHOP: foco em recorrencia, retorno rapido, barba e servicos complementares.
                 - SALAO_CABELO: foco em recorrencia, combos, tratamentos, coloracao e fidelizacao.
-                - PERSONAL_TRAINER: foco em retenÃ§Ã£o, pacotes de sessoes, frequencia semanal e acompanhamento.
+                - PERSONAL_TRAINER: foco em retenção, pacotes de sessoes, frequencia semanal e acompanhamento.
                 - CLINICA_FISIOTERAPIA: foco em reavaliacao, continuidade de tratamento e follow-up.
-                - CLINICA_ODONTOLOGIA: foco em prevenÃ§ao, retorno periodico e agenda preventiva.
+                - CLINICA_ODONTOLOGIA: foco em prevençao, retorno periodico e agenda preventiva.
                 - OUTRO: use recomendacoes genericas e praticas, sem inventar servicos.
 
                 Estrutura esperada:
@@ -249,22 +249,22 @@ public class InsightsService {
                     {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"acao"}
                   ],
                   "oportunidades": [
-                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"MÃ©dia"}
+                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média"}
                   ],
                   "acoes": [
-                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"MÃ©dia", "status":"Pendente"}
+                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média", "status":"Pendente"}
                   ]
                 }
 
                 Regras:
-                - Retorne no mÃ¡ximo 3 oportunidades.
-                - Retorne no mÃ¡ximo 4 aÃ§Ãµes.
-                - Se houver pendÃªncias, devolva aÃ§Ãµes para cobranÃ§a e recuperaÃ§Ã£o.
+                - Retorne no máximo 3 oportunidades.
+                - Retorne no máximo 4 ações.
+                - Se houver pendências, devolva ações para cobrança e recuperação.
                 - So recomende reativacao de clientes quando clientes.inativos_status ou resumo.clientes_inativos for maior que 0.
                 - Se clientes.inativos_status for 0, nao cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
                 - Se nao houver sinal real suficiente, devolva arrays vazios para oportunidades e acoes.
-                - Se houver serviÃ§o sem venda ou profissional ocioso, devolva aÃ§Ãµes prÃ¡ticas.
-                - Se a Groq nÃ£o conseguir estimar impacto, use "Impacto nÃ£o estimado".
+                - Se houver serviço sem venda ou profissional ocioso, devolva ações práticas.
+                - Se a Groq não conseguir estimar impacto, use "Impacto não estimado".
 
                 Dados:
                 %s
@@ -312,17 +312,17 @@ public class InsightsService {
         List<InsightAction> acoes = new ArrayList<>();
 
         if (pendente > 0) {
-            oportunidades.add(new InsightItem("CobranÃ§a ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperÃ¡vel no financeiro.", formatarMoeda(pendente), "Alta"));
+            oportunidades.add(new InsightItem("Cobrança ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperável no financeiro.", formatarMoeda(pendente), "Alta"));
             acoes.add(new InsightAction("Cobrar pagamentos pendentes", "Alta", formatarMoeda(pendente)));
         }
         if (servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) == 0)) {
-            oportunidades.add(new InsightItem("Divulgar serviÃ§o sem venda", "HÃ¡ serviÃ§o sem conversÃ£o no perÃ­odo.", "O catÃ¡logo da empresa mostra um serviÃ§o sem movimento recente.", "Impacto nÃ£o estimado", "MÃ©dia"));
+            oportunidades.add(new InsightItem("Divulgar serviço sem venda", "Há serviço sem conversão no período.", "O catálogo da empresa mostra um serviço sem movimento recente.", "Impacto não estimado", "Média"));
         }
         if (profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) == 0)) {
-            oportunidades.add(new InsightItem("Redistribuir agenda", "Profissional com baixa ocupaÃ§Ã£o pode absorver demanda.", "Baseado no movimento real.", "Impacto n\u00e3o estimado", "MÃ©dia"));
+            oportunidades.add(new InsightItem("Redistribuir agenda", "Profissional com baixa ocupação pode absorver demanda.", "Baseado no movimento real.", "Impacto n\u00e3o estimado", "Média"));
         }
         if (receita60 > 0 && receita30 < receita60) {
-            oportunidades.add(new InsightItem("Queda de receita", "A receita recente caiu em relaÃ§Ã£o ao perÃ­odo anterior.", "ComparaÃ§Ã£o 30d vs 60d.", "Impacto n\u00e3o estimado", "Alta"));
+            oportunidades.add(new InsightItem("Queda de receita", "A receita recente caiu em relação ao período anterior.", "Comparação 30d vs 60d.", "Impacto n\u00e3o estimado", "Alta"));
         }
 
         if (groq.containsKey("principais")) {
@@ -357,7 +357,7 @@ public class InsightsService {
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
-        String impactoTotal = pendente > 0 ? formatarMoeda(pendente) : "Impacto nÃ£o estimado";
+        String impactoTotal = pendente > 0 ? formatarMoeda(pendente) : "Impacto não estimado";
         return new DashboardResponse(
                 empresaId,
                 stringValor(dados.get("empresaNome")),
@@ -523,7 +523,7 @@ public class InsightsService {
 
         if (pendente > 0) {
             alertas.add(new InsightItem(
-                    "CobranÃ§a pendente",
+                    "Cobrança pendente",
                     "Existem pagamentos em aberto que ainda exigem acompanhamento.",
                     formatarMoeda(pendente),
                     "Alta",
@@ -536,9 +536,9 @@ public class InsightsService {
         if (servicosSemMovimento > 0 || profissionaisSemMovimento > 0) {
             alertas.add(new InsightItem(
                     "Movimento abaixo do ideal",
-                    "HÃ¡ serviÃ§os ou profissionais sem movimentaÃ§Ã£o relevante no perÃ­odo.",
-                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviÃ§os",
-                    "MÃ©dia",
+                    "Há serviços ou profissionais sem movimentação relevante no período.",
+                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviços",
+                    "Média",
                     "alerta"
             ));
         }
@@ -546,17 +546,17 @@ public class InsightsService {
         if (receita60 > 0 && receita30 < receita60) {
             alertas.add(new InsightItem(
                     "Receita em queda",
-                    "O faturamento recente ficou abaixo do perÃ­odo comparado.",
-                    "ComparaÃ§Ã£o 30d vs 60d",
-                    "MÃ©dia",
+                    "O faturamento recente ficou abaixo do período comparado.",
+                    "Comparação 30d vs 60d",
+                    "Média",
                     "alerta"
             ));
         }
 
         if (alertas.isEmpty()) {
             alertas.add(new InsightItem(
-                    "OperaÃ§Ã£o estÃ¡vel",
-                    "Nenhum alerta crÃ­tico foi encontrado na anÃ¡lise atual.",
+                    "Operação estável",
+                    "Nenhum alerta crítico foi encontrado na análise atual.",
                     "Dados sincronizados com a empresa vinculada.",
                     "Baixa",
                     "alerta"
@@ -569,8 +569,8 @@ public class InsightsService {
     private InsightItem montarPrincipalAcao(double pendente, long atRisk, long servicosSemMovimento, long profissionaisSemMovimento, boolean quedaReceita) {
         if (pendente > 0) {
             return new InsightItem(
-                    "PrÃ³xima Melhor AÃ§Ã£o",
-                    "Priorize a cobranÃ§a dos pagamentos em aberto para recuperar caixa imediato.",
+                    "Próxima Melhor Ação",
+                    "Priorize a cobrança dos pagamentos em aberto para recuperar caixa imediato.",
                     formatarMoeda(pendente),
                     "Alta",
                     "acao"
@@ -578,26 +578,26 @@ public class InsightsService {
         }
         if (profissionaisSemMovimento > 0 || servicosSemMovimento > 0) {
             return new InsightItem(
-                    "PrÃ³xima Melhor AÃ§Ã£o",
-                    "Redistribua a agenda e divulgue os itens sem movimento para gerar novas conversÃµes.",
-                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviÃ§os sem movimento",
-                    "MÃ©dia",
+                    "Próxima Melhor Ação",
+                    "Redistribua a agenda e divulgue os itens sem movimento para gerar novas conversões.",
+                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviços sem movimento",
+                    "Média",
                     "acao"
             );
         }
         if (quedaReceita) {
             return new InsightItem(
-                    "PrÃ³xima Melhor AÃ§Ã£o",
-                    "Compense a queda recente de faturamento com uma campanha comercial para os serviÃ§os com melhor potencial.",
-                    "Receita recente abaixo do perÃ­odo anterior",
-                    "MÃ©dia",
+                    "Próxima Melhor Ação",
+                    "Compense a queda recente de faturamento com uma campanha comercial para os serviços com melhor potencial.",
+                    "Receita recente abaixo do período anterior",
+                    "Média",
                     "acao"
             );
         }
         return new InsightItem(
-                "PrÃ³xima Melhor AÃ§Ã£o",
-                "Mantenha a operaÃ§Ã£o atual e acompanhe os sinais da empresa diariamente.",
-                "Sem aÃ§Ã£o crÃ­tica no momento",
+                "Próxima Melhor Ação",
+                "Mantenha a operação atual e acompanhe os sinais da empresa diariamente.",
+                "Sem ação crítica no momento",
                 "Baixa",
                 "acao"
         );
@@ -607,16 +607,16 @@ public class InsightsService {
         if (riscoOciosidade) {
             return new InsightItem(
                     "Risco de Ociosidade",
-                    "Existem recursos sem uso consistente no perÃ­odo analisado.",
-                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviÃ§os sem vendas recentes",
-                    "MÃ©dia",
+                    "Existem recursos sem uso consistente no período analisado.",
+                    profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviços sem vendas recentes",
+                    "Média",
                     "agenda"
             );
         }
         return new InsightItem(
                 "Risco de Ociosidade",
-                "NÃ£o hÃ¡ sinais relevantes de ociosidade agora.",
-                "Agenda e serviÃ§os com movimento suficiente no perÃ­odo",
+                "Não há sinais relevantes de ociosidade agora.",
+                "Agenda e serviços com movimento suficiente no período",
                 "Baixa",
                 "agenda"
         );
@@ -625,8 +625,8 @@ public class InsightsService {
     private InsightItem montarPrincipalFinanceiro(double pendente, double receita30, double receita60, boolean perdaFinanceira) {
         if (pendente > 0) {
             return new InsightItem(
-                    "Perda Financeira EvitÃ¡vel",
-                    "HÃ¡ pagamentos em aberto que ainda podem ser recuperados.",
+                    "Perda Financeira Evitável",
+                    "Há pagamentos em aberto que ainda podem ser recuperados.",
                     formatarMoeda(pendente),
                     "Alta",
                     "financeiro"
@@ -634,16 +634,16 @@ public class InsightsService {
         }
         if (perdaFinanceira) {
             return new InsightItem(
-                    "Perda Financeira EvitÃ¡vel",
-                    "A receita recente caiu em relaÃ§Ã£o ao perÃ­odo anterior e merece atenÃ§Ã£o.",
-                    "ComparaÃ§Ã£o entre 30 dias e 60 dias",
-                    "MÃ©dia",
+                    "Perda Financeira Evitável",
+                    "A receita recente caiu em relação ao período anterior e merece atenção.",
+                    "Comparação entre 30 dias e 60 dias",
+                    "Média",
                     "financeiro"
             );
         }
         return new InsightItem(
-                "Perda Financeira EvitÃ¡vel",
-                "NÃ£o hÃ¡ perda financeira evidente no momento.",
+                "Perda Financeira Evitável",
+                "Não há perda financeira evidente no momento.",
                 receita30 > 0 ? formatarMoeda(receita30) : "Sem receita recente relevante",
                 "Baixa",
                 "financeiro"
@@ -749,22 +749,22 @@ public class InsightsService {
         boolean profissionalOcioso = profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) <= 0);
         if (servicoSemVenda) {
             acoes.add(new InsightAction(
-                    "Divulgar serviÃ§o sem venda",
-                    "MÃ©dia",
-                    "Criar campanha para o serviÃ§o com menor movimento"
+                    "Divulgar serviço sem venda",
+                    "Média",
+                    "Criar campanha para o serviço com menor movimento"
             ));
         }
         if (profissionalOcioso) {
             acoes.add(new InsightAction(
                     "Redistribuir agenda",
-                    "MÃ©dia",
-                    "Aproveitar profissionais com baixa ocupaÃ§Ã£o"
+                    "Média",
+                    "Aproveitar profissionais com baixa ocupação"
             ));
         }
         if (acoes.isEmpty() && receita60 > 0 && receita30 < receita60) {
             acoes.add(new InsightAction(
                     "Recuperar receita perdida",
-                    "MÃ©dia",
+                    "Média",
                     "Divulgar os servicos com melhor potencial para recuperar faturamento"
             ));
         }
@@ -772,7 +772,7 @@ public class InsightsService {
             acoes.add(new InsightAction(
                     "Acompanhar indicadores",
                     "Baixa",
-                    "Nenhum sinal crÃ­tico suficiente para aÃ§Ã£o imediata"
+                    "Nenhum sinal crítico suficiente para ação imediata"
             ));
         }
         return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
@@ -783,7 +783,7 @@ public class InsightsService {
         if (pendente > 0) {
             oportunidades.add(new InsightItem(
                     "Recuperar valores em aberto",
-                    "Existe dinheiro pendente no financeiro e vale priorizar cobranÃ§a.",
+                    "Existe dinheiro pendente no financeiro e vale priorizar cobrança.",
                     "Baseado no saldo pendente real.",
                     formatarMoeda(pendente),
                     "Alta"
@@ -792,11 +792,11 @@ public class InsightsService {
         long servicosSemVenda = servicos.stream().filter(s -> longo(s.get("vendas_30d")) <= 0).count();
         if (servicosSemVenda > 0) {
             oportunidades.add(new InsightItem(
-                    "Revisar serviÃ§os sem venda",
-                    "HÃ¡ serviÃ§os sem conversÃ£o no perÃ­odo e isso pede divulgaÃ§Ã£o ou ajuste de oferta.",
-                    servicosSemVenda + " serviÃ§os sem venda recente",
-                    "Impacto nÃ£o estimado",
-                    "MÃ©dia"
+                    "Revisar serviços sem venda",
+                    "Há serviços sem conversão no período e isso pede divulgação ou ajuste de oferta.",
+                    servicosSemVenda + " serviços sem venda recente",
+                    "Impacto não estimado",
+                    "Média"
             ));
         }
         long profissionaisOciosos = profissionais.stream().filter(p -> longo(p.get("agendamentos_30d")) <= 0).count();
@@ -804,17 +804,17 @@ public class InsightsService {
             oportunidades.add(new InsightItem(
                     "Aproveitar agenda ociosa",
                     "Existe capacidade parada que pode receber mais demanda.",
-                    profissionaisOciosos + " profissionais com baixa ocupaÃ§Ã£o",
-                    "Impacto nÃ£o estimado",
-                    "MÃ©dia"
+                    profissionaisOciosos + " profissionais com baixa ocupação",
+                    "Impacto não estimado",
+                    "Média"
             ));
         }
         if (receita60 > 0 && receita30 < receita60) {
             oportunidades.add(new InsightItem(
                     "Compensar queda de receita",
-                    "A receita recente caiu em relaÃ§Ã£o ao perÃ­odo anterior.",
-                    "ComparaÃ§Ã£o real de 30d vs 60d.",
-                    "Impacto nÃ£o estimado",
+                    "A receita recente caiu em relação ao período anterior.",
+                    "Comparação real de 30d vs 60d.",
+                    "Impacto não estimado",
                     "Alta"
             ));
         }
@@ -822,9 +822,9 @@ public class InsightsService {
             oportunidades.add(new InsightItem(
                     "Sem recomendacao no momento",
                     "Os dados reais sincronizados nao mostram uma acao prioritaria agora.",
-                    "Sem sinal forte no perÃ­odo analisado.",
+                    "Sem sinal forte no período analisado.",
                     "Baixa",
-                    "MÃ©dia"
+                    "Média"
             ));
         }
         return oportunidades.size() > 3 ? oportunidades.subList(0, 3) : oportunidades;
@@ -878,19 +878,19 @@ public class InsightsService {
         String acao = "nenhuma";
 
         if (perguntaNormalizada.matches(".*(agendar|marcar|reserva).*")) {
-            resposta = "Vou te ajudar aqui mesmo. Me diga qual serviÃ§o vocÃª quer.";
-            sugestoes = List.of("Quero agendar", "Ver serviÃ§os", "Ver horÃ¡rios");
+            resposta = "Vou te ajudar aqui mesmo. Me diga qual serviço você quer.";
+            sugestoes = List.of("Quero agendar", "Ver serviços", "Ver horários");
             acao = "agenda";
         } else if (perguntaNormalizada.matches(".*(reagendar|remarcar|trocar).*")) {
-            resposta = "Sem problema. Me diga qual agendamento vocÃª quer alterar.";
+            resposta = "Sem problema. Me diga qual agendamento você quer alterar.";
             sugestoes = List.of("Reagendar", "Ver meus agendamentos");
             acao = "reagendar";
         } else if (perguntaNormalizada.matches(".*(cancelar|desmarcar|remover).*")) {
-            resposta = "Entendi. Me diga qual agendamento vocÃª quer cancelar.";
+            resposta = "Entendi. Me diga qual agendamento você quer cancelar.";
             sugestoes = List.of("Cancelar", "Ver meus agendamentos");
             acao = "cancelar";
         } else {
-            resposta = "Posso ajudar com agendamento, reagendamento ou cancelamento. Me diga o que vocÃª quer fazer.";
+            resposta = "Posso ajudar com agendamento, reagendamento ou cancelamento. Me diga o que você quer fazer.";
             sugestoes = List.of("Quero agendar", "Reagendar", "Cancelar");
         }
 

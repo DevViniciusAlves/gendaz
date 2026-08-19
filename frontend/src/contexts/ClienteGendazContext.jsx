@@ -465,14 +465,14 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const hora = new Date().getHours()
       const periodo = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite'
       return {
-        resposta: `${periodo}, ${nome}!  Como posso ajudÃ¡-lo? Posso agendar, reagendar, cancelar, listar serviÃ§os ou responder dÃºvidas.`,
-        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviÃ§os vocÃªs tÃªm?'],
+        resposta: `${periodo}, ${nome}!  Como posso ajudá-lo? Posso agendar, reagendar, cancelar, listar serviços ou responder dúvidas.`,
+        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Quais serviços vocês têm?'],
       }
     }
     case 'sobre': {
       return {
-        resposta: `Sou a assistente virtual do estabelecimento! Posso ajudar com:\n\nâ€¢ Agendar serviÃ§os\nâ€¢ Reagendar compromissos\nâ€¢ Cancelar agendamentos\nâ€¢ Listar serviÃ§os e preÃ§os\nâ€¢ Consultar promoÃ§Ãµes\n\nBasta me dizer o que precisa!`,
-        sugestoes: ['Quero agendar', 'Ver serviÃ§os', 'Ver promoÃ§Ãµes'],
+        resposta: `Sou a assistente virtual do estabelecimento! Posso ajudar com:\n\n• Agendar serviços\n• Reagendar compromissos\n• Cancelar agendamentos\n• Listar serviços e preços\n• Consultar promoções\n\nBasta me dizer o que precisa!`,
+        sugestoes: ['Quero agendar', 'Ver serviços', 'Ver promoções'],
       }
     }
     case 'agradecimento': {
@@ -481,20 +481,20 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'listar_servicos': {
       if (!servicos || servicos.length === 0) {
         return {
-          resposta: `${nome}, no momento nÃ£o consigo listar os serviÃ§os. Acesse a aba **Agenda** para ver todos os serviÃ§os disponÃ­veis.`,
+          resposta: `${nome}, no momento não consigo listar os serviços. Acesse a aba **Agenda** para ver todos os serviços disponíveis.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
-      const lista = servicos.map((s, i) => `${i + 1}. ${s.nome || s.titulo} â€” R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
+      const lista = servicos.map((s, i) => `${i + 1}. ${s.nome || s.titulo} — R$ ${Number(s.valor || 0).toFixed(2)}`).join('\n')
       return {
-        resposta: `ServiÃ§os disponÃ­veis:\n\n${lista}\n\nQuer agendar algum?`,
+        resposta: `Serviços disponíveis:\n\n${lista}\n\nQuer agendar algum?`,
         sugestoes: servicos.slice(0, 3).map((s) => `Agendar ${s.nome || s.titulo}`),
       }
     }
     case 'listar_profissionais': {
       if (!profissionais || profissionais.length === 0) {
         return {
-          resposta: `${nome}, nÃ£o consigo listar os profissionais agora. Ao agendar, vocÃª poderÃ¡ escolher o profissional.`,
+          resposta: `${nome}, não consigo listar os profissionais agora. Ao agendar, você poderá escolher o profissional.`,
           sugestoes: ['Ir para Agenda'],
         }
       }
@@ -507,21 +507,21 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     case 'meus_agendamentos': {
       if (!agendamentos || agendamentos.length === 0) {
         return {
-          resposta: `${nome}, vocÃª nÃ£o possui agendamentos futuros. Que tal agendar um novo serviÃ§o?`,
-          sugestoes: ['Quero agendar', 'Ver serviÃ§os'],
+          resposta: `${nome}, você não possui agendamentos futuros. Que tal agendar um novo serviço?`,
+          sugestoes: ['Quero agendar', 'Ver serviços'],
         }
       }
       const lista = agendamentos.map((a, i) =>
-        `${i + 1}. ${a.servicoNome || a.servico || 'ServiÃ§o'} â€” ${a.data ? new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR') : '?'} Ã s ${a.horaInicio || a.hora || '?'} com ${a.profissionalNome || a.profissional || '?'} [${a.status}]`
+        `${i + 1}. ${a.servicoNome || a.servico || 'Serviço'} — ${a.data ? new Date(a.data + 'T12:00:00').toLocaleDateString('pt-BR') : '?'} às ${a.horaInicio || a.hora || '?'} com ${a.profissionalNome || a.profissional || '?'} [${a.status}]`
       ).join('\n')
       return {
-        resposta: `Seus prÃ³ximos agendamentos:\n\n${lista}\n\nPrecisa reagendar ou cancelar algum?`,
+        resposta: `Seus próximos agendamentos:\n\n${lista}\n\nPrecisa reagendar ou cancelar algum?`,
         sugestoes: ['Reagendar', 'Cancelar'],
       }
     }
     case 'cancelar': {
       if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, vocÃª nÃ£o possui agendamentos para cancelar.` }
+        return { resposta: `${nome}, você não possui agendamentos para cancelar.` }
       }
       return {
         resposta: `Para cancelar, acesse a aba **Agenda**, clique em "Cancelar" no agendamento desejado e confirme.`,
@@ -530,10 +530,10 @@ function gerarRespostaLocal(intencao, texto, contexto) {
     }
     case 'reagendar': {
       if (!agendamentos || agendamentos.length === 0) {
-        return { resposta: `${nome}, vocÃª nÃ£o possui agendamentos para reagendar.` }
+        return { resposta: `${nome}, você não possui agendamentos para reagendar.` }
       }
       return {
-        resposta: `Para reagendar, acesse a aba **Agenda**, clique em "Reagendar" e escolha nova data/horÃ¡rio.`,
+        resposta: `Para reagendar, acesse a aba **Agenda**, clique em "Reagendar" e escolha nova data/horário.`,
         sugestoes: ['Ir para Agenda'],
       }
     }
@@ -541,40 +541,40 @@ function gerarRespostaLocal(intencao, texto, contexto) {
       const promos = beneficios?.promocoes || []
       if (!promos || promos.length === 0) {
         return {
-          resposta: `${nome}, no momento nÃ£o hÃ¡ promoÃ§Ãµes ativas. Acesse a aba **BenefÃ­cios** para ficar por dentro!`,
-          sugestoes: ['Ir para BenefÃ­cios'],
+          resposta: `${nome}, no momento não há promoções ativas. Acesse a aba **Benefícios** para ficar por dentro!`,
+          sugestoes: ['Ir para Benefícios'],
         }
       }
       const lista = promos.map((p, i) =>
-        `${i + 1}. ${p.titulo} â€” ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
+        `${i + 1}. ${p.titulo} — ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
       ).join('\n\n')
       return {
-        resposta: `PromoÃ§Ãµes disponÃ­veis:\n\n${lista}\n\nQuer agendar aproveitando alguma promoÃ§Ã£o?`,
-        sugestoes: ['Quero agendar', 'Ir para BenefÃ­cios'],
+        resposta: `Promoções disponíveis:\n\n${lista}\n\nQuer agendar aproveitando alguma promoção?`,
+        sugestoes: ['Quero agendar', 'Ir para Benefícios'],
       }
     }
     case 'agendar': {
       return {
-        resposta: `${nome}, vou te ajudar a agendar! \n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviÃ§o, profissional, data e horÃ¡rio\n4. Confirme!\n\nQuer que eu te leve para lÃ¡?`,
-        sugestoes: ['Ir para Agenda', 'Ver serviÃ§os'],
+        resposta: `${nome}, vou te ajudar a agendar! \n\nPara criar um novo agendamento:\n1. Acesse a aba **Agenda**\n2. Clique em **"Novo agendamento"**\n3. Escolha serviço, profissional, data e horário\n4. Confirme!\n\nQuer que eu te leve para lá?`,
+        sugestoes: ['Ir para Agenda', 'Ver serviços'],
       }
     }
     case 'historico': {
       return {
-        resposta: `${nome}, para ver seu histÃ³rico, acesse a aba **HistÃ³rico** na sidebar.`,
-        sugestoes: ['Ir para HistÃ³rico'],
+        resposta: `${nome}, para ver seu histórico, acesse a aba **Histórico** na sidebar.`,
+        sugestoes: ['Ir para Histórico'],
       }
     }
     case 'listar_horarios': {
       return {
-        resposta: `${nome}, os horÃ¡rios dependem do serviÃ§o e profissional. VÃ¡ na aba **Agenda**, clique em "Novo agendamento" e selecione serviÃ§o, profissional e data para ver os horÃ¡rios disponÃ­veis.`,
+        resposta: `${nome}, os horários dependem do serviço e profissional. Vá na aba **Agenda**, clique em "Novo agendamento" e selecione serviço, profissional e data para ver os horários disponíveis.`,
         sugestoes: ['Ir para Agenda', 'Ver meus agendamentos'],
       }
     }
     default: {
       return {
-        resposta: `${nome}, posso ajudar com:\n\nâ€¢ **Agendar** um serviÃ§o\nâ€¢ **Reagendar** compromisso\nâ€¢ **Cancelar** agendamento\nâ€¢ **ServiÃ§os** e preÃ§os\nâ€¢ **PromoÃ§Ãµes** e cupons\n\nÃ‰ sÃ³ me dizer o que precisa!`,
-        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'ServiÃ§os e preÃ§os'],
+        resposta: `${nome}, posso ajudar com:\n\n• **Agendar** um serviço\n• **Reagendar** compromisso\n• **Cancelar** agendamento\n• **Serviços** e preços\n• **Promoções** e cupons\n\nÉ só me dizer o que precisa!`,
+        sugestoes: ['Quero agendar', 'Ver meus agendamentos', 'Serviços e preços'],
       }
     }
   }

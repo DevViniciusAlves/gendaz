@@ -20,7 +20,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ApiErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiErrorResponse.of(404, "Recurso nÃƒÂ£o encontrado", ex.getMessage(), request.getRequestURI()));
+                .body(ApiErrorResponse.of(404, "Recurso não encontrado", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(ConflictException.class)
@@ -41,13 +41,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiErrorResponse> handleBusiness(BusinessException ex, HttpServletRequest request) {
         return ResponseEntity.badRequest()
-                .body(ApiErrorResponse.of(400, "Regra de negÃƒÂ³cio", ex.getMessage(), request.getRequestURI()));
+                .body(ApiErrorResponse.of(400, "Regra de negócio", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(SessaoExpiradaException.class)
     public ResponseEntity<ApiErrorResponse> handleSessaoExpirada(SessaoExpiradaException ex, HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ApiErrorResponse.of(401, "SessÃƒÂ£o expirada", ex.getMessage(), request.getRequestURI()));
+                .body(ApiErrorResponse.of(401, "Sessão expirada", ex.getMessage(), request.getRequestURI()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -55,7 +55,7 @@ public class GlobalExceptionHandler {
         Map<String, String> campos = new LinkedHashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(error -> campos.put(error.getField(), error.getDefaultMessage()));
         return ResponseEntity.badRequest()
-                .body(ValidationErrorResponse.of("Existem campos invÃƒÂ¡lidos.", request.getRequestURI(), campos));
+                .body(ValidationErrorResponse.of("Existem campos inválidos.", request.getRequestURI(), campos));
     }
 
     @ExceptionHandler(RateLimitExceededException.class)

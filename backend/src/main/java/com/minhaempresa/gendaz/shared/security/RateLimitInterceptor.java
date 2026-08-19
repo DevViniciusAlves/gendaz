@@ -115,7 +115,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
             } else {
                 long waitForRefill = TimeUnit.NANOSECONDS.toSeconds(probe.getNanosToWaitForRefill());
                 response.addHeader("X-Rate-Limit-Retry-After-Seconds", String.valueOf(waitForRefill));
-                reason = "Sistema estÃ¡ carregando. Aguarde um momento.";
+                reason = "Sistema está carregando. Aguarde um momento.";
                 log.warn("[rate-limit] API geral bloqueada: usuario={} aguarde={}s", usuarioId, waitForRefill);
                 registrarRateLimit(request, ip, path, "RATE_LIMIT_API", "HIGH", waitForRefill);
             }

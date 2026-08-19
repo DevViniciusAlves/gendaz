@@ -67,7 +67,7 @@ public class MeuGendazPromocaoService {
         
         boolean jaUsou = mirrorId != null && usoRepository.existsByPromocaoIdAndClienteId(mirrorId, cliente.getId());
         
-        // Calcula validade real baseada em fuso horÃ¡rio Brasil
+        // Calcula validade real baseada em fuso horário Brasil
         LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         boolean dentroPeriodo = p.getDataInicio() == null || p.getDataFim() == null
                 || (!agora.isBefore(p.getDataInicio()) && !agora.isAfter(p.getDataFim()));

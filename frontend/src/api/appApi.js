@@ -36,8 +36,8 @@ function emitirToast(type, message) {
 async function comNotificacao(acao, textos = {}) {
   const {
     loading = 'Processando... aguarde',
-    success = 'OperaÃ§Ã£o concluÃ­da com sucesso.',
-    error = 'NÃ£o foi possÃ­vel concluir a operaÃ§Ã£o.',
+    success = 'Operação concluída com sucesso.',
+    error = 'Não foi possível concluir a operação.',
   } = textos
 
   emitirToast('loading', loading)
@@ -521,15 +521,15 @@ export const appApi = {
     return comNotificacao(() => api.put(`/empresas/${id}`, payload).then((response) => response.data), {
       loading: 'Editando empresa... aguarde',
       success: 'Empresa atualizada com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar a empresa.',
+      error: 'Não foi possível atualizar a empresa.',
     })
   },
 
   atualizarUsuario(id, payload) {
     return comNotificacao(() => api.put(`/usuarios/${id}`, payload).then((response) => response.data), {
-      loading: 'Editando usuÃ¡rio... aguarde',
-      success: 'UsuÃ¡rio atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o usuÃ¡rio.',
+      loading: 'Editando usuário... aguarde',
+      success: 'Usuário atualizado com sucesso.',
+      error: 'Não foi possível atualizar o usuário.',
     })
   },
 
@@ -549,7 +549,7 @@ export const appApi = {
     return comNotificacao(() => api.post(`/usuarios/empresa/${empresaIdAtual()}/convites`, payload).then((response) => response.data), {
       loading: 'Criando convite... aguarde',
       success: 'Convite criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o convite.',
+      error: 'Não foi possível criar o convite.',
     })
   },
 
@@ -557,7 +557,7 @@ export const appApi = {
     return comNotificacao(() => api.post(`/usuarios/convites/${conviteId}/reenviar`).then((response) => response.data), {
       loading: 'Reenviando convite... aguarde',
       success: 'Convite reenviado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel reenviar o convite.',
+      error: 'Não foi possível reenviar o convite.',
     })
   },
 
@@ -565,7 +565,7 @@ export const appApi = {
     return comNotificacao(() => api.delete(`/usuarios/convites/${conviteId}`).then((response) => response.data), {
       loading: 'Cancelando convite... aguarde',
       success: 'Convite cancelado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel cancelar o convite.',
+      error: 'Não foi possível cancelar o convite.',
     })
   },
 
@@ -581,7 +581,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/usuarios/${usuarioId}/desativar`).then((response) => response.data), {
       loading: 'Desativando membro... aguarde',
       success: 'Membro desativado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel desativar o membro.',
+      error: 'Não foi possível desativar o membro.',
     })
   },
 
@@ -589,15 +589,15 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/usuarios/${usuarioId}/reativar`).then((response) => response.data), {
       loading: 'Reativando membro... aguarde',
       success: 'Membro reativado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel reativar o membro.',
+      error: 'Não foi possível reativar o membro.',
     })
   },
 
   transferirPropriedadeUsuario(usuarioId) {
     return comNotificacao(() => api.post(`/usuarios/${usuarioId}/transferir-propriedade`).then((response) => response.data), {
-      loading: 'Transferindo proprietÃ¡rio... aguarde',
+      loading: 'Transferindo proprietário... aguarde',
       success: 'Propriedade transferida com sucesso.',
-      error: 'NÃ£o foi possÃ­vel transferir a propriedade.',
+      error: 'Não foi possível transferir a propriedade.',
     })
   },
 
@@ -605,7 +605,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/clientes', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando cliente... aguarde',
       success: 'Cliente criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o cliente.',
+      error: 'Não foi possível criar o cliente.',
     })
   },
 
@@ -613,15 +613,15 @@ export const appApi = {
     return comNotificacao(() => api.put(`/clientes/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando cliente... aguarde',
       success: 'Cliente atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o cliente.',
+      error: 'Não foi possível atualizar o cliente.',
     })
   },
 
   excluirCliente(id) {
     return comNotificacao(() => api.delete(`/clientes/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo cliente... aguarde',
-      success: 'Cliente excluÃ­do com sucesso.',
-      error: 'NÃ£o foi possÃ­vel excluir o cliente.',
+      success: 'Cliente excluído com sucesso.',
+      error: 'Não foi possível excluir o cliente.',
     })
   },
 
@@ -629,7 +629,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/clientes/${id}/ativar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Ativando cliente... aguarde',
       success: 'Cliente ativado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel ativar o cliente.',
+      error: 'Não foi possível ativar o cliente.',
     })
   },
 
@@ -637,7 +637,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/clientes/${id}/desativar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Desativando cliente... aguarde',
       success: 'Cliente desativado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel desativar o cliente.',
+      error: 'Não foi possível desativar o cliente.',
     })
   },
 
@@ -645,7 +645,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'ATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Ativando clientes... aguarde',
       success: 'Clientes ativados com sucesso.',
-      error: 'NÃ£o foi possÃ­vel ativar os clientes.',
+      error: 'Não foi possível ativar os clientes.',
     })
   },
 
@@ -653,7 +653,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'DESATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Desativando clientes... aguarde',
       success: 'Clientes desativados com sucesso.',
-      error: 'NÃ£o foi possÃ­vel desativar os clientes.',
+      error: 'Não foi possível desativar os clientes.',
     })
   },
 
@@ -670,17 +670,17 @@ export const appApi = {
 
   criarServico(payload) {
     return comNotificacao(() => api.post('/servicos', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
-      loading: 'Criando serviÃ§o... aguarde',
-      success: 'ServiÃ§o criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o serviÃ§o.',
+      loading: 'Criando serviço... aguarde',
+      success: 'Serviço criado com sucesso.',
+      error: 'Não foi possível criar o serviço.',
     })
   },
 
   atualizarServico(id, payload) {
     return comNotificacao(() => api.put(`/servicos/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
-      loading: 'Editando serviÃ§o... aguarde',
-      success: 'ServiÃ§o atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o serviÃ§o.',
+      loading: 'Editando serviço... aguarde',
+      success: 'Serviço atualizado com sucesso.',
+      error: 'Não foi possível atualizar o serviço.',
     })
   },
 
@@ -691,9 +691,9 @@ export const appApi = {
 
   excluirServico(id) {
     return comNotificacao(() => api.delete(`/servicos/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
-      loading: 'Excluindo serviÃ§o... aguarde',
-      success: 'ServiÃ§o excluÃ­do com sucesso.',
-      error: 'NÃ£o foi possÃ­vel excluir o serviÃ§o.',
+      loading: 'Excluindo serviço... aguarde',
+      success: 'Serviço excluído com sucesso.',
+      error: 'Não foi possível excluir o serviço.',
     })
   },
 
@@ -701,7 +701,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/profissionais', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando profissional... aguarde',
       success: 'Profissional criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o profissional.',
+      error: 'Não foi possível criar o profissional.',
     })
   },
 
@@ -714,15 +714,15 @@ export const appApi = {
     return comNotificacao(() => api.put(`/profissionais/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando profissional... aguarde',
       success: 'Profissional atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o profissional.',
+      error: 'Não foi possível atualizar o profissional.',
     })
   },
 
   excluirProfissional(id) {
     return comNotificacao(() => api.delete(`/profissionais/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo profissional... aguarde',
-      success: 'Profissional excluÃ­do com sucesso.',
-      error: 'NÃ£o foi possÃ­vel excluir o profissional.',
+      success: 'Profissional excluído com sucesso.',
+      error: 'Não foi possível excluir o profissional.',
     })
   },
 
@@ -731,7 +731,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/agendamentos', { ...body, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando agendamento... aguarde',
       success: 'Agendamento criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o agendamento.',
+      error: 'Não foi possível criar o agendamento.',
     })
   },
 
@@ -739,7 +739,7 @@ export const appApi = {
     return comNotificacao(() => api.put(`/agendamentos/${id}`, { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Editando agendamento... aguarde',
       success: 'Agendamento atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o agendamento.',
+      error: 'Não foi possível atualizar o agendamento.',
     })
   },
 
@@ -748,7 +748,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/finalizar`, payload).then((response) => response.data), {
       loading: 'Finalizando agendamento... aguarde',
       success: pagamentoRealizado ? 'Agendamento finalizado e pagamento aprovado.' : 'Agendamento finalizado com pagamento pendente.',
-      error: 'NÃ£o foi possÃ­vel finalizar o agendamento.',
+      error: 'Não foi possível finalizar o agendamento.',
     })
   },
 
@@ -756,7 +756,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/iniciar`).then((response) => response.data), {
       loading: 'Iniciando atendimento... aguarde',
       success: 'Atendimento iniciado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel iniciar o atendimento.',
+      error: 'Não foi possível iniciar o atendimento.',
     })
   },
 
@@ -764,7 +764,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/pausar`).then((response) => response.data), {
       loading: 'Pausando atendimento... aguarde',
       success: 'Atendimento pausado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel pausar o atendimento.',
+      error: 'Não foi possível pausar o atendimento.',
     })
   },
 
@@ -772,15 +772,15 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/cancelar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Cancelando agendamento... aguarde',
       success: 'Agendamento cancelado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel cancelar o agendamento.',
+      error: 'Não foi possível cancelar o agendamento.',
     })
   },
 
   excluirAgendamento(id) {
     return comNotificacao(() => api.delete(`/agendamentos/${id}`, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Excluindo agendamento... aguarde',
-      success: 'Agendamento excluÃ­do com sucesso.',
-      error: 'NÃ£o foi possÃ­vel excluir o agendamento.',
+      success: 'Agendamento excluído com sucesso.',
+      error: 'Não foi possível excluir o agendamento.',
     })
   },
 
@@ -788,7 +788,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Processando agendamentos... aguarde',
       success: 'Agendamentos processados com sucesso.',
-      error: 'NÃ£o foi possÃ­vel processar os agendamentos.',
+      error: 'Não foi possível processar os agendamentos.',
     })
   },
 
@@ -796,7 +796,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/confirmar`).then((response) => response.data), {
       loading: 'Confirmando agendamento... aguarde',
       success: 'Agendamento confirmado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel confirmar o agendamento.',
+      error: 'Não foi possível confirmar o agendamento.',
     })
   },
 
@@ -804,7 +804,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/pagamentos', { ...payload, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Criando pagamento... aguarde',
       success: 'Pagamento criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o pagamento.',
+      error: 'Não foi possível criar o pagamento.',
     })
   },
 
@@ -812,7 +812,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/pagamentos/${id}/marcar-pago`, payload).then((response) => response.data), {
       loading: 'Marcando pagamento como pago... aguarde',
       success: 'Pagamento marcado como pago.',
-      error: 'NÃ£o foi possÃ­vel atualizar o pagamento.',
+      error: 'Não foi possível atualizar o pagamento.',
     })
   },
 
@@ -824,7 +824,7 @@ export const appApi = {
     return comNotificacao(() => api.put('/financeiro/formas-pagamento', payload, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Salvando formas de pagamento... aguarde',
       success: 'Formas de pagamento atualizadas.',
-      error: 'NÃ£o foi possÃ­vel salvar as formas de pagamento.',
+      error: 'Não foi possível salvar as formas de pagamento.',
     })
   },
 
@@ -832,7 +832,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/pagamentos/${id}/status`, { status }).then((response) => response.data), {
       loading: 'Atualizando pagamento... aguarde',
       success: 'Pagamento atualizado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o pagamento.',
+      error: 'Não foi possível atualizar o pagamento.',
     })
   },
 
@@ -840,7 +840,7 @@ export const appApi = {
     return comNotificacao(() => api.post('/pagamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
       loading: 'Processando pagamentos... aguarde',
       success: 'Pagamentos processados com sucesso.',
-      error: 'NÃ£o foi possÃ­vel processar os pagamentos.',
+      error: 'Não foi possível processar os pagamentos.',
     })
   },
 
@@ -900,7 +900,7 @@ export const appApi = {
     return comNotificacao(() => api.patch(`/conversas/${id}/finalizar`).then((response) => response.data), {
       loading: 'Finalizando conversa... aguarde',
       success: 'Conversa finalizada com sucesso.',
-      error: 'NÃ£o foi possÃ­vel finalizar a conversa.',
+      error: 'Não foi possível finalizar a conversa.',
     })
   },
 
@@ -936,7 +936,7 @@ export const appApi = {
     }).then((response) => response.data), {
       loading: 'Criando chamado... aguarde',
       success: 'Chamado criado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel criar o chamado.',
+      error: 'Não foi possível criar o chamado.',
     })
   },
 
@@ -964,7 +964,7 @@ export const appApi = {
     }).then((response) => response.data), {
       loading: 'Salvando link... aguarde',
       success: 'Link de agendamento salvo com sucesso.',
-      error: 'NÃ£o foi possÃ­vel atualizar o link de agendamento.',
+      error: 'Não foi possível atualizar o link de agendamento.',
     })
   },
 
@@ -986,7 +986,7 @@ export const appApi = {
     return comNotificacao(() => api.post(`/public/agendamento/${slugOuEmpresaId}/confirmar`, payload).then((response) => response.data), {
       loading: 'Confirmando agendamento... aguarde',
       success: 'Agendamento confirmado com sucesso.',
-      error: 'NÃ£o foi possÃ­vel confirmar o agendamento.',
+      error: 'Não foi possível confirmar o agendamento.',
     })
   },
 

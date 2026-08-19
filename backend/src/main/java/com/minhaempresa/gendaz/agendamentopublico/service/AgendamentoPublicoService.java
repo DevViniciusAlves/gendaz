@@ -141,7 +141,7 @@ public class AgendamentoPublicoService {
     private ClienteEntity buscarOuCriarCliente(EmpresaEntity empresa, CriarAgendamentoPublicoRequest request) {
         String telefone = sanitizacaoService.telefone(request.clienteTelefone());
         if (telefone == null) {
-            throw new BusinessException("Telefone Ã© obrigatÃ³rio");
+            throw new BusinessException("Telefone é obrigatório");
         }
         return clienteRepository.findFirstByEmpresaIdAndTelefone(empresa.getId(), telefone)
                 .map(cliente -> atualizarClientePublico(cliente, request))

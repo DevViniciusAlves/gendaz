@@ -2,10 +2,10 @@ package com.minhaempresa.gendaz.empresa.enums;
 
 public enum RamoEmpresa {
     BARBERSHOP("Barbershop", 20, 60, "dias"),
-    SALAO_CABELO("SalÃ£o/Cabelo", 45, 90, "dias"),
+    SALAO_CABELO("Salão/Cabelo", 45, 90, "dias"),
     PERSONAL_TRAINER("Personal Trainer", 7, 14, "dias"),
-    CLINICA_FISIOTERAPIA("ClÃ­nica - Fisioterapia", 7, 14, "dias"),
-    CLINICA_ODONTOLOGIA("ClÃ­nica - Odontologia", 180, 360, "dias"),
+    CLINICA_FISIOTERAPIA("Clínica - Fisioterapia", 7, 14, "dias"),
+    CLINICA_ODONTOLOGIA("Clínica - Odontologia", 180, 360, "dias"),
     OUTRO("Outro", 30, 60, "dias");
 
     private final String displayName;

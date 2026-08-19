@@ -115,7 +115,7 @@ public class ClienteService {
         Long companyId = CompanyContext.requireCompanyId();
         return clienteRepository.findFirstByEmpresaIdAndTelefone(companyId, telefoneNormalizado)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente nÃ£o encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
     }
 
     @Transactional
@@ -187,21 +187,21 @@ public class ClienteService {
     @Transactional(readOnly = true)
     public ClienteEntity buscarEntidade(Long id) {
         ClienteEntity cliente = clienteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente nÃ£o encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
         validarEmpresaAtual(cliente.getEmpresa().getId());
         return cliente;
     }
 
     private void validarEmpresa(ClienteEntity cliente, Long empresaId) {
         if (empresaId == null || !cliente.getEmpresa().getId().equals(empresaId)) {
-            throw new ResourceNotFoundException("Cliente nÃ£o encontrado.");
+            throw new ResourceNotFoundException("Cliente não encontrado.");
         }
     }
 
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Cliente nÃ£o encontrado.");
+            throw new ResourceNotFoundException("Cliente não encontrado.");
         }
     }
 

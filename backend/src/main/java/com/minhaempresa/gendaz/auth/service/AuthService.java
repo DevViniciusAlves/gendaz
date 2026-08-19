@@ -430,10 +430,10 @@ public class AuthService {
     public void trocarSenha(Long usuarioId, String sessionToken, String senhaAtual, String novaSenha, String confirmarNovaSenha) {
         UsuarioEntity usuario = buscarUsuarioAutenticado(usuarioId, sessionToken);
         if (!passwordService.matches(senhaAtual, usuario.getSenha())) {
-            throw new BusinessException("Senha atual invÃ¡lida.");
+            throw new BusinessException("Senha atual inválida.");
         }
         if (!novaSenha.equals(confirmarNovaSenha)) {
-            throw new BusinessException("As senhas nÃ£o coincidem.");
+            throw new BusinessException("As senhas não coincidem.");
         }
         passwordService.validarSenha(novaSenha);
         usuario.setSenha(passwordService.hash(novaSenha));
@@ -450,12 +450,12 @@ public class AuthService {
     @Transactional
     public RefreshResponse refresh(String sessionToken) {
         if (sessionToken == null || sessionToken.isBlank()) {
-            throw new BusinessException("SessÃ£o nÃ£o encontrada.");
+            throw new BusinessException("Sessão não encontrada.");
         }
         UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
-                .orElseThrow(() -> new SessaoExpiradaException("UsuÃ¡rio autenticado invÃ¡lido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
-            throw new BusinessException("UsuÃ¡rio inativo.");
+            throw new BusinessException("Usuário inativo.");
         }
         boolean sessaoRestritaEncerrada = usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                 && usuario.getEmpresa() != null
@@ -464,7 +464,7 @@ public class AuthService {
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                     && usuario.getEmpresa() != null
                     && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
-                throw new BusinessException("Conta indisponÃ­vel. Entre em contato com o suporte.");
+                throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
             }
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                     && usuario.getEmpresa() != null) {
@@ -485,26 +485,26 @@ public class AuthService {
 
     @Transactional(readOnly = true)
     public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId) {
-        throw new SessaoExpiradaException("UsuÃ¡rio autenticado obrigatÃ³rio.");
+        throw new SessaoExpiradaException("Usuário autenticado obrigatório.");
     }
 
     @Transactional(readOnly = true)
     public UsuarioEntity buscarUsuarioAutenticado(Long usuarioId, String sessionToken) {
         if (sessionToken == null || sessionToken.isBlank()) {
-            throw new SessaoExpiradaException("SessÃ£o nÃ£o encontrada.");
+            throw new SessaoExpiradaException("Sessão não encontrada.");
         }
         UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
-                .orElseThrow(() -> new SessaoExpiradaException("UsuÃ¡rio autenticado invÃ¡lido."));
+                .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
         if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
             log.warn("Header X-Usuario-Id divergente da sessao. header={}, sessao={}", usuarioId, usuario.getId());
         }
         if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
-            throw new BusinessException("UsuÃ¡rio inativo.");
+            throw new BusinessException("Usuário inativo.");
         }
         if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                 && usuario.getEmpresa() != null
                 && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
-            throw new BusinessException("Conta indisponÃ­vel. Entre em contato com o suporte.");
+            throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
         }
         if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                 && usuario.getEmpresa() != null) {
@@ -531,7 +531,7 @@ public class AuthService {
             throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
         }
         if (membros.get(0).getStatus() != StatusMembresia.ACTIVE) {
-            throw new BusinessException("UsuÃ¡rio sem membresia ativa.");
+            throw new BusinessException("Usuário sem membresia ativa.");
         }
     }
     private String calcularStatusConta(UsuarioEntity usuario, AssinaturaResponse assinatura) {
@@ -639,7 +639,7 @@ public class AuthService {
     private void validarCadastro(CriarContaRequest request) {
         phoneNumberService.normalizarObrigatorio(request.telefone());
         if (normalizarTexto(request.nomeProprietario()).length() < 2 || normalizarTexto(request.nomeProprietario()).length() > 80) {
-            throw new BusinessException("Nome do usuÃ¡rio deve ter entre 2 e 80 caracteres.");
+            throw new BusinessException("Nome do usuário deve ter entre 2 e 80 caracteres.");
         }
         if (normalizarTexto(request.nomeEmpresa()).length() < 2 || normalizarTexto(request.nomeEmpresa()).length() > 100) {
             throw new BusinessException("Nome da empresa deve ter entre 2 e 100 caracteres.");
@@ -648,7 +648,7 @@ public class AuthService {
             throw new BusinessException("E-mail deve ter no maximo 120 caracteres.");
         }
         if (!request.senha().equals(request.confirmarSenha())) {
-            throw new BusinessException("As senhas nÃ£o coincidem.");
+            throw new BusinessException("As senhas não coincidem.");
         }
         passwordService.validarSenha(request.senha());
         if (!Boolean.TRUE.equals(request.aceiteTermos())) {

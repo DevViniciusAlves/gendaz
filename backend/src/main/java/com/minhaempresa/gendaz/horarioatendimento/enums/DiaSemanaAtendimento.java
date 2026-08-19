@@ -7,11 +7,11 @@ import java.util.List;
 
 public enum DiaSemanaAtendimento {
     SEGUNDA(1, "Segunda"),
-    TERCA(2, "TerÃ§a"),
+    TERCA(2, "Terça"),
     QUARTA(3, "Quarta"),
     QUINTA(4, "Quinta"),
     SEXTA(5, "Sexta"),
-    SABADO(6, "SÃ¡bado"),
+    SABADO(6, "Sábado"),
     DOMINGO(7, "Domingo");
 
     private final int ordem;

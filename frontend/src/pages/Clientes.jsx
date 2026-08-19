@@ -70,7 +70,7 @@ export default function Clientes() {
         return current.filter((item) => item !== id)
       }
       if (current.length >= 10) {
-        setErro('VocÃª pode selecionar no mÃ¡ximo 10 itens por vez.')
+        setErro('Você pode selecionar no máximo 10 itens por vez.')
         return current
       }
       setErro('')
@@ -190,7 +190,7 @@ export default function Clientes() {
   function ativarDesativar(cliente) {
     const acao = cliente.status === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
     acao.then(() => reload(true)).catch((error) => {
-      setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel alterar o status do cliente.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível alterar o status do cliente.')
     })
   }
 
@@ -219,7 +219,7 @@ export default function Clientes() {
             window.dispatchEvent(new Event('gendaz:data-changed'))
           }, 2000)
         } catch (error) {
-          setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel excluir o cliente.')
+          setErro(error.response?.data?.mensagem || 'Não foi possível excluir o cliente.')
         }
       },
     })
@@ -248,7 +248,7 @@ export default function Clientes() {
       return
     }
     if (!email || email.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setErro('Informe um e-mail vÃ¡lido com atÃ© 120 caracteres.')
+      setErro('Informe um e-mail válido com até 120 caracteres.')
       return
     }
 
@@ -270,7 +270,7 @@ export default function Clientes() {
       setModal(false)
       setClienteEditando(null)
     } catch (error) {
-      setErro(error.response?.data?.mensagem || 'NÃ£o foi possÃ­vel salvar o cliente.')
+      setErro(error.response?.data?.mensagem || 'Não foi possível salvar o cliente.')
     } finally {
       setSalvando(false)
     }
@@ -282,7 +282,7 @@ export default function Clientes() {
         <div>
           <span className="section-kicker">Base de clientes</span>
           <h1>Clientes</h1>
-          <p>Busca, cadastro e histÃ³rico bÃ¡sico da base atendida.</p>
+          <p>Busca, cadastro e histórico básico da base atendida.</p>
         </div>
         <div className="table-actions">
           <Button variant="secondary" icon={Download} onClick={confirmarExportacao} disabled={recarregando}>
@@ -355,12 +355,12 @@ export default function Clientes() {
           { key: 'email', label: 'E-MAIL' },
           { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
           { key: 'totalGasto', label: 'TOTAL GASTO', render: (row) => currency(row.totalGasto) },
-          { key: 'observacoes', label: 'HISTÃƒâ€œRICO', render: (row) => (
+          { key: 'observacoes', label: 'HISTÓRICO', render: (row) => (
              <div className="stacked-cell">
-               <strong>{row.observacoes || 'Sem histÃ³rico'}</strong>
+               <strong>{row.observacoes || 'Sem histórico'}</strong>
              </div>
           ) },
-          { key: 'acao', label: 'AÃƒâ€¡Ãƒâ€¢ES', render: (row) => (
+          { key: 'acao', label: 'AÇÕES', render: (row) => (
             <ActionMenu
               actions={[
                 { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(row) },
@@ -384,8 +384,8 @@ export default function Clientes() {
             onChangeValue={(valor) => setForm({ ...form, telefone: valor || '' })}
             required
           />
-          <Input label="E-mail" helper="Use um e-mail vÃ¡lido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input label="ObservaÃ§ÃƒÂµes" helper="Resumo curto do histÃ³rico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+          <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
           <Button type="submit" disabled={salvando || !form.nome.trim() || !form.email.trim() || (validarTelefone(form.telefone) !== '')}>
             {salvando ? 'Salvando...' : 'Salvar'}
@@ -393,7 +393,7 @@ export default function Clientes() {
         </form>
       </Modal>
 
-      <Modal title={confirmacao?.titulo || 'Confirmar aÃ§Ã£o'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
+      <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
           <p>{confirmacao?.descricao}</p>
           <div className="confirm-actions">
@@ -413,7 +413,7 @@ export default function Clientes() {
       </Modal>
       <BulkConfirmModal
         open={Boolean(bulkModal)}
-        title={bulkModal?.titulo || 'Confirmar aÃ§Ã£o'}
+        title={bulkModal?.titulo || 'Confirmar ação'}
         description={bulkModal?.descricao || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}

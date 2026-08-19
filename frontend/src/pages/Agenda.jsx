@@ -794,7 +794,7 @@ export default function Agenda() {
               ))}
             </select>
           </label>
-          <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
+          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>
         </form>
@@ -812,9 +812,9 @@ export default function Agenda() {
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
             <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
-            <label className="field field-wide"><span>ObservaçÃµes</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
+            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
-            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correçÃµes'}</Button>
+            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correções'}</Button>
           </form>
         )}
       </Modal>

@@ -134,11 +134,11 @@ public class ProfissionalService {
     @Transactional
     public ProfissionalEntity buscarOuCriarAtendimentoPrincipal(EmpresaEntity empresa) {
         return profissionalRepository.findByEmpresaId(empresa.getId()).stream()
-                .filter(profissional -> "Sem preferÃªncia".equalsIgnoreCase(profissional.getNome())
+                .filter(profissional -> "Sem preferência".equalsIgnoreCase(profissional.getNome())
                         || "Atendimento principal".equalsIgnoreCase(profissional.getNome()))
                 .findFirst()
                 .orElseGet(() -> profissionalRepository.save(ProfissionalEntity.builder()
-                        .nome("Sem preferÃªncia")
+                        .nome("Sem preferência")
                         .especialidade(null)
                         .status(StatusCadastro.ATIVO)
                         .sistema(true)

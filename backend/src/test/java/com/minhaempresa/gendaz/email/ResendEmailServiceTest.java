@@ -41,7 +41,7 @@ class ResendEmailServiceTest {
         var service = new ResendEmailService(objectMapper, "", "from@test.com", "Test", "https://test.com", "admin@test.com");
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).email("dono@test.com").build();
         ClienteEntity cliente = ClienteEntity.builder()
-                .nome("JoÃ£o Silva").telefone("11999999999").email("joao@test.com").build();
+                .nome("João Silva").telefone("11999999999").email("joao@test.com").build();
         AgendamentoEntity agendamento = AgendamentoEntity.builder()
                 .protocolo("123456").cliente(cliente)
                 .data(LocalDate.of(2025, 1, 15)).horaInicio(LocalTime.of(14, 0))
@@ -102,7 +102,7 @@ class ResendEmailServiceTest {
     void deveRetornarFalseQuandoEmpresaSemEmail() {
         var service = new ResendEmailService(objectMapper, "re_test_key", "from@test.com", "Test", "https://test.com", "admin@test.com");
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
-        ClienteEntity cliente = ClienteEntity.builder().nome("JoÃ£o").build();
+        ClienteEntity cliente = ClienteEntity.builder().nome("João").build();
         AgendamentoEntity agendamento = AgendamentoEntity.builder()
                 .protocolo("999999").cliente(cliente)
                 .data(LocalDate.now()).horaInicio(LocalTime.of(10, 0))

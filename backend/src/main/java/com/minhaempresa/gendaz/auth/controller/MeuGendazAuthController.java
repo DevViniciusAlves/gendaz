@@ -52,7 +52,7 @@ public class MeuGendazAuthController {
             cookieService.limparCookie(http, response, onboardingCookieName);
             cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
         }
-        // O sessionToken nÃ£o deve ser retornado no JSON para evitar armazenamento no client side.
+        // O sessionToken não deve ser retornado no JSON para evitar armazenamento no client side.
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
 
@@ -70,7 +70,7 @@ public class MeuGendazAuthController {
         MeuGendazAuthResponse auth = authService.refreshSessao(slug, sessionToken);
         String cookieName = nomeCookie(slug);
         cookieService.adicionarCookie(http, response, cookieName, auth.sessionToken(), SESSION_COOKIE_MAX_AGE);
-        // O sessionToken nÃ£o deve ser retornado no JSON para evitar armazenamento no client side.
+        // O sessionToken não deve ser retornado no JSON para evitar armazenamento no client side.
         return ResponseEntity.ok(new MeuGendazAuthResponse(auth.mensagem(), auth.email(), "", auth.status()));
     }
 

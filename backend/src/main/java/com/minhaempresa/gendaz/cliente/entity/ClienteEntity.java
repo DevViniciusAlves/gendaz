@@ -30,7 +30,7 @@ public class ClienteEntity {
 
     @Setter(AccessLevel.NONE)
     @Column(name = "telefone", length = 20)
-    @NotBlank(message = "Telefone Ã© obrigatÃ³rio")
+    @NotBlank(message = "Telefone é obrigatório")
     private String telefone;
 
     private String email;

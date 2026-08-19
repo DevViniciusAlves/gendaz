@@ -133,7 +133,7 @@ public class UsuarioService {
     }
 
     private void validarNome(String nome) {
-        if (!nome.matches("^[A-Za-zÃ€-Ã¿ ]+$")) {
+        if (!nome.matches("^[A-Za-zÀ-ÿ ]+$")) {
             throw new BusinessException("O nome deve conter apenas letras e espacos.");
         }
     }

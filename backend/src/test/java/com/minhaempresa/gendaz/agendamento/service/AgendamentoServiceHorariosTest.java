@@ -71,11 +71,11 @@ class AgendamentoServiceHorariosTest {
 
     private ProfissionalEntity criarProfissional(Long id, Long empresaId, boolean sistema) {
         EmpresaEntity empresa = criarEmpresa(empresaId);
-        return ProfissionalEntity.builder().id(id).nome(sistema ? "Sem preferÃªncia" : "Dra. Marina").status(StatusCadastro.ATIVO).sistema(sistema).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
+        return ProfissionalEntity.builder().id(id).nome(sistema ? "Sem preferência" : "Dra. Marina").status(StatusCadastro.ATIVO).sistema(sistema).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
     }
 
     private ProfissionalResponse criarProfissionalResponse(Long id, boolean sistema) {
-        return new ProfissionalResponse(id, sistema ? "Sem preferÃªncia" : "Dra. Marina", null, null, StatusCadastro.ATIVO, 1L, sistema, java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class));
+        return new ProfissionalResponse(id, sistema ? "Sem preferência" : "Dra. Marina", null, null, StatusCadastro.ATIVO, 1L, sistema, java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class));
     }
 
     @Test

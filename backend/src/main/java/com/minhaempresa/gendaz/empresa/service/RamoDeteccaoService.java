@@ -36,11 +36,11 @@ public class RamoDeteccaoService {
         PALAVRAS_CHAVE.put(RamoEmpresa.SALAO_CABELO, List.of(
                 "cabelo",
                 "salao",
-                "salÃ£o",
+                "salão",
                 "coloracao",
-                "coloraÃ§Ã£o",
+                "coloração",
                 "escova",
-                "hidrataÃ§Ã£o",
+                "hidratação",
                 "hidratacao",
                 "botox capilar",
                 "progressiva",
@@ -51,30 +51,30 @@ public class RamoDeteccaoService {
         PALAVRAS_CHAVE.put(RamoEmpresa.PERSONAL_TRAINER, List.of(
                 "personal",
                 "musculacao",
-                "musculaÃ§Ã£o",
+                "musculação",
                 "treino",
                 "treino funcional",
                 "pilates",
                 "yoga",
                 "crossfit",
                 "aerobica",
-                "aerÃ³bica"
+                "aeróbica"
         ));
         PALAVRAS_CHAVE.put(RamoEmpresa.CLINICA_FISIOTERAPIA, List.of(
                 "fisioterapia",
                 "fisio",
                 "reabilitacao",
-                "reabilitaÃ§Ã£o",
+                "reabilitação",
                 "massagem terapeutica",
-                "massagem terapÃªutica",
+                "massagem terapêutica",
                 "sessao fisio",
-                "sessÃ£o fisio"
+                "sessão fisio"
         ));
         PALAVRAS_CHAVE.put(RamoEmpresa.CLINICA_ODONTOLOGIA, List.of(
                 "odonto",
                 "dentista",
                 "limpeza dentaria",
-                "limpeza dentÃ¡ria",
+                "limpeza dentária",
                 "clareamento",
                 "implante",
                 "canal"

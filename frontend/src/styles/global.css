@@ -105,11 +105,20 @@
   --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
 }
 
-* { box-sizing: border-box; }
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
 
 body {
   margin: 0;
-  min-width: 1080px;
   color: var(--text);
   background: var(--bg);
   font-family: 'Poppins', 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -954,7 +963,13 @@ input:focus, select:focus, textarea:focus { border-color: var(--primary); box-sh
   flex: 1;
 }
 
-.table-wrap { overflow-x: auto; max-width: 100%; }
+.table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
 table { width: 100%; border-collapse: collapse; }
 .data-table { table-layout: fixed; min-width: 760px; }
 th, td { padding: 14px 16px; border-bottom: 1px solid var(--line); text-align: left; font-size: 14px; vertical-align: middle; }
@@ -21636,3 +21651,50 @@ iframe {
 }
 
 
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+  .sidebar {
+    display: none !important;
+  }
+}
+
+/* Fix Safari Zoom on Inputs */
+@media (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Landing Page Responsive Fixes */
+@media (max-width: 768px) {
+  .hero-section-new {
+    padding: 40px 16px 60px !important;
+    min-height: auto !important;
+  }
+  .hero-new-title {
+    font-size: 32px !important;
+  }
+  .hero-line {
+    white-space: normal !important;
+  }
+  .hero-new-buttons {
+    flex-direction: column !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+  .hero-new-buttons a, .hero-new-buttons Link {
+    width: 100% !important;
+  }
+}
+
+/* Features Mosaic Fix */
+@media (max-width: 768px) {
+  .features-grid-container {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -10,13 +10,13 @@ function emitirToast(type, message) {
 }
 
 /**
- * Modal reutilizÃ¡vel de exportaÃ§Ã£o CSV.
+ * Modal reutilizável de exportação CSV.
  *
- * Responsabilidades: exibir as opÃ§Ãµes (tudo / perÃ­odo), validar as datas,
+ * Responsabilidades: exibir as opções (tudo / período), validar as datas,
  * confirmar ou cancelar, controlar o loading e exibir erros.
  *
- * NÃ£o conhece regras de domÃ­nio (clientes, financeiro, relatÃ³rios): a pÃ¡gina
- * decide o que exportar atravÃ©s de `onConfirm`, que deve retornar uma Promise.
+ * Não conhece regras de domínio (clientes, financeiro, relatórios): a página
+ * decide o que exportar através de `onConfirm`, que deve retornar uma Promise.
  * Em caso de erro (inclusive "nenhum registro"), a Promise deve rejeitar e o
  * modal permanece aberto exibindo a mensagem.
  */
@@ -46,7 +46,7 @@ export default function ExportCsvModal({
   function validarPeriodo() {
     if (!dataInicial) return 'Informe a data inicial.'
     if (!dataFinal) return 'Informe a data final.'
-    if (dataInicial > dataFinal) return 'A data inicial nÃ£o pode ser posterior Ã  data final.'
+    if (dataInicial > dataFinal) return 'A data inicial não pode ser posterior à data final.'
     return ''
   }
 
@@ -75,14 +75,14 @@ export default function ExportCsvModal({
     } catch (error) {
       const mensagem = error?.response?.data?.mensagem
         || error?.message
-        || 'NÃ£o foi possÃ­vel gerar a exportaÃ§Ã£o.'
+        || 'Não foi possível gerar a exportação.'
       setErro(mensagem)
     } finally {
       setCarregando(false)
     }
   }
 
-  // Impede fechar o modal enquanto a exportaÃ§Ã£o estÃ¡ em andamento.
+  // Impede fechar o modal enquanto a exportação está em andamento.
   const handleClose = carregando ? () => {} : onClose
 
   return (
@@ -99,7 +99,7 @@ export default function ExportCsvModal({
               />
               <span>
                 <strong>Exportar tudo</strong>
-                <small>Todos os registros disponÃ­veis da empresa.</small>
+                <small>Todos os registros disponíveis da empresa.</small>
               </span>
             </label>
           )}
@@ -112,7 +112,7 @@ export default function ExportCsvModal({
                 onChange={() => setModo('periodo')}
               />
               <span>
-                <strong>Selecionar perÃ­odo</strong>
+                <strong>Selecionar período</strong>
                 <small>Somente registros dentro do intervalo informado.</small>
               </span>
             </label>
@@ -128,7 +128,7 @@ export default function ExportCsvModal({
                 value={dataInicial}
                 max={dataFinal || undefined}
                 onChange={(e) => setDataInicial(e.target.value)}
-                aria-label="Data inicial do perÃ­odo"
+                aria-label="Data inicial do período"
               />
             </label>
             <label className="field">
@@ -138,7 +138,7 @@ export default function ExportCsvModal({
                 value={dataFinal}
                 min={dataInicial || undefined}
                 onChange={(e) => setDataFinal(e.target.value)}
-                aria-label="Data final do perÃ­odo"
+                aria-label="Data final do período"
               />
             </label>
           </div>

@@ -125,9 +125,9 @@ export function useLocalData(scope = 'full') {
       setLoading(false)
     }
 
-    // Sem polling: a tela carrega ao montar e sÃ³ reage a aÃ§Ãµes reais
+    // Sem polling: a tela carrega ao montar e só reage a ações reais
     // (gendaz:data-changed), troca de rota (remontagem) e recarga manual.
-    // Evita o recarregamento contÃ­nuo do pacote do escopo com o usuÃ¡rio parado.
+    // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
     function reloadFromEvent() {
       reload(false)
     }

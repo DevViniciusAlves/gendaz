@@ -457,7 +457,7 @@ public class MeuGendazController {
             String mensagem = request.mensagem().trim();
             String assunto = "Meu Gendaz - " + tipo + " - " + motivo;
             String mensagemCompleta = "Origem: Meu Gendaz\n"
-                    + "Tipo de ocorrÃªncia: " + tipo + "\n"
+                    + "Tipo de ocorrência: " + tipo + "\n"
                     + "Motivo: " + motivo + "\n\n"
                     + mensagem;
             CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
@@ -497,9 +497,9 @@ public class MeuGendazController {
         String normalizado = status.trim().toUpperCase();
         return "FINALIZADO".equals(normalizado)
                 || "CONCLUIDO".equals(normalizado)
-                || "CONCLUÃDO".equals(normalizado)
+                || "CONCLUÍDO".equals(normalizado)
                 || "CONCLUIDA".equals(normalizado)
-                || "CONCLUÃDA".equals(normalizado);
+                || "CONCLUÍDA".equals(normalizado);
     }
 
     private boolean isStatusHistorico(String status) {

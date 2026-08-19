@@ -192,9 +192,9 @@ public class ChamadoService {
         }
         String normalizado = assunto.trim();
         return switch (normalizado) {
-            case "DÃºvidas" -> PrioridadeChamado.BAIXA;
+            case "Dúvidas" -> PrioridadeChamado.BAIXA;
             case "Pagamentos" -> PrioridadeChamado.ALTA;
-            case "AlteraÃ§Ã£o em conta" -> PrioridadeChamado.MEDIA;
+            case "Alteração em conta" -> PrioridadeChamado.MEDIA;
             default -> PrioridadeChamado.MEDIA;
         };
     }

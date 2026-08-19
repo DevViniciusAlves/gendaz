@@ -4,12 +4,12 @@ import java.util.Arrays;
 import java.util.Optional;
 
 public enum TimezoneEnum {
-    AMERICA_CUIABA("America/Cuiaba", "CuiabÃ¡"),
-    AMERICA_SAO_PAULO("America/Sao_Paulo", "SÃ£o Paulo"),
+    AMERICA_CUIABA("America/Cuiaba", "Cuiabá"),
+    AMERICA_SAO_PAULO("America/Sao_Paulo", "São Paulo"),
     AMERICA_MANAUS("America/Manaus", "Manaus"),
     AMERICA_RIO_BRANCO("America/Rio_Branco", "Rio Branco"),
     AMERICA_PORTO_VELHO("America/Porto_Velho", "Porto Velho"),
-    AMERICA_BELEM("America/Belem", "BelÃ©m"),
+    AMERICA_BELEM("America/Belem", "Belém"),
     AMERICA_FORTALEZA("America/Fortaleza", "Fortaleza"),
     AMERICA_RECIFE("America/Recife", "Recife"),
     AMERICA_BAHIA("America/Bahia", "Bahia"),

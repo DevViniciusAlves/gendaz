@@ -60,7 +60,7 @@ export default function OperationToast() {
     <div className={`admin-toast ${classe}`} role="status" aria-live="polite">
       <span>{toast.message}</span>
       {toast.type !== 'loading' && (
-        <button type="button" aria-label="Fechar notificaÃ§Ã£o" onClick={() => setToast(null)}>x</button>
+        <button type="button" aria-label="Fechar notificação" onClick={() => setToast(null)}>x</button>
       )}
     </div>
   )

@@ -69,10 +69,10 @@ public class ConversaService {
     @Transactional(readOnly = true)
     public ConversaEntity buscarEntidade(Long id) {
         ConversaEntity conversa = conversaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Conversa nÃ£o encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Conversa não encontrada."));
         Long companyId = CompanyContext.requireCompanyId();
         if (conversa.getEmpresa() == null || !companyId.equals(conversa.getEmpresa().getId())) {
-            throw new ResourceNotFoundException("Conversa nÃ£o encontrada.");
+            throw new ResourceNotFoundException("Conversa não encontrada.");
         }
         return conversa;
     }
@@ -80,7 +80,7 @@ public class ConversaService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Conversa nÃ£o encontrada.");
+            throw new ResourceNotFoundException("Conversa não encontrada.");
         }
     }
 }

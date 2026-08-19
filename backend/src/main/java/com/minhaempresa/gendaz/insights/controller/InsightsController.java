@@ -142,7 +142,7 @@ public class InsightsController {
     private Long resolverEmpresaId(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-                throw new BusinessException("Empresa da sessÃ£o nao corresponde ao Insights solicitado.");
+                throw new BusinessException("Empresa da sessão nao corresponde ao Insights solicitado.");
             }
         return empresaContexto;
     }
