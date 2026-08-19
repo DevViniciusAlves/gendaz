@@ -106,7 +106,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("ignorarId") Long ignorarId);
 
     @Query("""
-            select a.servico.id, a.servico.nome, count(a.id), coalesce(sum(a.servico.valor), 0)
+            select a.servico.id, a.servico.nome, count(a.id), coalesce(sum(coalesce(a.valorFinal, a.servico.valor)), 0)
             from AgendamentoEntity a
             where a.empresa.id = :empresaId
               and a.status <> :statusCancelado

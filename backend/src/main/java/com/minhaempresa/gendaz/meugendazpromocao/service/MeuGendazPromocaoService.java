@@ -9,6 +9,7 @@ import com.minhaempresa.gendaz.promocao.entity.PromocaoEntity;
 import com.minhaempresa.gendaz.promocao.repository.PromocaoRepository;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
@@ -126,12 +127,65 @@ public class MeuGendazPromocaoService {
     }
 
     public BigDecimal validarERegistrarUso(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, String cupomCodigo, Long agendamentoId) {
-        MeuGendazPromocaoEntity promocao = validarCupom(cliente, empresa, servico, cupomCodigo);
-        BigDecimal desconto = calcularDesconto(servico, promocao);
-        if (agendamentoId != null) {
-            registrarUso(cliente, promocao, agendamentoId, desconto);
+        CupomAplicadoResult resultado = aplicarCupomAoAgendamento(cliente, empresa, servico, cupomCodigo, agendamentoId);
+        return resultado == null ? BigDecimal.ZERO : resultado.desconto();
+    }
+
+    @Transactional
+    public CupomAplicadoResult aplicarCupomAoAgendamento(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, String cupomCodigo, Long agendamentoId) {
+        if (cupomCodigo == null || cupomCodigo.isBlank()) {
+            return null;
         }
-        return desconto;
+        String codigoNormalizado = cupomCodigo.trim();
+        try {
+            syncService.sincronizarEmpresa(empresa.getId());
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para aplicar cupom: {}", empresa.getId(), e.getMessage());
+        }
+        Optional<MeuGendazPromocaoEntity> opt = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), codigoNormalizado);
+        if (opt.isEmpty()) {
+            Long mirrorId = syncERegistrarMirror(empresa.getId(), codigoNormalizado);
+            opt = mirrorId != null ? promocaoRepository.findById(mirrorId) : Optional.empty();
+        }
+        MeuGendazPromocaoEntity promocao = opt
+                .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
+        if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
+            throw new IllegalArgumentException("Cupom invalido.");
+        }
+        MeuGendazPromocaoEntity bloqueada = promocaoRepository.findByIdComLock(promocao.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
+        validarCupomDentroLock(cliente, empresa, servico, bloqueada, codigoNormalizado);
+        BigDecimal desconto = calcularDesconto(servico, bloqueada);
+        if (agendamentoId != null) {
+            registrarUso(cliente, bloqueada, agendamentoId, desconto);
+        }
+        return new CupomAplicadoResult(
+                bloqueada.getCodigo(),
+                bloqueada.getTipo(),
+                bloqueada.getValor(),
+                desconto,
+                bloqueada.getPromocaoOrigemId()
+        );
+    }
+
+    /**
+     * Validacao completa feita SOMENTE dentro do lock pessimista. Nao
+     * confiar em validacao feita anteriormente fora do lock.
+     */
+    private void validarCupomDentroLock(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, MeuGendazPromocaoEntity promocao, String codigoNormalizado) {
+        if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
+            throw new IllegalArgumentException("Cupom invalido.");
+        }
+        if (!Boolean.TRUE.equals(promocao.getAplicarTodosServicos())
+                && (promocao.getServicos() == null || promocao.getServicos().stream().noneMatch(s -> s.getId().equals(servico.getId())))) {
+            throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
+        }
+        if (usoRepository.existsByPromocaoIdAndClienteId(promocao.getId(), cliente.getId())) {
+            throw new IllegalArgumentException("Voce ja usou este cupom.");
+        }
+        if (!promocao.isValida()) {
+            throw new IllegalArgumentException("Cupom expirado ou invalido.");
+        }
     }
 
     public MeuGendazPromocaoEntity validarCupom(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, String cupomCodigo) {
@@ -185,7 +239,7 @@ public class MeuGendazPromocaoService {
             return BigDecimal.ZERO;
         }
         BigDecimal desconto = "PERCENTUAL".equalsIgnoreCase(promocao.getTipo())
-                ? servico.getValor().multiply(promocao.getValor()).divide(new BigDecimal("100"))
+                ? servico.getValor().multiply(promocao.getValor()).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP)
                 : promocao.getValor();
         if (desconto.compareTo(servico.getValor()) > 0) {
             desconto = servico.getValor();

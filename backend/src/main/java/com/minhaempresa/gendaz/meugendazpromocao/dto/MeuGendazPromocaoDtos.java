@@ -29,11 +29,19 @@ public final class MeuGendazPromocaoDtos {
             Long agendamentoId
     ) {}
 
-    public record PromocaoNotificacaoResponse(
+public record PromocaoNotificacaoResponse(
             Long promocaoId,
             String cupomCodigo,
             String cupomDescricao,
             LocalDateTime dataEnvio
+    ) {}
+
+    public record CupomAplicadoResult(
+            String codigo,
+            String tipo,
+            BigDecimal valorPromocao,
+            BigDecimal desconto,
+            Long promocaoOrigemId
     ) {}
 }
 

@@ -94,7 +94,7 @@ class AgendamentoPublicoRateLimitTest {
         when(sanitizacaoService.telefone(anyString())).thenReturn(telefone);
         when(agendamentoService.criar(any())).thenReturn(new AgendamentoResponse(
                 1L, "PROTO-1", 9L, "Joao", 1L, "Consulta", null, "Dra. Marina", 5L, null,
-                null, null, null, null, null));
+                null, null, null, null, null, null, null, null, null, null, null));
     }
 
     @Test

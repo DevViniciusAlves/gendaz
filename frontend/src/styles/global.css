@@ -16170,6 +16170,37 @@ tbody tr:hover { background: #fffaf5; }
   line-height: 1.55;
 }
 
+.gendaz-historico-valor-breakdown {
+  display: grid;
+  gap: 3px;
+  justify-items: center;
+  text-align: center;
+}
+
+.gendaz-historico-valor-breakdown > strong {
+  color: #ffffff;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.gendaz-historico-valor-breakdown .gendaz-historico-cupom {
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 10px;
+  line-height: 1.3;
+  display: grid;
+  gap: 1px;
+}
+
+.gendaz-historico-valor-breakdown .gendaz-historico-cupom span {
+  color: #fca5a5;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.gendaz-historico-valor-breakdown .gendaz-historico-total {
+  color: #86efac;
+}
+
 .gendaz-vazio {
   text-align: center;
   color: rgba(255, 255, 255, 0.48);

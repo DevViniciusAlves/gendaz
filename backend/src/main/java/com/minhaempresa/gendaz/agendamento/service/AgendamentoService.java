@@ -16,6 +16,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.horarioatendimento.entity.HorarioAtendimentoEntity;
 import com.minhaempresa.gendaz.horarioatendimento.service.HorarioAtendimentoService;
+import com.minhaempresa.gendaz.meugendazpromocao.dto.MeuGendazPromocaoDtos.CupomAplicadoResult;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoService;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
@@ -32,6 +33,7 @@ import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -121,8 +123,37 @@ public class AgendamentoService {
             contextoSucesso.put("horaFim", salvo.getHoraFim());
             contextoSucesso.put("status", salvo.getStatus());
             log.info("[agendamento-debug] agendamento salvo com sucesso {}", contextoSucesso);
+
+            BigDecimal valorOriginal = servico.getValor() != null ? servico.getValor() : BigDecimal.ZERO;
+            BigDecimal desconto = BigDecimal.ZERO;
+            if (request.cupomCodigo() != null && !request.cupomCodigo().isBlank()) {
+                try {
+                    CupomAplicadoResult cupom = meuGendazPromocaoService.aplicarCupomAoAgendamento(
+                            cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
+                    if (cupom != null) {
+                        desconto = cupom.desconto() != null ? cupom.desconto() : BigDecimal.ZERO;
+                        salvo.setCupomCodigo(cupom.codigo());
+                        salvo.setTipoPromocaoAplicada(cupom.tipo());
+                        salvo.setValorPromocaoAplicada(cupom.valorPromocao());
+                        salvo.setPromocaoOrigemId(cupom.promocaoOrigemId());
+                    }
+                } catch (Exception e) {
+                    Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
+                    contextoCupomErro.put("agendamentoId", salvo.getId());
+                    contextoCupomErro.put("protocolo", salvo.getProtocolo());
+                    contextoCupomErro.put("cupomCodigo", request.cupomCodigo());
+                    log.warn("[agendamento-debug] cupom nao aplicado. mensagem='{}' contexto={}", e.getMessage(), contextoCupomErro, e);
+                    throw new BusinessException(e.getMessage());
+                }
+            }
+            BigDecimal valorFinal = valorOriginal.subtract(desconto).max(BigDecimal.ZERO);
+            salvo.setValorOriginal(valorOriginal);
+            salvo.setValorDesconto(desconto);
+            salvo.setValorFinal(valorFinal);
+            salvo = agendamentoRepository.save(salvo);
+
             try {
-                criarPagamentoPendente(salvo, cliente, empresa, servico);
+                criarPagamentoPendente(salvo, cliente, empresa);
             } catch (Exception e) {
                 Map<String, Object> contextoPagamentoErro = new LinkedHashMap<>();
                 contextoPagamentoErro.put("agendamentoId", salvo.getId());
@@ -162,18 +193,6 @@ public class AgendamentoService {
                 contextoEmailConfirmacaoErro.put("protocolo", salvo.getProtocolo());
                 contextoEmailConfirmacaoErro.put("clienteEmail", cliente.getEmail());
                 log.error("[agendamento-debug] falha ao enviar email de confirmacao. mensagem='{}' contexto={}", e.getMessage(), contextoEmailConfirmacaoErro, e);
-            }
-            try {
-                if (request.cupomCodigo() != null && !request.cupomCodigo().isBlank()) {
-                    meuGendazPromocaoService.validarERegistrarUso(cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
-                }
-            } catch (Exception e) {
-                Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
-                contextoCupomErro.put("agendamentoId", salvo.getId());
-                contextoCupomErro.put("protocolo", salvo.getProtocolo());
-                contextoCupomErro.put("cupomCodigo", request.cupomCodigo());
-                log.warn("[agendamento-debug] cupom nao aplicado. mensagem='{}' contexto={}", e.getMessage(), contextoCupomErro, e);
-                throw new BusinessException(e.getMessage());
             }
             return mapper.toResponse(salvo);
         } catch (Exception e) {
@@ -510,12 +529,13 @@ public class AgendamentoService {
         return ZoneId.of(valor);
     }
 
-    private void criarPagamentoPendente(AgendamentoEntity agendamento, ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico) {
+    private void criarPagamentoPendente(AgendamentoEntity agendamento, ClienteEntity cliente, EmpresaEntity empresa) {
+        BigDecimal valor = agendamento.getValorFinal() != null ? agendamento.getValorFinal() : agendamento.getServico().getValor();
         pagamentoRepository.save(PagamentoEntity.builder()
                 .agendamento(agendamento)
                 .cliente(cliente)
                 .empresa(empresa)
-                .valor(servico.getValor())
+                .valor(valor)
                 .metodoPagamento(MetodoPagamento.OUTRO)
                 .status(StatusPagamento.PENDENTE)
                 .build());

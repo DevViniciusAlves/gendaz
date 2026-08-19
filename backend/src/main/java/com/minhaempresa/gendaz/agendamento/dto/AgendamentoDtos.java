@@ -41,7 +41,7 @@ public final class AgendamentoDtos {
             String observacoes
     ) {}
 
-    public record AgendamentoResponse(
+public record AgendamentoResponse(
             Long id,
             String protocolo,
             Long clienteId,
@@ -56,7 +56,13 @@ public final class AgendamentoDtos {
             LocalTime horaInicio,
             LocalTime horaFim,
             StatusAgendamento status,
-            String observacoes
+            String observacoes,
+            BigDecimal valorOriginal,
+            BigDecimal valorDesconto,
+            BigDecimal valorFinal,
+            String cupomCodigo,
+            String tipoPromocaoAplicada,
+            BigDecimal valorPromocaoAplicada
     ) {}
 
     public record AcaoEmMassaAgendamentoRequest(

@@ -2,6 +2,12 @@ import { useContext, useState, useEffect, useCallback } from 'react'
 import { Loader, ChevronLeft, ChevronRight } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 
+function formatarMoeda(valor) {
+  return valor != null && valor !== ''
+    ? Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+    : null
+}
+
 export default function Historico() {
   const { cliente, carregarHistorico } = useContext(ClienteGendazContext)
   const [agendamentos, setAgendamentos] = useState([])
@@ -65,10 +71,12 @@ export default function Historico() {
               const profissional = item.profissionalNome || item.profissional || item.profissional?.nome || '-----'
               const data = item.data ? new Date(`${item.data}T12:00:00`).toLocaleDateString('pt-BR') : '-----'
               const hora = item.horaInicio || item.hora || '-----'
-              const valorFonte = item.valor ?? item.valorServico ?? item.servicoValor ?? item.servico?.valor ?? null
-              const valor = valorFonte != null && valorFonte !== ''
-                ? Number(valorFonte).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
-                : '-----'
+              const valorFonte = item.valorFinal ?? item.valor ?? item.valorServico ?? item.servicoValor ?? item.servico?.valor ?? null
+              const valor = formatarMoeda(valorFonte) ?? '-----'
+              const valorOriginal = item.valorOriginal ?? item.valorServico ?? item.servicoValor ?? item.servico?.valor ?? null
+              const desconto = item.valorDesconto
+              const cupomCodigo = item.cupomCodigo
+              const temDesconto = cupomCodigo && desconto != null && Number(desconto) > 0
               const observacao = [item.observacoes, item.observacao]
                 .find((texto) => texto && String(texto).trim().toLowerCase() !== 'criado pelo painel.')
 
@@ -101,7 +109,18 @@ export default function Historico() {
                     </div>
                     <div className="gendaz-historico-field gendaz-historico-field--valor">
                       <span>Valor</span>
-                      <strong>{valor}</strong>
+                      {temDesconto ? (
+                        <div className="gendaz-historico-valor-breakdown">
+                          <strong>{formatarMoeda(valorOriginal)}</strong>
+                          <span className="gendaz-historico-cupom">
+                            Cupom {cupomCodigo}
+                            <span>-{formatarMoeda(desconto)}</span>
+                          </span>
+                          <strong className="gendaz-historico-total">{formatarMoeda(item.valorFinal ?? item.valor)}</strong>
+                        </div>
+                      ) : (
+                        <strong>{valor}</strong>
+                      )}
                     </div>
                   </div>
                   {observacao && (

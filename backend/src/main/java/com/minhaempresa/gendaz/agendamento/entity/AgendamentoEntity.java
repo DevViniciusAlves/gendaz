@@ -6,6 +6,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import lombok.*;
@@ -59,6 +60,27 @@ public class AgendamentoEntity {
 
     @Column(length = 1000)
     private String observacoes;
+
+    @Column(name = "valor_original", precision = 10, scale = 2)
+    private BigDecimal valorOriginal;
+
+    @Column(name = "valor_desconto", precision = 10, scale = 2)
+    private BigDecimal valorDesconto;
+
+    @Column(name = "valor_final", precision = 10, scale = 2)
+    private BigDecimal valorFinal;
+
+    @Column(name = "cupom_codigo", length = 80)
+    private String cupomCodigo;
+
+    @Column(name = "tipo_promocao_aplicada", length = 20)
+    private String tipoPromocaoAplicada;
+
+    @Column(name = "valor_promocao_aplicada", precision = 10, scale = 2)
+    private BigDecimal valorPromocaoAplicada;
+
+    @Column(name = "promocao_origem_id")
+    private Long promocaoOrigemId;
 
 }
 
