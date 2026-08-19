@@ -149,6 +149,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         if (usuario.getEmpresa().getStatus() == StatusEmpresa.INATIVA) {
             return isReactivationRoute(request);
         }
+        // Empresa ENCERRADA ou BLOQUEADA está bloqueada
         return false;
     }
 

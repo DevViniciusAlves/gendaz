@@ -17,32 +17,43 @@ import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.UsuarioResponse;
 import com.minhaempresa.gendaz.mensagem.dto.MensagemDtos.MensagemResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 public final class LgpdDtos {
     private LgpdDtos() {}
 
     public record ExportacaoDadosResponse(
+            Map<String, Object> exportacao,
             EmpresaExportada empresa,
-            UsuarioResponse usuarioSolicitante,
-            AssinaturaResponse assinatura,
-            ResumoFinanceiroResponse financeiro,
-            List<UsuarioResponse> usuarios,
-            List<ClienteResponse> clientes,
-            List<ServicoResponse> servicos,
-            List<ProfissionalResponse> profissionais,
-            List<AgendamentoResponse> agendamentos,
-            List<ConversaResponse> conversas,
-            List<MensagemResponse> mensagens,
-            List<PagamentoResponse> pagamentos,
-            List<PagamentoPlanoResponse> pagamentosPlano,
-            List<NotaFiscalResponse> notasFiscais,
-            List<EntregaResponse> entregas,
-            List<NotificacaoResponse> notificacoes,
-            List<ChamadoResponse> chamados,
-            List<AuditoriaExportada> auditoria
+            UsuarioResponse meusDados,
+            AceitesLgpd aceitesLgpd,
+            PlanoExportado plano,
+            List<AuditoriaExportada> dadosTecnicos,
+            MeuGendazExportado meuGendaz
     ) {}
 
-    public record EmpresaExportada(Long id, String nomeFantasia, String telefone, String email, String status, LocalDateTime dataCriacao) {}
+    public record AceitesLgpd(
+            boolean aceitouTermos,
+            LocalDateTime dataAceiteTermos,
+            String versaoTermos,
+            LocalDateTime dataAceitePolitica,
+            String versaoPolitica
+    ) {}
+
+    public record PlanoExportado(
+            String plano,
+            String status,
+            LocalDateTime dataCriacao,
+            LocalDateTime dataExpiracao
+    ) {}
+
+    public record MeuGendazExportado(
+            String nome,
+            String email,
+            String status
+    ) {}
+
+    public record EmpresaExportada(Long id, String nomeFantasia, String telefone, String email, String agendamentoSlug, String status, String timezone, String ramo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {}
 
     public record AuditoriaExportada(Long id, String tipo, String severidade, String descricao, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
 

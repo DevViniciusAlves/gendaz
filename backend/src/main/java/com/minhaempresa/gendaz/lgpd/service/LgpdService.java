@@ -71,42 +71,84 @@ public class LgpdService {
     @Transactional(readOnly = true)
     public ExportacaoDadosResponse exportar(Long usuarioId) {
         UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
-        if (usuario.getPerfil() != PerfilUsuario.DONO) {
-            throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");
-        }
         Long empresaId = obterEmpresaId(usuario);
         EmpresaEntity empresa = buscarEmpresa(empresaId);
-        AssinaturaResponse assinatura = assinaturaService.buscarAtualResponsePorEmpresa(empresaId);
-        ResumoFinanceiroResponse financeiro = financeiroService.resumo(empresaId, java.time.LocalDate.now().getMonthValue(), java.time.LocalDate.now().getYear());
-        List<AuditoriaExportada> auditoria = auditLogRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
-                .limit(200)
-                .map(this::toAuditoria)
-                .toList();
 
-        List<com.minhaempresa.gendaz.mensagem.dto.MensagemDtos.MensagemResponse> mensagens = conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream()
-                .flatMap(c -> mensagemRepository.findByConversaIdOrderByDataEnvioAsc(c.getId()).stream())
-                .map(m -> new com.minhaempresa.gendaz.mensagem.mapper.MensagemMapper().toResponse(m))
-                .toList();
+        // 1. Dados da Exportação
+        var exportacao = new LgpdDtos.ExportacaoInfo(
+                java.time.LocalDateTime.now(),
+                "JSON",
+                "gendaz"
+        );
+
+        // 2. Dados da Empresa (Campos permitidos)
+        var empresaExport = new LgpdDtos.EmpresaExportada(
+                empresa.getNomeFantasia(),
+                empresa.getTelefone(),
+                empresa.getEmail(),
+                empresa.getAgendamentoSlug(),
+                empresa.getStatus().name(),
+                empresa.getTimezone(),
+                empresa.getRamo(),
+                empresa.getDataCriacao(),
+                empresa.getDataAtualizacao()
+        );
+
+        // 3. Meus Dados
+        var meusDados = new LgpdDtos.MeusDadosExport(
+                usuario.getNome(),
+                usuario.getEmail(),
+                usuario.getPerfil().name(),
+                usuario.getStatus().name()
+        );
+
+        // 4. Aceites LGPD
+        var aceites = new LgpdDtos.AceitesLgpdExport(
+                usuario.isAceitouTermos(),
+                usuario.getDataAceiteTermos(),
+                usuario.getVersaoTermos(),
+                usuario.getDataAceitePolitica(),
+                usuario.getVersaoPolitica()
+        );
+
+        // 5. Plano (Leitura segura)
+        LgpdDtos.PlanoExport plano = null;
+        try {
+            AssinaturaResponse assinatura = assinaturaService.buscarAtualResponsePorEmpresa(empresaId);
+            if (assinatura != null) {
+                plano = new LgpdDtos.PlanoExport(
+                        assinatura.getPlanoNome(),
+                        assinatura.getStatus().name(),
+                        assinatura.getDataCriacao(),
+                        assinatura.getDataFim()
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Nao foi possivel carregar dados do plano para exportacao LGPD: {}", e.getMessage());
+        }
+
+        // 6. Dados Tecnicos (Audit logs do proprio usuario)
+        // Buscamos logs onde o IP ou UserAgent podem estar relacionados, mas o ideal eh filtro por usuario se existir.
+        // Como o AuditLogEntity parece nao ter usuarioId direto (pelo exportar original), filtramos os ultimos 50 da empresa
+        // que coincidam com o IP/UA atual se disponivel, ou apenas retornamos vazios se nao houver vinculo forte.
+        // No momento, seguindo a regra de nao inferir vinculo apenas por empresa, retornaremos apenas os que o repository
+        // suportar de forma segura. O sistema atual usa findByEmpresaId.
+        // Para cumprir o requisito 6: "Nao exportar esse registro automaticamente se nao houver seguranca".
+        List<LgpdDtos.AuditoriaExportada> auditoria = List.of();
+
+        // 7. Meu Gendaz (Acesso do titular)
+        LgpdDtos.MeuGendazExport meuGendaz = meuGendazAcessoRepository.findByEmpresaIdAndEmail(empresaId, usuario.getEmail())
+                .map(a -> new LgpdDtos.MeuGendazExport(a.getNome(), a.getEmail(), a.getStatus().name()))
+                .orElse(null);
 
         return new ExportacaoDadosResponse(
-                new EmpresaExportada(empresa.getId(), empresa.getNomeFantasia(), empresa.getTelefone(), empresa.getEmail(), empresa.getStatus().name(), empresa.getDataCriacao()),
-                usuarioMapper.toResponse(usuario),
-                assinatura,
-                financeiro,
-                usuarioRepository.findByEmpresaId(empresaId).stream().map(usuarioMapper::toResponse).toList(),
-                clienteRepository.findByEmpresaId(empresaId).stream().map(c -> new com.minhaempresa.gendaz.cliente.mapper.ClienteMapper().toResponse(c)).toList(),
-                servicoRepository.findByEmpresaId(empresaId).stream().map(s -> new com.minhaempresa.gendaz.servico.mapper.ServicoMapper().toResponse(s)).toList(),
-                profissionalRepository.findByEmpresaId(empresaId).stream().map(p -> new com.minhaempresa.gendaz.profissional.mapper.ProfissionalMapper().toResponse(p)).toList(),
-                agendamentoRepository.findByEmpresaId(empresaId).stream().map(a -> new com.minhaempresa.gendaz.agendamento.mapper.AgendamentoMapper().toResponse(a)).toList(),
-                conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream().map(c -> new com.minhaempresa.gendaz.conversa.mapper.ConversaMapper().toResponse(c)).toList(),
-                mensagens,
-                pagamentoRepository.findByEmpresaId(empresaId).stream().map(p -> new com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper().toResponse(p)).toList(),
-                pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream().map(p -> new com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper().toPlanoResponse(p)).toList(),
-                notaFiscalRepository.findByEmpresaId(empresaId).stream().map(n -> new com.minhaempresa.gendaz.notafiscal.mapper.NotaFiscalMapper().toResponse(n)).toList(),
-                entregaRepository.findByEmpresaId(empresaId).stream().map(e -> new com.minhaempresa.gendaz.entrega.mapper.EntregaMapper().toResponse(e)).toList(),
-                notificacaoRepository.findByEmpresaId(empresaId).stream().map(n -> new com.minhaempresa.gendaz.notificacao.mapper.NotificacaoMapper().toResponse(n)).toList(),
-                chamadoService.listarPorEmpresa(empresaId, usuarioId),
-                auditoria
+                exportacao,
+                empresaExport,
+                meusDados,
+                aceites,
+                plano,
+                auditoria,
+                meuGendaz
         );
     }
 
@@ -124,7 +166,6 @@ public class LgpdService {
 
         List<UsuarioEntity> usuarios = usuarioRepository.findByEmpresaId(empresaId);
         usuarios.forEach(u -> {
-            u.setStatus(StatusUsuario.INATIVO);
             u.setSessaoAtiva(null);
             u.setSessaoAtivaMeuGendaz(null);
         });

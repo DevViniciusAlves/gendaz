@@ -39,8 +39,7 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
         return "OPTIONS".equalsIgnoreCase(request.getMethod())
-                || !uri.startsWith("/api/meu-gendaz/")
-                || isPublicRoute(request);
+                || !uri.startsWith("/api/meu-gendaz/");
     }
 
     @Override
@@ -49,6 +48,11 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
         try {
             String slug = slugAtual(request);
             if (slug == null) {
+                // Se é rota pública que não precisa de slug, deixa passar
+                if (isPublicRoute(request)) {
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Slug da empresa nao informado.");
                 return;
             }
@@ -57,6 +61,17 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Loja nao encontrada.");
                 return;
             }
+            
+            if (empresa.getStatus() == StatusEmpresa.ENCERRADA) {
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Loja indisponivel.");
+                return;
+            }
+
+            if (isPublicRoute(request)) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session == null || session.isBlank()) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
