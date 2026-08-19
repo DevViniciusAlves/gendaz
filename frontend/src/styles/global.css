@@ -21508,21 +21508,9 @@ input, select, textarea {
   }
 }
 
-@media (max-width: 768px) {
-  .gendaz-modal-overlay {
-    padding: 16px;
-  }
-
-  .gendaz-modal {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    max-height: calc(100dvh - 32px);
-    overflow-y: auto;
-  }
+.data-table-responsive-fix {
+  display: table-header-group;
 }
-    display: table-header-group;
-  }
 
   .app-shell .modal .data-table tbody,
   .app-shell .modal-card .data-table tbody {
