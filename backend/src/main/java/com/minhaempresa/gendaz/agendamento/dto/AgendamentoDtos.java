@@ -62,7 +62,8 @@ public record AgendamentoResponse(
             BigDecimal valorFinal,
             String cupomCodigo,
             String tipoPromocaoAplicada,
-            BigDecimal valorPromocaoAplicada
+            BigDecimal valorPromocaoAplicada,
+            com.minhaempresa.gendaz.shared.enums.StatusCadastro situacaoCliente
     ) {}
 
     public record AcaoEmMassaAgendamentoRequest(

@@ -357,10 +357,11 @@ export default function Clientes() {
           { key: 'totalGasto', label: 'TOTAL GASTO', render: (row) => currency(row.totalGasto) },
           { key: 'observacoes', label: 'HISTÓRICO', render: (row) => (
              <div className="stacked-cell">
-               <strong>{row.observacoes || 'Sem histórico'}</strong>
+               <strong>{row.status === 'EXCLUIDO' ? 'Excluído' : (row.observacoes || 'Sem histórico')}</strong>
              </div>
           ) },
           { key: 'acao', label: 'AÇÕES', render: (row) => (
+            row.status === 'EXCLUIDO' ? null : (
             <ActionMenu
               actions={[
                 { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(row) },
@@ -368,6 +369,7 @@ export default function Clientes() {
                 { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluir(row) },
               ]}
             />
+            )
           )},
         ]}
         rows={clientesPaginados}

@@ -142,25 +142,27 @@ public class ClienteService {
         ClienteEntity cliente = buscarEntidade(id);
         validarEmpresa(cliente, empresaId);
 
-        for (AgendamentoEntity agendamento : agendamentoRepository.findByClienteId(id)) {
-            pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
-            agendamentoRepository.delete(agendamento);
-        }
-
+        // Apenas limpa vínculos operacionais, preservando financeiros/agendamentos/fiscais
         for (ConversaEntity conversa : conversaRepository.findByClienteId(id)) {
             mensagemRepository.deleteByConversaId(conversa.getId());
             conversaRepository.delete(conversa);
         }
-
         crmContatoRepository.deleteByClienteId(id);
-        entregaRepository.deleteByClienteId(id);
         notificacaoRepository.deleteByClienteId(id);
-        notaFiscalRepository.deleteByClienteId(id);
-        pagamentoRepository.deleteByClienteId(id);
         promocaoNotificacaoRepository.deleteByClienteId(id);
         meuGendazPromocaoNotificacaoRepository.deleteByClienteId(id);
+        
+        // Anonimização
+        cliente.setNome("Cliente excluído");
+        cliente.setTelefone("00000000000");
+        cliente.setEmail("excluido-" + cliente.getId() + "@gendaz.site");
+        cliente.setObservacoes("");
+        cliente.setStatus(StatusCadastro.EXCLUIDO);
+        
+        clienteRepository.save(cliente);
+
         clienteEmailBloqueadoService.bloquear(cliente.getEmpresa(), cliente.getEmail(), "Cliente excluido pelo painel Gendaz");
-        clienteRepository.delete(cliente);
+        
         auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", cliente.getNome(), null, null);
     }
 

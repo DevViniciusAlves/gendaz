@@ -27,7 +27,8 @@ public class AgendamentoMapper {
                 agendamento.getValorFinal(),
                 agendamento.getCupomCodigo(),
                 agendamento.getTipoPromocaoAplicada(),
-                agendamento.getValorPromocaoAplicada()
+                agendamento.getValorPromocaoAplicada(),
+                agendamento.getCliente() != null ? agendamento.getCliente().getStatus() : null
         );
     }
 

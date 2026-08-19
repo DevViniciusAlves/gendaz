@@ -26,7 +26,8 @@ public class PagamentoMapper {
                 pagamento.getMetodoPagamento(),
                 pagamento.getParcelas(),
                 pagamento.getStatus(),
-                pagamento.getDataPagamento()
+                pagamento.getDataPagamento(),
+                pagamento.getCliente() != null ? pagamento.getCliente().getStatus() : null
         );
     }
 
