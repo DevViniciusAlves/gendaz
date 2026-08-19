@@ -14,10 +14,13 @@ import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ResumoFinanceiroResponse;
 import com.minhaempresa.gendaz.financeiro.service.FinanceiroService;
+import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.AceitesLgpd;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.AuditoriaExportada;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.EmpresaExportada;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ExcluirContaResponse;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ExportacaoDadosResponse;
+import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.MeuGendazExportado;
+import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.PlanoExportado;
 import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.notafiscal.repository.NotaFiscalRepository;
@@ -36,6 +39,7 @@ import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
@@ -75,36 +79,31 @@ public class LgpdService {
         EmpresaEntity empresa = buscarEmpresa(empresaId);
 
         // 1. Dados da Exportação
-        var exportacao = new LgpdDtos.ExportacaoInfo(
-                java.time.LocalDateTime.now(),
-                "JSON",
-                "gendaz"
-        );
+        Map<String, Object> exportacao = new java.util.HashMap<>();
+        exportacao.put("geradoEm", java.time.LocalDateTime.now());
+        exportacao.put("formato", "JSON");
+        exportacao.put("origem", "gendaz");
 
         // 2. Dados da Empresa (Campos permitidos)
-        var empresaExport = new LgpdDtos.EmpresaExportada(
+        var empresaExport = new EmpresaExportada(
+                empresa.getId(),
                 empresa.getNomeFantasia(),
                 empresa.getTelefone(),
                 empresa.getEmail(),
                 empresa.getAgendamentoSlug(),
                 empresa.getStatus().name(),
                 empresa.getTimezone(),
-                empresa.getRamo(),
+                empresa.getRamo() != null ? empresa.getRamo().name() : null,
                 empresa.getDataCriacao(),
                 empresa.getDataAtualizacao()
         );
 
         // 3. Meus Dados
-        var meusDados = new LgpdDtos.MeusDadosExport(
-                usuario.getNome(),
-                usuario.getEmail(),
-                usuario.getPerfil().name(),
-                usuario.getStatus().name()
-        );
+        var meusDados = usuarioMapper.toResponse(usuario);
 
         // 4. Aceites LGPD
-        var aceites = new LgpdDtos.AceitesLgpdExport(
-                usuario.isAceitouTermos(),
+        var aceites = new AceitesLgpd(
+                usuario.getAceitouTermos() != null && usuario.getAceitouTermos(),
                 usuario.getDataAceiteTermos(),
                 usuario.getVersaoTermos(),
                 usuario.getDataAceitePolitica(),
@@ -112,15 +111,15 @@ public class LgpdService {
         );
 
         // 5. Plano (Leitura segura)
-        LgpdDtos.PlanoExport plano = null;
+        PlanoExportado plano = null;
         try {
             AssinaturaResponse assinatura = assinaturaService.buscarAtualResponsePorEmpresa(empresaId);
             if (assinatura != null) {
-                plano = new LgpdDtos.PlanoExport(
-                        assinatura.getPlanoNome(),
-                        assinatura.getStatus().name(),
-                        assinatura.getDataCriacao(),
-                        assinatura.getDataFim()
+                plano = new PlanoExportado(
+                        assinatura.planoNome(),
+                        assinatura.status().name(),
+                        assinatura.dataInicio() != null ? assinatura.dataInicio().atStartOfDay() : null,
+                        assinatura.dataFim() != null ? assinatura.dataFim().atStartOfDay() : null
                 );
             }
         } catch (Exception e) {
@@ -128,17 +127,11 @@ public class LgpdService {
         }
 
         // 6. Dados Tecnicos (Audit logs do proprio usuario)
-        // Buscamos logs onde o IP ou UserAgent podem estar relacionados, mas o ideal eh filtro por usuario se existir.
-        // Como o AuditLogEntity parece nao ter usuarioId direto (pelo exportar original), filtramos os ultimos 50 da empresa
-        // que coincidam com o IP/UA atual se disponivel, ou apenas retornamos vazios se nao houver vinculo forte.
-        // No momento, seguindo a regra de nao inferir vinculo apenas por empresa, retornaremos apenas os que o repository
-        // suportar de forma segura. O sistema atual usa findByEmpresaId.
-        // Para cumprir o requisito 6: "Nao exportar esse registro automaticamente se nao houver seguranca".
-        List<LgpdDtos.AuditoriaExportada> auditoria = List.of();
+        List<AuditoriaExportada> auditoria = List.of();
 
         // 7. Meu Gendaz (Acesso do titular)
-        LgpdDtos.MeuGendazExport meuGendaz = meuGendazAcessoRepository.findByEmpresaIdAndEmail(empresaId, usuario.getEmail())
-                .map(a -> new LgpdDtos.MeuGendazExport(a.getNome(), a.getEmail(), a.getStatus().name()))
+        MeuGendazExportado meuGendaz = meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresaId, usuario.getEmail())
+                .map(a -> new MeuGendazExportado(a.getNome(), a.getEmail(), a.getStatus().name()))
                 .orElse(null);
 
         return new ExportacaoDadosResponse(

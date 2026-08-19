@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.shared.security;
 
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
