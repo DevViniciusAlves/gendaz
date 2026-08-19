@@ -16,6 +16,7 @@ import PagamentoPendente from '../pages/PagamentoPendente.jsx'
 import PagamentoRetorno from '../pages/PagamentoRetorno.jsx'
 import ContaInativa from '../pages/ContaInativa.jsx'
 import ContaEncerrada from '../pages/ContaEncerrada.jsx'
+import NotFound from '../pages/NotFound.jsx'
 import SessionExpiredScreen from '../pages/SessionExpiredScreen.jsx'
 import TermosDeUso from '../pages/TermosDeUso.jsx'
 import PoliticaPrivacidade from '../pages/PoliticaPrivacidade.jsx'
@@ -130,6 +131,7 @@ export default function AppRoutes() {
       <Route path="/admin/login" element={<AdminAccessGate><AdminLogin /></AdminAccessGate>} />
       <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+      <Route path="/admin/*" element={<AdminRoute><NotFound /></AdminRoute>} />
       <Route path="/agendar/:slugOuEmpresaId" element={<Booking />} />
       <Route path="/booking/:slugOuEmpresaId" element={<Booking />} />
       <Route path="/criar-conta" element={<CriarConta />} />
@@ -138,6 +140,7 @@ export default function AppRoutes() {
       <Route path="/pagamento/cancelado" element={<PagamentoRetorno tipo="cancelado" />} />
       <Route path="/conta-inativa" element={<ContaInativaRoute><ContaInativa /></ContaInativaRoute>} />
       <Route path="/conta-encerrada" element={<ContaEncerradaRoute><ContaEncerrada /></ContaEncerradaRoute>} />
+      <Route path="/not-found" element={<NotFound />} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
       <Route path="/meu-gendaz/:slug/*" element={<Gendaz />}>
@@ -170,7 +173,9 @@ export default function AppRoutes() {
         <Route path="configuracoes/usuarios" element={<PlanRoute routeKey="configuracoes"><UsuariosEmpresa /></PlanRoute>} />
         <Route path="suporte" element={<Suporte />} />
         <Route path="conta" element={<Conta />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }

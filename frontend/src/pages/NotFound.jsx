@@ -1,17 +1,20 @@
-import { Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 export default function NotFound() {
+  const navigate = useNavigate()
+
   return (
-    <main className="admin-login-screen app-dark-screen">
-      <section className="admin-login-panel">
-        <span className="section-kicker">Erro 404</span>
-        <h1>Pagina nao encontrada</h1>
-        <p className="admin-login-copy">
-          O endereco solicitado nao existe ou foi removido.
+    <main className="notfound-screen">
+      <section className="notfound-content" aria-label="Página não encontrada">
+        <span className="notfound-brand">gendaz</span>
+        <h1 className="notfound-code">404</h1>
+        <p className="notfound-title">Ops, essa página não existe.</p>
+        <p className="notfound-description">
+          O endereço pode estar incorreto, ter sido removido ou não estar mais disponível.
         </p>
-        <Link to="/" className="btn btn-primary" style={{ marginTop: '1.5rem', display: 'inline-block', textDecoration: 'none' }}>
-          Voltar para a pagina inicial
-        </Link>
+        <button type="button" className="notfound-button" onClick={() => navigate('/')}>
+          Voltar para o início
+        </button>
       </section>
     </main>
   )

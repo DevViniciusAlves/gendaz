@@ -6645,6 +6645,116 @@ tbody tr:hover { background: #fffaf5; }
     padding: 36px 24px;
   }
 }
+
+/* ============================================================
+   404 · GENDAZ preto e branco (tema independente)
+   ============================================================ */
+.notfound-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 40px 20px;
+  background: #ffffff;
+  color: #000000;
+  color-scheme: light;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.notfound-screen *,
+.notfound-screen *::before,
+.notfound-screen *::after {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.notfound-content {
+  width: min(720px, 100%);
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding: 0 16px;
+}
+
+.notfound-brand {
+  margin: 0 0 32px;
+  color: #000000;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.notfound-code {
+  margin: 0;
+  color: #000000;
+  font-size: clamp(8rem, 18vw, 14rem);
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.notfound-title {
+  margin: 36px 0 0;
+  color: #000000;
+  font-size: clamp(22px, 4vw, 32px);
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.notfound-description {
+  max-width: 480px;
+  margin: 14px 0 0;
+  color: #6b7280;
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.notfound-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  margin-top: 40px;
+  padding: 0 30px;
+  border: 1px solid #000000;
+  border-radius: 12px;
+  background: #000000;
+  color: #ffffff;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background .18s ease, transform .18s ease, box-shadow .18s ease;
+}
+
+.notfound-button:hover {
+  background: #1f1f1f;
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.16);
+}
+
+.notfound-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25);
+}
+
+@media (max-width: 640px) {
+  .notfound-screen {
+    padding: 24px 16px;
+  }
+  .notfound-code {
+    font-size: clamp(6.5rem, 30vw, 10rem);
+  }
+  .notfound-title {
+    margin-top: 28px;
+  }
+  .notfound-button {
+    width: 100%;
+    max-width: 320px;
+  }
+}
+
 .payment-feedback,
 .payment-info-card {
   display: flex;
