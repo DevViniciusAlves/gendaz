@@ -368,8 +368,8 @@ export default function Insights() {
       )}
 
       {analiseAberta && (
-        <div className="insights-modal-backdrop" role="presentation" onClick={() => setAnaliseAberta(false)}>
-          <div className="panel insights-modal" role="dialog" aria-modal="true" aria-label="Análise completa" onClick={(event) => event.stopPropagation()}>
+        <div className="insights-modal-backdrop system-modal-backdrop" role="presentation" onClick={() => setAnaliseAberta(false)}>
+          <div className="panel insights-modal system-modal" role="dialog" aria-modal="true" aria-label="Análise completa" onClick={(event) => event.stopPropagation()}>
             <div className="insights-modal__head">
               <div>
                 <div className="section-kicker">Análise completa</div>

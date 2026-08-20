@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long> {
+    @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
+    Optional<PagamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     List<PagamentoEntity> findByEmpresaId(Long empresaId);
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
@@ -25,7 +28,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     List<PagamentoEntity> findByEmpresaIdAndStatusIn(Long empresaId, List<StatusPagamento> statuses);
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
-    java.util.Optional<PagamentoEntity> findByAgendamento_Id(Long agendamentoId);
+    Optional<PagamentoEntity> findByAgendamentoIdAndEmpresaId(Long agendamentoId, Long empresaId);
 
     @Query("""
             select coalesce(sum(p.valor), 0)
@@ -41,12 +44,16 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM PagamentoEntity p WHERE p.agendamento.id = :agendamentoId")
-    void deleteByAgendamentoId(@Param("agendamentoId") Long agendamentoId);
+    @Query("DELETE FROM PagamentoEntity p WHERE p.agendamento.id = :agendamentoId AND p.empresa.id = :empresaId")
+    int deleteByAgendamentoIdAndEmpresaId(
+            @Param("agendamentoId") Long agendamentoId,
+            @Param("empresaId") Long empresaId);
     @Transactional
     @Modifying
-    @Query("DELETE FROM PagamentoEntity p WHERE p.cliente.id = :clienteId")
-    void deleteByClienteId(@Param("clienteId") Long clienteId);
+    @Query("DELETE FROM PagamentoEntity p WHERE p.cliente.id = :clienteId AND p.empresa.id = :empresaId")
+    int deleteByClienteIdAndEmpresaId(
+            @Param("clienteId") Long clienteId,
+            @Param("empresaId") Long empresaId);
     @Query("""
             select coalesce(sum(p.valor), 0)
             from PagamentoEntity p

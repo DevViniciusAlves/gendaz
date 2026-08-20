@@ -76,8 +76,8 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   }
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
-      <section className="modal" style={{ minWidth: 480, maxWidth: 600, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
+    <div className="modal-backdrop system-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
+      <section className="modal system-modal" style={{ minWidth: 480, maxWidth: 600, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
         <div className="modal-header" style={{ background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', borderBottom: '1px solid var(--line)' }}>
           <h2 style={{ color: 'var(--text)' }}>{tmpl.titulo}</h2>
           <button type="button" className="icon-btn" onClick={handleClose} aria-label="Fechar modal">

@@ -47,7 +47,7 @@ public class AgendamentoBulkService {
                     case "CANCELAR" -> agendamento.setStatus(StatusAgendamento.CANCELADO);
                     case "PENDENTE" -> agendamento.setStatus(StatusAgendamento.PENDENTE);
                     case "EXCLUIR" -> {
-                        pagamentoRepository.deleteByAgendamentoId(id);
+                        pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(id, companyId);
                         agendamentoRepository.delete(agendamento);
                         processados++;
                         continue;

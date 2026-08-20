@@ -109,7 +109,7 @@ public class ServicoService {
         validarEmpresa(servico, empresaId);
         Long empresaIdResolvido = servico.getEmpresa().getId();
         agendamentoRepository.findByServicoId(id).forEach(agendamento -> {
-            pagamentoRepository.deleteByAgendamentoId(agendamento.getId());
+            pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(agendamento.getId(), empresaIdResolvido);
             agendamentoRepository.delete(agendamento);
         });
         servicoRepository.flush();

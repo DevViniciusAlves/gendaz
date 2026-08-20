@@ -8,8 +8,8 @@ export default function ConfirmacaoModal({ open, titulo, mensagem, tipo = 'dange
   const Icone = tipo === 'danger' ? AlertTriangle : Download
 
   return createPortal(
-    <div className="modal-backdrop" role="presentation">
-      <section className="modal confirm-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-titulo">
+    <div className="modal-backdrop system-modal-backdrop" role="presentation">
+      <section className="modal confirm-modal system-modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-modal-titulo">
         <div className="modal-header">
           <h2 id="confirm-modal-titulo">{titulo}</h2>
           <button type="button" className="icon-btn" onClick={onCancelar} disabled={carregando} aria-label="Fechar confirmação">

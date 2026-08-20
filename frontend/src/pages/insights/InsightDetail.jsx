@@ -1,7 +1,7 @@
 export default function InsightDetail({ insight, onClose }) {
   return (
-    <div className="insights-modal-backdrop" onClick={onClose} role="presentation">
-      <article className="panel insights-modal" onClick={(e) => e.stopPropagation()}>
+    <div className="insights-modal-backdrop system-modal-backdrop" onClick={onClose} role="presentation">
+      <article className="panel insights-modal system-modal" onClick={(e) => e.stopPropagation()}>
         <div className="insights-modal__head">
           <div>
             <span className="section-kicker">Detalhe</span>

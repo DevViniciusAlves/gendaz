@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.pagamento.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.never;
@@ -36,6 +37,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -115,6 +117,7 @@ class PagamentoServiceCheckoutTest {
 
     @Test
     void checkoutPendenteValidoDentroDoPrazoDeveSerReutilizadoSemCriarNovoCheckoutStripe() {
+        CompanyContext.setCompanyId(1L);
         EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
         PlanoEntity plano = plano(2L, "PRO");
         PagamentoPlanoEntity pendente = pagamentoPendente(
@@ -138,6 +141,7 @@ class PagamentoServiceCheckoutTest {
 
     @Test
     void checkoutPendenteVencidoDeveExpirarESomenteNovoPedidoCriaNovaSession() {
+        CompanyContext.setCompanyId(1L);
         EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
         PlanoEntity plano = plano(2L, "PRO");
         PagamentoPlanoEntity vencido = pagamentoPendente(
@@ -189,6 +193,7 @@ class PagamentoServiceCheckoutTest {
 
     @Test
     void pagamentoExpiradoNaoSincronizaComGatewayNoVerificarAutenticado() {
+        CompanyContext.setCompanyId(1L);
         EmpresaEntity empresa = empresa(1L, StatusEmpresa.PENDENTE_PAGAMENTO);
         PlanoEntity plano = plano(2L, "PRO");
         PagamentoPlanoEntity expirado = pagamentoPendente(
@@ -207,32 +212,22 @@ class PagamentoServiceCheckoutTest {
     }
 
     @Test
-    void marcarPagoNaoValidaTenantDoPagamento() {
-        // Usuario logado de uma empresa (1) consegue marcar como pago pagamento de outra empresa (99).
+    void marcarPagoDeOutraEmpresaDeveFalharSemAlterarPagamento() {
         CompanyContext.setCompanyId(1L);
-        EmpresaEntity empresaB = empresa(99L, StatusEmpresa.ATIVA);
-        ClienteEntity clienteB = ClienteEntity.builder().id(500L).nome("Cliente da Empresa B").build();
-        PagamentoEntity pagamentoB = PagamentoEntity.builder()
-                .id(100L)
-                .empresa(empresaB)
-                .cliente(clienteB)
-                .valor(new BigDecimal("100.00"))
-                .status(StatusPagamento.PENDENTE)
-                .build();
+        when(pagamentoRepository.findByIdAndEmpresaId(100L, 1L)).thenReturn(Optional.empty());
 
-        when(pagamentoRepository.findById(100L)).thenReturn(Optional.of(pagamentoB));
-        when(pagamentoRepository.save(any(PagamentoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
-        when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
-        when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, null)).thenReturn(null);
+        assertThrows(ResourceNotFoundException.class,
+                () -> pagamentoService.marcarPago(100L,
+                        new MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null)));
 
-        // IMPLEMENTACAO ATUAL: NAO lanca excecao de tenant. Nenhuma checagem de
-        // CompanyContext e feita em marcarPago/buscarEntidade(id). Este teste
-        // passa sem erro, o que por si so demonstra o IDOR: o fluxo permite
-        // alterar pagamento de outra empresa. (Verbug/PATCH /api/pagamentos/{id}/marcar-pago.)
-        var resp = pagamentoService.marcarPago(100L, new MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null));
+        verify(pagamentoRepository).findByIdAndEmpresaId(100L, 1L);
+        verify(pagamentoRepository, never()).save(any(PagamentoEntity.class));
+        verify(formaPagamentoEmpresaService, never()).validarPagamentoManual(anyLong(), any(), any());
+    }
 
-        assertEquals(StatusPagamento.PAGO, resp.status());
-        verify(pagamentoRepository).findById(100L);
-        verify(pagamentoRepository).save(pagamentoB);
+    @Test
+    void buscarPagamentoDeveFalharSemCompanyContext() {
+        assertThrows(RuntimeException.class, () -> pagamentoService.buscarEntidade(100L));
+        verify(pagamentoRepository, never()).findByIdAndEmpresaId(anyLong(), anyLong());
     }
 }

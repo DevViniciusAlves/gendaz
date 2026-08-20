@@ -373,8 +373,10 @@
 
   .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-container,
   .app-shell :is(.data-table, .mobile-data-table) td:last-child .financeiro-center-actions {
-    justify-self: end !important;
-    width: 38px !important;
+    justify-self: center !important;
+    width: auto !important;
+    display: flex !important;
+    justify-content: center !important;
   }
 
   .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-btn {
@@ -911,13 +913,14 @@
     .promotions-page,
     .reports-page
   ) :is(.data-table, .mobile-data-table) td[data-column='acao'] {
-    position: absolute !important;
-    top: 14px !important;
-    right: 14px !important;
-    display: block !important;
-    width: 38px !important;
-    min-height: 38px !important;
-    padding: 0 !important;
+    position: static !important;
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 8px 0 0 !important;
   }
 
   .app-shell :is(
@@ -929,6 +932,18 @@
     .reports-page
   ) :is(.data-table, .mobile-data-table) td[data-column='acao']::before {
     display: none !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao'] .action-menu-container {
+    width: auto !important;
+    justify-content: center !important;
   }
 
   /* Clientes: identidade, contatos, situacao e historico em blocos claros. */

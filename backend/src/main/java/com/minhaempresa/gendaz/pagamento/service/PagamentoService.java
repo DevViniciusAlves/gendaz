@@ -92,6 +92,7 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public List<PagamentoResponse> listarPorEmpresa(Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return pagamentoRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
     }
 
@@ -508,7 +509,8 @@ public class PagamentoService {
 
     @Transactional(readOnly = true)
     public PagamentoEntity buscarEntidade(Long id) {
-        return pagamentoRepository.findById(id)
+        Long empresaId = CompanyContext.requireCompanyId();
+        return pagamentoRepository.findByIdAndEmpresaId(id, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
     }
 
@@ -535,8 +537,8 @@ public class PagamentoService {
     }
 
     private void validarEmpresaAtual(Long empresaId) {
-        Long empresaContexto = CompanyContext.getCompanyId();
-        if (empresaContexto != null && empresaId != null && !empresaContexto.equals(empresaId)) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId == null || !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
         }
     }

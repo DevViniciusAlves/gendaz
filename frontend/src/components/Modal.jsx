@@ -5,9 +5,9 @@ export default function Modal({ title, open, onClose, children }) {
   if (!open) return null
 
   return createPortal(
-    <div className="modal-backdrop" role="presentation" onClick={onClose}>
+    <div className="modal-backdrop system-modal-backdrop" role="presentation" onClick={onClose}>
       <section
-        className="modal"
+        className="modal system-modal"
         role="dialog"
         aria-modal="true"
         aria-label={title}

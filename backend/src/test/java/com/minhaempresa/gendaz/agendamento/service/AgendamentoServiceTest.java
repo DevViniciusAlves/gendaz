@@ -219,7 +219,7 @@ class AgendamentoServiceTest {
                 .build();
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(pagamentoRepository.findByAgendamento_Id(10L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, 2)).thenReturn(null);
         CompanyContext.setCompanyId(1L);

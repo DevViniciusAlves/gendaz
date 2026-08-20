@@ -41,11 +41,8 @@ public class PagamentoBulkService {
         int processados = 0;
         for (Long id : idsUnicos) {
             try {
-                PagamentoEntity pagamento = pagamentoRepository.findById(id)
+                PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaId(id, companyId)
                         .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
-                if (!pagamento.getEmpresa().getId().equals(companyId)) {
-                    throw new ResourceNotFoundException("Pagamento nao encontrado.");
-                }
                 switch (acao) {
                     case "MARCAR_COMO_PAGO" -> {
                         formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());

@@ -28,8 +28,8 @@ export default function ContactHistoryModal({ open, onClose, cliente }) {
   if (!open || !cliente) return null
 
   return (
-    <div className="modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
-      <section className="modal" style={{ minWidth: 560, maxWidth: 700, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
+    <div className="modal-backdrop system-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) onClose() }}>
+      <section className="modal system-modal" style={{ minWidth: 560, maxWidth: 700, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
         <div className="modal-header" style={{ background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', borderBottom: '1px solid var(--line)' }}>
           <h2 style={{ color: 'var(--text)' }}>Historico de Contatos: {cliente.nome}</h2>
           <button type="button" className="icon-btn" onClick={onClose} aria-label="Fechar modal">

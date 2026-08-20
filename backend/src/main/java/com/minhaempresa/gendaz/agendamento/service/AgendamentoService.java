@@ -324,7 +324,7 @@ public class AgendamentoService {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
         // lembretePagamentoRepository.deleteByAgendamento_Id(id);
-        pagamentoRepository.deleteByAgendamentoId(id);
+        pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId());
         agendamentoRepository.delete(agendamento);
     }
 
@@ -332,7 +332,7 @@ public class AgendamentoService {
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
-        pagamentoRepository.findByAgendamento_Id(id).ifPresentOrElse(pagamento -> {
+        pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
             if (pago) {
                 formaPagamentoEmpresaService.validarPagamentoManual(agendamento.getEmpresa().getId(), metodoPagamento, parcelas);
