@@ -543,11 +543,12 @@
     inset: 0 !important;
     display: grid !important;
     place-items: center !important;
-    padding: 14px !important;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    padding: 10px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
     background: rgba(5, 5, 8, 0.72) !important;
     backdrop-filter: blur(10px);
     z-index: 1000 !important;
+    overflow: hidden !important;
   }
 
   .app-shell .modal {
@@ -560,10 +561,10 @@
   }
 
   .app-shell .promotions-page .modal-card {
-    width: min(100%, 520px) !important;
-    max-width: min(100%, 520px) !important;
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
     min-width: 0 !important;
-    max-height: calc(100dvh - 28px - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-bottom)) !important;
     overflow: auto !important;
     padding: 14px !important;
     box-sizing: border-box !important;
@@ -574,7 +575,7 @@
     writing-mode: horizontal-tb !important;
     text-orientation: mixed !important;
     word-break: normal !important;
-    overflow-wrap: normal !important;
+    overflow-wrap: anywhere !important;
     white-space: normal !important;
   }
 
@@ -633,6 +634,20 @@
     max-width: 100% !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
+    align-items: flex-start !important;
+  }
+
+  .app-shell .promotions-page .modal-card label > span {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .app-shell .promotions-page .modal-card label > span > :is(span, small, strong),
+  .app-shell .promotions-page .modal-card .radio-label {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    line-height: 1.25 !important;
   }
 
   .app-shell .promotions-page .modal-card input,
@@ -655,9 +670,25 @@
     padding: 0 !important;
   }
 
+  .app-shell .promotions-page .modal-card .form-section > div[style] > label,
+  .app-shell .promotions-page .modal-card .servicos-lista label.cliente-item {
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
   .app-shell .promotions-page .modal-card .servicos-lista > div[style] {
     grid-template-columns: 1fr !important;
     max-height: 180px !important;
+  }
+
+  .app-shell .promotions-page .modal-card .servicos-lista > div[style]:has(input[placeholder='Filtrar serviço']) {
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: center !important;
+    max-height: none !important;
   }
 
   .app-shell .modal-header {
@@ -1322,7 +1353,24 @@
     gap: 8px !important;
   }
 
-  /* Insights: pilha editorial; resumo e recomendacoes sem colunas comprimidas. */
+  /* Insights: pilha compacta baseada nas outras abas mobile do sistema. */
+  .app-shell .insights-page {
+    padding: 10px !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-hero .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
   .app-shell .insights-page :is(
     .insights-layout,
     .insights-summary-panel,
@@ -1336,20 +1384,70 @@
     gap: 12px !important;
   }
 
+  .app-shell .insights-page .insights-sidebar {
+    position: static !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
   .app-shell .insights-page :is(
     .insights-summary-panel,
     .insights-changes-card,
     .insights-risk-card,
     .insights-section,
-    .insights-core-card,
-    .insights-list-item,
-    .insights-highlight-card
+    .insights-ai-chat
   ) {
     min-width: 0 !important;
     padding: 14px !important;
-    border-radius: 12px !important;
+    border-radius: 14px !important;
     border-color: var(--card-mobile-border) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+      #1a1a1a !important;
     box-shadow: none !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-core-card,
+    .insights-list-item,
+    .insights-highlight-card,
+    .insights-action-row,
+    .insights-change-card,
+    .insights-summary-metric
+  ) {
+    min-width: 0 !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .insights-page .insights-list-item,
+  .app-shell .insights-page .insights-highlight-card {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    align-items: start !important;
+  }
+
+  .app-shell .insights-page .insights-list-item__meta,
+  .app-shell .insights-page .insights-action-row__impacto {
+    grid-column: 2 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .insights-page .insights-highlight-card__meta {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat {
+    height: auto !important;
+    min-height: 420px !important;
+    max-height: none !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__body {
+    max-height: none !important;
   }
 
   .app-shell .insights-page :is(h2, h3, p, small, span) {

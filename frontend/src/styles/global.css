@@ -22060,8 +22060,15 @@ iframe {
 }
 
 .system-modal .btn:not(.btn-danger) {
-  color: #0b0b0b !important;
-  -webkit-text-fill-color: #0b0b0b !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.system-modal .btn:not(.btn-danger) span,
+.system-modal .btn:not(.btn-danger) svg {
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  stroke: currentColor !important;
 }
 
 .system-modal .payment-methods button {
