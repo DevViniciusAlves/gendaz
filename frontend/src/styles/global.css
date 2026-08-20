@@ -130,18 +130,19 @@ button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 
 .dias-trabalho-field {
-  gap: 10px;
+  gap: 8px;
 }
 
 .dias-trabalho-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(38px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
   width: 100%;
 }
 
 .dia-trabalho-btn {
-  min-height: 40px;
+  min-height: 34px;
+  padding: 4px 2px;
   border: 1px solid var(--line, #404040);
   border-radius: 8px;
   background: var(--surface-soft, rgba(255, 255, 255, 0.06));
@@ -155,12 +156,12 @@ button { cursor: pointer; }
 }
 
 .dia-trabalho-btn strong {
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
 }
 
 .dia-trabalho-btn small {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--muted, rgba(255, 255, 255, 0.6));
 }
 
@@ -181,7 +182,7 @@ button { cursor: pointer; }
 
 @media (max-width: 420px) {
   .dias-trabalho-grid {
-    grid-template-columns: repeat(4, minmax(44px, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -1114,6 +1115,14 @@ tbody tr:hover { background: #fffaf5; }
 
 .app-shell .page .table-wrap .data-table td .name-cell {
   justify-content: center;
+}
+
+@media (min-width: 769px) {
+  .app-shell .clients-page .table-wrap .data-table td[data-column='nome'] .name-cell {
+    width: min(100%, 170px);
+    margin-inline: auto;
+    justify-content: flex-start;
+  }
 }
 
 .financeiro-center-cell {
@@ -16683,11 +16692,14 @@ tbody tr:hover { background: #fffaf5; }
   width: min(520px, 90vw);
   max-height: 90vh;
   overflow-y: auto;
-  background: linear-gradient(180deg, var(--gendaz-surface-2) 0%, var(--gendaz-surface) 100%);
+  background: #111111;
   border: 1px solid var(--gendaz-border);
   border-radius: 14px;
   padding: 24px;
   box-shadow: var(--gendaz-shadow-hover);
+  color: #0b0b0b;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif;
+  font-weight: 500;
 }
 
 .gendaz-modal__head {
@@ -16700,7 +16712,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-modal__head h2 {
   margin: 0;
   font-size: 18px;
-  color: #ffffff;
+  color: #0b0b0b;
 }
 
 .gendaz-modal__close {
@@ -16711,12 +16723,12 @@ tbody tr:hover { background: #fffaf5; }
   height: 38px;
   border-radius: 12px;
   border: 1px solid var(--gendaz-border);
-  background: rgba(255, 255, 255, 0.04);
-  color: #ffffff;
+  background: #ffffff;
+  color: #0b0b0b;
 }
 
 .gendaz-modal__close:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.92);
   border-color: rgba(255, 255, 255, 0.24);
 }
 
@@ -16726,7 +16738,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .gendaz-modal__texto {
   margin: 0 0 18px;
-  color: rgba(255, 255, 255, 0.82);
+  color: #0b0b0b;
   line-height: 1.5;
 }
 
@@ -16738,7 +16750,7 @@ tbody tr:hover { background: #fffaf5; }
 .gendaz-modal__form label {
   display: grid;
   gap: 6px;
-  color: rgba(255, 255, 255, 0.8);
+  color: #0b0b0b;
   font-size: 13px;
 }
 
@@ -16750,9 +16762,10 @@ tbody tr:hover { background: #fffaf5; }
   border-radius: 10px;
   border: 1px solid var(--gendaz-border);
   background: var(--gendaz-soft);
-  color: #ffffff;
+  color: #0b0b0b;
   font-size: 14px;
   transition: border-color .16s ease, box-shadow .16s ease;
+  background: #ffffff;
 }
 
 .gendaz-modal__form input:focus,
@@ -21883,6 +21896,65 @@ iframe {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+.app-shell .modal,
+.app-shell .confirm-modal {
+  color: #0b0b0b !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .modal *,
+.app-shell .confirm-modal * {
+  color: inherit;
+  font-family: inherit;
+  font-weight: inherit;
+}
+
+.app-shell .modal-header .icon-btn,
+.app-shell .confirm-modal .icon-btn {
+  color: #0b0b0b !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+  box-shadow: none !important;
+}
+
+.app-shell .modal-header .icon-btn:hover,
+.app-shell .confirm-modal .icon-btn:hover {
+  transform: none !important;
+  background: rgba(255, 255, 255, 0.92) !important;
+  box-shadow: none !important;
+}
+
+.app-shell .modal h2,
+.app-shell .confirm-modal h2,
+.app-shell .modal .field span,
+.app-shell .confirm-modal .field span,
+.app-shell .modal .field-hint,
+.app-shell .confirm-modal .field-hint,
+.app-shell .modal .confirm-box p,
+.app-shell .confirm-modal .confirm-box p,
+.app-shell .modal label,
+.app-shell .confirm-modal label,
+.app-shell .modal small,
+.app-shell .confirm-modal small {
+  color: #0b0b0b !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .modal input,
+.app-shell .modal select,
+.app-shell .modal textarea,
+.app-shell .confirm-modal input,
+.app-shell .confirm-modal select,
+.app-shell .confirm-modal textarea {
+  color: #0b0b0b !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+  background: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.82) !important;
 }
 
 

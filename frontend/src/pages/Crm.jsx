@@ -40,7 +40,7 @@ export default function Crm() {
   }
 
   return (
-    <section className="page">
+    <section className="page crm-page">
       <div className="page-title">
         <div>
           <span className="section-kicker" style={{ color: 'var(--text)', letterSpacing: '0.12em' }}>Relacionamento</span>

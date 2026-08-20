@@ -278,7 +278,7 @@ export default function Promocoes() {
   })
 
   return (
-    <section className="page">
+    <section className="page promotions-page">
       <header className="page-title">
         <div>
           <span className="section-kicker">Gendaz</span>

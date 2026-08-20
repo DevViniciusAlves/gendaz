@@ -206,7 +206,7 @@ export default function Profissionais() {
   }
 
   return (
-    <section className="page">
+    <section className="page professionals-page">
       <div className="page-title row-title">
         <div>
           <span className="section-kicker">Equipe</span>

@@ -753,3 +753,487 @@
     font-size: clamp(2rem, 10.5vw, 2.7rem) !important;
   }
 }
+
+/* Mobile interno: composicoes proprias por aba, com a Agenda apenas como linguagem visual. */
+@media (max-width: 768px) {
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .crm-page,
+    .insights-page
+  ) {
+    --card-mobile-bg: #1a1a1a;
+    --card-mobile-border: #404040;
+    --card-mobile-muted: #a3a3a3;
+    font-size: 14px;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .crm-page,
+    .insights-page
+  ) .page-title {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .crm-page,
+    .insights-page
+  ) .page-title h1 {
+    margin: 3px 0 4px !important;
+    font-size: 28px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .crm-page,
+    .insights-page
+  ) .page-title p {
+    margin: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) tbody tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 16px !important;
+    padding: 14px 16px !important;
+    border: 1px solid var(--card-mobile-border) !important;
+    border-radius: 12px !important;
+    background: var(--card-mobile-bg) !important;
+    overflow: visible !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) tbody td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+    padding: 10px 0 !important;
+    border: 0 !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-label]::before {
+    margin: 0 !important;
+    color: var(--card-mobile-muted) !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    letter-spacing: .11em !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td :is(.name-cell, .financeiro-center-cell, .report-center-cell, .stacked-cell) {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    font-size: inherit !important;
+    word-break: normal !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao'] {
+    position: absolute !important;
+    top: 14px !important;
+    right: 14px !important;
+    display: block !important;
+    width: 38px !important;
+    min-height: 38px !important;
+    padding: 0 !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao']::before {
+    display: none !important;
+  }
+
+  /* Clientes: identidade, contatos, situacao e historico em blocos claros. */
+  .app-shell .clients-page .data-table td[data-column='nome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 54px !important;
+    padding: 0 52px 12px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid var(--card-mobile-border) !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='nome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='telefone'],
+  .app-shell .clients-page .data-table td[data-column='email'],
+  .app-shell .clients-page .data-table td[data-column='observacoes'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='email'] {
+    overflow-wrap: anywhere !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='statusCliente'],
+  .app-shell .clients-page .data-table td[data-column='totalGasto'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='observacoes'] {
+    min-height: 52px !important;
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  /* Financeiro: cabecalho do cliente, servico largo e pares financeiros. */
+  .app-shell .financeiro-page .financeiro-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-metrics .metric-card {
+    padding: 13px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-controls {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-controls .financeiro-month-field {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-panel {
+    padding: 14px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='clienteNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 54px !important;
+    padding: 0 52px 12px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid var(--card-mobile-border) !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='clienteNome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='servicoNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 50px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='statusCliente'],
+  .app-shell .financeiro-page .data-table td[data-column='protocolo'],
+  .app-shell .financeiro-page .data-table td[data-column='valor'],
+  .app-shell .financeiro-page .data-table td[data-column='cupomCodigo'],
+  .app-shell .financeiro-page .data-table td[data-column='metodoPagamento'],
+  .app-shell .financeiro-page .data-table td[data-column='status'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='valor'] .financeiro-valor-desconto {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+  }
+
+  /* Profissionais e servicos: cards compactos, sem tabela espremida. */
+  .app-shell :is(.professionals-page, .services-page) .data-table td[data-column='nome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 50px !important;
+    padding: 0 52px 10px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid var(--card-mobile-border) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .app-shell .professionals-page .data-table td[data-column='telefone'],
+  .app-shell .services-page .data-table td[data-column='descricao'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell :is(.professionals-page, .services-page) .data-table td[data-column='status'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  /* Promocoes: codigo vira titulo e descricao ocupa toda a largura. */
+  .app-shell .promotions-page .mobile-data-table td[data-column='codigo'] {
+    grid-column: 1 / -1 !important;
+    min-height: 48px !important;
+    padding: 0 52px 10px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid var(--card-mobile-border) !important;
+    font-size: 15px !important;
+  }
+
+  .app-shell .promotions-page .mobile-data-table td[data-column='codigo']::before {
+    display: none !important;
+  }
+
+  .app-shell .promotions-page .mobile-data-table td[data-column='descricao'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Relatorios: cliente e servico largos; data, hora e estados em pares. */
+  .app-shell .reports-page .panel-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='clienteNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 52px !important;
+    padding: 0 0 10px !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid var(--card-mobile-border) !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='clienteNome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='servicoNome'],
+  .app-shell .reports-page .data-table td[data-column='observacoes'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Configuracoes: formularios de uma coluna e dias sem quebra letra a letra. */
+  .app-shell .settings-page :is(.settings-form-panel, .settings-card) {
+    padding: 14px !important;
+  }
+
+  .app-shell .settings-page :is(.form-grid, .settings-grid, .settings-summary-grid) {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .settings-page .schedule-day-toggle {
+    display: grid !important;
+    grid-template-columns: 24px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .settings-page .schedule-day-toggle :is(strong, small) {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .app-shell .settings-page .schedule-day-fields {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* CRM: cada cliente continua sendo um card, mas com densidade de celular. */
+  .app-shell .crm-page .crm-layout,
+  .app-shell .crm-page .crm-cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .crm-page .crm-card {
+    padding: 14px !important;
+    border: 1px solid var(--card-mobile-border) !important;
+    border-radius: 12px !important;
+    background: var(--card-mobile-bg) !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .crm-page .crm-card-header {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .crm-page .crm-card-contact,
+  .app-shell .crm-page .crm-card-name {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .app-shell .crm-page .crm-card-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .crm-page .crm-card-metric {
+    min-width: 0 !important;
+    padding: 9px 6px !important;
+    text-align: center !important;
+  }
+
+  .app-shell .crm-page .crm-card-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Insights: pilha editorial; resumo e recomendacoes sem colunas comprimidas. */
+  .app-shell .insights-page :is(
+    .insights-layout,
+    .insights-summary-panel,
+    .insights-change-risk-row,
+    .insights-bottom-grid,
+    .insights-principais-grid,
+    .insights-change-grid
+  ) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-summary-panel,
+    .insights-changes-card,
+    .insights-risk-card,
+    .insights-section,
+    .insights-core-card,
+    .insights-list-item,
+    .insights-highlight-card
+  ) {
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 12px !important;
+    border-color: var(--card-mobile-border) !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .insights-page :is(h2, h3, p, small, span) {
+    max-width: 100% !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) tbody tr {
+    padding: 13px 14px !important;
+    gap: 0 12px !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) tbody td {
+    min-height: 54px !important;
+    font-size: 12.5px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .app-shell .settings-page .schedule-day-fields {
+    grid-template-columns: 1fr !important;
+  }
+}

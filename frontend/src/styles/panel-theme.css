@@ -10,13 +10,13 @@
 
 .app-shell,
 .app-shell * {
-  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-family: 'Faktum', sans-serif !important;
   font-weight: 500 !important;
 }
 
 .admin-shell,
 .admin-shell * {
-  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-family: 'Faktum', sans-serif !important;
   font-weight: 500 !important;
 }
 

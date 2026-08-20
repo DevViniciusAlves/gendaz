@@ -153,7 +153,7 @@ export default function Servicos() {
   }
 
   return (
-    <section className="page">
+    <section className="page services-page">
       <div className="page-title row-title">
         <div>
           <span className="section-kicker">Catálogo</span>

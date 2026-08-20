@@ -138,7 +138,7 @@ function montarLinhaConsultas(item) {
   }
 
   return (
-    <section className="page">
+    <section className="page reports-page">
       <div className="page-title">
         <span className="section-kicker">Relatórios</span>
         <h1>Histórico operacional</h1>

@@ -348,7 +348,7 @@ export default function Configuracoes() {
     : ''
 
   return (
-    <section className="page">
+    <section className="page settings-page">
       <div className="page-title">
         <span className="section-kicker">Configuração</span>
         <h1>Configurações</h1>
