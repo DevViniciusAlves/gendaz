@@ -21957,6 +21957,56 @@ iframe {
   border-color: rgba(255, 255, 255, 0.82) !important;
 }
 
+/* Modal base do /sistema: texto preto, Faktum Medium e X preto */
+.app-shell .modal,
+.app-shell .confirm-modal,
+.app-shell .modal *,
+.app-shell .confirm-modal * {
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .modal,
+.app-shell .confirm-modal,
+.app-shell .modal h2,
+.app-shell .confirm-modal h2,
+.app-shell .modal label,
+.app-shell .confirm-modal label,
+.app-shell .modal p,
+.app-shell .confirm-modal p,
+.app-shell .modal small,
+.app-shell .confirm-modal small,
+.app-shell .modal span,
+.app-shell .confirm-modal span,
+.app-shell .modal strong,
+.app-shell .confirm-modal strong,
+.app-shell .modal .field-hint,
+.app-shell .confirm-modal .field-hint,
+.app-shell .modal .field span,
+.app-shell .confirm-modal .field span,
+.app-shell .modal .confirm-box p,
+.app-shell .confirm-modal .confirm-box p {
+  color: #0b0b0b !important;
+}
+
+.app-shell .modal .icon-btn,
+.app-shell .confirm-modal .icon-btn {
+  color: #0b0b0b !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.82) !important;
+}
+
+.app-shell .modal .icon-btn svg,
+.app-shell .confirm-modal .icon-btn svg {
+  color: #0b0b0b !important;
+  stroke: #0b0b0b !important;
+}
+
+.app-shell .modal .btn span,
+.app-shell .confirm-modal .btn span {
+  color: inherit !important;
+}
+
 
 
 @media (max-width: 1024px) {
