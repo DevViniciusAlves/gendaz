@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -21,7 +22,7 @@ class AgendamentoMapperTest {
 
     private AgendamentoEntity agendamentoBase() {
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
-        ClienteEntity cliente = ClienteEntity.builder().id(9L).nome("Ana").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(9L).nome("Ana").status(StatusCadastro.ATIVO).build();
         ServicoEntity servico = ServicoEntity.builder().id(3L).nome("Corte").valor(new BigDecimal("100.00")).build();
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(4L).nome("Dra. Marina").build();
         return AgendamentoEntity.builder()
@@ -58,6 +59,7 @@ class AgendamentoMapperTest {
         assertEquals("TESTE50", response.cupomCodigo());
         assertEquals("VALOR_FIXO", response.tipoPromocaoAplicada());
         assertEquals(new BigDecimal("50.00"), response.valorPromocaoAplicada());
+        assertEquals(StatusCadastro.ATIVO, response.statusCliente());
     }
 
     @Test
@@ -70,5 +72,6 @@ class AgendamentoMapperTest {
         assertNull(response.valorFinal());
         assertNull(response.cupomCodigo());
         assertNull(response.tipoPromocaoAplicada());
+        assertEquals(StatusCadastro.ATIVO, response.statusCliente());
     }
 }

@@ -7,6 +7,7 @@ const LABELS = {
   ATIVO: 'Ativo',
   INATIVO: 'Inativo',
   EXCLUIDO: 'Excluído',
+  EXCLUIDA: 'Excluída',
   TESTE: 'Teste',
   EXPIRADA: 'Expirada',
   CANCELADA: 'Cancelada',
@@ -26,6 +27,7 @@ const LABELS = {
   PAYMENT_REJECTED: 'Pagamento recusado',
   PAYMENT_CANCELED: 'Pagamento cancelado',
   PAYMENT_EXPIRED: 'Pagamento expirado',
+  SITUACAO_CLIENTE: 'Situação do cliente',
   INFO: 'Info',
   WARNING: 'Aviso',
   SECURITY: 'Segurança',
@@ -34,9 +36,11 @@ const LABELS = {
 
 export default function StatusBadge({ status }) {
   const normalized = String(status || '').toLowerCase().replaceAll('_', '-').replaceAll(' ', '-')
-  const label = LABELS[String(status || '').toUpperCase()] || String(status || '').replaceAll('_', ' ')
+  const upper = String(status || '').toUpperCase()
+  const label = LABELS[upper] || String(status || '').replaceAll('_', ' ')
+  const statusClass = normalized === 'excluido' ? 'excluido' : normalized
   return (
-    <span className={`status status-${normalized}`}>
+    <span className={`status status-${statusClass}`}>
       <span className="status-dot">●</span>
       {label}
     </span>

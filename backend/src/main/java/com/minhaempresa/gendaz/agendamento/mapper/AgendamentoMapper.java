@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.agendamento.mapper;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.math.BigDecimal;
 
 public class AgendamentoMapper {
@@ -28,7 +29,9 @@ public class AgendamentoMapper {
                 agendamento.getCupomCodigo(),
                 agendamento.getTipoPromocaoAplicada(),
                 agendamento.getValorPromocaoAplicada(),
-                agendamento.getCliente() != null ? agendamento.getCliente().getStatus() : null
+                agendamento.getCliente() != null
+                        ? (agendamento.getCliente().getStatus() != null ? agendamento.getCliente().getStatus() : StatusCadastro.ATIVO)
+                        : null
         );
     }
 

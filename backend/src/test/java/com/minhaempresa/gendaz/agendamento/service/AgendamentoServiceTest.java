@@ -230,5 +230,19 @@ class AgendamentoServiceTest {
         assertEquals(0, new BigDecimal("50.00").compareTo(pagamento.getValor()));
         verify(formaPagamentoEmpresaService).validarPagamentoManual(eq(1L), eq(MetodoPagamento.PIX), eq(2));
     }
+
+    @Test
+    void criarNaoPermiteClienteExcluido() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO).build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(new BigDecimal("100.00")).build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
+        when(clienteService.buscarEntidade(1L)).thenReturn(cliente);
+        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
+
+        assertThrows(BusinessException.class, () -> agendamentoService.criar(requestBase(null)));
+    }
 }
 

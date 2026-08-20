@@ -4,6 +4,7 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -27,7 +28,9 @@ public class PagamentoMapper {
                 pagamento.getParcelas(),
                 pagamento.getStatus(),
                 pagamento.getDataPagamento(),
-                pagamento.getCliente() != null ? pagamento.getCliente().getStatus() : null
+                pagamento.getCliente() != null
+                        ? (pagamento.getCliente().getStatus() != null ? pagamento.getCliente().getStatus() : StatusCadastro.ATIVO)
+                        : null
         );
     }
 

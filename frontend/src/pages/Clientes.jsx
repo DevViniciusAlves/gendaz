@@ -49,8 +49,9 @@ export default function Clientes() {
     return (Array.isArray(data.clientes) ? data.clientes : [])
       .map((cliente) => ({
         ...cliente,
-        status: cliente.status || 'ATIVO',
+        statusCliente: cliente.statusCliente || cliente.status || 'ATIVO',
       }))
+      .filter((cliente) => cliente.statusCliente !== 'EXCLUIDO')
       .filter((cliente) => `${cliente.nome} ${cliente.telefone} ${cliente.email || ''}`.toLowerCase().includes(busca.toLowerCase()))
   }, [data.clientes, busca])
   const totalPaginas = Math.max(1, Math.ceil(clientes.length / itensPorPagina))
@@ -148,7 +149,7 @@ export default function Clientes() {
       acaoLabel: 'Exportar',
       acao: async () => {
         const columns = [
-          'ID', 'Nome', 'Telefone', 'E-mail', 'Status', 'Total gasto',
+          'ID', 'Nome', 'Telefone', 'E-mail', 'Situação do cliente', 'Total gasto',
           'Quantidade de atendimentos', 'Último atendimento', 'Data de cadastro', 'Observações'
         ]
         const rows = clientes.map((cliente) => [
@@ -156,7 +157,7 @@ export default function Clientes() {
           cliente.nome,
           exibirTelefone(cliente.telefone),
           cliente.email || '',
-          cliente.status === 'ATIVO' ? 'Ativo' : 'Inativo',
+          cliente.statusCliente === 'ATIVO' ? 'Ativo' : cliente.statusCliente === 'INATIVO' ? 'Inativo' : 'Excluído',
           currency(cliente.totalGasto || 0),
           cliente.quantidadeAtendimentos || 0,
           cliente.ultimoAtendimento ? formatarData(cliente.ultimoAtendimento) : '',
@@ -188,7 +189,7 @@ export default function Clientes() {
   }
 
   function ativarDesativar(cliente) {
-    const acao = cliente.status === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
+    const acao = cliente.statusCliente === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
     acao.then(() => reload(true)).catch((error) => {
       setErro(error.response?.data?.mensagem || 'Não foi possível alterar o status do cliente.')
     })
@@ -207,7 +208,7 @@ export default function Clientes() {
   async function excluir(cliente) {
     setConfirmacao({
       titulo: 'Excluir cliente',
-      descricao: `Tem certeza que deseja excluir ${cliente.nome}? Essa ação é permanente e vai apagar todos os dados do cliente, incluindo agendamentos, histórico e registros relacionados. Não será possível reverter.`, 
+      descricao: `Tem certeza que deseja excluir ${cliente.nome}? O nome original será preservado e os vínculos históricos continuarão disponíveis. Não será possível reverter.`,
       acaoLabel: 'Excluir',
       acao: async () => {
         setErro('')
@@ -353,19 +354,19 @@ export default function Clientes() {
              </div>
           )},
           { key: 'email', label: 'E-MAIL' },
-          { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
+          { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={row.statusCliente || row.status || 'ATIVO'} /> },
           { key: 'totalGasto', label: 'TOTAL GASTO', render: (row) => currency(row.totalGasto) },
           { key: 'observacoes', label: 'HISTÓRICO', render: (row) => (
              <div className="stacked-cell">
-               <strong>{row.status === 'EXCLUIDO' ? 'Excluído' : (row.observacoes || 'Sem histórico')}</strong>
+               <strong>{row.statusCliente === 'EXCLUIDO' ? 'Excluído' : (row.observacoes || 'Sem histórico')}</strong>
              </div>
           ) },
           { key: 'acao', label: 'AÇÕES', render: (row) => (
-            row.status === 'EXCLUIDO' ? null : (
+            row.statusCliente === 'EXCLUIDO' ? null : (
             <ActionMenu
               actions={[
                 { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(row) },
-                { label: row.status === 'ATIVO' ? 'Desativar' : 'Ativar', icon: Power, onClick: () => ativarDesativar(row) },
+                { label: row.statusCliente === 'ATIVO' ? 'Desativar' : 'Ativar', icon: Power, onClick: () => ativarDesativar(row) },
                 { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluir(row) },
               ]}
             />
@@ -428,7 +429,6 @@ export default function Clientes() {
     </section>
   )
 }
-
 
 
 

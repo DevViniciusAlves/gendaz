@@ -343,6 +343,12 @@ export default function Agenda() {
                   <strong>{item.servicoNome || item.servico || item.servico?.nome || 'Serviço'}</strong>
                 </div>
                 <div className="gendaz-agenda-field">
+                  <span>Situação do cliente</span>
+                  <strong className={`gendaz-status gendaz-status--${String(item.statusCliente || item.cliente?.status || 'ATIVO').toLowerCase()}`}>
+                    {item.statusCliente || item.cliente?.status || 'ATIVO'}
+                  </strong>
+                </div>
+                <div className="gendaz-agenda-field">
                   <span>Profissional</span>
                   <strong>{item.profissionalNome || item.profissional || item.profissional?.nome || 'Profissional'}</strong>
                 </div>

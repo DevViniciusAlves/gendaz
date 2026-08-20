@@ -20,7 +20,11 @@ export default function Table({ columns, rows = [], empty = 'Nenhum registro enc
           ) : rows.map((row) => (
             <tr key={row.id}>
               {normalizedColumns.map((column) => (
-                <td key={column.key} style={column.key === 'acao' ? { overflow: 'visible', position: 'relative' } : undefined}>
+                <td
+                  key={column.key}
+                  data-label={column.label}
+                  style={column.key === 'acao' ? { overflow: 'visible', position: 'relative' } : undefined}
+                >
                   {renderCell(row, column)}
                 </td>
               ))}

@@ -70,13 +70,14 @@ export default function Relatorios() {
     return dataBase >= dataInicial && dataBase <= dataFinal
   }
 
-  function montarLinhaConsultas(item) {
+function montarLinhaConsultas(item) {
     return [
       item.id,
       item.protocolo || '',
       item.clienteNome || '',
       item.servicoNome || '',
       item.profissionalNome || 'Sem preferência',
+      item.statusCliente || item.cliente?.status || 'ATIVO',
       currency(item.valor || 0),
       formatarData(item.data),
       item.horaInicio || '',
@@ -111,7 +112,7 @@ export default function Relatorios() {
         ? `relatorio-consultas-gendaz-${periodoParaArquivo(dataInicial, dataFinal)}.csv`
         : `relatorio-consultas-gendaz-${dataHojeDdMmAAAA()}.csv`,
       columns: [
-        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Valor',
+        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Situação do cliente', 'Valor',
         'Data', 'Hora início', 'Hora fim', 'Status', 'Observações',
       ],
       rows: registros.map(montarLinhaConsultas),
@@ -193,6 +194,7 @@ export default function Relatorios() {
           { key: 'servicoNome', label: 'SERVIÇO' },
           { key: 'data', label: 'DATA' },
           { key: 'horaInicio', label: 'HORA' },
+          { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={row.statusCliente || row.cliente?.status || 'ATIVO'} /> },
           { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
         ]} rows={consultasPaginadas} empty="Nenhum atendimento encontrado para o filtro atual." />
         <Pagination page={paginaConsultasAtual} totalPages={totalPaginasConsultas} totalItems={consultas.length} pageSize={itensPorPagina} onPageChange={setPaginaConsultas} />

@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useRef, useState, useCallback } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ArrowRight, Bot, Calendar, Loader, Send, Sparkles } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
@@ -147,6 +147,11 @@ export default function AssistenteIA() {
   const [horarios, setHorarios] = useState([])
   const messagesEndRef = useRef(null)
   const navigate = useNavigate()
+  const { slug } = useParams()
+  const irParaAgenda = () => {
+    if (!slug) return
+    navigate(`/meu-gendaz/${slug}/agenda`)
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -473,7 +478,7 @@ export default function AssistenteIA() {
 
   function handleAtalho(atalho) {
     if (atalho === 'agenda') {
-      navigate('agenda')
+      irParaAgenda()
       return
     }
     if (atalho === 'servicos') {
@@ -524,7 +529,7 @@ export default function AssistenteIA() {
                 {item.acao && (
                   <div className="gendaz-chat__acao">
                     <Calendar size={14} /> Ação sugerida: {String(item.acao)}
-                    <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={() => navigate('agenda')}>
+                    <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={irParaAgenda}>
                       <ArrowRight size={14} /> Ir para agenda
                     </button>
                   </div>

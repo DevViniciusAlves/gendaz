@@ -94,7 +94,25 @@ function normalizarAgendamentos(agendamentos) {
 }
 
 function normalizarPagamentos(pagamentos) {
-  return (Array.isArray(pagamentos) ? pagamentos : []).map((item) => ({ ...item, valor: moedaNumero(item.valor) }))
+  return (Array.isArray(pagamentos) ? pagamentos : []).map((item) => ({
+    ...item,
+    valor: moedaNumero(item.valor),
+    statusCliente: item.statusCliente || item.cliente?.status || item.statusClienteCadastro || item.clienteStatus || item.status,
+  }))
+}
+
+function normalizarClientes(clientes) {
+  return (Array.isArray(clientes) ? clientes : []).map((item) => ({
+    ...item,
+    statusCliente: item.statusCliente || item.status || 'ATIVO',
+  }))
+}
+
+function normalizarAgendamentosComStatusCliente(agendamentos) {
+  return (Array.isArray(agendamentos) ? agendamentos : []).map((item) => ({
+    ...item,
+    statusCliente: item.statusCliente || item.cliente?.status || 'ATIVO',
+  }))
 }
 
 function normalizarResumoDashboard(resumo) {
@@ -425,10 +443,10 @@ export const appApi = {
       empresa: {
         ...empresa,
       },
-      clientes: enriquecerClientes(clientesBase, pagamentos),
+      clientes: enriquecerClientes(normalizarClientes(clientesBase), pagamentos),
       servicos: enriquecerServicos(servicosBase, agendamentos),
       profissionais,
-      agendamentos,
+      agendamentos: normalizarAgendamentosComStatusCliente(agendamentos),
       conversas,
       mensagens,
       pagamentos,

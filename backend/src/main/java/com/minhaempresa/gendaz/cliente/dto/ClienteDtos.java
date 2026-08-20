@@ -27,7 +27,6 @@ public final class ClienteDtos {
             String telefone,
             String email,
             String observacoes,
-            StatusCadastro status,
             StatusCadastro statusCliente,
             Long empresaId,
             LocalDateTime dataCriacao,

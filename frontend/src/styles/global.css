@@ -1087,7 +1087,7 @@ tbody tr:hover { background: #fffaf5; }
   background: color-mix(in srgb, var(--danger) 10%, transparent);
   border-color: color-mix(in srgb, var(--danger) 20%, transparent);
 }
-.status-reprovada, .status-reprovado, .status-cancelado, .status-cancelada, .status-inativo, .status-finalizada, .status-offline {
+.status-reprovada, .status-reprovado, .status-cancelado, .status-cancelada, .status-inativo, .status-finalizada, .status-offline, .status-excluido {
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 10%, transparent);
   border-color: color-mix(in srgb, var(--danger) 20%, transparent);
@@ -20868,6 +20868,45 @@ iframe {
     -webkit-overflow-scrolling: touch;
   }
 
+  .app-shell .data-table {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-shell .data-table thead {
+    display: none !important;
+  }
+
+  .app-shell .data-table tbody,
+  .app-shell .data-table tr,
+  .app-shell .data-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .app-shell .data-table tr {
+    margin-bottom: 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .app-shell .data-table td {
+    padding: 8px 0 !important;
+    border: 0 !important;
+  }
+
+  .app-shell .data-table td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.42);
+  }
+
   .modal-backdrop {
     align-items: end;
     place-items: end center;
@@ -20951,6 +20990,44 @@ iframe {
   .booking-page .booking-hour-chip,
   .booking-page .booking-actions .btn {
     width: 100%;
+  }
+
+  .app-shell .table-wrap,
+  .admin-shell .table-wrap {
+    margin-inline: 0;
+    overflow: visible;
+  }
+
+  .app-shell .data-table tr {
+    padding: 12px;
+    border-radius: 16px;
+  }
+
+  .app-shell .data-table td[data-label]::before {
+    font-size: 10px;
+  }
+
+  .pagination-bar {
+    gap: 10px;
+  }
+
+  .pagination-actions {
+    gap: 8px;
+  }
+
+  .pagination-actions .btn {
+    width: 100%;
+  }
+
+  .app-shell .mass-action-toolbar,
+  .app-shell .mass-action-toolbar-inline {
+    display: grid !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .mass-action-toolbar .btn,
+  .app-shell .mass-action-toolbar-inline .btn {
+    width: 100% !important;
   }
 }
 
@@ -21711,21 +21788,32 @@ iframe {
 /* Landing Page Responsive Fixes */
 @media (max-width: 768px) {
   .hero-section-new {
-    padding: 30px 14px 50px !important;
+    padding: 24px 14px 40px !important;
     min-height: auto !important;
   }
 
   .hero-line {
     display: block !important;
-    white-space: nowrap !important;
+    white-space: normal !important;
+  }
+  .hero-new-title {
+    font-size: clamp(1.9rem, 8vw, 2.6rem) !important;
+    line-height: 1.08 !important;
+  }
+  .hero-new-sequence {
+    gap: 8px !important;
+    font-size: 14px !important;
   }
   .hero-new-buttons {
     flex-direction: column !important;
     width: 100% !important;
     gap: 10px !important;
   }
-  .hero-new-buttons a, .hero-new-buttons Link {
+  .hero-new-buttons a,
+  .hero-new-buttons .primary-link,
+  .hero-new-buttons .secondary-link {
     width: 100% !important;
+    min-width: 0 !important;
   }
 }
 
@@ -21741,6 +21829,16 @@ iframe {
    ============================================================ */
 
 @media (max-width: 480px) {
+  .marketing-page .marketing-nav-gendo-shell {
+    min-height: 56px !important;
+    padding: 0 10px !important;
+  }
+
+  .marketing-page .nav-logo-gendo {
+    height: 40px !important;
+    max-width: 150px !important;
+  }
+
   .hero-new-buttons {
     flex-direction: column !important;
     width: 100% !important;
@@ -21749,6 +21847,8 @@ iframe {
   .hero-new-buttons a, .hero-new-buttons .primary-link, .hero-new-buttons .secondary-link {
     width: 100% !important;
     justify-content: center !important;
+    min-width: 0 !important;
+    padding-inline: 18px !important;
   }
 }
 

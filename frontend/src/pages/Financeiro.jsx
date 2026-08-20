@@ -77,6 +77,10 @@ function statusSimples(statusAtual) {
   return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
+function statusClienteValor(row) {
+  return row.statusCliente || row.cliente?.status || 'ATIVO'
+}
+
 function metodoLegivel(metodoAtual, parcelas, parcelaAtual) {
   if (!metodoAtual) return '—'
   if (metodoAtual === 'PIX_AUTO') return 'PIX automático'
@@ -505,6 +509,7 @@ export default function Financeiro() {
                 </div>
               ),
             },
+            { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={statusClienteValor(row)} /> },
             { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
             { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
             { key: 'valor', label: 'VALOR', render: (row) => {

@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
@@ -146,5 +147,39 @@ class ClienteServicePhoneFlowTest {
         BusinessException ex = assertThrows(BusinessException.class, () -> clienteService.salvar(request));
         assertEquals("Ja existe um cliente com este telefone.", ex.getMessage());
         verify(clienteRepository, never()).save(any(ClienteEntity.class));
+    }
+
+    @Test
+    void excluirPreservaNomeOriginalAoMarcarComoExcluido() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(10L).build();
+        ClienteEntity cliente = ClienteEntity.builder()
+                .id(3L)
+                .nome("Vinicius")
+                .telefone("5565993360341")
+                .email("vinicius@test.com")
+                .status(StatusCadastro.ATIVO)
+                .empresa(empresa)
+                .build();
+        when(clienteRepository.findById(3L)).thenReturn(Optional.of(cliente));
+        when(conversaRepository.findByClienteId(3L)).thenReturn(java.util.List.of());
+
+        clienteService.excluir(3L, 10L);
+
+        assertEquals("Vinicius", cliente.getNome());
+        assertEquals(StatusCadastro.EXCLUIDO, cliente.getStatus());
+    }
+
+    @Test
+    void listarPorEmpresaNaoDeveIncluirExcluidosViaRepositorioFiltrado() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(10L).build();
+        ClienteEntity ativo = ClienteEntity.builder().id(1L).nome("Ativo").status(StatusCadastro.ATIVO).empresa(empresa).build();
+        when(clienteRepository.findByEmpresaIdAndStatusNot(10L, StatusCadastro.EXCLUIDO)).thenReturn(java.util.List.of(ativo));
+
+        var clientes = clienteService.listarPorEmpresa(10L);
+
+        assertEquals(1, clientes.size());
+        assertEquals("Ativo", clientes.get(0).nome());
+        verify(clienteRepository).findByEmpresaIdAndStatusNot(10L, StatusCadastro.EXCLUIDO);
+        verifyNoMoreInteractions(clienteRepository);
     }
 }

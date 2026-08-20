@@ -1,13 +1,18 @@
 ﻿import { useContext, useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy, Phone } from 'lucide-react'
 
 export default function Dashboard() {
   const navigate = useNavigate()
+  const { slug } = useParams()
   const { cliente, dashboard, agendamentos, carregarHistorico, carregando, erro } = useContext(ClienteGendazContext)
   const [ultimosAtendimentos, setUltimosAtendimentos] = useState([])
   const [carregandoAtendimentos, setCarregandoAtendimentos] = useState(false)
+  const irParaAgenda = () => {
+    if (!slug) return
+    navigate(`/meu-gendaz/${slug}/agenda`)
+  }
 
   useEffect(() => {
     const buscar = async () => {
@@ -99,10 +104,10 @@ export default function Dashboard() {
           </div>
 
           <div className="gendaz-card__actions">
-            <button className="gendaz-btn gendaz-btn--secondary" onClick={() => navigate('agenda')}>
+            <button className="gendaz-btn gendaz-btn--secondary" onClick={irParaAgenda}>
               Reagendar
             </button>
-            <button className="gendaz-btn gendaz-btn--danger" onClick={() => navigate('agenda')}>
+            <button className="gendaz-btn gendaz-btn--danger" onClick={irParaAgenda}>
               Cancelar
             </button>
           </div>
@@ -113,7 +118,7 @@ export default function Dashboard() {
             <Calendar size={48} />
             <h3>Sem agendamentos proximos</h3>
             <p>Voce nao possui agendamentos no momento.</p>
-            <button className="gendaz-btn gendaz-btn--primary" onClick={() => navigate('agenda')}>
+            <button className="gendaz-btn gendaz-btn--primary" onClick={irParaAgenda}>
               <Plus size={16} /> Agendar Agora
             </button>
           </div>
@@ -201,7 +206,7 @@ export default function Dashboard() {
                 <LifeBuoy size={18} />
                 <span>Suporte</span>
               </button>
-              <button className="gendaz-btn-contato" onClick={() => navigate('agenda')}>
+              <button className="gendaz-btn-contato" onClick={irParaAgenda}>
                 <Phone size={18} />
                 <span>Agendar</span>
               </button>
@@ -279,7 +284,7 @@ export default function Dashboard() {
               <h3>Agende Agora</h3>
               <p>Clique abaixo para fazer seu primeiro agendamento</p>
             </div>
-            <button className="gendaz-btn gendaz-btn--primary gendaz-btn--lg" onClick={() => navigate('agenda')}>
+            <button className="gendaz-btn gendaz-btn--primary gendaz-btn--lg" onClick={irParaAgenda}>
               <Plus size={18} /> Novo Agendamento
             </button>
           </div>
