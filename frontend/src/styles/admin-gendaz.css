@@ -1255,6 +1255,16 @@ html .admin-gendaz .admin-assinatura {
   color: #0b0b0b !important;
 }
 
+html .admin-gendaz .admin-assinatura *,
+html .admin-gendaz .admin-assinaturas-block *,
+html .admin-gendaz .admin-assinatura .field span,
+html .admin-gendaz .admin-assinaturas-block .field span,
+html .admin-gendaz .admin-assinatura .field-hint,
+html .admin-gendaz .admin-assinaturas-block .field-hint {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+}
+
 html .admin-gendaz .admin-assinatura__head {
   display: flex;
   justify-content: space-between;
@@ -1313,6 +1323,58 @@ html .admin-gendaz .admin-assinatura .btn-ghost {
 
 html .admin-gendaz .admin-assinatura .btn-ghost span,
 html .admin-gendaz .admin-assinatura .btn-ghost svg {
+  color: #111111 !important;
+  stroke: #111111 !important;
+}
+
+html .admin-gendaz .admin-assinatura__add {
+  display: grid;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--gd-border);
+  border-radius: 12px;
+  background: #ffffff !important;
+  color: #0b0b0b !important;
+}
+
+html .admin-gendaz .admin-assinatura__add-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 140px;
+  gap: 10px;
+  align-items: start;
+}
+
+html .admin-gendaz .admin-assinatura__add-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+html .admin-gendaz .admin-assinatura__add .field {
+  gap: 6px;
+}
+
+html .admin-gendaz .admin-assinatura__add .btn-secondary {
+  background: #111111 !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+html .admin-gendaz .admin-assinatura__add .btn-secondary span,
+html .admin-gendaz .admin-assinatura__add .btn-secondary svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+html .admin-gendaz .admin-assinatura__add .btn-ghost {
+  background: #ffffff !important;
+  color: #111111 !important;
+  border-color: rgba(11, 11, 11, 0.18) !important;
+}
+
+html .admin-gendaz .admin-assinatura__add .btn-ghost span,
+html .admin-gendaz .admin-assinatura__add .btn-ghost svg {
   color: #111111 !important;
   stroke: #111111 !important;
 }

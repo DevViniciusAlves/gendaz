@@ -1228,35 +1228,45 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 {adicionandoPlano ? (
-                  <div className="admin-assinatura__edit admin-assinatura__add">
-                    <select
-                      value={novaAssinatura.planoId}
-                      onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, planoId: event.target.value }))}
-                    >
-                      <option value="">Selecionar plano</option>
-                      {planos.map((plano) => (
-                        <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min={0}
-                      max={3650}
-                      value={novaAssinatura.dias}
-                      onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, dias: event.target.value }))}
-                      placeholder="Dias"
-                    />
-                    <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={criarNovaAssinatura}>
-                      {salvandoAssinatura ? 'Adicionando...' : 'Adicionar'}
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-ghost"
-                      disabled={salvandoAssinatura}
-                      onClick={() => { setAdicionandoPlano(false); setNovaAssinatura({ planoId: '', dias: 30 }) }}
-                    >
-                      Cancelar
-                    </button>
+                  <div className="admin-assinatura__add">
+                    <div className="admin-assinatura__add-grid">
+                      <label className="field">
+                        <span>Plano</span>
+                        <select
+                          value={novaAssinatura.planoId}
+                          onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, planoId: event.target.value }))}
+                        >
+                          <option value="">Selecionar plano</option>
+                          {planos.map((plano) => (
+                            <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="field">
+                        <span>Dias</span>
+                        <input
+                          type="number"
+                          min={0}
+                          max={3650}
+                          value={novaAssinatura.dias}
+                          onChange={(event) => setNovaAssinatura((atual) => ({ ...atual, dias: event.target.value }))}
+                          placeholder="Dias"
+                        />
+                      </label>
+                    </div>
+                    <div className="admin-assinatura__add-actions">
+                      <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={criarNovaAssinatura}>
+                        {salvandoAssinatura ? 'Adicionando...' : 'Adicionar'}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={salvandoAssinatura}
+                        onClick={() => { setAdicionandoPlano(false); setNovaAssinatura({ planoId: '', dias: 30 }) }}
+                      >
+                        Cancelar
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   assinaturasAtivas.length < 2 ? (

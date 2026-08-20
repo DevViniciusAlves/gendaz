@@ -22302,6 +22302,11 @@ iframe {
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
 }
 
+.system-modal .gd-phone-country {
+  border-right: 1px solid rgba(11, 11, 11, 0.14);
+  margin-right: 2px;
+}
+
 .system-modal .gd-phone-country__toggle,
 .system-modal .gd-phone-country__ddi,
 .system-modal .international-phone .PhoneInput .PhoneInputInput {
@@ -22310,6 +22315,25 @@ iframe {
   caret-color: #0b0b0b !important;
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
   font-weight: 500 !important;
+}
+
+.system-modal .gd-phone-country__toggle {
+  min-width: 88px;
+  padding-inline: 12px 10px;
+}
+
+.system-modal .gd-phone-country__flag {
+  width: 24px;
+  height: 18px;
+  background: #f4f4f4;
+  border: 1px solid rgba(11, 11, 11, 0.16);
+}
+
+.system-modal .gd-phone-country__flag .PhoneInputCountryIcon,
+.system-modal .gd-phone-country__flag .PhoneInputCountryIcon svg,
+.system-modal .gd-phone-country__flag .PhoneInputCountryIcon img {
+  opacity: 1 !important;
+  visibility: visible !important;
 }
 
 .system-modal .gd-phone-country__arrow {
