@@ -501,17 +501,19 @@ export default function Financeiro() {
               key: 'clienteNome',
               label: 'CLIENTE',
               render: (row) => (
-                <div className="name-cell">
-                  <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
-                  <div className="name-cell-info">
-                    <strong>{row.clienteNome}</strong>
+                <div className="financeiro-center-cell">
+                  <div className="name-cell financeiro-center-name">
+                    <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
+                    <div className="name-cell-info">
+                      <strong>{row.clienteNome}</strong>
+                    </div>
                   </div>
                 </div>
               ),
             },
-            { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={statusClienteValor(row)} /> },
-            { key: 'servicoNome', label: 'SERVIÇO', render: (row) => row.servicoNome || row.servico?.nome || '-' },
-            { key: 'protocolo', label: 'PROTOCOLO', render: (row) => row.protocolo || row.agendamento?.protocolo || '-' },
+            { key: 'statusCliente', label: 'CADASTRO', render: (row) => <span className="financeiro-center-cell"><StatusBadge status={statusClienteValor(row)} /></span> },
+            { key: 'servicoNome', label: 'SERVIÇO', render: (row) => <span className="financeiro-center-cell">{row.servicoNome || row.servico?.nome || '-'}</span> },
+            { key: 'protocolo', label: 'PROTOCOLO', render: (row) => <span className="financeiro-center-cell">{row.protocolo || row.agendamento?.protocolo || '-'}</span> },
             { key: 'valor', label: 'VALOR', render: (row) => {
               const ag = agendamentoMap.get(row.agendamentoId || row.pagamentoId || row.id) || row.agendamento || {}
               const cupomCodigo = ag.cupomCodigo || row.cupomCodigo
@@ -520,34 +522,36 @@ export default function Financeiro() {
               const temCupom = cupomCodigo && desconto != null && Number(desconto) > 0
               if (temCupom) {
                 return (
-                  <div className="financeiro-valor-desconto">
+                  <div className="financeiro-center-cell financeiro-valor-desconto">
                     <span className="financeiro-valor-original">{currency(valorOriginal ?? row.valor)}</span>
                     <span className="financeiro-valor-final">{currency(row.valor)}</span>
                   </div>
                 )
               }
-              return currency(row.valor)
+              return <span className="financeiro-center-cell">{currency(row.valor)}</span>
             }},
             { key: 'cupomCodigo', label: 'CUPOM', render: (row) => {
               const ag = agendamentoMap.get(row.agendamentoId || row.pagamentoId || row.id) || row.agendamento || {}
               const cupom = ag.cupomCodigo || row.cupomCodigo
               return cupom
-                ? <span className="financeiro-cupom-tag">{cupom}</span>
-                : <span className="financeiro-cupom-vazio">SEM CUPOM</span>
+                ? <span className="financeiro-center-cell"><span className="financeiro-cupom-tag">{cupom}</span></span>
+                : <span className="financeiro-center-cell"><span className="financeiro-cupom-vazio">SEM CUPOM</span></span>
             }},
-            { key: 'metodoPagamento', label: 'FORMA', render: (row) => metodoLegivel(row.metodoPagamento, row.parcelas, row.parcelaAtual) },
-            { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={statusSimples(row.status)} /> },
+            { key: 'metodoPagamento', label: 'FORMA', render: (row) => <span className="financeiro-center-cell">{metodoLegivel(row.metodoPagamento, row.parcelas, row.parcelaAtual)}</span> },
+            { key: 'status', label: 'STATUS', render: (row) => <span className="financeiro-center-cell"><StatusBadge status={statusSimples(row.status)} /></span> },
             {
               key: 'acao',
               label: 'AÇÕES',
               render: (row) => (
-                <ActionMenu
-                  actions={[
-                    { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') },
-                    { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') },
-                    { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluirPagamento(row.pagamentoId || row.id) },
-                  ]}
-                />
+                <span className="financeiro-center-cell financeiro-center-actions">
+                  <ActionMenu
+                    actions={[
+                      { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') },
+                      { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') },
+                      { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluirPagamento(row.pagamentoId || row.id) },
+                    ]}
+                  />
+                </span>
               ),
             },
           ]}

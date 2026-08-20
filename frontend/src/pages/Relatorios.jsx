@@ -112,7 +112,7 @@ function montarLinhaConsultas(item) {
         ? `relatorio-consultas-gendaz-${periodoParaArquivo(dataInicial, dataFinal)}.csv`
         : `relatorio-consultas-gendaz-${dataHojeDdMmAAAA()}.csv`,
       columns: [
-        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Situação do cliente', 'Valor',
+        'ID', 'Protocolo', 'Cliente', 'Serviço', 'Profissional', 'Cadastro', 'Valor',
         'Data', 'Hora início', 'Hora fim', 'Status', 'Observações',
       ],
       rows: registros.map(montarLinhaConsultas),
@@ -184,18 +184,20 @@ function montarLinhaConsultas(item) {
         </div>
         <Table columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
-            <div className="name-cell">
-              <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
-              <div className="name-cell-info">
-                <strong>{row.clienteNome}</strong>
+            <div className="report-center-cell">
+              <div className="name-cell report-center-name">
+                <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
+                <div className="name-cell-info">
+                  <strong>{row.clienteNome}</strong>
+                </div>
               </div>
             </div>
           ) },
-          { key: 'servicoNome', label: 'SERVIÇO' },
-          { key: 'data', label: 'DATA' },
-          { key: 'horaInicio', label: 'HORA' },
-          { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={row.statusCliente || row.cliente?.status || 'ATIVO'} /> },
-          { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
+          { key: 'servicoNome', label: 'SERVIÇO', render: (row) => <span className="report-center-cell">{row.servicoNome}</span> },
+          { key: 'data', label: 'DATA', render: (row) => <span className="report-center-cell">{row.data}</span> },
+          { key: 'horaInicio', label: 'HORA', render: (row) => <span className="report-center-cell">{row.horaInicio}</span> },
+          { key: 'statusCliente', label: 'CADASTRO', render: (row) => <span className="report-center-cell"><StatusBadge status={row.statusCliente || row.cliente?.status || 'ATIVO'} /></span> },
+          { key: 'status', label: 'STATUS', render: (row) => <span className="report-center-cell"><StatusBadge status={row.status} /></span> },
         ]} rows={consultasPaginadas} empty="Nenhum atendimento encontrado para o filtro atual." />
         <Pagination page={paginaConsultasAtual} totalPages={totalPaginasConsultas} totalItems={consultas.length} pageSize={itensPorPagina} onPageChange={setPaginaConsultas} />
       </section>

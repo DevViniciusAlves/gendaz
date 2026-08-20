@@ -1,30 +1,563 @@
-
 @media (max-width: 768px) {
-  /* Novo Agendamento Modal */
-  .gendaz-modal {
-    width: 95% !important;
-    max-width: 500px !important;
-    margin: 10px auto;
-    padding: 16px !important;
-  }
-  
-  .gendaz-modal__head {
-    padding: 0 0 16px 0 !important;
+  :root {
+    --mobile-shell-gap: 14px;
+    --mobile-card-radius: 22px;
+    --mobile-border: rgba(255, 255, 255, 0.08);
+    --mobile-surface: linear-gradient(180deg, rgba(21, 21, 23, 0.98) 0%, rgba(15, 15, 17, 0.98) 100%);
   }
 
-  .gendaz-modal__form label {
-    margin-bottom: 12px !important;
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0 !important;
+    overflow-x: hidden;
   }
 
-  .gendaz-modal__actions {
+  body {
+    min-width: 0 !important;
+  }
+
+  .app-shell,
+  .app-shell .app-main,
+  .app-shell .content,
+  .app-shell .page,
+  .app-shell .page-full {
+    min-width: 0 !important;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell .app-main {
+    margin-left: 0 !important;
+  }
+
+  .app-shell .content {
+    padding: 14px 14px calc(120px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .page,
+  .app-shell .page-full {
+    display: grid;
+    gap: var(--mobile-shell-gap);
+  }
+
+  .app-shell .page-title,
+  .app-shell .row-title,
+  .app-shell .panel-head,
+  .app-shell .table-actions,
+  .app-shell .filters,
+  .app-shell .report-filters,
+  .app-shell .financeiro-top-row,
+  .app-shell .financeiro-controls,
+  .app-shell .financeiro-payment-grid,
+  .app-shell .topbar-actions,
+  .app-shell .page-title-actions,
+  .app-shell .schedule-actions,
+  .app-shell .message-form,
+  .app-shell .account-badges,
+  .app-shell .delivery-action {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .page-title {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .app-shell .page-title h1,
+  .app-shell .dashboard-hero h1 {
+    font-size: clamp(1.9rem, 8vw, 2.4rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .app-shell .page-title p,
+  .app-shell .dashboard-hero p {
+    max-width: none !important;
+    font-size: 0.95rem !important;
+  }
+
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card,
+  .app-shell .settings-card,
+  .app-shell .client-panel,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .plan-card,
+  .app-shell .report-filters,
+  .app-shell .search-shell,
+  .app-shell .filters,
+  .app-shell .dashboard-hero,
+  .app-shell .receita-chart-panel,
+  .app-shell .conversation-list,
+  .app-shell .chat-center,
+  .app-shell .support-ticket-item,
+  .app-shell .account-card,
+  .app-shell .booking-link-panel,
+  .app-shell .settings-form-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: var(--mobile-card-radius) !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22) !important;
+    overflow: hidden;
+  }
+
+  .app-shell .panel::before,
+  .app-shell .panel::after,
+  .app-shell .metric-card::before,
+  .app-shell .metric-card::after,
+  .app-shell .dashboard-summary-card::before,
+  .app-shell .dashboard-summary-card::after,
+  .app-shell .client-panel::before,
+  .app-shell .client-panel::after,
+  .app-shell .table-wrap::before,
+  .app-shell .table-wrap::after {
+    opacity: 0 !important;
+    display: none !important;
+  }
+
+  .app-shell .dashboard-grid,
+  .app-shell .metric-grid,
+  .app-shell .settings-grid,
+  .app-shell .settings-summary-grid,
+  .app-shell .support-grid,
+  .app-shell .chat-layout,
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .plans-grid,
+  .app-shell .plans-grid.detailed,
+  .app-shell .financeiro-metrics,
+  .app-shell .financeiro-top-row,
+  .app-shell .financeiro-payment-grid,
+  .app-shell .booking-preview-grid,
+  .app-shell .booking-schedule-grid,
+  .app-shell .schedule-grid,
+  .app-shell .agenda-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card,
+  .app-shell .schedule-card,
+  .app-shell .payment-pro-card,
+  .app-shell .payment-checkout-card {
+    min-height: 0 !important;
+  }
+
+  .app-shell .btn,
+  .app-shell .btn-primary,
+  .app-shell .btn-secondary,
+  .app-shell .icon-btn,
+  .app-shell .schedule-actions .btn-action-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .filters > *,
+  .app-shell .report-filters > *,
+  .app-shell .table-actions > *,
+  .app-shell .page-title-actions > *,
+  .app-shell .financeiro-controls > *,
+  .app-shell .financeiro-payment-grid > *,
+  .app-shell .topbar-actions > *,
+  .app-shell .mass-action-toolbar > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .app-shell .field,
+  .app-shell .field input,
+  .app-shell .field select,
+  .app-shell .field textarea,
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-shell .mass-action-toolbar,
+  .app-shell .mass-action-toolbar-inline {
+    align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .bulk-selection-count {
+    text-align: center;
+  }
+
+  .app-shell .table-wrap {
+    overflow: visible !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .data-table,
+  .app-shell .data-table thead,
+  .app-shell .data-table tbody,
+  .app-shell .data-table tr,
+  .app-shell .data-table td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .app-shell .data-table {
+    min-width: 0 !important;
+    table-layout: auto !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: transparent !important;
+  }
+
+  .app-shell .data-table thead {
+    display: none !important;
+  }
+
+  .app-shell .data-table tbody {
+    display: grid !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .data-table tbody tr {
+    position: relative;
+    padding: 14px !important;
+    border: 1px solid var(--mobile-border) !important;
+    border-radius: var(--mobile-card-radius) !important;
+    background: var(--mobile-surface) !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18) !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .data-table tbody tr::before,
+  .app-shell .data-table tbody tr::after {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  .app-shell .data-table tbody td {
+    display: grid !important;
+    grid-template-columns: minmax(92px, 112px) minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    padding: 8px 0 !important;
+    border: 0 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+  }
+
+  .app-shell .data-table tbody td + td {
+    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+
+  .app-shell .data-table td[data-label]::before {
+    content: attr(data-label);
+    display: block !important;
+    color: rgba(255, 255, 255, 0.55) !important;
+    font-size: 0.69rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.16em !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+  }
+
+  .app-shell .data-table td > * {
+    min-width: 0;
+  }
+
+  .app-shell .data-table td .cell-truncate {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+  }
+
+  .app-shell .data-table td .name-cell,
+  .app-shell .data-table td .financeiro-center-cell,
+  .app-shell .data-table td .report-center-cell,
+  .app-shell .data-table td .stacked-cell {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  .app-shell .data-table td .avatar {
+    flex-shrink: 0;
+  }
+
+  .app-shell .data-table td:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .data-table td:last-child::before {
+    margin-bottom: 2px;
+  }
+
+  .app-shell .data-table td:last-child .action-menu-container,
+  .app-shell .data-table td:last-child .financeiro-center-actions {
+    justify-self: stretch !important;
+    width: 100% !important;
+  }
+
+  .app-shell .data-table td:last-child .action-menu-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    border-radius: 16px !important;
+  }
+
+  .app-shell .financeiro-page .data-table tbody td {
+    grid-template-columns: minmax(84px, 104px) minmax(0, 1fr) !important;
+  }
+
+  .app-shell .financeiro-page .data-table tbody tr {
+    padding: 12px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-top-row,
+  .app-shell .financeiro-page .financeiro-controls,
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    gap: 10px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle {
+    min-height: 54px !important;
+    padding: 12px 14px !important;
+    border-radius: 18px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-valor-desconto {
+    align-items: flex-start !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-cupom-tag,
+  .app-shell .financeiro-page .financeiro-cupom-vazio {
+    justify-content: flex-start !important;
+  }
+
+  .app-shell .clients-page .data-table tbody td:first-child,
+  .app-shell .financeiro-page .data-table tbody td:first-child {
+    padding-top: 0 !important;
+  }
+
+  .app-shell .report-filters .table-actions,
+  .app-shell .clients-page .table-actions,
+  .app-shell .financeiro-page .mass-action-toolbar-inline {
+    margin-top: 0 !important;
+  }
+
+  .app-shell .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 14px !important;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom)) !important;
+    background: rgba(5, 5, 8, 0.72) !important;
+    backdrop-filter: blur(10px);
+    z-index: 1000 !important;
+  }
+
+  .app-shell .modal {
+    width: min(100%, 520px) !important;
+    max-width: min(100%, 520px) !important;
+    max-height: calc(100dvh - 28px - env(safe-area-inset-bottom)) !important;
+    margin: 0 auto !important;
+    overflow: auto !important;
+    border-radius: 24px !important;
+  }
+
+  .app-shell .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: inherit;
+    padding-bottom: 12px !important;
+  }
+
+  .action-menu-mobile-layer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 14px;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    background: rgba(4, 4, 7, 0.64);
+    backdrop-filter: blur(8px);
+    z-index: 1100;
+  }
+
+  .action-menu-mobile-sheet {
+    width: min(100%, 420px);
+  }
+
+  .action-menu-panel-mobile {
+    position: static !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    border-radius: 22px !important;
+    padding: 8px !important;
+    background: linear-gradient(180deg, rgba(20, 20, 22, 0.98) 0%, rgba(13, 13, 15, 0.98) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32) !important;
+  }
+
+  .action-menu-panel-mobile button {
+    min-height: 48px !important;
+    border-radius: 16px !important;
+    justify-content: flex-start !important;
+  }
+
+  .app-shell .notification-panel,
+  .app-shell .account-panel,
+  .app-shell .dropdown-panel:not(.action-menu-panel-mobile) {
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+    transform: translateX(-50%) !important;
+    width: min(calc(100vw - 24px), 360px) !important;
+    max-width: min(calc(100vw - 24px), 360px) !important;
+  }
+
+  .marketing-nav-gendo-shell,
+  .marketing-actions-gendo,
+  .hero-new-buttons,
+  .marketing-support-grid,
+  .marketing-showcase-band-inner,
+  .plans-grid.detailed,
+  .contact-band,
+  .marketing-footer,
+  .marketing-split {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .marketing-nav-gendo {
+    padding: 12px 0 !important;
+  }
+
+  .marketing-nav-gendo-shell {
+    padding: 0 14px !important;
+    align-items: center !important;
+  }
+
+  .marketing-nav-links-gendo {
+    display: none !important;
+  }
+
+  .marketing-actions-gendo {
+    width: 100%;
+  }
+
+  .marketing-actions-gendo > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-section-new,
+  .marketing-page .hero-section-new {
+    padding: 118px 14px 44px !important;
+  }
+
+  .hero-new-inner {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 18px !important;
+  }
+
+  .hero-new-title,
+  .hero-line {
+    font-size: clamp(2.25rem, 11vw, 3.5rem) !important;
+    line-height: 0.97 !important;
+    letter-spacing: -0.06em !important;
+    word-break: break-word;
+  }
+
+  .hero-new-sequence {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
     gap: 8px !important;
   }
 
-  .gendaz-modal__actions button {
-    flex: 1;
+  .hero-sequence-finale {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-new-buttons a,
+  .hero-new-buttons .primary-link,
+  .hero-new-buttons .secondary-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-new-stats {
+    padding: 0 !important;
+  }
+
+  .hero-new-stats p {
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .marketing-showcase-device {
+    width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+
+  .marketing-showcase-copy {
+    text-align: left !important;
   }
 }
 
-@media (max-width: 390px) {
-  /* Ajustes extras */
+@media (max-width: 430px) {
+  .app-shell .content {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .app-shell .data-table tbody tr {
+    padding: 12px !important;
+    border-radius: 20px !important;
+  }
+
+  .app-shell .data-table tbody td {
+    grid-template-columns: 1fr !important;
+    gap: 6px !important;
+  }
+
+  .app-shell .data-table td[data-label]::before {
+    margin-bottom: 2px;
+  }
+
+  .app-shell .page-title h1,
+  .app-shell .dashboard-hero h1 {
+    font-size: clamp(1.7rem, 9vw, 2.1rem) !important;
+  }
+
+  .hero-new-title,
+  .hero-line {
+    font-size: clamp(2rem, 10.5vw, 2.7rem) !important;
+  }
 }

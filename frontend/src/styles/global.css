@@ -1093,6 +1093,69 @@ tbody tr:hover { background: #fffaf5; }
   border-color: color-mix(in srgb, var(--danger) 20%, transparent);
 }
 
+.report-center-cell {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  text-align: center;
+}
+
+.report-center-name {
+  justify-content: center;
+  width: auto;
+}
+
+.app-shell .page .table-wrap .data-table th,
+.app-shell .page .table-wrap .data-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.app-shell .page .table-wrap .data-table td .name-cell {
+  justify-content: center;
+}
+
+.financeiro-center-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
+}
+
+.financeiro-center-name {
+  justify-content: center;
+  width: auto;
+}
+
+.financeiro-valor-desconto {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.financeiro-valor-original,
+.financeiro-valor-final,
+.financeiro-cupom-tag,
+.financeiro-cupom-vazio {
+  display: inline-flex;
+  justify-content: center;
+}
+
+.financeiro-center-actions {
+  justify-content: center;
+}
+
+.app-shell .financeiro-page .table-wrap .data-table th,
+.app-shell .financeiro-page .table-wrap .data-table td {
+  text-align: center;
+  vertical-align: middle;
+}
+
+.app-shell .financeiro-page .table-wrap .data-table td .name-cell {
+  justify-content: center;
+}
+
 .chat-layout {
   display: grid;
   grid-template-columns: 300px minmax(420px, 1fr) 320px;
@@ -20908,17 +20971,17 @@ iframe {
   }
 
   .modal-backdrop {
-    align-items: end;
-    place-items: end center;
-    padding: 12px 12px max(12px, env(safe-area-inset-bottom));
+    align-items: center;
+    place-items: center;
+    padding: 14px 12px max(14px, env(safe-area-inset-bottom));
   }
 
   .modal {
-    width: 100% !important;
+    width: min(520px, calc(100vw - 24px)) !important;
     min-width: 0 !important;
-    max-width: 100% !important;
-    max-height: calc(100dvh - 24px - env(safe-area-inset-bottom));
-    border-radius: 20px 20px 16px 16px !important;
+    max-width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 28px - env(safe-area-inset-bottom));
+    border-radius: 22px !important;
   }
 }
 
@@ -20992,6 +21055,35 @@ iframe {
     width: 100%;
   }
 
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card,
+  .app-shell .panel,
+  .app-shell .plan-card,
+  .app-shell .support-card,
+  .app-shell .booking-card,
+  .app-shell .client-panel,
+  .app-shell .schedule-card,
+  .app-shell .conversation-list,
+  .app-shell .chat-center,
+  .app-shell .payment-pro-card,
+  .app-shell .payment-checkout-card,
+  .gendaz-card,
+  .gendaz-panel,
+  .gendaz-chat,
+  .gendaz-auth__card,
+  .admin-shell .admin-gendaz-card,
+  .admin-shell .admin-gendaz-panel,
+  .admin-shell .admin-filters {
+    padding: 12px !important;
+    gap: 10px !important;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18) !important;
+  }
+
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card {
+    min-height: auto !important;
+  }
+
   .app-shell .table-wrap,
   .admin-shell .table-wrap {
     margin-inline: 0;
@@ -21029,6 +21121,31 @@ iframe {
   .app-shell .mass-action-toolbar-inline .btn {
     width: 100% !important;
   }
+
+  .app-shell .payment-steps {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .payment-step {
+    justify-items: start !important;
+    text-align: left !important;
+    grid-template-columns: auto 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .payment-step:not(:last-child)::after {
+    display: none !important;
+  }
+
+  .app-shell .payment-status-card {
+    grid-template-columns: 1fr !important;
+    justify-items: start !important;
+  }
+
+  .app-shell .payment-status-icon {
+    width: 48px !important;
+    height: 48px !important;
+  }
 }
 
 @media (max-width: 480px) {
@@ -21055,8 +21172,11 @@ iframe {
   .notification-panel,
   .account-panel,
   .action-menu-panel {
-    left: auto !important;
-    right: 0 !important;
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    top: auto !important;
+    bottom: 88px !important;
     max-width: calc(100vw - 20px) !important;
   }
 
