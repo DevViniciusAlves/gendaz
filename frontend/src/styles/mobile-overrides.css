@@ -219,16 +219,16 @@
     box-shadow: none !important;
   }
 
-  .app-shell .data-table,
-  .app-shell .data-table thead,
-  .app-shell .data-table tbody,
-  .app-shell .data-table tr,
-  .app-shell .data-table td {
+  .app-shell :is(.data-table, .mobile-data-table),
+  .app-shell :is(.data-table, .mobile-data-table) thead,
+  .app-shell :is(.data-table, .mobile-data-table) tbody,
+  .app-shell :is(.data-table, .mobile-data-table) tr,
+  .app-shell :is(.data-table, .mobile-data-table) td {
     display: block !important;
     width: 100% !important;
   }
 
-  .app-shell .data-table {
+  .app-shell :is(.data-table, .mobile-data-table) {
     min-width: 0 !important;
     table-layout: auto !important;
     border-collapse: separate !important;
@@ -236,18 +236,21 @@
     background: transparent !important;
   }
 
-  .app-shell .data-table thead {
+  .app-shell :is(.data-table, .mobile-data-table) thead {
     display: none !important;
   }
 
-  .app-shell .data-table tbody {
+  .app-shell :is(.data-table, .mobile-data-table) tbody {
     display: grid !important;
     gap: 12px !important;
   }
 
-  .app-shell .data-table tbody tr {
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr {
     position: relative;
-    padding: 12px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 14px !important;
+    padding: 14px !important;
     border: 1px solid var(--mobile-border) !important;
     border-radius: var(--mobile-card-radius) !important;
     background: var(--mobile-surface) !important;
@@ -255,18 +258,18 @@
     overflow: hidden !important;
   }
 
-  .app-shell .data-table tbody tr::before,
-  .app-shell .data-table tbody tr::after {
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr::after {
     display: none !important;
     opacity: 0 !important;
   }
 
-  .app-shell .data-table tbody td {
+  .app-shell :is(.data-table, .mobile-data-table) tbody td {
     display: grid !important;
-    grid-template-columns: minmax(92px, 112px) minmax(0, 1fr) !important;
-    align-items: start !important;
-    gap: 8px !important;
-    padding: 7px 0 !important;
+    grid-template-columns: minmax(72px, auto) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 0 !important;
     border: 0 !important;
     max-width: none !important;
     white-space: normal !important;
@@ -274,11 +277,48 @@
     text-overflow: initial !important;
   }
 
-  .app-shell .data-table tbody td + td {
-    border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+  .app-shell :is(.data-table, .mobile-data-table) tbody td + td {
+    border-top: 0 !important;
   }
 
-  .app-shell .data-table td[data-label]::before {
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='nome'],
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='clienteNome'],
+  .app-shell :is(.data-table, .mobile-data-table) tbody td:first-child:not([data-column='__selecionar']) {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    min-height: 44px !important;
+    padding: 0 44px 10px 0 !important;
+    margin-bottom: 4px !important;
+    border-bottom: 1px solid var(--mobile-border) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='nome']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='clienteNome']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='acao']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='__selecionar']::before {
+    display: none !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='acao'] {
+    position: absolute !important;
+    top: 12px !important;
+    right: 10px !important;
+    display: flex !important;
+    width: 38px !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='__selecionar'] {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    width: auto !important;
+    padding: 0 46px 8px 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before {
     content: attr(data-label);
     display: block !important;
     color: #8f8f8f !important;
@@ -289,32 +329,32 @@
     font-weight: 700 !important;
   }
 
-  .app-shell .data-table td > * {
+  .app-shell :is(.data-table, .mobile-data-table) td > * {
     min-width: 0;
   }
 
-  .app-shell .data-table td .cell-truncate {
+  .app-shell :is(.data-table, .mobile-data-table) td .cell-truncate {
     white-space: normal !important;
     overflow: visible !important;
     text-overflow: initial !important;
   }
 
-  .app-shell .data-table td .name-cell,
-  .app-shell .data-table td .financeiro-center-cell,
-  .app-shell .data-table td .report-center-cell,
-  .app-shell .data-table td .stacked-cell {
+  .app-shell :is(.data-table, .mobile-data-table) td .name-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .financeiro-center-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .report-center-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .stacked-cell {
     justify-content: flex-start !important;
     align-items: flex-start !important;
     text-align: left !important;
     width: 100% !important;
   }
 
-  .app-shell .data-table td .report-center-cell .name-cell,
-  .app-shell .data-table td .financeiro-center-cell .name-cell {
+  .app-shell :is(.data-table, .mobile-data-table) td .report-center-cell .name-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .financeiro-center-cell .name-cell {
     justify-content: flex-start !important;
   }
 
-  .app-shell .data-table td .avatar {
+  .app-shell :is(.data-table, .mobile-data-table) td .avatar {
     flex-shrink: 0;
     width: 38px !important;
     height: 38px !important;
@@ -323,32 +363,41 @@
     color: #ffffff !important;
   }
 
-  .app-shell .data-table td:last-child {
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child {
     grid-template-columns: 1fr !important;
   }
 
-  .app-shell .data-table td:last-child::before {
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child::before {
     margin-bottom: 2px;
   }
 
-  .app-shell .data-table td:last-child .action-menu-container,
-  .app-shell .data-table td:last-child .financeiro-center-actions {
-    justify-self: stretch !important;
-    width: 100% !important;
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-container,
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .financeiro-center-actions {
+    justify-self: end !important;
+    width: 38px !important;
   }
 
-  .app-shell .data-table td:last-child .action-menu-btn {
-    width: 100% !important;
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-btn {
+    width: 38px !important;
+    min-width: 38px !important;
     min-height: 38px !important;
-    padding: 8px 12px !important;
-    border-radius: 10px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
   }
 
-  .app-shell .financeiro-page .data-table tbody td {
-    grid-template-columns: minmax(84px, 104px) minmax(0, 1fr) !important;
+  .app-shell .promo-actions-desktop {
+    display: none !important;
   }
 
-  .app-shell .financeiro-page .data-table tbody tr {
+  .app-shell .promo-actions-mobile {
+    display: block !important;
+  }
+
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody td {
+    grid-template-columns: minmax(68px, auto) minmax(0, 1fr) !important;
+  }
+
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody tr {
     padding: 10px !important;
   }
 
@@ -387,8 +436,8 @@
     justify-content: flex-start !important;
   }
 
-  .app-shell .clients-page .data-table tbody td:first-child,
-  .app-shell .financeiro-page .data-table tbody td:first-child {
+  .app-shell .clients-page :is(.data-table, .mobile-data-table) tbody td:first-child,
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody td:first-child {
     padding-top: 0 !important;
   }
 
@@ -396,6 +445,62 @@
   .app-shell .clients-page .table-actions,
   .app-shell .financeiro-page .mass-action-toolbar-inline {
     margin-top: 0 !important;
+  }
+
+  .app-shell input[type='checkbox'],
+  .app-shell input[type='radio'] {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px !important;
+  }
+
+  .app-shell .schedule-settings-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .schedule-day-card {
+    padding: 14px !important;
+    border-radius: 10px !important;
+  }
+
+  .app-shell .schedule-day-toggle {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .app-shell .schedule-day-toggle > div {
+    min-width: 0 !important;
+  }
+
+  .app-shell .schedule-day-toggle strong,
+  .app-shell .schedule-day-toggle small {
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .schedule-day-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .financeiro-page .filters-inline {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .financeiro-page .filters-inline input,
+  .app-shell .financeiro-page .filters-inline select {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px !important;
   }
 
   .app-shell .mass-action-toolbar .btn,
@@ -597,8 +702,8 @@
   :root[data-theme='light'] .app-shell .page-title h1,
   :root[data-theme='light'] .app-shell .page-title p,
   :root[data-theme='light'] .app-shell .panel h2,
-  :root[data-theme='light'] .app-shell .data-table td,
-  :root[data-theme='light'] .app-shell .data-table td *,
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td,
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td *,
   :root[data-theme='light'] .app-shell .content input,
   :root[data-theme='light'] .app-shell .content select,
   :root[data-theme='light'] .app-shell .content textarea,
@@ -606,7 +711,7 @@
     color: #ffffff !important;
   }
 
-  :root[data-theme='light'] .app-shell .data-table td[data-label]::before,
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before,
   :root[data-theme='light'] .app-shell .page-title .section-kicker,
   :root[data-theme='light'] .app-shell .page-title p,
   :root[data-theme='light'] .app-shell .bulk-selection-count {
@@ -620,18 +725,22 @@
     padding-right: 12px !important;
   }
 
-  .app-shell .data-table tbody tr {
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr {
     padding: 12px !important;
     border-radius: 12px !important;
   }
 
-  .app-shell .data-table tbody td {
-    grid-template-columns: 1fr !important;
+  .app-shell :is(.data-table, .mobile-data-table) tbody td {
+    grid-template-columns: minmax(68px, auto) minmax(0, 1fr) !important;
     gap: 6px !important;
   }
 
-  .app-shell .data-table td[data-label]::before {
-    margin-bottom: 2px;
+  .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before {
+    margin-bottom: 0;
+  }
+
+  .app-shell .schedule-day-fields {
+    grid-template-columns: 1fr !important;
   }
 
   .app-shell .page-title h1,

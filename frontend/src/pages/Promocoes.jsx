@@ -5,6 +5,7 @@ import { clientesApi } from '../api/clientesApi.js'
 import { servicosApi } from '../api/servicosApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Button from '../components/Button.jsx'
+import ActionMenu from '../components/ActionMenu.jsx'
 import { exibirTelefone } from '../utils/phoneUtils.js'
 
 const emptyForm = {
@@ -310,7 +311,7 @@ export default function Promocoes() {
         <div className="panel">Carregando promoções...</div>
       ) : (
         <div className="panel" style={{ overflowX: 'auto', padding: 0 }}>
-          <table className="table">
+          <table className="table mobile-data-table">
             <thead>
               <tr>
                 <th>Código</th>
@@ -325,18 +326,18 @@ export default function Promocoes() {
             <tbody>
               {filtered.map((cupom) => (
                 <tr key={cupom.id}>
-                  <td><strong>{cupom.codigo}</strong></td>
-                  <td>{cupom.descricao}</td>
-                  <td>{cupom.tipo === 'PERCENTUAL' ? `${cupom.valor}%` : currency(cupom.valor)}</td>
-                  <td>{cupom.dataFim ? new Date(cupom.dataFim).toLocaleDateString('pt-BR') : 'Sem prazo'}</td>
-                  <td>
+                  <td data-label="CÓDIGO" data-column="codigo"><strong>{cupom.codigo}</strong></td>
+                  <td data-label="DESCRIÇÃO" data-column="descricao">{cupom.descricao}</td>
+                  <td data-label="DESCONTO" data-column="desconto">{cupom.tipo === 'PERCENTUAL' ? `${cupom.valor}%` : currency(cupom.valor)}</td>
+                  <td data-label="VIGÊNCIA" data-column="vigencia">{cupom.dataFim ? new Date(cupom.dataFim).toLocaleDateString('pt-BR') : 'Sem prazo'}</td>
+                  <td data-label="STATUS" data-column="status">
                     {cupom.status === 'ATIVO'
                       ? <span className="status status-success"><CheckCircle2 size={14} /> Ativo</span>
                       : <span className="status status-muted"><AlertTriangle size={14} /> Inativo</span>}
                   </td>
-                  <td>{cupom.quantidadeUsada}/{cupom.quantidadeLimite ?? '∞'}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <td data-label="USO" data-column="uso">{cupom.quantidadeUsada}/{cupom.quantidadeLimite ?? '∞'}</td>
+                  <td data-label="AÇÕES" data-column="acao">
+                    <div className="promo-actions-desktop" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button type="button" className="btn-secondary" onClick={() => abrirEdicao(cupom)}><Pencil size={14} /> Editar</button>
                       <button type="button" className="btn-secondary" onClick={() => abrirNotificar(cupom)}><Megaphone size={14} /> Notificar</button>
                       <button type="button" className="btn-secondary" onClick={() => abrirResumo(cupom)}><Eye size={14} /> Ver uso</button>
@@ -351,6 +352,18 @@ export default function Promocoes() {
                         </button>
                       )}
                       <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)} disabled={cupomEmAcao === cupom.id}><Trash2 size={14} /> Excluir</button>
+                    </div>
+                    <div className="promo-actions-mobile" style={{ display: 'none' }}>
+                      <ActionMenu actions={[
+                        { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(cupom) },
+                        { label: 'Notificar', icon: Megaphone, onClick: () => abrirNotificar(cupom) },
+                        { label: 'Ver uso', icon: Eye, onClick: () => abrirResumo(cupom) },
+                        { label: 'Copiar', icon: Copy, onClick: () => navigator.clipboard.writeText(cupom.codigo) },
+                        cupom.status === 'ATIVO'
+                          ? { label: cupomEmAcao === cupom.id ? 'Desativando...' : 'Desativar', onClick: () => desativar(cupom.id), disabled: cupomEmAcao === cupom.id }
+                          : { label: cupomEmAcao === cupom.id ? 'Ativando...' : 'Ativar', onClick: () => ativar(cupom.id), disabled: cupomEmAcao === cupom.id },
+                        { label: 'Excluir', icon: Trash2, danger: true, onClick: () => setModalExcluir(cupom), disabled: cupomEmAcao === cupom.id },
+                      ]} />
                     </div>
                   </td>
                 </tr>
