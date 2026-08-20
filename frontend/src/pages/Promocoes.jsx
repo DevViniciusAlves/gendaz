@@ -1,5 +1,6 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Copy, Eye, Megaphone, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { createPortal } from 'react-dom'
 import { promocoesApi } from '../api/promocoesApi.js'
 import { clientesApi } from '../api/clientesApi.js'
 import { servicosApi } from '../api/servicosApi.js'
@@ -373,9 +374,9 @@ export default function Promocoes() {
         </div>
       )}
 
-      {modalAberto && (
-        <div className="modal-backdrop">
-          <div className="panel modal-card" style={{ maxWidth: 760, width: '100%' }}>
+      {modalAberto && createPortal((
+        <div className="modal-backdrop promotions-modal-backdrop">
+          <div className="panel modal-card promotions-modal-card" style={{ maxWidth: 760, width: '100%' }}>
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>{editing ? 'Editar promoção' : 'Nova promoção'}</h2>
@@ -522,11 +523,11 @@ export default function Promocoes() {
             </form>
           </div>
         </div>
-      )}
+      ), document.body)}
 
-      {notificarAberto && (
-        <div className="modal-backdrop">
-          <div className="panel modal-card" style={{ maxWidth: 680, width: '100%' }}>
+      {notificarAberto && createPortal((
+        <div className="modal-backdrop promotions-modal-backdrop">
+          <div className="panel modal-card promotions-modal-card" style={{ maxWidth: 680, width: '100%' }}>
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>Notificar clientes</h2>
@@ -663,11 +664,11 @@ export default function Promocoes() {
             </form>
           </div>
         </div>
-      )}
+      ), document.body)}
 
-      {usoAberto && resumo && (
-        <div className="modal-backdrop">
-          <div className="panel modal-card" style={{ maxWidth: 800, width: '100%' }}>
+      {usoAberto && resumo && createPortal((
+        <div className="modal-backdrop promotions-modal-backdrop">
+          <div className="panel modal-card promotions-modal-card" style={{ maxWidth: 800, width: '100%' }}>
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>Uso da promoção</h2>
@@ -688,11 +689,11 @@ export default function Promocoes() {
             <Button variant="secondary" onClick={() => setUsoAberto(false)}>Fechar</Button>
           </div>
         </div>
-      )}
+      ), document.body)}
 
-      {modalExcluir && (
-        <div className="modal-backdrop">
-          <div className="panel modal-card" style={{ maxWidth: 520, width: '100%' }}>
+      {modalExcluir && createPortal((
+        <div className="modal-backdrop promotions-modal-backdrop">
+          <div className="panel modal-card promotions-modal-card" style={{ maxWidth: 520, width: '100%' }}>
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>Excluir promoção</h2>
@@ -711,7 +712,7 @@ export default function Promocoes() {
             </div>
           </div>
         </div>
-      )}
+      ), document.body)}
     </section>
   )
 }

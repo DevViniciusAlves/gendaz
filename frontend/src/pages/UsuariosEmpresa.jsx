@@ -137,7 +137,7 @@ export default function UsuariosEmpresa() {
   }
 
   return (
-    <section className="page">
+    <section className="page settings-users-page">
       <div className="page-title">
         <span className="section-kicker">Configurações</span>
         <h1>Usuários</h1>

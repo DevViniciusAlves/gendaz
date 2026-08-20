@@ -22059,13 +22059,20 @@ iframe {
   opacity: 1 !important;
 }
 
-.system-modal .btn:not(.btn-danger) {
+.system-modal .btn-primary {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+}
+
+.system-modal .btn-secondary {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
-.system-modal .btn:not(.btn-danger) span,
-.system-modal .btn:not(.btn-danger) svg {
+.system-modal .btn-primary span,
+.system-modal .btn-primary svg,
+.system-modal .btn-secondary span,
+.system-modal .btn-secondary svg {
   color: inherit !important;
   -webkit-text-fill-color: inherit !important;
   stroke: currentColor !important;
@@ -22087,29 +22094,47 @@ iframe {
 }
 
 /* Modais escuros do /sistema: card preto, texto branco e Faktum Medium. */
-.app-shell .modal-card {
+.app-shell .modal-card,
+.promotions-modal-card {
   color: #ffffff !important;
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
   font-weight: 500 !important;
 }
 
 .app-shell .modal-card *,
+.promotions-modal-card *,
 .app-shell .modal-card h1,
+.promotions-modal-card h1,
 .app-shell .modal-card h2,
+.promotions-modal-card h2,
 .app-shell .modal-card h3,
+.promotions-modal-card h3,
 .app-shell .modal-card label,
+.promotions-modal-card label,
 .app-shell .modal-card p,
+.promotions-modal-card p,
 .app-shell .modal-card small,
+.promotions-modal-card small,
 .app-shell .modal-card span,
+.promotions-modal-card span,
 .app-shell .modal-card strong,
+.promotions-modal-card strong,
 .app-shell .modal-card .field-hint,
+.promotions-modal-card .field-hint,
 .app-shell .modal-card .panel-description,
+.promotions-modal-card .panel-description,
 .app-shell .modal-card .confirm-box p,
+.promotions-modal-card .confirm-box p,
 .app-shell .modal-card .form-error,
+.promotions-modal-card .form-error,
 .app-shell .modal-card .export-option strong,
+.promotions-modal-card .export-option strong,
 .app-shell .modal-card .export-option small,
+.promotions-modal-card .export-option small,
 .app-shell .modal-card input,
+.promotions-modal-card input,
 .app-shell .modal-card select,
+.promotions-modal-card select,
 .app-shell .modal-card textarea {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
@@ -22118,19 +22143,24 @@ iframe {
 }
 
 .app-shell .modal-card input::placeholder,
+.promotions-modal-card input::placeholder,
 .app-shell .modal-card textarea::placeholder {
   color: rgba(255, 255, 255, 0.7) !important;
   -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
 }
 
 .app-shell .modal-card button:not(.icon-btn),
-.app-shell .modal-card button:not(.icon-btn) span {
+.promotions-modal-card button:not(.icon-btn),
+.app-shell .modal-card button:not(.icon-btn) span,
+.promotions-modal-card button:not(.icon-btn) span {
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
 .app-shell .modal-card .modal-header .icon-btn,
-.app-shell .modal-card .modal-header .icon-btn svg {
+.promotions-modal-card .modal-header .icon-btn,
+.app-shell .modal-card .modal-header .icon-btn svg,
+.promotions-modal-card .modal-header .icon-btn svg {
   color: #0b0b0b !important;
   stroke: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;

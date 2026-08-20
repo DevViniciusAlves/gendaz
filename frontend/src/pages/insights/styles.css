@@ -1045,9 +1045,12 @@
   }
 
   .insights-sidebar {
+    width: 100%;
+    min-width: 0;
     height: auto;
     max-height: none;
     position: static;
+    overflow: visible;
   }
 
   .insights-summary-panel,
@@ -1089,13 +1092,55 @@
   }
 
   .insights-ai-chat__body {
+    width: 100%;
+    min-width: 0;
     max-height: none;
+    overflow: visible;
   }
 
   .insights-ai-chat {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     height: auto;
     min-height: 420px;
     max-height: none;
+  }
+
+  .insights-ai-chat__header,
+  .insights-ai-chat__messages,
+  .insights-ai-chat__message,
+  .insights-ai-chat__suggestions,
+  .insights-ai-chat__form {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .insights-ai-chat__empty {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .insights-ai-chat__empty p {
+    grid-column: 1 / -1;
+    max-width: none;
+  }
+
+  .insights-ai-chat__bubble {
+    max-width: min(88%, 100%);
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .insights-ai-chat__suggestion {
+    min-width: 0;
+    overflow-wrap: break-word;
+    word-break: normal;
   }
 }
 
