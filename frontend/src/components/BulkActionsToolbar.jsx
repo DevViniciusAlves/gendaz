@@ -21,7 +21,11 @@ export default function BulkActionsToolbar({
       }
     }
     document.addEventListener('mousedown', fecharAoClicarFora)
-    return () => document.removeEventListener('mousedown', fecharAoClicarFora)
+    document.addEventListener('pointerdown', fecharAoClicarFora)
+    return () => {
+      document.removeEventListener('mousedown', fecharAoClicarFora)
+      document.removeEventListener('pointerdown', fecharAoClicarFora)
+    }
   }, [])
 
   useEffect(() => {
@@ -44,7 +48,14 @@ export default function BulkActionsToolbar({
         <Button
           variant="secondary"
           icon={MoreHorizontal}
-          onClick={() => setOpen((value) => !value)}
+          onPointerDown={(e) => {
+            e.stopPropagation()
+            setOpen((value) => !value)
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            setOpen((value) => !value)
+          }}
           className="mass-action-icon-button"
           disabled={disabled || selectedCount === 0}
           aria-label="Abrir ações em massa"
@@ -52,26 +63,33 @@ export default function BulkActionsToolbar({
           ...
         </Button>
         {open && (
-          <div className="dropdown-panel" style={{ position: 'absolute', right: 0, top: '100%', zIndex: 20, minWidth: 220 }}>
-            {selectedCount === 0 ? (
-              <button type="button" disabled style={{ width: '100%', textAlign: 'left', padding: '10px 12px' }}>
-                Selecione pelo menos um item.
-              </button>
-            ) : actions.map((action) => (
-              <button
-                key={action.label}
-                type="button"
-                className={action.danger ? 'action-danger' : ''}
-                onClick={() => {
-                  setOpen(false)
-                  action.onClick?.()
-                }}
-                style={{ width: '100%', textAlign: 'left', padding: '10px 12px' }}
-              >
-                {action.label}
-              </button>
-            ))}
-          </div>
+          <>
+            <div className="action-menu-mobile-layer" role="presentation" onPointerDown={() => setOpen(false)} onClick={() => setOpen(false)}>
+              <div className="action-menu-mobile-sheet mass-action-mobile-sheet" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                <div className="dropdown-panel action-menu-panel action-menu-panel-mobile mass-action-panel-mobile">
+                  {selectedCount === 0 ? (
+                    <button type="button" disabled style={{ width: '100%', textAlign: 'center', padding: '10px 12px' }}>
+                      Selecione pelo menos um item.
+                    </button>
+                  ) : actions.map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      className={action.danger ? 'action-danger' : ''}
+                      onPointerDown={(e) => e.stopPropagation()}
+                      onClick={() => {
+                        setOpen(false)
+                        action.onClick?.()
+                      }}
+                      style={{ width: '100%', textAlign: 'center', padding: '10px 12px' }}
+                    >
+                      {action.label}
+                    </button>
+                    ))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
       {selectionMode && (

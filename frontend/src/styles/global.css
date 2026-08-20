@@ -22008,8 +22008,7 @@ iframe {
 }
 
 /* Modais de /sistema usam portal no body, portanto nao dependem de .app-shell. */
-.system-modal,
-.app-shell .modal-card {
+.system-modal {
   background: #ffffff !important;
   color: #0b0b0b !important;
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
@@ -22017,8 +22016,7 @@ iframe {
   border-color: rgba(11, 11, 11, 0.16) !important;
 }
 
-.system-modal *,
-.app-shell .modal-card * {
+.system-modal * {
   font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
   font-weight: 500 !important;
 }
@@ -22032,25 +22030,14 @@ iframe {
 .system-modal span,
 .system-modal strong,
 .system-modal .field-hint,
-.system-modal .confirm-box p,
-.app-shell .modal-card h1,
-.app-shell .modal-card h2,
-.app-shell .modal-card h3,
-.app-shell .modal-card label,
-.app-shell .modal-card p,
-.app-shell .modal-card small,
-.app-shell .modal-card span,
-.app-shell .modal-card strong {
+.system-modal .confirm-box p {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
 }
 
 .system-modal input,
 .system-modal select,
-.system-modal textarea,
-.app-shell .modal-card input,
-.app-shell .modal-card select,
-.app-shell .modal-card textarea {
+.system-modal textarea {
   background: #ffffff !important;
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
@@ -22072,10 +22059,106 @@ iframe {
   opacity: 1 !important;
 }
 
-.system-modal .btn:not(.btn-danger),
-.app-shell .modal-card .btn:not(.btn-danger) {
+.system-modal .btn:not(.btn-danger) {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
+}
+
+/* Modais escuros do /sistema: card preto, texto branco e Faktum Medium. */
+.app-shell .modal-card {
+  color: #ffffff !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .modal-card *,
+.app-shell .modal-card h1,
+.app-shell .modal-card h2,
+.app-shell .modal-card h3,
+.app-shell .modal-card label,
+.app-shell .modal-card p,
+.app-shell .modal-card small,
+.app-shell .modal-card span,
+.app-shell .modal-card strong,
+.app-shell .modal-card .field-hint,
+.app-shell .modal-card .panel-description,
+.app-shell .modal-card .confirm-box p,
+.app-shell .modal-card .form-error,
+.app-shell .modal-card .export-option strong,
+.app-shell .modal-card .export-option small,
+.app-shell .modal-card input,
+.app-shell .modal-card select,
+.app-shell .modal-card textarea {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.app-shell .modal-card input::placeholder,
+.app-shell .modal-card textarea::placeholder {
+  color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.app-shell .modal-card .modal-header .icon-btn,
+.app-shell .modal-card .modal-header .icon-btn svg {
+  color: #0b0b0b !important;
+  stroke: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+}
+
+.app-shell .modal-card .btn-primary,
+.app-shell .modal-card .btn-primary span {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+}
+
+/* O telefone internacional possui uma casca propria e nao herda o input comum. */
+.system-modal .international-phone .PhoneInput {
+  background: #ffffff !important;
+  color: #0b0b0b !important;
+  border-color: rgba(11, 11, 11, 0.28) !important;
+  box-shadow: none !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+}
+
+.system-modal .gd-phone-country__toggle,
+.system-modal .gd-phone-country__ddi,
+.system-modal .international-phone .PhoneInput .PhoneInputInput {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+  caret-color: #0b0b0b !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+  font-weight: 500 !important;
+}
+
+.system-modal .gd-phone-country__arrow {
+  border-right-color: rgba(11, 11, 11, 0.62) !important;
+  border-bottom-color: rgba(11, 11, 11, 0.62) !important;
+}
+
+.system-modal .international-phone .PhoneInput .PhoneInputInput::placeholder {
+  color: rgba(11, 11, 11, 0.46) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.46) !important;
+}
+
+.system-modal .gd-phone-dropdown {
+  background: #ffffff !important;
+  border-color: rgba(11, 11, 11, 0.18) !important;
+}
+
+.system-modal .gd-phone-dropdown__option,
+.system-modal .gd-phone-dropdown__name,
+.system-modal .gd-phone-dropdown__ddi {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+  font-family: 'Faktum', 'Faktum Medium', sans-serif !important;
+}
+
+.system-modal .gd-phone-dropdown__option:hover,
+.system-modal .gd-phone-dropdown__option--selected {
+  background: rgba(11, 11, 11, 0.08) !important;
 }
 
 

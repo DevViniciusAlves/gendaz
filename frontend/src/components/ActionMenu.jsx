@@ -14,7 +14,11 @@ export default function ActionMenu({ actions }) {
       }
     }
     document.addEventListener('mousedown', fecharAoClicarFora)
-    return () => document.removeEventListener('mousedown', fecharAoClicarFora)
+    document.addEventListener('pointerdown', fecharAoClicarFora)
+    return () => {
+      document.removeEventListener('mousedown', fecharAoClicarFora)
+      document.removeEventListener('pointerdown', fecharAoClicarFora)
+    }
   }, [])
 
   useEffect(() => {
@@ -32,15 +36,22 @@ export default function ActionMenu({ actions }) {
     if (action.onClick) action.onClick()
   }
 
+  function toggleOpen(e) {
+    e.stopPropagation()
+    setOpen((current) => !current)
+  }
+
   const panel = (
     <div
       className={`dropdown-panel action-menu-panel${mobile ? ' action-menu-panel-mobile' : ''}`}
       style={mobile ? undefined : { position: 'absolute', right: 0, top: '100%', zIndex: 10, minWidth: '150px' }}
+      onPointerDown={(e) => e.stopPropagation()}
     >
       {actions.map((action, index) => (
         <button
           key={index}
           type="button"
+          onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => handleClick(action, e)}
           className={action.danger ? 'action-danger' : ''}
           disabled={action.disabled}
@@ -58,10 +69,8 @@ export default function ActionMenu({ actions }) {
       <button
         type="button"
         className="icon-btn action-menu-btn"
-        onClick={(e) => {
-          e.stopPropagation()
-          setOpen(!open)
-        }}
+        onPointerDown={toggleOpen}
+        onClick={toggleOpen}
         aria-label="Abrir menu de ações"
       >
         <MoreHorizontal size={16} />
@@ -69,8 +78,17 @@ export default function ActionMenu({ actions }) {
 
       {open && !mobile && panel}
       {open && mobile && createPortal(
-        <div className="action-menu-mobile-layer" role="presentation" onClick={() => setOpen(false)}>
-          <div className="action-menu-mobile-sheet" onClick={(event) => event.stopPropagation()}>
+        <div
+          className="action-menu-mobile-layer"
+          role="presentation"
+          onPointerDown={() => setOpen(false)}
+          onClick={() => setOpen(false)}
+        >
+          <div
+            className="action-menu-mobile-sheet"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
             {panel}
           </div>
         </div>,

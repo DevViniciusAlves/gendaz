@@ -459,6 +459,30 @@
   margin: 0 0 24px 0 !important;
 }
 
+@media (max-width: 768px) {
+  .agenda-card-menu-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .agenda-card-dropdown {
+    left: 50% !important;
+    right: auto !important;
+    transform: translateX(-50%) !important;
+    min-width: min(220px, calc(100vw - 48px)) !important;
+    background: rgba(26, 26, 26, 0.98) !important;
+    border-color: rgba(255, 255, 255, 0.16) !important;
+    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.55) !important;
+    z-index: 30 !important;
+  }
+
+  .agenda-card-dropdown button {
+    justify-content: center !important;
+    text-align: center !important;
+  }
+}
+
 .confirmacao-botoes {
   display: flex !important;
   gap: 12px !important;
