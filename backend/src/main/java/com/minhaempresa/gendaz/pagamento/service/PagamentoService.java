@@ -339,6 +339,23 @@ public class PagamentoService {
                 .map(mapper::toPlanoResponse);
     }
 
+    /**
+     * Consulta pre-autenticacao usada exclusivamente depois que o login validou
+     * as credenciais e resolveu a empresa a partir do usuario persistido.
+     */
+    @Transactional(readOnly = true)
+    public Optional<PagamentoPlanoResponse> buscarUltimoPagamentoPlanoPendenteParaLogin(EmpresaEntity empresaValidada) {
+        if (empresaValidada == null || empresaValidada.getId() == null) {
+            throw new BusinessException("Empresa valida obrigatoria para concluir o login.");
+        }
+        return pagamentoPlanoRepository
+                .findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                        empresaValidada.getId(), StatusPagamento.PAYMENT_PENDING)
+                .stream()
+                .findFirst()
+                .map(mapper::toPlanoResponse);
+    }
+
     @Transactional(readOnly = true)
     public PagamentoPlanoResponse consultarPagamentoPlano(Long empresaId, Long pagamentoId) {
         validarEmpresaAtual(empresaId);

@@ -36,6 +36,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
+import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import java.math.BigDecimal;
@@ -229,5 +230,26 @@ class PagamentoServiceCheckoutTest {
     void buscarPagamentoDeveFalharSemCompanyContext() {
         assertThrows(RuntimeException.class, () -> pagamentoService.buscarEntidade(100L));
         verify(pagamentoRepository, never()).findByIdAndEmpresaId(anyLong(), anyLong());
+    }
+
+    @Test
+    void consultaPendenteParaLoginUsaEmpresaValidadaSemExigirCompanyContext() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of());
+
+        var resultado = pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(empresa);
+
+        assertEquals(Optional.empty(), resultado);
+        verify(pagamentoPlanoRepository).findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING);
+    }
+
+    @Test
+    void consultaPendenteParaLoginRejeitaEmpresaSemIdentidadePersistida() {
+        assertThrows(BusinessException.class,
+                () -> pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(EmpresaEntity.builder().build()));
+        verify(pagamentoPlanoRepository, never())
+                .findByEmpresaIdAndStatusOrderByDataCriacaoDesc(anyLong(), any());
     }
 }

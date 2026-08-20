@@ -164,7 +164,7 @@ public class AuthService {
             if (usuario.getEmpresa() != null) {
                 AssinaturaEntity assinaturaAtual = assinaturaService.buscarAtualPorEmpresa(usuario.getEmpresa().getId()).orElse(null);
                 assinatura = assinaturaAtual == null ? null : assinaturaService.toResponse(assinaturaAtual);
-                pagamentoPlano = pagamentoService.buscarUltimoPagamentoPlanoPendente(usuario.getEmpresa().getId()).orElse(null);
+                pagamentoPlano = pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(usuario.getEmpresa()).orElse(null);
                 if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
                     String sessionToken = usuarioSessionService.renovarSessao(usuario);
                     log.info("Login redirecionado para conta encerrada para {}", mascararEmail(email));
