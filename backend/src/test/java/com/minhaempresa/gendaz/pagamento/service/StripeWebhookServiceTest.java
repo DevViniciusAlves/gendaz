@@ -6,11 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.gateway.StripeProperties;
+import com.minhaempresa.gendaz.pagamento.repository.StripeWebhookEventRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import java.nio.charset.StandardCharsets;
@@ -31,13 +33,16 @@ class StripeWebhookServiceTest {
     @Mock
     private PagamentoService pagamentoService;
 
+    @Mock
+    private StripeWebhookEventRepository webhookEventRepository;
+
     private StripeWebhookService stripeWebhookService;
 
     @BeforeEach
     void setup() {
         StripeProperties properties = new StripeProperties();
         properties.setWebhookSecret(WEBHOOK_SECRET);
-        stripeWebhookService = new StripeWebhookService(properties, pagamentoService);
+        stripeWebhookService = new StripeWebhookService(properties, pagamentoService, webhookEventRepository);
     }
 
     private String checkoutCompletedPayload() {
@@ -92,7 +97,12 @@ class StripeWebhookServiceTest {
         long timestamp = System.currentTimeMillis() / 1000L;
         String sig = assinaturaValida(payload, timestamp);
 
-        when(pagamentoService.eventoJaProcessado("evt_checkout_completed_1")).thenReturn(false);
+        when(webhookEventRepository.reservarEvento(
+                "evt_checkout_completed_1",
+                "checkout.session.completed",
+                "cs_test_abc",
+                "checkout.session.completed:cs_test_abc"
+        )).thenReturn(1);
 
         assertDoesNotThrow(() -> stripeWebhookService.processar(payload, sig));
         verify(pagamentoService).registrarCheckoutStripeConcluido(
@@ -137,7 +147,12 @@ class StripeWebhookServiceTest {
         long timestamp = System.currentTimeMillis() / 1000L;
         String sig = assinaturaValida(payload, timestamp);
 
-        when(pagamentoService.eventoJaProcessado("evt_checkout_completed_1")).thenReturn(true);
+        when(webhookEventRepository.reservarEvento(
+                "evt_checkout_completed_1",
+                "checkout.session.completed",
+                "cs_test_abc",
+                "checkout.session.completed:cs_test_abc"
+        )).thenReturn(0);
 
         stripeWebhookService.processar(payload, sig);
         verify(pagamentoService, org.mockito.Mockito.never()).registrarCheckoutStripeConcluido(
@@ -170,12 +185,95 @@ class StripeWebhookServiceTest {
         long timestamp = System.currentTimeMillis() / 1000L;
         String sig = assinaturaValida(payload, timestamp);
 
-when(pagamentoService.eventoJaProcessado("evt_invoice_1")).thenReturn(false);
+        when(webhookEventRepository.reservarEvento(
+                "evt_invoice_1",
+                "invoice.payment_succeeded",
+                "in_123",
+                "invoice.payment_succeeded:in_123"
+        )).thenReturn(1);
         doThrow(new ResourceNotFoundException("Pagamento do plano não encontrado para subscriptionId: sub_x"))
                 .when(pagamentoService).processarInvoiceStripe(
-                        eq("evt_invoice_1"), eq("in_123"), any(), eq(StatusPagamento.PAYMENT_APPROVED));
+                        eq("in_123"), any(), eq(StatusPagamento.PAYMENT_APPROVED));
 
         // Comportamento atual: o evento propaga o erro (HTTP 500) e a Stripe re-entrega depois.
         assertThrows(ResourceNotFoundException.class, () -> stripeWebhookService.processar(payload, sig));
+    }
+
+    @Test
+    void assinaturaInvalidaNaoReservaEvento() throws Exception {
+        String payload = checkoutCompletedPayload();
+        long timestamp = System.currentTimeMillis() / 1000L;
+        String assinaturaDeOutroPayload = assinaturaValida("{}", timestamp);
+
+        assertThrows(BusinessException.class, () -> stripeWebhookService.processar(payload, assinaturaDeOutroPayload));
+
+        verify(webhookEventRepository, never()).reservarEvento(any(), any(), any(), any());
+    }
+
+    @Test
+    void eventosDistintosDoMesmoObjetoLogicoSaoDeduplicadosPelaChaveDeNegocio() throws Exception {
+        String primeiroPayload = checkoutCompletedPayload();
+        String segundoPayload = primeiroPayload.replace("evt_checkout_completed_1", "evt_checkout_completed_2");
+        long timestamp = System.currentTimeMillis() / 1000L;
+
+        when(webhookEventRepository.reservarEvento(
+                "evt_checkout_completed_1",
+                "checkout.session.completed",
+                "cs_test_abc",
+                "checkout.session.completed:cs_test_abc"
+        )).thenReturn(1);
+        when(webhookEventRepository.reservarEvento(
+                "evt_checkout_completed_2",
+                "checkout.session.completed",
+                "cs_test_abc",
+                "checkout.session.completed:cs_test_abc"
+        )).thenReturn(0);
+
+        stripeWebhookService.processar(primeiroPayload, assinaturaValida(primeiroPayload, timestamp));
+        stripeWebhookService.processar(segundoPayload, assinaturaValida(segundoPayload, timestamp));
+
+        verify(pagamentoService).registrarCheckoutStripeConcluido(
+                eq("cs_test_abc"), eq("sub_abc"), eq("cus_abc"), eq(42L), eq("AGE-PRO-ABC"));
+    }
+
+    @Test
+    void subscriptionUpdatedNaoUsaChaveDeNegocioPermanente() throws Exception {
+        String payload = """
+                {
+                  "id": "evt_subscription_updated_1",
+                  "object": "event",
+                  "api_version": "2026-07-29.dahlia",
+                  "type": "customer.subscription.updated",
+                  "created": 1700000000,
+                  "livemode": false,
+                  "pending_webhooks": 1,
+                  "request": null,
+                  "data": {
+                    "object": {
+                      "id": "sub_abc",
+                      "object": "subscription",
+                      "status": "active"
+                    }
+                  }
+                }
+                """;
+        long timestamp = System.currentTimeMillis() / 1000L;
+
+        when(webhookEventRepository.reservarEvento(
+                "evt_subscription_updated_1",
+                "customer.subscription.updated",
+                "sub_abc",
+                null
+        )).thenReturn(1);
+
+        stripeWebhookService.processar(payload, assinaturaValida(payload, timestamp));
+
+        verify(webhookEventRepository).reservarEvento(
+                "evt_subscription_updated_1",
+                "customer.subscription.updated",
+                "sub_abc",
+                null
+        );
+        verify(pagamentoService, never()).aplicarStatusPorSubscriptionStripe(any(), any());
     }
 }

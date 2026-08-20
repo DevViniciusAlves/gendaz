@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.pagamento.service;
 
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.gateway.StripeProperties;
+import com.minhaempresa.gendaz.pagamento.repository.StripeWebhookEventRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
@@ -10,6 +11,7 @@ import com.stripe.model.Subscription;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
 import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -19,12 +21,33 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 @Slf4j
 public class StripeWebhookService {
+    private static final Set<String> TIPOS_COM_DEDUPLICACAO_DE_NEGOCIO = Set.of(
+            "checkout.session.completed",
+            "checkout.session.expired",
+            "invoice.payment_succeeded",
+            "customer.subscription.deleted"
+    );
+
     private final StripeProperties stripeProperties;
     private final PagamentoService pagamentoService;
+    private final StripeWebhookEventRepository webhookEventRepository;
 
     @Transactional
     public void processar(String payload, String sigHeader) {
         Event event = construirEvento(payload, sigHeader);
+        EventIdentity identity = identificar(event);
+        int inseridos = webhookEventRepository.reservarEvento(
+                event.getId(),
+                event.getType(),
+                identity.objectId(),
+                identity.deduplicationKey()
+        );
+        if (inseridos == 0) {
+            log.info("Webhook Stripe duplicado ignorado: eventId={}, type={}, objectId={}",
+                    event.getId(), event.getType(), identity.objectId());
+            return;
+        }
+
         switch (event.getType()) {
             case "checkout.session.completed" -> processarCheckoutSessionCompleted(event);
             case "checkout.session.expired" -> processarCheckoutSessionExpired(event);
@@ -54,12 +77,6 @@ public class StripeWebhookService {
     private void processarCheckoutSessionCompleted(Event event) {
         Session session = desserializar(event, Session.class);
         
-        // Idempotência
-        if (pagamentoService.eventoJaProcessado(event.getId())) {
-             log.info("Evento checkout.session.completed já processado: {}", event.getId());
-             return;
-        }
-
         Map<String, String> metadata = session.getMetadata();
         Long pagamentoPlanoId = parseLong(metadata == null ? null : metadata.get("pagamentoPlanoId"));
         String paymentReference = metadata == null ? null : metadata.get("paymentReference");
@@ -86,33 +103,16 @@ public class StripeWebhookService {
     private void processarCheckoutSessionExpired(Event event) {
         Session session = desserializar(event, Session.class);
         
-        // Idempotência
-        if (pagamentoService.eventoJaProcessado(event.getId())) {
-             log.info("Evento checkout.session.expired já processado: {}", event.getId());
-             return;
-        }
-
         log.info("Processando checkout.session.expired: id={}", session.getId());
-        
-        // Registrar evento para idempotência e expirar
-        pagamentoService.expirarCheckoutPorSessionStripe(session.getId(), event.getId());
+        pagamentoService.expirarCheckoutPorSessionStripe(session.getId());
     }
 
     private void processarInvoice(Event event, StatusPagamento status) {
 
         Invoice invoice = desserializar(event, Invoice.class);
-        String eventId = event.getId();
         String invoiceId = invoice.getId();
         String subscriptionId = (String) new com.google.gson.Gson().fromJson(invoice.toJson(), java.util.Map.class).get("subscription");
-        
-        // Idempotência: verificar se o evento já foi processado
-        if (pagamentoService.eventoJaProcessado(eventId)) {
-            log.info("Evento Stripe já processado: eventId={}, type={}", eventId, event.getType());
-            return;
-        }
-        
-        // Processar invoice e registrar evento
-        pagamentoService.processarInvoiceStripe(eventId, invoiceId, subscriptionId, status);
+        pagamentoService.processarInvoiceStripe(invoiceId, subscriptionId, status);
     }
 
     private void processarSubscription(Event event, StatusPagamento status) {
@@ -143,4 +143,32 @@ public class StripeWebhookService {
             return null;
         }
     }
+
+    @SuppressWarnings("unchecked")
+    private EventIdentity identificar(Event event) {
+        String objectId = null;
+        try {
+            Map<String, Object> eventJson = new com.google.gson.Gson().fromJson(event.toJson(), Map.class);
+            Object dataValue = eventJson.get("data");
+            if (dataValue instanceof Map<?, ?> data) {
+                Object objectValue = data.get("object");
+                if (objectValue instanceof Map<?, ?> object) {
+                    Object idValue = object.get("id");
+                    if (idValue != null) {
+                        objectId = String.valueOf(idValue);
+                    }
+                }
+            }
+        } catch (RuntimeException ex) {
+            log.warn("Nao foi possivel extrair objectId do evento Stripe. eventId={}, type={}, erroTipo={}",
+                    event.getId(), event.getType(), ex.getClass().getSimpleName());
+        }
+
+        String deduplicationKey = objectId != null && TIPOS_COM_DEDUPLICACAO_DE_NEGOCIO.contains(event.getType())
+                ? event.getType() + ":" + objectId
+                : null;
+        return new EventIdentity(objectId, deduplicationKey);
+    }
+
+    private record EventIdentity(String objectId, String deduplicationKey) {}
 }

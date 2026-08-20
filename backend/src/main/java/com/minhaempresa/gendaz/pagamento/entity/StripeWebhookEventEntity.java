@@ -28,6 +28,12 @@ public class StripeWebhookEventEntity {
     @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
 
+    @Column(name = "object_id", length = 255)
+    private String objectId;
+
+    @Column(name = "deduplication_key", length = 380, unique = true)
+    private String deduplicationKey;
+
     @Column(name = "processed_at")
     private LocalDateTime processedAt;
 

@@ -23,7 +23,6 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.VerificarPagamentoPla
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoCobrancaEntity;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
-import com.minhaempresa.gendaz.pagamento.entity.StripeWebhookEventEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGateway;
@@ -35,7 +34,6 @@ import com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoCobrancaRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
-import com.minhaempresa.gendaz.pagamento.repository.StripeWebhookEventRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -457,40 +455,26 @@ public class PagamentoService {
     }
 
     @Transactional
-    public boolean eventoJaProcessado(String eventId) {
-        return pagamentoPlanoRepository.existsByStripeEventId(eventId);
-    }
-
-    @Transactional
-    public void expirarCheckoutPorSessionStripe(String stripeSessionId, String eventId) {
+    public void expirarCheckoutPorSessionStripe(String stripeSessionId) {
         if (stripeSessionId == null || stripeSessionId.isBlank()) {
             return;
         }
         pagamentoPlanoRepository.findByStripeSessionId(stripeSessionId)
                 .ifPresent(pagamento -> {
-                    pagamento.setStripeEventId(eventId);
                     pagamentoPlanoRepository.save(pagamento);
                     expirarCheckoutPorTimeout(pagamento);
                 });
     }
 
     @Transactional
-    public void processarInvoiceStripe(String eventId, String invoiceId, String subscriptionId, StatusPagamento status) {
-        if (eventId == null || invoiceId == null || subscriptionId == null) {
+    public void processarInvoiceStripe(String invoiceId, String subscriptionId, StatusPagamento status) {
+        if (invoiceId == null || subscriptionId == null) {
             throw new BusinessException("Dados do evento Stripe inválidos.");
         }
-        
-        // Idempotência: verificar se o evento já foi processado
-        if (pagamentoPlanoRepository.existsByStripeEventId(eventId)) {
-            log.info("Evento Stripe já processado: eventId={}", eventId);
-            return;
-        }
-        
-        // Registrar evento para idempotência
+
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findBySubscriptionId(subscriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado para subscriptionId: " + subscriptionId));
-        
-        pagamento.setStripeEventId(eventId);
+
         pagamento.setStripeInvoiceId(invoiceId);
         aplicarStatusPagamentoPlano(pagamento, status);
         pagamentoPlanoRepository.save(pagamento);

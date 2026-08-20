@@ -7,3 +7,6 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+JWT_SECRET: test-jwt-secret-para-spring-security-1234567890
+SUPER_ADMIN_PASSWORD: test-super-admin-password

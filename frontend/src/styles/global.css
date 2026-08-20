@@ -13846,6 +13846,7 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .invite-card-v2 .login-label-v2,
+.invite-card-v2 .field > span,
 .invite-card-v2 .section-kicker,
 .invite-card-v2 .login-helper-v2,
 .invite-card-v2 .inline-link {
@@ -13918,7 +13919,7 @@ tbody tr:hover { background: #fffaf5; }
 
 .invite-choice-grid-v2 .btn-secondary {
   background: rgba(255, 255, 255, 0.05);
-  color: #111111;
+  color: #ffffff;
 }
 
 .invite-choice-grid-v2 .btn-secondary:hover {
@@ -13931,8 +13932,12 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .invite-actions-v2 .btn-primary,
-.invite-actions-v2 .btn-secondary {
+.invite-actions-v2 .btn-primary {
   color: #111111;
+}
+
+.invite-actions-v2 .btn-secondary {
+  color: #ffffff;
 }
 
 @media (max-width: 520px) {
