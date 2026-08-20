@@ -64,6 +64,7 @@ public class FinanceiroService {
         return new PagamentoRecenteItem(
                 pagamento.getId(),
                 pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "",
+                pagamento.getCliente() != null ? pagamento.getCliente().getStatus() : null,
                 pagamento.getValor(),
                 pagamento.getMetodoPagamento() != null ? pagamento.getMetodoPagamento().name() : "",
                 pagamento.getStatus() != null ? pagamento.getStatus().name() : "",

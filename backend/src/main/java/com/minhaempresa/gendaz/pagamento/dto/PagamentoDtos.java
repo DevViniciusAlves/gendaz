@@ -113,7 +113,7 @@ String customerName,
             Integer parcelas,
             StatusPagamento status,
             LocalDateTime dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro situacaoCliente
+            com.minhaempresa.gendaz.shared.enums.StatusCadastro statusCliente
     ) {}
 
     public record StripeCheckoutStatusRequest(@NotNull String sessionId) {}

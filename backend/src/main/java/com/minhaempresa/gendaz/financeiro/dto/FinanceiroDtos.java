@@ -21,6 +21,7 @@ public final class FinanceiroDtos {
     public record PagamentoRecenteItem(
             Long id,
             String clienteNome,
+            com.minhaempresa.gendaz.shared.enums.StatusCadastro statusCliente,
             BigDecimal valor,
             String metodo,
             String status,
