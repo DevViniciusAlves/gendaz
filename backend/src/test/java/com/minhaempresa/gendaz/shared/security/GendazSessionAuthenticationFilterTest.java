@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.minhaempresa.gendaz.admin.entity.AdminImpersonationSessionEntity;
 import com.minhaempresa.gendaz.admin.service.AdminImpersonationService;
@@ -135,6 +136,28 @@ class GendazSessionAuthenticationFilterTest {
         verify(usuarioRepository).findBySessaoAtiva("sessao-normal");
         verify(usuarioRepository, never()).findByIdComEmpresa(org.mockito.ArgumentMatchers.anyLong());
         verify(adminImpersonationService, never()).validar(anyString());
+    }
+
+    @Test
+    void endpointsPublicosDeConviteNaoExigemSessao() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+
+        for (String[] rota : new String[][] {
+                {"GET", "/api/usuarios/convites/publico"},
+                {"POST", "/api/usuarios/convites/aceitar"},
+                {"POST", "/api/usuarios/convites/recusar"}
+        }) {
+            MockHttpServletRequest request = new MockHttpServletRequest(rota[0], rota[1]);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            MockFilterChain chain = new MockFilterChain();
+
+            filter.doFilter(request, response, chain);
+
+            assertEquals(200, response.getStatus());
+            assertTrue(chain.getRequest() != null);
+        }
+
+        verifyNoInteractions(usuarioRepository, adminImpersonationService);
     }
 
     @Test

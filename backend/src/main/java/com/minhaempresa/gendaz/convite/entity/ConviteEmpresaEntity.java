@@ -13,10 +13,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(
-        name = "convites_empresa",
-        uniqueConstraints = @UniqueConstraint(name = "uk_convite_empresa_email_ativo", columnNames = {"empresa_id", "email", "status"})
-)
+@Table(name = "convites_empresa")
 public class ConviteEmpresaEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

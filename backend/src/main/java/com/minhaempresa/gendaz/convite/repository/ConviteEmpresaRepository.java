@@ -14,6 +14,7 @@ import org.springframework.data.repository.query.Param;
 public interface ConviteEmpresaRepository extends JpaRepository<ConviteEmpresaEntity, Long> {
     List<ConviteEmpresaEntity> findByEmpresaId(Long empresaId);
     List<ConviteEmpresaEntity> findByEmpresaIdAndStatus(Long empresaId, StatusConviteEmpresa status);
+    List<ConviteEmpresaEntity> findByEmpresaIdAndStatusAndDataExpiracaoBefore(Long empresaId, StatusConviteEmpresa status, LocalDateTime agora);
     Optional<ConviteEmpresaEntity> findByEmpresaIdAndEmailAndStatus(Long empresaId, String email, StatusConviteEmpresa status);
     Optional<ConviteEmpresaEntity> findByTokenHash(String tokenHash);
     List<ConviteEmpresaEntity> findByStatusAndDataExpiracaoBefore(StatusConviteEmpresa status, LocalDateTime agora);

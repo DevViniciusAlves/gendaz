@@ -11,8 +11,10 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -39,5 +41,24 @@ class SecurityChainIntegrationTest {
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_METHODS, containsString("POST")))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString("X-Idempotency-Key")))
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS, containsString("X-Request-Id")));
+    }
+
+    @Test
+    void consultaPublicaDeConviteChegaAoControllerSemSessao() throws Exception {
+        mockMvc.perform(get("/api/usuarios/convites/publico").param("token", "inexistente"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void aceiteERecusaDeConviteNaoSaoBloqueadosPorSessaoOuCsrf() throws Exception {
+        mockMvc.perform(post("/api/usuarios/convites/aceitar")
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(post("/api/usuarios/convites/recusar")
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isBadRequest());
     }
 }

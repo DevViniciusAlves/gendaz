@@ -76,9 +76,10 @@ public class MembresiaService {
         return membresiaRepository.findByEmpresaId(empresaId).stream().map(this::toResponse).toList();
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<ConviteEmpresaResponse> listarConvites(Long empresaId) {
         validarEmpresaAtual(empresaId);
+        expirarConvitesVencidos(empresaId);
         return conviteRepository.findByEmpresaIdAndStatus(empresaId, StatusConviteEmpresa.PENDING)
                 .stream()
                 .map(this::toResponse)
@@ -94,6 +95,8 @@ public class MembresiaService {
         if (email == null || !email.contains("@")) {
             throw new BusinessException("Email invalido.");
         }
+        expirarConvitesVencidos(empresaId);
+        validarDisponibilidadeParaNovoConvite(empresaId);
         List<UsuarioEntity> usuariosPainel = buscarUsuariosPainelPorEmail(email);
         if (usuariosPainel.size() > 1) {
             throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
@@ -168,8 +171,13 @@ public class MembresiaService {
     public ConviteEmpresaResponse cancelarConvite(Long empresaId, Long usuarioAtualId, Long conviteId) {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         ConviteEmpresaEntity convite = buscarConvite(empresaId, conviteId);
+        if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
+            throw new BusinessException("Convite nao esta pendente.");
+        }
+        convite.setStatus(StatusConviteEmpresa.CANCELLED);
+        convite.setCanceladoEm(LocalDateTime.now());
+        conviteRepository.save(convite);
         ConviteEmpresaResponse resposta = toResponse(convite);
-        conviteRepository.delete(convite);
         registrarAudit("INVITE_CANCELLED", executor, executor.getEmpresa(), "Convite cancelado", convite.getId(), "SUCCESS");
         return resposta;
     }
@@ -181,6 +189,12 @@ public class MembresiaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
             throw new BusinessException("Convite invalido.");
+        }
+        if (!convite.getDataExpiracao().isAfter(LocalDateTime.now())) {
+            convite.setStatus(StatusConviteEmpresa.EXPIRED);
+            convite.setExpiradoEm(LocalDateTime.now());
+            conviteRepository.save(convite);
+            throw new BusinessException("Convite expirado.");
         }
         convite.setStatus(StatusConviteEmpresa.CANCELLED);
         convite.setCanceladoEm(LocalDateTime.now());
@@ -275,7 +289,7 @@ public class MembresiaService {
     public MembroEmpresaResponse aceitarConvite(String token, AceitarConviteRequest request) {
         ConviteEmpresaEntity convite = buscarConvitePorToken(token);
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) throw new BusinessException("Convite invalido.");
-        if (convite.getDataExpiracao().isBefore(LocalDateTime.now())) throw new BusinessException("Convite expirado.");
+        if (!convite.getDataExpiracao().isAfter(LocalDateTime.now())) throw new BusinessException("Convite expirado.");
         String email = sanitizacaoService.email(request.email());
         if (!convite.getEmail().equalsIgnoreCase(email)) throw new BusinessException("Convite invalido para este email.");
         validarLimite(convite.getEmpresa().getId());
@@ -351,6 +365,29 @@ public class MembresiaService {
     private void validarLimite(Long empresaId) {
         if (contarUsados(empresaId) >= limiteEmpresa(empresaId)) {
             throw new BusinessException("Seu plano atingiu o limite de usuarios.");
+        }
+    }
+
+    private void validarDisponibilidadeParaNovoConvite(Long empresaId) {
+        long convitesPendentesValidos = conviteRepository.findByEmpresaIdAndStatus(empresaId, StatusConviteEmpresa.PENDING)
+                .stream()
+                .filter(convite -> convite.getDataExpiracao().isAfter(LocalDateTime.now()))
+                .count();
+        if (contarUsados(empresaId) + convitesPendentesValidos >= limiteEmpresa(empresaId)) {
+            throw new BusinessException("Seu plano atingiu o limite de usuarios, incluindo convites pendentes.");
+        }
+    }
+
+    private void expirarConvitesVencidos(Long empresaId) {
+        LocalDateTime agora = LocalDateTime.now();
+        List<ConviteEmpresaEntity> vencidos = conviteRepository
+                .findByEmpresaIdAndStatusAndDataExpiracaoBefore(empresaId, StatusConviteEmpresa.PENDING, agora);
+        vencidos.forEach(convite -> {
+            convite.setStatus(StatusConviteEmpresa.EXPIRED);
+            convite.setExpiradoEm(agora);
+        });
+        if (!vencidos.isEmpty()) {
+            conviteRepository.saveAll(vencidos);
         }
     }
 

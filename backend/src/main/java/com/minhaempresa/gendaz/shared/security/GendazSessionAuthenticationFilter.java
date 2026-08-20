@@ -123,12 +123,15 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         String method = request.getMethod();
         if (("GET".equalsIgnoreCase(method) && ("/health".equals(uri) || "/api/health".equals(uri)))
                 || ("GET".equalsIgnoreCase(method) && "/api/auth/csrf".equals(uri))
+                || ("GET".equalsIgnoreCase(method) && "/api/usuarios/convites/publico".equals(uri))
                 || ("POST".equalsIgnoreCase(method) && List.of(
                         "/api/auth/login",
                         "/api/auth/criar-conta",
                         "/api/auth/recuperar-senha",
                         "/api/auth/redefinir-senha",
-                        "/api/auth/logout"
+                        "/api/auth/logout",
+                        "/api/usuarios/convites/aceitar",
+                        "/api/usuarios/convites/recusar"
                 ).contains(uri))) {
             return true;
         }
