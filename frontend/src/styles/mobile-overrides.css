@@ -1485,6 +1485,21 @@
     max-height: 180px !important;
   }
 
+  .system-modal .crm-send-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .system-modal .crm-send-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .system-modal .crm-send-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
   /* Relatorios: cliente e servico largos; data, hora e estados em pares. */
   .app-shell .reports-page .panel-head {
     display: grid !important;

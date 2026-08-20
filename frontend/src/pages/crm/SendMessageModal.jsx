@@ -76,83 +76,55 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   }
 
   return (
-    <div className="modal-backdrop system-modal-backdrop" role="presentation" onClick={(e) => { if (e.target === e.currentTarget) handleClose() }}>
-      <section className="modal system-modal" style={{ minWidth: 480, maxWidth: 600, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', color: 'var(--text)' }}>
-        <div className="modal-header" style={{ background: 'var(--surface-solid, var(--surface-strong, var(--surface)))', borderBottom: '1px solid var(--line)' }}>
-          <h2 style={{ color: 'var(--text)' }}>{tmpl.titulo}</h2>
-          <button type="button" className="icon-btn" onClick={handleClose} aria-label="Fechar modal">
-            <span style={{ fontSize: 18, lineHeight: 1 }}>×</span>
-          </button>
-        </div>
+    <Modal title={tmpl.titulo} open={open} onClose={handleClose}>
+      <div className="crm-send-form">
+          <div className="crm-send-summary">
+            <div className="crm-send-detail">
+              <span>Cliente</span>
+              <strong>{nomeCliente}</strong>
+            </div>
 
-        <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16, background: 'var(--surface-solid, var(--surface-strong, var(--surface)))' }}>
-          <div>
-            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Cliente</div>
-            <div style={{ color: 'var(--text)', fontSize: 14 }}>{nomeCliente}</div>
+            <div className="crm-send-detail">
+              <span>E-mail</span>
+              <strong>{cliente.email || 'Não cadastrado'}</strong>
+            </div>
           </div>
 
-          <div>
-            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Email</div>
-            <div style={{ color: 'var(--text)', fontSize: 14 }}>{cliente.email || 'Nao cadastrado'}</div>
-          </div>
-
-          <div>
-            <div style={{ color: 'var(--muted)', fontSize: 13, marginBottom: 4 }}>Mensagem padrao</div>
-            <div style={{
-              padding: 16,
-              background: 'var(--surface-soft)',
-              border: '1px solid var(--line)',
-              borderRadius: 8,
-              color: 'var(--text)',
-              fontSize: 14,
-              lineHeight: 1.5,
-              whiteSpace: 'pre-wrap',
-            }}>
+          <div className="crm-send-message">
+            <span>Mensagem padrão</span>
+            <div className="crm-send-message-preview">
               {mensagemPadrao}
             </div>
           </div>
 
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 14, color: 'var(--text)', lineHeight: 1.3 }}>
+          <label className="crm-send-custom-toggle">
             <input
               type="checkbox"
               checked={personalizar}
               onChange={(e) => setPersonalizar(e.target.checked)}
-              style={{ accentColor: 'var(--text)', width: 18, height: 18, flexShrink: 0, margin: 0 }}
             />
-            Personalizar mensagem
+            <span>Personalizar mensagem</span>
           </label>
 
           {personalizar && (
-            <textarea
-              value={mensagemCustom}
-              onChange={(e) => setMensagemCustom(e.target.value)}
-              placeholder="Digite sua mensagem personalizada..."
-              style={{
-                width: '100%',
-                minHeight: 120,
-                maxHeight: 120,
-                padding: 12,
-                background: 'var(--surface-solid, var(--surface-strong, var(--surface)))',
-                border: '1px solid var(--line)',
-                borderRadius: 8,
-                color: 'var(--text)',
-                fontSize: 14,
-                resize: 'vertical',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-            />
+            <label className="field crm-send-custom-message">
+              <span>Mensagem personalizada</span>
+              <textarea
+                value={mensagemCustom}
+                onChange={(e) => setMensagemCustom(e.target.value)}
+                placeholder="Digite sua mensagem personalizada..."
+              />
+            </label>
           )}
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 12, marginTop: 8, alignItems: 'center' }}>
-            <Button variant="secondary" onClick={handleClose} style={{ height: 40, padding: '12px 16px', fontSize: 14 }}>Cancelar</Button>
-            <Button onClick={handleEnviar} disabled={enviando || !cliente.email} style={{ height: 40, padding: '12px 16px', fontSize: 14 }}>
+          <div className="modal-actions crm-send-actions">
+            <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
+            <Button onClick={handleEnviar} disabled={enviando || !cliente.email}>
               {enviando ? 'Enviando...' : 'Enviar agora'}
             </Button>
           </div>
-        </div>
-      </section>
-    </div>
+      </div>
+    </Modal>
   )
 }
 

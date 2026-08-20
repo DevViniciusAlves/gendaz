@@ -51,7 +51,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MembresiaService {
     private static final int LIMITE_REENVIO = 3;
-    private static final java.time.Duration DURACAO_CONVITE = java.time.Duration.ofHours(1);
+    private static final java.time.Duration DURACAO_CONVITE = java.time.Duration.ofDays(7);
     private static final List<PerfilUsuario> PERFIS_PAINEL_DIRETOS = List.of(PerfilUsuario.SUPER_ADMIN, PerfilUsuario.DONO);
     private final MembresiaRepository membresiaRepository;
     private final ConviteEmpresaRepository conviteRepository;
@@ -143,32 +143,25 @@ public class MembresiaService {
         if (convite.getReenvios() != null && convite.getReenvios() >= LIMITE_REENVIO) {
             throw new BusinessException("Limite de reenvios atingido.");
         }
-        String nome = convite.getNomeConvidado();
-        String telefone = convite.getTelefoneConvidado();
-        String email = convite.getEmail();
-        conviteRepository.delete(convite);
         String tokenNovo = gerarToken();
-        ConviteEmpresaEntity novoConvite = ConviteEmpresaEntity.builder()
-                .empresa(executor.getEmpresa())
-                .nomeConvidado(nome)
-                .telefoneConvidado(telefone)
-                .email(email)
-                .criadoPor(executor)
-                .status(StatusConviteEmpresa.PENDING)
-                .dataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE))
-                .tokenHash(hash(tokenNovo))
-                .reenvios((convite.getReenvios() == null ? 0 : convite.getReenvios()) + 1)
-                .build();
-        conviteRepository.save(novoConvite);
-        resendEmailService.enviarConviteEmpresa(
-                novoConvite.getEmail(),
-                novoConvite.getNomeConvidado(),
+        convite.setTokenHash(hash(tokenNovo));
+        convite.setDataExpiracao(LocalDateTime.now().plus(DURACAO_CONVITE));
+        convite.setReenvios((convite.getReenvios() == null ? 0 : convite.getReenvios()) + 1);
+        convite.setExpiradoEm(null);
+        convite.setCanceladoEm(null);
+        conviteRepository.save(convite);
+        boolean enviado = resendEmailService.enviarConviteEmpresa(
+                convite.getEmail(),
+                convite.getNomeConvidado(),
                 convite.getEmpresa().getNomeFantasia(),
                 montarUrlConvite(tokenNovo),
                 montarUrlConvite(tokenNovo) + "&acao=recusar"
         );
-        registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", novoConvite.getId(), "SUCCESS");
-        return toResponse(novoConvite);
+        if (!enviado) {
+            throw new BusinessException("Falha no reenvio do convite.");
+        }
+        registrarAudit("INVITE_RESENT", executor, executor.getEmpresa(), "Convite reenviado", convite.getId(), "SUCCESS");
+        return toResponse(convite);
     }
 
     @Transactional
