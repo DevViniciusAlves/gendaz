@@ -33,7 +33,7 @@ export default function AdminLogin() {
 
   return (
     <main className="admin-login-screen">
-      <section className="admin-login-card">
+      <section className="admin-login-card admin-login-panel">
         <div className="admin-login-header">
           <div className="admin-login-brand">
             <img src={logoWhite} alt="gendaz" className="admin-login-logo" />
