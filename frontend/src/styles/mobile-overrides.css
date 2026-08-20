@@ -1,0 +1,30 @@
+
+@media (max-width: 768px) {
+  /* Novo Agendamento Modal */
+  .gendaz-modal {
+    width: 95% !important;
+    max-width: 500px !important;
+    margin: 10px auto;
+    padding: 16px !important;
+  }
+  
+  .gendaz-modal__head {
+    padding: 0 0 16px 0 !important;
+  }
+
+  .gendaz-modal__form label {
+    margin-bottom: 12px !important;
+  }
+
+  .gendaz-modal__actions {
+    gap: 8px !important;
+  }
+
+  .gendaz-modal__actions button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 390px) {
+  /* Ajustes extras */
+}

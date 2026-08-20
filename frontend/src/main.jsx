@@ -5,6 +5,7 @@ import App from './App.jsx'
 import './styles/global.css'
 import './styles/panel-theme.css'
 import './styles/admin-gendaz.css'
+import './styles/mobile-overrides.css'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
