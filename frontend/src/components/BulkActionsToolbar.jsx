@@ -48,10 +48,6 @@ export default function BulkActionsToolbar({
         <Button
           variant="secondary"
           icon={MoreHorizontal}
-          onPointerDown={(e) => {
-            e.stopPropagation()
-            setOpen((value) => !value)
-          }}
           onClick={(e) => {
             e.stopPropagation()
             setOpen((value) => !value)

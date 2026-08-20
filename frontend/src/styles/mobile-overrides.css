@@ -564,6 +564,39 @@
     max-width: min(100%, 520px) !important;
     max-height: calc(100dvh - 28px - env(safe-area-inset-bottom)) !important;
     overflow: auto !important;
+    padding: 14px !important;
+  }
+
+  .app-shell .promotions-page .modal-card,
+  .app-shell .promotions-page .modal-card * {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header h2 {
+    font-size: 1.15rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header p {
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
   }
 
   .app-shell .promotions-page .modal-card > form {

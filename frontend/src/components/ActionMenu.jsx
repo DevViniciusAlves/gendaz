@@ -69,7 +69,6 @@ export default function ActionMenu({ actions }) {
       <button
         type="button"
         className="icon-btn action-menu-btn"
-        onPointerDown={toggleOpen}
         onClick={toggleOpen}
         aria-label="Abrir menu de ações"
       >
