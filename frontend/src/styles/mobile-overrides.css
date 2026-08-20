@@ -1,9 +1,9 @@
 @media (max-width: 768px) {
   :root {
     --mobile-shell-gap: 14px;
-    --mobile-card-radius: 22px;
-    --mobile-border: rgba(255, 255, 255, 0.08);
-    --mobile-surface: linear-gradient(180deg, rgba(21, 21, 23, 0.98) 0%, rgba(15, 15, 17, 0.98) 100%);
+    --mobile-card-radius: 14px;
+    --mobile-border: #404040;
+    --mobile-surface: #1a1a1a;
   }
 
   html,
@@ -109,7 +109,9 @@
     min-width: 0 !important;
     padding: 14px !important;
     border-radius: var(--mobile-card-radius) !important;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22) !important;
+    background: #1a1a1a !important;
+    border: 1px solid #404040 !important;
+    box-shadow: none !important;
     overflow: hidden;
   }
 
@@ -164,6 +166,9 @@
   .app-shell .schedule-actions .btn-action-card {
     width: 100% !important;
     min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
     justify-content: center !important;
   }
 
@@ -193,11 +198,17 @@
   .app-shell .mass-action-toolbar,
   .app-shell .mass-action-toolbar-inline {
     align-items: stretch !important;
-    gap: 10px !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
   }
 
   .app-shell .bulk-selection-count {
     text-align: center;
+    font-size: 12px !important;
+    color: #b0b0b0 !important;
   }
 
   .app-shell .table-wrap {
@@ -236,11 +247,11 @@
 
   .app-shell .data-table tbody tr {
     position: relative;
-    padding: 14px !important;
+    padding: 12px !important;
     border: 1px solid var(--mobile-border) !important;
     border-radius: var(--mobile-card-radius) !important;
     background: var(--mobile-surface) !important;
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18) !important;
+    box-shadow: none !important;
     overflow: hidden !important;
   }
 
@@ -254,8 +265,8 @@
     display: grid !important;
     grid-template-columns: minmax(92px, 112px) minmax(0, 1fr) !important;
     align-items: start !important;
-    gap: 10px !important;
-    padding: 8px 0 !important;
+    gap: 8px !important;
+    padding: 7px 0 !important;
     border: 0 !important;
     max-width: none !important;
     white-space: normal !important;
@@ -270,10 +281,10 @@
   .app-shell .data-table td[data-label]::before {
     content: attr(data-label);
     display: block !important;
-    color: rgba(255, 255, 255, 0.55) !important;
-    font-size: 0.69rem !important;
+    color: #8f8f8f !important;
+    font-size: 0.68rem !important;
     line-height: 1.15 !important;
-    letter-spacing: 0.16em !important;
+    letter-spacing: 0.12em !important;
     text-transform: uppercase !important;
     font-weight: 700 !important;
   }
@@ -298,8 +309,18 @@
     width: 100% !important;
   }
 
+  .app-shell .data-table td .report-center-cell .name-cell,
+  .app-shell .data-table td .financeiro-center-cell .name-cell {
+    justify-content: flex-start !important;
+  }
+
   .app-shell .data-table td .avatar {
     flex-shrink: 0;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 999px !important;
+    background: #111827 !important;
+    color: #ffffff !important;
   }
 
   .app-shell .data-table td:last-child {
@@ -318,8 +339,9 @@
 
   .app-shell .data-table td:last-child .action-menu-btn {
     width: 100% !important;
-    min-height: 44px !important;
-    border-radius: 16px !important;
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
   }
 
   .app-shell .financeiro-page .data-table tbody td {
@@ -327,7 +349,7 @@
   }
 
   .app-shell .financeiro-page .data-table tbody tr {
-    padding: 12px !important;
+    padding: 10px !important;
   }
 
   .app-shell .financeiro-page .financeiro-top-row,
@@ -337,9 +359,23 @@
   }
 
   .app-shell .financeiro-page .financeiro-payment-toggle {
-    min-height: 54px !important;
-    padding: 12px 14px !important;
-    border-radius: 18px !important;
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    background: #1a1a1a !important;
+    border: 1px solid #404040 !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle span {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle input {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
   }
 
   .app-shell .financeiro-page .financeiro-valor-desconto {
@@ -360,6 +396,14 @@
   .app-shell .clients-page .table-actions,
   .app-shell .financeiro-page .mass-action-toolbar-inline {
     margin-top: 0 !important;
+  }
+
+  .app-shell .mass-action-toolbar .btn,
+  .app-shell .mass-action-toolbar-inline .btn,
+  .app-shell .mass-action-icon-button {
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
   }
 
   .app-shell .modal-backdrop {
@@ -395,34 +439,37 @@
     position: fixed;
     inset: 0;
     display: flex;
-    align-items: flex-end;
+    align-items: center;
     justify-content: center;
-    padding: 14px;
-    padding-bottom: calc(14px + env(safe-area-inset-bottom));
-    background: rgba(4, 4, 7, 0.64);
-    backdrop-filter: blur(8px);
-    z-index: 1100;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.46);
+    backdrop-filter: blur(3px);
+    z-index: 2000;
   }
 
   .action-menu-mobile-sheet {
-    width: min(100%, 420px);
+    width: min(100%, 280px);
+    margin: 0 auto;
   }
 
   .action-menu-panel-mobile {
     position: static !important;
     min-width: 0 !important;
     width: 100% !important;
-    border-radius: 22px !important;
-    padding: 8px !important;
-    background: linear-gradient(180deg, rgba(20, 20, 22, 0.98) 0%, rgba(13, 13, 15, 0.98) 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.08) !important;
-    box-shadow: 0 18px 42px rgba(0, 0, 0, 0.32) !important;
+    margin: 0 auto !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+    background: #222222 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
   }
 
   .action-menu-panel-mobile button {
-    min-height: 48px !important;
-    border-radius: 16px !important;
-    justify-content: flex-start !important;
+    min-height: 40px !important;
+    border-radius: 8px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #ffffff !important;
   }
 
   .app-shell .notification-panel,
@@ -529,6 +576,42 @@
   .marketing-showcase-copy {
     text-align: left !important;
   }
+
+  :root[data-theme='light'] .app-shell .panel,
+  :root[data-theme='light'] .app-shell .metric-card,
+  :root[data-theme='light'] .app-shell .dashboard-summary-card,
+  :root[data-theme='light'] .app-shell .settings-card,
+  :root[data-theme='light'] .app-shell .client-panel,
+  :root[data-theme='light'] .app-shell .table-wrap,
+  :root[data-theme='light'] .app-shell .schedule-card,
+  :root[data-theme='light'] .app-shell .report-filters,
+  :root[data-theme='light'] .app-shell .filters,
+  :root[data-theme='light'] .app-shell .dashboard-hero,
+  :root[data-theme='light'] .app-shell .receita-chart-panel,
+  :root[data-theme='light'] .app-shell .conversation-list,
+  :root[data-theme='light'] .app-shell .chat-center {
+    background: #1a1a1a !important;
+    border-color: #404040 !important;
+  }
+
+  :root[data-theme='light'] .app-shell .page-title h1,
+  :root[data-theme='light'] .app-shell .page-title p,
+  :root[data-theme='light'] .app-shell .panel h2,
+  :root[data-theme='light'] .app-shell .data-table td,
+  :root[data-theme='light'] .app-shell .data-table td *,
+  :root[data-theme='light'] .app-shell .content input,
+  :root[data-theme='light'] .app-shell .content select,
+  :root[data-theme='light'] .app-shell .content textarea,
+  :root[data-theme='light'] .app-shell .bulk-selection-count {
+    color: #ffffff !important;
+  }
+
+  :root[data-theme='light'] .app-shell .data-table td[data-label]::before,
+  :root[data-theme='light'] .app-shell .page-title .section-kicker,
+  :root[data-theme='light'] .app-shell .page-title p,
+  :root[data-theme='light'] .app-shell .bulk-selection-count {
+    color: #b0b0b0 !important;
+  }
 }
 
 @media (max-width: 430px) {
@@ -539,7 +622,7 @@
 
   .app-shell .data-table tbody tr {
     padding: 12px !important;
-    border-radius: 20px !important;
+    border-radius: 12px !important;
   }
 
   .app-shell .data-table tbody td {
