@@ -562,9 +562,11 @@
   .app-shell .promotions-page .modal-card {
     width: min(100%, 520px) !important;
     max-width: min(100%, 520px) !important;
+    min-width: 0 !important;
     max-height: calc(100dvh - 28px - env(safe-area-inset-bottom)) !important;
     overflow: auto !important;
     padding: 14px !important;
+    box-sizing: border-box !important;
   }
 
   .app-shell .promotions-page .modal-card,
@@ -581,11 +583,24 @@
     align-items: flex-start !important;
     justify-content: space-between !important;
     gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   .app-shell .promotions-page .modal-card .modal-header > div {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header .icon-btn {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
   }
 
   .app-shell .promotions-page .modal-card .modal-header h2 {
@@ -602,6 +617,8 @@
   .app-shell .promotions-page .modal-card > form {
     display: grid !important;
     gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
     padding-inline: 0 !important;
   }
 
@@ -612,13 +629,30 @@
   }
 
   .app-shell .promotions-page .modal-card label {
+    width: 100% !important;
+    max-width: 100% !important;
     min-width: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .app-shell .promotions-page .modal-card input,
   .app-shell .promotions-page .modal-card select,
   .app-shell .promotions-page .modal-card textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
     min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .promotions-page .modal-card input:is([type='radio'], [type='checkbox']) {
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    padding: 0 !important;
   }
 
   .app-shell .promotions-page .modal-card .servicos-lista > div[style] {
