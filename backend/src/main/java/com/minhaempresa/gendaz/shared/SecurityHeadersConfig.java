@@ -25,6 +25,8 @@ public class SecurityHeadersConfig {
             "/api/public/**",
             "/api/auth/recuperar-senha",
             "/api/auth/redefinir-senha",
+            "/api/usuarios/convites/aceitar",
+            "/api/usuarios/convites/recusar",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
             "/api/pagamentos/webhook/stripe"
@@ -57,13 +59,20 @@ public class SecurityHeadersConfig {
                 .addFilterBefore(meuGendazSessionAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.GET, "/health", "/api/health", "/api/auth/csrf").permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/health",
+                                "/api/health",
+                                "/api/auth/csrf",
+                                "/api/usuarios/convites/publico"
+                        ).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login",
                                 "/api/auth/criar-conta",
                                 "/api/auth/recuperar-senha",
                                 "/api/auth/redefinir-senha",
                                 "/api/auth/logout",
+                                "/api/usuarios/convites/aceitar",
+                                "/api/usuarios/convites/recusar",
                                 "/api/meu-gendaz/auth/solicitar-codigo",
                                 "/api/meu-gendaz/auth/validar-codigo",
                                 "/api/meu-gendaz/auth/logout"

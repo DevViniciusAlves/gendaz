@@ -168,11 +168,10 @@ public class ResendEmailService {
                     <p style="margin:0 0 12px;">Voce foi convidado para acessar a conta <strong>%s</strong>.</p>
                     <p style="margin:0 0 18px;">Deseja aceitar o convite?</p>
                     <div style="text-align:center; margin:24px 0 8px;">
-                      <a href="%s" style="display:inline-block; background:#111111; color:#ffffff; text-decoration:none; font-weight:700; padding:14px 24px; border-radius:999px; margin-right:8px;">Sim, aceitar</a>
                       <a href="%s" style="display:inline-block; background:#ffffff; color:#111111; border:1px solid #d1d5db; text-decoration:none; font-weight:700; padding:14px 24px; border-radius:999px;">Nao, recusar</a>
                     </div>
                     <p style="margin:0;">Nome: <strong>%s</strong>.</p>
-                    """.formatted(safe(empresa, "Gendaz"), safe(linkAceitar, montarUrlBase()), safe(linkRecusar, montarUrlBase()), safe(nome, "usuario"));
+                    """.formatted(safe(empresa, "Gendaz"), safe(linkRecusar, montarUrlBase()), safe(nome, "usuario"));
             String html = montarEmailPadrao(
                     "Gendaz",
                     "Voce foi convidado para acessar a conta",

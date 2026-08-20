@@ -83,6 +83,7 @@ api.interceptors.response.use(
       || url.includes('/auth/recuperar-senha')
       || url.includes('/auth/redefinir-senha')
       || url.includes('/auth/csrf')
+      || url.includes('/usuarios/convites/')
     const isMeuGendaz = url.includes('/meu-gendaz/')
     const isAdmin = url.includes('/admin/')
     if (status === 401 && (url.includes('/auth/refresh') || (!isPublicAuth && !isMeuGendaz && !isAdmin))) {

@@ -18,6 +18,7 @@ export default function Convite() {
   const [erro, setErro] = useState('')
   const [carregando, setCarregando] = useState(false)
   const [carregandoDados, setCarregandoDados] = useState(true)
+  const [falhaCarregamento, setFalhaCarregamento] = useState(false)
   const [mostrarSenha, setMostrarSenha] = useState(false)
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false)
 
@@ -40,6 +41,7 @@ export default function Convite() {
         })
       } catch (error) {
         if (!ativo) return
+        setFalhaCarregamento(true)
         setErro(error.response?.data?.mensagem || 'Nao foi possivel carregar o convite.')
       } finally {
         if (ativo) setCarregandoDados(false)
@@ -125,7 +127,12 @@ export default function Convite() {
         <span className="section-kicker">Convite</span>
         <h1>Voce foi convidado para acessar a conta {dados.empresaNome || 'Gendaz'}</h1>
 
-        {!dados.valido ? (
+        {falhaCarregamento ? (
+          <>
+            <p className="form-error">{erro || 'Nao foi possivel carregar o convite.'}</p>
+            <p className="login-helper-v2">Tente abrir novamente o link mais recente recebido por e-mail.</p>
+          </>
+        ) : !dados.valido ? (
           <>
             <p className="form-error">Convite expirado. Peça para o dono enviar um novo convite.</p>
             <p className="login-helper-v2">

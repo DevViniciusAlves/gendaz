@@ -1825,6 +1825,38 @@
     min-width: 0 !important;
   }
 
+  .app-shell .insights-page .insights-ai-chat__header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__header > div {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__toggle {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__header :is(.section-kicker, h2) {
+    width: auto !important;
+    max-width: 100% !important;
+    writing-mode: horizontal-tb !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
   .app-shell .insights-page .insights-ai-chat__empty {
     display: grid !important;
     grid-template-columns: auto minmax(0, 1fr) auto !important;
