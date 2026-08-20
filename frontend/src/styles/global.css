@@ -21396,6 +21396,7 @@ input, select, textarea {
   font-size: 16px !important;
 }
 
+@media (max-width: 768px) {
   .gendaz-mobile-nav {
     position: fixed;
     left: 0;
@@ -21512,6 +21513,7 @@ input, select, textarea {
   display: table-header-group;
 }
 
+@media (max-width: 768px) {
   .app-shell .modal .data-table tbody,
   .app-shell .modal-card .data-table tbody {
     display: table-row-group;
