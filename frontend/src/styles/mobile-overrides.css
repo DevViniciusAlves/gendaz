@@ -1471,6 +1471,20 @@
     justify-content: center !important;
   }
 
+  .system-modal .promotion-form {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .system-modal .promotion-target-section > div:first-of-type {
+    grid-template-columns: 1fr !important;
+  }
+
+  .system-modal .promotion-target-section .servicos-lista > div:last-child {
+    grid-template-columns: 1fr !important;
+    max-height: 180px !important;
+  }
+
   /* Relatorios: cliente e servico largos; data, hora e estados em pares. */
   .app-shell .reports-page .panel-head {
     display: grid !important;

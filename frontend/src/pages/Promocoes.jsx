@@ -7,6 +7,7 @@ import { servicosApi } from '../api/servicosApi.js'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import Button from '../components/Button.jsx'
 import ActionMenu from '../components/ActionMenu.jsx'
+import Modal from '../components/Modal.jsx'
 import { exibirTelefone } from '../utils/phoneUtils.js'
 
 const emptyForm = {
@@ -374,31 +375,18 @@ export default function Promocoes() {
         </div>
       )}
 
-      {modalAberto && createPortal((
-        <div className="modal-backdrop promotions-modal-backdrop">
-          <div className="panel modal-card promotions-modal-card" style={{ maxWidth: 760, width: '100%' }}>
-            <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
-              <div>
-                <h2 style={{ marginBottom: 6 }}>{editing ? 'Editar promoção' : 'Nova promoção'}</h2>
-                <p>Preencha os dados do cupom e escolha como ele será aplicado.</p>
-              </div>
-              <button type="button" className="icon-btn" onClick={() => setModalAberto(false)} aria-label="Fechar">
-                <X size={18} />
-              </button>
-            </div>
+      <Modal title={editing ? 'Editar promoção' : 'Nova promoção'} open={modalAberto} onClose={() => setModalAberto(false)}>
+        <form onSubmit={salvar} className="form-grid promotion-form">
+              <p className="panel-description field-wide">Preencha os dados do cupom e escolha como ele será aplicado.</p>
+              <label className="field"><span>Código</span><input value={form.codigo} onChange={(e) => setForm((c) => ({ ...c, codigo: e.target.value }))} /></label>
+              <label className="field"><span>Descrição</span><input value={form.descricao} onChange={(e) => setForm((c) => ({ ...c, descricao: e.target.value }))} /></label>
+              <label className="field"><span>Tipo</span><select value={form.tipo} onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}><option value="PERCENTUAL">Percentual</option><option value="VALOR_FIXO">Valor fixo</option></select></label>
+              <label className="field"><span>Valor</span><input value={form.valor} onChange={(e) => setForm((c) => ({ ...c, valor: e.target.value }))} /></label>
+              <label className="field"><span>Início</span><input type="datetime-local" value={form.dataInicio} onChange={(e) => setForm((c) => ({ ...c, dataInicio: e.target.value }))} /></label>
+              <label className="field"><span>Fim</span><input type="datetime-local" value={form.dataFim} onChange={(e) => setForm((c) => ({ ...c, dataFim: e.target.value }))} /></label>
+              <label className="field"><span>Limite</span><input value={form.quantidadeLimite} onChange={(e) => setForm((c) => ({ ...c, quantidadeLimite: e.target.value }))} /></label>
 
-            <form onSubmit={salvar} style={{ display: 'grid', gap: 14 }}>
-              <div className="grid grid-2">
-                <label><span>Código</span><input value={form.codigo} onChange={(e) => setForm((c) => ({ ...c, codigo: e.target.value }))} /></label>
-                <label><span>Descrição</span><input value={form.descricao} onChange={(e) => setForm((c) => ({ ...c, descricao: e.target.value }))} /></label>
-                <label><span>Tipo</span><select value={form.tipo} onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}><option value="PERCENTUAL">Percentual</option><option value="VALOR_FIXO">Valor fixo</option></select></label>
-                <label><span>Valor</span><input value={form.valor} onChange={(e) => setForm((c) => ({ ...c, valor: e.target.value }))} /></label>
-                <label><span>Início</span><input type="datetime-local" value={form.dataInicio} onChange={(e) => setForm((c) => ({ ...c, dataInicio: e.target.value }))} /></label>
-                <label><span>Fim</span><input type="datetime-local" value={form.dataFim} onChange={(e) => setForm((c) => ({ ...c, dataFim: e.target.value }))} /></label>
-                <label><span>Limite</span><input value={form.quantidadeLimite} onChange={(e) => setForm((c) => ({ ...c, quantidadeLimite: e.target.value }))} /></label>
-              </div>
-
-              <div className="form-section">
+              <div className="form-section field-wide promotion-target-section">
                 <label className="section-title">Aplicar cupom em</label>
 
                 <div style={{ display: 'grid', gap: 8 }}>
@@ -430,9 +418,9 @@ export default function Promocoes() {
                         gap: 10,
                         minHeight: 46,
                         padding: '8px 10px',
-                        border: '1px solid rgba(255, 255, 255, 0.10)',
+                        border: '1px solid rgba(11, 11, 11, 0.18)',
                         borderRadius: 12,
-                        background: 'rgba(255, 255, 255, 0.03)',
+                        background: '#ffffff',
                         cursor: 'pointer',
                       }}
                     >
@@ -516,14 +504,12 @@ export default function Promocoes() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <div className="modal-actions field-wide">
                 <Button type="button" variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
                 <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
               </div>
-            </form>
-          </div>
-        </div>
-      ), document.body)}
+        </form>
+      </Modal>
 
       {notificarAberto && createPortal((
         <div className="modal-backdrop promotions-modal-backdrop">
