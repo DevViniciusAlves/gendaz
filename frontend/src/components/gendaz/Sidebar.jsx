@@ -1,5 +1,6 @@
 ﻿import { NavLink, useParams } from 'react-router-dom'
 import { CalendarDays, LayoutDashboard, MessageCircle, Settings2, History, LifeBuoy, Ticket, MoreHorizontal } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import logoSidebar from '../../assets/logos/meugendazpngpreto.png'
 
 const items = [
@@ -16,9 +17,21 @@ const primaryMobileItems = items.filter((item) => item.mobile)
 const moreMobileItems = items.filter((item) => !item.mobile)
 
 export default function Sidebar() {
+  const mobileMoreRef = useRef(null)
   const { slug } = useParams()
 
   const basePath = `/meu-gendaz/${slug}`
+
+  useEffect(() => {
+    function fecharMaisAoTocarFora(event) {
+      if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target)) {
+        mobileMoreRef.current.removeAttribute('open')
+      }
+    }
+
+    document.addEventListener('pointerdown', fecharMaisAoTocarFora)
+    return () => document.removeEventListener('pointerdown', fecharMaisAoTocarFora)
+  }, [])
 
   const resolveTo = (to) =>
     to === '.'
@@ -58,7 +71,7 @@ export default function Sidebar() {
             <span>{label}</span>
           </NavLink>
         ))}
-        <details className="gendaz-mobile-more">
+        <details className="gendaz-mobile-more" ref={mobileMoreRef}>
           <summary className="gendaz-mobile-nav__link">
             <MoreHorizontal size={18} />
             <span>Mais</span>
@@ -69,6 +82,7 @@ export default function Sidebar() {
                 key={to}
                 to={resolveTo(to)}
                 end={end}
+                onClick={() => mobileMoreRef.current?.removeAttribute('open')}
                 className={({ isActive }) => (isActive ? 'gendaz-mobile-more__link is-active' : 'gendaz-mobile-more__link')}
               >
                 <Icon size={18} />
@@ -81,4 +95,3 @@ export default function Sidebar() {
     </>
   )
 }
-

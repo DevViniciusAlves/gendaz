@@ -6,10 +6,14 @@ export default function ActionMenu({ actions }) {
   const [open, setOpen] = useState(false)
   const [mobile, setMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth <= 768 : false))
   const menuRef = useRef(null)
+  const mobileMenuRef = useRef(null)
 
   useEffect(() => {
     function fecharAoClicarFora(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
+      const clicouNoBotao = menuRef.current?.contains(event.target)
+      const clicouNoMenuMobile = mobileMenuRef.current?.contains(event.target)
+
+      if (!clicouNoBotao && !clicouNoMenuMobile) {
         setOpen(false)
       }
     }
@@ -85,6 +89,7 @@ export default function ActionMenu({ actions }) {
         >
           <div
             className="action-menu-mobile-sheet"
+            ref={mobileMenuRef}
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >

@@ -1,5 +1,6 @@
 ﻿import { NavLink } from 'react-router-dom'
 import { BarChart3, CalendarDays, Gift, Home, MessageCircle, MoreHorizontal, ReceiptText, Settings, Sparkles, Users, Wrench, UserRoundCog } from 'lucide-react'
+import { useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
 import { usePendentes } from '../contexts/PendentesContext.jsx'
@@ -20,12 +21,24 @@ const items = [
 ]
 
 export default function Sidebar() {
+  const mobileMoreRef = useRef(null)
   const { usuario } = useAuth()
   const { contagemPendentes } = usePendentes()
   const allowed = PLANOS[usuario?.plano]?.rotas || []
   const visibleItems = items.filter((item) => allowed.includes(item.key))
   const primaryMobileItems = visibleItems.filter((item) => item.mobile)
   const moreMobileItems = visibleItems.filter((item) => !item.mobile)
+
+  useEffect(() => {
+    function fecharMaisAoTocarFora(event) {
+      if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target)) {
+        mobileMoreRef.current.removeAttribute('open')
+      }
+    }
+
+    document.addEventListener('pointerdown', fecharMaisAoTocarFora)
+    return () => document.removeEventListener('pointerdown', fecharMaisAoTocarFora)
+  }, [])
 
   function renderFinanceBadge(key) {
     return key === 'financeiro' && contagemPendentes > 0 ? (
@@ -65,14 +78,14 @@ export default function Sidebar() {
             {renderFinanceBadge(key)}
           </NavLink>
         ))}
-        <details className="app-mobile-more">
+        <details className="app-mobile-more" ref={mobileMoreRef}>
           <summary className="app-mobile-nav__link">
             <MoreHorizontal size={18} />
             <span>Mais</span>
           </summary>
           <div className="app-mobile-more__panel">
             {moreMobileItems.map(({ to, key, label, icon: Icon }) => (
-              <NavLink key={to} to={to} className={({ isActive }) => (isActive ? 'app-mobile-more__link is-active' : 'app-mobile-more__link')}>
+              <NavLink key={to} to={to} onClick={() => mobileMoreRef.current?.removeAttribute('open')} className={({ isActive }) => (isActive ? 'app-mobile-more__link is-active' : 'app-mobile-more__link')}>
                 <Icon size={18} />
                 <span>{label}</span>
                 {renderFinanceBadge(key)}
