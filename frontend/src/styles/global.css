@@ -21776,3 +21776,499 @@ iframe {
     font-size: 16px !important;
   }
 }
+
+/* ============================================================
+   FIX FINAL MOBILE — GENDAZ / MEU GENDAZ
+   Escopo somente mobile. Não altera desktop.
+   ============================================================ */
+
+@media (max-width: 1024px) {
+  .gendaz-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: block !important;
+  }
+
+  .gendaz-sidebar {
+    display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    flex: 0 0 0 !important;
+  }
+
+  .gendaz-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    flex: 1 1 auto !important;
+  }
+}
+
+@media (max-width: 768px) {
+  html,
+  body,
+  #root {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
+  .gendaz-shell,
+  .gendaz-main,
+  .gendaz-page,
+  .gendaz-grid,
+  .gendaz-grid--two,
+  .gendaz-grid--four,
+  .gendaz-agenda-grid,
+  .gendaz-table,
+  .gendaz-panel,
+  .gendaz-card {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .gendaz-main {
+    min-height: 100dvh !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 14px 14px calc(112px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gendaz-page {
+    width: 100% !important;
+    display: grid !important;
+    gap: 14px !important;
+    padding: 0 !important;
+    padding-bottom: calc(28px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gendaz-page__header {
+    display: grid !important;
+    gap: 6px !important;
+    margin: 0 !important;
+  }
+
+  .gendaz-page__header h1 {
+    font-size: 22px !important;
+    line-height: 1.12 !important;
+    margin: 0 !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .gendaz-page__header p {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+  }
+
+  .gendaz-kicker {
+    font-size: 11px !important;
+    line-height: 1.2 !important;
+  }
+
+  .gendaz-grid,
+  .gendaz-grid--two,
+  .gendaz-grid--four,
+  .gendaz-agenda-grid,
+  .gendaz-resumo-financeiro,
+  .gendaz-historico-grid,
+  .gendaz-promocoes__grade {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .gendaz-panel,
+  .gendaz-card {
+    width: 100% !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .gendaz-panel__head {
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .gendaz-panel__head h2 {
+    font-size: 16px !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+  }
+
+  .gendaz-panel p,
+  .gendaz-card p,
+  .gendaz-panel small,
+  .gendaz-card small {
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+  }
+
+  .gendaz-form {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .gendaz-form label,
+  .gendaz-modal__form label {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .gendaz-form label span,
+  .gendaz-modal__form label span {
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  .gendaz-form input,
+  .gendaz-form select,
+  .gendaz-form textarea,
+  .gendaz-modal input,
+  .gendaz-modal select,
+  .gendaz-modal textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    font-size: 16px !important;
+    padding-inline: 12px !important;
+    border-radius: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .gendaz-form textarea,
+  .gendaz-modal textarea {
+    min-height: 96px !important;
+    padding-top: 12px !important;
+    padding-bottom: 12px !important;
+  }
+
+  .gendaz-btn {
+    min-height: 42px !important;
+    padding: 0 14px !important;
+    font-size: 13px !important;
+    border-radius: 12px !important;
+    gap: 7px !important;
+  }
+
+  .gendaz-actions,
+  .gendaz-card__actions,
+  .gendaz-agenda-actions,
+  .gendaz-modal__actions {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .gendaz-actions .gendaz-btn,
+  .gendaz-card__actions .gendaz-btn,
+  .gendaz-agenda-actions .gendaz-btn,
+  .gendaz-modal__actions .gendaz-btn {
+    width: 100% !important;
+  }
+
+  .gendaz-mobile-nav {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 900 !important;
+    display: grid !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    gap: 2px !important;
+    min-height: calc(72px + env(safe-area-inset-bottom)) !important;
+    height: auto !important;
+    padding: 8px max(8px, env(safe-area-inset-left)) calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right)) !important;
+    background: rgba(10, 10, 10, 0.96) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 -14px 32px rgba(0, 0, 0, 0.34) !important;
+    backdrop-filter: blur(18px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(120%) !important;
+    box-sizing: border-box !important;
+  }
+
+  .gendaz-mobile-nav__link {
+    min-width: 0 !important;
+    min-height: 52px !important;
+    padding: 4px 3px !important;
+    font-size: 11px !important;
+    line-height: 1.1 !important;
+    gap: 4px !important;
+  }
+
+  .gendaz-mobile-nav__link svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+
+  .gendaz-mobile-nav__link span {
+    display: block !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .gendaz-fab {
+    right: 14px !important;
+    bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+    width: 50px !important;
+    height: 50px !important;
+    z-index: 850 !important;
+  }
+
+  .gendaz-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+  }
+
+  .gendaz-modal {
+    width: 100% !important;
+    max-width: min(100%, 430px) !important;
+    min-width: 0 !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+    padding: 16px !important;
+    border-radius: 18px !important;
+    box-sizing: border-box !important;
+  }
+
+  .gendaz-modal__head {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 0 !important;
+    margin-bottom: 14px !important;
+  }
+
+  .gendaz-modal__head h2 {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .gendaz-modal__head button,
+  .gendaz-modal__close {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+  }
+
+  .gendaz-modal__form {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    padding: 0 !important;
+  }
+
+  .gendaz-agenda-field {
+    min-width: 0 !important;
+  }
+
+  .gendaz-agenda-field strong,
+  .gendaz-agenda-field span {
+    max-width: 100% !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .gendaz-checkbox {
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .gendaz-checkbox input {
+    width: 18px !important;
+    min-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    margin-top: 2px !important;
+  }
+
+  .gendaz-checkbox span {
+    min-width: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.35 !important;
+  }
+}
+
+@media (max-width: 390px) {
+  .gendaz-main {
+    padding-inline: 10px !important;
+    padding-bottom: calc(116px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .gendaz-page {
+    gap: 12px !important;
+  }
+
+  .gendaz-page__header h1 {
+    font-size: 20px !important;
+  }
+
+  .gendaz-panel,
+  .gendaz-card {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .gendaz-modal {
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  .gendaz-modal__head h2 {
+    font-size: 20px !important;
+  }
+
+  .gendaz-mobile-nav__link {
+    font-size: 10px !important;
+  }
+}
+
+/* ============================================================
+   FIX FINAL MOBILE — PAINEL /SISTEMA
+   Escopo somente mobile. Não altera desktop.
+   ============================================================ */
+
+@media (max-width: 768px) {
+  .app-shell {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .app-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .content {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+  }
+
+  .app-shell .page {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    gap: 14px !important;
+  }
+
+  .app-shell .page-title h1 {
+    font-size: 22px !important;
+    line-height: 1.15 !important;
+  }
+
+  .app-shell .page-title p {
+    font-size: 13px !important;
+    line-height: 1.4 !important;
+  }
+
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .settings-card,
+  .app-shell .table-wrap,
+  .app-shell .client-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 16px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .dashboard-grid,
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .metric-grid,
+  .app-shell .settings-grid,
+  .app-shell .settings-summary-grid,
+  .app-shell .form-grid,
+  .app-shell .plans-grid,
+  .app-shell .support-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .topbar {
+    min-height: auto !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .topbar strong {
+    font-size: 18px !important;
+    line-height: 1.15 !important;
+  }
+
+  .app-shell .topbar span {
+    font-size: 12px !important;
+  }
+
+  .app-shell .btn,
+  .app-shell .icon-btn {
+    min-height: 40px !important;
+    font-size: 13px !important;
+  }
+
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    font-size: 16px !important;
+  }
+
+  .app-shell .modal-backdrop {
+    padding: 12px !important;
+  }
+
+  .app-shell .modal,
+  .app-shell .modal-content,
+  .app-shell .modal-panel {
+    width: 100% !important;
+    max-width: min(100%, 430px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    overflow-y: auto !important;
+  }
+}
