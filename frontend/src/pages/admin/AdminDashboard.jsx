@@ -266,7 +266,8 @@ export default function AdminDashboard() {
         if (filtroPagamento.status === '' && filtroPagamento.plano === '') {
           pagamentosModeracao = listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
         } else {
-          const todosPagamentos = Array.isArray(await adminApi.pagamentos()) ? await adminApi.pagamentos() : []
+          const respostaPagamentos = await adminApi.pagamentos()
+          const todosPagamentos = Array.isArray(respostaPagamentos) ? respostaPagamentos : []
           pagamentosModeracao = todosPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
         }
         if (!ativo) return
@@ -298,9 +299,11 @@ export default function AdminDashboard() {
       if (aba === 'Dashboard' || aba === 'Usuarios' || aba === 'Configuracoes') {
         await carregarAdmin()
       } else if (aba === 'Pagamentos') {
-        setPagamentos(Array.isArray(await adminApi.pagamentos(filtroPagamento)) ? await adminApi.pagamentos(filtroPagamento) : [])
+        const respostaPagamentos = await adminApi.pagamentos(filtroPagamento)
+        setPagamentos(Array.isArray(respostaPagamentos) ? respostaPagamentos : [])
       } else if (aba === 'Aprovar Pagamentos') {
-        const pagamentosData = Array.isArray(await adminApi.pagamentos()) ? await adminApi.pagamentos() : []
+        const respostaPagamentos = await adminApi.pagamentos()
+        const pagamentosData = Array.isArray(respostaPagamentos) ? respostaPagamentos : []
         setPagamentosModeracao(pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
       } else if (aba === 'Chamados') {
         setChamados(await adminApi.chamados())
@@ -494,7 +497,6 @@ export default function AdminDashboard() {
         setErro('A conta foi atualizada, mas nao foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
-      setModal(null)
       setErro(mensagemErroApi(error, modal.tipo === 'empresa-ativar' ? 'Nao foi possivel ativar a conta.' : 'Nao foi possivel desativar a conta.'))
     } finally {
       setCarregandoAcao(false)
@@ -523,7 +525,6 @@ export default function AdminDashboard() {
         setErro('A empresa foi atualizada, mas nao foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
-      setModal(null)
       setErro(mensagemErroApi(error, 'Nao foi possivel atualizar os dados da empresa.'))
     } finally {
       setCarregandoAcao(false)

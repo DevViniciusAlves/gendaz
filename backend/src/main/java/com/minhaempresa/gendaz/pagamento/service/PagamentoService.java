@@ -499,7 +499,7 @@ public class PagamentoService {
             pagamento.setProviderPaymentId(transacaoId.trim());
         }
         aplicarStatusPagamentoPlano(pagamento, StatusPagamento.PAYMENT_REJECTED);
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
+        return mapper.toPlanoResponse(pagamentoPlanoRepository.saveAndFlush(pagamento));
     }
 
     @Transactional
@@ -653,6 +653,11 @@ public class PagamentoService {
     }
 
     private void rebaixarContaPorPagamento(PagamentoPlanoEntity pagamento, StatusPagamento status) {
+        EmpresaEntity empresa = pagamento.getEmpresa();
+        if (empresa.getStatus() == StatusEmpresa.BLOQUEADA || empresa.getStatus() == StatusEmpresa.ENCERRADA) {
+            return;
+        }
+
         LocalDate hoje = LocalDate.now();
         AssinaturaEntity assinaturaRelacionada = pagamento.getAssinatura();
         if (assinaturaRelacionada != null
@@ -664,8 +669,8 @@ public class PagamentoService {
             pagamento.setAssinatura(assinaturaRelacionada);
         }
 
-        boolean possuiVigenciaFutura = !assinaturaService.buscarFilaAtiva(pagamento.getEmpresa().getId()).isEmpty();
-        pagamento.getEmpresa().setStatus(possuiVigenciaFutura ? StatusEmpresa.ATIVA : StatusEmpresa.PENDENTE_PAGAMENTO);
+        boolean possuiVigenciaFutura = !assinaturaService.buscarFilaAtiva(empresa.getId()).isEmpty();
+        empresa.setStatus(possuiVigenciaFutura ? StatusEmpresa.ATIVA : StatusEmpresa.PENDENTE_PAGAMENTO);
     }
 
     private PagamentoPlanoEntity sincronizarPagamentoComGateway(PagamentoPlanoEntity pagamento) {

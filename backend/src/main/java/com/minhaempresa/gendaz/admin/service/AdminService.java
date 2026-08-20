@@ -476,6 +476,10 @@ public class AdminService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         empresa.setStatus(StatusEmpresa.BLOQUEADA);
         EmpresaEntity salva = empresaRepository.save(empresa);
+        usuarioRepository.findByEmpresaId(empresaId).stream()
+                .map(UsuarioEntity::getSessaoAtiva)
+                .filter(sessao -> sessao != null && !sessao.isBlank())
+                .forEach(usuarioSessionService::encerrarSessao);
         auditService.registrar("EMPRESA_DESATIVADA", "SECURITY", admin, null, salva, "Conta bloqueada manualmente pelo Super Admin", request.motivo().trim(), ip, userAgent);
         return montarEmpresaResponse(salva);
     }

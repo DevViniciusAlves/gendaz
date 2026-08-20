@@ -1247,8 +1247,8 @@ html .admin-gendaz .admin-assinaturas {
 
 html .admin-gendaz .admin-assinatura {
   display: grid;
-  gap: 8px;
-  padding: 12px 14px;
+  gap: 10px;
+  padding: 14px 16px;
   border: 1px solid var(--gd-border);
   border-radius: 12px;
   background: #ffffff;
@@ -1279,13 +1279,20 @@ html .admin-gendaz .admin-assinatura__head strong {
 }
 
 html .admin-gendaz .admin-assinatura__meta {
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  column-gap: 12px;
+  row-gap: 4px;
   color: rgba(11, 11, 11, 0.68) !important;
   font-size: 12px !important;
+  line-height: 1.35;
+}
+
+html .admin-gendaz .admin-assinatura__meta span,
+html .admin-gendaz .admin-assinatura__meta small {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
 }
 
 html .admin-gendaz .admin-assinatura select,
@@ -1329,8 +1336,8 @@ html .admin-gendaz .admin-assinatura .btn-ghost svg {
 
 html .admin-gendaz .admin-assinatura__add {
   display: grid;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 12px;
+  padding: 14px 16px;
   border: 1px solid var(--gd-border);
   border-radius: 12px;
   background: #ffffff !important;
@@ -1339,9 +1346,9 @@ html .admin-gendaz .admin-assinatura__add {
 
 html .admin-gendaz .admin-assinatura__add-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 140px;
-  gap: 10px;
-  align-items: start;
+  grid-template-columns: minmax(0, 1.6fr) minmax(120px, 0.65fr);
+  gap: 12px;
+  align-items: end;
 }
 
 html .admin-gendaz .admin-assinatura__add-actions {
@@ -1352,7 +1359,17 @@ html .admin-gendaz .admin-assinatura__add-actions {
 }
 
 html .admin-gendaz .admin-assinatura__add .field {
-  gap: 6px;
+  gap: 7px;
+  margin: 0;
+}
+
+html .admin-gendaz .admin-assinatura__add .field > span {
+  line-height: 1.2;
+}
+
+html .admin-gendaz .admin-assinatura__add select,
+html .admin-gendaz .admin-assinatura__add input {
+  min-height: 42px;
 }
 
 html .admin-gendaz .admin-assinatura__add .btn-secondary {
@@ -1377,6 +1394,29 @@ html .admin-gendaz .admin-assinatura__add .btn-ghost span,
 html .admin-gendaz .admin-assinatura__add .btn-ghost svg {
   color: #111111 !important;
   stroke: #111111 !important;
+}
+
+@media (max-width: 640px) {
+  html .admin-gendaz .admin-assinatura__meta {
+    grid-template-columns: 1fr;
+  }
+
+  html .admin-gendaz .admin-assinatura__add-grid {
+    grid-template-columns: 1fr;
+  }
+
+  html .admin-gendaz .admin-assinatura__add-actions {
+    justify-content: stretch;
+  }
+
+  html .admin-gendaz .admin-assinatura__add-actions .btn {
+    width: 100%;
+  }
+
+  html .admin-gendaz .admin-assinatura,
+  html .admin-gendaz .admin-assinatura__add {
+    padding: 12px 14px;
+  }
 }
 
 html .admin-gendaz .admin-assinatura__edit {

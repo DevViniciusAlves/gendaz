@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminLoginRequest;
+import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminAcaoEmpresaRequest;
 import com.minhaempresa.gendaz.admin.repository.AdminImpersonationSessionRepository;
 import com.minhaempresa.gendaz.chamado.repository.ChamadoRepository;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
@@ -12,6 +13,8 @@ import com.minhaempresa.gendaz.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.gendaz.auth.service.PasswordService;
 import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
+import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
@@ -102,6 +105,39 @@ class AdminServiceTest {
                 .validarSessao("token-invalido");
 
         assertThrows(com.minhaempresa.gendaz.shared.SessaoExpiradaException.class, () -> adminService.exigirAdmin("token-invalido"));
+    }
+
+    @Test
+    void deveDesativarEmpresaEEncerrarSessoesAtivas() {
+        UsuarioEntity admin = UsuarioEntity.builder().id(1L).perfil(PerfilUsuario.SUPER_ADMIN).build();
+        EmpresaEntity empresa = EmpresaEntity.builder()
+                .id(10L)
+                .nomeFantasia("Empresa teste")
+                .email("empresa@teste.com")
+                .status(StatusEmpresa.ATIVA)
+                .build();
+        UsuarioEntity dono = UsuarioEntity.builder()
+                .id(20L)
+                .empresa(empresa)
+                .perfil(PerfilUsuario.DONO)
+                .sessaoAtiva("sessao-cliente")
+                .build();
+
+        when(adminSessionService.validarSessao("token-admin")).thenReturn(admin);
+        when(empresaRepository.findById(10L)).thenReturn(Optional.of(empresa));
+        when(empresaRepository.save(empresa)).thenReturn(empresa);
+        when(usuarioRepository.findByEmpresaId(10L)).thenReturn(java.util.List.of(dono));
+        when(usuarioRepository.findByEmpresaIdAndPerfil(10L, PerfilUsuario.DONO)).thenReturn(java.util.List.of(dono));
+        when(assinaturaService.buscarAtualPorEmpresa(10L)).thenReturn(Optional.empty());
+        when(pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(10L)).thenReturn(java.util.List.of());
+
+        var response = adminService.desativarEmpresa(
+                "token-admin", 10L, new AdminAcaoEmpresaRequest("Bloqueio administrativo"), "127.0.0.1", "test"
+        );
+
+        assertEquals(StatusEmpresa.BLOQUEADA, empresa.getStatus());
+        assertEquals("BLOQUEADA", response.statusEmpresa());
+        verify(usuarioSessionService).encerrarSessao("sessao-cliente");
     }
 }
 
