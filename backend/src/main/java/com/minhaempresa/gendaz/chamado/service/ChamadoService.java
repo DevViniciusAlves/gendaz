@@ -62,7 +62,7 @@ public class ChamadoService {
                 usuario,
                 empresa,
                 "Chamado aberto pelo " + ("MEU_GENDAZ".equals(origemNormalizada) ? "Meu Gendaz" : "painel"),
-                request.assunto().trim(),
+                "chamadoId=" + chamado.getId(),
                 null,
                 null
         );
@@ -92,7 +92,7 @@ public class ChamadoService {
                 null,
                 empresa,
                 "Chamado aberto pelo Meu Gendaz",
-                request.assunto().trim(),
+                "chamadoId=" + chamado.getId(),
                 null,
                 null
         );

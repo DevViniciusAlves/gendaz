@@ -82,7 +82,7 @@ public class RecaptchaService {
             return success && score >= 0.5f;
 
         } catch (Exception ex) {
-            log.error("[recaptcha] erro ao validar: {}", ex.getMessage());
+            log.error("[recaptcha] erro ao validar. erroTipo={}", ex.getClass().getSimpleName());
             return false;
         }
     }

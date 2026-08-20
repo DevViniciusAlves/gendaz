@@ -413,7 +413,7 @@ export default function Agenda() {
       setModalCriar(false)
       setForm(novoFormulario)
       reload(true).catch((error) => {
-        console.warn('[agenda-debug] falha ao recarregar agenda após criar', error)
+        console.warn('[agenda-debug] falha ao recarregar agenda após criar')
       })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
@@ -461,7 +461,7 @@ export default function Agenda() {
       setModalEditar(false)
       setEdicao(null)
       reload(true).catch((error) => {
-        console.warn('[agenda-debug] falha ao recarregar agenda após editar', error)
+        console.warn('[agenda-debug] falha ao recarregar agenda após editar')
       })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''

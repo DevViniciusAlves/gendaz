@@ -219,10 +219,10 @@ export default function AdminDashboard() {
       if (results[6].status === 'fulfilled') setPlanos(Array.isArray(results[6].value) ? results[6].value : [])
 
       if (results.some(r => r.status === 'rejected')) {
-        console.error('Algumas chamadas falharam:', results.filter(r => r.status === 'rejected'))
+        console.error('Algumas chamadas do painel falharam')
       }
     } catch (e) {
-      console.error('Falha crítica ao carregar painel:', e)
+      console.error('Falha crítica ao carregar painel')
       setErro('Erro crítico ao carregar painel. Tente novamente.')
     } finally {
       setCarregando(false)

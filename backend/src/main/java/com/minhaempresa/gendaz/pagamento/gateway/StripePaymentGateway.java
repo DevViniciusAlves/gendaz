@@ -101,7 +101,7 @@ public class StripePaymentGateway implements PaymentGateway {
                 }
             }
         } catch (StripeException e) {
-            log.warn("Erro ao buscar customer Stripe por email: {}", e.getMessage());
+            log.warn("Erro ao buscar customer Stripe por email. erroTipo={}", e.getClass().getSimpleName());
         }
 
         try {
@@ -163,7 +163,7 @@ public class StripePaymentGateway implements PaymentGateway {
                 ));
             }
         } catch (StripeException ex) {
-            log.warn("Erro ao consultar session {} na Stripe: {}", pagamento.getStripeSessionId(), ex.getMessage());
+            log.warn("Erro ao consultar session na Stripe para pagamentoId={}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
         }
         return Optional.empty();
     }
@@ -188,7 +188,7 @@ public class StripePaymentGateway implements PaymentGateway {
         try {
             Subscription subscription = Subscription.retrieve(subscriptionId);
             subscription.cancel();
-            log.info("Subscription Stripe cancelada: subscriptionId={}", subscriptionId);
+            log.info("Subscription Stripe cancelada com sucesso");
         } catch (Exception ex) {
             throw new BusinessException("Falha ao cancelar subscription Stripe: " + ex.getMessage());
         }
@@ -204,12 +204,12 @@ public class StripePaymentGateway implements PaymentGateway {
             Session session = Session.retrieve(sessionId);
             if ("open".equals(session.getStatus())) {
                 session.expire();
-                log.info("Checkout Session Stripe expirada: sessionId={}", sessionId);
+                log.info("Checkout Session Stripe expirada com sucesso");
             } else {
-                log.info("Checkout Session Stripe com status terminal: sessionId={}, status={}", sessionId, session.getStatus());
+                log.info("Checkout Session Stripe com status terminal: status={}", session.getStatus());
             }
         } catch (StripeException ex) {
-            log.warn("Erro ao expirar session {} na Stripe: {}", sessionId, ex.getMessage());
+            log.warn("Erro ao expirar session na Stripe. erroTipo={}", ex.getClass().getSimpleName());
         }
     }
 

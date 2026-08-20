@@ -96,7 +96,7 @@ export default function Promocoes() {
   }
 
   useEffect(() => {
-    carregar().catch((error) => console.error(error))
+    carregar().catch(() => console.error('[promocoes] erro ao carregar dados'))
   }, [empresaId])
 
   function abrirNovo() {

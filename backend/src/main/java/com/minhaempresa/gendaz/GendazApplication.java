@@ -44,7 +44,7 @@ public class GendazApplication {
     private void validarValorSeguro(String variavel, String valor, List<String> valoresProibidos) {
         valoresProibidos.forEach(proibido -> {
             if (valor.toLowerCase().contains(proibido.toLowerCase())) {
-                throw new IllegalStateException("Variável de ambiente " + variavel + " contém um valor padrão inseguro: " + valor);
+                throw new IllegalStateException("Variável de ambiente " + variavel + " contém um valor padrão inseguro.");
             }
         });
     }

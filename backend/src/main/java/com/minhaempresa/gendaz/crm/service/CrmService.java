@@ -207,7 +207,7 @@ public class CrmService {
                 crmContatoRepository.save(contato);
             });
         } catch (Exception e) {
-            log.warn("[crm] erro ao registrar abertura messageId={}: {}", messageId, e.getMessage());
+            log.warn("[crm] erro ao registrar abertura messageId={}. erroTipo={}", messageId, e.getClass().getSimpleName());
         }
     }
 

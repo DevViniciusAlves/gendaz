@@ -33,7 +33,7 @@ public class ProfissionalController {
             log.info("[profissional-debug] resposta criar profissional sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("[profissional-debug] erro no clique criar profissional. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[profissional-debug] erro no clique criar profissional. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             throw e;
         }
     }
@@ -57,7 +57,7 @@ public class ProfissionalController {
             log.info("[profissional-debug] resposta atualizar profissional sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("[profissional-debug] erro no clique atualizar profissional. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[profissional-debug] erro no clique atualizar profissional. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             throw e;
         }
     }

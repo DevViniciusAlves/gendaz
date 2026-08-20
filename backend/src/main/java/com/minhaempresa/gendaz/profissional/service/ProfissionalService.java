@@ -64,7 +64,7 @@ public class ProfissionalService {
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
             contextoErro.put("empresaId", request.empresaId());
-            log.error("[profissional-debug] erro ao criar profissional. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            log.error("[profissional-debug] erro ao criar profissional. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoErro);
             throw e;
         }
     }

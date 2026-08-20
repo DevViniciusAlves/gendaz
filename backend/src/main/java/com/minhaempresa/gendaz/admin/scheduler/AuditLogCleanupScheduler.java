@@ -35,7 +35,7 @@ public class AuditLogCleanupScheduler {
                 log.info("[audit-logs-cleanup] {} registros de auditoria removidos (retencao={} dias)", deletados, retentionDays);
             }
         } catch (Exception ex) {
-            log.error("[audit-logs-cleanup] erro ao limpar audit_logs: {}", ex.getMessage());
+            log.error("[audit-logs-cleanup] erro ao limpar audit_logs. erroTipo={}", ex.getClass().getSimpleName());
         }
     }
 }

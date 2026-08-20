@@ -40,7 +40,7 @@ public class ClienteController {
             log.info("[cliente-debug] resposta criar cliente sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
-            log.error("[cliente-debug] erro no clique criar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[cliente-debug] erro no clique criar cliente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             return ResponseEntity.badRequest().body(Map.of(
                     "erro", "TELEFONE_INVALIDO",
                     "mensagem", e.getMessage()
@@ -79,7 +79,7 @@ public class ClienteController {
             log.info("[cliente-debug] resposta atualizar cliente sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (BusinessException e) {
-            log.error("[cliente-debug] erro no clique atualizar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[cliente-debug] erro no clique atualizar cliente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             return ResponseEntity.badRequest().body(Map.of(
                     "erro", "TELEFONE_INVALIDO",
                     "mensagem", e.getMessage()

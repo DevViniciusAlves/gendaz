@@ -29,7 +29,7 @@ public class CrmWebhookController {
             }
             return ResponseEntity.ok(Map.of("received", true));
         } catch (Exception e) {
-            log.warn("[crm-webhook] erro ao processar evento: {}", e.getMessage());
+            log.warn("[crm-webhook] erro ao processar evento. erroTipo={}", e.getClass().getSimpleName());
             return ResponseEntity.ok(Map.of("received", true));
         }
     }

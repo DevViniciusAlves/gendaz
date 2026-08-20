@@ -219,7 +219,7 @@ public class AdminService {
                 && admin.getStatus() == StatusUsuario.ATIVO 
                 && passwordService.matches(senha, admin.getSenha());
         } catch (Exception e) {
-            log.warn("[validar-credenciais-admin] erro ao validar credenciais: {}", e.getMessage());
+            log.warn("[validar-credenciais-admin] erro ao validar credenciais. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }

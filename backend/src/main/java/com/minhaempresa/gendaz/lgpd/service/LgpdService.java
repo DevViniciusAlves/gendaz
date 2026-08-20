@@ -126,7 +126,7 @@ public class LgpdService {
                 );
             }
         } catch (Exception e) {
-            log.warn("Nao foi possivel carregar dados do plano para exportacao LGPD: {}", e.getMessage());
+            log.warn("Nao foi possivel carregar dados do plano para exportacao LGPD. erroTipo={}", e.getClass().getSimpleName());
         }
 
         // 6. Dados Tecnicos (Audit logs do proprio usuario)
@@ -244,12 +244,12 @@ public class LgpdService {
                 if (pagamento.getSubscriptionId() != null && !pagamento.getSubscriptionId().isBlank()) {
                     paymentGateway.cancelarSubscription(pagamento.getSubscriptionId());
                     algumCancelado = true;
-                    log.info("Subscription Stripe cancelada: empresa={}, subscriptionId={}", empresa.getId(), pagamento.getSubscriptionId());
+                    log.info("Subscription Stripe cancelada: empresa={}", empresa.getId());
                 }
             }
             return algumCancelado ? "CANCELADO" : "NENHUMA_ASSINATURA_ATIVA";
         } catch (Exception ex) {
-            log.error("Falha ao cancelar subscription Stripe para empresa {}: {}", empresa.getId(), ex.getMessage(), ex);
+            log.error("Falha ao cancelar subscription Stripe para empresa {}. erroTipo={}", empresa.getId(), ex.getClass().getSimpleName());
             return "FALHA_AO_CANCELAR";
         }
     }

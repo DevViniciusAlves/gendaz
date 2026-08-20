@@ -37,12 +37,12 @@ public class MeuGendazPromocaoService {
         try {
             syncService.sincronizarEmpresa(empresaId);
         } catch (Exception e) {
-            log.warn("[meu-gendaz] falha ao sincronizar promocoes da empresa {}: {}", empresaId, e.getMessage());
+            log.warn("[meu-gendaz] falha ao sincronizar promocoes da empresa {}. erroTipo={}", empresaId, e.getClass().getSimpleName());
         }
         try {
             garantirNotificacoes(cliente);
         } catch (Exception e) {
-            log.warn("[meu-gendaz] falha ao garantir notificacoes do cliente {}: {}", cliente.getId(), e.getMessage());
+            log.warn("[meu-gendaz] falha ao garantir notificacoes do cliente {}. erroTipo={}", cliente.getId(), e.getClass().getSimpleName());
         }
         LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
         return adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
@@ -140,7 +140,7 @@ public class MeuGendazPromocaoService {
         try {
             syncService.sincronizarEmpresa(empresa.getId());
         } catch (Exception e) {
-            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para aplicar cupom: {}", empresa.getId(), e.getMessage());
+            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para aplicar cupom. erroTipo={}", empresa.getId(), e.getClass().getSimpleName());
         }
         Optional<MeuGendazPromocaoEntity> opt = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), codigoNormalizado);
         if (opt.isEmpty()) {
@@ -196,7 +196,7 @@ public class MeuGendazPromocaoService {
         try {
             syncService.sincronizarEmpresa(empresa.getId());
         } catch (Exception e) {
-            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para validar cupom: {}", empresa.getId(), e.getMessage());
+            log.warn("[meu-gendaz] falha ao sincronizar empresa {} para validar cupom. erroTipo={}", empresa.getId(), e.getClass().getSimpleName());
         }
         Optional<MeuGendazPromocaoEntity> opt = promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresa.getId(), codigoNormalizado);
         if (opt.isEmpty()) {
@@ -226,7 +226,7 @@ public class MeuGendazPromocaoService {
             try {
                 syncService.sincronizarPromocao(empresaId, admin.get().getId());
             } catch (Exception e) {
-                log.warn("[meu-gendaz] falha ao sincronizar cupom {}: {}", codigoNormalizado, e.getMessage());
+                log.warn("[meu-gendaz] falha ao sincronizar cupom. erroTipo={}", e.getClass().getSimpleName());
             }
         }
         return promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresaId, codigoNormalizado)

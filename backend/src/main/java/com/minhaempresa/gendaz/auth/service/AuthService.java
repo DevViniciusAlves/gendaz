@@ -89,7 +89,7 @@ public class AuthService {
                     && usuario.getStatus() == StatusUsuario.ATIVO
                     && passwordService.matches(senha, usuario.getSenha());
         } catch (Exception e) {
-            log.warn("[validar-credenciais] erro ao validar credenciais: {}", e.getMessage());
+            log.warn("[validar-credenciais] erro ao validar credenciais. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -244,7 +244,7 @@ public class AuthService {
         } catch (BusinessException ex) {
             throw ex;
         } catch (RuntimeException ex) {
-            log.error("Login falhou para {} em {} ms. Causa real abaixo.", mascararEmail(email), duracaoMs(inicio), ex);
+            log.error("Login falhou para {} em {} ms. erroTipo={}", mascararEmail(email), duracaoMs(inicio), ex.getClass().getSimpleName());
             throw ex;
         }
     }
@@ -313,7 +313,7 @@ public class AuthService {
                 log.error("[IDEMPOTENCIA] falhou requestId={} keyHash={} resultado=FAILED",
                         requestIdFinal, idempotencia.getKeyHash());
             }
-            log.error("Cadastro falhou para {} em {} ms. Causa real abaixo.", mascararEmail(email), duracaoMs(inicio), ex);
+            log.error("Cadastro falhou para {} em {} ms. erroTipo={}", mascararEmail(email), duracaoMs(inicio), ex.getClass().getSimpleName());
             throw ex;
         }
     }
@@ -360,7 +360,7 @@ public class AuthService {
                         cadastro.usuario().getId()
                 );
             } catch (Exception e) {
-                log.error("[admin-notification] erro ao enviar notificacao de novo cliente: {}", e.getMessage(), e);
+                log.error("[admin-notification] erro ao enviar notificacao de novo cliente. erroTipo={}", e.getClass().getSimpleName());
             }
         }
 
@@ -579,10 +579,9 @@ public class AuthService {
         Optional<EmpresaEntity> empByName = empresaRepository.findByNomeFantasiaNormalizado(nomeEmpresa);
         List<UsuarioEntity> usersByEmail = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
 
-        String diagLog = String.format("[CADASTRO-DIAG] telefoneNormalizado=%s telefoneExiste=%b telefoneEmpresaId=%s nomeNormalizado='%s' nomeExiste=%b nomeEmpresaId=%s emailNormalizado=%s emailQtd=%d emailUsuarioIds=%s",
-              telefone, empByTel.isPresent(), empByTel.map(e -> e.getId().toString()).orElse("null"),
-              nomeEmpresa, empByName.isPresent(), empByName.map(e -> e.getId().toString()).orElse("null"),
-              mascararEmail(email), usersByEmail.size(),
+        String diagLog = String.format("[CADASTRO-DIAG] telefoneExiste=%b telefoneEmpresaId=%s nomeExiste=%b nomeEmpresaId=%s emailQtd=%d emailUsuarioIds=%s",
+              empByTel.isPresent(), empByTel.map(e -> e.getId().toString()).orElse("null"),
+              empByName.isPresent(), empByName.map(e -> e.getId().toString()).orElse("null"), usersByEmail.size(),
               usersByEmail.stream().map(u -> u.getId().toString()).toList());
 
         if (empByTel.isPresent()) {

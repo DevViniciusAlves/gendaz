@@ -81,7 +81,6 @@ public class AgendamentoService {
         contextoInicio.put("profissionalId", request.profissionalId());
         contextoInicio.put("data", request.data());
         contextoInicio.put("horaInicio", request.horaInicio());
-        contextoInicio.put("observacoes", request.observacoes());
         log.debug("[agendamento-debug] inicio criacao agendamento {}", contextoInicio);
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
@@ -113,17 +112,10 @@ public class AgendamentoService {
             AgendamentoEntity salvo = salvarAgendamentoComProtocolo(agendamento);
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("agendamentoId", salvo.getId());
-            contextoSucesso.put("protocolo", salvo.getProtocolo());
             contextoSucesso.put("empresaId", empresa.getId());
             contextoSucesso.put("clienteId", cliente.getId());
-            contextoSucesso.put("clienteNome", cliente.getNome());
             contextoSucesso.put("servicoId", servico.getId());
-            contextoSucesso.put("servicoNome", servico.getNome());
             contextoSucesso.put("profissionalId", profissional.getId());
-            contextoSucesso.put("profissionalNome", profissional.getNome());
-            contextoSucesso.put("data", salvo.getData());
-            contextoSucesso.put("horaInicio", salvo.getHoraInicio());
-            contextoSucesso.put("horaFim", salvo.getHoraFim());
             contextoSucesso.put("status", salvo.getStatus());
             log.info("[agendamento-debug] agendamento salvo com sucesso {}", contextoSucesso);
 
@@ -143,9 +135,7 @@ public class AgendamentoService {
                 } catch (Exception e) {
                     Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
                     contextoCupomErro.put("agendamentoId", salvo.getId());
-                    contextoCupomErro.put("protocolo", salvo.getProtocolo());
-                    contextoCupomErro.put("cupomCodigo", request.cupomCodigo());
-                    log.warn("[agendamento-debug] cupom nao aplicado. mensagem='{}' contexto={}", e.getMessage(), contextoCupomErro, e);
+                    log.warn("[agendamento-debug] cupom nao aplicado. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoCupomErro);
                     throw new BusinessException(e.getMessage());
                 }
             }
@@ -160,24 +150,22 @@ public class AgendamentoService {
             } catch (Exception e) {
                 Map<String, Object> contextoPagamentoErro = new LinkedHashMap<>();
                 contextoPagamentoErro.put("agendamentoId", salvo.getId());
-                contextoPagamentoErro.put("protocolo", salvo.getProtocolo());
                 contextoPagamentoErro.put("empresaId", empresa.getId());
                 contextoPagamentoErro.put("clienteId", cliente.getId());
                 contextoPagamentoErro.put("servicoId", servico.getId());
                 contextoPagamentoErro.put("profissionalId", profissional.getId());
-                log.warn("[agendamento-debug] falha ao criar pagamento pendente. mensagem='{}' contexto={}", e.getMessage(), contextoPagamentoErro, e);
+                log.warn("[agendamento-debug] falha ao criar pagamento pendente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoPagamentoErro);
             }
             try {
                 resendEmailService.enviarEmailNovoAgendamento(empresa, salvo);
             } catch (Exception e) {
                 Map<String, Object> contextoEmailErro = new LinkedHashMap<>();
                 contextoEmailErro.put("agendamentoId", salvo.getId());
-                contextoEmailErro.put("protocolo", salvo.getProtocolo());
                 contextoEmailErro.put("empresaId", empresa.getId());
                 contextoEmailErro.put("clienteId", cliente.getId());
                 contextoEmailErro.put("servicoId", servico.getId());
                 contextoEmailErro.put("profissionalId", profissional.getId());
-                log.error("[agendamento-debug] falha ao enviar email. mensagem='{}' contexto={}", e.getMessage(), contextoEmailErro, e);
+                log.error("[agendamento-debug] falha ao enviar email. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailErro);
             }
             try {
                 resendEmailService.enviarConfirmacaoAgendamento(
@@ -193,9 +181,7 @@ public class AgendamentoService {
             } catch (Exception e) {
                 Map<String, Object> contextoEmailConfirmacaoErro = new LinkedHashMap<>();
                 contextoEmailConfirmacaoErro.put("agendamentoId", salvo.getId());
-                contextoEmailConfirmacaoErro.put("protocolo", salvo.getProtocolo());
-                contextoEmailConfirmacaoErro.put("clienteEmail", cliente.getEmail());
-                log.error("[agendamento-debug] falha ao enviar email de confirmacao. mensagem='{}' contexto={}", e.getMessage(), contextoEmailConfirmacaoErro, e);
+                log.error("[agendamento-debug] falha ao enviar email de confirmacao. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailConfirmacaoErro);
             }
             return mapper.toResponse(salvo);
         } catch (Exception e) {
@@ -204,10 +190,7 @@ public class AgendamentoService {
             contextoErro.put("clienteId", request.clienteId());
             contextoErro.put("servicoId", request.servicoId());
             contextoErro.put("profissionalId", request.profissionalId());
-            contextoErro.put("data", request.data());
-            contextoErro.put("horaInicio", request.horaInicio());
-            contextoErro.put("observacoes", request.observacoes());
-            log.error("[agendamento-debug] erro ao criar agendamento. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            log.error("[agendamento-debug] erro ao criar agendamento. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoErro);
             throw e;
         }
     }

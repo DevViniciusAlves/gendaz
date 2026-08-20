@@ -44,7 +44,7 @@ public class AuthController {
             }
             throw ex;
         } catch (RuntimeException ex) {
-            log.error("Erro real no POST /api/auth/login para email={}", mascararEmail(request.email()), ex);
+            log.error("Erro no POST /api/auth/login para email={}. erroTipo={}", mascararEmail(request.email()), ex.getClass().getSimpleName());
             throw ex;
         }
     }
@@ -65,7 +65,7 @@ public class AuthController {
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
         } catch (RuntimeException ex) {
-            log.error("Erro real no POST /api/auth/criar-conta para email={} requestId={}", mascararEmail(request.email()), requestId, ex);
+            log.error("Erro no POST /api/auth/criar-conta para email={} requestId={}. erroTipo={}", mascararEmail(request.email()), requestId, ex.getClass().getSimpleName());
             throw ex;
         }
     }
@@ -105,7 +105,7 @@ public class AuthController {
         try {
             authService.logout(sessionToken);
         } catch (BusinessException ex) {
-            log.debug("Logout sem sessao valida (best-effort): {}", ex.getMessage());
+            log.debug("Logout sem sessao valida (best-effort). erroTipo={}", ex.getClass().getSimpleName());
         }
         cookieService.limparCookie(http, response, SESSION_COOKIE);
         cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);

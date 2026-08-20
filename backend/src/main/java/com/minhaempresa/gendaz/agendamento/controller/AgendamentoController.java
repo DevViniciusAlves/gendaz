@@ -35,21 +35,17 @@ public class AgendamentoController {
         contexto.put("clienteId", request.clienteId());
         contexto.put("servicoId", request.servicoId());
         contexto.put("profissionalId", request.profissionalId());
-        contexto.put("data", request.data());
-        contexto.put("horaInicio", request.horaInicio());
-        contexto.put("observacoes", request.observacoes());
         log.debug("[agendamento-debug] clique em criar agendamento {}", contexto);
         try {
             AgendamentoResponse response = agendamentoService.criar(request);
             Map<String, Object> retorno = new LinkedHashMap<>();
             retorno.put("agendamentoId", response.id());
-            retorno.put("protocolo", response.protocolo());
             retorno.put("status", response.status());
             retorno.put("empresaId", request.empresaId());
             log.info("[agendamento-debug] resposta criar agendamento sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("[agendamento-debug] erro no clique criar agendamento. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[agendamento-debug] erro no clique criar agendamento. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             throw e;
         }
     }
@@ -82,22 +78,18 @@ public class AgendamentoController {
         contexto.put("clienteId", request.clienteId());
         contexto.put("servicoId", request.servicoId());
         contexto.put("profissionalId", request.profissionalId());
-        contexto.put("data", request.data());
-        contexto.put("horaInicio", request.horaInicio());
         contexto.put("status", request.status());
-        contexto.put("observacoes", request.observacoes());
         log.debug("[agendamento-debug] clique em atualizar agendamento {}", contexto);
         try {
             AgendamentoResponse response = agendamentoService.atualizar(id, request);
             Map<String, Object> retorno = new LinkedHashMap<>();
             retorno.put("agendamentoId", response.id());
-            retorno.put("protocolo", response.protocolo());
             retorno.put("status", response.status());
             retorno.put("empresaId", request.empresaId());
             log.info("[agendamento-debug] resposta atualizar agendamento sucesso {}", retorno);
             return ResponseEntity.ok(response);
         } catch (Exception e) {
-            log.error("[agendamento-debug] erro no clique atualizar agendamento. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[agendamento-debug] erro no clique atualizar agendamento. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             throw e;
         }
     }

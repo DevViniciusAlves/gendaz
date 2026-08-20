@@ -23,7 +23,7 @@ public class InsightsCleanupScheduler {
                 log.info("[insights-cleanup] {} insights expirados removidos", deletados);
             }
         } catch (Exception ex) {
-            log.error("[insights-cleanup] erro ao limpar insights expirados: {}", ex.getMessage());
+            log.error("[insights-cleanup] erro ao limpar insights expirados. erroTipo={}", ex.getClass().getSimpleName());
         }
     }
 }

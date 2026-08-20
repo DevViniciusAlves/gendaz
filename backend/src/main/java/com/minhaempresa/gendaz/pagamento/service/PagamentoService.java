@@ -149,7 +149,7 @@ public class PagamentoService {
                 }
             }
         } catch (Exception ex) {
-            log.warn("Erro ao consultar Stripe para checkout id={} antes de expirar: {}", pagamento.getId(), ex.getMessage());
+            log.warn("Erro ao consultar Stripe para checkout id={} antes de expirar. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
         }
 
         // Invalidar a Session Stripe se ainda estiver aberta
@@ -157,7 +157,7 @@ public class PagamentoService {
             try {
                 paymentGateway.expirarCheckoutSession(pagamento.getStripeSessionId());
             } catch (Exception ex) {
-                log.warn("Falha ao invalidar Session Stripe {} para checkout id={}: {}", pagamento.getStripeSessionId(), pagamento.getId(), ex.getMessage());
+                log.warn("Falha ao invalidar Session Stripe para checkout id={}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
             }
         }
 
@@ -209,8 +209,8 @@ public class PagamentoService {
                 // Validar que existe checkoutUrl e stripeSessionId utilizáveis
                 if (pendente.getCheckoutUrl() != null && !pendente.getCheckoutUrl().isBlank()
                         && pendente.getStripeSessionId() != null && !pendente.getStripeSessionId().isBlank()) {
-                    log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}, session={}",
-                            pendente.getId(), empresaId, plano.getNome(), pendente.getStripeSessionId());
+                    log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}",
+                            pendente.getId(), empresaId, plano.getNome());
                     return pendente;
                 }
             } else {
@@ -245,8 +245,8 @@ public class PagamentoService {
         pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
         
         pagamento = pagamentoPlanoRepository.save(pagamento);
-        log.info("Checkout criado: pagamentoId={}, empresaId={}, plano={}, session={}",
-                pagamento.getId(), empresaId, plano.getNome(), pagamento.getStripeSessionId());
+        log.info("Checkout criado: pagamentoId={}, empresaId={}, plano={}",
+                pagamento.getId(), empresaId, plano.getNome());
         return pagamento;
     }
 
@@ -675,7 +675,7 @@ public class PagamentoService {
             aplicarStatusPagamentoPlano(pagamento, confirmado.status());
             return pagamentoPlanoRepository.save(pagamento);
         } catch (BusinessException ex) {
-            log.warn("Consulta direta ao gateway nao confirmou pagamento {}: {}", pagamento.getId(), ex.getMessage());
+            log.warn("Consulta direta ao gateway nao confirmou pagamento {}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
             return pagamento;
         }
     }

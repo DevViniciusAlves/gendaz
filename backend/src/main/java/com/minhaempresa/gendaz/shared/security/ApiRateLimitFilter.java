@@ -51,18 +51,19 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
             String chave = chaveRateLimit(request);
             if (chave != null) {
                 Janela janela = janelas.get(chave, k -> new Janela(Instant.now()));
+                Duration duracao = duracaoDaRota(request);
                 synchronized (janela) {
-                    if (janela.expirou(janelaDuracao)) {
+                    if (janela.expirou(duracao)) {
                         janela.reiniciar();
                     }
                     if (janela.quantidade.incrementAndGet() > limiteDaRota(request)) {
-                        escreverRateLimit(response, janela.segundosRestantes(janelaDuracao));
+                        escreverRateLimit(response, janela.segundosRestantes(duracao));
                         return;
                     }
                 }
             }
         } catch (Exception ex) {
-            log.error("Rate limit local falhou para {} {}.", request.getMethod(), request.getRequestURI(), ex);
+            log.error("Rate limit local falhou para {} {}. erroTipo={}", request.getMethod(), request.getRequestURI(), ex.getClass().getSimpleName());
             if (endpointCritico(request)) {
                 response.setStatus(503);
                 response.setContentType("application/json;charset=UTF-8");
@@ -88,8 +89,14 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
         if (path.contains("/api/admin/auth/login")) {
             return 5;
         }
-        if (path.contains("/api/auth/login") || path.contains("/api/auth/criar-conta")) {
-            return 8;
+        if (path.equals("/api/auth/login")) {
+            return RateLimitConfig.Limits.LOGIN_PER_MINUTE;
+        }
+        if (path.equals("/api/auth/criar-conta")) {
+            return RateLimitConfig.Limits.REGISTRAR_PER_MINUTE;
+        }
+        if (isWebhookPost(path, method)) {
+            return RateLimitConfig.Limits.WEBHOOK_PER_MINUTE;
         }
         if (path.contains("/api/auth/recuperar-senha") || path.contains("/api/auth/redefinir-senha")) {
             return 4;
@@ -106,6 +113,16 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
         return limitePadrao;
     }
 
+    private Duration duracaoDaRota(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        if (path != null && (path.equals("/api/auth/login")
+                || path.equals("/api/auth/criar-conta")
+                || isWebhookPost(path, request.getMethod()))) {
+            return Duration.ofMinutes(1);
+        }
+        return janelaDuracao;
+    }
+
     private String chaveRateLimit(HttpServletRequest request) {
         String path = request.getRequestURI();
         if (path == null || path.isBlank() || path.startsWith("/health") || path.startsWith("/actuator/health")) {
@@ -115,7 +132,8 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
                 || path.startsWith("/api/admin/auth/")
                 || path.startsWith("/api/meu-gendaz/auth/")
                 || path.startsWith("/api/public/agendamento/")
-                || path.startsWith("/api/agendamento-publico/")) {
+                || path.startsWith("/api/agendamento-publico/")
+                || isWebhookPost(path, request.getMethod())) {
             return clientIpResolver.resolve(request) + ":" + request.getMethod() + ":" + path;
         }
         return null;
@@ -147,6 +165,17 @@ public class ApiRateLimitFilter extends OncePerRequestFilter {
     private boolean isAgendamentoPublicoGet(String path, String method) {
         return "GET".equalsIgnoreCase(method)
                 && (path.startsWith("/api/public/agendamento/") || path.startsWith("/api/agendamento-publico/"));
+    }
+
+    private boolean isWebhookPost(String path, String method) {
+        if (!"POST".equalsIgnoreCase(method) || path == null) {
+            return false;
+        }
+        return path.equals("/api/pagamentos/planos/webhook")
+                || path.equals("/api/pagamentos/webhook/stripe")
+                || path.equals("/api/crm/webhook")
+                || path.equals("/api/webhooks")
+                || path.startsWith("/api/webhooks/");
     }
 
     private void escreverRateLimit(HttpServletResponse response, long retryAfter) throws IOException {

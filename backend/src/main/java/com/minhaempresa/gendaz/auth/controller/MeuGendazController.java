@@ -468,7 +468,7 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            log.error("[meu-gendaz] erro ao abrir chamado", e);
+            log.error("[meu-gendaz] erro ao abrir chamado. erroTipo={}", e.getClass().getSimpleName());
             return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel abrir o chamado.", "erro", e.getMessage()));
         }
     }
@@ -485,7 +485,7 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.status(401).body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            log.error("[meu-gendaz] erro ao listar chamados", e);
+            log.error("[meu-gendaz] erro ao listar chamados. erroTipo={}", e.getClass().getSimpleName());
             return ResponseEntity.status(500).body(Map.of("mensagem", "Nao foi possivel carregar os chamados."));
         }
     }

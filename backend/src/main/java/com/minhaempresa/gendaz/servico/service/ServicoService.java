@@ -38,7 +38,6 @@ public class ServicoService {
     public ServicoResponse salvar(SalvarServicoRequest request) {
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
         contextoInicio.put("empresaId", request.empresaId());
-        contextoInicio.put("nome", request.nome());
         contextoInicio.put("duracaoMinutos", request.duracaoMinutos());
         contextoInicio.put("valor", request.valor());
         contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
@@ -60,7 +59,6 @@ public class ServicoService {
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("servicoId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
-            contextoSucesso.put("nome", salvo.getNome());
             contextoSucesso.put("duracaoMinutos", salvo.getDuracaoMinutos());
             contextoSucesso.put("valor", salvo.getValor());
             log.info("[servico-debug] servico criado com sucesso {}", contextoSucesso);
@@ -68,10 +66,9 @@ public class ServicoService {
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
             contextoErro.put("empresaId", request.empresaId());
-            contextoErro.put("nome", request.nome());
             contextoErro.put("duracaoMinutos", request.duracaoMinutos());
             contextoErro.put("valor", request.valor());
-            log.error("[servico-debug] erro ao criar servico. mensagem='{}' contexto={}", e.getMessage(), contextoErro, e);
+            log.error("[servico-debug] erro ao criar servico. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoErro);
             throw e;
         }
     }

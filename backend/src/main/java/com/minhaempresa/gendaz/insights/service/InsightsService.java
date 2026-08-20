@@ -152,7 +152,7 @@ public class InsightsService {
                     LocalDateTime.now(ZoneId.of(appTimezone))
             );
         } catch (Exception e) {
-            log.warn("[meu-gendaz-ia] resposta invalida da groq, usando fallback: {}", e.getMessage());
+            log.warn("[meu-gendaz-ia] resposta invalida da groq, usando fallback. erroTipo={}", e.getClass().getSimpleName());
             return responderClienteLocalmente(empresaId, pergunta, dados);
         }
     }
@@ -282,7 +282,7 @@ public class InsightsService {
             Map<String, Object> json = objectMapper.readValue(resposta.get(), new TypeReference<>() {});
             return construirDashboardLocal(empresaId, dados, origem, json, fallback);
         } catch (Exception e) {
-            log.warn("[insights] json invalido do groq, usando fallback: {}", e.getMessage());
+            log.warn("[insights] json invalido do groq, usando fallback. erroTipo={}", e.getClass().getSimpleName());
             return fallback;
         }
     }
@@ -430,7 +430,7 @@ public class InsightsService {
             }
             return Optional.of(objectMapper.readValue(insight.getResposta(), DashboardResponse.class));
         } catch (Exception e) {
-            log.warn("[INSIGHTS] empresa={} acao=READ_SNAPSHOT_PARSE_ERROR snapshotId={}: {}", insight.getEmpresaId(), insight.getId(), e.getMessage());
+            log.warn("[INSIGHTS] empresa={} acao=READ_SNAPSHOT_PARSE_ERROR snapshotId={} erroTipo={}", insight.getEmpresaId(), insight.getId(), e.getClass().getSimpleName());
             return Optional.empty();
         }
     }

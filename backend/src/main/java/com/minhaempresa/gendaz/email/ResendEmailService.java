@@ -79,7 +79,7 @@ public class ResendEmailService {
             String html = montarHtmlBoasVindas(safe(nomeCliente, "cliente"), safe(nomeEmpresa, "Gendaz"));
             return enviarEmail(emailCliente, assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email boas-vindas: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email boas-vindas. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -95,7 +95,7 @@ public class ResendEmailService {
             String html = montarHtmlRecuperacao(safe(nomeCliente, "cliente"), link);
             return enviarEmail(emailCliente, assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email recuperacao: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email recuperacao. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -110,7 +110,7 @@ public class ResendEmailService {
             String html = montarHtmlNovoAgendamento(agendamento);
             return enviarEmail(empresa.getEmail(), assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email novo agendamento: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email novo agendamento. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -125,7 +125,7 @@ public class ResendEmailService {
             String html = montarHtmlCodigoMeuGendaz(safe(nomeCliente, "cliente"), safe(codigo, "000000"));
             return enviarEmail(emailCliente, assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email de codigo Meu Gendaz: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email de codigo Meu Gendaz. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -184,7 +184,7 @@ public class ResendEmailService {
             );
             return enviarEmail(email, "Convite para acessar a conta " + safe(empresa, "Gendaz"), html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email de convite: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email de convite. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -246,7 +246,7 @@ public class ResendEmailService {
                     "Agendar com desconto"
             );
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email promocao: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email promocao. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -299,7 +299,7 @@ public class ResendEmailService {
                     "Ver meus agendamentos"
             );
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email confirmacao: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email confirmacao. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -349,7 +349,7 @@ public class ResendEmailService {
                     "Acessar o portal"
             );
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email lembrete: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email lembrete. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -401,7 +401,7 @@ public class ResendEmailService {
             log.warn("[resend] resposta nao-sucedida status={}", response.statusCode());
             return false;
         } catch (Exception e) {
-            log.error("[resend] falha ao enviar email: {}", e.getMessage(), e);
+            log.error("[resend] falha ao enviar email. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }
@@ -567,7 +567,7 @@ public class ResendEmailService {
                     plano, dataCadastro, empresaId, usuarioId);
             return enviarEmail(adminNotificationEmail, assunto, html);
         } catch (Exception e) {
-            log.error("[resend] erro ao montar email novo cliente: {}", e.getMessage(), e);
+            log.error("[resend] erro ao montar email novo cliente. erroTipo={}", e.getClass().getSimpleName());
             return false;
         }
     }

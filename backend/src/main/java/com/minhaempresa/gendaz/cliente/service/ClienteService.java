@@ -86,12 +86,12 @@ public class ClienteService {
             contextoSucesso.put("clienteId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
             log.info("[cliente-debug] cliente criado com sucesso {}", contextoSucesso);
-            auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", salvo.getNome(), null, null);
+            auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", "clienteId=" + salvo.getId(), null, null);
             return mapper.toResponse(salvo);
         } catch (Exception e) {
             Map<String, Object> contexto = new LinkedHashMap<>();
             contexto.put("empresaId", request.empresaId());
-            log.error("[cliente-debug] erro ao criar cliente. mensagem='{}' contexto={}", e.getMessage(), contexto, e);
+            log.error("[cliente-debug] erro ao criar cliente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contexto);
             throw e;
         }
     }
@@ -133,7 +133,7 @@ public class ClienteService {
         cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
         ClienteEntity salvo = clienteRepository.save(cliente);
         clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
-        auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", salvo.getNome(), null, null);
+        auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", "clienteId=" + salvo.getId(), null, null);
         return mapper.toResponse(salvo);
     }
 
@@ -168,7 +168,7 @@ public class ClienteService {
         
         clienteRepository.save(cliente);
         
-        auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", cliente.getNome(), null, null);
+        auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", "clienteId=" + cliente.getId(), null, null);
     }
 
     @Transactional

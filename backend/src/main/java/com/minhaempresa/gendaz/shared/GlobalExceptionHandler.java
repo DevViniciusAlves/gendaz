@@ -79,7 +79,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("Erro inesperado em {} {}. Causa real abaixo.", request.getMethod(), request.getRequestURI(), ex);
+        log.error("Erro inesperado em {} {}. erroTipo={}", request.getMethod(), request.getRequestURI(), ex.getClass().getSimpleName());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiErrorResponse.of(500, "Erro interno", "Nao foi possivel concluir a operacao.", request.getRequestURI()));
     }

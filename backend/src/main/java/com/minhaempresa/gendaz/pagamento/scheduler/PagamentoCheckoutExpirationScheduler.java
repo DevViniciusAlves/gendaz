@@ -38,7 +38,7 @@ public class PagamentoCheckoutExpirationScheduler {
             try {
                 pagamentoService.expirarCheckoutPorTimeout(pagamento);
             } catch (Exception ex) {
-                log.error("Erro ao expirar checkout id={}: {}", pagamento.getId(), ex.getMessage());
+                log.error("Erro ao expirar checkout id={}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
             }
         }
         

@@ -244,7 +244,7 @@ public class PromocaoService {
             notificacao.setStatus("ERRO");
             notificacao.setMensagemErro(e.getMessage());
             promocaoNotificacaoRepository.save(notificacao);
-            log.warn("[promocao] erro ao notificar cliente {}: {}", notificacao.getCliente().getId(), e.getMessage());
+            log.warn("[promocao] erro ao notificar cliente {}. erroTipo={}", notificacao.getCliente().getId(), e.getClass().getSimpleName());
         }
     }
 

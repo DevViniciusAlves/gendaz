@@ -466,25 +466,10 @@ export const appApi = {
   async login(email, senha) {
     await garantirCsrfCookie().catch(() => {})
     const loginUrl = '/auth/login'
-    const baseURL = api.defaults?.baseURL || ''
-    const urlChamada = `${String(baseURL).replace(/\/+$/, '')}${loginUrl}`
-    console.info('[LOGIN-FRONT] tentativa iniciada', {
-      baseURL,
-      url: urlChamada,
-      horario: new Date().toISOString(),
-    })
     try {
       const response = await api.post(loginUrl, { email, senha })
       return response.data
     } catch (error) {
-      console.error('[LOGIN-FRONT] erro na tentativa', {
-        message: error?.message,
-        code: error?.code,
-        responseStatus: error?.response?.status,
-        responseData: error?.response?.data,
-        hasRequest: Boolean(error?.request),
-        url: urlChamada,
-      })
       throw error
     }
   },

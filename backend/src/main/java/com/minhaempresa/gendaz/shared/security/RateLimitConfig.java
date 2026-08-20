@@ -15,6 +15,7 @@ public class RateLimitConfig {
     public static class Limits {
         public static final int LOGIN_PER_MINUTE = 5;
         public static final int REGISTRAR_PER_MINUTE = 3;
+        public static final int WEBHOOK_PER_MINUTE = 20;
         public static final int HORARIOS_PER_MINUTE = 10;
         public static final int API_GERAL_PER_MINUTE = 300;
     }

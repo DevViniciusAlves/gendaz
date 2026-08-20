@@ -25,7 +25,7 @@ public class IpTrackingCleanupScheduler {
                 log.info("[ip-cleanup] {} registros de IP antigos foram removidos", deletados);
             }
         } catch (Exception ex) {
-            log.error("[ip-cleanup] erro ao limpar IPs antigos: {}", ex.getMessage());
+            log.error("[ip-cleanup] erro ao limpar IPs antigos. erroTipo={}", ex.getClass().getSimpleName());
         }
     }
 }

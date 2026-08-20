@@ -102,10 +102,10 @@ public class GroqClient {
             String content = contentNode.isTextual() ? contentNode.asText() : null;
             return Optional.ofNullable(content);
         } catch (IOException e) {
-            log.warn("[insights-groq] falha ao serializar ou ler resposta: {}", e.getMessage());
+            log.warn("[insights-groq] falha ao serializar ou ler resposta. erroTipo={}", e.getClass().getSimpleName());
             return Optional.empty();
         } catch (Exception e) {
-            log.warn("[insights-groq] falha ao analisar: {}", e.getMessage(), e);
+            log.warn("[insights-groq] falha ao analisar. erroTipo={}", e.getClass().getSimpleName());
             return Optional.empty();
         }
     }
@@ -160,10 +160,10 @@ public class GroqClient {
             String content = contentNode.isTextual() ? contentNode.asText() : null;
             return Optional.ofNullable(content);
         } catch (IOException e) {
-            log.warn("[insights-groq] falha ao serializar ou ler resposta: {}", e.getMessage());
+            log.warn("[insights-groq] falha ao serializar ou ler resposta. erroTipo={}", e.getClass().getSimpleName());
             return Optional.empty();
         } catch (Exception e) {
-            log.warn("[insights-groq] falha ao conversar: {}", e.getMessage(), e);
+            log.warn("[insights-groq] falha ao conversar. erroTipo={}", e.getClass().getSimpleName());
             return Optional.empty();
         }
     }
