@@ -144,6 +144,17 @@ function rotuloPlano(valor) {
   return 'Plano não identificado'
 }
 
+const PLANOS_PADRAO_ADMIN = [
+  { id: 'BASICO', nome: 'BASICO', descricao: 'Agenda, clientes e servicos.' },
+  { id: 'PRO', nome: 'PRO', descricao: 'Agenda com financeiro, pagamentos e relatorios.' },
+]
+
+function normalizarPlanosAdmin(planosRecebidos) {
+  const planosValidos = Array.isArray(planosRecebidos) ? planosRecebidos.filter((plano) => plano && plano.id != null && plano.nome) : []
+  if (planosValidos.length > 0) return planosValidos
+  return PLANOS_PADRAO_ADMIN
+}
+
 export default function AdminDashboard() {
   const navigate = useNavigate()
   const { adminUsuario, adminLogout, iniciarImpersonacao, impersonation, encerrarImpersonacao } = useAuth()
@@ -216,7 +227,8 @@ export default function AdminDashboard() {
       if (results[3].status === 'fulfilled') setChamados(Array.isArray(results[3].value) ? results[3].value : [])
       if (results[4].status === 'fulfilled') setLogs(Array.isArray(results[4].value) ? results[4].value : [])
       if (results[5].status === 'fulfilled') setConfig(results[5].value)
-      if (results[6].status === 'fulfilled') setPlanos(Array.isArray(results[6].value) ? results[6].value : [])
+      if (results[6].status === 'fulfilled') setPlanos(normalizarPlanosAdmin(results[6].value))
+      else setPlanos(PLANOS_PADRAO_ADMIN)
 
       if (results.some(r => r.status === 'rejected')) {
         console.error('Algumas chamadas do painel falharam')
@@ -1141,6 +1153,7 @@ export default function AdminDashboard() {
                   value={empresaEdicao.telefone}
                   onChangeValue={(valor) => setEmpresaEdicao((atual) => ({ ...atual, telefone: valor || '' }))}
                   helper="País, DDI e número no formato do país selecionado."
+                  className="field-wide"
                 />
                 <label className="field">
                   <span>E-mail</span>
@@ -1152,7 +1165,7 @@ export default function AdminDashboard() {
                   />
                 </label>
               </div>
-              <div className="admin-assinaturas-block">
+              <div className="admin-assinaturas-block field-wide">
                 <label className="field">
                   <span>Planos da conta (ate 2)</span>
                 </label>
@@ -1255,7 +1268,7 @@ export default function AdminDashboard() {
                   )
                 )}
               </div>
-              <label className="field">
+              <label className="field field-wide">
                 <span>Motivo obrigatorio</span>
                 <textarea
                   value={motivo}
