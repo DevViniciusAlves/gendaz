@@ -36,14 +36,14 @@ public class GroqClient {
             ObjectMapper objectMapper,
             OutboundTrafficAuditService auditService,
             @Value("${groq.api-key:${GROQ_API_KEY:}}") String apiKey,
-            @Value("${groq.model:llama-3.1-8b-instant}") String model,
-            @Value("${groq.fallback-model:llama-3.3-70b-versatile}") String fallbackModel
+            @Value("${groq.model:llama-3.3-70b-versatile}") String model,
+            @Value("${groq.fallback-model:llama-3.1-70b-versatile}") String fallbackModel
     ) {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "llama-3.1-8b-instant" : model.trim();
-        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama-3.3-70b-versatile" : fallbackModel.trim();
+        this.model = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
+        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama-3.1-70b-versatile" : fallbackModel.trim();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
@@ -99,7 +99,7 @@ public class GroqClient {
         }
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            log.warn("[insights-groq] resposta nao-sucedida status={}", response.statusCode());
+            log.warn("[insights-groq] resposta nao-sucedida status={} corpo={}", response.statusCode(), response.body());
             return Optional.empty();
         }
 
