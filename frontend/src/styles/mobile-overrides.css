@@ -6,28 +6,40 @@
     --mobile-surface: #1a1a1a;
   }
 
+  /* Replica a estrutura do desktop, mas com 1 coluna */
   .chat-layout {
     grid-template-columns: 1fr !important;
     height: auto !important;
+    gap: 14px !important;
   }
 
+  /* Oculta a lista de conversas e o painel do cliente no mobile */
   .conversation-list,
   .client-panel {
     display: none !important;
   }
 
+  /* Garante que o chat-center ocupe todo o espaço disponível */
   .chat-center {
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
     height: auto !important;
     max-height: calc(100dvh - 120px - env(safe-area-inset-bottom)) !important;
     overflow: hidden !important;
   }
 
+  /* Garante que o chat-body seja rolável */
   .chat-body {
-    max-height: calc(100dvh - 200px - env(safe-area-inset-bottom)) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 18px !important;
     overflow-y: auto !important;
-    height: 100% !important;
+    background: rgba(255, 255, 255, 0.02) !important;
+    min-height: 0 !important;
   }
 
+  /* Garante que o cabeçalho, ações e formulário não rolem */
   .chat-header,
   .chat-actions,
   .message-form {
