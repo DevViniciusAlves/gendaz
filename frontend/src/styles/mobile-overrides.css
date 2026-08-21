@@ -6,14 +6,32 @@
     --mobile-surface: #1a1a1a;
   }
 
+  .chat-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+
+  .conversation-list,
+  .client-panel {
+    display: none !important;
+  }
+
   .chat-center {
-    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom));
-    height: auto;
+    height: auto !important;
+    max-height: calc(100dvh - 120px - env(safe-area-inset-bottom)) !important;
+    overflow: hidden !important;
   }
 
   .chat-body {
-    max-height: calc(100dvh - 260px - env(safe-area-inset-bottom));
-    overflow-y: auto;
+    max-height: calc(100dvh - 200px - env(safe-area-inset-bottom)) !important;
+    overflow-y: auto !important;
+    height: 100% !important;
+  }
+
+  .chat-header,
+  .chat-actions,
+  .message-form {
+    flex-shrink: 0 !important;
   }
 
   html,

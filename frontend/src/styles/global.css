@@ -22996,3 +22996,17 @@ iframe {
   min-height: 0 !important;
 }
 .caixa-despesas-grid .historico-card strong { font-size: 14px !important; font-weight: 600; }
+
+/* Cores fixas dos cards Caixa/Despesas (plano PRO) */
+.caixa-despesas-grid .caixa-card {
+  border-top: 4px solid #1cfc63 !important;
+}
+.caixa-despesas-grid .caixa-card strong {
+  color: #1cfc63 !important;
+}
+.caixa-despesas-grid .despesas-card {
+  border-top: 4px solid #ff2b32 !important;
+}
+.caixa-despesas-grid .despesas-card strong {
+  color: #ff2b32 !important;
+}

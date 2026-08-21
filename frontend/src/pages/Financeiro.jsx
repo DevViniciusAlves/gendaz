@@ -282,7 +282,7 @@ export default function Financeiro() {
     .filter((item) => STATUS_CONFIRMADO.has(String(item.status || '').toUpperCase()))
     .reduce((sum, item) => sum + Number(item.valor || 0), 0)
 
-  const pendente = pagamentosDoMes
+  const pendente = pagamentosExpandidos
     .filter((item) => String(item.status || '').toUpperCase() === 'PENDENTE')
     .reduce((sum, item) => sum + Number(item.valor || 0), 0)
 
@@ -478,20 +478,20 @@ export default function Financeiro() {
 
       {isPlanoPro && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
-          <article className="metric-card caixa-card" style={{ borderTop: '3px solid #1cfc63' }}>
+          <article className="metric-card caixa-card">
             <div>
               <span>CAIXA</span>
-              <strong style={{ color: '#1cfc63' }}>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
+              <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
               <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
                 ADICIONAR
               </button>
             </div>
           </article>
 
-          <article className="metric-card despesas-card" style={{ borderTop: '3px solid #ff2b32' }}>
+          <article className="metric-card despesas-card">
             <div>
               <span>DESPESAS</span>
-              <strong style={{ color: '#ff2b32' }}>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
+              <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
               <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
                 ADICIONAR
               </button>
