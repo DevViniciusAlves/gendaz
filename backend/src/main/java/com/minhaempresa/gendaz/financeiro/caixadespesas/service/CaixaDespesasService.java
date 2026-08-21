@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.financeiro.caixadespesas.entity.CaixaDespesasLogE
 import com.minhaempresa.gendaz.financeiro.caixadespesas.enums.TipoCaixaDespesasLog;
 import com.minhaempresa.gendaz.financeiro.caixadespesas.repository.CaixaDespesasLogRepository;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
@@ -69,7 +70,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA, valor, nome + " - adicionou", obs, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA, valor, nome + " adicionou", obs, usuario, null);
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -82,7 +83,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_DESPESAS, valor, nome + " - adicionou", obs, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_DESPESAS, valor, nome + " adicionou", obs, usuario, null);
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -100,7 +101,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_CAIXA, subtrair, nome + " - removeu", null, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_CAIXA, subtrair, nome + " removeu", null, usuario, null);
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -118,7 +119,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_DESPESAS, subtrair, nome + " - removeu", null, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_DESPESAS, subtrair, nome + " removeu", null, usuario, null);
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -161,7 +162,23 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_REMOVIDO, valor, nome + " - removeu", null, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_REMOVIDO, valor, nome + " removeu", null, usuario, null);
+    }
+
+    @Transactional
+    public void registrarPagamentoCancelado(PagamentoEntity pagamento, Long usuarioId, StatusPagamento statusAnterior) {
+        EmpresaEntity empresa = pagamento.getEmpresa();
+        if (!assinaturaService.isPlanoPro(empresa.getId())) {
+            return;
+        }
+        BigDecimal valor = pagamento.getValor();
+        if (statusAnterior == StatusPagamento.PAGO) {
+            empresa.setCaixaTotal(empresa.getCaixaTotal().subtract(valor));
+            empresaRepository.save(empresa);
+        }
+        UsuarioEntity usuario = carregarUsuario(usuarioId);
+        String nome = usuario != null ? usuario.getNome() : "Usuario";
+        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_CANCELADO, valor, nome + " cancelou", null, usuario, null);
     }
 
     private String buildDescricaoPagamento(PagamentoEntity pagamento) {
@@ -176,11 +193,11 @@ public class CaixaDespesasService {
 
     private HistoricoItemResponse toItem(CaixaDespesasLogEntity log) {
         boolean positivo = switch (log.getTipo()) {
-            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS -> true;
+            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_DESPESAS -> true;
             default -> false;
         };
         String categoria = switch (log.getTipo()) {
-            case PAGAMENTO_APROVADO, PAGAMENTO_REMOVIDO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_CAIXA -> "CAIXA";
+            case PAGAMENTO_APROVADO, PAGAMENTO_REMOVIDO, PAGAMENTO_CANCELADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_CAIXA -> "CAIXA";
             case ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> "DESPESAS";
         };
         String usuarioNome = log.getUsuario() != null ? log.getUsuario().getNome() : null;

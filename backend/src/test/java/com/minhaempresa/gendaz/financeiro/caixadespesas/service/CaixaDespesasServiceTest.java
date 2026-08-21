@@ -158,4 +158,29 @@ class CaixaDespesasServiceTest {
         service.registrarPagamentoAprovado(pagamento);
         assertEquals(0, BigDecimal.ZERO.compareTo(empresa.getCaixaTotal()));
     }
+
+    @Test
+    void deveRegistrarPagamentoCanceladoEPuxarDoCaixaQuandoPago() {
+        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        PagamentoEntity pagamento = new PagamentoEntity();
+        pagamento.setId(3L);
+        pagamento.setEmpresa(empresa);
+        pagamento.setValor(new BigDecimal("150"));
+        empresa.setCaixaTotal(new BigDecimal("150"));
+
+        service.registrarPagamentoCancelado(pagamento, 5L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PAGO);
+        assertEquals(0, BigDecimal.ZERO.compareTo(empresa.getCaixaTotal()));
+    }
+
+    @Test
+    void naoDevePuxarDoCaixaAoCancelarPendente() {
+        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        PagamentoEntity pagamento = new PagamentoEntity();
+        pagamento.setEmpresa(empresa);
+        pagamento.setValor(new BigDecimal("150"));
+        empresa.setCaixaTotal(new BigDecimal("80"));
+
+        service.registrarPagamentoCancelado(pagamento, 5L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PENDENTE);
+        assertEquals(0, new BigDecimal("80").compareTo(empresa.getCaixaTotal()));
+    }
 }

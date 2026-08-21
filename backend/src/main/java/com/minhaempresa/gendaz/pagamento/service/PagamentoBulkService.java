@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.pagamento.service;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaResponse;
+import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.FalhaAcaoItem;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
@@ -10,6 +11,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -24,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PagamentoBulkService {
     private final PagamentoRepository pagamentoRepository;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
+    private final CaixaDespesasService caixaDespesasService;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     @Transactional
     public AcaoEmMassaResponse executar(AcaoEmMassaPagamentoRequest request) {
@@ -43,6 +47,7 @@ public class PagamentoBulkService {
             try {
                 PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaId(id, companyId)
                         .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
+                StatusPagamento statusAnterior = pagamento.getStatus();
                 switch (acao) {
                     case "MARCAR_COMO_PAGO" -> {
                         formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());
@@ -66,6 +71,11 @@ public class PagamentoBulkService {
                     default -> throw new BusinessException("Acao de pagamento nao suportada.");
                 }
                 pagamentoRepository.save(pagamento);
+                if (acao.equals("MARCAR_COMO_PAGO") && statusAnterior != StatusPagamento.PAGO) {
+                    caixaDespesasService.registrarPagamentoAprovado(pagamento);
+                } else if (acao.equals("MARCAR_COMO_PENDENTE") && statusAnterior == StatusPagamento.PAGO) {
+                    caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
+                }
                 processados++;
             } catch (RuntimeException ex) {
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));

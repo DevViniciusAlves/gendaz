@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.financeiro.caixadespesas.enums;
 public enum TipoCaixaDespesasLog {
     PAGAMENTO_APROVADO,
     PAGAMENTO_REMOVIDO,
+    PAGAMENTO_CANCELADO,
     ADICAO_MANUAL_CAIXA,
     ADICAO_MANUAL_DESPESAS,
     REMOCAO_MANUAL_CAIXA,

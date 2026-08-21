@@ -801,7 +801,6 @@ export default function Financeiro() {
                     <th>Descrição</th>
                     <th>Valor</th>
                     <th>Data</th>
-                    <th>Ação</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -810,27 +809,16 @@ export default function Financeiro() {
                       <tr key={item.id}>
                         <td>
                           {item.descricao}
-                          {item.usuarioNome && item.tipo !== 'PAGAMENTO_APROVADO' ? ` (${item.usuarioNome})` : ''}
+                          {item.obs ? ` (${item.obs})` : ''}
                         </td>
                         <td className={item.positivo ? 'success-text' : 'danger-text'}>
                           {item.positivo ? '' : '-'}{currency(item.valor)}
                         </td>
                         <td>{formatarData(item.data)}</td>
-                        <td>
-                          {(item.tipo === 'ADICAO_MANUAL_CAIXA' || item.tipo === 'ADICAO_MANUAL_DESPESAS') && (
-                            <button
-                              type="button"
-                              className="btn btn-danger historico-remover"
-                              onClick={() => removerRegistro(item.tipo === 'ADICAO_MANUAL_CAIXA' ? 'CAIXA' : 'DESPESAS', item.id)}
-                            >
-                              Remover
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     ))
                   ) : (
-                    <tr><td colSpan={4} className="historico-vazio">Nenhum registro encontrado.</td></tr>
+                    <tr><td colSpan={3} className="historico-vazio">Nenhum registro encontrado.</td></tr>
                   )}
                 </tbody>
               </table>

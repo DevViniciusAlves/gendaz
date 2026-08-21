@@ -131,8 +131,12 @@ public class PagamentoService {
             pagamento.setParcelas(null);
         }
         PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
-        if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+            caixaDespesasService.registrarPagamentoAprovado(pagamento);
+        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
             caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
+        } else if (request.status() == StatusPagamento.CANCELADO) {
+            caixaDespesasService.registrarPagamentoCancelado(pagamento, usuarioAutenticadoProvider.exigirUsuarioId(), statusAnterior);
         }
         return response;
     }
