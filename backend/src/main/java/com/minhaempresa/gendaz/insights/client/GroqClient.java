@@ -36,14 +36,14 @@ public class GroqClient {
             ObjectMapper objectMapper,
             OutboundTrafficAuditService auditService,
             @Value("${groq.api-key:${GROQ_API_KEY:}}") String apiKey,
-            @Value("${groq.model:llama-3.3-70b-versatile}") String model,
-            @Value("${groq.fallback-model:llama-3.1-70b-versatile}") String fallbackModel
+            @Value("${groq.model:llama-3.1-8b-instant}") String model,
+            @Value("${groq.fallback-model:llama3-8b-8192}") String fallbackModel
     ) {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
-        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama-3.1-70b-versatile" : fallbackModel.trim();
+        this.model = model == null || model.isBlank() ? "llama-3.1-8b-instant" : model.trim();
+        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama3-8b-8192" : fallbackModel.trim();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
