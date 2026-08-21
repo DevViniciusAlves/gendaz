@@ -11,15 +11,15 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class PlanoBootstrap implements CommandLineRunner {
-    public static final BigDecimal VALOR_BASICO_MENSAL = new BigDecimal("39.00");
-    public static final BigDecimal VALOR_PRO_MENSAL = new BigDecimal("89.00");
+    public static final BigDecimal VALOR_BASICO_MENSAL = new BigDecimal("29.90");
+    public static final BigDecimal VALOR_PRO_MENSAL = new BigDecimal("79.90");
 
     private final PlanoRepository planoRepository;
 
     @Override
     public void run(String... args) {
-        garantirPlano("BASICO", "Agenda, clientes e servicos.", VALOR_BASICO_MENSAL);
-        garantirPlano("PRO", "Agenda com financeiro, pagamentos e relatorios.", VALOR_PRO_MENSAL);
+        garantirPlano("BASICO", "Financeiro - Pagamentos automatizados - Relatórios | Histórico ilimitado | Agendamentos ilimitados | Confirmação de agendamentos | Não inclui: CRM integrado, Insights, Até 3 usuários, Financeiro completo", VALOR_BASICO_MENSAL);
+        garantirPlano("PRO", "Tudo do Plano básico + Até 3 usuários na conta | CRM integrado | Insights com GendazIA no controle | Financeiro completo: caixa, contas a pagar e a receber", VALOR_PRO_MENSAL);
     }
 
     private void garantirPlano(String nome, String descricao, BigDecimal valorMensal) {
