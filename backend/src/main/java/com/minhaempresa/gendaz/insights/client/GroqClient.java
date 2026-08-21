@@ -36,14 +36,16 @@ public class GroqClient {
             ObjectMapper objectMapper,
             OutboundTrafficAuditService auditService,
             @Value("${groq.api-key:${GROQ_API_KEY:}}") String apiKey,
-            @Value("${groq.model:llama-3.1-8b-instant}") String model,
-            @Value("${groq.fallback-model:llama3-8b-8192}") String fallbackModel
+            @Value("${groq.model:}") String model,
+            @Value("${groq.fallback-model:}") String fallbackModel
     ) {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        this.model = model == null || model.isBlank() ? "llama-3.1-8b-instant" : model.trim();
-        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama3-8b-8192" : fallbackModel.trim();
+        // Se o valor vindo do application.yml ou variavel de ambiente for vazio, usa os padrões aqui.
+        // Desta forma, se você não definiu GROQ_MODEL, ele usa o padrão hardcoded abaixo.
+        this.model = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
+        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "llama-3.3-70b-versatile" : fallbackModel.trim();
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
@@ -100,6 +102,18 @@ public class GroqClient {
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
             log.warn("[insights-groq] resposta nao-sucedida status={} corpo={}", response.statusCode(), response.body());
+            try {
+                HttpRequest modelsRequest = HttpRequest.newBuilder()
+                        .uri(URI.create("https://api.groq.com/openai/v1/models"))
+                        .timeout(Duration.ofSeconds(10))
+                        .header("Authorization", "Bearer " + apiKey)
+                        .GET()
+                        .build();
+                HttpResponse<String> modelsResponse = httpClient.send(modelsRequest, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                log.info("[insights-groq] Modelos disponiveis na Groq para esta chave: {}", modelsResponse.body());
+            } catch (Exception e) {
+                log.warn("[insights-groq] Nao foi possivel listar os modelos disponiveis: {}", e.getMessage());
+            }
             return Optional.empty();
         }
 
