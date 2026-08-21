@@ -6,6 +6,16 @@
     --mobile-surface: #1a1a1a;
   }
 
+  .chat-center {
+    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom));
+    height: auto;
+  }
+
+  .chat-body {
+    max-height: calc(100dvh - 260px - env(safe-area-inset-bottom));
+    overflow-y: auto;
+  }
+
   html,
   body,
   #root {

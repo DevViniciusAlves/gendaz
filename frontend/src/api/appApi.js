@@ -881,6 +881,46 @@ export const appApi = {
     return api.get(`/pagamentos/planos/empresa/${empresaId}/atual`, options).then((response) => response.data)
   },
 
+  buscarTotaisCaixaDespesas(empresaId = empresaIdAtual()) {
+    return api.get(`/business/${empresaId}/caixa-despesas/totais`).then((response) => response.data)
+  },
+
+  adicionarCaixa(valor, obs) {
+    const empresaId = empresaIdAtual()
+    return comNotificacao(
+      () => api.post(`/business/${empresaId}/caixa/adicionar`, { valor, obs }).then((response) => response.data),
+      { loading: 'Adicionando ao caixa... aguarde', success: 'Valor adicionado ao caixa.', error: 'Não foi possível adicionar ao caixa.' },
+    )
+  },
+
+  adicionarDespesas(valor, obs) {
+    const empresaId = empresaIdAtual()
+    return comNotificacao(
+      () => api.post(`/business/${empresaId}/despesas/adicionar`, { valor, obs }).then((response) => response.data),
+      { loading: 'Adicionando despesa... aguarde', success: 'Despesa adicionada.', error: 'Não foi possível adicionar a despesa.' },
+    )
+  },
+
+  removerCaixa(logId) {
+    const empresaId = empresaIdAtual()
+    return comNotificacao(
+      () => api.delete(`/business/${empresaId}/caixa/${logId}`).then((response) => response.data),
+      { loading: 'Removendo do caixa... aguarde', success: 'Registro removido do caixa.', error: 'Não foi possível remover do caixa.' },
+    )
+  },
+
+  removerDespesas(logId) {
+    const empresaId = empresaIdAtual()
+    return comNotificacao(
+      () => api.delete(`/business/${empresaId}/despesas/${logId}`).then((response) => response.data),
+      { loading: 'Removendo despesa... aguarde', success: 'Registro de despesa removido.', error: 'Não foi possível remover a despesa.' },
+    )
+  },
+
+  buscarHistoricoCaixaDespesas(page = 1, limit = 10, empresaId = empresaIdAtual()) {
+    return api.get(`/business/${empresaId}/caixa-despesas/historico`, { params: { page, limit } }).then((response) => response.data)
+  },
+
   listarAssinaturas(empresaId = empresaIdAtual(), options = {}) {
     return api.get(`/assinaturas/empresa/${empresaId}`, options).then((response) => response.data)
   },

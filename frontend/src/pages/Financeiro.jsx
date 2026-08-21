@@ -1,5 +1,6 @@
 import { Check, Download, RefreshCw, Trash, X } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
+import { useAuth } from '../contexts/AuthContext.jsx'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi } from '../api/appApi.js'
 import ActionMenu from '../components/ActionMenu.jsx'
@@ -122,6 +123,21 @@ export default function Financeiro() {
   const [pagamentoManual, setPagamentoManual] = useState(null)
   const itensPorPaginaPagamentos = 10
 
+  const { usuario } = useAuth()
+  const planoAtual = String(usuario?.plano || '').toUpperCase()
+  const isPlanoPro = planoAtual === 'PRO'
+
+  const [caixaDespesas, setCaixaDespesas] = useState(null)
+  const [modalAdicionar, setModalAdicionar] = useState(null)
+  const [valorModal, setValorModal] = useState('')
+  const [obsModal, setObsModal] = useState('')
+  const [erroModal, setErroModal] = useState('')
+  const [salvandoModal, setSalvandoModal] = useState(false)
+  const [modalHistorico, setModalHistorico] = useState(false)
+  const [historico, setHistorico] = useState(null)
+  const [paginaHistorico, setPaginaHistorico] = useState(1)
+  const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+
   const agendamentoMap = useMemo(() => {
     const agendamentos = Array.isArray(data.agendamentos) ? data.agendamentos : []
     const map = new Map()
@@ -138,6 +154,89 @@ export default function Financeiro() {
       .then(setFormasPagamento)
       .catch(() => setFormasPagamento({ pixAtivo: true, debitoAtivo: true, creditoAtivo: true, parceladoAtivo: false, dinheiroAtivo: true, maxParcelas: 12 }))
   }, [])
+
+  useEffect(() => {
+    if (!isPlanoPro) return
+    carregarTotaisCaixaDespesas()
+  }, [isPlanoPro])
+
+  async function carregarTotaisCaixaDespesas() {
+    try {
+      const totais = await appApi.buscarTotaisCaixaDespesas()
+      setCaixaDespesas(totais)
+    } catch {
+      setCaixaDespesas({ caixaTotal: 0, despesasTotal: 0 })
+    }
+  }
+
+  function abrirModalAdicionar(tipo) {
+    setModalAdicionar(tipo)
+    setValorModal('')
+    setObsModal('')
+    setErroModal('')
+  }
+
+  function fecharModalAdicionar() {
+    setModalAdicionar(null)
+    setErroModal('')
+  }
+
+  async function confirmarAdicionar() {
+    const valor = Number(valorModal)
+    if (!valorModal || Number.isNaN(valor) || valor <= 0) {
+      setErroModal('Informe um valor válido e maior que zero.')
+      return
+    }
+    setSalvandoModal(true)
+    setErroModal('')
+    try {
+      const tipo = modalAdicionar
+      const totais = tipo === 'CAIXA'
+        ? await appApi.adicionarCaixa(valor, obsModal.trim())
+        : await appApi.adicionarDespesas(valor, obsModal.trim())
+      setCaixaDespesas(totais)
+      fecharModalAdicionar()
+    } catch {
+      /* erro já exibido via toast */
+    } finally {
+      setSalvandoModal(false)
+    }
+  }
+
+  async function removerRegistro(tipo, logId) {
+    try {
+      const totais = tipo === 'CAIXA'
+        ? await appApi.removerCaixa(logId)
+        : await appApi.removerDespesas(logId)
+      setCaixaDespesas(totais)
+      await carregarHistorico(paginaHistorico)
+    } catch {
+      /* erro via toast */
+    }
+  }
+
+  async function carregarHistorico(pagina = 1) {
+    setCarregandoHistorico(true)
+    try {
+      const resultado = await appApi.buscarHistoricoCaixaDespesas(pagina, 10)
+      setHistorico(resultado)
+      setPaginaHistorico(pagina)
+    } catch {
+      setHistorico({ itens: [], total: 0, pagina, totalPaginas: 1, tamanhoPagina: 10 })
+    } finally {
+      setCarregandoHistorico(false)
+    }
+  }
+
+  function abrirHistorico() {
+    setModalHistorico(true)
+    carregarHistorico(1)
+  }
+
+  function trocarPaginaHistorico(pagina) {
+    window.scrollTo({ top: 0 })
+    carregarHistorico(pagina)
+  }
 
   const pagamentosExpandidos = useMemo(() => {
     const pagamentos = Array.isArray(data.pagamentos) ? data.pagamentos : []
@@ -374,6 +473,44 @@ export default function Financeiro() {
         <DashboardCard title="Total recebido" value={currency(recebido)} />
         <DashboardCard title="Total pendente" value={currency(pendente)} />
       </div>
+
+      {isPlanoPro && (
+        <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
+          <article className="metric-card caixa-card" style={{ borderTop: '3px solid var(--success)' }}>
+            <div>
+              <span>CAIXA</span>
+              <strong className="success-text">{currency(caixaDespesas?.caixaTotal || 0)}</strong>
+              <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
+                ADICIONAR
+              </button>
+            </div>
+          </article>
+
+          <article className="metric-card despesas-card" style={{ borderTop: '3px solid var(--danger)' }}>
+            <div>
+              <span>DESPESAS</span>
+              <strong className="danger-text">{currency(caixaDespesas?.despesasTotal || 0)}</strong>
+              <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
+                ADICIONAR
+              </button>
+            </div>
+          </article>
+
+          <article
+            className="metric-card historico-card"
+            style={{ borderTop: '3px solid var(--primary)', cursor: 'pointer' }}
+            role="button"
+            tabIndex={0}
+            onClick={abrirHistorico}
+            onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && abrirHistorico()}
+          >
+            <div>
+              <span>HISTÓRICO</span>
+              <strong>Ver registros</strong>
+            </div>
+          </article>
+        </div>
+      )}
 
       <div className="financeiro-top-row">
         <div className="financeiro-payment-grid">
@@ -612,6 +749,100 @@ export default function Financeiro() {
         onClose={() => setExportModal(false)}
         onConfirm={exportarFinanceiro}
       />
+
+      <Modal
+        title={modalAdicionar === 'DESPESAS' ? 'Adicionar Despesa' : 'Adicionar ao Caixa'}
+        open={Boolean(modalAdicionar)}
+        onClose={fecharModalAdicionar}
+      >
+        <div className="form-grid single">
+          {erroModal && <p className="form-error">{erroModal}</p>}
+          <label className="field">
+            <span>Valor (R$)</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={valorModal}
+              onChange={(e) => setValorModal(e.target.value)}
+              placeholder="0,00"
+              aria-label="Valor"
+            />
+          </label>
+          <label className="field">
+            <span>Obs (opcional)</span>
+            <input
+              type="text"
+              value={obsModal}
+              onChange={(e) => setObsModal(e.target.value)}
+              placeholder="Observação"
+              maxLength={500}
+              aria-label="Observação"
+            />
+          </label>
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={fecharModalAdicionar}>Cancelar</Button>
+            <Button variant="primary" loading={salvandoModal} onClick={confirmarAdicionar}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal title="Histórico" open={modalHistorico} onClose={() => setModalHistorico(false)}>
+        <div className="historico-modal">
+          {carregandoHistorico ? (
+            <p className="panel-description">Carregando histórico...</p>
+          ) : (
+            <>
+              <table className="table historico-table">
+                <thead>
+                  <tr>
+                    <th>Descrição</th>
+                    <th>Valor</th>
+                    <th>Data</th>
+                    <th>Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {historico?.itens?.length ? (
+                    historico.itens.map((item) => (
+                      <tr key={item.id}>
+                        <td>
+                          {item.descricao}
+                          {item.usuarioNome && item.tipo !== 'PAGAMENTO_APROVADO' ? ` (${item.usuarioNome})` : ''}
+                        </td>
+                        <td className={item.positivo ? 'success-text' : 'danger-text'}>
+                          {item.positivo ? '' : '-'}{currency(item.valor)}
+                        </td>
+                        <td>{formatarData(item.data)}</td>
+                        <td>
+                          {(item.tipo === 'ADICAO_MANUAL_CAIXA' || item.tipo === 'ADICAO_MANUAL_DESPESAS') && (
+                            <button
+                              type="button"
+                              className="btn btn-danger historico-remover"
+                              onClick={() => removerRegistro(item.tipo === 'ADICAO_MANUAL_CAIXA' ? 'CAIXA' : 'DESPESAS', item.id)}
+                            >
+                              Remover
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr><td colSpan={4} className="historico-vazio">Nenhum registro encontrado.</td></tr>
+                  )}
+                </tbody>
+              </table>
+              <Pagination
+                page={paginaHistorico}
+                totalPages={historico?.totalPaginas || 1}
+                totalItems={historico?.total || 0}
+                pageSize={historico?.tamanhoPagina || 10}
+                onPageChange={trocarPaginaHistorico}
+              />
+            </>
+          )}
+        </div>
+      </Modal>
     </section>
   )
 }

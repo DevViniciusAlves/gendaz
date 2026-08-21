@@ -22971,3 +22971,20 @@ iframe {
     overflow-y: auto !important;
   }
 }
+
+/* Modulo Financeiro Caixa/Despesas (plano PRO) */
+.caixa-despesas-grid .caixa-card-btn {
+  margin-top: 12px;
+  align-self: flex-start;
+}
+.historico-modal { width: 100%; }
+.historico-table { width: 100%; border-collapse: collapse; }
+.historico-table th, .historico-table td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  font-size: 13px;
+}
+.historico-table th { font-weight: 600; color: var(--text-muted, #9aa0a6); }
+.historico-vazio { text-align: center; color: var(--text-muted, #9aa0a6); padding: 18px; }
+.historico-remover { font-size: 12px; padding: 4px 10px; }

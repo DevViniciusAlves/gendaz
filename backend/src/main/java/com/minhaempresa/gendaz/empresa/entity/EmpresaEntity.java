@@ -41,6 +41,12 @@ public class EmpresaEntity {
     @Column(name = "stripe_customer_id", length = 120)
     private String stripeCustomerId;
 
+    @Column(name = "caixa_total", nullable = false, precision = 12, scale = 2)
+    private java.math.BigDecimal caixaTotal = java.math.BigDecimal.ZERO;
+
+    @Column(name = "despesas_total", nullable = false, precision = 12, scale = 2)
+    private java.math.BigDecimal despesasTotal = java.math.BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "ramo", length = 50)
     private RamoEmpresa ramo;

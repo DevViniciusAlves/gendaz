@@ -111,6 +111,16 @@ public class AssinaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
     }
 
+    @Transactional(readOnly = true)
+    public boolean isPlanoPro(Long empresaId) {
+        LocalDate hoje = LocalDate.now();
+        return assinaturaRepository.findByEmpresaId(empresaId).stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
+                        || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+                .anyMatch(a -> a.getPlano() != null && "PRO".equals(a.getPlano().getNome()));
+    }
+
     /**
      * Ativa uma assinatura paga e a encadeia na fila de planos (sem cancelar a
      * atual). Se a assinatura vinculada/pendente for do mesmo plano, ativa ela;

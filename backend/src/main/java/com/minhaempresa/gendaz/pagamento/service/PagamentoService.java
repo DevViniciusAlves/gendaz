@@ -36,9 +36,11 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.service.PlanoService;
+import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -68,6 +70,8 @@ public class PagamentoService {
     private final PaymentGatewayProperties paymentGatewayProperties;
     private final AdminAuditService auditService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
+    private final CaixaDespesasService caixaDespesasService;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
     private final PagamentoMapper mapper = new PagamentoMapper();
 
 
@@ -97,18 +101,24 @@ public class PagamentoService {
     @Transactional
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
         PagamentoEntity pagamento = buscarEntidade(id);
+        StatusPagamento statusAnterior = pagamento.getStatus();
         formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
         MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setMetodoPagamento(metodo);
         pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, request.parcelas()));
         pagamento.setDataPagamento(LocalDateTime.now());
-        return mapper.toResponse(pagamentoRepository.save(pagamento));
+        PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
+        if (statusAnterior != StatusPagamento.PAGO) {
+            caixaDespesasService.registrarPagamentoAprovado(pagamento);
+        }
+        return response;
     }
 
     @Transactional
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
         PagamentoEntity pagamento = buscarEntidade(id);
+        StatusPagamento statusAnterior = pagamento.getStatus();
         pagamento.setStatus(request.status());
         if (request.status() == StatusPagamento.PAGO) {
             if (pagamento.getMetodoPagamento() == null) {
@@ -120,7 +130,11 @@ public class PagamentoService {
             pagamento.setMetodoPagamento(null);
             pagamento.setParcelas(null);
         }
-        return mapper.toResponse(pagamentoRepository.save(pagamento));
+        PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
+        if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+            caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
+        }
+        return response;
     }
 
     @Transactional

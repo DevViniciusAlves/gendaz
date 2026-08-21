@@ -102,7 +102,7 @@ const plans = [
       'Até 3 usuários na conta',
       'CRM integrado',
       'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, contas a pagar e a receber',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
     ],
     cta: 'Escolher Pro',
     destaque: true,
