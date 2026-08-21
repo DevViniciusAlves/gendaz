@@ -109,66 +109,68 @@ public class InsightsService {
     public MeuGendazIAResponse responderCliente(Long empresaId, String pergunta, List<ChatMessageRequest> historico) {
         validarAcessoEmpresa(empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
-        String promptSistema = """
-                Voce e a GendazIA, uma atendente virtual de uma empresa de servicos.
-                Responda sempre em portugues do Brasil.
-                Use apenas os dados fornecidos.
-                Seja cordial, humana, acolhedora e natural.
-                Fale como uma atendente de verdade, sem soar mecanica ou com cara de IA.
-                Prefira frases curtas, fluidas e espontaneas.
-                Nao invente valores, horarios ou servicos.
-                Ajude o cliente com duvidas sobre agendar, reagendar, cancelar, servicos, precos, profissionais, horarios e promocoes.
-                Se a pergunta pedir acao, conduza o atendimento passo a passo.
-                Quando faltar informacao, pergunte apenas a proxima coisa que precisa.
-                Se o cliente quiser agendar, pedir o servico, a data e o horario de forma natural, uma coisa por vez.
-                Se quiser reagendar, pedir a identificacao do agendamento e a nova data/horario.
-                Se quiser cancelar, confirmar o agendamento e, se necessario, o motivo.
-                Retorne somente JSON valido neste formato:
-                {
-                  "resposta": "texto",
-                  "sugestoes": ["opcao 1", "opcao 2", "opcao 3"],
-                  "acao": "agenda|reagendar|cancelar|servicos|precos|nenhuma"
+
+        // Tenta usar a Groq se estiver disponível
+        if (groqClient.disponivel()) {
+            String promptSistema = """
+                    Voce e a GendazIA, uma atendente virtual de uma empresa de servicos.
+                    Responda sempre em portugues do Brasil.
+                    Use apenas os dados fornecidos.
+                    Seja cordial, humana, acolhedora e natural.
+                    Fale como uma atendente de verdade, sem soar mecanica ou com cara de IA.
+                    Prefira frases curtas, fluidas e espontaneas.
+                    Nao invente valores, horarios ou servicos.
+                    Ajude o cliente com duvidas sobre agendar, reagendar, cancelar, servicos, precos, profissionais, horarios e promocoes.
+                    Se a pergunta pedir acao, conduza o atendimento passo a passo.
+                    Quando faltar informacao, pergunte apenas a proxima coisa que precisa.
+                    Se o cliente quiser agendar, pedir o servico, a data e o horario de forma natural, uma coisa por vez.
+                    Se quiser reagendar, pedir a identificacao do agendamento e a nova data/horario.
+                    Se quiser cancelar, confirmar o agendamento e, se necessario, o motivo.
+                    Retorne somente JSON valido neste formato:
+                    {
+                      "resposta": "texto",
+                      "sugestoes": ["opcao 1", "opcao 2", "opcao 3"],
+                      "acao": "agenda|reagendar|cancelar|servicos|precos|nenhuma"
+                    }
+                    """;
+            String promptUsuario = """
+                    Dados da empresa:
+                    %s
+
+                    Pergunta do cliente:
+                    %s
+
+                    Historico recente:
+                    %s
+                    """.formatted(serializar(dados), pergunta, serializar(historico == null ? List.of() : historico));
+
+            try {
+                Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
+                if (resposta.isPresent() && !resposta.get().isBlank()) {
+                    try {
+                        Map<String, Object> json = objectMapper.readValue(resposta.get(), new TypeReference<>() {});
+                        String texto = stringValor(json.get("resposta"));
+                        List<String> sugestoes = listaStrings(json.get("sugestoes"));
+                        String acao = stringValor(json.get("acao"));
+                        if (!texto.isBlank()) {
+                            return new MeuGendazIAResponse(
+                                    humanizarTexto(texto),
+                                    sugestoes,
+                                    acao == null || acao.isBlank() ? "nenhuma" : acao.trim().toLowerCase(),
+                                    LocalDateTime.now(ZoneId.of(appTimezone))
+                            );
+                        }
+                    } catch (Exception e) {
+                        log.warn("[meu-gendaz-ia] resposta invalida da groq, usando fallback local. erroTipo={}", e.getClass().getSimpleName());
+                    }
                 }
-                """;
-        String promptUsuario = """
-                Dados da empresa:
-                %s
-
-                Pergunta do cliente:
-                %s
-
-                Historico recente:
-                %s
-                """.formatted(serializar(dados), pergunta, serializar(historico == null ? List.of() : historico));
-
-        if (!groqClient.disponivel()) {
-            throw new BusinessException("GendazIA indisponivel: configure a chave da Groq para usar a IA.");
-        }
-
-        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        if (resposta.isEmpty() || resposta.get().isBlank()) {
-            throw new BusinessException("GendazIA indisponivel no momento. Tente novamente em instantes.");
-        }
-        try {
-            Map<String, Object> json = objectMapper.readValue(resposta.get(), new TypeReference<>() {});
-            String texto = stringValor(json.get("resposta"));
-            List<String> sugestoes = listaStrings(json.get("sugestoes"));
-            String acao = stringValor(json.get("acao"));
-            if (texto.isBlank()) {
-                throw new BusinessException("GendazIA retornou uma resposta vazia. Tente novamente em instantes.");
+            } catch (Exception e) {
+                log.warn("[meu-gendaz-ia] falha ao chamar groq, usando fallback local. erroTipo={}", e.getClass().getSimpleName());
             }
-            return new MeuGendazIAResponse(
-                    humanizarTexto(texto),
-                    sugestoes,
-                    acao == null || acao.isBlank() ? "nenhuma" : acao.trim().toLowerCase(),
-                    LocalDateTime.now(ZoneId.of(appTimezone))
-            );
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn("[meu-gendaz-ia] resposta invalida da groq. erroTipo={}", e.getClass().getSimpleName());
-            throw new BusinessException("GendazIA retornou uma resposta invalida. Tente novamente em instantes.");
         }
+
+        // Fallback local inteligente
+        return responderClienteLocalmente(empresaId, pergunta, dados);
     }
 
     @Transactional
@@ -472,6 +474,54 @@ public class InsightsService {
             msgs.add(Map.of("role", item.role() == null ? "user" : item.role(), "content", item.content()));
         }
         return msgs;
+    }
+
+    private MeuGendazIAResponse responderClienteLocalmente(Long empresaId, String pergunta, Map<String, Object> dados) {
+        String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase().trim();
+        List<String> sugestoes = new ArrayList<>();
+        String resposta;
+        String acao = "nenhuma";
+
+        // Detectar intenção da pergunta
+        if (perguntaNormalizada.matches(".*(agendar|marcar|reservar|horario|horário|disponibilidade).*")) {
+            resposta = "Claro! Para agendar, me diga qual serviço você gostaria e qual dia/horário prefere. Vamos confirmar tudo para você.";
+            sugestoes = List.of("Quero agendar um serviço", "Ver horários disponíveis", "Ver serviços");
+            acao = "agenda";
+        } else if (perguntaNormalizada.matches(".*(reagendar|remarcar|alterar|mudar|trocar).*")) {
+            resposta = "Para reagendar, me informe qual agendamento você quer alterar e qual o novo dia/horário.";
+            sugestoes = List.of("Reagendar agendamento", "Ver meus agendamentos", "Cancelar agendamento");
+            acao = "reagendar";
+        } else if (perguntaNormalizada.matches(".*(cancelar|desmarcar|remover|excluir).*")) {
+            resposta = "Para cancelar, me diga qual agendamento você quer desmarcar. Se precisar, pode informar o motivo.";
+            sugestoes = List.of("Cancelar agendamento", "Ver meus agendamentos");
+            acao = "cancelar";
+        } else if (perguntaNormalizada.matches(".*(serviço|servicos|tratamento|procedimento|o que voces fazem|o que voces oferecem).*")) {
+            resposta = "Oferecemos diversos serviços. Me diga qual você tem interesse ou se quer ver a lista completa.";
+            sugestoes = List.of("Ver serviços", "Quero agendar", "Ver preços");
+            acao = "servicos";
+        } else if (perguntaNormalizada.matches(".*(preço|preco|valor|quanto custa|orçamento|orcamento|pagamento|forma de pagamento).*")) {
+            resposta = "Os preços variam de acordo com o serviço. Me diga qual serviço você quer saber o valor ou se prefere ver a lista de preços.";
+            sugestoes = List.of("Ver preços", "Quero agendar", "Ver serviços");
+            acao = "precos";
+        } else if (perguntaNormalizada.matches(".*(profissional|quem vai me atender|atendente|especialista).*")) {
+            resposta = "Temos uma equipe qualificada para te atender. Me diga se você tem preferência por alguém ou se quer ver a lista de profissionais.";
+            sugestoes = List.of("Ver profissionais", "Quero agendar", "Ver serviços");
+            acao = "servicos";
+        } else if (perguntaNormalizada.matches(".*(promoção|promocao|desconto|oferta|cupom).*")) {
+            resposta = "Às vezes temos promoções! Me diga se você quer saber das ofertas atuais ou se quer agendar com desconto.";
+            sugestoes = List.of("Ver promoções", "Quero agendar", "Ver serviços");
+            acao = "servicos";
+        } else {
+            resposta = "Posso te ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções. Como posso te ajudar?";
+            sugestoes = List.of("Quero agendar", "Reagendar", "Cancelar", "Ver serviços");
+        }
+
+        return new MeuGendazIAResponse(
+                resposta,
+                sugestoes,
+                acao,
+                LocalDateTime.now(ZoneId.of(appTimezone))
+        );
     }
 
     private void validarAcessoEmpresa(Long empresaId) {
@@ -876,33 +926,6 @@ public class InsightsService {
             }
         }
         return itens.size() > 3 ? itens.subList(0, 3) : itens;
-    }
-
-    private MeuGendazIAResponse responderClienteLocalmente(Long empresaId, String pergunta, Map<String, Object> dados) {
-        String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase();
-
-        List<String> sugestoes = new ArrayList<>();
-        String resposta;
-        String acao = "nenhuma";
-
-        if (perguntaNormalizada.matches(".*(agendar|marcar|reserva).*")) {
-            resposta = "Vou te ajudar aqui mesmo. Me diga qual serviço você quer.";
-            sugestoes = List.of("Quero agendar", "Ver serviços", "Ver horários");
-            acao = "agenda";
-        } else if (perguntaNormalizada.matches(".*(reagendar|remarcar|trocar).*")) {
-            resposta = "Sem problema. Me diga qual agendamento você quer alterar.";
-            sugestoes = List.of("Reagendar", "Ver meus agendamentos");
-            acao = "reagendar";
-        } else if (perguntaNormalizada.matches(".*(cancelar|desmarcar|remover).*")) {
-            resposta = "Entendi. Me diga qual agendamento você quer cancelar.";
-            sugestoes = List.of("Cancelar", "Ver meus agendamentos");
-            acao = "cancelar";
-        } else {
-            resposta = "Posso ajudar com agendamento, reagendamento ou cancelamento. Me diga o que você quer fazer.";
-            sugestoes = List.of("Quero agendar", "Reagendar", "Cancelar");
-        }
-
-        return new MeuGendazIAResponse(resposta, sugestoes, acao, LocalDateTime.now(ZoneId.of(appTimezone)));
     }
 
     private String humanizarTexto(String texto) {
