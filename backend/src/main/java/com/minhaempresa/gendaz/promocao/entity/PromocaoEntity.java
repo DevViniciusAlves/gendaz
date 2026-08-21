@@ -32,7 +32,7 @@ public class PromocaoEntity {
     @Column(nullable = false, length = 80)
     private String codigo;
 
-    @Column(nullable = false, length = 180)
+    @Column(nullable = true, length = 180)
     private String descricao;
 
     @Enumerated(EnumType.STRING)

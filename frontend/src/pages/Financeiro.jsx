@@ -101,13 +101,32 @@ const FORMAS_PAGAMENTO = [
   ['dinheiroAtivo', 'Dinheiro'],
 ]
 
+const styles = `
+  .caixa-despesas-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .caixa-despesas-actions .btn {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+`
+
 export default function Financeiro() {
   const [data, , { reload }] = useLocalData('financeiro')
+
+  return (
+    <>
+      <style>{styles}</style>
+      <section className="page financeiro-page">
   const { refreshTrigger } = useContext(RefreshContext)
   const { atualizarContagem } = usePendentes()
   const [mes, setMes] = useState(mesReferenciaAtual())
   const [recarregando, setRecarregando] = useState(false)
-  const [statusPagamento, setStatusPagamento] = useState('todos')
+  const [statusPagamento, setStatusPagamento] = useState('mes_atual')
   const [periodoPagamento, setPeriodoPagamento] = useState('')
   const [metodoPagamento, setMetodoPagamento] = useState('todos')
   const [protocoloPagamento, setProtocoloPagamento] = useState('')
@@ -129,7 +148,9 @@ export default function Financeiro() {
 
   const [caixaDespesas, setCaixaDespesas] = useState(null)
   const [modalAdicionar, setModalAdicionar] = useState(null)
+  const [modalRemover, setModalRemover] = useState(null)
   const [valorModal, setValorModal] = useState('')
+  const [motivoModal, setMotivoModal] = useState('')
   const [obsModal, setObsModal] = useState('')
   const [erroModal, setErroModal] = useState('')
   const [salvandoModal, setSalvandoModal] = useState(false)
@@ -181,6 +202,18 @@ export default function Financeiro() {
     setErroModal('')
   }
 
+  function abrirModalRemover(tipo) {
+    setModalRemover(tipo)
+    setValorModal('')
+    setMotivoModal('')
+    setErroModal('')
+  }
+
+  function fecharModalRemover() {
+    setModalRemover(null)
+    setErroModal('')
+  }
+
   async function confirmarAdicionar() {
     const valor = Number(valorModal)
     if (!valorModal || Number.isNaN(valor) || valor <= 0) {
@@ -196,6 +229,39 @@ export default function Financeiro() {
         : await appApi.adicionarDespesas(valor, obsModal.trim())
       setCaixaDespesas(totais)
       fecharModalAdicionar()
+    } catch {
+      /* erro já exibido via toast */
+    } finally {
+      setSalvandoModal(false)
+    }
+  }
+
+  async function confirmarRemover() {
+    const valor = Number(valorModal)
+    if (!valorModal || Number.isNaN(valor) || valor <= 0) {
+      setErroModal('Informe um valor válido e maior que zero.')
+      return
+    }
+    if (modalRemover === 'CAIXA' && valor > (caixaDespesas?.caixaTotal || 0)) {
+      setErroModal('O valor não pode ser maior que o total do caixa.')
+      return
+    }
+    if (modalRemover === 'DESPESAS' && valor > (caixaDespesas?.despesasTotal || 0)) {
+      setErroModal('O valor não pode ser maior que o total de despesas.')
+      return
+    }
+    setSalvandoModal(true)
+    setErroModal('')
+    try {
+      const tipo = modalRemover
+      const descricao = tipo === 'CAIXA'
+        ? `Usuário removeu do Caixa${motivoModal ? ` (Motivo = ${motivoModal})` : ''}`
+        : `Usuário removeu Despesas${motivoModal ? ` (Motivo = ${motivoModal})` : ''}`
+      const totais = tipo === 'CAIXA'
+        ? await appApi.removerCaixa(valor, descricao)
+        : await appApi.removerDespesas(valor, descricao)
+      setCaixaDespesas(totais)
+      fecharModalRemover()
     } catch {
       /* erro já exibido via toast */
     } finally {
@@ -249,7 +315,8 @@ export default function Financeiro() {
 
   const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
       .filter((item) => {
-        const matchesStatus = statusPagamento === 'todos' || item.status === statusPagamento
+        const matchesStatus = statusPagamento === 'todos' || statusPagamento === 'mes_atual' || item.status === statusPagamento
+        const matchesMesAtual = statusPagamento !== 'mes_atual' || valorTextoPagamento(item).startsWith(mesReferenciaAtual())
         const dataBase = String(item.dataPagamento || item.data || item.dataCriacao || '')
         const matchesPeriodo = !periodoPagamento || dataBase.startsWith(periodoPagamento)
         const matchesMetodo = metodoPagamento === 'todos'
@@ -259,7 +326,7 @@ export default function Financeiro() {
         const textoProtocolo = String(item.protocolo || item.agendamento?.protocolo || '').toLowerCase()
         const matchesProtocolo = !protocoloPagamento.trim()
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
-        return matchesStatus && matchesPeriodo && matchesMetodo && matchesProtocolo
+        return matchesStatus && matchesMesAtual && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
       .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento])
 
@@ -478,25 +545,35 @@ export default function Financeiro() {
 
       {isPlanoPro && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
-          <article className="metric-card caixa-card">
-            <div>
-              <span>CAIXA</span>
-              <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
-              <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
-                ADICIONAR
-              </button>
-            </div>
-          </article>
+           <article className="metric-card caixa-card">
+             <div>
+               <span>CAIXA</span>
+               <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
+               <div className="caixa-despesas-actions">
+                 <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
+                   ADICIONAR
+                 </button>
+                 <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('CAIXA')}>
+                   REMOVER
+                 </button>
+               </div>
+             </div>
+           </article>
 
-          <article className="metric-card despesas-card">
-            <div>
-              <span>DESPESAS</span>
-              <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
-              <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
-                ADICIONAR
-              </button>
-            </div>
-          </article>
+           <article className="metric-card despesas-card">
+             <div>
+               <span>DESPESAS</span>
+               <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
+               <div className="caixa-despesas-actions">
+                 <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
+                   ADICIONAR
+                 </button>
+                 <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('DESPESAS')}>
+                   REMOVER
+                 </button>
+               </div>
+             </div>
+           </article>
 
           <article
             className="metric-card historico-card"
@@ -565,6 +642,7 @@ export default function Financeiro() {
         <h2>Pagamentos recentes</h2>
         <div className="filters filters-inline">
           <select value={statusPagamento} onChange={(e) => setStatusPagamento(e.target.value)}>
+            <option value="mes_atual">Mês atual</option>
             <option value="todos">Todos os status</option>
             <option value="PENDENTE">Pendente</option>
             <option value="PAGO">Pago</option>
@@ -785,6 +863,43 @@ export default function Financeiro() {
           <div className="modal-actions">
             <Button variant="secondary" onClick={fecharModalAdicionar}>Cancelar</Button>
             <Button variant="primary" loading={salvandoModal} onClick={confirmarAdicionar}>Salvar</Button>
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        title={modalRemover === 'DESPESAS' ? 'Remover Despesa' : 'Remover do Caixa'}
+        open={Boolean(modalRemover)}
+        onClose={fecharModalRemover}
+      >
+        <div className="form-grid single">
+          {erroModal && <p className="form-error">{erroModal}</p>}
+          <label className="field">
+            <span>Valor (R$)</span>
+            <input
+              type="number"
+              min="0.01"
+              step="0.01"
+              value={valorModal}
+              onChange={(e) => setValorModal(e.target.value)}
+              placeholder="0,00"
+              aria-label="Valor"
+            />
+          </label>
+          <label className="field">
+            <span>Motivo (opcional)</span>
+            <input
+              type="text"
+              value={motivoModal}
+              onChange={(e) => setMotivoModal(e.target.value)}
+              placeholder="Motivo da remoção"
+              maxLength={500}
+              aria-label="Motivo"
+            />
+          </label>
+          <div className="modal-actions">
+            <Button variant="secondary" onClick={fecharModalRemover}>Cancelar</Button>
+            <Button variant="danger" loading={salvandoModal} onClick={confirmarRemover}>Remover</Button>
           </div>
         </div>
       </Modal>

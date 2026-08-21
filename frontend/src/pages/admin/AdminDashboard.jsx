@@ -222,7 +222,7 @@ export default function AdminDashboard() {
       if (results[2].status === 'fulfilled') {
         const listaPagamentos = Array.isArray(results[2].value) ? results[2].value : []
         setPagamentos(listaPagamentos)
-        setPagamentosModeracao(listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
+        setPagamentosModeracao(listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'].includes(item.status)))
       }
       if (results[3].status === 'fulfilled') setChamados(Array.isArray(results[3].value) ? results[3].value : [])
       if (results[4].status === 'fulfilled') setLogs(Array.isArray(results[4].value) ? results[4].value : [])
@@ -264,11 +264,11 @@ export default function AdminDashboard() {
         const listaPagamentos = Array.isArray(pagamentosData) ? pagamentosData : []
         let pagamentosModeracao
         if (filtroPagamento.status === '' && filtroPagamento.plano === '') {
-          pagamentosModeracao = listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+          pagamentosModeracao = listaPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'].includes(item.status))
         } else {
           const respostaPagamentos = await adminApi.pagamentos()
           const todosPagamentos = Array.isArray(respostaPagamentos) ? respostaPagamentos : []
-          pagamentosModeracao = todosPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status))
+          pagamentosModeracao = todosPagamentos.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'].includes(item.status))
         }
         if (!ativo) return
         setDashboard(dashboardData)
@@ -304,7 +304,7 @@ export default function AdminDashboard() {
       } else if (aba === 'Aprovar Pagamentos') {
         const respostaPagamentos = await adminApi.pagamentos()
         const pagamentosData = Array.isArray(respostaPagamentos) ? respostaPagamentos : []
-        setPagamentosModeracao(pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status)))
+        setPagamentosModeracao(pagamentosData.filter((item) => ['PAYMENT_PENDING', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'].includes(item.status)))
       } else if (aba === 'Chamados') {
         setChamados(await adminApi.chamados())
       } else if (aba === 'Logs') {
@@ -632,12 +632,12 @@ export default function AdminDashboard() {
         <button className="icon-btn" type="button" title="Ver detalhes" onClick={() => abrirModal(item, 'pagamento-detalhes')}>
           <Eye size={16} />
         </button>
-        {item.status === 'PAYMENT_PENDING' && (
+        {['PAYMENT_PENDING', 'PAYMENT_REJECTED'].includes(item.status) && (
           <button className="icon-btn" type="button" title="Aprovar manualmente" onClick={() => abrirModal(item, 'pagamento-aprovar')}>
             <CheckCircle2 size={16} />
           </button>
         )}
-        {['PAYMENT_PENDING', 'PAYMENT_APPROVED'].includes(item.status) && (
+        {['PAYMENT_PENDING', 'PAYMENT_APPROVED', 'PAYMENT_REJECTED'].includes(item.status) && (
           <button className="icon-btn" type="button" title="Desaprovar pagamento" onClick={() => abrirModal(item, 'pagamento-desaprovar')}>
             <XCircle size={16} />
           </button>

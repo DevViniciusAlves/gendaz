@@ -13,7 +13,7 @@ public final class PromocaoDtos {
 
     public record PromocaoRequest(
             @NotBlank @Size(max = 80) String codigo,
-            @NotBlank @Size(max = 180) String descricao,
+            @Size(max = 180) String descricao,
             @NotNull TipoPromocao tipo,
             @NotNull @Positive BigDecimal valor,
             @NotNull LocalDateTime dataInicio,

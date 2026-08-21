@@ -57,7 +57,7 @@ public class PromocaoService {
         PromocaoEntity promocao = PromocaoEntity.builder()
                 .empresa(empresa)
                 .codigo(request.codigo().trim().toUpperCase())
-                .descricao(request.descricao().trim())
+                .descricao(request.descricao() == null ? null : request.descricao().trim())
                 .tipo(request.tipo())
                 .valor(request.valor())
                 .dataInicio(request.dataInicio())
@@ -85,7 +85,7 @@ public class PromocaoService {
         validarCodigoUnico(empresaId, request.codigo(), id);
 
         promocao.setCodigo(request.codigo().trim().toUpperCase());
-        promocao.setDescricao(request.descricao().trim());
+        promocao.setDescricao(request.descricao() == null ? null : request.descricao().trim());
         promocao.setTipo(request.tipo());
         promocao.setValor(request.valor());
         promocao.setDataInicio(request.dataInicio());

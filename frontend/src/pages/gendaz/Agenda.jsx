@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { CalendarPlus, RotateCw, X, Loader, AlertTriangle } from 'lucide-react'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import clienteApi from '../../api/clienteApi.js'
+import Modal from '../../components/Modal.jsx'
 
 function diaSemanaIso(data) {
   if (!data) return null
@@ -11,6 +12,7 @@ function diaSemanaIso(data) {
   const dias = ['DOMINGO', 'SEGUNDA', 'TERCA', 'QUARTA', 'QUINTA', 'SEXTA', 'SABADO']
   return local ? dias[local.getDay()] : null
 }
+
 
 function trabalhaNaData(profissional, data) {
   const dia = diaSemanaIso(data)

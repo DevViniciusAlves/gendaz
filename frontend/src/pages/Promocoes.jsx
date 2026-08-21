@@ -379,7 +379,7 @@ export default function Promocoes() {
         <form onSubmit={salvar} className="form-grid promotion-form">
               <p className="panel-description field-wide">Preencha os dados do cupom e escolha como ele será aplicado.</p>
               <label className="field"><span>Código</span><input value={form.codigo} onChange={(e) => setForm((c) => ({ ...c, codigo: e.target.value }))} /></label>
-              <label className="field"><span>Descrição</span><input value={form.descricao} onChange={(e) => setForm((c) => ({ ...c, descricao: e.target.value }))} /></label>
+              <label className="field"><span>Descrição (opcional)</span><input value={form.descricao} onChange={(e) => setForm((c) => ({ ...c, descricao: e.target.value }))} /></label>
               <label className="field"><span>Tipo</span><select value={form.tipo} onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}><option value="PERCENTUAL">Percentual</option><option value="VALOR_FIXO">Valor fixo</option></select></label>
               <label className="field"><span>Valor</span><input value={form.valor} onChange={(e) => setForm((c) => ({ ...c, valor: e.target.value }))} /></label>
               <label className="field"><span>Início</span><input type="datetime-local" value={form.dataInicio} onChange={(e) => setForm((c) => ({ ...c, dataInicio: e.target.value }))} /></label>

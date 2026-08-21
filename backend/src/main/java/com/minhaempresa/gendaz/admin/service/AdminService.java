@@ -500,6 +500,20 @@ public class AdminService {
         empresa.setEmail(email);
         EmpresaEntity salva = empresaRepository.save(empresa);
 
+        UsuarioEntity dono = usuarioRepository.findByEmpresaIdAndPerfil(empresa.getId(), PerfilUsuario.DONO)
+                .stream()
+                .findFirst()
+                .orElse(null);
+        if (dono != null && !email.equalsIgnoreCase(dono.getEmail())) {
+            usuarioRepository.findByEmailIgnoreCase(email).ifPresent((outro) -> {
+                if (!outro.getId().equals(dono.getId())) {
+                    throw new BusinessException("O e-mail informado ja esta em uso por outra conta.");
+                }
+            });
+            dono.setEmail(email);
+            usuarioRepository.save(dono);
+        }
+
         boolean alterarAssinatura = request.planoId() != null || request.diasPlano() != null;
         if (alterarAssinatura) {
             atualizarPlanoEAjustarPrazo(empresa, request);
@@ -589,8 +603,8 @@ public class AdminService {
                 salvo.getId(),
                 salvo.getAssunto(),
                 salvo.getMensagem(),
-                salvo.getEmpresa().getNomeFantasia(),
-                salvo.getUsuario().getNome(),
+                salvo.getEmpresa() != null ? salvo.getEmpresa().getNomeFantasia() : null,
+                salvo.getUsuario() != null ? salvo.getUsuario().getNome() : null,
                 salvo.getStatus().name(),
                 salvo.getResposta(),
                 salvo.getDataCriacao(),

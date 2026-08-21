@@ -2,6 +2,7 @@ import { Headphones, LifeBuoy, MessageCircle, Send } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
+import Modal from '../components/Modal.jsx'
 import StatusBadge from '../components/StatusBadge.jsx'
 import { useAuth } from '../contexts/AuthContext.jsx'
 
@@ -39,6 +40,7 @@ export default function Suporte() {
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
   const [enviando, setEnviando] = useState(false)
+  const [chamadoSelecionado, setChamadoSelecionado] = useState(null)
 
   useEffect(() => {
     if (!usuario?.empresaId) return
@@ -152,7 +154,14 @@ export default function Suporte() {
         <h2>Chamados abertos</h2>
         <div className="support-ticket-list">
           {chamados.length === 0 ? <p>Nenhum chamado aberto.</p> : chamados.map((item) => (
-            <article key={item.id} className="support-ticket-item">
+            <article
+              key={item.id}
+              className="support-ticket-item support-ticket-clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => setChamadoSelecionado(item)}
+              onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setChamadoSelecionado(item)}
+            >
               <div>
                 <strong>{item.assunto || 'Não informado'}</strong>
                 <p>{item.mensagem}</p>
@@ -161,6 +170,40 @@ export default function Suporte() {
               <StatusBadge status={item.status} />
             </article>
           ))}
+
+          <Modal
+            title="Detalhes do chamado"
+            open={Boolean(chamadoSelecionado)}
+            onClose={() => setChamadoSelecionado(null)}
+          >
+            {chamadoSelecionado && (
+              <div className="support-ticket-detail">
+                <div className="field">
+                  <span>Assunto</span>
+                  <p className="support-detail-value">{chamadoSelecionado.assunto || 'Não informado'}</p>
+                </div>
+                <div className="field">
+                  <span>Situação</span>
+                  <p className="support-detail-value"><StatusBadge status={chamadoSelecionado.status} /></p>
+                </div>
+                <div className="field">
+                  <span>Sua mensagem</span>
+                  <p className="support-detail-value">{chamadoSelecionado.mensagem}</p>
+                </div>
+                <div className="field">
+                  <span>Mensagem</span>
+                  <p className="support-detail-value">
+                    {chamadoSelecionado.resposta && chamadoSelecionado.resposta.trim()
+                      ? chamadoSelecionado.resposta
+                      : 'Nenhuma resposta do administrador ainda.'}
+                  </p>
+                </div>
+                <div className="modal-actions">
+                  <Button variant="secondary" onClick={() => setChamadoSelecionado(null)}>Fechar</Button>
+                </div>
+              </div>
+            )}
+          </Modal>
         </div>
       </section>
     </section>

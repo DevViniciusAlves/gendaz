@@ -3659,6 +3659,33 @@ tbody tr:hover { background: #fffaf5; }
   font-size: 12px;
   font-weight: 800;
 }
+.support-ticket-clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+.support-ticket-clickable:hover,
+.support-ticket-clickable:focus-visible {
+  border-color: var(--primary);
+  transform: translateY(-1px);
+  outline: none;
+}
+.support-ticket-detail .field {
+  margin-bottom: 14px;
+}
+.support-ticket-detail .field > span {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.support-detail-value {
+  margin: 0;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
 .report-filters {
   display: grid;
   grid-template-columns: minmax(170px, 190px) minmax(0, 1fr) minmax(0, 1fr) auto;
@@ -16237,6 +16264,37 @@ tbody tr:hover { background: #fffaf5; }
   grid-template-columns: auto 1fr auto;
   gap: 10px;
   align-items: center;
+}
+
+.gendaz-mini-card--clickable {
+  cursor: pointer;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.gendaz-mini-card--clickable:hover,
+.gendaz-mini-card--clickable:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+
+.gendaz-chamado-detalhe {
+  display: grid;
+  gap: 16px;
+}
+
+.gendaz-chamado-campo > span {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.gendaz-chamado-campo > p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .gendaz-mini-card__data strong {

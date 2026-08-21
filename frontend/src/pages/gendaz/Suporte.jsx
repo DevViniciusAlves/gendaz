@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, LifeBuoy, MessageCircle, Send, ShieldAlert, Ticket } from 'lucide-react'
+import { AlertCircle, LifeBuoy, MessageCircle, Send, ShieldAlert, Ticket, X } from 'lucide-react'
 import clienteApi from '../../api/clienteApi.js'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
@@ -40,6 +40,7 @@ export default function Suporte() {
   const [enviando, setEnviando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
+  const [chamadoSelecionado, setChamadoSelecionado] = useState(null)
 
   const nomeEmpresa = useMemo(
     () => cliente?.empresaNome || cliente?.empresa?.nome || cliente?.empresa?.nomeFantasia || 'sua empresa',
@@ -209,7 +210,14 @@ export default function Suporte() {
         ) : chamados.length > 0 ? (
           <div className="gendaz-stack">
             {chamados.map((item) => (
-              <div key={item.id} className="gendaz-mini-card gendaz-mini-card--historico">
+              <div
+                key={item.id}
+                className="gendaz-mini-card gendaz-mini-card--historico gendaz-mini-card--clickable"
+                role="button"
+                tabIndex={0}
+                onClick={() => setChamadoSelecionado(item)}
+                onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setChamadoSelecionado(item)}
+              >
                 <div className="gendaz-mini-card__info">
                   <p className="gendaz-mini-card__servico">{item.assunto || 'Meu Gendaz'}</p>
                   <p className="gendaz-mini-card__profissional">
@@ -228,6 +236,44 @@ export default function Suporte() {
           <p className="gendaz-vazio">Nenhum chamado enviado ainda.</p>
         )}
       </article>
+
+      {chamadoSelecionado && (
+        <div className="gendaz-modal-overlay" onClick={() => setChamadoSelecionado(null)}>
+          <div className="gendaz-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="gendaz-modal__head">
+              <h2>Detalhes do chamado</h2>
+              <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => setChamadoSelecionado(null)} aria-label="Fechar">
+                <X size={18} />
+              </button>
+            </div>
+            <div className="gendaz-modal__form gendaz-chamado-detalhe">
+              <div className="gendaz-chamado-campo">
+                <span>Assunto</span>
+                <p>{chamadoSelecionado.assunto || 'Meu Gendaz'}</p>
+              </div>
+              <div className="gendaz-chamado-campo">
+                <span>Situação</span>
+                <p><StatusBadge status={chamadoSelecionado.status} /></p>
+              </div>
+              <div className="gendaz-chamado-campo">
+                <span>Sua mensagem</span>
+                <p>{chamadoSelecionado.mensagem}</p>
+              </div>
+              <div className="gendaz-chamado-campo">
+                <span>Mensagem</span>
+                <p>
+                  {chamadoSelecionado.resposta && chamadoSelecionado.resposta.trim()
+                    ? chamadoSelecionado.resposta
+                    : 'Nenhuma resposta do administrador ainda.'}
+                </p>
+              </div>
+              <div className="gendaz-modal__actions">
+                <button className="gendaz-btn" type="button" onClick={() => setChamadoSelecionado(null)}>Fechar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   )
 }
