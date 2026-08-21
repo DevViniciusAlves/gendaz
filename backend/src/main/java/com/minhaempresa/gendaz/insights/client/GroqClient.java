@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -25,12 +26,27 @@ import org.springframework.stereotype.Component;
 public class GroqClient {
     private static final URI GROQ_URI = URI.create("https://api.groq.com/openai/v1/chat/completions");
 
+    private static final Set<String> MODELOS_PERMITIDOS = Set.of(
+            "openai/gpt-oss-20b",
+            "openai/gpt-oss-120b",
+            "qwen/qwen3.6-27b",
+            "groq/compound",
+            "groq/compound-mini"
+    );
+
     private final ObjectMapper objectMapper;
     private final HttpClient httpClient;
     private final OutboundTrafficAuditService auditService;
     private final String apiKey;
     private final String model;
     private final String fallbackModel;
+
+    private static String resolverModelo(String valor, String padrao) {
+        if (valor == null || valor.isBlank() || !MODELOS_PERMITIDOS.contains(valor.trim())) {
+            return padrao;
+        }
+        return valor.trim();
+    }
 
     public GroqClient(
             ObjectMapper objectMapper,
@@ -42,20 +58,9 @@ public class GroqClient {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        // Utilizando modelos confirmados na lista de permitidos da sua API Key
-        this.model = model == null || model.isBlank() ? "openai/gpt-oss-20b" : model.trim();
-        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "openai/gpt-oss-120b" : fallbackModel.trim();
-        this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(15))
-                .build();
-    }
-        if (resolvedFallback.equals("llama-3.1-8b-instant") || resolvedFallback.equals("llama3-8b-8192") || resolvedFallback.equals("llama-3.1-70b-versatile")) {
-            resolvedFallback = "llama-3.3-70b-versatile";
-        }
-        
-        this.model = resolvedModel;
-        this.fallbackModel = resolvedFallback;
-        
+        // Modelos confirmados na lista de permitidos da API Key (env var antiga com llama e ignorada)
+        this.model = resolverModelo(model, "openai/gpt-oss-20b");
+        this.fallbackModel = resolverModelo(fallbackModel, "openai/gpt-oss-120b");
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(15))
                 .build();
