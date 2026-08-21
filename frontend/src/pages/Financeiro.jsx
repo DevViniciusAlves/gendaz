@@ -469,27 +469,29 @@ export default function Financeiro() {
         </div>
       </div>
 
-      <div className="metric-grid compact financeiro-metrics">
-        <DashboardCard title="Total recebido" value={currency(recebido)} />
-        <DashboardCard title="Total pendente" value={currency(pendente)} />
-      </div>
+      {!isPlanoPro && (
+        <div className="metric-grid compact financeiro-metrics">
+          <DashboardCard title="Total recebido" value={currency(recebido)} />
+          <DashboardCard title="Total pendente" value={currency(pendente)} />
+        </div>
+      )}
 
       {isPlanoPro && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
-          <article className="metric-card caixa-card" style={{ borderTop: '3px solid var(--success)' }}>
+          <article className="metric-card caixa-card" style={{ borderTop: '3px solid #1cfc63' }}>
             <div>
               <span>CAIXA</span>
-              <strong className="success-text">{currency(caixaDespesas?.caixaTotal || 0)}</strong>
+              <strong style={{ color: '#1cfc63' }}>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
               <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
                 ADICIONAR
               </button>
             </div>
           </article>
 
-          <article className="metric-card despesas-card" style={{ borderTop: '3px solid var(--danger)' }}>
+          <article className="metric-card despesas-card" style={{ borderTop: '3px solid #ff2b32' }}>
             <div>
               <span>DESPESAS</span>
-              <strong className="danger-text">{currency(caixaDespesas?.despesasTotal || 0)}</strong>
+              <strong style={{ color: '#ff2b32' }}>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
               <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
                 ADICIONAR
               </button>

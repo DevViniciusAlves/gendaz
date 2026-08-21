@@ -22988,3 +22988,11 @@ iframe {
 .historico-table th { font-weight: 600; color: var(--text-muted, #9aa0a6); }
 .historico-vazio { text-align: center; color: var(--text-muted, #9aa0a6); padding: 18px; }
 .historico-remover { font-size: 12px; padding: 4px 10px; }
+
+/* Card Histórico mais compacto (plano PRO) */
+.caixa-despesas-grid { align-items: start; }
+.caixa-despesas-grid .historico-card {
+  padding: 12px 16px !important;
+  min-height: 0 !important;
+}
+.caixa-despesas-grid .historico-card strong { font-size: 14px !important; font-weight: 600; }

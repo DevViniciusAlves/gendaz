@@ -4,6 +4,7 @@ import com.minhaempresa.gendaz.empresa.enums.RamoEmpresa;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import lombok.*;
@@ -41,11 +42,13 @@ public class EmpresaEntity {
     @Column(name = "stripe_customer_id", length = 120)
     private String stripeCustomerId;
 
+    @Builder.Default
     @Column(name = "caixa_total", nullable = false, precision = 12, scale = 2)
-    private java.math.BigDecimal caixaTotal = java.math.BigDecimal.ZERO;
+    private BigDecimal caixaTotal = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(name = "despesas_total", nullable = false, precision = 12, scale = 2)
-    private java.math.BigDecimal despesasTotal = java.math.BigDecimal.ZERO;
+    private BigDecimal despesasTotal = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "ramo", length = 50)
