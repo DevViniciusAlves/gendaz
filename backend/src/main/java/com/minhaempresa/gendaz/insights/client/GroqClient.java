@@ -42,14 +42,13 @@ public class GroqClient {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
-        
-        String resolvedModel = model == null || model.isBlank() ? "llama-3.3-70b-versatile" : model.trim();
-        String resolvedFallback = fallbackModel == null || fallbackModel.isBlank() ? "llama-3.3-70b-versatile" : fallbackModel.trim();
-        
-        // Intercepta e atualiza automaticamente modelos antigos/descontinuados
-        if (resolvedModel.equals("llama-3.1-8b-instant") || resolvedModel.equals("llama3-8b-8192") || resolvedModel.equals("llama-3.1-70b-versatile")) {
-            resolvedModel = "llama-3.3-70b-versatile";
-        }
+        // Utilizando modelos confirmados na lista de permitidos da sua API Key
+        this.model = model == null || model.isBlank() ? "openai/gpt-oss-20b" : model.trim();
+        this.fallbackModel = fallbackModel == null || fallbackModel.isBlank() ? "openai/gpt-oss-120b" : fallbackModel.trim();
+        this.httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofSeconds(15))
+                .build();
+    }
         if (resolvedFallback.equals("llama-3.1-8b-instant") || resolvedFallback.equals("llama3-8b-8192") || resolvedFallback.equals("llama-3.1-70b-versatile")) {
             resolvedFallback = "llama-3.3-70b-versatile";
         }
