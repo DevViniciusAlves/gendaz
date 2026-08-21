@@ -93,8 +93,16 @@ public class InsightsService {
                 Pergunta:
                 %s
                 """.formatted(serializar(dados), pergunta);
+        if (!groqClient.disponivel()) {
+            throw new BusinessException("GendazIA indisponivel: configure a chave da Groq para usar a IA nos insights.");
+        }
+
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        return resposta.map(this::humanizarTexto).orElseGet(() -> responderLocalmente(pergunta, dados));
+        if (resposta.isEmpty() || resposta.get().isBlank()) {
+            throw new BusinessException("GendazIA indisponivel no momento. Tente novamente em instantes.");
+        }
+
+        return humanizarTexto(resposta.get());
     }
 
     @Transactional(readOnly = true)
@@ -133,9 +141,13 @@ public class InsightsService {
                 %s
                 """.formatted(serializar(dados), pergunta, serializar(historico == null ? List.of() : historico));
 
+        if (!groqClient.disponivel()) {
+            throw new BusinessException("GendazIA indisponivel: configure a chave da Groq para usar a IA.");
+        }
+
         Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
-        if (resposta.isEmpty()) {
-            return responderClienteLocalmente(empresaId, pergunta, dados);
+        if (resposta.isEmpty() || resposta.get().isBlank()) {
+            throw new BusinessException("GendazIA indisponivel no momento. Tente novamente em instantes.");
         }
         try {
             Map<String, Object> json = objectMapper.readValue(resposta.get(), new TypeReference<>() {});
@@ -143,7 +155,7 @@ public class InsightsService {
             List<String> sugestoes = listaStrings(json.get("sugestoes"));
             String acao = stringValor(json.get("acao"));
             if (texto.isBlank()) {
-                return responderClienteLocalmente(empresaId, pergunta, dados);
+                throw new BusinessException("GendazIA retornou uma resposta vazia. Tente novamente em instantes.");
             }
             return new MeuGendazIAResponse(
                     humanizarTexto(texto),
@@ -151,9 +163,11 @@ public class InsightsService {
                     acao == null || acao.isBlank() ? "nenhuma" : acao.trim().toLowerCase(),
                     LocalDateTime.now(ZoneId.of(appTimezone))
             );
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
-            log.warn("[meu-gendaz-ia] resposta invalida da groq, usando fallback. erroTipo={}", e.getClass().getSimpleName());
-            return responderClienteLocalmente(empresaId, pergunta, dados);
+            log.warn("[meu-gendaz-ia] resposta invalida da groq. erroTipo={}", e.getClass().getSimpleName());
+            throw new BusinessException("GendazIA retornou uma resposta invalida. Tente novamente em instantes.");
         }
     }
 
@@ -458,12 +472,6 @@ public class InsightsService {
             msgs.add(Map.of("role", item.role() == null ? "user" : item.role(), "content", item.content()));
         }
         return msgs;
-    }
-
-    private String responderLocalmente(String pergunta, Map<String, Object> dados) {
-        Map<String, Object> financeiro = mapa(dados.get("financeiro"));
-        Map<String, Object> clientes = mapa(dados.get("clientes"));
-        return "Score local: " + calcularScore((int) longo(clientes.get("at_risk")), numero(financeiro.get("pendente")), numero(financeiro.get("receita_30d")), numero(financeiro.get("receita_60d"))) + "/100.";
     }
 
     private void validarAcessoEmpresa(Long empresaId) {
