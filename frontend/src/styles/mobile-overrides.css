@@ -6,11 +6,11 @@
     --mobile-surface: #1a1a1a;
   }
 
-  /* Replica a estrutura do desktop, mas com 1 coluna */
+  /* Força o chat a usar apenas 1 coluna no mobile */
   .chat-layout {
     grid-template-columns: 1fr !important;
-    height: auto !important;
-    gap: 14px !important;
+    height: 100% !important;
+    min-height: 100dvh !important;
   }
 
   /* Oculta a lista de conversas e o painel do cliente no mobile */
@@ -19,27 +19,24 @@
     display: none !important;
   }
 
-  /* Garante que o chat-center ocupe todo o espaço disponível */
+  /* Força o chat-center a ter altura fixa e rolável */
   .chat-center {
-    display: grid !important;
-    grid-template-rows: auto minmax(0, 1fr) auto auto !important;
-    height: auto !important;
-    max-height: calc(100dvh - 120px - env(safe-area-inset-bottom)) !important;
-    overflow: hidden !important;
-  }
-
-  /* Garante que o chat-body seja rolável */
-  .chat-body {
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
-    padding: 18px !important;
-    overflow-y: auto !important;
-    background: rgba(255, 255, 255, 0.02) !important;
-    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
   }
 
-  /* Garante que o cabeçalho, ações e formulário não rolem */
+  /* Força o chat-body a ter altura fixa e ser rolável */
+  .chat-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom)) !important;
+    height: auto !important;
+  }
+
+  /* Garante que o cabeçalho e rodapé não rolem */
   .chat-header,
   .chat-actions,
   .message-form {
