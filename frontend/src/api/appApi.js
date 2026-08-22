@@ -901,16 +901,28 @@ export const appApi = {
     )
   },
 
-  removerCaixa(logId) {
+  removerCaixa(logId, obs) {
     const empresaId = empresaIdAtual()
+    if (obs !== undefined) {
+      return comNotificacao(
+        () => api.post(`/business/${empresaId}/caixa/remover`, { valor: logId, obs }).then((response) => response.data),
+        { loading: 'Removendo do caixa... aguarde', success: 'Valor removido do caixa.', error: 'Não foi possível remover do caixa.' },
+      )
+    }
     return comNotificacao(
       () => api.delete(`/business/${empresaId}/caixa/${logId}`).then((response) => response.data),
       { loading: 'Removendo do caixa... aguarde', success: 'Registro removido do caixa.', error: 'Não foi possível remover do caixa.' },
     )
   },
 
-  removerDespesas(logId) {
+  removerDespesas(logId, obs) {
     const empresaId = empresaIdAtual()
+    if (obs !== undefined) {
+      return comNotificacao(
+        () => api.post(`/business/${empresaId}/despesas/remover`, { valor: logId, obs }).then((response) => response.data),
+        { loading: 'Removendo despesa... aguarde', success: 'Despesa removida.', error: 'Não foi possível remover a despesa.' },
+      )
+    }
     return comNotificacao(
       () => api.delete(`/business/${empresaId}/despesas/${logId}`).then((response) => response.data),
       { loading: 'Removendo despesa... aguarde', success: 'Registro de despesa removido.', error: 'Não foi possível remover a despesa.' },

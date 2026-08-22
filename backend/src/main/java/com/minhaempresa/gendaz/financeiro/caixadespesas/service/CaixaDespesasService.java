@@ -123,6 +123,38 @@ public class CaixaDespesasService {
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
+    @Transactional
+    public CaixaDespesasTotaisResponse removerValorCaixaManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
+        exigirPlanoPro(empresaId);
+        validarValor(valor);
+        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        if (valor.compareTo(empresa.getCaixaTotal()) > 0) {
+            throw new BusinessException("O valor não pode ser maior que o total do caixa.");
+        }
+        empresa.setCaixaTotal(empresa.getCaixaTotal().subtract(valor));
+        empresaRepository.save(empresa);
+        UsuarioEntity usuario = carregarUsuario(usuarioId);
+        String nome = usuario != null ? usuario.getNome() : "Usuario";
+        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_CAIXA, valor, nome + " removeu", obs, usuario, null);
+        return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
+    }
+
+    @Transactional
+    public CaixaDespesasTotaisResponse removerValorDespesasManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
+        exigirPlanoPro(empresaId);
+        validarValor(valor);
+        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        if (valor.compareTo(empresa.getDespesasTotal()) > 0) {
+            throw new BusinessException("O valor não pode ser maior que o total de despesas.");
+        }
+        empresa.setDespesasTotal(empresa.getDespesasTotal().subtract(valor));
+        empresaRepository.save(empresa);
+        UsuarioEntity usuario = carregarUsuario(usuarioId);
+        String nome = usuario != null ? usuario.getNome() : "Usuario";
+        registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_DESPESAS, valor, nome + " removeu", obs, usuario, null);
+        return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
+    }
+
     @Transactional(readOnly = true)
     public CaixaDespesasTotaisResponse buscarTotais(Long empresaId) {
         EmpresaEntity empresa = carregarEmpresa(empresaId);
@@ -193,7 +225,7 @@ public class CaixaDespesasService {
 
     private HistoricoItemResponse toItem(CaixaDespesasLogEntity log) {
         boolean positivo = switch (log.getTipo()) {
-            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_DESPESAS -> true;
+            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS -> true;
             default -> false;
         };
         String categoria = switch (log.getTipo()) {

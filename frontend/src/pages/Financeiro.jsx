@@ -253,12 +253,9 @@ export default function Financeiro() {
     setErroModal('')
     try {
       const tipo = modalRemover
-      const descricao = tipo === 'CAIXA'
-        ? `Usuário removeu do Caixa${motivoModal ? ` (Motivo = ${motivoModal})` : ''}`
-        : `Usuário removeu Despesas${motivoModal ? ` (Motivo = ${motivoModal})` : ''}`
       const totais = tipo === 'CAIXA'
-        ? await appApi.removerCaixa(valor, descricao)
-        : await appApi.removerDespesas(valor, descricao)
+        ? await appApi.removerCaixa(valor, motivoModal.trim())
+        : await appApi.removerDespesas(valor, motivoModal.trim())
       setCaixaDespesas(totais)
       fecharModalRemover()
     } catch {

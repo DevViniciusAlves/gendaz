@@ -57,6 +57,22 @@ public class CaixaDespesasController {
         return ResponseEntity.ok(service.removerDespesasManual(id, logId, usuarioProvider.exigirUsuarioId()));
     }
 
+    @PostMapping("/{id}/despesas/remover")
+    public ResponseEntity<CaixaDespesasTotaisResponse> removerValorDespesas(
+            @PathVariable Long id, @Valid @RequestBody AdicionarCaixaDespesasRequest request) {
+        usuarioProvider.exigirEmpresa(id);
+        exigirDonoOuAdmin();
+        return ResponseEntity.ok(service.removerValorDespesasManual(id, request.valor(), request.obs(), usuarioProvider.exigirUsuarioId()));
+    }
+
+    @PostMapping("/{id}/caixa/remover")
+    public ResponseEntity<CaixaDespesasTotaisResponse> removerValorCaixa(
+            @PathVariable Long id, @Valid @RequestBody AdicionarCaixaDespesasRequest request) {
+        usuarioProvider.exigirEmpresa(id);
+        exigirDonoOuAdmin();
+        return ResponseEntity.ok(service.removerValorCaixaManual(id, request.valor(), request.obs(), usuarioProvider.exigirUsuarioId()));
+    }
+
     @GetMapping("/{id}/caixa-despesas/totais")
     public ResponseEntity<CaixaDespesasTotaisResponse> totais(@PathVariable Long id) {
         usuarioProvider.exigirEmpresa(id);
