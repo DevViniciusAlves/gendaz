@@ -103,14 +103,15 @@ const FORMAS_PAGAMENTO = [
 
 const styles = `
   .caixa-despesas-actions {
-    display: flex;
-    gap: 16px;
-    margin-top: 8px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 14px;
   }
   .caixa-despesas-actions .btn {
-    flex: 1;
     min-width: 0;
-    padding: 6px 8px;
+    width: 100%;
+    padding: 8px 10px;
     font-size: 12px;
   }
 `
@@ -541,7 +542,7 @@ export default function Financeiro() {
 
       {isPlanoPro && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
-          <article className="metric-card caixa-card" style={{ marginRight: '15px' }}>
+          <article className="metric-card caixa-card">
             <div>
               <span>CAIXA</span>
               <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
@@ -556,7 +557,7 @@ export default function Financeiro() {
             </div>
           </article>
 
-          <article className="metric-card despesas-card" style={{ marginLeft: '15px' }}>
+          <article className="metric-card despesas-card">
             <div>
               <span>DESPESAS</span>
               <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
