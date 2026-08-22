@@ -2065,4 +2065,12 @@
   .app-shell .settings-page .schedule-day-fields {
     grid-template-columns: 1fr !important;
   }
+
+  .app-shell .caixa-despesas-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .caixa-despesas-actions .btn {
+    white-space: nowrap;
+  }
 }

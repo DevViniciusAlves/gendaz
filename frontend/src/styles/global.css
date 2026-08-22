@@ -1113,8 +1113,17 @@ tbody tr:hover { background: #fffaf5; }
   vertical-align: middle;
 }
 
+.app-shell .clients-page .table-wrap .data-table th,
+.app-shell .clients-page .table-wrap .data-table td {
+  text-align: left;
+}
+
 .app-shell .page .table-wrap .data-table td .name-cell {
   justify-content: center;
+}
+
+.app-shell .clients-page .table-wrap .data-table td .name-cell {
+  justify-content: flex-start;
 }
 
 @media (min-width: 769px) {

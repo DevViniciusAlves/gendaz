@@ -12,7 +12,6 @@ const SEGMENTO_LABELS = { at_risk: 'Alto Risco', regular: 'Regular', novo: 'Novo
 const TEMPLATE_LABELS = {
   resgate: 'Email resgate',
   reconexao: 'Email reconexao',
-  promocao: 'Email promoções',
   lembrete: 'Email lembrete',
 }
 
@@ -145,7 +144,6 @@ export default function ClienteCard({ cliente, onEnviarMensagem, onVerHistorico 
           {[
             { label: 'Resgatar', template: 'resgate', color: '#4bab3a' },
             { label: 'Reconexão', template: 'reconexao', color: '#dc2626' },
-            { label: 'Promoções', template: 'promocao', color: '#075ae0' },
           ].map((btn) => (
             <button
               key={btn.template}
