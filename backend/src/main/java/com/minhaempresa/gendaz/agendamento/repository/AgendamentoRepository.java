@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.agendamento.repository;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoSimplesProjection;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
+import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ItemResumoResponse;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -123,7 +124,11 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     long countConsultasFinalizadas(@Param("empresaId") Long empresaId);
 
     @Query("""
-        SELECT c.nome, COUNT(a.id)
+        SELECT new com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos$ItemResumoResponse(
+            c.nome,
+            COUNT(a.id),
+            coalesce(sum(coalesce(a.valorFinal, a.servico.valor)), 0)
+        )
         FROM AgendamentoEntity a
         JOIN a.cliente c
         WHERE a.empresa.id = :empresaId
@@ -131,13 +136,17 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         GROUP BY c.id, c.nome
         ORDER BY COUNT(a.id) DESC
     """)
-    List<Object[]> resumoClientesMaisAgendados(
+    List<ItemResumoResponse> resumoClientesMaisAgendados(
             @Param("empresaId") Long empresaId,
             @Param("statusCancelado") StatusAgendamento statusCancelado,
             Pageable pageable);
 
     @Query("""
-        SELECT s.nome, COUNT(a.id)
+        SELECT new com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos$ItemResumoResponse(
+            s.nome,
+            COUNT(a.id),
+            coalesce(sum(coalesce(a.valorFinal, a.servico.valor)), 0)
+        )
         FROM AgendamentoEntity a
         JOIN a.servico s
         WHERE a.empresa.id = :empresaId
@@ -145,7 +154,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
         GROUP BY s.id, s.nome
         ORDER BY COUNT(a.id) DESC
     """)
-    List<Object[]> resumoServicosMaisAgendadosFinanceiro(
+    List<ItemResumoResponse> resumoServicosMaisAgendadosFinanceiro(
             @Param("empresaId") Long empresaId,
             @Param("statusCancelado") StatusAgendamento statusCancelado,
             Pageable pageable);

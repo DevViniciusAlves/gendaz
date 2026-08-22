@@ -4,6 +4,7 @@ import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ItemResumoResponse;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.PagamentoRecenteItem;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ResumoFinanceiroResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
