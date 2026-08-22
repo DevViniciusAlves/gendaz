@@ -17,8 +17,8 @@ const PLANOS_INFO = {
   PRO: {
     nome: 'Pro',
     preco: 'R$ 79,90/mês',
-    possuiTesteGratis: false,
-    subtitulo: 'Plano profissional liberado apos a aprovacao do pagamento.',
+    possuiTesteGratis: true,
+    subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
   },
 }
 

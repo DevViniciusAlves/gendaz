@@ -34,6 +34,7 @@ const planosBase = [
     codigo: 'PRO',
     nome: 'Plano Pro',
     subtitulo: 'Gestão completa com financeiro',
+    extra: '7 dias grátis',
     descricao: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
     beneficios: [
       'Tudo do Plano Básico +',
