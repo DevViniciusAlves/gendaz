@@ -73,9 +73,9 @@ public class DataSeeder implements CommandLineRunner {
         }
 
         PlanoEntity basico = planoRepository.findByNome("BASICO")
-                .orElseGet(() -> planoRepository.save(new PlanoEntity(null, "BASICO", "Agenda, clientes e servicos.", new BigDecimal("39.00"), StatusPlano.ATIVO)));
+                .orElseGet(() -> planoRepository.save(new PlanoEntity(null, "BASICO", "Agenda, clientes e servicos.", new BigDecimal("29.90"), StatusPlano.ATIVO)));
         PlanoEntity pro = planoRepository.findByNome("PRO")
-                .orElseGet(() -> planoRepository.save(new PlanoEntity(null, "PRO", "Agenda com financeiro, pagamentos e relatorios.", new BigDecimal("89.00"), StatusPlano.ATIVO)));
+                .orElseGet(() -> planoRepository.save(new PlanoEntity(null, "PRO", "Agenda com financeiro, pagamentos e relatorios.", new BigDecimal("79.90"), StatusPlano.ATIVO)));
 
         EmpresaEntity empresaBasico = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Gendaz Matriz")

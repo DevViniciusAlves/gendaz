@@ -104,7 +104,7 @@ const FORMAS_PAGAMENTO = [
 const styles = `
   .caixa-despesas-actions {
     display: flex;
-    gap: 8px;
+    gap: 16px;
     margin-top: 8px;
   }
   .caixa-despesas-actions .btn {
@@ -541,35 +541,35 @@ export default function Financeiro() {
 
       {isPlanoPro && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
-           <article className="metric-card caixa-card">
-             <div>
-               <span>CAIXA</span>
-               <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
-               <div className="caixa-despesas-actions">
-                 <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
-                   ADICIONAR
-                 </button>
-                 <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('CAIXA')}>
-                   REMOVER
-                 </button>
-               </div>
-             </div>
-           </article>
+          <article className="metric-card caixa-card" style={{ marginRight: '15px' }}>
+            <div>
+              <span>CAIXA</span>
+              <strong>{currency(caixaDespesas?.caixaTotal || 0)}</strong>
+              <div className="caixa-despesas-actions">
+                <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('CAIXA')}>
+                  ADICIONAR
+                </button>
+                <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('CAIXA')}>
+                  REMOVER
+                </button>
+              </div>
+            </div>
+          </article>
 
-           <article className="metric-card despesas-card">
-             <div>
-               <span>DESPESAS</span>
-               <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
-               <div className="caixa-despesas-actions">
-                 <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
-                   ADICIONAR
-                 </button>
-                 <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('DESPESAS')}>
-                   REMOVER
-                 </button>
-               </div>
-             </div>
-           </article>
+          <article className="metric-card despesas-card" style={{ marginLeft: '15px' }}>
+            <div>
+              <span>DESPESAS</span>
+              <strong>{currency(caixaDespesas?.despesasTotal || 0)}</strong>
+              <div className="caixa-despesas-actions">
+                <button type="button" className="btn btn-primary caixa-card-btn" onClick={() => abrirModalAdicionar('DESPESAS')}>
+                  ADICIONAR
+                </button>
+                <button type="button" className="btn btn-danger caixa-card-btn" onClick={() => abrirModalRemover('DESPESAS')}>
+                  REMOVER
+                </button>
+              </div>
+            </div>
+          </article>
 
           <article
             className="metric-card historico-card"

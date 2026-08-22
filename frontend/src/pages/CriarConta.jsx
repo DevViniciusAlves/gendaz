@@ -10,13 +10,13 @@ import logoSvg from '../assets/logos/gendaz-logo-branco.png'
 const PLANOS_INFO = {
   BASICO: {
     nome: 'Basico',
-    preco: 'R$ 39,00/mes',
+    preco: 'R$ 29,90/mês',
     possuiTesteGratis: true,
     subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
   },
   PRO: {
     nome: 'Pro',
-    preco: 'R$ 89,00/mes',
+    preco: 'R$ 79,90/mês',
     possuiTesteGratis: false,
     subtitulo: 'Plano profissional liberado apos a aprovacao do pagamento.',
   },
