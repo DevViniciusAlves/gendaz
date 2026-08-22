@@ -105,14 +105,16 @@ const styles = `
   .caixa-despesas-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-    margin-top: 14px;
+    gap: 12px;
+    margin-top: 16px;
+    width: 100%;
   }
   .caixa-despesas-actions .btn {
     min-width: 0;
     width: 100%;
     padding: 8px 10px;
     font-size: 12px;
+    display: block;
   }
 `
 
@@ -525,6 +527,7 @@ export default function Financeiro() {
 
   return (
     <section className="page financeiro-page">
+      <style>{styles}</style>
       <div className="page-title financeiro-header">
         <div className="financeiro-title-block">
           <span className="section-kicker">Financeiro</span>
