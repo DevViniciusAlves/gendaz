@@ -315,7 +315,7 @@ export default function Financeiro() {
   const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
       .filter((item) => {
         const matchesStatus = statusPagamento === 'todos' || statusPagamento === 'mes_atual' || item.status === statusPagamento
-        const matchesMesAtual = statusPagamento !== 'mes_atual' || valorTextoPagamento(item).startsWith(mesReferenciaAtual())
+        const matchesMes = valorTextoPagamento(item).startsWith(mes)
         const dataBase = String(item.dataPagamento || item.data || item.dataCriacao || '')
         const matchesPeriodo = !periodoPagamento || dataBase.startsWith(periodoPagamento)
         const matchesMetodo = metodoPagamento === 'todos'
@@ -325,9 +325,9 @@ export default function Financeiro() {
         const textoProtocolo = String(item.protocolo || item.agendamento?.protocolo || '').toLowerCase()
         const matchesProtocolo = !protocoloPagamento.trim()
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
-        return matchesStatus && matchesMesAtual && matchesPeriodo && matchesMetodo && matchesProtocolo
+        return matchesStatus && matchesMes && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
-      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento])
+      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)

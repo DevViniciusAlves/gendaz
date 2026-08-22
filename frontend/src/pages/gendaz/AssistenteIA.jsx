@@ -145,7 +145,7 @@ export default function AssistenteIA() {
   const [fluxo, setFluxo] = useState(null)
   const [dadosFluxo, setDadosFluxo] = useState({})
   const [horarios, setHorarios] = useState([])
-  const messagesEndRef = useRef(null)
+  const messagesRef = useRef(null)
   const navigate = useNavigate()
   const { slug } = useParams()
   const irParaAgenda = () => {
@@ -154,7 +154,10 @@ export default function AssistenteIA() {
   }
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    const container = messagesRef.current
+    if (!container) return
+
+    container.scrollTop = container.scrollHeight
   }, [mensagens])
 
   const servicosAtivos = useMemo(() => (Array.isArray(servicos) ? servicos : []), [servicos])
@@ -513,7 +516,7 @@ export default function AssistenteIA() {
             <h2>gendazIA</h2>
           </div>
 
-          <div className="gendaz-chat__messages">
+          <div className="gendaz-chat__messages" ref={messagesRef}>
             {mensagens.map((item) => (
               <div key={item.id} className={`gendaz-chat__message gendaz-chat__message--${item.origem}`}>
                 <div className="gendaz-chat__text">{item.texto}</div>
@@ -542,7 +545,6 @@ export default function AssistenteIA() {
                 <Loader size={16} className="gendaz-spinner" /> <span>Digitando...</span>
               </div>
             )}
-            <div ref={messagesEndRef} />
           </div>
 
           <form className="gendaz-chat__form" onSubmit={handleSubmit}>
@@ -551,7 +553,6 @@ export default function AssistenteIA() {
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Digite sua mensagem..."
               disabled={carregando}
-              autoFocus
             />
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={carregando || !inputValue.trim()}>
               <Send size={16} />
