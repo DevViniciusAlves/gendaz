@@ -68,7 +68,7 @@ public class CrmService {
                     int padraoFrequencia = calcularPadraoFrequencia(agendamentos);
                     int scoreRisco = calcularScoreRisco(totalGasto, totalAgendamentos, diasSemAgendar, padraoFrequencia, cliente);
 
-                    String seg = calcularSegmento(totalGasto, totalAgendamentos, diasSemAgendar, cliente);
+                    String seg = calcularSegmento(scoreRisco, cliente);
 
                     CrmUltimaMensagem ultimaMsg = null;
                     Optional<CrmContatoEntity> ultimoContato = crmContatoRepository.findFirstByClienteIdOrderByDataCriacaoDesc(cliente.getId());
@@ -243,11 +243,10 @@ public class CrmService {
         return (int) (totalDias / (ordenados.size() - 1));
     }
 
-    private String calcularSegmento(double totalGasto, int agendamentos, int diasSemAgendar, ClienteEntity cliente) {
-        if (agendamentos <= 2) return "novo";
+    private String calcularSegmento(int scoreRisco, ClienteEntity cliente) {
         if (cliente.getDataCriacao() != null
                 && ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now()) < 30) return "novo";
-        if (diasSemAgendar > 30) return "at_risk";
+        if (scoreRisco >= 70) return "at_risk";
         return "regular";
     }
 
