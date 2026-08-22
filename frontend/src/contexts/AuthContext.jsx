@@ -633,6 +633,10 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     setUsuario(null)
   }
 
+  function setPagamentoPendente(pendente) {
+    pendingPaymentMemory = pendente
+  }
+
   function getPagamentoPendente() {
     return pendingPaymentMemory
   }
@@ -672,6 +676,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     atualizarPlanoAtual,
     renovarAoRetomarAba,
     getPagamentoPendente,
+    setPagamentoPendente,
     limparPagamentoPendente,
     adminUsuario,
     adminLogin,

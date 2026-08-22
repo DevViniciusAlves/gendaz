@@ -26,7 +26,7 @@ function mensagemPadrao(status) {
 
 export default function PagamentoPendente() {
   const navigate = useNavigate()
-  const { getPagamentoPendente, limparPagamentoPendente } = useAuth()
+  const { getPagamentoPendente, limparPagamentoPendente, setPagamentoPendente } = useAuth()
   const [pendente, setPendente] = useState(() => getPagamentoPendente())
   const [mensagem, setMensagem] = useState('')
   const [tipoMensagem, setTipoMensagem] = useState('')
@@ -70,6 +70,7 @@ export default function PagamentoPendente() {
       const resultado = await appApi.verificarPagamentoPublico(sessionId)
       const atualizado = { ...pendente, pagamentoPlano: { ...pendente.pagamentoPlano, status: resultado.statusVerificacao === 'APPROVED' ? 'PAYMENT_APPROVED' : pendente.pagamentoPlano.status } }
       setPendente(atualizado)
+      setPagamentoPendente(atualizado)
       setTipoMensagem(resultado.statusVerificacao === 'APPROVED' ? 'success' : resultado.statusVerificacao === 'PENDING' ? 'info' : 'error')
       setMensagem(resultado.mensagem || mensagemPadrao(resultado.statusVerificacao === 'APPROVED' ? 'PAYMENT_APPROVED' : pendente.pagamentoPlano.status))
       if (resultado.statusVerificacao === 'APPROVED') {
@@ -107,6 +108,10 @@ export default function PagamentoPendente() {
          plano: pendente?.assinatura?.planoNome || 'PRO',
        })
        if (novoPagamento.checkoutUrl) {
+         const novoPendente = { ...pendente, pagamentoPlano: novoPagamento }
+         setPendente(novoPendente)
+         setPagamentoPendente(novoPendente)
+
          if (novaGuia && !novaGuia.closed) {
            novaGuia.location.href = novoPagamento.checkoutUrl
            return

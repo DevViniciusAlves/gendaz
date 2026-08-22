@@ -118,10 +118,6 @@ const styles = `
 export default function Financeiro() {
   const [data, , { reload }] = useLocalData('financeiro')
 
-  return (
-    <>
-      <style>{styles}</style>
-      <section className="page financeiro-page">
   const { refreshTrigger } = useContext(RefreshContext)
   const { atualizarContagem } = usePendentes()
   const [mes, setMes] = useState(mesReferenciaAtual())

@@ -50,6 +50,23 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const original = error.config
+    const codigoStatus = error.response?.status
+    const metodo = String(original?.method || 'get').toLowerCase()
+    const precisaCsrf = ['post', 'put', 'patch', 'delete'].includes(metodo)
+    const urlReq = String(original?.url || '')
+    const ehApi = urlReq.includes('/api/') || urlReq.startsWith('/api/')
+
+    if (codigoStatus === 403 && precisaCsrf && ehApi && !original._csrfRetry) {
+      original._csrfRetry = true
+      try {
+        await garantirCsrfCookie()
+        return api(original)
+      } catch (retryError) {
+        // Mantém o erro 403 original se o refresh de CSRF não resolver
+      }
+    }
+
     if (error.response) {
       const isHtml = typeof error.response.data === 'string' &&
         (error.response.data.includes('<!DOCTYPE') || error.response.data.includes('<html') || error.response.data.includes('<body'));

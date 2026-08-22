@@ -55,7 +55,8 @@ public final class PagamentoDtos {
             @Size(max = 120) String customerName,
             @Size(max = 120) String customerEmail,
             @Size(max = 20) String customerPhone,
-            @Size(max = 120) String antifraudProfilingAttemptReference
+            @Size(max = 120) String antifraudProfilingAttemptReference,
+            Boolean forceNew
     ) {}
 
     public record WebhookPagamentoPlanoRequest(
