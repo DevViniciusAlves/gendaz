@@ -367,7 +367,15 @@ public class AuthService {
         log.info("Cadastro concluido para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
         String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
         registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
-        return new LoginResponse("Conta criada com sucesso. Seu teste gratis de 7 dias comecou.", mapper.toResponse(cadastro.usuario()), assinaturaService.toResponse(cadastro.assinatura()), null, "ACTIVE", sessionToken, null);
+        return new LoginResponse(
+                "Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
+                mapper.toResponse(cadastro.usuario()),
+                assinaturaService.toResponse(cadastro.assinatura()),
+                pagamentoPlano,
+                "ACTIVE",
+                sessionToken,
+                null
+        );
     }
 
     private String normalizarPlano(String plano) {
