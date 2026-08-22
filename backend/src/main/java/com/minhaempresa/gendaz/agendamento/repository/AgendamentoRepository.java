@@ -118,5 +118,36 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("statusCancelado") StatusAgendamento statusCancelado,
             Pageable pageable
     );
+
+    @Query("SELECT COUNT(a) FROM AgendamentoEntity a WHERE a.empresa.id = :empresaId AND a.status = 'FINALIZADO'")
+    long countConsultasFinalizadas(@Param("empresaId") Long empresaId);
+
+    @Query("""
+        SELECT c.nome, COUNT(a.id)
+        FROM AgendamentoEntity a
+        JOIN a.cliente c
+        WHERE a.empresa.id = :empresaId
+          AND a.status <> :statusCancelado
+        GROUP BY c.id, c.nome
+        ORDER BY COUNT(a.id) DESC
+    """)
+    List<Object[]> resumoClientesMaisAgendados(
+            @Param("empresaId") Long empresaId,
+            @Param("statusCancelado") StatusAgendamento statusCancelado,
+            Pageable pageable);
+
+    @Query("""
+        SELECT s.nome, COUNT(a.id)
+        FROM AgendamentoEntity a
+        JOIN a.servico s
+        WHERE a.empresa.id = :empresaId
+          AND a.status <> :statusCancelado
+        GROUP BY s.id, s.nome
+        ORDER BY COUNT(a.id) DESC
+    """)
+    List<Object[]> resumoServicosMaisAgendadosFinanceiro(
+            @Param("empresaId") Long empresaId,
+            @Param("statusCancelado") StatusAgendamento statusCancelado,
+            Pageable pageable);
 }
 

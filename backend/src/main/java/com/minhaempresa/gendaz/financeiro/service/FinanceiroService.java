@@ -33,30 +33,39 @@ public class FinanceiroService {
         Long empresaResolvida = resolverEmpresaAtual(empresaId);
         LocalDateTime inicio = LocalDate.of(ano, mes, 1).atStartOfDay();
         LocalDateTime fim = inicio.toLocalDate().withDayOfMonth(inicio.toLocalDate().lengthOfMonth()).atTime(LocalTime.MAX);
-        List<PagamentoEntity> pagamentosMes = pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(empresaResolvida, inicio, fim);
+        
+        // Usar queries seguras que retornam DTOs e não carregam a coluna clientes.status
+        List<PagamentoDtos.PagamentoResponse> pagamentosMes = pagamentoRepository.findByEmpresaIdAndDataPagamentoBetweenForFinanceiro(empresaResolvida, inicio, fim);
+        
         BigDecimal recebido = pagamentosMes.stream()
-                .filter(p -> p.getStatus() == StatusPagamento.PAGO)
-                .map(PagamentoEntity::getValor)
+                .filter(p -> p.status() == StatusPagamento.PAGO)
+                .map(PagamentoDtos.PagamentoResponse::valor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal pendente = pagamentoRepository.findByEmpresaIdAndStatus(empresaResolvida, StatusPagamento.PENDENTE).stream()
-                .map(PagamentoEntity::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        var agendamentos = agendamentoRepository.findByEmpresaId(empresaResolvida);
-        long consultasRealizadas = agendamentos.stream().filter(a -> a.getStatus() == StatusAgendamento.FINALIZADO).count();
-        List<ItemResumoResponse> clientes = agendamentos.stream()
-                .collect(Collectors.groupingBy(a -> a.getCliente().getNome(), Collectors.counting()))
-                .entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(5)
-                .map(e -> new ItemResumoResponse(e.getKey(), e.getValue(), BigDecimal.ZERO)).toList();
-        List<ItemResumoResponse> servicos = agendamentos.stream()
-                .collect(Collectors.groupingBy(a -> a.getServico().getNome(), Collectors.counting()))
-                .entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).limit(5)
-                .map(e -> new ItemResumoResponse(e.getKey(), e.getValue(), BigDecimal.ZERO)).toList();
+                
+        BigDecimal pendente = pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaResolvida, List.of(StatusPagamento.PENDENTE));
+        
+        // Queries diretas para evitar carregar a entidade AgendamentoEntity e ClienteEntity completas
+        long consultasRealizadas = agendamentoRepository.countConsultasFinalizadas(empresaResolvida);
+        
+        List<ItemResumoResponse> clientes = agendamentoRepository.resumoClientesMaisAgendados(
+                empresaResolvida, StatusAgendamento.CANCELADO, org.springframework.data.domain.PageRequest.of(0, 5));
+                
+        List<ItemResumoResponse> servicos = agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(
+                empresaResolvida, StatusAgendamento.CANCELADO, org.springframework.data.domain.PageRequest.of(0, 5));
+        
         List<PagamentoRecenteItem> pagamentosRecentes = pagamentosMes.stream()
-                .sorted(Comparator.comparing(this::dataOrdenacaoPagamento, Comparator.nullsLast(Comparator.naturalOrder())).reversed()
-                        .thenComparing(PagamentoEntity::getId, Comparator.nullsLast(Comparator.reverseOrder())))
                 .limit(10)
-                .map(this::toPagamentoRecenteItem)
+                .map(p -> new PagamentoRecenteItem(
+                        p.id(),
+                        p.clienteNome(),
+                        p.statusCliente(),
+                        p.valor(),
+                        p.metodoPagamento() != null ? p.metodoPagamento().name() : "",
+                        p.status() != null ? p.status().name() : "",
+                        p.dataPagamento()
+                ))
                 .toList();
+                
         return new ResumoFinanceiroResponse(recebido, pendente, consultasRealizadas, pagamentosRecentes, clientes, servicos);
     }
 

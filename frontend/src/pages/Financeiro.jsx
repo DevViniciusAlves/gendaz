@@ -918,16 +918,16 @@ export default function Financeiro() {
                 <tbody>
                   {historico?.itens?.length ? (
                     historico.itens.map((item) => (
-                      <tr key={item.id}>
-                        <td>
-                          {item.descricao}
-                          {item.obs ? ` (${item.obs})` : ''}
-                        </td>
-                        <td className={item.positivo ? 'success-text' : 'danger-text'}>
-                          {item.positivo ? '' : '-'}{currency(item.valor)}
-                        </td>
-                        <td>{formatarData(item.data)}</td>
-                      </tr>
+                       <tr key={item.id}>
+                         <td>
+                           <strong>({item.tipo === 'CAIXA' ? 'Caixa' : 'Despesas'})</strong> {item.usuarioNome || 'Usuário'} {item.positivo ? 'adicionou' : 'removeu'}
+                           {item.obs ? ` (obs: ${item.obs})` : ''} = {currency(item.valor)}
+                         </td>
+                         <td className={item.positivo ? 'success-text' : 'danger-text'}>
+                           {item.positivo ? '' : '-'}{currency(item.valor)}
+                         </td>
+                         <td>{formatarData(item.data)}</td>
+                       </tr>
                     ))
                   ) : (
                     <tr><td colSpan={3} className="historico-vazio">Nenhum registro encontrado.</td></tr>

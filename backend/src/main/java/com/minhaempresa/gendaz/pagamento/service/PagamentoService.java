@@ -95,7 +95,7 @@ public class PagamentoService {
     @Transactional(readOnly = true)
     public List<PagamentoResponse> listarPorEmpresa(Long empresaId) {
         validarEmpresaAtual(empresaId);
-        return pagamentoRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
+        return pagamentoRepository.findByEmpresaIdForFinanceiro(empresaId);
     }
 
     @Transactional
