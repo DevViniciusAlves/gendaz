@@ -601,12 +601,11 @@ public class AuthService {
         // FIM DIAGNOSTICO
 
         PlanoEntity planoEscolhido = planoService.buscarPorNomePermitido(request.plano());
-            boolean cadastroPro = "PRO".equalsIgnoreCase(planoEscolhido.getNome());
             EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia(nomeEmpresa)
                 .telefone(telefone)
                 .email(email)
-                .status(cadastroPro ? StatusEmpresa.PENDENTE_PAGAMENTO : StatusEmpresa.ATIVA)
+                .status(StatusEmpresa.ATIVA)
                 .build());
 
         profissionalService.buscarOuCriarAtendimentoPrincipal(empresa);
@@ -627,9 +626,7 @@ public class AuthService {
                 .versaoPolitica(VERSAO_PRIVACIDADE)
                 .build());
 
-        AssinaturaEntity assinatura = cadastroPro
-                ? assinaturaService.criarPendentePagamento(empresa, planoEscolhido)
-                : assinaturaService.criarTesteGratis(empresa, planoEscolhido);
+        AssinaturaEntity assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
         log.info("Conta criada: empresa={}, usuario={}, assinatura={}, plano={}, status={}",
                 empresa.getId(), usuario.getId(), assinatura.getId(), planoEscolhido.getNome(), assinatura.getStatus());
         return new CadastroContaCriada(empresa.getId(), usuario, assinatura, cadastroPro);
