@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.pagamento.repository;
 
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import java.math.BigDecimal;
@@ -18,7 +19,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     Optional<PagamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,
@@ -39,7 +40,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     """)
     List<PagamentoDtos.PagamentoResponse> findByEmpresaIdForFinanceiro(@Param("empresaId") Long empresaId);
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,
@@ -62,7 +63,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<PagamentoDtos.PagamentoResponse> findByEmpresaIdAndDataPagamentoBetweenForFinanceiro(@Param("empresaId") Long empresaId, @Param("inicio") LocalDateTime inicio, @Param("fim") LocalDateTime fim);
 
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,
@@ -85,7 +86,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<PagamentoDtos.PagamentoResponse> findByEmpresaIdAndStatusForFinanceiro(@Param("empresaId") Long empresaId, @Param("status") StatusPagamento status);
 
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,
@@ -108,7 +109,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<PagamentoDtos.PagamentoResponse> findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(@Param("empresaId") Long empresaId, @Param("status") StatusPagamento status);
 
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,
@@ -131,7 +132,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     List<PagamentoDtos.PagamentoResponse> findByEmpresaIdAndStatusInForFinanceiro(@Param("empresaId") Long empresaId, @Param("statuses") List<StatusPagamento> statuses);
 
     @Query("""
-        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse(
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             p.agendamento.id,
             p.agendamento.protocolo,

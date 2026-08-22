@@ -19,6 +19,8 @@ import { currency, todayIso } from '../services/localStore.js'
 import { dataHojeDdMmAAAA, exportarCsv, formatarData, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
 
 const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])
+const STATUS_PENDENTE = new Set(['PENDENTE', 'PAYMENT_PENDING'])
+const STATUS_CANCELADO = new Set(['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'])
 
 function mesReferenciaAtual() {
   return todayIso().slice(0, 7)
@@ -35,8 +37,10 @@ function valorTextoPagamento(pagamento) {
   )
 }
 
-function pertenceAoMes(pagamento, mes) {
-  return valorTextoPagamento(pagamento).startsWith(mes)
+function dataReferenciaPagamento(item, agendamentoMap) {
+  const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.id)
+  const dataAgendamento = agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || ''
+  return String(dataAgendamento || valorTextoPagamento(item) || '')
 }
 
 function ehCreditoParcelado(pagamento) {
@@ -306,15 +310,19 @@ export default function Financeiro() {
   }, [data.pagamentos])
 
   const pagamentosDoMes = useMemo(() => pagamentosExpandidos
-    .filter((item) => pertenceAoMes(item, mes))
-    .sort(ordenarMaisRecente), [pagamentosExpandidos, mes])
+    .filter((item) => dataReferenciaPagamento(item, agendamentoMap).startsWith(mes))
+    .sort(ordenarMaisRecente), [pagamentosExpandidos, mes, agendamentoMap])
 
   const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
       .filter((item) => {
-        const matchesStatus = statusPagamento === 'todos' || statusPagamento === 'mes_atual' || item.status === statusPagamento
-        const matchesMes = valorTextoPagamento(item).startsWith(mes)
-        const dataBase = String(item.dataPagamento || item.data || item.dataCriacao || '')
-        const matchesPeriodo = !periodoPagamento || dataBase.startsWith(periodoPagamento)
+        const statusNormalizado = String(item.status || '').toUpperCase()
+        let matchesStatus = true
+        if (statusPagamento === 'PENDENTE') matchesStatus = STATUS_PENDENTE.has(statusNormalizado)
+        else if (statusPagamento === 'PAGO') matchesStatus = STATUS_CONFIRMADO.has(statusNormalizado)
+        else if (statusPagamento === 'CANCELADO') matchesStatus = STATUS_CANCELADO.has(statusNormalizado)
+        const dataRef = dataReferenciaPagamento(item, agendamentoMap)
+        const matchesMes = dataRef.startsWith(mes)
+        const matchesPeriodo = !periodoPagamento || dataRef.startsWith(periodoPagamento)
         const matchesMetodo = metodoPagamento === 'todos'
           || item.metodoPagamento === metodoPagamento
           || (metodoPagamento === 'PIX' && item.metodoPagamento === 'PIX_AUTO')
@@ -324,7 +332,7 @@ export default function Financeiro() {
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
         return matchesStatus && matchesMes && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
-      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes])
+      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes, agendamentoMap])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)
@@ -346,7 +354,7 @@ export default function Financeiro() {
     .reduce((sum, item) => sum + Number(item.valor || 0), 0)
 
   const pendente = pagamentosExpandidos
-    .filter((item) => String(item.status || '').toUpperCase() === 'PENDENTE')
+    .filter((item) => STATUS_PENDENTE.has(String(item.status || '').toUpperCase()))
     .reduce((sum, item) => sum + Number(item.valor || 0), 0)
 
   const realizadas = agendamentosDoMes.filter((item) => String(item.status || '').toUpperCase() === 'FINALIZADO').length
@@ -386,9 +394,7 @@ export default function Financeiro() {
   async function exportarFinanceiro({ modo, dataInicial, dataFinal }) {
     const registros = pagamentosExpandidos.filter((item) => {
       if (modo !== 'periodo') return true
-      const dataBase = String(
-        item.dataPagamento || item.pagoEm || item.createdAt || item.data || item.dataCriacao || item.updatedAt || item.agendamento?.data || '',
-      ).slice(0, 10)
+      const dataBase = dataReferenciaPagamento(item, agendamentoMap).slice(0, 10)
       return dataBase >= dataInicial && dataBase <= dataFinal
     })
     if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
@@ -918,16 +924,15 @@ export default function Financeiro() {
                 <tbody>
                   {historico?.itens?.length ? (
                     historico.itens.map((item) => (
-                       <tr key={item.id}>
-                         <td>
-                           <strong>({item.tipo === 'CAIXA' ? 'Caixa' : 'Despesas'})</strong> {item.usuarioNome || 'Usuário'} {item.positivo ? 'adicionou' : 'removeu'}
-                           {item.obs ? ` (obs: ${item.obs})` : ''} = {currency(item.valor)}
-                         </td>
-                         <td className={item.positivo ? 'success-text' : 'danger-text'}>
-                           {item.positivo ? '' : '-'}{currency(item.valor)}
-                         </td>
-                         <td>{formatarData(item.data)}</td>
-                       </tr>
+                        <tr key={item.id}>
+                          <td>
+                            {item.descricao}
+                          </td>
+                          <td className={item.categoria === 'CAIXA' ? 'success-text' : 'danger-text'}>
+                            {item.categoria === 'CAIXA' && item.positivo ? '' : '-'}{currency(item.valor)}
+                          </td>
+                          <td>{formatarData(item.data)}</td>
+                        </tr>
                     ))
                   ) : (
                     <tr><td colSpan={3} className="historico-vazio">Nenhum registro encontrado.</td></tr>

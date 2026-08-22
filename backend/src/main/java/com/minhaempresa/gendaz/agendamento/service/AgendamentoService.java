@@ -93,7 +93,8 @@ public class AgendamentoService {
                     ? profissionalParaSemPreferencia(empresa, request.data())
                     : profissionalService.buscarEntidade(request.profissionalId());
             validarProfissionalAgendamento(empresa, profissional, request.data());
-            LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
+            int duracao = servico.getDuracaoMinutos() != null ? servico.getDuracaoMinutos() : 30;
+            LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
             validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
             validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
             validarConflitoHorario(profissional.getId(), request.data(), request.horaInicio(), horaFim, null);
@@ -274,7 +275,8 @@ public class AgendamentoService {
         LocalTime horaAtual = horario.getHoraInicio();
         while (horaAtual.isBefore(horario.getHoraFim())) {
             LocalTime inicio = horaAtual;
-            LocalTime fim = inicio.plusMinutes(servico.getDuracaoMinutos());
+            int duracao = servico.getDuracaoMinutos() != null ? servico.getDuracaoMinutos() : 30;
+            LocalTime fim = inicio.plusMinutes(duracao);
 
             if (fim.isAfter(horario.getHoraFim())) {
                 break;
@@ -378,7 +380,8 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidade(id);
-        LocalTime horaFim = request.horaInicio().plusMinutes(agendamento.getServico().getDuracaoMinutos());
+        int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
+        LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
         validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
@@ -395,7 +398,8 @@ public class AgendamentoService {
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
-        LocalTime horaFim = request.horaInicio().plusMinutes(agendamento.getServico().getDuracaoMinutos());
+        int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
+        LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
         agendamento.setData(request.data());
@@ -415,7 +419,8 @@ public class AgendamentoService {
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
 
         validarProfissionalAgendamento(empresa, profissional, request.data());
-        LocalTime horaFim = request.horaInicio().plusMinutes(servico.getDuracaoMinutos());
+        int duracao = servico.getDuracaoMinutos() != null ? servico.getDuracaoMinutos() : 30;
+        LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarDataHorario(empresa.getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(empresa.getId(), profissional.getId(), request.data());
         if (request.status() != StatusAgendamento.CANCELADO) {

@@ -225,19 +225,30 @@ public class CaixaDespesasService {
 
     private HistoricoItemResponse toItem(CaixaDespesasLogEntity log) {
         boolean positivo = switch (log.getTipo()) {
-            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS -> true;
+            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA -> true;
+            case REMOCAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> false;
             default -> false;
         };
         String categoria = switch (log.getTipo()) {
             case PAGAMENTO_APROVADO, PAGAMENTO_REMOVIDO, PAGAMENTO_CANCELADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_CAIXA -> "CAIXA";
             case ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> "DESPESAS";
         };
+        
+        // Monta a descrição conforme solicitado
+        String acao = positivo ? "adicionou" : "removeu";
+        String descricao = String.format("(%s) %s %s%s = %s",
+                categoria.toLowerCase(),
+                log.getUsuario() != null ? log.getUsuario().getNome() : "Usuario",
+                acao,
+                log.getObs() != null && !log.getObs().isEmpty() ? " (obs= " + log.getObs() + ")" : "",
+                log.getValor().toPlainString());
+        
         String usuarioNome = log.getUsuario() != null ? log.getUsuario().getNome() : null;
         return new HistoricoItemResponse(
                 log.getId(),
                 log.getTipo(),
                 categoria,
-                log.getDescricao(),
+                descricao,
                 log.getValor(),
                 positivo,
                 log.getObs(),

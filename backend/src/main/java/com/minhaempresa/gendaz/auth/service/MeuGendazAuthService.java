@@ -48,29 +48,37 @@ public class MeuGendazAuthService {
 
     @Transactional
     public MeuGendazCodigoResponse solicitarCodigo(String slug, String email, String ip) {
-        EmpresaEntity empresa = buscarEmpresa(slug);
-        String normalizado = normalizarEmail(email);
-        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        aplicarRateLimitSolicitacao(empresa.getId(), normalizado, ip);
+        String normalizadoSlug = normalizarSlug(slug);
+        String normalizadoEmail = normalizarEmail(email);
+
+        Optional<EmpresaEntity> empresaOpt = empresaRepository.findByAgendamentoSlug(normalizadoSlug);
+        if (empresaOpt.isEmpty() || normalizadoSlug.isBlank()) {
+            // Para mitigar enumeração de slugs de empresa, retornamos o mesmo sucesso genérico
+            return new MeuGendazCodigoResponse("Enviamos um codigo para o seu e-mail.", normalizadoEmail, false);
+        }
+
+        EmpresaEntity empresa = empresaOpt.get();
+        clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizadoEmail);
+        aplicarRateLimitSolicitacao(empresa.getId(), normalizadoEmail, ip);
 
         LocalDateTime agora = LocalDateTime.now();
-        MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizado)
+        MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizadoEmail)
                 .orElseGet(() -> MeuGendazOtpChallengeEntity.builder()
                         .empresa(empresa)
-                        .email(normalizado)
+                        .email(normalizadoEmail)
                         .build());
 
         validarCooldownEJanela(challenge, agora);
 
         String codigo = gerarCodigo();
-        String otpHash = tokenHashService.hashOtp(codigo, normalizado, empresa.getId());
-        String nomeEmail = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado)
+        String otpHash = tokenHashService.hashOtp(codigo, normalizadoEmail, empresa.getId());
+        String nomeEmail = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizadoEmail)
                 .map(ClienteEntity::getNome)
-                .orElseGet(() -> meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizado)
+                .orElseGet(() -> meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresa.getId(), normalizadoEmail)
                         .map(MeuGendazAcessoEntity::getNome)
-                        .orElse(nomePadrao(normalizado)));
+                        .orElse(nomePadrao(normalizadoEmail)));
 
-        boolean enviado = resendEmailService.enviarCodigoMeuGendaz(normalizado, nomeEmail, codigo);
+        boolean enviado = resendEmailService.enviarCodigoMeuGendaz(normalizadoEmail, nomeEmail, codigo);
         if (!enviado) {
             throw new BusinessException("Nao foi possivel enviar o codigo agora.");
         }
@@ -78,13 +86,19 @@ public class MeuGendazAuthService {
         registrarOtpEmitido(challenge, otpHash, agora);
         challengeRepository.save(challenge);
 
-        log.info("[meu-gendaz] codigo enviado para {} empresaId={}", mascararEmail(normalizado), empresa.getId());
-        return new MeuGendazCodigoResponse("Enviamos um codigo para o seu e-mail.", normalizado, false);
+        log.info("[meu-gendaz] codigo enviado para {} empresaId={}", mascararEmail(normalizadoEmail), empresa.getId());
+        return new MeuGendazCodigoResponse("Enviamos um codigo para o seu e-mail.", normalizadoEmail, false);
     }
 
     @Transactional
     public MeuGendazAuthResponse validarCodigo(String slug, String email, String codigo, String ip) {
-        EmpresaEntity empresa = buscarEmpresa(slug);
+        String normalizadoSlug = normalizarSlug(slug);
+        Optional<EmpresaEntity> empresaOpt = empresaRepository.findByAgendamentoSlug(normalizadoSlug);
+        if (empresaOpt.isEmpty() || normalizadoSlug.isBlank()) {
+            throw new BusinessException("Solicite um novo codigo.");
+        }
+
+        EmpresaEntity empresa = empresaOpt.get();
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
         persistentRateLimitService.consumir("OTP_VALIDATE_IP:" + normalizarIp(ip), securityProperties.getOtp().getMaxValidatePerIp10m(), Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
@@ -141,7 +155,12 @@ public class MeuGendazAuthService {
 
     @Transactional
     public MeuGendazAuthResponse refreshSessao(String slug, String sessionToken) {
-        EmpresaEntity empresa = buscarEmpresa(slug);
+        String normalizadoSlug = normalizarSlug(slug);
+        Optional<EmpresaEntity> empresaOpt = empresaRepository.findByAgendamentoSlug(normalizadoSlug);
+        if (empresaOpt.isEmpty() || normalizadoSlug.isBlank()) {
+            throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
+        }
+        EmpresaEntity empresa = empresaOpt.get();
         if (sessionToken == null || sessionToken.isBlank()) {
             throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }

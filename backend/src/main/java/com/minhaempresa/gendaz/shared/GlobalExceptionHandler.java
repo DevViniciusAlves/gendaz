@@ -58,6 +58,13 @@ public class GlobalExceptionHandler {
                 .body(ValidationErrorResponse.of("Existem campos inválidos.", request.getRequestURI(), campos));
     }
 
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiErrorResponse> handleMessageNotReadable(org.springframework.http.converter.HttpMessageNotReadableException ex, HttpServletRequest request) {
+        log.warn("Requisicao com JSON malformado em {} {}. erroTipo={}", request.getMethod(), request.getRequestURI(), ex.getClass().getSimpleName());
+        return ResponseEntity.badRequest()
+                .body(ApiErrorResponse.of(400, "Bad Request", "Formato de requisição inválido ou malformado.", request.getRequestURI()));
+    }
+
     @ExceptionHandler(RateLimitExceededException.class)
     public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitExceededException ex, HttpServletRequest request) {
         String mensagem = ex.getReason() != null ? ex.getReason() : "Muitas tentativas. Aguarde um momento e tente novamente.";
