@@ -49,6 +49,9 @@ public class HorarioAtendimentoEntity {
     @Column(name = "intervalo_fim")
     private LocalTime intervaloFim;
 
+    @Column(name = "intervalo_minutos")
+    private Integer intervaloMinutos;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime dataCriacao;
 

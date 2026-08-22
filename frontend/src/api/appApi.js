@@ -12,7 +12,7 @@ export function gerarUuid() {
   })
 }
 
-function empresaIdAtual() {
+export function empresaIdAtual() {
   const usuario = getSessionUser()
   return usuario?.empresaId || null
 }
@@ -1059,6 +1059,21 @@ export const appApi = {
       success: 'Horários salvos com sucesso.',
       error: 'Não foi possível salvar os horários.',
     })
+  },
+
+  horariosDisponiveis(empresaId, profissionalId, servicoId, data) {
+    const params = {
+      empresaId,
+      servicoId,
+      data,
+    }
+    if (profissionalId !== null && profissionalId !== undefined && profissionalId !== '') {
+      params.profissionalId = profissionalId
+    }
+    return api.get('/agendamentos/horarios-disponiveis', {
+      params,
+      headers: usuarioHeaders(),
+    }).then((response) => response.data)
   },
 
   exportarDadosLgpd() {

@@ -1,7 +1,7 @@
 ﻿import { CalendarPlus, RefreshCw } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
-import { appApi } from '../api/appApi.js'
+import { appApi, empresaIdAtual } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
 import Modal from '../components/Modal.jsx'
@@ -132,6 +132,10 @@ export default function Agenda() {
   const [recarregando, setRecarregando] = useState(false)
   const [pagina, setPagina] = useState(1)
   const itensPorPagina = 9
+  const [horariosCriar, setHorariosCriar] = useState([])
+  const [carregandoHorariosCriar, setCarregandoHorariosCriar] = useState(false)
+  const [horariosEditar, setHorariosEditar] = useState([])
+  const [carregandoHorariosEditar, setCarregandoHorariosEditar] = useState(false)
   const profissionaisCriacaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, form.data)), [profissionaisAtivosLista, form.data])
   const profissionaisEdicaoDisponiveis = useMemo(() => profissionaisAtivosLista.filter((item) => trabalhaNaData(item, edicao?.data)), [profissionaisAtivosLista, edicao?.data])
 
@@ -249,6 +253,56 @@ export default function Agenda() {
     }
   }, [edicao, modalEditar, profissionaisEdicaoDisponiveis, temProfissionais])
 
+  async function buscarHorariosDisponiveisAgenda(profissionalId, servicoId, dataRef) {
+    if (!servicoId || !dataRef) return []
+    const empresaId = empresaIdAtual()
+    if (!empresaId) return []
+    const profissionalParam = (profissionalId == null || profissionalId === '' || profissionalId === PROFISSIONAL_AUTOMATICO_VALUE)
+      ? null
+      : Number(profissionalId)
+    try {
+      const resposta = await appApi.horariosDisponiveis(empresaId, profissionalParam, Number(servicoId), dataRef)
+      return Array.isArray(resposta) ? resposta : []
+    } catch {
+      return []
+    }
+  }
+
+  useEffect(() => {
+    if (!modalCriar) {
+      setHorariosCriar([])
+      return
+    }
+    if (!form.servicoId || !form.data) {
+      setHorariosCriar([])
+      return
+    }
+    let ativo = true
+    setCarregandoHorariosCriar(true)
+    buscarHorariosDisponiveisAgenda(form.profissionalId, form.servicoId, form.data)
+      .then((lista) => { if (ativo) setHorariosCriar(lista) })
+      .catch(() => { if (ativo) setHorariosCriar([]) })
+      .finally(() => { if (ativo) setCarregandoHorariosCriar(false) })
+    return () => { ativo = false }
+  }, [modalCriar, form.servicoId, form.profissionalId, form.data])
+
+  useEffect(() => {
+    if (!modalEditar || !edicao) {
+      setHorariosEditar([])
+      return
+    }
+    if (!edicao.servicoId || !edicao.data) {
+      setHorariosEditar([])
+      return
+    }
+    let ativo = true
+    setCarregandoHorariosEditar(true)
+    buscarHorariosDisponiveisAgenda(edicao.profissionalId, edicao.servicoId, edicao.data)
+      .then((lista) => { if (ativo) setHorariosEditar(lista) })
+      .catch(() => { if (ativo) setHorariosEditar([]) })
+      .finally(() => { if (ativo) setCarregandoHorariosEditar(false) })
+    return () => { ativo = false }
+  }, [modalEditar, edicao])
 
   const promocoesAplicaveis = useMemo(() => {
     const servicoAtual = Number(form.servicoId)
@@ -782,7 +836,22 @@ export default function Agenda() {
           <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           {temProfissionais && profissionaisCriacaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
 
-          <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
+          {horariosCriar.length > 0 ? (
+            <label className="field">
+              <span>Horário</span>
+              <select value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })}>
+                {form.horaInicio && !horariosCriar.includes(form.horaInicio) && (
+                  <option value={form.horaInicio}>{form.horaInicio} (indisponível)</option>
+                )}
+                {horariosCriar.map((horario) => (
+                  <option key={horario} value={horario}>{horario}</option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={form.horaInicio} onChange={(e) => setForm({ ...form, horaInicio: e.target.value })} />
+          )}
+          {carregandoHorariosCriar && <small className="field-hint">Carregando horários disponíveis...</small>}
           <label className="field">
             <span>Adicionar cupom</span>
             <select value={form.cupomCodigo || ''} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
@@ -811,7 +880,22 @@ export default function Agenda() {
             <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
-            <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
+            {horariosEditar.length > 0 ? (
+              <label className="field">
+                <span>Horário</span>
+                <select value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })}>
+                  {edicao.horaInicio && !horariosEditar.includes(edicao.horaInicio) && (
+                    <option value={edicao.horaInicio}>{edicao.horaInicio} (indisponível)</option>
+                  )}
+                  {horariosEditar.map((horario) => (
+                    <option key={horario} value={horario}>{horario}</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
+            )}
+            {carregandoHorariosEditar && <small className="field-hint">Carregando horários disponíveis...</small>}
             <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correções'}</Button>

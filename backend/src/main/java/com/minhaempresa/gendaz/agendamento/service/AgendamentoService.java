@@ -270,6 +270,7 @@ public class AgendamentoService {
             agendados = List.of();
         }
         List<String> horarios = new ArrayList<>();
+        int intervaloMinutos = horarioAtendimentoService.resolverIntervaloMinutos(horario);
         LocalTime horaAtual = horario.getHoraInicio();
         while (horaAtual.isBefore(horario.getHoraFim())) {
             LocalTime inicio = horaAtual;
@@ -290,7 +291,7 @@ public class AgendamentoService {
                 horarios.add(inicio.toString());
             }
 
-            horaAtual = horaAtual.plusMinutes(30);
+            horaAtual = horaAtual.plusMinutes(intervaloMinutos);
         }
         return horarios;
     }

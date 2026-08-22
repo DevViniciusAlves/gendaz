@@ -48,6 +48,7 @@ function criarHorariosPadrao() {
     horaFim: index < 5 ? '18:00' : '',
     intervaloInicio: '',
     intervaloFim: '',
+    intervaloMinutos: 15,
   }))
 }
 
@@ -65,6 +66,7 @@ function normalizarHorariosAtendimento(lista) {
         horaFim: index < 5 ? '18:00' : '',
         intervaloInicio: '',
         intervaloFim: '',
+        intervaloMinutos: 15,
       }
     }
     return {
@@ -76,6 +78,7 @@ function normalizarHorariosAtendimento(lista) {
       horaFim: item.horaFim || '',
       intervaloInicio: item.intervaloInicio || '',
       intervaloFim: item.intervaloFim || '',
+      intervaloMinutos: item.intervaloMinutos != null ? item.intervaloMinutos : 15,
     }
   })
 }
@@ -551,6 +554,17 @@ export default function Configuracoes() {
                     value={horario.intervaloFim}
                     onChange={(event) => alterarHorario(index, 'intervaloFim', event.target.value)}
                     disabled={!horario.ativo && !horario.intervaloFim}
+                  />
+                </label>
+                <label className="field field-compact">
+                  <span>Intervalo de agendamento (min)</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={240}
+                    value={horario.intervaloMinutos ?? 15}
+                    onChange={(event) => alterarHorario(index, 'intervaloMinutos', event.target.value === '' ? null : Number(event.target.value))}
+                    disabled={!horario.ativo}
                   />
                 </label>
               </div>

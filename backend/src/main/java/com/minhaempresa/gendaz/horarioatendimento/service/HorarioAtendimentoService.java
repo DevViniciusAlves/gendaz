@@ -24,6 +24,10 @@ public class HorarioAtendimentoService {
     private final HorarioAtendimentoRepository repository;
     private final UsuarioRepository usuarioRepository;
 
+    private static final int INTERVALO_PADRAO_MINUTOS = 15;
+    private static final int INTERVALO_MINUTOS_MINIMO = 1;
+    private static final int INTERVALO_MINUTOS_MAXIMO = 240;
+
     @Transactional(readOnly = true)
     public List<HorarioAtendimentoResponse> listarPorUsuario(Long usuarioId) {
         EmpresaEntity empresa = buscarEmpresaDoUsuario(usuarioId);
@@ -125,7 +129,19 @@ public class HorarioAtendimentoService {
                     throw new BusinessException("Intervalo de inicio deve ser menor que o fim.");
                 }
             }
+            if (item.intervaloMinutos() != null
+                    && (item.intervaloMinutos() < INTERVALO_MINUTOS_MINIMO || item.intervaloMinutos() > INTERVALO_MINUTOS_MAXIMO)) {
+                throw new BusinessException("Intervalo de agendamento deve ficar entre "
+                        + INTERVALO_MINUTOS_MINIMO + " e " + INTERVALO_MINUTOS_MAXIMO + " minutos.");
+            }
         });
+    }
+
+    public int resolverIntervaloMinutos(HorarioAtendimentoEntity horario) {
+        if (horario != null && horario.getIntervaloMinutos() != null && horario.getIntervaloMinutos() >= INTERVALO_MINUTOS_MINIMO) {
+            return horario.getIntervaloMinutos();
+        }
+        return INTERVALO_PADRAO_MINUTOS;
     }
 
     private void aplicar(HorarioAtendimentoEntity entity, HorarioAtendimentoItemRequest item) {
@@ -134,6 +150,7 @@ public class HorarioAtendimentoService {
         entity.setHoraFim(item.horaFim());
         entity.setIntervaloInicio(item.intervaloInicio());
         entity.setIntervaloFim(item.intervaloFim());
+        entity.setIntervaloMinutos(item.intervaloMinutos());
     }
 
     private Map<DiaSemanaAtendimento, HorarioAtendimentoEntity> carregarMapeado(Long empresaId) {
@@ -150,6 +167,7 @@ public class HorarioAtendimentoService {
                 .ativo(ativo)
                 .horaInicio(ativo ? LocalTime.of(8, 0) : null)
                 .horaFim(ativo ? LocalTime.of(18, 0) : null)
+                .intervaloMinutos(INTERVALO_PADRAO_MINUTOS)
                 .build();
     }
 
@@ -162,7 +180,8 @@ public class HorarioAtendimentoService {
                 entity.getHoraInicio(),
                 entity.getHoraFim(),
                 entity.getIntervaloInicio(),
-                entity.getIntervaloFim()
+                entity.getIntervaloFim(),
+                entity.getIntervaloMinutos()
         );
     }
 

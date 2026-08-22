@@ -31,28 +31,28 @@ export default function ContactHistoryModal({ open, onClose, cliente }) {
     <Modal title={`Histórico de Contatos: ${cliente.nome}`} open={open} onClose={onClose}>
       <div style={{ padding: '0 24px 24px', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
         {loading ? (
-          <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>Carregando...</div>
+          <div style={{ textAlign: 'center', padding: 32, color: '#6b7280' }}>Carregando...</div>
         ) : contatos.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 32, color: 'var(--muted)' }}>Nenhum contato registrado.</div>
+          <div style={{ textAlign: 'center', padding: 32, color: '#6b7280' }}>Nenhum contato registrado.</div>
         ) : (
           <div style={{ overflowX: 'auto', overflowY: 'auto', maxHeight: 'calc(80vh - 140px)', paddingRight: 4 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--line)' }}>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', color: 'var(--muted)', fontWeight: 700 }}>Data</th>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', color: 'var(--muted)', fontWeight: 700 }}>Tipo</th>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', color: 'var(--muted)', fontWeight: 700 }}>Assunto</th>
-                  <th style={{ textAlign: 'left', padding: '10px 8px', color: 'var(--muted)', fontWeight: 700 }}>Status</th>
+                <tr style={{ borderBottom: '1px solid #e5e7eb' }}>
+                  <th style={{ textAlign: 'left', padding: '10px 8px', color: '#6b7280', fontWeight: 700 }}>Data</th>
+                  <th style={{ textAlign: 'left', padding: '10px 8px', color: '#6b7280', fontWeight: 700 }}>Tipo</th>
+                  <th style={{ textAlign: 'left', padding: '10px 8px', color: '#6b7280', fontWeight: 700 }}>Assunto</th>
+                  <th style={{ textAlign: 'left', padding: '10px 8px', color: '#6b7280', fontWeight: 700 }}>Status</th>
                 </tr>
               </thead>
               <tbody>
                 {contatos.map((c) => (
-                  <tr key={c.id} style={{ borderBottom: '1px solid var(--surface-soft)' }}>
-                    <td style={{ padding: '10px 8px', color: 'var(--text)' }}>{formatarData(c.dataCriacao)}</td>
-                    <td style={{ padding: '10px 8px', color: 'var(--text)' }}>{c.tipo}</td>
-                    <td style={{ padding: '10px 8px', color: 'var(--text)' }}>{c.assunto || c.template}</td>
+                  <tr key={c.id} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                    <td style={{ padding: '10px 8px', color: '#111827' }}>{formatarData(c.dataCriacao)}</td>
+                    <td style={{ padding: '10px 8px', color: '#111827' }}>{c.tipo}</td>
+                    <td style={{ padding: '10px 8px', color: '#111827' }}>{c.assunto || c.template}</td>
                     <td style={{ padding: '10px 8px' }}>
-                      <span style={{ color: c.status === 'aberto' ? 'var(--text)' : 'var(--muted)' }}>
+                      <span style={{ color: c.status === 'aberto' ? '#111827' : '#6b7280' }}>
                         {c.status === 'aberto' ? 'Abriu ' : 'Nao abriu '}
                       </span>
                     </td>

@@ -18,7 +18,8 @@ public final class HorarioAtendimentoDtos {
             LocalTime horaInicio,
             LocalTime horaFim,
             LocalTime intervaloInicio,
-            LocalTime intervaloFim
+            LocalTime intervaloFim,
+            Integer intervaloMinutos
     ) {}
 
     public record HorarioAtendimentoItemRequest(
@@ -27,7 +28,8 @@ public final class HorarioAtendimentoDtos {
             LocalTime horaInicio,
             LocalTime horaFim,
             LocalTime intervaloInicio,
-            LocalTime intervaloFim
+            LocalTime intervaloFim,
+            Integer intervaloMinutos
     ) {}
 
     public record SalvarHorariosAtendimentoRequest(
