@@ -629,7 +629,7 @@ public class AuthService {
         AssinaturaEntity assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
         log.info("Conta criada: empresa={}, usuario={}, assinatura={}, plano={}, status={}",
                 empresa.getId(), usuario.getId(), assinatura.getId(), planoEscolhido.getNome(), assinatura.getStatus());
-        return new CadastroContaCriada(empresa.getId(), usuario, assinatura, cadastroPro);
+        return new CadastroContaCriada(empresa.getId(), usuario, assinatura);
     }
 
     private void validarCadastro(CriarContaRequest request) {
@@ -757,6 +757,6 @@ public class AuthService {
         return ip.split(",")[0].trim();
     }
 
-    private record CadastroContaCriada(Long empresaId, UsuarioEntity usuario, AssinaturaEntity assinatura, boolean cadastroPro) {}
+    private record CadastroContaCriada(Long empresaId, UsuarioEntity usuario, AssinaturaEntity assinatura) {}
 }
 
