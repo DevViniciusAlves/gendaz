@@ -124,7 +124,7 @@ public class DashboardService {
         log.info("[dashboard-debug] receitaPorDia={}", receitaPorDia);
 
         List<DashboardPagamentoItem> pagamentosPendentes = pagamentoRepository
-                .findTop5ByEmpresaIdAndStatusOrderByIdDesc(empresaId, StatusPagamento.PENDENTE)
+                .findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(empresaId, StatusPagamento.PENDENTE)
                 .stream()
                 .map(this::toPagamentoItem)
                 .toList();
@@ -188,15 +188,16 @@ public class DashboardService {
         return new DashboardItemResumo(nome, quantidade, valor);
     }
 
-    private DashboardPagamentoItem toPagamentoItem(PagamentoEntity pagamento) {
+    private DashboardPagamentoItem toPagamentoItem(com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse pagamento) {
         return new DashboardPagamentoItem(
-                pagamento.getId(),
-                pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "",
-                pagamento.getMetodoPagamento() != null ? pagamento.getMetodoPagamento().name() : "",
-                valorOuZero(pagamento.getValor()),
-                pagamento.getStatus() != null ? pagamento.getStatus().name() : ""
+                pagamento.id(),
+                pagamento.clienteNome() != null ? pagamento.clienteNome() : "",
+                pagamento.metodoPagamento() != null ? pagamento.metodoPagamento().name() : "",
+                valorOuZero(pagamento.valor()),
+                pagamento.status() != null ? pagamento.status().name() : ""
         );
     }
+
 
     private List<DashboardReceitaDiaItem> pagamentosPorDia(Long empresaId, LocalDateTime inicio, LocalDateTime fim) {
         Map<LocalDate, BigDecimal> receitaPorDia = pagamentoRepository.resumoReceitaPorDia(empresaId, STATUS_RECEITA_CONFIRMADA, inicio, fim)

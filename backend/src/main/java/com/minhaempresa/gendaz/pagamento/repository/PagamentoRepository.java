@@ -18,6 +18,16 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long> {
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     Optional<PagamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
+
+    // Métodos originais que retornam entidades para compatibilidade
+    // Sem @EntityGraph para evitar carregar a coluna inexistente clientes.status e quebrar o boot/queries
+    List<PagamentoEntity> findByEmpresaId(Long empresaId);
+    List<PagamentoEntity> findByEmpresaIdAndDataPagamentoBetween(Long empresaId, LocalDateTime inicio, LocalDateTime fim);
+    List<PagamentoEntity> findByEmpresaIdAndStatus(Long empresaId, StatusPagamento status);
+    List<PagamentoEntity> findTop5ByEmpresaIdAndStatusOrderByIdDesc(Long empresaId, StatusPagamento status);
+    List<PagamentoEntity> findByEmpresaIdAndStatusIn(Long empresaId, List<StatusPagamento> statuses);
+    Optional<PagamentoEntity> findByAgendamentoIdAndEmpresaId(Long agendamentoId, Long empresaId);
+
     @Query("""
         SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
