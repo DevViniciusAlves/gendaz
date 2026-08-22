@@ -949,7 +949,7 @@ public class InsightsService {
                 .replaceAll("(?m)^#.*$", "")
                 .replaceAll("(?m)^\\s*[-•]\\s*", "")
                 .replaceAll("(?m)^\\s*\\d+\\.\\s*", "")
-                .replaceAll("[\\u{1F000}-\\u{1FAFF}\\u{2600}-\\u{27BF}\\u{FE00}-\\u{FE0F}\\u{2190}-\\u{21FF}\\u{2300}-\\u{23FF}\\u{2B00}-\\u{2BFF}]", "")
+                .replaceAll("[\\p{So}\\p{Cf}]", "")
                 .replaceAll("(?i)\\b(com base nos dados fornecidos|com base nos dados|foi identificado que|score geral|impacto total)\\b[\\s:,-]*", "")
                 .replaceAll("\\s+", " ")
                 .trim();
