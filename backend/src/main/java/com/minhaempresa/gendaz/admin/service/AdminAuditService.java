@@ -2,8 +2,8 @@ package com.minhaempresa.gendaz.admin.service;
 
 import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
 import com.minhaempresa.gendaz.admin.repository.AdminAuditRepository;
-import com.minhaempresa.gendaz.shared.security.CompanyContext;
-import com.minhaempresa.gendaz.shared.security.UserContext;
+import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,6 +17,7 @@ import java.util.List;
 public class AdminAuditService {
 
     private final AdminAuditRepository adminAuditRepository;
+    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
 
     /**
      * Registra um log de auditoria.
@@ -30,8 +31,18 @@ public class AdminAuditService {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
             audit.setEmpresaId(CompanyContext.requireCompanyId()); // Use CompanyContext.requireCompanyId() para garantir empresa
-            audit.setUsuarioId(UserContext.getUserId()); // Precisa verificar se esse método existe e retorna Long
-            audit.setUsuarioNome(UserContext.getUserName()); // Precisa verificar se esse método existe e retorna String
+            
+            Long usuarioId = null;
+            String usuarioNome = "Sistema";
+            try {
+                usuarioId = usuarioAutenticadoProvider.exigirUsuarioId();
+                usuarioNome = usuarioAutenticadoProvider.exigirUsuario().getNome();
+            } catch (Exception e) {
+                log.debug("Nenhum usuario autenticado encontrado para o log de auditoria, registrando como 'Sistema'.");
+            }
+            
+            audit.setUsuarioId(usuarioId != null ? usuarioId : 0L); // 0L representa sistema/anônimo se não autenticado
+            audit.setUsuarioNome(usuarioNome);
             audit.setAcao(acao);
             audit.setEntidade(entidade);
             audit.setEntidadeId(entidadeId);
@@ -47,6 +58,7 @@ public class AdminAuditService {
             log.error("Falha ao registrar auditoria: {}", e.getMessage(), e);
         }
     }
+
 
     /**
      * Registra um log de auditoria sem entidadeId.
