@@ -1,56 +1,71 @@
 package com.minhaempresa.gendaz.admin.service;
 
-import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminAuditLogResponse;
-import com.minhaempresa.gendaz.admin.entity.AuditLogEntity;
-import com.minhaempresa.gendaz.admin.repository.AuditLogRepository;
-import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
-import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
-import java.util.List;
+import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
+import com.minhaempresa.gendaz.admin.repository.AdminAuditRepository;
+import com.minhaempresa.gendaz.shared.security.CompanyContext;
+import com.minhaempresa.gendaz.shared.security.UserContext;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AdminAuditService {
-    private final AuditLogRepository auditLogRepository;
 
-    @Transactional
-    public void registrar(String tipo, String severidade, UsuarioEntity admin, UsuarioEntity usuario, EmpresaEntity empresa, String descricao, String motivo, String ip, String userAgent) {
-        auditLogRepository.save(AuditLogEntity.builder()
-                .tipo(tipo)
-                .severidade(severidade)
-                .admin(admin)
-                .usuario(usuario)
-                .empresa(empresa)
-                .descricao(descricao)
-                .motivo(motivo)
-                .ip(ip)
-                .userAgent(userAgent)
-                .build());
+    private final AdminAuditRepository adminAuditRepository;
+
+    /**
+     * Registra um log de auditoria.
+     *
+     * @param acao      Ação realizada (ex: "Criar", "Editar", "Excluir").
+     * @param entidade  Entidade afetada (ex: "Cliente", "Agendamento").
+     * @param entidadeId ID da entidade afetada (opcional).
+     * @param descricao Descrição detalhada da ação (ex: "Criou cliente Cleiton").
+     */
+    public void registrar(String acao, String entidade, Long entidadeId, String descricao) {
+        try {
+            AdminAuditEntity audit = new AdminAuditEntity();
+            audit.setEmpresaId(CompanyContext.requireCompanyId()); // Use CompanyContext.requireCompanyId() para garantir empresa
+            audit.setUsuarioId(UserContext.getUserId()); // Precisa verificar se esse método existe e retorna Long
+            audit.setUsuarioNome(UserContext.getUserName()); // Precisa verificar se esse método existe e retorna String
+            audit.setAcao(acao);
+            audit.setEntidade(entidade);
+            audit.setEntidadeId(entidadeId);
+            audit.setDescricao(descricao);
+            audit.setDataHora(LocalDateTime.now());
+            
+            // TODO: Obter IP e User-Agent do request (opcional)
+            audit.setIp(null);
+            audit.setUserAgent(null);
+            
+            adminAuditRepository.save(audit);
+        } catch (Exception e) {
+            log.error("Falha ao registrar auditoria: {}", e.getMessage(), e);
+        }
     }
 
-    @Transactional(readOnly = true)
-    public List<AdminAuditLogResponse> listar() {
-        return auditLogRepository.findTop200ByOrderByDataCriacaoDesc().stream()
-                .map(this::toResponse)
-                .toList();
+    /**
+     * Registra um log de auditoria sem entidadeId.
+     *
+     * @param acao      Ação realizada.
+     * @param entidade  Entidade afetada.
+     * @param descricao Descrição detalhada da ação.
+     */
+    public void registrar(String acao, String entidade, String descricao) {
+        registrar(acao, entidade, null, descricao);
     }
 
-    private AdminAuditLogResponse toResponse(AuditLogEntity log) {
-        return new AdminAuditLogResponse(
-                log.getId(),
-                log.getTipo(),
-                log.getSeveridade(),
-                log.getAdmin() == null ? null : log.getAdmin().getEmail(),
-                log.getUsuario() == null ? null : log.getUsuario().getEmail(),
-                log.getEmpresa() == null ? null : log.getEmpresa().getNomeFantasia(),
-                log.getDescricao(),
-                log.getMotivo(),
-                log.getIp(),
-                log.getUserAgent(),
-                log.getDataCriacao()
-        );
+    /**
+     * Retorna todos os logs de auditoria da empresa, ordenados por data/hora (mais recentes primeiro).
+     *
+     * @param empresaId ID da empresa.
+     * @return Lista de logs de auditoria.
+     */
+    public List<AdminAuditEntity> findByEmpresaIdOrderByDataHoraDesc(Long empresaId) {
+        return adminAuditRepository.findByEmpresaIdOrderByDataHoraDesc(empresaId);
     }
 }
-

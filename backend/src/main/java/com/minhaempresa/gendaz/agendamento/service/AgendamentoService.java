@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.agendamento.service;
 
+import com.minhaempresa.gendaz.admin.service.AdminAuditService;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AtualizarAgendamentoRequest;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.CriarAgendamentoRequest;

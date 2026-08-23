@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.usuario.service;
 
+import com.minhaempresa.gendaz.admin.service.AdminAuditService;
 import com.minhaempresa.gendaz.auth.service.PasswordService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
@@ -35,6 +36,7 @@ public class UsuarioService {
     private final ResendEmailService resendEmailService;
     private final SanitizacaoService sanitizacaoService;
     private final SecurityMonitoringService securityMonitoringService;
+    private final AdminAuditService adminAuditService;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
     @Transactional
@@ -68,6 +70,10 @@ public class UsuarioService {
         if (!emailBoasVindas) {
             log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
         }
+        
+        // Registrar auditoria
+        adminAuditService.registrar("Criar", "Usuário", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
+        
         return mapper.toResponse(salvo);
     }
 
@@ -90,10 +96,20 @@ public class UsuarioService {
         }
         UsuarioEntity usuario = buscarEntidade(id);
         validarNaoSuperAdmin(usuario);
+        
+        String nomeAnterior = usuario.getNome();
+        PerfilUsuario perfilAnterior = usuario.getPerfil();
+        
         usuario.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
         usuario.setEmail(sanitizacaoService.email(request.email()));
         usuario.setPerfil(request.perfil());
-        return mapper.toResponse(usuarioRepository.save(usuario));
+        
+        UsuarioEntity atualizado = usuarioRepository.save(usuario);
+        
+        // Registrar auditoria
+        adminAuditService.registrar("Editar", "Usuário", atualizado.getId(), "Editou usuário " + nomeAnterior);
+        
+        return mapper.toResponse(atualizado);
     }
 
     @Transactional
@@ -101,7 +117,12 @@ public class UsuarioService {
         UsuarioEntity usuario = buscarEntidade(id);
         validarNaoSuperAdmin(usuario);
         usuario.setStatus(StatusUsuario.ATIVO);
-        return mapper.toResponse(usuarioRepository.save(usuario));
+        UsuarioEntity atualizado = usuarioRepository.save(usuario);
+        
+        // Registrar auditoria
+        adminAuditService.registrar("Ativar", "Usuário", atualizado.getId(), "Ativou usuário " + atualizado.getNome());
+        
+        return mapper.toResponse(atualizado);
     }
 
     @Transactional
@@ -109,7 +130,12 @@ public class UsuarioService {
         UsuarioEntity usuario = buscarEntidade(id);
         validarNaoSuperAdmin(usuario);
         usuario.setStatus(StatusUsuario.INATIVO);
-        return mapper.toResponse(usuarioRepository.save(usuario));
+        UsuarioEntity atualizado = usuarioRepository.save(usuario);
+        
+        // Registrar auditoria
+        adminAuditService.registrar("Desativar", "Usuário", atualizado.getId(), "Desativou usuário " + atualizado.getNome());
+        
+        return mapper.toResponse(atualizado);
     }
 
     @Transactional(readOnly = true)
