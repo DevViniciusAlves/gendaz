@@ -926,7 +926,7 @@ export default function Financeiro() {
                     historico.itens.map((item) => (
                         <tr key={item.id}>
                            <td>
-                             {`${item.categoria} - ${item.usuarioNome || 'Usuário'} - ${item.positivo ? 'Adicionou' : 'Removeu'}`}
+                             {item.descricao}
                            </td>
                            <td className={item.positivo ? 'success-text' : 'danger-text'}>
                              {item.positivo ? '+' : '-'}{currency(item.valor)}

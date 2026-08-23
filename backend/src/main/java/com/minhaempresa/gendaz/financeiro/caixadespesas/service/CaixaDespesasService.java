@@ -194,7 +194,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_REMOVIDO, valor, nome + " removeu", null, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_REMOVIDO, valor, null, null, usuario, pagamento.getAgendamento());
     }
 
     @Transactional
@@ -210,7 +210,7 @@ public class CaixaDespesasService {
         }
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
-        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_CANCELADO, valor, nome + " cancelou", null, usuario, null);
+        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_CANCELADO, valor, null, null, usuario, pagamento.getAgendamento());
     }
 
     private String buildDescricaoPagamento(PagamentoEntity pagamento) {
@@ -226,23 +226,21 @@ public class CaixaDespesasService {
     private HistoricoItemResponse toItem(CaixaDespesasLogEntity log) {
         boolean positivo = switch (log.getTipo()) {
             case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_DESPESAS -> true;
-            case REMOCAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS -> false;
+            case REMOCAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS, PAGAMENTO_CANCELADO, PAGAMENTO_REMOVIDO -> false;
             default -> false;
         };
         String categoria = switch (log.getTipo()) {
             case PAGAMENTO_APROVADO, PAGAMENTO_REMOVIDO, PAGAMENTO_CANCELADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_CAIXA -> "CAIXA";
             case ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> "DESPESAS";
         };
-        
-        // Monta a descrição conforme solicitado
-        String acao = positivo ? "adicionou" : "removeu";
-        String descricao = String.format("(%s) %s %s%s = %s",
-                categoria.toLowerCase(),
-                log.getUsuario() != null ? log.getUsuario().getNome() : "Usuario",
-                acao,
-                log.getObs() != null && !log.getObs().isEmpty() ? " (obs= " + log.getObs() + ")" : "",
-                log.getValor().toPlainString());
-        
+
+        String descricao = switch (log.getTipo()) {
+            case PAGAMENTO_APROVADO -> buildPagamentoHistorico(log, "Aprovado");
+            case PAGAMENTO_CANCELADO -> buildPagamentoHistorico(log, "Pendente");
+            case PAGAMENTO_REMOVIDO -> buildPagamentoHistorico(log, "Removido");
+            default -> buildManualHistorico(log, categoria, positivo);
+        };
+
         String usuarioNome = log.getUsuario() != null ? log.getUsuario().getNome() : null;
         return new HistoricoItemResponse(
                 log.getId(),
@@ -255,6 +253,26 @@ public class CaixaDespesasService {
                 log.getCriadoEm(),
                 usuarioNome
         );
+    }
+
+    private String buildPagamentoHistorico(CaixaDespesasLogEntity log, String status) {
+        String cliente = "Cliente";
+        String servico = "Servico";
+        if (log.getAgendamento() != null) {
+            if (log.getAgendamento().getCliente() != null) {
+                cliente = log.getAgendamento().getCliente().getNome();
+            }
+            if (log.getAgendamento().getServico() != null) {
+                servico = log.getAgendamento().getServico().getNome();
+            }
+        }
+        return "CAIXA - " + cliente + " - " + servico + " - " + status;
+    }
+
+    private String buildManualHistorico(CaixaDespesasLogEntity log, String categoria, boolean positivo) {
+        String nome = log.getUsuario() != null ? log.getUsuario().getNome() : "Usuario";
+        String acao = positivo ? "Adicionou" : "Removeu";
+        return categoria + " - " + nome + " - " + acao;
     }
 
     private void registrarLog(EmpresaEntity empresa, TipoCaixaDespesasLog tipo, BigDecimal valor, String descricao,
