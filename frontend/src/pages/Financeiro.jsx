@@ -928,8 +928,8 @@ export default function Financeiro() {
                            <td>
                              {`${item.categoria} - ${item.usuarioNome || 'Usuário'} - ${item.positivo ? 'Adicionou' : 'Removeu'}`}
                            </td>
-                           <td className={item.categoria === 'CAIXA' ? (item.positivo ? 'success-text' : 'danger-text') : (item.positivo ? 'danger-text' : 'success-text')}>
-                             {item.categoria === 'CAIXA' ? (item.positivo ? '+' : '-') : (item.positivo ? '-' : '+')}{currency(item.valor)}
+                           <td className={item.positivo ? 'success-text' : 'danger-text'}>
+                             {item.positivo ? '+' : '-'}{currency(item.valor)}
                            </td>
                           <td>{formatarData(item.data)}</td>
                         </tr>

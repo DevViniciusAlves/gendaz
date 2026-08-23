@@ -455,12 +455,14 @@ public class MeuGendazController {
             String tipo = request.tipoOcorrencia().trim();
             String motivo = request.motivo().trim();
             String mensagem = request.mensagem().trim();
+            boolean bugSistema = "Bug".equalsIgnoreCase(tipo);
             String assunto = "Meu Gendaz - " + tipo + " - " + motivo;
             String mensagemCompleta = "Origem: Meu Gendaz\n"
                     + "Tipo de ocorrência: " + tipo + "\n"
                     + "Motivo: " + motivo + "\n\n"
                     + mensagem;
-            CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, PrioridadeChamado.MEDIA, mensagemCompleta);
+            PrioridadeChamado prioridade = bugSistema ? PrioridadeChamado.ALTA : PrioridadeChamado.MEDIA;
+            CriarChamadoRequest chamadoRequest = new CriarChamadoRequest(assunto, prioridade, mensagemCompleta);
             ChamadoResponse chamado = chamadoService.criarMeuGendaz(chamadoRequest, acesso);
             return ResponseEntity.ok(chamado);
         } catch (SessaoExpiradaException e) {

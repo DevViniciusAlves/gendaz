@@ -225,8 +225,8 @@ public class CaixaDespesasService {
 
     private HistoricoItemResponse toItem(CaixaDespesasLogEntity log) {
         boolean positivo = switch (log.getTipo()) {
-            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA -> true;
-            case REMOCAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> false;
+            case PAGAMENTO_APROVADO, ADICAO_MANUAL_CAIXA, REMOCAO_MANUAL_DESPESAS -> true;
+            case REMOCAO_MANUAL_CAIXA, ADICAO_MANUAL_DESPESAS -> false;
             default -> false;
         };
         String categoria = switch (log.getTipo()) {

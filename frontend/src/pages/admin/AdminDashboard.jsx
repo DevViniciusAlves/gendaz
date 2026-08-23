@@ -1322,6 +1322,16 @@ export default function AdminDashboard() {
                 </label>
               </div>
               <label className="field">
+                <span>Mensagem do usuário</span>
+                <textarea
+                  className="admin-readonly-field"
+                  value={modal?.mensagem || 'Nenhuma mensagem registrada.'}
+                  readOnly
+                  disabled
+                  rows={6}
+                />
+              </label>
+              <label className="field">
                 <span>Resposta para o chamado</span>
                 <textarea
                   value={chamadoEdicao.resposta}

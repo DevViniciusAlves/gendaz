@@ -11,8 +11,15 @@ const TIPOS_OCORRENCIA = [
   'Reagendamento',
   'Cancelamento',
   'Serviços e preços',
+  'Bug',
   'Outros',
 ]
+
+const PRIORIDADE_ALTA = 'ALTA'
+
+function ehBugChamado(item) {
+  return item?.prioridade === PRIORIDADE_ALTA
+}
 
 function extrairMensagemErro(error) {
   return error.response?.data?.mensagem
@@ -41,6 +48,19 @@ export default function Suporte() {
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
   const [chamadoSelecionado, setChamadoSelecionado] = useState(null)
+  const [filtroChamado, setFiltroChamado] = useState('TODOS')
+
+  const totalBugs = useMemo(
+    () => chamados.filter((item) => ehBugChamado(item)).length,
+    [chamados],
+  )
+
+  const chamadosFiltrados = useMemo(() => {
+    if (filtroChamado === 'BUGS') {
+      return chamados.filter((item) => ehBugChamado(item))
+    }
+    return chamados
+  }, [chamados, filtroChamado])
 
   const nomeEmpresa = useMemo(
     () => cliente?.empresaNome || cliente?.empresa?.nome || cliente?.empresa?.nomeFantasia || 'sua empresa',
@@ -205,11 +225,27 @@ export default function Suporte() {
           <h2>Meus chamados</h2>
         </div>
 
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          {[
+            { key: 'TODOS', label: `Todos (${chamados.length})` },
+            { key: 'BUGS', label: `Bugs (${totalBugs})` },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={`filter-chip ${filtroChamado === item.key ? 'active' : ''}`}
+              onClick={() => setFiltroChamado(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
         {carregando ? (
           <p className="gendaz-vazio">Carregando chamados...</p>
-        ) : chamados.length > 0 ? (
+        ) : chamadosFiltrados.length > 0 ? (
           <div className="gendaz-stack">
-            {chamados.map((item) => (
+            {chamadosFiltrados.map((item) => (
               <div
                 key={item.id}
                 className="gendaz-mini-card gendaz-mini-card--historico gendaz-mini-card--clickable"
@@ -227,13 +263,23 @@ export default function Suporte() {
                 </div>
                 <div style={{ display: 'grid', justifyItems: 'end', gap: 10 }}>
                   <StatusBadge status={item.status} />
+                  {ehBugChamado(item) && (
+                    <span className="status status-atencao" title="Bug de sistema com prioridade alta">
+                      <span className="status-dot">●</span>
+                      Prioridade alta
+                    </span>
+                  )}
                   {item.resposta && <small style={{ maxWidth: 260, textAlign: 'right' }}>{item.resposta}</small>}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <p className="gendaz-vazio">Nenhum chamado enviado ainda.</p>
+          <p className="gendaz-vazio">
+            {chamados.length === 0
+              ? 'Nenhum chamado enviado ainda.'
+              : 'Nenhum chamado encontrado para este filtro.'}
+          </p>
         )}
       </article>
 
