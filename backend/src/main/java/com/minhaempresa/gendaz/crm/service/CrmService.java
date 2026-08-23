@@ -215,7 +215,7 @@ public class CrmService {
         Optional<AgendamentoEntity> ultimo = agendamentos.stream()
                 .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
                 .max(Comparator.comparing(AgendamentoEntity::getData));
-        if (ultimo.isEmpty()) return 9999;
+        if (ultimo.isEmpty()) return 0;
         int dias = (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
         return Math.max(0, dias);
     }
@@ -245,7 +245,7 @@ public class CrmService {
 
     private String calcularSegmento(int scoreRisco, ClienteEntity cliente) {
         if (cliente.getDataCriacao() != null
-                && ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now()) < 30) return "novo";
+                && ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now()) < 7) return "novo";
         if (scoreRisco >= 70) return "at_risk";
         return "regular";
     }

@@ -925,12 +925,12 @@ export default function Financeiro() {
                   {historico?.itens?.length ? (
                     historico.itens.map((item) => (
                         <tr key={item.id}>
-                          <td>
-                            {item.descricao}
-                          </td>
-                          <td className={item.categoria === 'CAIXA' ? 'success-text' : 'danger-text'}>
-                            {item.categoria === 'CAIXA' && item.positivo ? '' : '-'}{currency(item.valor)}
-                          </td>
+                           <td>
+                             {`${item.categoria} - ${item.usuarioNome || 'Usuário'} - ${item.positivo ? 'Adicionou' : 'Removeu'}`}
+                           </td>
+                           <td className={item.categoria === 'CAIXA' ? (item.positivo ? 'success-text' : 'danger-text') : (item.positivo ? 'danger-text' : 'success-text')}>
+                             {item.categoria === 'CAIXA' ? (item.positivo ? '+' : '-') : (item.positivo ? '-' : '+')}{currency(item.valor)}
+                           </td>
                           <td>{formatarData(item.data)}</td>
                         </tr>
                     ))
