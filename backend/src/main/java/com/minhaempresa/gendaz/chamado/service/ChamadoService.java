@@ -195,6 +195,7 @@ public class ChamadoService {
             case "Dúvidas" -> PrioridadeChamado.BAIXA;
             case "Pagamentos" -> PrioridadeChamado.ALTA;
             case "Alteração em conta" -> PrioridadeChamado.MEDIA;
+            case "BUGS SISTEMA" -> PrioridadeChamado.ALTA;
             default -> PrioridadeChamado.MEDIA;
         };
     }

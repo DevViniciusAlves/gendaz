@@ -1,5 +1,5 @@
 import { Headphones, LifeBuoy, MessageCircle, Send } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
 import Modal from '../components/Modal.jsx'
@@ -16,13 +16,17 @@ const PRIORIDADE_POR_ASSUNTO = {
   'Dúvidas': 'BAIXA',
   'Pagamentos': 'ALTA',
   'Alteração em conta': 'MEDIA',
+  'BUGS SISTEMA': 'ALTA',
 }
 
 const ASSUNTOS_CHAMADO = [
   'Dúvidas',
   'Pagamentos',
   'Alteração em conta',
+  'BUGS SISTEMA',
 ]
+
+const ASSUNTO_BUG = 'BUGS SISTEMA'
 
 function mensagemErro(error) {
   return error.response?.data?.mensagem
@@ -41,6 +45,19 @@ export default function Suporte() {
   const [sucesso, setSucesso] = useState('')
   const [enviando, setEnviando] = useState(false)
   const [chamadoSelecionado, setChamadoSelecionado] = useState(null)
+  const [filtroChamado, setFiltroChamado] = useState('TODOS')
+
+  const totalBugs = useMemo(
+    () => chamados.filter((item) => item.assunto === ASSUNTO_BUG).length,
+    [chamados],
+  )
+
+  const chamadosFiltrados = useMemo(() => {
+    if (filtroChamado === 'BUGS') {
+      return chamados.filter((item) => item.assunto === ASSUNTO_BUG)
+    }
+    return chamados
+  }, [chamados, filtroChamado])
 
   useEffect(() => {
     if (!usuario?.empresaId) return
@@ -152,8 +169,25 @@ export default function Suporte() {
 
       <section className="panel support-form">
         <h2>Chamados abertos</h2>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 16 }}>
+          {[
+            { key: 'TODOS', label: `Todos (${chamados.length})` },
+            { key: 'BUGS', label: `Bugs (${totalBugs})` },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className={`filter-chip ${filtroChamado === item.key ? 'active' : ''}`}
+              onClick={() => setFiltroChamado(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
         <div className="support-ticket-list">
-          {chamados.length === 0 ? <p>Nenhum chamado aberto.</p> : chamados.map((item) => (
+          {chamadosFiltrados.length === 0 ? (
+            <p>{chamados.length === 0 ? 'Nenhum chamado aberto.' : 'Nenhum chamado encontrado para este filtro.'}</p>
+          ) : chamadosFiltrados.map((item) => (
             <article
               key={item.id}
               className="support-ticket-item support-ticket-clickable"
@@ -166,6 +200,12 @@ export default function Suporte() {
                 <strong>{item.assunto || 'Não informado'}</strong>
                 <p>{item.mensagem}</p>
                 <span className="support-ticket-meta">Prioridade: {PRIORIDADE_LABEL[item.prioridade] || 'Media'}</span>
+                {item.assunto === ASSUNTO_BUG && (
+                  <span className="status status-atencao" style={{ marginLeft: 8 }} title="Bug de sistema com prioridade alta">
+                    <span className="status-dot">●</span>
+                    Prioridade alta
+                  </span>
+                )}
               </div>
               <StatusBadge status={item.status} />
             </article>

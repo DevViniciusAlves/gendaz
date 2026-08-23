@@ -455,7 +455,7 @@ public class MeuGendazController {
             String tipo = request.tipoOcorrencia().trim();
             String motivo = request.motivo().trim();
             String mensagem = request.mensagem().trim();
-            boolean bugSistema = "Bug".equalsIgnoreCase(tipo);
+            boolean bugSistema = "BUGS SISTEMA".equalsIgnoreCase(tipo);
             String assunto = "Meu Gendaz - " + tipo + " - " + motivo;
             String mensagemCompleta = "Origem: Meu Gendaz\n"
                     + "Tipo de ocorrência: " + tipo + "\n"

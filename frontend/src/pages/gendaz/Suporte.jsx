@@ -11,7 +11,7 @@ const TIPOS_OCORRENCIA = [
   'Reagendamento',
   'Cancelamento',
   'Serviços e preços',
-  'Bug',
+  'BUGS SISTEMA',
   'Outros',
 ]
 
