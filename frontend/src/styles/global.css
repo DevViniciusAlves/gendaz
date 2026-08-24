@@ -1128,6 +1128,17 @@ tbody tr:hover { background: #fffaf5; }
   justify-content: center;
 }
 
+.app-shell .reports-page .table-wrap .data-table th,
+.app-shell .reports-page .table-wrap .data-table td {
+  text-align: center;
+}
+.app-shell .reports-page .table-wrap .data-table td .name-cell {
+  justify-content: center;
+}
+.app-shell .reports-page .table-wrap .data-table td .report-center-cell {
+  justify-content: center;
+}
+
 .app-shell .clients-page .table-wrap .data-table td .name-cell {
   justify-content: flex-start;
 }
