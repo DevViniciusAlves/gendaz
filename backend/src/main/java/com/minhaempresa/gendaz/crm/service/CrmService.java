@@ -63,7 +63,7 @@ public class CrmService {
                             .doubleValue();
                     double gastoMedio = totalAgendamentos > 0 ? totalGasto / totalAgendamentos : 0.0;
 
-                    int diasSemAgendar = calcularDiasSemAgendar(agendamentos);
+                    int diasSemAgendar = calcularDiasSemAgendar(cliente, agendamentos);
                     LocalDate ultimoAgendamentoData = calcularUltimoAgendamentoData(agendamentos);
                     int padraoFrequencia = calcularPadraoFrequencia(agendamentos);
                     int scoreRisco = calcularScoreRisco(totalGasto, totalAgendamentos, diasSemAgendar, padraoFrequencia, cliente);
@@ -211,13 +211,22 @@ public class CrmService {
         }
     }
 
-    private int calcularDiasSemAgendar(List<AgendamentoEntity> agendamentos) {
+    private int calcularDiasSemAgendar(ClienteEntity cliente, List<AgendamentoEntity> agendamentos) {
         Optional<AgendamentoEntity> ultimo = agendamentos.stream()
                 .filter(a -> a.getStatus() != StatusAgendamento.CANCELADO)
                 .max(Comparator.comparing(AgendamentoEntity::getData));
-        if (ultimo.isEmpty()) return 0;
-        int dias = (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
-        return Math.max(0, dias);
+        
+        if (ultimo.isPresent()) {
+            int dias = (int) ChronoUnit.DAYS.between(ultimo.get().getData(), LocalDate.now());
+            return Math.max(0, dias);
+        }
+        
+        if (cliente.getDataCriacao() != null) {
+            int dias = (int) ChronoUnit.DAYS.between(cliente.getDataCriacao().toLocalDate(), LocalDate.now());
+            return Math.max(0, dias);
+        }
+        
+        return 0;
     }
 
     private LocalDate calcularUltimoAgendamentoData(List<AgendamentoEntity> agendamentos) {
