@@ -39,12 +39,12 @@ public class LogAtividadeService {
      * O tenant (empresa) e o usuario responsavel sao SEMPRE resolvidos no servidor,
      * jamais confiando em dados enviados pelo frontend.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void registrar(String entidade, Long entidadeId, String acao) {
         registrar(entidade, entidadeId, acao, null);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void registrar(String entidade, Long entidadeId, String acao, String detalhes) {
         try {
             Long empresaId = CompanyContext.getCompanyId();

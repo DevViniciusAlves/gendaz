@@ -49,6 +49,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -69,6 +70,7 @@ public class AgendamentoService {
     private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final LogAtividadeService logAtividadeService;
+    private final TransactionTemplate transactionTemplate;
     private final AgendamentoMapper mapper = new AgendamentoMapper();
 
 
@@ -140,7 +142,6 @@ public class AgendamentoService {
                     Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
                     contextoCupomErro.put("agendamentoId", salvo.getId());
                     log.warn("[agendamento-debug] cupom nao aplicado. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoCupomErro);
-                    throw new BusinessException(e.getMessage());
                 }
             }
             BigDecimal valorFinal = valorOriginal.subtract(desconto).max(BigDecimal.ZERO);
@@ -150,45 +151,56 @@ public class AgendamentoService {
             salvo = agendamentoRepository.save(salvo);
             logAtividadeService.registrar("AGENDAMENTO", salvo.getId(), "Criou agendamento para " + cliente.getNome());
 
+            final AgendamentoEntity agendamentoFinal = salvo;
+            final ClienteEntity clienteFinal = cliente;
+            final EmpresaEntity empresaFinal = empresa;
+            final ServicoEntity servicoFinal = servico;
+            final ProfissionalEntity profissionalFinal = profissional;
             try {
-                criarPagamentoPendente(salvo, cliente, empresa);
+                transactionTemplate.executeWithoutResult(status -> {
+                    criarPagamentoPendente(agendamentoFinal, clienteFinal, empresaFinal);
+                });
             } catch (Exception e) {
                 Map<String, Object> contextoPagamentoErro = new LinkedHashMap<>();
-                contextoPagamentoErro.put("agendamentoId", salvo.getId());
-                contextoPagamentoErro.put("empresaId", empresa.getId());
-                contextoPagamentoErro.put("clienteId", cliente.getId());
-                contextoPagamentoErro.put("servicoId", servico.getId());
-                contextoPagamentoErro.put("profissionalId", profissional.getId());
+                contextoPagamentoErro.put("agendamentoId", agendamentoFinal.getId());
+                contextoPagamentoErro.put("empresaId", empresaFinal.getId());
+                contextoPagamentoErro.put("clienteId", clienteFinal.getId());
+                contextoPagamentoErro.put("servicoId", servicoFinal.getId());
+                contextoPagamentoErro.put("profissionalId", profissionalFinal.getId());
                 log.warn("[agendamento-debug] falha ao criar pagamento pendente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoPagamentoErro);
             }
             try {
-                resendEmailService.enviarEmailNovoAgendamento(empresa, salvo);
+                transactionTemplate.executeWithoutResult(status -> {
+                    resendEmailService.enviarEmailNovoAgendamento(empresaFinal, agendamentoFinal);
+                });
             } catch (Exception e) {
                 Map<String, Object> contextoEmailErro = new LinkedHashMap<>();
-                contextoEmailErro.put("agendamentoId", salvo.getId());
-                contextoEmailErro.put("empresaId", empresa.getId());
-                contextoEmailErro.put("clienteId", cliente.getId());
-                contextoEmailErro.put("servicoId", servico.getId());
-                contextoEmailErro.put("profissionalId", profissional.getId());
+                contextoEmailErro.put("agendamentoId", agendamentoFinal.getId());
+                contextoEmailErro.put("empresaId", empresaFinal.getId());
+                contextoEmailErro.put("clienteId", clienteFinal.getId());
+                contextoEmailErro.put("servicoId", servicoFinal.getId());
+                contextoEmailErro.put("profissionalId", profissionalFinal.getId());
                 log.error("[agendamento-debug] falha ao enviar email. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailErro);
             }
             try {
-                resendEmailService.enviarConfirmacaoAgendamento(
-                        cliente.getEmail(),
-                        cliente.getNome(),
-                        servico.getNome(),
-                        profissional.getNome(),
-                        salvo.getData(),
-                        salvo.getHoraInicio(),
-                        empresa.getNomeFantasia(),
-                        empresa.getAgendamentoSlug()
-                );
+                transactionTemplate.executeWithoutResult(status -> {
+                    resendEmailService.enviarConfirmacaoAgendamento(
+                            clienteFinal.getEmail(),
+                            clienteFinal.getNome(),
+                            servicoFinal.getNome(),
+                            profissionalFinal.getNome(),
+                            agendamentoFinal.getData(),
+                            agendamentoFinal.getHoraInicio(),
+                            empresaFinal.getNomeFantasia(),
+                            empresaFinal.getAgendamentoSlug()
+                    );
+                });
             } catch (Exception e) {
                 Map<String, Object> contextoEmailConfirmacaoErro = new LinkedHashMap<>();
-                contextoEmailConfirmacaoErro.put("agendamentoId", salvo.getId());
+                contextoEmailConfirmacaoErro.put("agendamentoId", agendamentoFinal.getId());
                 log.error("[agendamento-debug] falha ao enviar email de confirmacao. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailConfirmacaoErro);
             }
-            return mapper.toResponse(salvo);
+            return mapper.toResponse(agendamentoFinal);
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
             contextoErro.put("empresaId", request.empresaId());
@@ -310,8 +322,13 @@ public class AgendamentoService {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
         }
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Confirmou agendamento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Confirmou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de confirmacao. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -322,8 +339,13 @@ public class AgendamentoService {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
         }
         agendamento.setStatus(StatusAgendamento.CANCELADO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de cancelamento. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -331,8 +353,13 @@ public class AgendamentoService {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
         agendamento.setStatus(StatusAgendamento.CANCELADO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de cancelamento. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -349,7 +376,6 @@ public class AgendamentoService {
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Concluiu agendamento de " + agendamento.getCliente().getNome());
         pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
             if (pago) {
@@ -367,7 +393,13 @@ public class AgendamentoService {
             }
             pagamentoRepository.save(pagamento);
         }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Concluiu agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de finalizacao. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -379,8 +411,13 @@ public class AgendamentoService {
             throw new BusinessException("Apenas agendamentos pendentes, confirmados ou pausados podem ser iniciados.");
         }
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Iniciou atendimento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Iniciou atendimento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de inicio. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -390,8 +427,13 @@ public class AgendamentoService {
             throw new BusinessException("Apenas agendamentos em atendimento podem ser pausados.");
         }
         agendamento.setStatus(StatusAgendamento.PAUSADO);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Pausou atendimento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Pausou atendimento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de pausa. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -408,8 +450,13 @@ public class AgendamentoService {
         agendamento.setHoraFim(horaFim);
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de reagendamento. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional
@@ -425,8 +472,13 @@ public class AgendamentoService {
         agendamento.setHoraFim(horaFim);
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
-        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de reagendamento. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
     }
 
     @Transactional

@@ -144,7 +144,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Data *</span>
             <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
           </label>
-          {carregandoHorarios && <div className="gendaz-loading"><Loader size={16} /> Buscando horários...</div>}
+          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader size={16} /> Buscando horários...</div>}
           {!carregandoHorarios && horarios.length > 0 && (
             <label>
               <span>Horário *</span>
@@ -236,7 +236,7 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
             <span>Nova data</span>
             <input type="date" value={novaData} onChange={(e) => setNovaData(e.target.value)} required />
           </label>
-          {carregandoHorarios && <div className="gendaz-loading"><Loader size={16} /> Buscando horários...</div>}
+          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader size={16} /> Buscando horários...</div>}
           {!carregandoHorarios && horarios.length > 0 && (
             <label>
               <span>Novo horário</span>

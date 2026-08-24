@@ -100,8 +100,12 @@ public class AgendamentoController {
     }
 
     @PatchMapping("/{id}/cancelar")
-    public ResponseEntity<AgendamentoResponse> cancelar(@PathVariable Long id, @RequestParam(required = false) Long empresaId) {
-        return ResponseEntity.ok(agendamentoService.cancelar(id, empresaId));
+    public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestParam(required = false) Long empresaId) {
+        try {
+            return ResponseEntity.ok(agendamentoService.cancelar(id, empresaId));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Erro ao cancelar agendamento."));
+        }
     }
 
     @PatchMapping("/{id}/finalizar")

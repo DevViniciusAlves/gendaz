@@ -14,6 +14,7 @@ import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.CriarAgendamentoR
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.agendamento.service.AgendaBlockedDayService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
@@ -51,6 +52,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionCallback;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -67,6 +70,8 @@ class AgendamentoServiceTest {
     @Mock ResendEmailService resendEmailService;
     @Mock MeuGendazPromocaoService meuGendazPromocaoService;
     @Mock FormaPagamentoEmpresaService formaPagamentoEmpresaService;
+    @Mock LogAtividadeService logAtividadeService;
+    @Mock TransactionTemplate transactionTemplate;
     @Captor ArgumentCaptor<AgendamentoEntity> agendamentoCaptor;
     @Captor ArgumentCaptor<PagamentoEntity> pagamentoCaptor;
     @InjectMocks AgendamentoService agendamentoService;
@@ -79,6 +84,11 @@ class AgendamentoServiceTest {
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(agendamentoService, "appTimezone", "America/Cuiaba");
+        org.mockito.Mockito.doAnswer(invocation -> {
+            java.util.function.Consumer<org.springframework.transaction.TransactionStatus> callback = invocation.getArgument(0);
+            callback.accept(null);
+            return null;
+        }).when(transactionTemplate).executeWithoutResult(any());
     }
 
     private ServicoEntity preparaCriacao(BigDecimal valorServico, CupomAplicadoResult cupom) {
@@ -187,14 +197,18 @@ class AgendamentoServiceTest {
     }
 
     @Test
-    void falhaAoRegistrarCupomImpedeCriacaoDePagamento() {
+    void falhaAoRegistrarCupomNaoImpedeCriacaoDeAgendamento() {
         preparaCriacao(new BigDecimal("100.00"), null);
         when(meuGendazPromocaoService.aplicarCupomAoAgendamento(any(), any(), any(), any(), any()))
                 .thenThrow(new IllegalArgumentException("Voce ja usou este cupom."));
 
-        assertThrows(BusinessException.class, () -> agendamentoService.criar(requestBase("USADO")));
+        var response = agendamentoService.criar(requestBase("USADO"));
 
-        verify(pagamentoRepository, never()).save(any());
+        assertEquals(0, new BigDecimal("100.00").compareTo(response.valorOriginal()));
+        assertEquals(0, new BigDecimal("0.00").compareTo(response.valorDesconto()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(response.valorFinal()));
+        verify(pagamentoRepository).save(pagamentoCaptor.capture());
+        assertEquals(0, new BigDecimal("100.00").compareTo(pagamentoCaptor.getValue().getValor()));
     }
 
     @Test

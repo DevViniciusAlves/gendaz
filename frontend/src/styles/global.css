@@ -16606,6 +16606,12 @@ tbody tr:hover { background: #fffaf5; }
     linear-gradient(180deg, #101010 0%, #080808 100%);
 }
 
+.gendaz-loading--inline {
+  min-height: auto;
+  padding: 12px 0;
+  background: none;
+}
+
 .gendaz-erro {
   padding: 16px;
   background: rgba(255, 255, 255, 0.05);

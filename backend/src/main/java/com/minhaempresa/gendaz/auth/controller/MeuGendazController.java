@@ -337,7 +337,8 @@ public class MeuGendazController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos: " + e.getMessage()));
+            log.error("[meu-gendaz] erro inesperado ao criar agendamento. erroTipo={}", e.getClass().getSimpleName());
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Erro ao criar agendamento. Tente novamente."));
         }
     }
 
@@ -355,7 +356,8 @@ public class MeuGendazController {
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Dados invalidos: " + e.getMessage()));
+            log.error("[meu-gendaz] erro inesperado ao reagendar. erroTipo={}", e.getClass().getSimpleName());
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Erro ao reagendar. Tente novamente."));
         }
     }
 
@@ -367,6 +369,9 @@ public class MeuGendazController {
             return ResponseEntity.ok(Map.of("mensagem", "Agendamento cancelado com sucesso."));
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
+        } catch (Exception e) {
+            log.error("[meu-gendaz] erro inesperado ao cancelar agendamento. erroTipo={}", e.getClass().getSimpleName());
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Erro ao cancelar agendamento. Tente novamente."));
         }
     }
 
