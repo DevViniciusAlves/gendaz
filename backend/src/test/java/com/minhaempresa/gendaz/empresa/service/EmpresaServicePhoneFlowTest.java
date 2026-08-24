@@ -5,8 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.dto.EmpresaDtos.AtualizarEmpresaRequest;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
@@ -47,7 +49,7 @@ class EmpresaServicePhoneFlowTest {
     @BeforeEach
     void setUp() {
         phoneNumberService = new PhoneNumberService();
-        empresaService = new EmpresaService(empresaRepository, sanitizacaoService, ramoDeteccaoService, phoneNumberService);
+        empresaService = new EmpresaService(empresaRepository, sanitizacaoService, ramoDeteccaoService, phoneNumberService, mock(LogAtividadeService.class));
         CompanyContext.setCompanyId(7L);
     }
 

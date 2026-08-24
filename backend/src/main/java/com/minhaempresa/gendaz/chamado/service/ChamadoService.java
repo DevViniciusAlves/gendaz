@@ -9,6 +9,7 @@ import com.minhaempresa.gendaz.chamado.enums.PrioridadeChamado;
 import com.minhaempresa.gendaz.chamado.mapper.ChamadoMapper;
 import com.minhaempresa.gendaz.chamado.repository.ChamadoRepository;
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -30,6 +31,7 @@ public class ChamadoService {
     private final ChamadoRepository chamadoRepository;
     private final UsuarioRepository usuarioRepository;
     private final AdminAuditService auditService;
+    private final LogAtividadeService logAtividadeService;
     private final ChamadoMapper mapper = new ChamadoMapper();
 
     @Transactional
@@ -66,6 +68,7 @@ public class ChamadoService {
                 null,
                 null
         );
+        logAtividadeService.registrar("CHAMADO", chamado.getId(), "Criou chamado " + chamado.getAssunto());
         return mapper.toResponse(chamado);
     }
 
@@ -96,6 +99,7 @@ public class ChamadoService {
                 null,
                 null
         );
+        logAtividadeService.registrar("CHAMADO", chamado.getId(), "Criou chamado " + chamado.getAssunto());
         return mapper.toResponse(chamado);
     }
 
@@ -167,6 +171,7 @@ public class ChamadoService {
                 null,
                 null
         );
+        logAtividadeService.registrar("CHAMADO", salvo.getId(), "Alterou status do chamado " + salvo.getAssunto());
         return mapper.toResponse(salvo);
     }
 

@@ -11,6 +11,7 @@ import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.time.LocalDate;
@@ -32,6 +33,7 @@ public class ProfissionalService {
     private final ProfissionalRepository profissionalRepository;
     private final EmpresaService empresaService;
     private final SanitizacaoService sanitizacaoService;
+    private final LogAtividadeService logAtividadeService;
     private final ProfissionalMapper mapper = new ProfissionalMapper();
 
     @Transactional
@@ -55,6 +57,7 @@ public class ProfissionalService {
                     .empresa(empresa)
                     .build();
             ProfissionalEntity salvo = profissionalRepository.save(profissional);
+            logAtividadeService.registrar("PROFISSIONAL", salvo.getId(), "Criou profissional " + salvo.getNome());
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("profissionalId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
@@ -83,7 +86,9 @@ public class ProfissionalService {
         profissional.setEspecialidade(sanitizacaoService.texto(request.especialidade()));
         profissional.setTelefone(sanitizacaoService.telefone(request.telefone()));
         profissional.setDiasTrabalho(normalizarDiasTrabalho(request.diasTrabalho(), profissional.getStatus()));
-        return mapper.toResponse(profissionalRepository.save(profissional));
+        ProfissionalResponse response = mapper.toResponse(profissionalRepository.save(profissional));
+        logAtividadeService.registrar("PROFISSIONAL", profissional.getId(), "Editou profissional " + profissional.getNome());
+        return response;
     }
 
     @Transactional
@@ -94,7 +99,13 @@ public class ProfissionalService {
             throw new BusinessException("Selecione pelo menos um dia de trabalho.");
         }
         profissional.setStatus(status);
-        return mapper.toResponse(profissionalRepository.save(profissional));
+        ProfissionalResponse response = mapper.toResponse(profissionalRepository.save(profissional));
+        if (status == StatusCadastro.ATIVO) {
+            logAtividadeService.registrar("PROFISSIONAL", profissional.getId(), "Ativou profissional " + profissional.getNome());
+        } else {
+            logAtividadeService.registrar("PROFISSIONAL", profissional.getId(), "Desativou profissional " + profissional.getNome());
+        }
+        return response;
     }
 
     @Transactional
@@ -104,7 +115,9 @@ public class ProfissionalService {
         profissional.setEspecialidade(sanitizacaoService.texto(request.especialidade()));
         profissional.setTelefone(sanitizacaoService.telefone(request.telefone()));
         profissional.setDiasTrabalho(normalizarDiasTrabalho(request.diasTrabalho(), profissional.getStatus()));
-        return mapper.toResponse(profissionalRepository.save(profissional));
+        ProfissionalResponse response = mapper.toResponse(profissionalRepository.save(profissional));
+        logAtividadeService.registrar("PROFISSIONAL", profissional.getId(), "Editou profissional " + profissional.getNome());
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -123,12 +136,14 @@ public class ProfissionalService {
             throw new BusinessException("Profissional nao pertence a empresa informada.");
         }
         profissionalRepository.delete(profissional);
+        logAtividadeService.registrar("PROFISSIONAL", id, "Removeu profissional " + profissional.getNome());
     }
 
     @Transactional
     public void excluirAdmin(Long id) {
         ProfissionalEntity profissional = buscarEntidade(id);
         profissionalRepository.delete(profissional);
+        logAtividadeService.registrar("PROFISSIONAL", id, "Removeu profissional " + profissional.getNome());
     }
 
     @Transactional

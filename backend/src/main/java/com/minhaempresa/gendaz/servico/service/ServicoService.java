@@ -13,6 +13,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -32,6 +33,7 @@ public class ServicoService {
     private final AgendamentoRepository agendamentoRepository;
     private final PagamentoRepository pagamentoRepository;
     private final SanitizacaoService sanitizacaoService;
+    private final LogAtividadeService logAtividadeService;
     private final ServicoMapper mapper = new ServicoMapper();
 
     @Transactional
@@ -56,6 +58,7 @@ public class ServicoService {
                     .build();
             ServicoEntity salvo = servicoRepository.save(servico);
             ramoDeteccaoService.sincronizarRamoDaEmpresa(empresa.getId());
+            logAtividadeService.registrar("SERVICO", salvo.getId(), "Criou serviço " + salvo.getNome());
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
             contextoSucesso.put("servicoId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
@@ -91,6 +94,7 @@ public class ServicoService {
         servico.setValor(val);
         ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
         ramoDeteccaoService.sincronizarRamoDaEmpresa(servico.getEmpresa().getId());
+        logAtividadeService.registrar("SERVICO", servico.getId(), "Editou serviço " + servico.getNome());
         return response;
     }
 
@@ -100,6 +104,11 @@ public class ServicoService {
         servico.setStatus(status);
         ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
         ramoDeteccaoService.sincronizarRamoDaEmpresa(servico.getEmpresa().getId());
+        if (status == StatusCadastro.ATIVO) {
+            logAtividadeService.registrar("SERVICO", servico.getId(), "Ativou serviço " + servico.getNome());
+        } else {
+            logAtividadeService.registrar("SERVICO", servico.getId(), "Desativou serviço " + servico.getNome());
+        }
         return response;
     }
 
@@ -116,6 +125,7 @@ public class ServicoService {
         servicoRepository.delete(servico);
         servicoRepository.flush();
         ramoDeteccaoService.sincronizarRamoDaEmpresa(empresaIdResolvido);
+        logAtividadeService.registrar("SERVICO", id, "Removeu serviço " + servico.getNome());
         return mapper.toResponse(servico);
     }
 

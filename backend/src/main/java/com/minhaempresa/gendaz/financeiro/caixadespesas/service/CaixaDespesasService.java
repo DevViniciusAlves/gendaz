@@ -16,6 +16,7 @@ import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -39,6 +40,7 @@ public class CaixaDespesasService {
     private final EmpresaRepository empresaRepository;
     private final UsuarioRepository usuarioRepository;
     private final AssinaturaService assinaturaService;
+    private final LogAtividadeService logAtividadeService;
 
     private void exigirPlanoPro(Long empresaId) {
         if (!assinaturaService.isPlanoPro(empresaId)) {
@@ -71,6 +73,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA, valor, nome + " adicionou", obs, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Registrou entrada de caixa de R$ " + valor.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -84,6 +87,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.ADICAO_MANUAL_DESPESAS, valor, nome + " adicionou", obs, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Registrou despesa de R$ " + valor.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -102,6 +106,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_CAIXA, subtrair, nome + " removeu", null, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Removeu entrada de caixa de R$ " + subtrair.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -120,6 +125,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_DESPESAS, subtrair, nome + " removeu", null, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Removeu despesa de R$ " + subtrair.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -136,6 +142,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_CAIXA, valor, nome + " removeu", obs, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Removeu valor do caixa de R$ " + valor.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -152,6 +159,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.REMOCAO_MANUAL_DESPESAS, valor, nome + " removeu", obs, usuario, null);
+        logAtividadeService.registrar("CAIXA_DESPESA", empresaId, "Removeu valor de despesas de R$ " + valor.toPlainString());
         return new CaixaDespesasTotaisResponse(empresa.getCaixaTotal(), empresa.getDespesasTotal());
     }
 
@@ -181,6 +189,7 @@ public class CaixaDespesasService {
         empresaRepository.save(empresa);
         String descricao = buildDescricaoPagamento(pagamento);
         registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_APROVADO, valor, descricao, null, null, pagamento.getAgendamento());
+        logAtividadeService.registrar("CAIXA_DESPESA", empresa.getId(), "Registrou entrada de caixa por pagamento aprovado de R$ " + (valor != null ? valor.toPlainString() : "0"));
     }
 
     @Transactional
@@ -195,6 +204,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_REMOVIDO, valor, null, null, usuario, pagamento.getAgendamento());
+        logAtividadeService.registrar("CAIXA_DESPESA", empresa.getId(), "Removeu entrada de caixa por pagamento removido de R$ " + (valor != null ? valor.toPlainString() : "0"));
     }
 
     @Transactional
@@ -211,6 +221,7 @@ public class CaixaDespesasService {
         UsuarioEntity usuario = carregarUsuario(usuarioId);
         String nome = usuario != null ? usuario.getNome() : "Usuario";
         registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_CANCELADO, valor, null, null, usuario, pagamento.getAgendamento());
+        logAtividadeService.registrar("CAIXA_DESPESA", empresa.getId(), "Registrou cancelamento de pagamento no caixa de R$ " + (valor != null ? valor.toPlainString() : "0"));
     }
 
     private String buildDescricaoPagamento(PagamentoEntity pagamento) {

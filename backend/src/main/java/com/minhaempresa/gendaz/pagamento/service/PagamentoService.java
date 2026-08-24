@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.pagamento.service;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.service.AgendamentoService;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
@@ -72,6 +73,7 @@ public class PagamentoService {
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final CaixaDespesasService caixaDespesasService;
     private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+    private final LogAtividadeService logAtividadeService;
     private final PagamentoMapper mapper = new PagamentoMapper();
 
 
@@ -89,7 +91,11 @@ public class PagamentoService {
                 .metodoPagamento(request.metodoPagamento())
                 .status(StatusPagamento.PENDENTE)
                 .build();
-        return mapper.toResponse(pagamentoRepository.save(pagamento));
+        PagamentoEntity pagamentoSalvo = pagamentoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO", pagamentoSalvo.getId(),
+                "Registrou pagamento de " + nomeClientePagamento(pagamentoSalvo)
+                        + " de R$ " + (pagamentoSalvo.getValor() != null ? pagamentoSalvo.getValor().toPlainString() : "0"));
+        return mapper.toResponse(pagamentoSalvo);
     }
 
     @Transactional(readOnly = true)
@@ -110,6 +116,9 @@ public class PagamentoService {
         pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, request.parcelas()));
         pagamento.setDataPagamento(LocalDateTime.now());
         PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
+        logAtividadeService.registrar("PAGAMENTO", pagamento.getId(),
+                "Confirmou pagamento de " + nomeClientePagamento(pagamento)
+                        + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0"));
         if (statusAnterior != StatusPagamento.PAGO) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
         }
@@ -132,6 +141,19 @@ public class PagamentoService {
             pagamento.setParcelas(null);
         }
         PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
+        String descricaoAuditoria;
+        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+            descricaoAuditoria = "Confirmou pagamento de " + nomeClientePagamento(pagamento)
+                    + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
+        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+            descricaoAuditoria = "Desfez pagamento de " + nomeClientePagamento(pagamento)
+                    + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
+        } else if (request.status() == StatusPagamento.CANCELADO) {
+            descricaoAuditoria = "Cancelou pagamento de " + nomeClientePagamento(pagamento);
+        } else {
+            descricaoAuditoria = "Alterou status do pagamento de " + nomeClientePagamento(pagamento) + " para " + request.status();
+        }
+        logAtividadeService.registrar("PAGAMENTO", pagamento.getId(), descricaoAuditoria);
         if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
         } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
@@ -162,7 +184,9 @@ public class PagamentoService {
                 if (info.status() == StatusPagamento.PAYMENT_APPROVED) {
                     log.info("Evitando expiração do checkout id={} pois o pagamento foi concluído na Stripe.", pagamento.getId());
                     liberarContaPorPagamentoAprovado(pagamento, "CORRIDA_TIMEOUT");
-                    pagamentoPlanoRepository.save(pagamento);
+                    pagamento = pagamentoPlanoRepository.save(pagamento);
+                    logAtividadeService.registrar("PAGAMENTO_PLANO", pagamento.getId(),
+                            "Confirmou pagamento do plano por timeout " + (pagamento.getPlano() != null ? pagamento.getPlano().getNome() : ""));
                     return;
                 }
             }
@@ -181,7 +205,9 @@ public class PagamentoService {
 
         // Marcar PAYMENT_EXPIRED pelo caminho isolado de timeout
         pagamento.setStatus(StatusPagamento.PAYMENT_EXPIRED);
-        pagamentoPlanoRepository.save(pagamento);
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Expirou checkout do plano " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
 
         log.info("Checkout expirado por timeout: pagamentoId={}, empresaId={}, plano={}", 
                  pagamento.getId(), pagamento.getEmpresa().getId(), pagamento.getPlano().getNome());
@@ -263,6 +289,8 @@ public class PagamentoService {
         pagamento.setCheckoutUrl(gatewayResponse.checkoutUrl());
         
         pagamento = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamento.getId(),
+                "Criou checkout do plano " + (pagamento.getPlano() != null ? pagamento.getPlano().getNome() : ""));
         log.info("Checkout criado: pagamentoId={}, empresaId={}, plano={}",
                 pagamento.getId(), empresaId, plano.getNome());
         return pagamento;
@@ -336,7 +364,10 @@ public class PagamentoService {
         EmpresaEntity empresa = empresaService.buscarEntidade(empresaId);
         PlanoEntity plano = planoService.buscarPorNomePermitido(normalizarPlano(planoNome));
         PagamentoPlanoEntity pagamento = novoPagamentoPlano(empresa, plano, metodoPagamento, null, null, null, null);
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Criou pagamento de plano pendente " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
+        return mapper.toPlanoResponse(pagamentoSalvo);
     }
 
     @Transactional(readOnly = true)
@@ -391,6 +422,8 @@ public class PagamentoService {
         if (pagamento.getStatus() == StatusPagamento.PAYMENT_APPROVED) {
             pagamento = liberarContaPorPagamentoAprovado(pagamento, "VERIFICACAO");
             pagamento = pagamentoPlanoRepository.save(pagamento);
+            logAtividadeService.registrar("PAGAMENTO_PLANO", pagamento.getId(),
+                    "Confirmou pagamento do plano " + (pagamento.getPlano() != null ? pagamento.getPlano().getNome() : ""));
         }
         AssinaturaEntity assinatura = pagamento.getAssinatura();
         PagamentoPlanoResponse pagamentoResponse = mapper.toPlanoResponse(pagamento);
@@ -423,6 +456,8 @@ public class PagamentoService {
         if (pagamento.getStatus() == StatusPagamento.PAYMENT_APPROVED) {
             liberarContaPorPagamentoAprovado(pagamento, "VERIFICACAO_PUBLICA");
             pagamento = pagamentoPlanoRepository.save(pagamento);
+            logAtividadeService.registrar("PAGAMENTO_PLANO", pagamento.getId(),
+                    "Confirmou pagamento do plano " + (pagamento.getPlano() != null ? pagamento.getPlano().getNome() : ""));
             return criarRespostaVerificacao(pagamento, "APPROVED", "Pagamento aprovado! Sua conta foi liberada.");
         }
 
@@ -455,7 +490,10 @@ public class PagamentoService {
         pagamento.setSubscriptionId(subscriptionId);
         pagamento.setStripeCustomerId(stripeCustomerId);
         aplicarStatusPagamentoPlano(pagamento, StatusPagamento.PAYMENT_APPROVED);
-        return pagamentoPlanoRepository.save(pagamento);
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Confirmou pagamento do plano via Stripe " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
+        return pagamentoSalvo;
     }
 
     @Transactional
@@ -469,7 +507,10 @@ public class PagamentoService {
                         return pagamento;
                     }
                     aplicarStatusPagamentoPlano(pagamento, status);
-                    return pagamentoPlanoRepository.save(pagamento);
+                    PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+                    logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                            "Alterou status do plano " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : "") + " para " + status);
+                    return pagamentoSalvo;
                 });
     }
 
@@ -496,7 +537,9 @@ public class PagamentoService {
 
         pagamento.setStripeInvoiceId(invoiceId);
         aplicarStatusPagamentoPlano(pagamento, status);
-        pagamentoPlanoRepository.save(pagamento);
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Processou invoice do plano " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : "") + " - " + status);
     }
 
     @Transactional
@@ -507,7 +550,10 @@ public class PagamentoService {
             pagamento.setProviderPaymentId(transacaoId.trim());
         }
         aplicarStatusPagamentoPlano(pagamento, StatusPagamento.PAYMENT_APPROVED);
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.save(pagamento));
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Aprovou pagamento do plano " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
+        return mapper.toPlanoResponse(pagamentoSalvo);
     }
 
     @Transactional
@@ -518,7 +564,10 @@ public class PagamentoService {
             pagamento.setProviderPaymentId(transacaoId.trim());
         }
         aplicarStatusPagamentoPlano(pagamento, StatusPagamento.PAYMENT_REJECTED);
-        return mapper.toPlanoResponse(pagamentoPlanoRepository.saveAndFlush(pagamento));
+        PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.saveAndFlush(pagamento);
+        logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                "Rejeitou pagamento do plano " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
+        return mapper.toPlanoResponse(pagamentoSalvo);
     }
 
     @Transactional
@@ -538,6 +587,10 @@ public class PagamentoService {
     public long contarPendentes(Long empresaId) {
         validarEmpresaAtual(empresaId);
         return pagamentoRepository.countByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE);
+    }
+
+    private String nomeClientePagamento(PagamentoEntity pagamento) {
+        return pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "Cliente";
     }
 
     private Optional<PagamentoPlanoEntity> localizarPagamentoStripe(String stripeSessionId, Long pagamentoPlanoId, String paymentReference) {

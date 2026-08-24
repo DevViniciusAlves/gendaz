@@ -14,6 +14,7 @@ import com.minhaempresa.gendaz.entrega.repository.EntregaRepository;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ public class EntregaService {
     private final ClienteService clienteService;
     private final EmpresaService empresaService;
     private final SanitizacaoService sanitizacaoService;
+    private final LogAtividadeService logAtividadeService;
     private final EntregaMapper mapper = new EntregaMapper();
 
     @Transactional
@@ -40,7 +42,9 @@ public class EntregaService {
                 .observacoes(sanitizacaoService.texto(request.observacoes()))
                 .dataPrevisao(request.dataPrevisao())
                 .build();
-        return mapper.toResponse(entregaRepository.save(entrega));
+        EntregaEntity salva = entregaRepository.save(entrega);
+        logAtividadeService.registrar("ENTREGA", salva.getId(), "Criou entrega " + salva.getEndereco());
+        return mapper.toResponse(salva);
     }
 
     @Transactional(readOnly = true)
@@ -53,7 +57,9 @@ public class EntregaService {
     public EntregaResponse atualizarStatus(Long id, AtualizarStatusEntregaRequest request) {
         EntregaEntity entrega = buscarEntidade(id);
         entrega.setStatus(request.status());
-        return mapper.toResponse(entregaRepository.save(entrega));
+        EntregaEntity salva = entregaRepository.save(entrega);
+        logAtividadeService.registrar("ENTREGA", salva.getId(), "Alterou status da entrega " + salva.getEndereco());
+        return mapper.toResponse(salva);
     }
 
     @Transactional(readOnly = true)

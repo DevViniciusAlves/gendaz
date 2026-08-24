@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.usuario.service;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.admin.repository.AuditLogRepository;
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
@@ -65,6 +66,7 @@ public class MembresiaService {
     private final ResendEmailService resendEmailService;
     private final PasswordService passwordService;
     private final AdminAuditService auditService;
+    private final LogAtividadeService logAtividadeService;
     private final PhoneNumberService phoneNumberService;
     private final SecureRandom secureRandom = new SecureRandom();
     @Value("${app.frontend-url:${FRONTEND_URL:https://gendaz.site}}")
@@ -224,6 +226,7 @@ public class MembresiaService {
         }
         UsuarioEntity usuario = membresia.getUsuario();
         Long membroId = membroId(membresia);
+        String nomeMembro = usuario.getNome();
         desalocarDadosUsuario(usuario, executor, empresaId);
         chamadoRepository.desvincularUsuario(usuarioId);
         passwordResetTokenRepository.deleteByUsuarioId(usuarioId);
@@ -234,6 +237,7 @@ public class MembresiaService {
         membresiaRepository.delete(membresia);
         usuarioRepository.delete(usuario);
         registrarAudit("MEMBER_REMOVED", executor, executor.getEmpresa(), "Conta excluida", membroId, "SUCCESS");
+        logAtividadeService.registrar("MEMBRESIA", membroId, "Removeu " + nomeMembro + " da membresia");
         return new MembroEmpresaResponse(membroId, usuarioId, usuario.getNome(), usuario.getEmail(), StatusMembresia.REMOVED, FuncaoMembresia.MEMBER, false, membresia.getDataEntrada(), LocalDateTime.now(), membresia.getDataCriacao(), LocalDateTime.now());
     }
 
@@ -250,6 +254,7 @@ public class MembresiaService {
         membresia.getUsuario().setStatus(StatusUsuario.INATIVO);
         usuarioRepository.save(membresia.getUsuario());
         registrarAudit("MEMBER_DISABLED", executor, executor.getEmpresa(), "Membro desativado", membroId(membresia), "SUCCESS");
+        logAtividadeService.registrar("MEMBRESIA", membroId(membresia), "Alterou nível da membresia de " + membresia.getUsuario().getNome());
         return toResponse(membresia);
     }
 
@@ -264,6 +269,7 @@ public class MembresiaService {
         membresia.getUsuario().setStatus(StatusUsuario.ATIVO);
         usuarioRepository.save(membresia.getUsuario());
         registrarAudit("MEMBER_REACTIVATED", executor, executor.getEmpresa(), "Membro reativado", membroId(membresia), "SUCCESS");
+        logAtividadeService.registrar("MEMBRESIA", membroId(membresia), "Alterou nível da membresia de " + membresia.getUsuario().getNome());
         return toResponse(membresia);
     }
 
@@ -282,6 +288,7 @@ public class MembresiaService {
         membresiaRepository.save(atual);
         membresiaRepository.save(novo);
         registrarAudit("OWNERSHIP_TRANSFERRED", executor, executor.getEmpresa(), "Transferencia de proprietario", novo.getId(), "SUCCESS");
+        logAtividadeService.registrar("MEMBRESIA", novo.getId(), "Alterou nível da membresia de " + novo.getUsuario().getNome());
         return toResponse(novo);
     }
 
@@ -339,6 +346,7 @@ public class MembresiaService {
         membresia.setOwner(false);
         membresia.setFuncao(FuncaoMembresia.MEMBER);
         membresiaRepository.save(membresia);
+        logAtividadeService.registrar("MEMBRESIA", membresia.getId(), "Adicionou " + usuario.getNome() + " à membresia");
         convite.setStatus(StatusConviteEmpresa.ACCEPTED);
         convite.setDataAceite(LocalDateTime.now());
         convite.setAceitoPorUsuarioId(usuario.getId());

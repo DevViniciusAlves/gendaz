@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.notafiscal.mapper.NotaFiscalMapper;
 import com.minhaempresa.gendaz.notafiscal.repository.NotaFiscalRepository;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -26,6 +27,7 @@ public class NotaFiscalService {
     private final ClienteService clienteService;
     private final EmpresaService empresaService;
     private final NotaFiscalMapper mapper = new NotaFiscalMapper();
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public NotaFiscalResponse emitir(EmitirNotaFiscalRequest request) {
@@ -39,7 +41,9 @@ public class NotaFiscalService {
                 .numeroFake("NF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                 .dataEmissao(LocalDateTime.now())
                 .build();
-        return mapper.toResponse(notaFiscalRepository.save(nota));
+        NotaFiscalEntity salva = notaFiscalRepository.save(nota);
+        logAtividadeService.registrar("NOTA_FISCAL", salva.getId(), "Emitiu nota fiscal " + salva.getNumeroFake());
+        return mapper.toResponse(salva);
     }
 
     @Transactional(readOnly = true)

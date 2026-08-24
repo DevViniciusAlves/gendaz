@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.horarioatendimento.config;
 
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.horarioatendimento.repository.HorarioAtendimentoRepository;
 import com.minhaempresa.gendaz.horarioatendimento.service.HorarioAtendimentoService;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
@@ -11,9 +12,10 @@ public class HorarioAtendimentoBeanConfig {
     @Bean
     public HorarioAtendimentoService horarioAtendimentoService(
             HorarioAtendimentoRepository horarioAtendimentoRepository,
-            UsuarioRepository usuarioRepository
+            UsuarioRepository usuarioRepository,
+            LogAtividadeService logAtividadeService
     ) {
-        return new HorarioAtendimentoService(horarioAtendimentoRepository, usuarioRepository);
+        return new HorarioAtendimentoService(horarioAtendimentoRepository, usuarioRepository, logAtividadeService);
     }
 }
 

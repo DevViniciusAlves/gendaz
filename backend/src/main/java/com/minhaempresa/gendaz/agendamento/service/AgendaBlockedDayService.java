@@ -9,6 +9,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
@@ -24,6 +25,7 @@ public class AgendaBlockedDayService {
     private final AgendaBlockedDayRepository repository;
     private final EmpresaService empresaService;
     private final ProfissionalService profissionalService;
+    private final LogAtividadeService logAtividadeService;
     private final AgendaBlockedDayMapper mapper = new AgendaBlockedDayMapper();
 
     @Transactional(readOnly = true)
@@ -61,7 +63,9 @@ public class AgendaBlockedDayService {
                 .data(request.data())
                 .motivo(normalizarMotivo(request.motivo()))
                 .build();
-        return mapper.toResponse(repository.save(entity));
+        AgendaBlockedDayEntity salvo = repository.save(entity);
+        logAtividadeService.registrar("DIA_BLOQUEADO", salvo.getId(), "Bloqueou dia " + entity.getData());
+        return mapper.toResponse(salvo);
     }
 
     @Transactional
@@ -71,7 +75,9 @@ public class AgendaBlockedDayService {
 
         AgendaBlockedDayEntity entity = repository.findByIdAndEmpresaId(id, empresaAutenticadaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Dia bloqueado nao encontrado."));
+        LocalDate data = entity.getData();
         repository.delete(entity);
+        logAtividadeService.registrar("DIA_BLOQUEADO", id, "Desbloqueou dia " + data);
     }
 
     @Transactional(readOnly = true)

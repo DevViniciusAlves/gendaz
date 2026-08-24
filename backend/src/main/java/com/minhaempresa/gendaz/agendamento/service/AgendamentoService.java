@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.mapper.AgendamentoMapper;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository.AgendamentoHorarioProjection;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
@@ -67,6 +68,7 @@ public class AgendamentoService {
     private final ResendEmailService resendEmailService;
     private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
+    private final LogAtividadeService logAtividadeService;
     private final AgendamentoMapper mapper = new AgendamentoMapper();
 
 
@@ -146,6 +148,7 @@ public class AgendamentoService {
             salvo.setValorDesconto(desconto);
             salvo.setValorFinal(valorFinal);
             salvo = agendamentoRepository.save(salvo);
+            logAtividadeService.registrar("AGENDAMENTO", salvo.getId(), "Criou agendamento para " + cliente.getNome());
 
             try {
                 criarPagamentoPendente(salvo, cliente, empresa);
@@ -307,12 +310,20 @@ public class AgendamentoService {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
         }
         agendamento.setStatus(StatusAgendamento.CONFIRMADO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Confirmou agendamento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
     @Transactional
     public AgendamentoResponse cancelar(Long id) {
-        return alterarStatus(id, StatusAgendamento.CANCELADO);
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
+                agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
+            throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
+        }
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
+        return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
     @Transactional
@@ -320,6 +331,7 @@ public class AgendamentoService {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
         agendamento.setStatus(StatusAgendamento.CANCELADO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
@@ -329,6 +341,7 @@ public class AgendamentoService {
         validarEmpresa(agendamento, empresaId);
         // lembretePagamentoRepository.deleteByAgendamento_Id(id);
         pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId());
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
         agendamentoRepository.delete(agendamento);
     }
 
@@ -336,6 +349,7 @@ public class AgendamentoService {
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Concluiu agendamento de " + agendamento.getCliente().getNome());
         pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
             if (pago) {
@@ -365,6 +379,7 @@ public class AgendamentoService {
             throw new BusinessException("Apenas agendamentos pendentes, confirmados ou pausados podem ser iniciados.");
         }
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Iniciou atendimento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
@@ -375,6 +390,7 @@ public class AgendamentoService {
             throw new BusinessException("Apenas agendamentos em atendimento podem ser pausados.");
         }
         agendamento.setStatus(StatusAgendamento.PAUSADO);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Pausou atendimento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
@@ -392,6 +408,7 @@ public class AgendamentoService {
         agendamento.setHoraFim(horaFim);
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
@@ -408,6 +425,7 @@ public class AgendamentoService {
         agendamento.setHoraFim(horaFim);
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
         agendamento.setStatus(StatusAgendamento.PENDENTE);
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
@@ -438,6 +456,7 @@ public class AgendamentoService {
         agendamento.setStatus(request.status());
         agendamento.setObservacoes(sanitizacaoService.texto(request.observacoes()));
 
+        logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Editou agendamento de " + cliente.getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 

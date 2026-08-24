@@ -5,9 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
@@ -36,7 +38,7 @@ class FinanceiroServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        service = new FinanceiroService(pagamentoRepository, agendamentoRepository);
+        service = new FinanceiroService(pagamentoRepository, agendamentoRepository, mock(LogAtividadeService.class));
     }
 
     @AfterEach

@@ -1,5 +1,5 @@
 ﻿import { NavLink } from 'react-router-dom'
-import { BarChart3, CalendarDays, Gift, Home, MessageCircle, MoreHorizontal, ReceiptText, Settings, Sparkles, Users, Wrench, UserRoundCog } from 'lucide-react'
+import { BarChart3, CalendarDays, Gift, Home, MessageCircle, MoreHorizontal, ReceiptText, Settings, Sparkles, Users, Wrench, UserRoundCog, ScrollText } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { PLANOS } from '../services/localStore.js'
@@ -17,6 +17,7 @@ const items = [
   { key: 'promocoes',     to: '/sistema/promocoes',     label: 'Promoções',      icon: Gift },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3,     mobile: true },
   { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
+  { key: 'logs',          to: '/sistema/logs',          label: 'Logs',           icon: ScrollText, mobile: true },
   { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
 ]
 

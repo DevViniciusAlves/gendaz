@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.cliente.service;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.cliente.dto.ClienteDtos.AcaoEmMassaClienteRequest;
@@ -41,6 +42,7 @@ public class ClienteBulkService {
     private final NotificacaoRepository notificacaoRepository;
     private final NotaFiscalRepository notaFiscalRepository;
     private final AdminAuditService auditService;
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public AcaoEmMassaResponse excluir(AcaoEmMassaClienteRequest request) {
@@ -63,6 +65,7 @@ public class ClienteBulkService {
                 cliente.setStatus(StatusCadastro.INATIVO);
                 clienteRepository.save(cliente);
                 auditService.registrar("CLIENTE_STATUS_ALTERADO", "INFO", null, null, cliente.getEmpresa(), "Cliente desativado em massa", "clienteId=" + cliente.getId(), null, null);
+                logAtividadeService.registrar("CLIENTE", cliente.getId(), "Desativou cliente " + cliente.getNome());
                 processados++;
             } catch (RuntimeException ex) {
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));

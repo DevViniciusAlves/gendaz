@@ -8,6 +8,7 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ResumoFinanceiroResponse;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
@@ -28,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class FinanceiroService {
     private final PagamentoRepository pagamentoRepository;
     private final AgendamentoRepository agendamentoRepository;
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional(readOnly = true)
     public ResumoFinanceiroResponse resumo(Long empresaId, int mes, int ano) {

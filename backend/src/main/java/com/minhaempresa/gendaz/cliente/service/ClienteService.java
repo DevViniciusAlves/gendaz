@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.cliente.service;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.cliente.dto.ClienteDtos.ClienteResponse;
@@ -57,6 +58,7 @@ public class ClienteService {
     private final SanitizacaoService sanitizacaoService;
     private final PhoneNumberService phoneNumberService;
     private final AdminAuditService auditService;
+    private final LogAtividadeService logAtividadeService;
 
     private final ClienteMapper mapper = new ClienteMapper();
 
@@ -87,6 +89,7 @@ public class ClienteService {
             contextoSucesso.put("empresaId", empresa.getId());
             log.info("[cliente-debug] cliente criado com sucesso {}", contextoSucesso);
             auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", "clienteId=" + salvo.getId(), null, null);
+            logAtividadeService.registrar("CLIENTE", salvo.getId(), "Criou cliente " + salvo.getNome());
             return mapper.toResponse(salvo);
         } catch (Exception e) {
             Map<String, Object> contexto = new LinkedHashMap<>();
@@ -134,6 +137,7 @@ public class ClienteService {
         ClienteEntity salvo = clienteRepository.save(cliente);
         clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
         auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", "clienteId=" + salvo.getId(), null, null);
+        logAtividadeService.registrar("CLIENTE", salvo.getId(), "Editou cliente " + salvo.getNome());
         return mapper.toResponse(salvo);
     }
 
@@ -141,6 +145,7 @@ public class ClienteService {
     public void excluir(Long id, Long empresaId) {
         ClienteEntity cliente = buscarEntidade(id);
         validarEmpresa(cliente, empresaId);
+        String nomeClienteExcluido = cliente.getNome();
 
         if (cliente.getStatus() == StatusCadastro.EXCLUIDO) {
             return;
@@ -169,6 +174,7 @@ public class ClienteService {
         clienteRepository.save(cliente);
         
         auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", "clienteId=" + cliente.getId(), null, null);
+        logAtividadeService.registrar("CLIENTE", cliente.getId(), "Removeu cliente " + nomeClienteExcluido);
     }
 
     @Transactional
@@ -177,6 +183,11 @@ public class ClienteService {
         validarEmpresa(cliente, empresaId);
         cliente.setStatus(status == null ? StatusCadastro.ATIVO : status);
         ClienteEntity salvo = clienteRepository.save(cliente);
+        if (salvo.getStatus() == StatusCadastro.ATIVO) {
+            logAtividadeService.registrar("CLIENTE", salvo.getId(), "Ativou cliente " + salvo.getNome());
+        } else {
+            logAtividadeService.registrar("CLIENTE", salvo.getId(), "Desativou cliente " + salvo.getNome());
+        }
         auditService.registrar(
                 "CLIENTE_STATUS_ALTERADO",
                 "INFO",

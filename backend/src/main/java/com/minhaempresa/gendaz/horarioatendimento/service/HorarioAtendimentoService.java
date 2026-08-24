@@ -7,6 +7,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.horarioatendimento.entity.HorarioAtendimentoEntity;
 import com.minhaempresa.gendaz.horarioatendimento.enums.DiaSemanaAtendimento;
 import com.minhaempresa.gendaz.horarioatendimento.repository.HorarioAtendimentoRepository;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class HorarioAtendimentoService {
     private final HorarioAtendimentoRepository repository;
     private final UsuarioRepository usuarioRepository;
+    private final LogAtividadeService logAtividadeService;
 
     private static final int INTERVALO_PADRAO_MINUTOS = 15;
     private static final int INTERVALO_MINUTOS_MINIMO = 1;
@@ -64,7 +66,8 @@ public class HorarioAtendimentoService {
                             .diaSemana(dia)
                             .build());
             aplicar(entity, item);
-            repository.save(entity);
+            HorarioAtendimentoEntity salvo = repository.save(entity);
+            logAtividadeService.registrar("HORARIO", salvo.getId(), "Alterou horário de " + entity.getDiaSemana());
         }
 
         return listarPorEmpresa(empresa.getId());

@@ -8,9 +8,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.cliente.dto.ClienteDtos.ClienteResponse;
 import com.minhaempresa.gendaz.cliente.dto.ClienteDtos.SalvarClienteRequest;
@@ -71,7 +73,7 @@ class ClienteServicePhoneFlowTest {
                 conversaRepository, crmContatoRepository, mensagemRepository, entregaRepository,
                 notificacaoRepository, notaFiscalRepository, promocaoNotificacaoRepository,
                 meuGendazPromocaoNotificacaoRepository, clienteEmailBloqueadoService,
-                sanitizacaoService, phoneNumberService, auditService);
+                sanitizacaoService, phoneNumberService, auditService, mock(LogAtividadeService.class));
         CompanyContext.setCompanyId(10L);
     }
 

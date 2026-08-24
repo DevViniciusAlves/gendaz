@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.AtualizarUsuarioRequest;
 import com.minhaempresa.gendaz.usuario.dto.UsuarioDtos.CriarUsuarioRequest;
@@ -38,6 +39,7 @@ public class UsuarioService {
     private final SecurityMonitoringService securityMonitoringService;
     private final AdminAuditService adminAuditService;
     private final UsuarioMapper mapper = new UsuarioMapper();
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public UsuarioResponse criar(CriarUsuarioRequest request) {
@@ -70,10 +72,9 @@ public class UsuarioService {
         if (!emailBoasVindas) {
             log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
         }
-        
         // Registrar auditoria
         adminAuditService.registrar("Criar", "Usuário", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
-        
+        logAtividadeService.registrar("USUARIO", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
         return mapper.toResponse(salvo);
     }
 
@@ -103,13 +104,11 @@ public class UsuarioService {
         usuario.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
         usuario.setEmail(sanitizacaoService.email(request.email()));
         usuario.setPerfil(request.perfil());
-        
-        UsuarioEntity atualizado = usuarioRepository.save(usuario);
-        
+        UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Editar", "Usuário", atualizado.getId(), "Editou usuário " + nomeAnterior);
-        
-        return mapper.toResponse(atualizado);
+        adminAuditService.registrar("Editar", "Usuário", salvo.getId(), "Editou usuário " + nomeAnterior);
+        logAtividadeService.registrar("USUARIO", salvo.getId(), "Alterou perfil de " + salvo.getNome());
+        return mapper.toResponse(salvo);
     }
 
     @Transactional
@@ -117,12 +116,11 @@ public class UsuarioService {
         UsuarioEntity usuario = buscarEntidade(id);
         validarNaoSuperAdmin(usuario);
         usuario.setStatus(StatusUsuario.ATIVO);
-        UsuarioEntity atualizado = usuarioRepository.save(usuario);
-        
+        UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Ativar", "Usuário", atualizado.getId(), "Ativou usuário " + atualizado.getNome());
-        
-        return mapper.toResponse(atualizado);
+        adminAuditService.registrar("Ativar", "Usuário", salvo.getId(), "Ativou usuário " + salvo.getNome());
+        logAtividadeService.registrar("USUARIO", salvo.getId(), "Ativou usuário " + salvo.getNome());
+        return mapper.toResponse(salvo);
     }
 
     @Transactional
@@ -130,12 +128,11 @@ public class UsuarioService {
         UsuarioEntity usuario = buscarEntidade(id);
         validarNaoSuperAdmin(usuario);
         usuario.setStatus(StatusUsuario.INATIVO);
-        UsuarioEntity atualizado = usuarioRepository.save(usuario);
-        
+        UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Desativar", "Usuário", atualizado.getId(), "Desativou usuário " + atualizado.getNome());
-        
-        return mapper.toResponse(atualizado);
+        adminAuditService.registrar("Desativar", "Usuário", salvo.getId(), "Desativou usuário " + salvo.getNome());
+        logAtividadeService.registrar("USUARIO", salvo.getId(), "Desativou usuário " + salvo.getNome());
+        return mapper.toResponse(salvo);
     }
 
     @Transactional(readOnly = true)

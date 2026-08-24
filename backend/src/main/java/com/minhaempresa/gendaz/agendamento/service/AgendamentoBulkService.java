@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -23,6 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AgendamentoBulkService {
     private final AgendamentoRepository agendamentoRepository;
     private final PagamentoRepository pagamentoRepository;
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public AcaoEmMassaResponse executar(AcaoEmMassaAgendamentoRequest request) {
@@ -49,6 +51,7 @@ public class AgendamentoBulkService {
                     case "EXCLUIR" -> {
                         pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(id, companyId);
                         agendamentoRepository.delete(agendamento);
+                        logAtividadeService.registrar("AGENDAMENTO", id, "Removeu agendamento " + id);
                         processados++;
                         continue;
                     }
@@ -56,6 +59,7 @@ public class AgendamentoBulkService {
                     default -> throw new BusinessException("Acao de agendamento nao suportada.");
                 }
                 agendamentoRepository.save(agendamento);
+                logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), verboAcao(acao) + " agendamento " + agendamento.getId());
                 processados++;
             } catch (RuntimeException ex) {
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));
@@ -71,6 +75,15 @@ public class AgendamentoBulkService {
         if (ids.size() > 10) {
             throw new BusinessException("Você pode selecionar no máximo 10 itens por vez.");
         }
+    }
+
+    private String verboAcao(String acao) {
+        return switch (acao) {
+            case "FINALIZAR" -> "Finalizou";
+            case "CANCELAR" -> "Cancelou";
+            case "PENDENTE" -> "Marcou como pendente";
+            default -> "Alterou";
+        };
     }
 }
 

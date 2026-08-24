@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.promocao.entity.*;
 import com.minhaempresa.gendaz.promocao.enums.TipoPromocao;
 import com.minhaempresa.gendaz.promocao.repository.*;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoSyncService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
@@ -40,6 +41,7 @@ public class PromocaoService {
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
     private final MeuGendazPromocaoSyncService meuGendazPromocaoSyncService;
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional(readOnly = true)
     public List<PromocaoResponse> listar(Long empresaId) {
@@ -73,6 +75,7 @@ public class PromocaoService {
         }
 
         PromocaoResponse response = toResponse(promocaoRepository.save(promocao));
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Criou promoção " + promocao.getCodigo());
         meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, response.id());
         return response;
     }
@@ -94,6 +97,7 @@ public class PromocaoService {
         promocao.setAplicarTodosServicos(Boolean.TRUE.equals(request.aplicarTodosServicos()));
         promocao.setServicos(promocao.getAplicarTodosServicos() ? new HashSet<>() : carregarServicos(empresaId, request.servicoIds()));
         PromocaoResponse response = toResponse(promocaoRepository.save(promocao));
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Editou promoção " + promocao.getCodigo());
         meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, response.id());
         return response;
     }
@@ -103,6 +107,7 @@ public class PromocaoService {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         promocao.setStatus(StatusCadastro.INATIVO);
         promocaoRepository.save(promocao);
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Desativou promoção " + promocao.getCodigo());
         meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
     }
 
@@ -111,12 +116,14 @@ public class PromocaoService {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
         promocao.setStatus(StatusCadastro.ATIVO);
         promocaoRepository.save(promocao);
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Ativou promoção " + promocao.getCodigo());
         meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
     }
 
     @Transactional
     public void excluir(Long empresaId, Long id) {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Removeu promoção " + promocao.getCodigo());
         promocaoUsoRepository.deleteAll(promocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(id));
         promocaoNotificacaoRepository.deleteAll(promocaoNotificacaoRepository.findByPromocaoIdOrderByIdDesc(id));
         promocaoRepository.delete(promocao);
@@ -181,6 +188,7 @@ public class PromocaoService {
 
         promocao.setDataNotificacao(LocalDateTime.now());
         promocaoRepository.save(promocao);
+        logAtividadeService.registrar("PROMOCAO", promocao.getId(), "Notificou clientes da promoção " + promocao.getCodigo());
         meuGendazPromocaoSyncService.sincronizarPromocao(empresaId, id);
         return switch (tipoNormalizado) {
             case "TODOS" -> clientes.size() == 1

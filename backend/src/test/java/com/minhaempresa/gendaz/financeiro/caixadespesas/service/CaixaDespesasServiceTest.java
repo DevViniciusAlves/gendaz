@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
@@ -51,7 +52,7 @@ class CaixaDespesasServiceTest {
     @BeforeEach
     void setup() {
         MockitoAnnotations.openMocks(this);
-        service = new CaixaDespesasService(logRepository, empresaRepository, usuarioRepository, assinaturaService);
+        service = new CaixaDespesasService(logRepository, empresaRepository, usuarioRepository, assinaturaService, mock(LogAtividadeService.class));
         empresa = new EmpresaEntity();
         empresa.setId(1L);
         empresa.setCaixaTotal(BigDecimal.ZERO);

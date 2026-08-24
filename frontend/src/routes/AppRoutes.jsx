@@ -30,6 +30,7 @@ import Servicos from '../pages/Servicos.jsx'
 import Profissionais from '../pages/Profissionais.jsx'
 import Financeiro from '../pages/Financeiro.jsx'
 import Relatorios from '../pages/Relatorios.jsx'
+import Logs from '../pages/Logs.jsx'
 import Planos from '../pages/Planos.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
 import UsuariosEmpresa from '../pages/UsuariosEmpresa.jsx'
@@ -168,6 +169,7 @@ export default function AppRoutes() {
         <Route path="financeiro" element={<PlanRoute routeKey="financeiro"><Financeiro /></PlanRoute>} />
         <Route path="pagamentos/*" element={<Navigate to="/sistema/financeiro" replace />} />
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
+        <Route path="logs" element={<PlanRoute routeKey="logs"><Logs /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
         <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />
         <Route path="configuracoes/usuarios" element={<PlanRoute routeKey="configuracoes"><UsuariosEmpresa /></PlanRoute>} />

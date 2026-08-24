@@ -6,6 +6,7 @@ import com.minhaempresa.gendaz.empresa.dto.EmpresaDtos.EmpresaResponse;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
 import com.minhaempresa.gendaz.empresa.mapper.EmpresaMapper;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
@@ -26,6 +27,7 @@ public class EmpresaService {
     private final RamoDeteccaoService ramoDeteccaoService;
     private final PhoneNumberService phoneNumberService;
     private final EmpresaMapper mapper = new EmpresaMapper();
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public EmpresaResponse criar(CriarEmpresaRequest request) {
@@ -37,7 +39,9 @@ public class EmpresaService {
                 .status(StatusEmpresa.ATIVA)
                 .timezone(TimezoneEnum.AMERICA_CUIABA.getValue())
                 .build();
-        return mapper.toResponse(empresaRepository.save(empresa));
+        EmpresaEntity salva = empresaRepository.save(empresa);
+        logAtividadeService.registrar("EMPRESA", salva.getId(), "Criou empresa " + salva.getNomeFantasia());
+        return mapper.toResponse(salva);
     }
 
     @Transactional
@@ -60,7 +64,9 @@ public class EmpresaService {
         }
         empresa.setTelefone(telefone);
         empresa.setTimezone(resolverTimezone(empresa.getTimezone(), request.timezone()));
-        return mapper.toResponse(empresaRepository.save(empresa));
+        EmpresaEntity salva = empresaRepository.save(empresa);
+        logAtividadeService.registrar("EMPRESA", salva.getId(), "Alterou dados da empresa");
+        return mapper.toResponse(salva);
     }
 
     @Transactional(readOnly = true)

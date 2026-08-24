@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.configuracao.service;
 
 import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AgendamentoLinkResponse;
 import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AtualizarAgendamentoSlugRequest;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AgendamentoConfigService {
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
+    private final LogAtividadeService logAtividadeService;
 
     @Value("${app.frontend-url:https://gendaz.site}")
     private String frontendUrl;
@@ -28,6 +30,7 @@ public class AgendamentoConfigService {
         if (empresa.getAgendamentoSlug() == null || empresa.getAgendamentoSlug().isBlank()) {
             empresa.setAgendamentoSlug(gerarSlugUnico(empresa));
             empresa = empresaRepository.save(empresa);
+            logAtividadeService.registrar("CONFIG_AGENDA", empresa.getId(), "Alterou configuração de agendamento");
         }
         return toResponse(empresa);
     }
@@ -45,7 +48,9 @@ public class AgendamentoConfigService {
                     throw new BusinessException("Este link de agendamento ja esta em uso.");
                 });
         empresa.setAgendamentoSlug(slug);
-        return toResponse(empresaRepository.save(empresa));
+        EmpresaEntity salva = empresaRepository.save(empresa);
+        logAtividadeService.registrar("CONFIG_AGENDA", salva.getId(), "Alterou configuração de agendamento");
+        return toResponse(salva);
     }
 
     private EmpresaEntity buscarEmpresaDoUsuario(Long usuarioId) {
