@@ -27,8 +27,16 @@ public class ClienteController {
     private final ClienteBulkService clienteBulkService;
     private final PhoneNumberService phoneNumberService;
 
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
+    }
+
     @PostMapping
     public ResponseEntity<?> criar(@Valid @RequestBody SalvarClienteRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("empresaId", request.empresaId());
         log.debug("[cliente-debug] clique em criar cliente {}", contexto);
@@ -50,6 +58,7 @@ public class ClienteController {
 
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<List<ClienteResponse>> listarPorEmpresa(@PathVariable Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(clienteService.listarPorEmpresa(empresaId));
     }
 
@@ -67,6 +76,7 @@ public class ClienteController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody SalvarClienteRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("clienteId", id);
         contexto.put("empresaId", request.empresaId());
@@ -89,17 +99,20 @@ public class ClienteController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id, @RequestParam Long empresaId) {
+        validarEmpresaAtual(empresaId);
         clienteService.excluir(id, empresaId);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/ativar")
     public ResponseEntity<ClienteResponse> ativar(@PathVariable Long id, @RequestParam Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(clienteService.alterarStatus(id, empresaId, StatusCadastro.ATIVO));
     }
 
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<ClienteResponse> desativar(@PathVariable Long id, @RequestParam Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(clienteService.alterarStatus(id, empresaId, StatusCadastro.INATIVO));
     }
 

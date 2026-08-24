@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.crm.controller;
 
 import com.minhaempresa.gendaz.crm.dto.CrmDtos.*;
 import com.minhaempresa.gendaz.crm.service.CrmService;
+import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import jakarta.validation.Valid;
@@ -16,6 +17,13 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class CrmController {
     private final CrmService crmService;
+    private final AssinaturaService assinaturaService;
+
+    private void validarPlanoPro() {
+        if (!assinaturaService.isPlanoPro(CompanyContext.requireCompanyId())) {
+            throw new BusinessException("Esta funcionalidade requer o plano PRO.");
+        }
+    }
 
     @GetMapping("/clientes")
     public ResponseEntity<?> listarClientes(
@@ -25,6 +33,7 @@ public class CrmController {
             @RequestParam(required = false) String orderBy,
             @RequestParam(required = false) Integer period
     ) {
+        validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
@@ -40,6 +49,7 @@ public class CrmController {
             @RequestParam(required = false) Long empresaId,
             @Valid @RequestBody EnviarMensagemRequest request
     ) {
+        validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
@@ -60,6 +70,7 @@ public class CrmController {
             @PathVariable Long clienteId,
             @RequestParam(required = false) Long empresaId
     ) {
+        validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");

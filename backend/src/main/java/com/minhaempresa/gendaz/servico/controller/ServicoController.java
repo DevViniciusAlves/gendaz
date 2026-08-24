@@ -4,6 +4,8 @@ import com.minhaempresa.gendaz.servico.dto.ServicoDtos.SalvarServicoRequest;
 import com.minhaempresa.gendaz.servico.dto.ServicoDtos.ServicoResponse;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
+import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.BusinessException;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.LinkedHashMap;
@@ -20,8 +22,16 @@ import org.springframework.web.bind.annotation.*;
 public class ServicoController {
     private final ServicoService servicoService;
 
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        if (empresaId == null || !empresaContexto.equals(empresaId)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
+    }
+
     @PostMapping
     public ResponseEntity<ServicoResponse> criar(@Valid @RequestBody SalvarServicoRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("empresaId", request.empresaId());
         contexto.put("duracaoMinutos", request.duracaoMinutos());
@@ -42,11 +52,13 @@ public class ServicoController {
 
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<List<ServicoResponse>> listarPorEmpresa(@PathVariable Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(servicoService.listarPorEmpresa(empresaId));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ServicoResponse> atualizar(@PathVariable Long id, @Valid @RequestBody SalvarServicoRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("servicoId", id);
         contexto.put("empresaId", request.empresaId());
@@ -68,16 +80,19 @@ public class ServicoController {
 
     @PatchMapping("/{id}/ativar")
     public ResponseEntity<ServicoResponse> ativar(@PathVariable Long id) {
+        servicoService.buscarEntidade(id);
         return ResponseEntity.ok(servicoService.alterarStatus(id, StatusCadastro.ATIVO));
     }
 
     @PatchMapping("/{id}/desativar")
     public ResponseEntity<ServicoResponse> desativar(@PathVariable Long id) {
+        servicoService.buscarEntidade(id);
         return ResponseEntity.ok(servicoService.alterarStatus(id, StatusCadastro.INATIVO));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<ServicoResponse> excluir(@PathVariable Long id, @RequestParam Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(servicoService.excluirOuInativar(id, empresaId));
     }
 }

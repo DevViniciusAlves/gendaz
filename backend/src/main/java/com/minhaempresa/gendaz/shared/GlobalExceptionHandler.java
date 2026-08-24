@@ -86,7 +86,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception ex, HttpServletRequest request) {
-        log.error("Erro inesperado em {} {}. erroTipo={}", request.getMethod(), request.getRequestURI(), ex.getClass().getSimpleName());
+        log.error("Erro inesperado em {} {}. erroTipo={}", request.getMethod(), request.getRequestURI(), ex.getClass().getSimpleName(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(ApiErrorResponse.of(500, "Erro interno", "Nao foi possivel concluir a operacao.", request.getRequestURI()));
     }

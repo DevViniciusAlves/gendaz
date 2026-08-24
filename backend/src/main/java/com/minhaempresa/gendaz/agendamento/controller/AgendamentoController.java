@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.agendamento.controller;
 
+import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaResponse;
@@ -25,11 +26,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AgendamentoController {
-    private final AgendamentoService agendamentoService;
-    private final AgendamentoBulkService agendamentoBulkService;
+    private void validarEmpresaAtual(Long empresaId) {
+        Long empresaContexto = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
+        if (empresaId != null && !empresaContexto.equals(empresaId)) {
+            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
+    }
 
     @PostMapping
     public ResponseEntity<AgendamentoResponse> criar(@Valid @RequestBody CriarAgendamentoRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("empresaId", request.empresaId());
         contexto.put("clienteId", request.clienteId());
@@ -52,11 +58,13 @@ public class AgendamentoController {
 
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<List<AgendamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(agendamentoService.listarPorEmpresa(empresaId));
     }
 
     @GetMapping("/data")
     public ResponseEntity<List<AgendamentoResponse>> listarPorData(@RequestParam Long empresaId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(agendamentoService.listarPorData(empresaId, data));
     }
 
@@ -67,11 +75,13 @@ public class AgendamentoController {
 
     @GetMapping("/horarios-disponiveis")
     public ResponseEntity<List<String>> horariosDisponiveis(@RequestParam Long empresaId, @RequestParam Long profissionalId, @RequestParam Long servicoId, @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data) {
+        validarEmpresaAtual(empresaId);
         return ResponseEntity.ok(agendamentoService.horariosDisponiveis(empresaId, profissionalId, servicoId, data));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<AgendamentoResponse> atualizar(@PathVariable Long id, @Valid @RequestBody AtualizarAgendamentoRequest request) {
+        validarEmpresaAtual(request.empresaId());
         Map<String, Object> contexto = new LinkedHashMap<>();
         contexto.put("agendamentoId", id);
         contexto.put("empresaId", request.empresaId());
@@ -96,11 +106,15 @@ public class AgendamentoController {
 
     @PatchMapping("/{id}/confirmar")
     public ResponseEntity<AgendamentoResponse> confirmar(@PathVariable Long id) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         return ResponseEntity.ok(agendamentoService.confirmar(id));
     }
 
     @PatchMapping("/{id}/cancelar")
     public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestParam(required = false) Long empresaId) {
+        if (empresaId != null) {
+            validarEmpresaAtual(empresaId);
+        }
         try {
             return ResponseEntity.ok(agendamentoService.cancelar(id, empresaId));
         } catch (Exception e) {
@@ -110,6 +124,7 @@ public class AgendamentoController {
 
     @PatchMapping("/{id}/finalizar")
     public ResponseEntity<AgendamentoResponse> finalizar(@PathVariable Long id, @RequestBody(required = false) FinalizarAgendamentoRequest request) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         Boolean pagamentoRealizado = request == null ? null : request.pagamentoRealizado();
         return ResponseEntity.ok(agendamentoService.finalizar(
                 id,
@@ -121,27 +136,32 @@ public class AgendamentoController {
 
     @PatchMapping("/{id}/iniciar")
     public ResponseEntity<AgendamentoResponse> iniciar(@PathVariable Long id) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         return ResponseEntity.ok(agendamentoService.iniciar(id));
     }
 
     @PatchMapping("/{id}/pausar")
     public ResponseEntity<AgendamentoResponse> pausar(@PathVariable Long id) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         return ResponseEntity.ok(agendamentoService.pausar(id));
     }
 
     @PutMapping("/{id}/remarcar")
     public ResponseEntity<AgendamentoResponse> remarcar(@PathVariable Long id, @Valid @RequestBody RemarcarAgendamentoRequest request) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         return ResponseEntity.ok(agendamentoService.remarcar(id, request));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> excluir(@PathVariable Long id, @RequestParam Long empresaId) {
+        validarEmpresaAtual(empresaId);
         agendamentoService.excluir(id, empresaId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/acoes-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaAgendamentoRequest request) {
+        validarEmpresaAtual(request.empresaId());
         return ResponseEntity.ok(agendamentoBulkService.executar(request));
     }
 }

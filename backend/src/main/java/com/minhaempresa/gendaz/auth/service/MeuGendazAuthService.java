@@ -101,7 +101,8 @@ public class MeuGendazAuthService {
         EmpresaEntity empresa = empresaOpt.get();
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        persistentRateLimitService.consumir("OTP_VALIDATE_IP:" + normalizarIp(ip), securityProperties.getOtp().getMaxValidatePerIp10m(), Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
+        // Limite de tentativas de validação por IP mais restrito para evitar brute force de OTP
+        persistentRateLimitService.consumir("OTP_VALIDATE_IP:" + normalizarIp(ip), 5, Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
 
         MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizado)
                 .orElseThrow(() -> new BusinessException("Solicite um novo codigo."));
@@ -120,6 +121,10 @@ public class MeuGendazAuthService {
                 challenge.setOtpHash(null);
                 challenge.setBloqueadoAte(agora.plus(securityProperties.getOtp().blockDuration()));
                 challengeRepository.save(challenge);
+                
+                // Rate limit agressivo por IP após falha no OTP
+                persistentRateLimitService.consumir("OTP_BLOCK_IP:" + normalizarIp(ip), 3, Duration.ofHours(1), Duration.ofHours(12));
+                
                 throw new BusinessException("Codigo bloqueado apos muitas tentativas. Solicite um novo codigo.");
             }
             challengeRepository.save(challenge);

@@ -5,6 +5,7 @@ import com.minhaempresa.gendaz.insights.dto.InsightsDtos.InsightHistoryResponse;
 import com.minhaempresa.gendaz.insights.dto.InsightsDtos.InsightsRequest;
 import com.minhaempresa.gendaz.insights.dto.InsightsDtos.InsightsResponse;
 import com.minhaempresa.gendaz.insights.service.InsightsService;
+import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import jakarta.validation.Valid;
@@ -19,12 +20,20 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class InsightsController {
     private final InsightsService insightsService;
+    private final AssinaturaService assinaturaService;
+
+    private void validarPlanoPro() {
+        if (!assinaturaService.isPlanoPro(CompanyContext.requireCompanyId())) {
+            throw new BusinessException("Esta funcionalidade requer o plano PRO.");
+        }
+    }
 
     @GetMapping("/dashboard")
     public ResponseEntity<?> dashboard(
             @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
+        validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
@@ -50,6 +59,7 @@ public class InsightsController {
             @RequestParam(value = "periodo", defaultValue = "30") Integer periodo,
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
+        validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
@@ -104,6 +114,7 @@ public class InsightsController {
             @Valid @RequestBody InsightsRequest request,
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
+        validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
@@ -135,6 +146,7 @@ public class InsightsController {
     public ResponseEntity<List<InsightHistoryResponse>> historico(
             @RequestParam(value = "empresaId", required = false) Long empresaId
     ) {
+        validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         return ResponseEntity.ok(insightsService.obterHistorico(empresaId));
     }

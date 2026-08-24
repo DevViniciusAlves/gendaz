@@ -98,8 +98,17 @@ public class AuthService {
     public LoginResponse login(LoginRequest request) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
+        String ip = getCurrentClientIp();
+        
+        // Rate limiting de proteção contra brute force por IP
+        persistentRateLimitService.consumir("LOGIN_IP:" + ip, 5, Duration.ofMinutes(1), Duration.ofMinutes(15));
+        
         log.info("[LOGIN-SERVICE] chegou no AuthService email={}", mascararEmail(email));
         log.info("Login solicitado para {}", mascararEmail(email));
+        
+        // Rate limiting por IP antes de qualquer processamento pesado
+        persistentRateLimitService.consumir("LOGIN_IP_GLOBAL:" + getCurrentClientIp(), 20, Duration.ofMinutes(1), Duration.ofMinutes(15));
+        
         try {
             UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(email);
 
@@ -138,6 +147,8 @@ public class AuthService {
                     usuarioRepository.save(usuario);
                     log.warn("[login] usuario {} bloqueado por 5h apos {} tentativas", mascararEmail(email), usuario.getTentativasLoginFalhadas());
                     logLoginFalhado(email, usuario.getTentativasLoginFalhadas());
+                    // Proteção adicional de IP após muitas falhas
+                    persistentRateLimitService.consumir("LOGIN_IP_LOCKOUT:" + getCurrentClientIp(), 10, Duration.ofHours(1), Duration.ofHours(24));
                     throw new BusinessException("Tentativas de senha esgotadas. Sua conta foi bloqueada temporariamente. Tente novamente em 5 horas.");
                 }
 

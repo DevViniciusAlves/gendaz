@@ -18,13 +18,13 @@ public class MeuGendazSecurityProperties {
     public RateLimit getRateLimit() { return rateLimit; }
 
     public static class Otp {
-        private int ttlMinutes = 10;
-        private int maxAttempts = 5;
-        private int resendCooldownSeconds = 60;
-        private int maxRequestsPerEmailHour = 5;
-        private int maxRequestsPerIp10m = 20;
-        private int maxValidatePerIp10m = 50;
-        private int blockMinutes = 30;
+        private int ttlMinutes = 5; // Reduzido para 5 min
+        private int maxAttempts = 3; // Reduzido de 5 para 3
+        private int resendCooldownSeconds = 120; // Aumentado de 60 para 120
+        private int maxRequestsPerEmailHour = 3; // Reduzido de 5 para 3
+        private int maxRequestsPerIp10m = 10; // Reduzido de 20 para 10
+        private int maxValidatePerIp10m = 10; // Reduzido de 50 para 10
+        private int blockMinutes = 60; // Aumentado de 30 para 60
         private String secret = "${MEU_GENDAZ_OTP_SECRET:}";
 
         public Duration ttl() { return Duration.ofMinutes(ttlMinutes); }

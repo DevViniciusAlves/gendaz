@@ -64,11 +64,13 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponse salvar(SalvarClienteRequest request) {
+        Long empresaIdFinal = CompanyContext.requireCompanyId();
+        
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
-        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("empresaId", empresaIdFinal);
         log.debug("[cliente-debug] inicio criacao cliente {}", contextoInicio);
         try {
-            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            EmpresaEntity empresa = empresaService.buscarEntidade(empresaIdFinal);
             String nome = sanitizacaoService.textoObrigatorio(request.nome());
             String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
             String email = sanitizacaoService.email(request.email());

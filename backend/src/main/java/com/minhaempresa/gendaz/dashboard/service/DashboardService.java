@@ -112,13 +112,14 @@ public class DashboardService {
                 .map(this::toAgendamentoItem)
                 .toList();
 
-        List<DashboardItemResumo> servicosMaisAgendados = agendamentoRepository
-                .resumoServicosMaisAgendados(empresaId, StatusAgendamento.CANCELADO, PageRequest.of(0, 5))
+        var rowsServicos = agendamentoRepository.resumoServicosMaisAgendados(empresaId, StatusAgendamento.CANCELADO, PageRequest.of(0, 5));
+        List<DashboardItemResumo> servicosMaisAgendados = (rowsServicos == null ? List.<Object[]>of() : rowsServicos)
                 .stream()
                 .map(this::toItemResumo)
                 .toList();
 
         List<DashboardReceitaDiaItem> receitaPorDia = pagamentosPorDia(empresaId, inicioPeriodo, fimPeriodo);
+
         log.info("[dashboard-debug] receitaConfirmada={}", receitaConfirmada);
         log.info("[dashboard-debug] totalPagamentosConfirmados={}", receitaPorDia.stream().map(DashboardReceitaDiaItem::valor).reduce(BigDecimal.ZERO, BigDecimal::add));
         log.info("[dashboard-debug] receitaPorDia={}", receitaPorDia);

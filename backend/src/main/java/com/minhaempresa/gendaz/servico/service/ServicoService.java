@@ -38,14 +38,18 @@ public class ServicoService {
 
     @Transactional
     public ServicoResponse salvar(SalvarServicoRequest request) {
+        Long empresaContexto = CompanyContext.requireCompanyId();
+        // Força o empresaId da sessão, ignorando o do request para evitar cross-tenant
+        Long empresaIdFinal = empresaContexto;
+        
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
-        contextoInicio.put("empresaId", request.empresaId());
+        contextoInicio.put("empresaId", empresaIdFinal);
         contextoInicio.put("duracaoMinutos", request.duracaoMinutos());
         contextoInicio.put("valor", request.valor());
         contextoInicio.put("statusPadrao", StatusCadastro.ATIVO);
         log.debug("[servico-debug] inicio criacao servico {}", contextoInicio);
         try {
-            EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+            EmpresaEntity empresa = empresaService.buscarEntidade(empresaIdFinal);
             Integer duracao = request.duracaoMinutos() != null ? request.duracaoMinutos() : 30;
             java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
             ServicoEntity servico = ServicoEntity.builder()
@@ -68,7 +72,7 @@ public class ServicoService {
             return mapper.toResponse(salvo);
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
-            contextoErro.put("empresaId", request.empresaId());
+            contextoErro.put("empresaId", CompanyContext.requireCompanyId());
             contextoErro.put("duracaoMinutos", request.duracaoMinutos());
             contextoErro.put("valor", request.valor());
             log.error("[servico-debug] erro ao criar servico. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoErro);
@@ -85,7 +89,7 @@ public class ServicoService {
     @Transactional
     public ServicoResponse atualizar(Long id, SalvarServicoRequest request) {
         ServicoEntity servico = buscarEntidade(id);
-        validarEmpresa(servico, request.empresaId());
+        validarEmpresa(servico, CompanyContext.requireCompanyId());
         Integer duracao = request.duracaoMinutos() != null ? request.duracaoMinutos() : 30;
         java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
         servico.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
