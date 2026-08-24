@@ -435,7 +435,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <h2>Fale com a equipe e veja como o gendaz funciona na prática.</h2>
         </div>
         <a
-          href="https://wa.me/5565993360300"
+          href="mailto:contato@gendaz.site"
           className="primary-link"
           target="_blank"
           rel="noreferrer"

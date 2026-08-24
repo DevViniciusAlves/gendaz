@@ -14,7 +14,7 @@ const statusView = {
   PAYMENT_EXPIRED: { label: 'Pagamento expirado', tone: 'danger' },
 }
 
-const WHATSAPP_URL = 'https://wa.me/5565993360300?text=Ol%C3%A1%2C%20minha%20conta%20foi%20suspensa%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.'
+const WHATSAPP_URL = 'mailto:contato@gendaz.site?subject=Conta%20inativa&body=Ol%C3%A1%2C%20minha%20conta%20foi%20suspensa%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es.'
 
 export default function ContaInativa() {
   const navigate = useNavigate()
@@ -207,7 +207,7 @@ export default function ContaInativa() {
                 Nossa equipe está à disposição para ajudar a resolver sua situação.
               </p>
               <a href={WHATSAPP_URL} target="_blank" rel="noopener noreferrer" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-                <MessageSquare size={20} /> Suporte via WhatsApp
+                <MessageSquare size={20} /> Suporte via e-mail
               </a>
             </div>
 
