@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Search, Loader } from 'lucide-react'
 import Table from '../components/Table.jsx'
 import Pagination from '../components/Pagination.jsx'
 import { logsApi } from '../api/logsApi.js'
@@ -23,10 +22,14 @@ export default function Logs() {
   const [itens, setItens] = useState([])
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
-  const [termo, setTermo] = useState('')
   const [pagina, setPagina] = useState(0)
   const [totalPaginas, setTotalPaginas] = useState(1)
   const [totalItens, setTotalItens] = useState(0)
+
+  // Filtros
+  const [dataFiltro, setDataFiltro] = useState('')
+  const [usuarioFiltro, setUsuarioFiltro] = useState('')
+  const [acaoFiltro, setAcaoFiltro] = useState('')
 
   useEffect(() => {
     let cancelado = false
@@ -34,15 +37,17 @@ export default function Logs() {
       setCarregando(true)
       setErro(null)
       try {
-        const data = await logsApi.listar({
-          termo: termo.trim() || undefined,
+        const dataApi = await logsApi.listar({
+          data: dataFiltro || undefined,
+          usuario: usuarioFiltro.trim() || undefined,
+          acao: acaoFiltro.trim() || undefined,
           page: pagina,
           size: ITENS_POR_PAGINA,
         })
         if (cancelado) return
-        setItens(data.content || [])
-        setTotalPaginas(data.totalPages || 1)
-        setTotalItens(data.totalElements || 0)
+        setItens(dataApi.content || [])
+        setTotalPaginas(dataApi.totalPages || 1)
+        setTotalItens(dataApi.totalElements || 0)
       } catch (err) {
         if (cancelado) return
         if (err.response?.status === 401) {
@@ -55,12 +60,12 @@ export default function Logs() {
         if (!cancelado) setCarregando(false)
       }
     }
-    const tempo = setTimeout(buscar, termo !== undefined ? 300 : 0)
+    const tempo = setTimeout(buscar, 300)
     return () => {
       cancelado = true
       clearTimeout(tempo)
     }
-  }, [termo, pagina])
+  }, [dataFiltro, usuarioFiltro, acaoFiltro, pagina])
 
   function aoMudarPagina(paginaUmBase) {
     setPagina(paginaUmBase - 1)
@@ -75,21 +80,50 @@ export default function Logs() {
       </div>
 
       <div className="panel report-filters">
-        <label className="field report-filter-field" style={{ flex: 1 }}>
-          <span>Buscar</span>
-          <span className="search-input">
-            <Search size={16} />
-            <input
-              maxLength={80}
-              placeholder="Buscar por usuário ou ação"
-              value={termo}
-              onChange={(e) => {
-                setPagina(0)
-                setTermo(e.target.value)
-              }}
-            />
-          </span>
-          <small className="field-hint">Filtra por nome do usuário ou descrição da ação.</small>
+        <label className="field report-filter-field">
+          <span>Data</span>
+          <input
+            type="date"
+            value={dataFiltro}
+            onChange={(e) => {
+              setPagina(0)
+              setDataFiltro(e.target.value)
+            }}
+            aria-label="Filtrar por data"
+          />
+          <small className="field-hint">&nbsp;</small>
+        </label>
+
+        <label className="field report-filter-field">
+          <span>Usuário</span>
+          <input
+            type="text"
+            placeholder="Buscar por nome"
+            value={usuarioFiltro}
+            onChange={(e) => {
+              setPagina(0)
+              setUsuarioFiltro(e.target.value)
+            }}
+            aria-label="Filtrar por usuário"
+            maxLength={50}
+          />
+          <small className="field-hint">&nbsp;</small>
+        </label>
+
+        <label className="field report-filter-field">
+          <span>Ação</span>
+          <input
+            type="text"
+            placeholder="Buscar por descrição"
+            value={acaoFiltro}
+            onChange={(e) => {
+              setPagina(0)
+              setAcaoFiltro(e.target.value)
+            }}
+            aria-label="Filtrar por ação"
+            maxLength={100}
+          />
+          <small className="field-hint">&nbsp;</small>
         </label>
       </div>
 
@@ -101,8 +135,9 @@ export default function Logs() {
         </div>
 
         {carregando ? (
-          <div className="gendaz-loading">
-            <Loader size={20} /> Carregando logs...
+          <div className="space-y-3">
+            <div className="h-12 animate-pulse rounded bg-gray-700" />
+            <div className="h-72 animate-pulse rounded bg-gray-700" />
           </div>
         ) : (
           <Table
