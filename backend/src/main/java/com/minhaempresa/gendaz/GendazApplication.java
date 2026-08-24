@@ -7,14 +7,17 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.List;
+import java.util.TimeZone;
 
 @SpringBootApplication
 @EnableScheduling
 @EnableCaching
 public class GendazApplication {
     public static void main(String[] args) {
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Sao_Paulo"));
         System.setProperty("java.net.preferIPv4Stack", "true");
         System.setProperty("java.net.preferIPv6Addresses", "false");
+        java.util.TimeZone.setDefault(java.util.TimeZone.getTimeZone("America/Sao_Paulo"));
         SpringApplication.run(GendazApplication.class, args);
     }
 

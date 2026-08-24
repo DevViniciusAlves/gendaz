@@ -72,7 +72,7 @@ public class AgendamentoService {
     private final AgendamentoMapper mapper = new AgendamentoMapper();
 
 
-    @Value("${app.timezone:America/Cuiaba}")
+    @Value("${app.timezone:America/Sao_Paulo}")
     private String appTimezone;
 
     @Transactional

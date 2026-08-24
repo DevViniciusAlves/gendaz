@@ -40,7 +40,7 @@ public class InsightsService {
     private final InsightRepository insightRepository;
     private final ObjectMapper objectMapper;
 
-    @Value("${app.timezone:America/Cuiaba}")
+    @Value("${app.timezone:America/Sao_Paulo}")
     private String appTimezone;
 
     @Transactional(readOnly = true)
