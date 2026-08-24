@@ -521,7 +521,7 @@ public class MembresiaService {
     }
 
     private void registrarAudit(String tipo, UsuarioEntity usuario, EmpresaEntity empresa, String descricao, Long recursoId, String resultado) {
-        try { auditService.registrar(tipo, resultado, null, usuario, empresa, descricao, null, null, null); } catch (Exception ignored) {}
+        try { auditService.registrar(tipo, resultado, usuario != null ? usuario.getId() : null, descricao); } catch (Exception ignored) {}
     }
 
     private void desalocarDadosUsuario(UsuarioEntity usuario, UsuarioEntity executor, Long empresaId) {

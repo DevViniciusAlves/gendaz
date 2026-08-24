@@ -1,15 +1,19 @@
 package com.minhaempresa.gendaz.admin.service;
 
+import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminAuditLogResponse;
 import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
 import com.minhaempresa.gendaz.admin.repository.AdminAuditRepository;
+import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
+import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -79,5 +83,71 @@ public class AdminAuditService {
      */
     public List<AdminAuditEntity> findByEmpresaIdOrderByDataHoraDesc(Long empresaId) {
         return adminAuditRepository.findByEmpresaIdOrderByDataHoraDesc(empresaId);
+    }
+
+    /**
+     * Registra um log de auditoria com dados completos de seguranca (compatibilidade).
+     *
+     * @param acao      Ação realizada.
+     * @param severidade Severidade/categoria do log.
+     * @param admin     Administrador responsavel (opcional).
+     * @param usuario   Usuário afetado (opcional).
+     * @param empresa   Empresa afetada (opcional).
+     * @param descricao Descrição da ação.
+     * @param motivo    Motivo adicional (opcional).
+     * @param ip        Endereço IP (opcional).
+     * @param userAgent User-Agent (opcional).
+     */
+    public void registrar(String acao, String severidade, UsuarioEntity admin, UsuarioEntity usuario,
+                          EmpresaEntity empresa, String descricao, String motivo, String ip, String userAgent) {
+        try {
+            AdminAuditEntity audit = new AdminAuditEntity();
+            Long empresaId = empresa != null ? empresa.getId() : CompanyContext.requireCompanyId();
+            audit.setEmpresaId(empresaId);
+
+            Long usuarioId = usuario != null ? usuario.getId() : (admin != null ? admin.getId() : null);
+            String usuarioNome = usuario != null ? usuario.getNome() : (admin != null ? admin.getNome() : null);
+            audit.setUsuarioId(usuarioId != null ? usuarioId : 0L);
+            audit.setUsuarioNome(usuarioNome != null ? usuarioNome : "Sistema");
+
+            audit.setAcao(acao);
+            audit.setEntidade(severidade != null ? severidade : "AUDITORIA");
+            audit.setEntidadeId(null);
+            audit.setDescricao(motivo != null && !motivo.isBlank() ? descricao + " - " + motivo : descricao);
+            audit.setDataHora(LocalDateTime.now());
+            audit.setIp(ip);
+            audit.setUserAgent(userAgent);
+
+            adminAuditRepository.save(audit);
+        } catch (Exception e) {
+            log.error("Falha ao registrar auditoria: {}", e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Retorna todos os logs de auditoria (Super Admin), mais recentes primeiro.
+     *
+     * @return Lista de logs de auditoria.
+     */
+    public List<AdminAuditLogResponse> listar() {
+        return adminAuditRepository.findAllByOrderByDataHoraDesc().stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+    }
+
+    private AdminAuditLogResponse toResponse(AdminAuditEntity e) {
+        return new AdminAuditLogResponse(
+                e.getId(),
+                e.getAcao(),
+                e.getEntidade(),
+                null,
+                e.getUsuarioNome(),
+                String.valueOf(e.getEmpresaId()),
+                e.getDescricao(),
+                null,
+                e.getIp(),
+                e.getUserAgent(),
+                e.getDataHora()
+        );
     }
 }

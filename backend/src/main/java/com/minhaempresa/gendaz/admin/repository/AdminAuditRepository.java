@@ -11,4 +11,7 @@ public interface AdminAuditRepository extends JpaRepository<AdminAuditEntity, Lo
     
     // Método para buscar logs por empresaId (multi-tenant)
     List<AdminAuditEntity> findByEmpresaIdOrderByDataHoraDesc(Long empresaId);
+
+    // Método para buscar todos os logs (Super Admin), mais recentes primeiro
+    List<AdminAuditEntity> findAllByOrderByDataHoraDesc();
 }

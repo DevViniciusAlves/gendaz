@@ -64,7 +64,7 @@ public class ClienteBulkService {
 
                 cliente.setStatus(StatusCadastro.INATIVO);
                 clienteRepository.save(cliente);
-                auditService.registrar("CLIENTE_STATUS_ALTERADO", "INFO", null, null, cliente.getEmpresa(), "Cliente desativado em massa", "clienteId=" + cliente.getId(), null, null);
+                auditService.registrar("CLIENTE_STATUS_ALTERADO", "Cliente", cliente.getId(), "Cliente desativado em massa");
                 logAtividadeService.registrar("CLIENTE", cliente.getId(), "Desativou cliente " + cliente.getNome());
                 processados++;
             } catch (RuntimeException ex) {

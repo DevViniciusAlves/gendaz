@@ -88,7 +88,7 @@ public class ClienteService {
             contextoSucesso.put("clienteId", salvo.getId());
             contextoSucesso.put("empresaId", empresa.getId());
             log.info("[cliente-debug] cliente criado com sucesso {}", contextoSucesso);
-            auditService.registrar("CLIENTE_CRIADO", "INFO", null, null, empresa, "Cliente criado", "clienteId=" + salvo.getId(), null, null);
+            auditService.registrar("CLIENTE_CRIADO", "Cliente", salvo.getId(), "Cliente criado");
             logAtividadeService.registrar("CLIENTE", salvo.getId(), "Criou cliente " + salvo.getNome());
             return mapper.toResponse(salvo);
         } catch (Exception e) {
@@ -136,7 +136,7 @@ public class ClienteService {
         cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
         ClienteEntity salvo = clienteRepository.save(cliente);
         clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
-        auditService.registrar("CLIENTE_ATUALIZADO", "INFO", null, null, cliente.getEmpresa(), "Cliente atualizado", "clienteId=" + salvo.getId(), null, null);
+        auditService.registrar("CLIENTE_ATUALIZADO", "Cliente", salvo.getId(), "Cliente atualizado");
         logAtividadeService.registrar("CLIENTE", salvo.getId(), "Editou cliente " + salvo.getNome());
         return mapper.toResponse(salvo);
     }
@@ -173,7 +173,7 @@ public class ClienteService {
         
         clienteRepository.save(cliente);
         
-        auditService.registrar("CLIENTE_EXCLUIDO", "WARN", null, null, cliente.getEmpresa(), "Cliente excluido", "clienteId=" + cliente.getId(), null, null);
+        auditService.registrar("CLIENTE_EXCLUIDO", "Cliente", cliente.getId(), "Cliente excluido");
         logAtividadeService.registrar("CLIENTE", cliente.getId(), "Removeu cliente " + nomeClienteExcluido);
     }
 
@@ -188,17 +188,8 @@ public class ClienteService {
         } else {
             logAtividadeService.registrar("CLIENTE", salvo.getId(), "Desativou cliente " + salvo.getNome());
         }
-        auditService.registrar(
-                "CLIENTE_STATUS_ALTERADO",
-                "INFO",
-                null,
-                null,
-                cliente.getEmpresa(),
-                "Status do cliente alterado",
-                cliente.getNome() + " -> " + salvo.getStatus().name(),
-                null,
-                null
-        );
+        auditService.registrar("CLIENTE_STATUS_ALTERADO", "Cliente", cliente.getId(),
+                "Status do cliente alterado: " + cliente.getNome() + " -> " + salvo.getStatus().name());
         return mapper.toResponse(salvo);
     }
 

@@ -57,17 +57,8 @@ public class ChamadoService {
                 .usuario(usuario)
                 .status(StatusChamado.ABERTO)
                 .build());
-        auditService.registrar(
-                "CHAMADO_CRIADO",
-                "INFO",
-                null,
-                usuario,
-                empresa,
-                "Chamado aberto pelo " + ("MEU_GENDAZ".equals(origemNormalizada) ? "Meu Gendaz" : "painel"),
-                "chamadoId=" + chamado.getId(),
-                null,
-                null
-        );
+        auditService.registrar("CHAMADO_CRIADO", "Chamado", chamado.getId(),
+                "Chamado aberto pelo " + ("MEU_GENDAZ".equals(origemNormalizada) ? "Meu Gendaz" : "painel"));
         logAtividadeService.registrar("CHAMADO", chamado.getId(), "Criou chamado " + chamado.getAssunto());
         return mapper.toResponse(chamado);
     }
@@ -88,17 +79,7 @@ public class ChamadoService {
                 .meuGendazAcesso(acesso)
                 .status(StatusChamado.ABERTO)
                 .build());
-        auditService.registrar(
-                "CHAMADO_CRIADO",
-                "INFO",
-                null,
-                null,
-                empresa,
-                "Chamado aberto pelo Meu Gendaz",
-                "chamadoId=" + chamado.getId(),
-                null,
-                null
-        );
+        auditService.registrar("CHAMADO_CRIADO", "Chamado", chamado.getId(), "Chamado aberto pelo Meu Gendaz");
         logAtividadeService.registrar("CHAMADO", chamado.getId(), "Criou chamado " + chamado.getAssunto());
         return mapper.toResponse(chamado);
     }
@@ -160,17 +141,8 @@ public class ChamadoService {
             chamado.setResposta(request.resposta().trim());
         }
         ChamadoEntity salvo = chamadoRepository.save(chamado);
-        auditService.registrar(
-                "CHAMADO_ATUALIZADO",
-                "INFO",
-                admin,
-                null,
-                salvo.getEmpresa(),
-                "Chamado atualizado pelo Super Admin",
-                "status=" + statusAnterior + "->" + salvo.getStatus(),
-                null,
-                null
-        );
+        auditService.registrar("CHAMADO_ATUALIZADO", "Chamado", salvo.getId(),
+                "Chamado atualizado pelo Super Admin (status=" + statusAnterior + "->" + salvo.getStatus() + ")");
         logAtividadeService.registrar("CHAMADO", salvo.getId(), "Alterou status do chamado " + salvo.getAssunto());
         return mapper.toResponse(salvo);
     }

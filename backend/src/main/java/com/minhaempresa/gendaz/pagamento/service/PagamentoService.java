@@ -761,7 +761,7 @@ public class PagamentoService {
     }
 
     private void registrarAuditoriaAutomatica(String tipo, EmpresaEntity empresa, String descricao) {
-        auditService.registrar(tipo, "INFO", null, null, empresa, descricao, null, null, null);
+        auditService.registrar(tipo, "Pagamento", null, descricao);
     }
 
     private String gerarPaymentReference() {
