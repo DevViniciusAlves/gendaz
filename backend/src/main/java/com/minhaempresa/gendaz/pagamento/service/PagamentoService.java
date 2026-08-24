@@ -222,7 +222,8 @@ public class PagamentoService {
             String customerEmail,
             String customerPhone,
             String antifraudProfilingAttemptReference,
-            boolean isOnboarding
+            boolean isOnboarding,
+            boolean forceNew
     ) {
         // 1. Adquirir proteção de concorrência usando pessimistic lock
         EmpresaEntity empresa = empresaRepository.findByIdWithLock(empresaId)
@@ -242,25 +243,27 @@ public class PagamentoService {
         }
 
         // 2. Procurar PAYMENT_PENDING do mesmo plano
-        Optional<PagamentoPlanoEntity> pendenteOpt = pagamentoPlanoRepository
-                .findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(empresaId, plano.getId(), StatusPagamento.PAYMENT_PENDING);
+        if (!forceNew) {
+            Optional<PagamentoPlanoEntity> pendenteOpt = pagamentoPlanoRepository
+                    .findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(empresaId, plano.getId(), StatusPagamento.PAYMENT_PENDING);
 
-        if (pendenteOpt.isPresent()) {
-            PagamentoPlanoEntity pendente = pendenteOpt.get();
-            
-            // 3. Validar prazo do backend
-            if (pendente.getDataExpiracao() != null && pendente.getDataExpiracao().isAfter(LocalDateTime.now())) {
-                // Validar que existe checkoutUrl e stripeSessionId utilizáveis
-                if (pendente.getCheckoutUrl() != null && !pendente.getCheckoutUrl().isBlank()
-                        && pendente.getStripeSessionId() != null && !pendente.getStripeSessionId().isBlank()) {
-                    log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}",
-                            pendente.getId(), empresaId, plano.getNome());
-                    return pendente;
+            if (pendenteOpt.isPresent()) {
+                PagamentoPlanoEntity pendente = pendenteOpt.get();
+                
+                // 3. Validar prazo do backend
+                if (pendente.getDataExpiracao() != null && pendente.getDataExpiracao().isAfter(LocalDateTime.now())) {
+                    // Validar que existe checkoutUrl e stripeSessionId utilizáveis
+                    if (pendente.getCheckoutUrl() != null && !pendente.getCheckoutUrl().isBlank()
+                            && pendente.getStripeSessionId() != null && !pendente.getStripeSessionId().isBlank()) {
+                        log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}",
+                                pendente.getId(), empresaId, plano.getNome());
+                        return pendente;
+                    }
+                } else {
+                    // Se o prazo venceu, finalizar a expiração com segurança
+                    log.info("Checkout pendente encontrado, porém vencido. Expirando com segurança: pagamentoId={}", pendente.getId());
+                    expirarCheckoutPorTimeout(pendente);
                 }
-            } else {
-                // Se o prazo venceu, finalizar a expiração com segurança
-                log.info("Checkout pendente encontrado, porém vencido. Expirando com segurança: pagamentoId={}", pendente.getId());
-                expirarCheckoutPorTimeout(pendente);
             }
         }
 
@@ -272,7 +275,7 @@ public class PagamentoService {
         
         // TTL de 15 minutos definido em um único lugar no backend
         int ttlMinutes = paymentGatewayProperties.getCheckout().getTtlMinutes();
-        pagamento.setDataExpiracao(LocalDateTime.now().plusMinutes(ttlMinutes));
+        pagamento.setDataExpiracao(LocalDateTime.now(java.time.ZoneId.of("America/Sao_Paulo")).plusMinutes(ttlMinutes));
         pagamento = pagamentoPlanoRepository.save(pagamento);
 
         PaymentGatewayResponse gatewayResponse;
@@ -312,14 +315,14 @@ public class PagamentoService {
     ) {
         PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
                 empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
-                antifraudProfilingAttemptReference, true
+                antifraudProfilingAttemptReference, true, false
         );
         return mapper.toPlanoResponse(pagamento);
     }
 
     @Transactional
     public PagamentoPlanoResponse iniciarPagamentoPlano(Long empresaId, String planoNome, MetodoPagamento metodoPagamento) {
-        return iniciarPagamentoPlano(empresaId, planoNome, metodoPagamento, null, null, null, null);
+        return iniciarPagamentoPlano(empresaId, planoNome, metodoPagamento, null, null, null, null, false);
     }
 
     @Transactional
@@ -331,7 +334,8 @@ public class PagamentoService {
                 request.customerName(),
                 request.customerEmail(),
                 request.customerPhone(),
-                request.antifraudProfilingAttemptReference()
+                request.antifraudProfilingAttemptReference(),
+                request.forceNew() != null && request.forceNew()
         );
     }
 
@@ -343,11 +347,12 @@ public class PagamentoService {
             String customerName,
             String customerEmail,
             String customerPhone,
-            String antifraudProfilingAttemptReference
+            String antifraudProfilingAttemptReference,
+            boolean forceNew
     ) {
         PagamentoPlanoEntity pagamento = obterOuCriarCheckoutCentralizado(
                 empresaId, planoNome, metodoPagamento, customerName, customerEmail, customerPhone,
-                antifraudProfilingAttemptReference, false
+                antifraudProfilingAttemptReference, false, forceNew
         );
         return mapper.toPlanoResponse(pagamento);
     }

@@ -37,7 +37,10 @@ public class PagamentoMapper {
     public PagamentoPlanoResponse toPlanoResponse(PagamentoPlanoEntity pagamento) {
         Long dataExpiracaoEpoch = null;
         if (pagamento.getDataExpiracao() != null) {
-            dataExpiracaoEpoch = pagamento.getDataExpiracao().atZone(java.time.ZoneId.of("UTC")).toInstant().toEpochMilli();
+            dataExpiracaoEpoch = pagamento.getDataExpiracao()
+                    .atZone(java.time.ZoneId.of("America/Sao_Paulo"))
+                    .toInstant()
+                    .toEpochMilli();
         }
         return new PagamentoPlanoResponse(
                 pagamento.getId(),

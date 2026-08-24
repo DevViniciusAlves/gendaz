@@ -58,6 +58,20 @@ export default function ContaInativa() {
         }
 
         setAssinatura(assinaturaAtual || null)
+
+        try {
+          const pagamentos = await appApi.listarPagamentosPlano(usuario.empresaId, { skipUsuarioHeader: true })
+          const pendente = Array.isArray(pagamentos)
+            ? pagamentos
+                .filter((p) => p?.status === 'PAYMENT_PENDING' && p?.checkoutUrl)
+                .sort((a, b) => (b.id || 0) - (a.id || 0))[0]
+            : null
+          if (ativo && pendente) {
+            setPagamento(pendente)
+          }
+        } catch {
+          // Falha ao carregar o checkout pendente não deve bloquear a tela
+        }
        } catch (error) {
           if (!ativo) return
           if (error.response?.status !== 404) {
@@ -84,9 +98,9 @@ export default function ContaInativa() {
       setMensagem('Não encontramos uma conta ativa neste navegador.')
       return
     }
-    if (pagamento?.status === 'PAYMENT_PENDING') {
+    if (checkoutAtivo(pagamento)) {
       setTipoMensagem('info')
-      setMensagem('Já existe uma cobrança pendente. Verifique seu pagamento.')
+      setMensagem('Já existe uma cobrança pendente e ativa. Verifique seu pagamento ou abra o checkout.')
       return
     }
     setMensagem('')

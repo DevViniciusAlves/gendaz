@@ -102,11 +102,13 @@ export default function PagamentoPendente() {
     }
 
     try {
-       const novoPagamento = await appApi.iniciarPagamentoPro({
-         empresaId,
-         metodoPagamento: 'CREDIT_CARD',
-         plano: pendente?.assinatura?.planoNome || 'PRO',
-       })
+        const novoPagamento = await appApi.iniciarPagamentoPro({
+          empresaId,
+          metodoPagamento: 'CREDIT_CARD',
+          plano: pendente?.assinatura?.planoNome || 'PRO',
+          forceNew: true,
+        })
+
        if (novoPagamento.checkoutUrl) {
          const novoPendente = { ...pendente, pagamentoPlano: novoPagamento }
          setPendente(novoPendente)

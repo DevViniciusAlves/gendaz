@@ -184,6 +184,7 @@ export default function Planos() {
         customerEmail: usuario.email,
         customerPhone: usuario.telefone,
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
+        forceNew: true,
       })
       setPagamentoPlano(pagamento)
       setCheckoutSolicitado(true)
@@ -220,6 +221,7 @@ export default function Planos() {
         customerEmail: usuario.email,
         customerPhone: usuario.telefone,
         antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
+        forceNew: true,
       })
       setPagamentoPlano(pagamento)
       setCheckoutSolicitado(true)

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.agendamento.service.AgendamentoService;
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
@@ -81,6 +82,8 @@ class PagamentoServiceCheckoutTest {
     private AdminAuditService auditService;
     @Mock
     private FormaPagamentoEmpresaService formaPagamentoEmpresaService;
+    @Mock
+    private LogAtividadeService logAtividadeService;
 
     @InjectMocks
     private PagamentoService pagamentoService;
