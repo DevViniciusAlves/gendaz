@@ -154,7 +154,11 @@ export default function Logs() {
                   </div>
                 ),
               },
-              { key: 'acao', label: 'AÇÃO' },
+              {
+                key: 'acao',
+                label: 'AÇÃO',
+                render: (row) => <span className="report-center-cell">{row.acao || '-'}</span>,
+              },
               {
                 key: 'dataHora',
                 label: 'DATA / HORA',

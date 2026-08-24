@@ -24,7 +24,6 @@ export default function Table({ columns, rows = [], empty = 'Nenhum registro enc
                   key={column.key}
                   data-label={column.label}
                   data-column={column.key}
-                  style={column.key === 'acao' ? { overflow: 'visible', position: 'relative' } : undefined}
                 >
                   {renderCell(row, column)}
                 </td>
