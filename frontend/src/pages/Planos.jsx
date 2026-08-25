@@ -92,6 +92,7 @@ export default function Planos() {
   const [pagamentoPlano, setPagamentoPlano] = useState(() => usuario?.pagamentoPlano || null)
   const [checkoutSolicitado, setCheckoutSolicitado] = useState(false)
   const [carregando, setCarregando] = useState(false)
+  const [planoCarregando, setPlanoCarregando] = useState(null)
   const [erro, setErro] = useState('')
   const [filaAssinaturas, setFilaAssinaturas] = useState([])
   const perfilAtendente = String(usuario?.perfil || '').toUpperCase() === 'ATENDENTE'
@@ -174,7 +175,7 @@ export default function Planos() {
     }
 
     setErro('')
-    setCarregando(true)
+    setPlanoCarregando('PRO')
     try {
       const pagamento = await appApi.iniciarPagamentoPro({
         empresaId: usuario.empresaId,
@@ -192,7 +193,7 @@ export default function Planos() {
     } catch (error) {
       setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
     } finally {
-      setCarregando(false)
+      setPlanoCarregando(null)
     }
   }
 
@@ -211,7 +212,7 @@ export default function Planos() {
     }
 
     setErro('')
-    setCarregando(true)
+    setPlanoCarregando('BASICO')
     try {
       const pagamento = await appApi.iniciarPagamentoPlano({
         empresaId: usuario.empresaId,
@@ -229,7 +230,7 @@ export default function Planos() {
     } catch (error) {
       setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
     } finally {
-      setCarregando(false)
+      setPlanoCarregando(null)
     }
   }
 
@@ -421,9 +422,9 @@ export default function Planos() {
               type="button"
               onClick={() => handlePlanClick(plano)}
               className={plano.destaque ? 'btn btn-primary plan-action-link' : 'btn btn-secondary plan-action-link'}
-              disabled={carregando || limiteAtingido || perfilAtendente}
+              disabled={planoCarregando != null || limiteAtingido || perfilAtendente}
             >
-              {carregando
+              {planoCarregando === plano.codigo
                 ? <><Loader className="spin" size={16} /> Iniciando...</>
                 : perfilAtendente
                   ? 'Bloqueado para atendente'

@@ -49,13 +49,14 @@ export default function AgendaCard({
   selected = false,
   onToggleSelection,
   selectionDisabled = false,
-  loading = false,
+  acaoCarregando = null,
 }) {
   const [menuAberto, setMenuAberto] = useState(false)
   const status = agendamento.status || 'PENDENTE'
   const statusClass = status.toLowerCase()
   const iniciais = obterIniciais(agendamento.clienteNome)
   const horaFim = obterHoraFim(agendamento)
+  const carregandoTipo = (tipo) => acaoCarregando?.id === agendamento.id && acaoCarregando?.tipo === tipo
 
   return (
     <div className="agenda-card">
@@ -107,29 +108,29 @@ export default function AgendaCard({
       </div>
 
       {(status === 'PENDENTE' || status === 'CONFIRMADO') && onIniciar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
-          {loading ? <><Loader className="spin" size={17} /> Iniciando atendimento</> : 'Iniciar Atendimento'}
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={carregandoTipo('iniciar')}>
+          {carregandoTipo('iniciar') ? <><Loader className="spin" size={17} /> Iniciando atendimento</> : 'Iniciar Atendimento'}
         </button>
       )}
 
       {status === 'EM_ATENDIMENTO' && (
         <div className="agenda-card-botoes-duplos">
           {onPausar && (
-            <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button" disabled={loading}>
-              {loading ? <><Loader className="spin" size={17} /> Pausando</> : 'Pausar'}
+            <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button" disabled={carregandoTipo('pausar')}>
+              {carregandoTipo('pausar') ? <><Loader className="spin" size={17} /> Pausando</> : 'Pausar'}
             </button>
           )}
           {onFinalizar && (
-            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={loading}>
-              {loading ? <><Loader className="spin" size={17} /> Finalizando</> : 'Finalizar'}
+            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={carregandoTipo('finalizar')}>
+              {carregandoTipo('finalizar') ? <><Loader className="spin" size={17} /> Finalizando</> : 'Finalizar'}
             </button>
           )}
         </div>
       )}
 
       {status === 'PAUSADO' && onIniciar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
-          {loading ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={carregandoTipo('iniciar')}>
+          {carregandoTipo('iniciar') ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
         </button>
       )}
 

@@ -119,7 +119,7 @@ export default function Agenda() {
   const [erroAcao, setErroAcao] = useState('')
   const [salvandoCriar, setSalvandoCriar] = useState(false)
   const [salvandoEditar, setSalvandoEditar] = useState(false)
-  const [acaoId, setAcaoId] = useState(null)
+  const [acaoEmAndamento, setAcaoEmAndamento] = useState(null)
   const [confirmacao, setConfirmacao] = useState(null)
   const [confirmandoAcao, setConfirmandoAcao] = useState(false)
   const [finalizacaoPagamento, setFinalizacaoPagamento] = useState(null)
@@ -529,46 +529,46 @@ export default function Agenda() {
   }
 
   async function cancelarAgendamento(id) {
-    if (acaoId) return
-    setAcaoId(id)
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id, tipo: 'cancelar' })
     setErroAcao('')
     try {
       await appApi.cancelarAgendamento(id)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
     }
   }
 
   async function confirmarAgendamento(id) {
-    if (acaoId) return
-    setAcaoId(id)
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id, tipo: 'confirmar' })
     setErroAcao('')
     try {
       await appApi.confirmarAgendamento(id)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
     }
   }
 
   async function excluirAgendamento(id) {
-    if (acaoId || confirmandoAcao) return
-    setAcaoId(id)
+    if (acaoEmAndamento || confirmandoAcao) return
+    setAcaoEmAndamento({ id, tipo: 'excluir' })
     setErroAcao('')
     try {
       await appApi.excluirAgendamento(id)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
@@ -577,11 +577,11 @@ export default function Agenda() {
       const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || error.message || '')
       const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento nao encontrado') || mensagem.toLowerCase().includes('agendamento não encontrado')
       if (!jaNaoExiste) {
-        setAcaoId(null)
+        setAcaoEmAndamento(null)
         setErroAcao(mensagem || 'Não foi possível excluir o agendamento.')
         return
       }
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
@@ -593,37 +593,37 @@ export default function Agenda() {
   }
 
   async function iniciarAtendimento(agendamento) {
-    if (acaoId) return
-    setAcaoId(agendamento.id)
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'iniciar' })
     setErroAcao('')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.iniciarAgendamento(agendamento.id)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível iniciar o atendimento.')
     }
   }
 
   async function pausarAtendimento(agendamento) {
-    if (acaoId) return
-    setAcaoId(agendamento.id)
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'pausar' })
     setErroAcao('')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.pausarAgendamento(agendamento.id)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       reload(true).catch((error) => {
         console.error('[agenda-debug] erro ao recarregar agenda')
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
     }
   }
@@ -644,14 +644,14 @@ export default function Agenda() {
   }
 
   async function finalizarAtendimentoDireto(agendamento, pagamentoRealizado = true, pagamento = {}) {
-    if (acaoId) return
-    setAcaoId(agendamento.id)
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'finalizar' })
     setErroAcao('')
     emitirToast('loading', pagamentoRealizado ? 'Pagamento sendo efetuado, aguarde...' : 'Atendimento finalizando, aguarde...')
     try {
       await renovarAoRetomarAba({ ignorarThrottle: true })
       await appApi.finalizarAgendamento(agendamento.id, pagamentoRealizado, pagamento)
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       setFinalizacaoPagamento(null)
       emitirToast('success', 'Agendamento finalizado com sucesso.')
       reload(true).catch((error) => {
@@ -659,7 +659,7 @@ export default function Agenda() {
         setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
       })
     } catch (error) {
-      setAcaoId(null)
+      setAcaoEmAndamento(null)
       const mensagem = error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível finalizar o atendimento.'
       setErroAcao(mensagem)
       emitirToast('error', mensagem)
@@ -783,7 +783,7 @@ export default function Agenda() {
             selected={selecionados.includes(agendamento.id)}
             onToggleSelection={alternarSelecionado}
             selectionDisabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
-            loading={acaoId === agendamento.id}
+            acaoCarregando={acaoEmAndamento}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
               descricao: 'Tem certeza que deseja iniciar este atendimento?',
@@ -796,9 +796,7 @@ export default function Agenda() {
               acao: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
             })}
-            loading={acaoId === agendamento.id}
             onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
-            loading={acaoId === agendamento.id}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
@@ -806,14 +804,12 @@ export default function Agenda() {
               acao: () => cancelarAgendamento(ag.id),
               acaoLabel: 'Cancelar',
             })}
-            loading={acaoId === agendamento.id}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
               descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
               acao: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}
-            loading={acaoId === agendamento.id || confirmandoAcao}
           />
         ))}
       </div>
@@ -916,7 +912,7 @@ export default function Agenda() {
                 <button
                   key={metodo.metodoPagamento}
                   type="button"
-                  disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
                   onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
                 >
                   {metodo.label}
@@ -924,7 +920,7 @@ export default function Agenda() {
               ))}
               <button
                 type="button"
-                disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
                 onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
               >
                 Não foi pago
@@ -936,7 +932,7 @@ export default function Agenda() {
                 <button
                   key={parcela}
                   type="button"
-                  disabled={confirmandoAcao || acaoId === finalizacaoPagamento?.id}
+                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
                   onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
                 >
                   {parcela}x
