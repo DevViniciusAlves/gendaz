@@ -30,7 +30,9 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
 import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
+import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
+import java.time.Duration;
 import com.minhaempresa.gendaz.membresia.enums.StatusMembresia;
 import com.minhaempresa.gendaz.membresia.repository.MembresiaRepository;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
@@ -40,6 +42,7 @@ import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.Objects;
@@ -79,6 +82,7 @@ public class AuthService {
     private final TransactionTemplate transactionTemplate;
     private final MembresiaRepository membresiaRepository;
     private final CadastroIdempotenciaService cadastroIdempotenciaService;
+    private final PersistentRateLimitService persistentRateLimitService;
     private final UsuarioMapper mapper = new UsuarioMapper();
 
     public boolean validarCredenciaisLogin(String email, String senha) {

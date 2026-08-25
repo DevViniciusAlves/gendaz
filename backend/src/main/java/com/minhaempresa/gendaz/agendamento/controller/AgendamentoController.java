@@ -26,6 +26,9 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AgendamentoController {
+    private final AgendamentoService agendamentoService;
+    private final AgendamentoBulkService agendamentoBulkService;
+
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
