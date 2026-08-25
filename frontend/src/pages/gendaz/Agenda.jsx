@@ -144,7 +144,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
             <span>Data *</span>
             <input type="date" value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} required />
           </label>
-          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader size={16} /> Buscando horários...</div>}
+          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader className="spin" size={16} /> Buscando horários...</div>}
           {!carregandoHorarios && horarios.length > 0 && (
             <label>
               <span>Horário *</span>
@@ -175,7 +175,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Cancelar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--primary" disabled={salvando}>
-              {salvando ? <><Loader size={16} /> Salvando...</> : 'Confirmar agendamento'}
+              {salvando ? <><Loader className="spin" size={16} /> Salvando...</> : 'Confirmar agendamento'}
             </button>
           </div>
         </form>
@@ -236,7 +236,7 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
             <span>Nova data</span>
             <input type="date" value={novaData} onChange={(e) => setNovaData(e.target.value)} required />
           </label>
-          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader size={16} /> Buscando horários...</div>}
+          {carregandoHorarios && <div className="gendaz-loading gendaz-loading--inline"><Loader className="spin" size={16} /> Buscando horários...</div>}
           {!carregandoHorarios && horarios.length > 0 && (
             <label>
               <span>Novo horário</span>
@@ -251,7 +251,7 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Cancelar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--primary" disabled={salvando}>
-              {salvando ? <><Loader size={16} /> Salvando...</> : 'Confirmar reagendamento'}
+              {salvando ? <><Loader className="spin" size={16} /> Salvando...</> : 'Confirmar reagendamento'}
             </button>
           </div>
         </form>
@@ -296,7 +296,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Voltar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--danger" disabled={salvando}>
-              {salvando ? <><Loader size={16} /> Cancelando...</> : <><AlertTriangle size={16} /> Confirmar cancelamento</>}
+              {salvando ? <><Loader className="spin" size={16} /> Cancelando...</> : <><AlertTriangle size={16} /> Confirmar cancelamento</>}
             </button>
           </div>
         </form>

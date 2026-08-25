@@ -101,6 +101,7 @@ export default function Configuracoes() {
   const navigate = useNavigate()
   const [empresa, setEmpresa] = useState(data.empresa)
   const [salvo, setSalvo] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [solicitacaoAberta, setSolicitacaoAberta] = useState(false)
   const [mensagemAlteracao, setMensagemAlteracao] = useState('')
@@ -180,6 +181,9 @@ export default function Configuracoes() {
       return
     }
 
+    if (salvando) return
+    setSalvando(true)
+    try {
     await appApi.atualizarEmpresa(empresa.id, {
       nomeFantasia: data.empresa.nomeFantasia,
       telefone,
@@ -189,6 +193,9 @@ export default function Configuracoes() {
     })
     await reload(true)
     setSalvo(true)
+    } finally {
+      setSalvando(false)
+    }
   }
 
   async function trocarSenha(event) {
@@ -357,9 +364,7 @@ export default function Configuracoes() {
         <h1>Configurações</h1>
         <p>Centralize os dados da empresa, acesso da conta, plano atual e horário de atendimento.</p>
         <div className="page-title-actions">
-          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
+          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">Recarregar</Button>
         </div>
       </div>
 
@@ -457,7 +462,7 @@ export default function Configuracoes() {
           <Input label="E-mail" helper="Leitura apenas. Use Solicitar alteração para mudar este dado." type="email" maxLength={120} value={empresa?.email || ''} readOnly />
           <div className="settings-form-actions field-wide">
             <Button variant="secondary" type="button" onClick={() => setSolicitacaoAberta((aberta) => !aberta)} disabled={perfilAtendente}>Solicitar alteração</Button>
-            <Button icon={Save} type="submit" disabled={perfilAtendente}>Salvar configurações</Button>
+            <Button icon={Save} type="submit" loading={salvando} loadingText="Salvando..." disabled={perfilAtendente}>Salvar configurações</Button>
           </div>
         </form>
 
@@ -483,7 +488,7 @@ export default function Configuracoes() {
               </small>
             </label>
             <div className="settings-form-actions field-wide">
-              <Button icon={Send} type="submit" disabled={enviandoChamado}>{enviandoChamado ? 'Enviando...' : 'Enviar solicitação'}</Button>
+              <Button icon={Send} type="submit" loading={enviandoChamado} loadingText="Enviando...">Enviar solicitação</Button>
             </div>
           </form>
         )}
@@ -572,7 +577,7 @@ export default function Configuracoes() {
           ))}
 
           <div className="settings-form-actions field-wide">
-            <Button icon={Save} type="submit" disabled={salvandoHorario}>{salvandoHorario ? 'Salvando...' : 'Salvar horários'}</Button>
+            <Button icon={Save} type="submit" loading={salvandoHorario} loadingText="Salvando...">Salvar horários</Button>
           </div>
         </form>
       </section>
@@ -601,7 +606,7 @@ export default function Configuracoes() {
             {statusLink && <p className="success-text">{statusLink}</p>}
             {erroLink && <p className="form-error">{erroLink}</p>}
             <div className="booking-link-actions">
-              <Button icon={Save} type="submit" disabled={salvandoLink}>{salvandoLink ? 'Salvando...' : 'Salvar link'}</Button>
+              <Button icon={Save} type="submit" loading={salvandoLink} loadingText="Salvando...">Salvar link</Button>
               <Button variant="secondary" icon={Copy} type="button" onClick={copiarLinkAgendamento} disabled={!portalClienteLink?.publicUrl}>Copiar link</Button>
             </div>
           </form>
@@ -690,7 +695,7 @@ export default function Configuracoes() {
             <small className="field-hint">Repita a nova senha.</small>
           </label>
           <div className="settings-form-actions field-wide">
-            <Button icon={KeyRound} type="submit" disabled={salvandoSenha}>{salvandoSenha ? 'Salvando...' : 'Alterar senha'}</Button>
+            <Button icon={KeyRound} type="submit" loading={salvandoSenha} loadingText="Salvando...">Alterar senha</Button>
           </div>
         </form>
       </section>
@@ -710,18 +715,22 @@ export default function Configuracoes() {
             <Button
               variant="secondary"
               icon={Download}
-              disabled={exportandoDados || encerrandoConta}
+              loading={exportandoDados}
+              loadingText="Exportando dados..."
+              disabled={encerrandoConta}
               onClick={() => setConfirmacao('exportar')}
             >
-              {exportandoDados ? 'Exportando dados, aguarde...' : 'Exportar dados'}
+              Exportar dados
             </Button>
             <Button
               variant="danger"
               icon={AlertTriangle}
-              disabled={exportandoDados || encerrandoConta}
+              loading={encerrandoConta}
+              loadingText="Encerrando conta..."
+              disabled={exportandoDados}
               onClick={() => setConfirmacao('encerrar')}
             >
-              {encerrandoConta ? 'Encerrando conta, aguarde...' : 'Encerrar conta'}
+              Encerrar conta
             </Button>
           </div>
 

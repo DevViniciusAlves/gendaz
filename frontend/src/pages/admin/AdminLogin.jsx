@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Loader, Mail, Lock } from 'lucide-react'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import logoWhite from '../../assets/logos/gendaz-logo-branco.png'
 
@@ -85,7 +85,7 @@ export default function AdminLogin() {
           {erro && <p className="admin-login-error">{erro}</p>}
 
           <button type="submit" className="admin-login-submit" disabled={carregando}>
-            {carregando ? 'Entrando...' : 'Entrar'}
+            {carregando ? <><Loader className="spin" size={16} /> Entrando...</> : 'Entrar'}
           </button>
         </form>
 

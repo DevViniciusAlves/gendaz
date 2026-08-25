@@ -161,9 +161,7 @@ export default function Servicos() {
           <p>Cadastro de serviços, duração, valor e status conectado ao backend.</p>
         </div>
         <div className="table-actions">
-          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
+          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">Recarregar</Button>
           <Button icon={Plus} onClick={abrirNovo}>Novo serviço</Button>
         </div>
       </div>
@@ -201,7 +199,7 @@ export default function Servicos() {
           <Input label="Duração em minutos" helper="Digite apenas números, entre 5 e 720." type="number" min="5" max="720" value={form.duracaoMinutos} onChange={(e) => setForm({ ...form, duracaoMinutos: e.target.value.replace(/\D/g, '') })} />
           <Input label="Valor" helper="Informe um valor maior que zero." type="number" min="0.01" step="0.01" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
-          <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
+          <Button type="submit" loading={salvando} loadingText="Salvando...">Salvar</Button>
         </form>
       </Modal>
 

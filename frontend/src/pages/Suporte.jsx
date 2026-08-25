@@ -162,7 +162,7 @@ export default function Suporte() {
           {erro && <p className="form-error field-wide">{erro}</p>}
           {sucesso && <p className="success-text field-wide">{sucesso}</p>}
           <div className="support-form-actions">
-            <Button icon={Send} type="submit" disabled={enviando}>{enviando ? 'Enviando...' : 'Enviar chamado'}</Button>
+            <Button icon={Send} type="submit" loading={enviando} loadingText="Enviando...">Enviar chamado</Button>
           </div>
         </form>
       </section>

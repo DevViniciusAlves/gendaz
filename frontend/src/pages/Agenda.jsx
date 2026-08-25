@@ -697,8 +697,8 @@ export default function Agenda() {
               <strong>{busca.length}/80</strong>
             </div>
           </div>
-          <Button variant="secondary" icon={RefreshCw} className="agenda-action-btn agenda-action-reload" onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
+          <Button variant="secondary" icon={RefreshCw} className="agenda-action-btn agenda-action-reload" onClick={recarregar} loading={recarregando} loadingText="Recarregando...">
+            Recarregar
           </Button>
           <Button icon={CalendarPlus} className="agenda-action-btn agenda-action-new" onClick={abrirCriacao}>Novo agendamento</Button>
         </div>
@@ -783,6 +783,7 @@ export default function Agenda() {
             selected={selecionados.includes(agendamento.id)}
             onToggleSelection={alternarSelecionado}
             selectionDisabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
+            loading={acaoId === agendamento.id}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
               descricao: 'Tem certeza que deseja iniciar este atendimento?',
@@ -795,7 +796,9 @@ export default function Agenda() {
               acao: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
             })}
+            loading={acaoId === agendamento.id}
             onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
+            loading={acaoId === agendamento.id}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
@@ -803,12 +806,14 @@ export default function Agenda() {
               acao: () => cancelarAgendamento(ag.id),
               acaoLabel: 'Cancelar',
             })}
+            loading={acaoId === agendamento.id}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
               descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
               acao: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}
+            loading={acaoId === agendamento.id || confirmandoAcao}
           />
         ))}
       </div>
@@ -865,7 +870,7 @@ export default function Agenda() {
           </label>
           <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
-          <Button type="submit" disabled={salvandoCriar}>{salvandoCriar ? 'Salvando...' : 'Salvar'}</Button>
+          <Button type="submit" loading={salvandoCriar} loadingText="Salvando...">Salvar</Button>
         </form>
       </Modal>
 
@@ -898,7 +903,7 @@ export default function Agenda() {
             {carregandoHorariosEditar && <small className="field-hint">Carregando horários disponíveis...</small>}
             <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
-            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar correções'}</Button>
+            <Button type="submit" loading={salvandoEditar} loadingText="Salvando...">Salvar correções</Button>
           </form>
         )}
       </Modal>

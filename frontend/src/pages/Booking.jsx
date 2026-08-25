@@ -179,6 +179,7 @@ export default function Booking() {
 
   async function confirmar(event) {
     event.preventDefault()
+    if (salvando) return
     setErro('')
     setSucesso('')
 
@@ -505,8 +506,8 @@ export default function Booking() {
 
             {erro && <p className="form-error field-wide">{erro}</p>}
             <div className="booking-actions field-wide">
-              <Button type="submit" disabled={salvando || semServicos || !cliente.nome || (validarTelefone(cliente.telefone) !== '')}>
-                {salvando ? 'Confirmando...' : 'Confirmar agendamento'}
+              <Button type="submit" loading={salvando} loadingText="Confirmando..." disabled={semServicos || !cliente.nome || (validarTelefone(cliente.telefone) !== '')}>
+                Confirmar agendamento
               </Button>
             </div>
           </form>

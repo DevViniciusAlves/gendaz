@@ -19,6 +19,7 @@ export default function Promocoes() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
   const [aba, setAba] = useState('DISPONIVEIS')
+  const [marcandoLidas, setMarcandoLidas] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -50,10 +51,14 @@ export default function Promocoes() {
   const usadas = useMemo(() => cupons, [cupons])
 
   async function marcarLidas() {
+    if (marcandoLidas) return
+    setMarcandoLidas(true)
     try {
       await Promise.all(notificacoes.map((item) => marcarPromocaoLida(item.promocaoId)))
     } catch (err) {
       setErro(err.response?.data?.mensagem || err.message || 'Nao foi possivel atualizar a leitura.')
+    } finally {
+      setMarcandoLidas(false)
     }
   }
 
@@ -88,8 +93,8 @@ export default function Promocoes() {
             Você tem {notificacoes.length} nova{notificacoes.length > 1 ? 's' : ''} promoção(ões)
             disponível(is) para o seu atendimento.
           </p>
-          <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" type="button" onClick={marcarLidas}>
-            Marcar como lidas
+          <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" type="button" onClick={marcarLidas} disabled={marcandoLidas}>
+            {marcandoLidas ? <><Loader className="spin" size={16} /> Marcando...</> : 'Marcar como lidas'}
           </button>
         </article>
       )}

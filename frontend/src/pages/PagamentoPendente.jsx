@@ -212,14 +212,14 @@ export default function PagamentoPendente() {
             <small className="plan-checkout-expired-note">Checkout expirado. Gere uma nova cobranca para continuar.</small>
           )}
 
-          <Button type="button" variant="secondary" onClick={verificarStatus} disabled={carregando}>
-            <RefreshCw size={20} /> {carregando ? 'Verificando...' : 'Ja paguei, verificar'}
+          <Button type="button" variant="secondary" icon={RefreshCw} onClick={verificarStatus} loading={carregando} loadingText="Ja paguei, verificar">
+            Ja paguei, verificar
           </Button>
 
           {checkoutExpiradoAtual && (
-            <Button type="button" variant="secondary" onClick={gerarCheckout} disabled={gerando}>
-              <RefreshCw size={20} /> {gerando ? 'Gerando...' : 'Gerar nova cobranca'}
-            </Button>
+          <Button type="button" variant="secondary" icon={RefreshCw} onClick={gerarCheckout} loading={gerando} loadingText="Gerar nova cobranca">
+            Gerar nova cobranca
+          </Button>
           )}
 
           <Link to="/" className="payment-back-link">Voltar ao site</Link>

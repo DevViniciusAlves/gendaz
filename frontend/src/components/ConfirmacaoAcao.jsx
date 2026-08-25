@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { Loader, X } from 'lucide-react'
 
 const titulos = {
   INICIAR: 'Iniciar atendimento',
@@ -12,7 +12,7 @@ const mensagens = {
   FINALIZAR: 'Tem certeza que deseja finalizar o atendimento deste cliente?',
 }
 
-export default function ConfirmacaoAcao({ open, acao, agendamento, onConfirmar, onCancelar }) {
+export default function ConfirmacaoAcao({ open, acao, agendamento, onConfirmar, onCancelar, carregando = false }) {
   if (!open || !acao || !agendamento) return null
 
   return (
@@ -27,11 +27,11 @@ export default function ConfirmacaoAcao({ open, acao, agendamento, onConfirmar, 
         <p className="confirmacao-mensagem">{mensagens[acao] || 'Confirme a ação.'}</p>
         <p className="confirmacao-cliente">{agendamento.clienteNome} — #{agendamento.protocolo || '------'}</p>
         <div className="confirmacao-botoes">
-          <button className="confirmacao-botao confirmacao-botao-cancelar" onClick={onCancelar} type="button">
+          <button className="confirmacao-botao confirmacao-botao-cancelar" onClick={onCancelar} type="button" disabled={carregando}>
             Cancelar
           </button>
-          <button className="confirmacao-botao confirmacao-botao-confirmar" onClick={() => onConfirmar(acao, agendamento)} type="button">
-            Confirmar
+          <button className="confirmacao-botao confirmacao-botao-confirmar" onClick={() => onConfirmar(acao, agendamento)} type="button" disabled={carregando}>
+            {carregando ? <><Loader className="spin" size={16} /> Confirmando...</> : 'Confirmar'}
           </button>
         </div>
       </div>

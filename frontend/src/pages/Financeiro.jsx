@@ -1,4 +1,4 @@
-import { Check, Download, RefreshCw, Trash, X } from 'lucide-react'
+import { Check, Download, Loader, RefreshCw, Trash, X } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { RefreshContext } from '../context/RefreshContext.jsx'
@@ -161,6 +161,8 @@ export default function Financeiro() {
   const [historico, setHistorico] = useState(null)
   const [paginaHistorico, setPaginaHistorico] = useState(1)
   const [carregandoHistorico, setCarregandoHistorico] = useState(false)
+  const [processandoPagamento, setProcessandoPagamento] = useState(false)
+  const [processandoStatus, setProcessandoStatus] = useState(false)
 
   const agendamentoMap = useMemo(() => {
     const agendamentos = Array.isArray(data.agendamentos) ? data.agendamentos : []
@@ -502,26 +504,37 @@ export default function Financeiro() {
   }
 
   async function confirmarPagamentoManual(metodoPagamento, parcelas = null) {
-    if (!pagamentoManual) return
-    const payload = { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? (parcelas || 1) : null }
-    if (pagamentoManual.tipo === 'bulk') {
-      await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, 'MARCAR_COMO_PAGO', payload)
-      limparSelecaoPagamentos()
-    } else {
-      await appApi.marcarPagamentoPago(pagamentoManual.id, payload)
+    if (!pagamentoManual || processandoPagamento) return
+    setProcessandoPagamento(true)
+    try {
+      const payload = { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? (parcelas || 1) : null }
+      if (pagamentoManual.tipo === 'bulk') {
+        await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, 'MARCAR_COMO_PAGO', payload)
+        limparSelecaoPagamentos()
+      } else {
+        await appApi.marcarPagamentoPago(pagamentoManual.id, payload)
+      }
+      setPagamentoManual(null)
+      atualizarContagem()
+      await reload(true)
+    } finally {
+      setProcessandoPagamento(false)
     }
-    setPagamentoManual(null)
-    atualizarContagem()
-    await reload(true)
   }
 
   async function alterarStatusPagamento(id, novoStatus) {
+    if (processandoStatus) return
     if (novoStatus === 'PAGO') {
       setPagamentoManual({ tipo: 'single', id })
       return
     }
-    await appApi.atualizarStatusPagamento(id, novoStatus)
-    await reload(true)
+    setProcessandoStatus(true)
+    try {
+      await appApi.atualizarStatusPagamento(id, novoStatus)
+      await reload(true)
+    } finally {
+      setProcessandoStatus(false)
+    }
   }
 
   function excluirPagamento() {
@@ -629,15 +642,16 @@ export default function Financeiro() {
             Exportar CSV
           </Button>
 
-          <Button
-            variant="secondary"
-            icon={RefreshCw}
-            onClick={recarregar}
-            disabled={recarregando}
-            className="financeiro-refresh-btn"
-          >
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
+           <Button
+             variant="secondary"
+             icon={RefreshCw}
+             onClick={recarregar}
+             loading={recarregando}
+             loadingText="Recarregando..."
+             className="financeiro-refresh-btn"
+           >
+             Recarregar
+           </Button>
         </div>
       </div>
 
@@ -688,16 +702,14 @@ export default function Financeiro() {
               { label: 'Excluir', danger: true, onClick: () => abrirBulkPagamentos('EXCLUIR') },
             ]}
           />
-          <Button
-            variant="secondary"
-            icon={RefreshCw}
-            className="mass-action-icon-button"
-            onClick={recarregar}
-            disabled={recarregando}
-            aria-label="Recarregar pagamentos"
-          >
-            {recarregando ? '...' : ''}
-          </Button>
+           <Button
+             variant="secondary"
+             icon={RefreshCw}
+             className="mass-action-icon-button"
+             onClick={recarregar}
+             loading={recarregando}
+             aria-label="Recarregar pagamentos"
+           />
         </div>
 
         {erroPagamentos && <p className="form-error">{erroPagamentos}</p>}
@@ -795,19 +807,20 @@ export default function Financeiro() {
                 <button
                   key={metodo.metodoPagamento}
                   type="button"
+                  disabled={processandoPagamento}
                   onClick={() => metodo.metodoPagamento === 'CREDITO' && formasPagamento?.parceladoAtivo
                     ? setPagamentoManual({ ...pagamentoManual, creditoParcelado: true })
                     : confirmarPagamentoManual(metodo.metodoPagamento)}
                 >
-                  {metodo.label}
+                  {processandoPagamento ? <Loader className="spin" size={16} /> : metodo.label}
                 </button>
               ))}
             </div>
           ) : (
             <div className="payment-methods">
               {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
-                <button key={parcela} type="button" onClick={() => confirmarPagamentoManual('CREDITO', parcela)}>
-                  {parcela}x
+                <button key={parcela} type="button" disabled={processandoPagamento} onClick={() => confirmarPagamentoManual('CREDITO', parcela)}>
+                  {processandoPagamento ? <Loader className="spin" size={16} /> : `${parcela}x`}
                 </button>
               ))}
             </div>

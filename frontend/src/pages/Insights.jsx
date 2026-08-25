@@ -146,8 +146,8 @@ export default function Insights() {
           <h1>Insights</h1>
           <p>A IA analisa os dados da sua empresa e recomenda ações para crescer.</p>
         </div>
-        <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
-          {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
+        <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} loading={sincronizando} loadingText="Sincronizando..." disabled={loading}>
+          Sincronizar dados
         </Button>
       </header>
 
@@ -164,8 +164,8 @@ export default function Insights() {
                 <p>Sincronize os dados da sua empresa para gerar seus primeiros insights.</p>
                 <small className="insights-summary-panel__meta">Aguardando primeira sincronização manual</small>
                 <div className="insights-summary-actions">
-                  <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} disabled={sincronizando || loading}>
-                    {sincronizando ? 'Sincronizando...' : 'Sincronizar dados'}
+                  <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} loading={sincronizando} loadingText="Sincronizando..." disabled={loading}>
+                    Sincronizar dados
                   </Button>
                 </div>
               </div>

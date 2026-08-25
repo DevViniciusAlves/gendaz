@@ -1,4 +1,4 @@
-import { Check, ExternalLink, RefreshCw, ShieldCheck, X } from 'lucide-react'
+import { Check, ExternalLink, Loader, RefreshCw, ShieldCheck, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -349,7 +349,7 @@ export default function Planos() {
                 </a>
                 <span className="checkout-timer">Expira em: {timerPlano.formatado}</span>
                 <button type="button" className="btn btn-secondary" onClick={atualizarStatusPagamento} disabled={carregando}>
-                  <RefreshCw size={16} /> Já paguei, verificar
+                  {carregando ? <><Loader className="spin" size={16} /> Verificando...</> : <><RefreshCw size={16} /> Já paguei, verificar</>}
                 </button>
               </div>
               <small className="plan-payment-helper">Após a aprovação, sua conta Pro pode levar até 30 minutos para ser liberada.</small>
@@ -424,14 +424,14 @@ export default function Planos() {
               disabled={carregando || limiteAtingido || perfilAtendente}
             >
               {carregando
-                ? 'Iniciando...'
+                ? <><Loader className="spin" size={16} /> Iniciando...</>
                 : perfilAtendente
                   ? 'Bloqueado para atendente'
                   : limiteAtingido
-                  ? 'Limite de 2 planos atingido'
-                  : String(usuario?.plano || '').toUpperCase() === plano.codigo
-                    ? 'Adicionar dias ao plano'
-                    : 'Adicionar este plano'}
+                    ? 'Limite de 2 planos atingido'
+                    : String(usuario?.plano || '').toUpperCase() === plano.codigo
+                      ? 'Adicionar dias ao plano'
+                      : 'Adicionar este plano'}
             </button>
           </ScrollReveal>
         ))}

@@ -1,4 +1,4 @@
-import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, XCircle } from 'lucide-react'
+import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, Loader, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
@@ -714,8 +714,8 @@ export default function AdminDashboard() {
                 <p>Visao tática da saude do Gendaz com contas, pagamentos e fluxo operacional.</p>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Dashboard'}>
-                  {recarregando === 'Dashboard' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Dashboard'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -869,8 +869,8 @@ export default function AdminDashboard() {
                 <h1>Usuarios e empresas</h1>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Usuarios'}>
-                  {recarregando === 'Usuarios' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Usuarios'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -917,8 +917,8 @@ export default function AdminDashboard() {
                 <h1>Pagamentos</h1>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Pagamentos'}>
-                  {recarregando === 'Pagamentos' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Pagamentos'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -976,8 +976,8 @@ export default function AdminDashboard() {
                 <h1>Aprovar pagamentos</h1>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Aprovar Pagamentos'}>
-                  {recarregando === 'Aprovar Pagamentos' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Aprovar Pagamentos'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -1020,8 +1020,8 @@ export default function AdminDashboard() {
                 <h1>Logs / Auditoria</h1>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Logs'}>
-                  {recarregando === 'Logs' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Logs'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -1110,8 +1110,8 @@ export default function AdminDashboard() {
                 <h1>Configuracoes seguras</h1>
               </div>
               <div className="page-title-actions">
-                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} disabled={recarregando === 'Configuracoes'}>
-                  {recarregando === 'Configuracoes' ? 'Recarregando...' : 'Recarregar'}
+                <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Configuracoes'} loadingText="Recarregando...">
+                  Recarregar
                 </Button>
               </div>
             </div>
@@ -1204,7 +1204,7 @@ export default function AdminDashboard() {
                               placeholder="Dias"
                             />
                             <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={salvarEdicaoAssinatura}>
-                              {salvandoAssinatura ? 'Salvando...' : 'Salvar'}
+                              {salvandoAssinatura ? <><Loader className="spin" size={16} /> Salvando...</> : 'Salvar'}
                             </button>
                             <button type="button" className="btn btn-ghost" disabled={salvandoAssinatura} onClick={() => setEditandoAssinaturaId(null)}>
                               Cancelar
@@ -1221,8 +1221,7 @@ export default function AdminDashboard() {
                           disabled={salvandoAssinatura}
                           onClick={() => removerPlanoDaConta(assinatura)}
                         >
-                          <Trash2 size={14} />
-                          Remover
+                          {salvandoAssinatura ? <><Loader className="spin" size={16} /> Removendo...</> : <><Trash2 size={14} /> Remover</>}
                         </button>
                       </div>
                     ))}
@@ -1257,7 +1256,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="admin-assinatura__add-actions">
                       <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={criarNovaAssinatura}>
-                        {salvandoAssinatura ? 'Adicionando...' : 'Adicionar'}
+                        {salvandoAssinatura ? <><Loader className="spin" size={16} /> Adicionando...</> : 'Adicionar'}
                       </button>
                       <button
                         type="button"
@@ -1391,19 +1390,19 @@ export default function AdminDashboard() {
           {erro && <p className="form-error">{erro}</p>}
           <div className="confirm-actions">
             <Button variant="secondary" onClick={() => setModal(null)}>Cancelar</Button>
-            {modal?.tipo === 'pagamento-aprovar'
-              ? <Button icon={CheckCircle2} disabled={carregandoAcao} onClick={aprovarPagamentoManual}>{carregandoAcao ? 'Aprovando...' : 'Confirmar aprovacao'}</Button>
-              : modal?.tipo === 'pagamento-desaprovar'
-                ? <Button icon={XCircle} disabled={carregandoAcao || !motivoValido} onClick={desaprovarPagamentoManual}>{carregandoAcao ? 'Revertendo...' : 'Desaprovar pagamento'}</Button>
-                : modal?.tipo === 'empresa-ativar' || modal?.tipo === 'empresa-desativar'
-                  ? <Button icon={modal?.tipo === 'empresa-ativar' ? Power : Ban} disabled={carregandoAcao || !motivoValido} onClick={atualizarStatusEmpresa}>{carregandoAcao ? 'Salvando...' : 'Confirmar'}</Button>
-                  : modal?.tipo === 'empresa-editar'
-                    ? <Button icon={Pencil} disabled={carregandoAcao || !motivoValido} onClick={salvarEmpresaEditada}>{carregandoAcao ? 'Salvando...' : 'Salvar alteracoes'}</Button>
-                    : modal?.tipo === 'chamado-status'
-                      ? <Button icon={CheckCircle2} disabled={carregandoAcao} onClick={salvarChamadoEditado}>{carregandoAcao ? 'Salvando...' : 'Salvar chamado'}</Button>
-                      : modal?.tipo === 'pagamento-detalhes'
-                        ? null
-                        : <Button icon={Search} disabled={carregandoAcao} onClick={confirmarImpersonacao}>{carregandoAcao ? 'Acessando...' : 'Confirmar acesso'}</Button>}
+              {modal?.tipo === 'pagamento-aprovar'
+                ? <Button icon={CheckCircle2} loading={carregandoAcao} loadingText="Aprovando..." onClick={aprovarPagamentoManual}>Confirmar aprovacao</Button>
+                : modal?.tipo === 'pagamento-desaprovar'
+                  ? <Button icon={XCircle} disabled={!motivoValido} loading={carregandoAcao} loadingText="Revertendo..." onClick={desaprovarPagamentoManual}>Desaprovar pagamento</Button>
+                  : modal?.tipo === 'empresa-ativar' || modal?.tipo === 'empresa-desativar'
+                    ? <Button icon={modal?.tipo === 'empresa-ativar' ? Power : Ban} disabled={!motivoValido} loading={carregandoAcao} loadingText="Salvando..." onClick={atualizarStatusEmpresa}>Confirmar</Button>
+                    : modal?.tipo === 'empresa-editar'
+                      ? <Button icon={Pencil} disabled={!motivoValido} loading={carregandoAcao} loadingText="Salvando..." onClick={salvarEmpresaEditada}>Salvar alteracoes</Button>
+                      : modal?.tipo === 'chamado-status'
+                        ? <Button icon={CheckCircle2} loading={carregandoAcao} loadingText="Salvando..." onClick={salvarChamadoEditado}>Salvar chamado</Button>
+                        : modal?.tipo === 'pagamento-detalhes'
+                          ? null
+                          : <Button icon={Search} loading={carregandoAcao} loadingText="Acessando..." onClick={confirmarImpersonacao}>Confirmar acesso</Button>}
           </div>
         </div>
       </Modal>

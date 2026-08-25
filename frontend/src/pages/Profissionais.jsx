@@ -214,9 +214,7 @@ export default function Profissionais() {
           <p>Cadastro dos profissionais que atendem na agenda, conectado ao backend.</p>
         </div>
         <div className="table-actions">
-          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
+          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">Recarregar</Button>
           <Button icon={Plus} onClick={abrirNovo}>Novo profissional</Button>
         </div>
       </div>
@@ -246,7 +244,7 @@ export default function Profissionais() {
           <InternationalPhoneInput label="Telefone (opcional)" helper={form.telefone ? (validarTelefone(form.telefone) || ' Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`} value={form.telefone} onChangeValue={(valor) => setForm({ ...form, telefone: valor || '' })} />
           <DiasTrabalhoSelector value={form.diasTrabalho} onToggle={(dia) => alternarDia(setForm, dia)} />
           {erro && <p className="form-error field-wide">{erro}</p>}
-          <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
+            <Button type="submit" loading={salvando} loadingText="Salvando...">Salvar</Button>
         </form>
       </Modal>
 
@@ -258,7 +256,7 @@ export default function Profissionais() {
             <InternationalPhoneInput label="Telefone (opcional)" helper={edicao.telefone ? (validarTelefone(edicao.telefone) || ' Formato correto') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`} value={edicao.telefone} onChangeValue={(valor) => setEdicao({ ...edicao, telefone: valor || '' })} />
             <DiasTrabalhoSelector value={edicao.diasTrabalho} onToggle={(dia) => alternarDia(setEdicao, dia)} />
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
-            <Button type="submit" disabled={salvandoEditar}>{salvandoEditar ? 'Salvando...' : 'Salvar alterações'}</Button>
+            <Button type="submit" loading={salvandoEditar} loadingText="Salvando...">Salvar alterações</Button>
           </form>
         )}
       </Modal>

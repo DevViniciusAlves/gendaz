@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Eye, EyeOff, RefreshCw, Star, User, Mail, Lock, FileText, Check } from 'lucide-react'
+import { Eye, EyeOff, Loader, RefreshCw, Star, User, Mail, Lock, FileText, Check } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { normalizarParaApi, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import { gerarUuid } from '../api/appApi.js'
@@ -355,7 +355,7 @@ export default function CriarConta() {
           {erro && <p className="login-error-v2 cc-full-v2">{erro}</p>}
 
           <button type="submit" className="login-submit-v2 cc-submit-v2 cc-full-v2" disabled={carregando}>
-            {carregando ? 'Criando conta...' : 'Criar conta'}
+            {carregando ? <><Loader className="spin" size={16} /> Criando conta...</> : 'Criar conta'}
           </button>
         </form>
 

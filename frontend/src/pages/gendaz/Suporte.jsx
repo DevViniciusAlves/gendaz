@@ -1,5 +1,5 @@
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { AlertCircle, LifeBuoy, MessageCircle, Send, ShieldAlert, Ticket, X } from 'lucide-react'
+import { AlertCircle, LifeBuoy, Loader, MessageCircle, Send, ShieldAlert, Ticket, X } from 'lucide-react'
 import clienteApi from '../../api/clienteApi.js'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
@@ -179,7 +179,7 @@ export default function Suporte() {
             )}
 
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={enviando}>
-              {enviando ? <><Send size={16} /> Enviando...</> : <><Send size={16} /> Enviar chamado</>}
+              {enviando ? <><Loader className="spin" size={16} /> Enviando...</> : <><Send size={16} /> Enviar chamado</>}
             </button>
           </form>
         </article>

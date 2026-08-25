@@ -206,7 +206,7 @@ function GendazAuthGate({ slug, onLogin }) {
               </div>
             </label>
             <button className="login-submit-v2" type="submit" disabled={carregando || bloqueado}>
-              {carregando ? 'Enviando...' : 'Continuar'}
+              {carregando ? <><Loader className="spin" size={16} /> Enviando...</> : 'Continuar'}
             </button>
           </form>
         ) : (
@@ -226,7 +226,7 @@ function GendazAuthGate({ slug, onLogin }) {
               </div>
             </label>
             <button className="login-submit-v2" type="submit" disabled={carregando || bloqueado}>
-              {carregando ? 'Validando...' : 'Confirmar'}
+              {carregando ? <><Loader className="spin" size={16} /> Validando...</> : 'Confirmar'}
             </button>
             <button
               className="gendaz-btn gendaz-btn--voltar"
@@ -236,8 +236,8 @@ function GendazAuthGate({ slug, onLogin }) {
             >
               <ArrowLeft size={16} /> Voltar
             </button>
-            <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => void reenviarCodigo()} disabled={reenviarEm > 0 || bloqueado}>
-              {reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar codigo'}
+            <button className="gendaz-btn gendaz-btn--ghost" type="button" onClick={() => void reenviarCodigo()} disabled={carregando || reenviarEm > 0 || bloqueado}>
+              {carregando ? <><Loader className="spin" size={16} /> Reenviando...</> : reenviarEm > 0 ? `Reenviar em ${reenviarEm}s` : 'Reenviar codigo'}
             </button>
             <small>
               {reenviarEm > 0
@@ -366,10 +366,10 @@ function GendazCadastroGate({ slug }) {
             helper={telefone ? (validarTelefone(telefone) || ' Pronto para confirmar') : `Exemplo para o país selecionado: ${obterExemploTelefone('BR') || '+55 (65) 99336-0341'}`}
           />
           <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando || saindo}>
-            {salvando ? <><Loader size={16} /> Entrando...</> : 'Entrar'}
+            {salvando ? <><Loader className="spin" size={16} /> Entrando...</> : 'Entrar'}
           </button>
           <button className="gendaz-btn gendaz-btn--voltar" type="button" onClick={() => void sair()} disabled={salvando || saindo}>
-            {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
+            {saindo ? <><Loader className="spin" size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
           </button>
           <small>O e-mail vem do login. Nome e telefone seguem a regra do sistema.</small>
         </form>

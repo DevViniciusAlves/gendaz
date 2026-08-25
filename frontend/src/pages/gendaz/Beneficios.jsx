@@ -13,6 +13,7 @@ export default function Beneficios() {
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState(null)
   const [copiado, setCopiado] = useState(null)
+  const [cupomEmUso, setCupomEmUso] = useState(null)
 
   useEffect(() => {
     let ativo = true
@@ -33,10 +34,14 @@ export default function Beneficios() {
   }, [carregarBeneficios])
 
   async function handleUsarCupom(cupomCodigo) {
+    if (cupomEmUso) return
+    setCupomEmUso(cupomCodigo)
     try {
       await usarCupom(cupomCodigo)
     } catch (err) {
       alert(err.response?.data?.mensagem || err.message || 'Erro ao usar cupom.')
+    } finally {
+      setCupomEmUso(null)
     }
   }
 
@@ -114,8 +119,8 @@ export default function Beneficios() {
                       {copiado === item.codigo ? 'Copiado!' : 'Copiar'}
                     </button>
                     {item.ativo && (
-                      <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" onClick={() => handleUsarCupom(item.codigo)}>
-                        Usar agora
+                      <button className="gendaz-btn gendaz-btn--primary gendaz-btn--small" onClick={() => handleUsarCupom(item.codigo)} disabled={cupomEmUso === item.codigo}>
+                        {cupomEmUso === item.codigo ? <><Loader className="spin" size={16} /> Usando...</> : 'Usar agora'}
                       </button>
                     )}
                   </div>

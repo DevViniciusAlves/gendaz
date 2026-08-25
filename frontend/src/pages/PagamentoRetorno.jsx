@@ -105,8 +105,8 @@ export default function PagamentoRetorno({ tipo }) {
           ))}
           <Link to="/" className="btn btn-secondary">Voltar ao site</Link>
           {!aprovado && (
-            <Button type="button" variant="ghost" onClick={() => consultarStatus()} disabled={carregando}>
-              <RefreshCw size={15} /> {carregando ? 'Verificando...' : 'Ja paguei, verificar'}
+            <Button type="button" variant="ghost" icon={RefreshCw} onClick={() => consultarStatus()} loading={carregando} loadingText="Ja paguei, verificar">
+              Ja paguei, verificar
             </Button>
           )}
         </div>

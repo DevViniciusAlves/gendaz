@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Copy, Eye, Megaphone, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Copy, Eye, Loader, Megaphone, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { promocoesApi } from '../api/promocoesApi.js'
 import { clientesApi } from '../api/clientesApi.js'
@@ -346,11 +346,11 @@ export default function Promocoes() {
                       <button type="button" className="btn-secondary" onClick={() => navigator.clipboard.writeText(cupom.codigo)}><Copy size={14} /> Copiar</button>
                       {cupom.status === 'ATIVO' ? (
                         <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
-                          {cupomEmAcao === cupom.id ? 'Desativando...' : 'Desativar'}
+                          {cupomEmAcao === cupom.id ? <Loader className="spin" size={16} /> : 'Desativar'}
                         </button>
                       ) : (
                         <button type="button" className="btn-secondary" onClick={() => ativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
-                          {cupomEmAcao === cupom.id ? 'Ativando...' : 'Ativar'}
+                          {cupomEmAcao === cupom.id ? <Loader className="spin" size={16} /> : 'Ativar'}
                         </button>
                       )}
                       <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)} disabled={cupomEmAcao === cupom.id}><Trash2 size={14} /> Excluir</button>
@@ -506,7 +506,7 @@ export default function Promocoes() {
 
               <div className="modal-actions field-wide">
                 <Button type="button" variant="secondary" onClick={() => setModalAberto(false)}>Cancelar</Button>
-                <Button type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar'}</Button>
+                <Button type="submit" loading={salvando} loadingText="Salvando...">Salvar</Button>
               </div>
         </form>
       </Modal>
@@ -645,7 +645,7 @@ export default function Promocoes() {
 
               <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                 <Button type="button" variant="secondary" onClick={() => setNotificarAberto(false)} disabled={disparando}>Cancelar</Button>
-                <Button type="submit" disabled={disparando}>{disparando ? 'Disparando...' : 'Disparar'}</Button>
+                <Button type="submit" loading={disparando} loadingText="Disparando...">Disparar</Button>
               </div>
             </form>
           </div>
@@ -693,7 +693,7 @@ export default function Promocoes() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <Button variant="secondary" onClick={() => setModalExcluir(null)} disabled={Boolean(cupomEmAcao)}>Cancelar</Button>
               <button type="button" className="btn btn-danger" onClick={excluirConfirmado} disabled={Boolean(cupomEmAcao)}>
-                {cupomEmAcao ? 'Excluindo...' : 'Excluir'}
+                {cupomEmAcao ? <Loader className="spin" size={16} /> : 'Excluir'}
               </button>
             </div>
           </div>

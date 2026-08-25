@@ -186,8 +186,8 @@ export default function Convite() {
               {erro && <p className="form-error">{erro}</p>}
               {mensagem && <p className="success-text">{mensagem}</p>}
               <div className="invite-actions-v2">
-                <Button type="submit" disabled={carregando}>{carregando ? 'Criando...' : 'Criar senha'}</Button>
-                <Button variant="secondary" type="button" onClick={recusar} disabled={carregando}>{carregando ? 'Processando...' : 'Recusar convite'}</Button>
+                <Button type="submit" loading={carregando} loadingText="Criando...">Criar senha</Button>
+                <Button variant="secondary" type="button" onClick={recusar} loading={carregando} loadingText="Processando...">Recusar convite</Button>
               </div>
             </form>
           </>
@@ -202,7 +202,7 @@ export default function Convite() {
             {mensagem && <p className="success-text">{mensagem}</p>}
             <div className="invite-choice-grid-v2">
               <Button className="invite-choice-btn-v2" type="button" onClick={() => navigate(`/convite?token=${encodeURIComponent(token)}&acao=senha`, { replace: true })}>Sim, aceitar</Button>
-              <Button className="invite-choice-btn-v2" variant="secondary" type="button" onClick={recusar} disabled={carregando}>{carregando ? 'Recusando...' : 'Nao, recusar'}</Button>
+              <Button className="invite-choice-btn-v2" variant="secondary" type="button" onClick={recusar} loading={carregando} loadingText="Recusando...">Nao, recusar</Button>
             </div>
           </>
         )}

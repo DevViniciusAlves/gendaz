@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Mail } from 'lucide-react'
+import { Loader, Mail } from 'lucide-react'
 import { appApi } from '../api/appApi.js'
 
 export default function RecuperarSenha() {
@@ -54,7 +54,7 @@ export default function RecuperarSenha() {
           {mensagem && <p className="login-success-v2 recovery-success-v2">{mensagem}</p>}
 
           <button type="submit" className="login-submit-v2" disabled={carregando}>
-            {carregando ? 'Enviando...' : 'Enviar link de recuperação'}
+            {carregando ? <><Loader className="spin" size={16} /> Enviando...</> : 'Enviar link de recuperação'}
           </button>
         </form>
 

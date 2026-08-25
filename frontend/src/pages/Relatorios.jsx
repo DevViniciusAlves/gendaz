@@ -169,8 +169,8 @@ function montarLinhaConsultas(item) {
           </small>
         </label>
         <div className="table-actions report-actions">
-          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
+          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">
+            Recarregar
           </Button>
         </div>
       </div>

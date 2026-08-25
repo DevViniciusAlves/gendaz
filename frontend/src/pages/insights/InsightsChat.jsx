@@ -276,7 +276,7 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
               disabled={!entrada.trim() || carregando}
               aria-label="Enviar pergunta"
             >
-              <Send size={16} />
+              {carregando ? <Loader className="spin" size={16} /> : <Send size={16} />}
             </button>
           </form>
         </div>

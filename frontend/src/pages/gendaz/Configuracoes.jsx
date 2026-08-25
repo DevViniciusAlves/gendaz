@@ -188,7 +188,7 @@ export default function Configuracoes() {
               {erros.email && <small className="field-error">{erros.email}</small>}
             </label>
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando || !formData.nome.trim() || !formData.email.trim() || Boolean(validarTelefone(formData.telefone))}>
-              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Alteracoes'}
+              {salvando ? <><Loader className="spin" size={16} /> Salvando...</> : 'Salvar Alteracoes'}
             </button>
           </form>
         </article>
@@ -209,7 +209,7 @@ export default function Configuracoes() {
               <span>Receber notificacoes push</span>
             </label>
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
-              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Preferencias'}
+              {salvando ? <><Loader className="spin" size={16} /> Salvando...</> : 'Salvar Preferencias'}
             </button>
           </form>
         </article>
@@ -224,7 +224,7 @@ export default function Configuracoes() {
               <span>Compartilhar historico com a IA para recomendacoes</span>
             </label>
             <button className="gendaz-btn gendaz-btn--primary" type="submit" disabled={salvando}>
-              {salvando ? <><Loader size={16} /> Salvando...</> : 'Salvar Privacidade'}
+              {salvando ? <><Loader className="spin" size={16} /> Salvando...</> : 'Salvar Privacidade'}
             </button>
           </form>
         </article>
@@ -233,7 +233,7 @@ export default function Configuracoes() {
           <div className="gendaz-panel__head"><LogOut size={18} /><h2>Sair da conta</h2></div>
           <p>Sua sessao pode permanecer salva por longo periodo no mesmo dispositivo.</p>
           <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={() => setAbrirLogout(true)} disabled={saindo}>
-            {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
+            {saindo ? <><Loader className="spin" size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
           </button>
         </article>
       </div>
@@ -253,7 +253,7 @@ export default function Configuracoes() {
                 Cancelar
               </button>
               <button type="button" className="gendaz-btn gendaz-btn--danger" onClick={handleLogout} disabled={saindo}>
-                {saindo ? <><Loader size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
+                {saindo ? <><Loader className="spin" size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
               </button>
             </div>
           </div>

@@ -119,9 +119,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
 
           <div className="modal-actions crm-send-actions">
             <Button variant="secondary" onClick={handleClose}>Cancelar</Button>
-            <Button onClick={handleEnviar} disabled={enviando || !cliente.email}>
-              {enviando ? 'Enviando...' : 'Enviar agora'}
-            </Button>
+            <Button onClick={handleEnviar} loading={enviando} loadingText="Enviando..." disabled={!cliente.email}>Enviar agora</Button>
           </div>
       </div>
     </Modal>

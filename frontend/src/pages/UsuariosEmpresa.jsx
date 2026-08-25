@@ -1,4 +1,4 @@
-import { Plus, RefreshCw, Shield, UserX, Mail, Copy, Trash2 } from 'lucide-react'
+import { Plus, RefreshCw, Shield, UserX, Mail, Copy, Trash2, Loader } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { appApi } from '../api/appApi.js'
 import Button from '../components/Button.jsx'
@@ -31,6 +31,7 @@ export default function UsuariosEmpresa() {
   const [salvando, setSalvando] = useState(false)
   const [confirmacao, setConfirmacao] = useState(null)
   const [executandoExclusao, setExecutandoExclusao] = useState(false)
+  const [processandoAcao, setProcessandoAcao] = useState(null)
 
   async function carregar() {
     if (!usuario?.empresaId) return
@@ -117,6 +118,32 @@ export default function UsuariosEmpresa() {
     }
   }
 
+  async function reenviarConvite(row) {
+    if (processandoAcao) return
+    setProcessandoAcao(`reenviar-${row.raw.id}`)
+    try {
+      await appApi.reenviarConviteUsuario(row.raw.id)
+      await carregar()
+    } catch (err) {
+      setError(err.response?.data?.mensagem || 'Não foi possível reenviar o convite.')
+    } finally {
+      setProcessandoAcao(null)
+    }
+  }
+
+  async function cancelarConvite(row) {
+    if (processandoAcao) return
+    setProcessandoAcao(`cancelar-${row.raw.id}`)
+    try {
+      await appApi.cancelarConviteUsuario(row.raw.id)
+      await carregar()
+    } catch (err) {
+      setError(err.response?.data?.mensagem || 'Não foi possível cancelar o convite.')
+    } finally {
+      setProcessandoAcao(null)
+    }
+  }
+
   function solicitarExclusao(row) {
     if (perfilAtendente) return
     setConfirmacao({
@@ -173,8 +200,8 @@ export default function UsuariosEmpresa() {
             <div style={{ display: 'flex', gap: 8 }}>
               {row.tipo === 'Convite' && (
                 <>
-                  <button className="icon-btn" onClick={() => appApi.reenviarConviteUsuario(row.raw.id).then(carregar)} aria-label="Reenviar"><Mail size={16} /></button>
-                  <button className="icon-btn" onClick={() => appApi.cancelarConviteUsuario(row.raw.id).then(carregar)} aria-label="Excluir convite"><Trash2 size={16} /></button>
+                  <button className="icon-btn" onClick={() => reenviarConvite(row)} disabled={processandoAcao === `reenviar-${row.raw.id}`} aria-label="Reenviar">{processandoAcao === `reenviar-${row.raw.id}` ? <Loader className="spin" size={16} /> : <Mail size={16} />}</button>
+                  <button className="icon-btn" onClick={() => cancelarConvite(row)} disabled={processandoAcao === `cancelar-${row.raw.id}`} aria-label="Excluir convite">{processandoAcao === `cancelar-${row.raw.id}` ? <Loader className="spin" size={16} /> : <Trash2 size={16} />}</button>
                 </>
               )}
               {row.tipo === 'Membro' && !row.owner && (

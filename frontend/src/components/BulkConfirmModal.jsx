@@ -14,9 +14,10 @@ export default function BulkConfirmModal({ open, title, description, confirmLabe
             type="button"
             variant={danger ? 'danger' : 'primary'}
             onClick={onConfirm}
-            disabled={loading}
+            loading={loading}
+            loadingText="Executando..."
           >
-            {loading ? 'Executando...' : confirmLabel}
+            {confirmLabel}
           </Button>
         </div>
       </div>

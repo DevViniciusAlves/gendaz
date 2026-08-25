@@ -286,13 +286,13 @@ export default function Clientes() {
           <p>Busca, cadastro e histórico básico da base atendida.</p>
         </div>
         <div className="table-actions">
-          <Button variant="secondary" icon={Download} onClick={confirmarExportacao} disabled={recarregando}>
-            {recarregando ? 'Exportando...' : 'Exportar CSV'}
-          </Button>
-          <Button variant="secondary" icon={RefreshCw} onClick={recarregar} disabled={recarregando}>
-            {recarregando ? 'Recarregando...' : 'Recarregar'}
-          </Button>
-          <Button icon={Plus} onClick={abrirNovo}>Novo cliente</Button>
+           <Button variant="secondary" icon={Download} onClick={confirmarExportacao} loading={recarregando} loadingText="Exportando...">
+             Exportar CSV
+           </Button>
+           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">
+             Recarregar
+           </Button>
+           <Button icon={Plus} onClick={abrirNovo}>Novo cliente</Button>
           <BulkActionsToolbar
             selectionMode={selecionando}
             selectedCount={selectedCount}
@@ -390,9 +390,9 @@ export default function Clientes() {
           <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
-          <Button type="submit" disabled={salvando || !form.nome.trim() || !form.email.trim() || (validarTelefone(form.telefone) !== '')}>
-            {salvando ? 'Salvando...' : 'Salvar'}
-          </Button>
+           <Button type="submit" loading={salvando} loadingText="Salvando...">
+             Salvar
+           </Button>
         </form>
       </Modal>
 
@@ -401,16 +401,17 @@ export default function Clientes() {
           <p>{confirmacao?.descricao}</p>
           <div className="confirm-actions">
             <Button variant="secondary" type="button" onClick={() => setConfirmacao(null)}>Cancelar</Button>
-            <Button
-              type="button"
-              onClick={async () => {
-                const acao = confirmacao?.acao
-                setConfirmacao(null)
-                if (acao) await acao()
-              }}
-            >
-              {confirmacao?.acaoLabel || 'Confirmar'}
-            </Button>
+           <Button
+             type="button"
+             loading={false}
+             onClick={async () => {
+               const acao = confirmacao?.acao
+               setConfirmacao(null)
+               if (acao) await acao()
+             }}
+           >
+             {confirmacao?.acaoLabel || 'Confirmar'}
+           </Button>
           </div>
         </div>
       </Modal>

@@ -1,4 +1,4 @@
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, Loader } from 'lucide-react'
 import { useState } from 'react'
 
 function formatarData(dataStr) {
@@ -49,6 +49,7 @@ export default function AgendaCard({
   selected = false,
   onToggleSelection,
   selectionDisabled = false,
+  loading = false,
 }) {
   const [menuAberto, setMenuAberto] = useState(false)
   const status = agendamento.status || 'PENDENTE'
@@ -106,29 +107,29 @@ export default function AgendaCard({
       </div>
 
       {(status === 'PENDENTE' || status === 'CONFIRMADO') && onIniciar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
-          Iniciar Atendimento
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
+          {loading ? <Loader className="spin" size={17} /> : 'Iniciar Atendimento'}
         </button>
       )}
 
       {status === 'EM_ATENDIMENTO' && (
         <div className="agenda-card-botoes-duplos">
           {onPausar && (
-            <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button">
-              Pausar
+            <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button" disabled={loading}>
+              {loading ? <Loader className="spin" size={17} /> : 'Pausar'}
             </button>
           )}
           {onFinalizar && (
-            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button">
-              Finalizar
+            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={loading}>
+              {loading ? <Loader className="spin" size={17} /> : 'Finalizar'}
             </button>
           )}
         </div>
       )}
 
       {status === 'PAUSADO' && onIniciar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button">
-          Retomar Atendimento
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
+          {loading ? <Loader className="spin" size={17} /> : 'Retomar Atendimento'}
         </button>
       )}
 

@@ -292,8 +292,8 @@ export default function Dashboard() {
               <h1>Ola, {nomeUsuario}. A {nomeEmpresa} esta tudo sob controle.</h1>
               <p>Resumo do seu atendimento - apenas dados reais da sua conta.</p>
             </div>
-            <Button variant="secondary" icon={RefreshCw} onClick={recarregarDashboard} disabled={recarregando}>
-              {recarregando ? 'Recarregando...' : 'Recarregar'}
+            <Button variant="secondary" icon={RefreshCw} onClick={recarregarDashboard} loading={recarregando} loadingText="Recarregando...">
+              Recarregar
             </Button>
           </ScrollReveal>
 

@@ -16,6 +16,7 @@ export default function Conta() {
   const [form, setForm] = useState({ nome: usuario.nome, email: usuario.email })
   const [senhaForm, setSenhaForm] = useState({ senhaAtual: '', novaSenha: '', confirmarNovaSenha: '' })
   const [salvo, setSalvo] = useState(false)
+  const [salvando, setSalvando] = useState(false)
   const [senhaSalva, setSenhaSalva] = useState(false)
   const [erro, setErro] = useState('')
   const [erroSenha, setErroSenha] = useState('')
@@ -34,6 +35,9 @@ export default function Conta() {
       setErro('Informe um e-mail válido.')
       return
     }
+    if (salvando) return
+    setSalvando(true)
+    try {
     const atualizado = await appApi.atualizarUsuario(usuario.id, {
       nome,
       email,
@@ -41,6 +45,9 @@ export default function Conta() {
     })
     atualizarUsuario({ ...atualizado, plano: usuario.plano })
     setSalvo(true)
+    } finally {
+      setSalvando(false)
+    }
   }
 
   async function trocarSenha(event) {
@@ -85,7 +92,7 @@ export default function Conta() {
             <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             {erro && <p className="form-error">{erro}</p>}
             {salvo && <p className="success-text">Conta atualizada.</p>}
-            <Button icon={Save} type="submit">Salvar alterações</Button>
+            <Button icon={Save} type="submit" loading={salvando} loadingText="Salvando...">Salvar alterações</Button>
           </form>
         </section>
         <section className="panel">
@@ -96,7 +103,7 @@ export default function Conta() {
             <Input label="Confirmar nova senha" type="password" value={senhaForm.confirmarNovaSenha} onChange={(e) => setSenhaForm({ ...senhaForm, confirmarNovaSenha: e.target.value })} required />
             {erroSenha && <p className="form-error">{erroSenha}</p>}
             {senhaSalva && <p className="success-text">Senha alterada com sucesso.</p>}
-            <Button type="submit" disabled={carregandoSenha}>{carregandoSenha ? 'Salvando...' : 'Trocar senha'}</Button>
+            <Button type="submit" loading={carregandoSenha} loadingText="Salvando...">Trocar senha</Button>
           </form>
         </section>
       </div>

@@ -77,6 +77,7 @@ export default function BulkActionsToolbar({
                         setOpen(false)
                         action.onClick?.()
                       }}
+                      disabled={disabled}
                       style={{ width: '100%', textAlign: 'center', padding: '10px 12px' }}
                     >
                       {action.label}
