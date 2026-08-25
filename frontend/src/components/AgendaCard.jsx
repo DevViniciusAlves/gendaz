@@ -108,7 +108,7 @@ export default function AgendaCard({
 
       {(status === 'PENDENTE' || status === 'CONFIRMADO') && onIniciar && (
         <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
-          {loading ? <Loader className="spin" size={17} /> : 'Iniciar Atendimento'}
+          {loading ? <><Loader className="spin" size={17} /> Iniciando atendimento</> : 'Iniciar Atendimento'}
         </button>
       )}
 
@@ -116,12 +116,12 @@ export default function AgendaCard({
         <div className="agenda-card-botoes-duplos">
           {onPausar && (
             <button className="agenda-card-botao agenda-card-botao-pausar" onClick={() => onPausar(agendamento)} type="button" disabled={loading}>
-              {loading ? <Loader className="spin" size={17} /> : 'Pausar'}
+              {loading ? <><Loader className="spin" size={17} /> Pausando</> : 'Pausar'}
             </button>
           )}
           {onFinalizar && (
             <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={loading}>
-              {loading ? <Loader className="spin" size={17} /> : 'Finalizar'}
+              {loading ? <><Loader className="spin" size={17} /> Finalizando</> : 'Finalizar'}
             </button>
           )}
         </div>
@@ -129,7 +129,7 @@ export default function AgendaCard({
 
       {status === 'PAUSADO' && onIniciar && (
         <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={loading}>
-          {loading ? <Loader className="spin" size={17} /> : 'Retomar Atendimento'}
+          {loading ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
         </button>
       )}
 

@@ -346,11 +346,11 @@ export default function Promocoes() {
                       <button type="button" className="btn-secondary" onClick={() => navigator.clipboard.writeText(cupom.codigo)}><Copy size={14} /> Copiar</button>
                       {cupom.status === 'ATIVO' ? (
                         <button type="button" className="btn-secondary" onClick={() => desativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
-                          {cupomEmAcao === cupom.id ? <Loader className="spin" size={16} /> : 'Desativar'}
+                          {cupomEmAcao === cupom.id ? <><Loader className="spin" size={16} /> Desativar</> : 'Desativar'}
                         </button>
                       ) : (
                         <button type="button" className="btn-secondary" onClick={() => ativar(cupom.id)} disabled={cupomEmAcao === cupom.id}>
-                          {cupomEmAcao === cupom.id ? <Loader className="spin" size={16} /> : 'Ativar'}
+                          {cupomEmAcao === cupom.id ? <><Loader className="spin" size={16} /> Ativar</> : 'Ativar'}
                         </button>
                       )}
                       <button type="button" className="btn btn-danger" onClick={() => setModalExcluir(cupom)} disabled={cupomEmAcao === cupom.id}><Trash2 size={14} /> Excluir</button>
@@ -693,7 +693,7 @@ export default function Promocoes() {
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <Button variant="secondary" onClick={() => setModalExcluir(null)} disabled={Boolean(cupomEmAcao)}>Cancelar</Button>
               <button type="button" className="btn btn-danger" onClick={excluirConfirmado} disabled={Boolean(cupomEmAcao)}>
-                {cupomEmAcao ? <Loader className="spin" size={16} /> : 'Excluir'}
+                {cupomEmAcao ? <><Loader className="spin" size={16} /> Excluir</> : 'Excluir'}
               </button>
             </div>
           </div>

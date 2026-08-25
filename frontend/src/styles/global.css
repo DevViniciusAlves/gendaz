@@ -1277,7 +1277,7 @@ tbody tr:hover { background: #fffaf5; }
 */
 
 .spin {
-  color: var(--primary);
+  color: currentColor;
   animation: spin .9s linear infinite;
 }
 @keyframes spin {

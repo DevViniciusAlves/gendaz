@@ -812,7 +812,7 @@ export default function Financeiro() {
                     ? setPagamentoManual({ ...pagamentoManual, creditoParcelado: true })
                     : confirmarPagamentoManual(metodo.metodoPagamento)}
                 >
-                  {processandoPagamento ? <Loader className="spin" size={16} /> : metodo.label}
+                  {processandoPagamento ? <><Loader className="spin" size={16} /> {metodo.label}</> : metodo.label}
                 </button>
               ))}
             </div>
@@ -820,7 +820,7 @@ export default function Financeiro() {
             <div className="payment-methods">
               {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
                 <button key={parcela} type="button" disabled={processandoPagamento} onClick={() => confirmarPagamentoManual('CREDITO', parcela)}>
-                  {processandoPagamento ? <Loader className="spin" size={16} /> : `${parcela}x`}
+                  {processandoPagamento ? <><Loader className="spin" size={16} /> {`${parcela}x`}</> : `${parcela}x`}
                 </button>
               ))}
             </div>
