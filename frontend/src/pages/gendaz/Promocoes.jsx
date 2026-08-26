@@ -22,25 +22,18 @@ export default function Promocoes() {
   const [marcandoLidas, setMarcandoLidas] = useState(false)
 
   useEffect(() => {
-    let ativo = true
-
     const carregar = async () => {
       try {
         setCarregando(true)
         await carregarBeneficios()
       } catch (err) {
-        if (!ativo) return
         setErro(err.response?.data?.mensagem || err.message || 'Erro ao carregar promoções.')
       } finally {
-        if (ativo) setCarregando(false)
+        setCarregando(false)
       }
     }
 
     carregar()
-
-    return () => {
-      ativo = false
-    }
   }, [carregarBeneficios])
 
   const promocoes = beneficios?.promocoes || []

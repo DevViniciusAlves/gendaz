@@ -80,8 +80,8 @@ export default function Suporte() {
   }
 
   useEffect(() => {
-    if (cliente) carregarChamados()
-  }, [cliente])
+    void carregarChamados()
+  }, [])
 
   async function enviarChamado(event) {
     event.preventDefault()

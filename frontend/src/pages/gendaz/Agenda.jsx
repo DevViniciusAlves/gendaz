@@ -306,10 +306,14 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
 }
 
 export default function Agenda() {
-  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro } = useContext(ClienteGendazContext)
+  const { agendamentos, criarAgendamento, reagendar, cancelarAgendamento, carregando, erro, recarregarAgendamentos } = useContext(ClienteGendazContext)
   const [showNovo, setShowNovo] = useState(false)
   const [modalReagendar, setModalReagendar] = useState(null)
   const [modalCancelar, setModalCancelar] = useState(null)
+
+  useEffect(() => {
+    void recarregarAgendamentos()
+  }, [recarregarAgendamentos])
 
   if (carregando) {
     return (

@@ -1,18 +1,23 @@
 ﻿import { useContext, useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
-import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy, Phone } from 'lucide-react'
+import { Calendar, Clock, Gift, MessageCircle, Plus, ChevronRight, Sparkles, BellRing, Wallet, LifeBuoy } from 'lucide-react'
+import { somenteNumeros } from '../../utils/phoneUtils.js'
 
 export default function Dashboard() {
   const navigate = useNavigate()
   const { slug } = useParams()
-  const { cliente, dashboard, agendamentos, carregarHistorico, carregando, erro } = useContext(ClienteGendazContext)
+  const { cliente, dashboard, agendamentos, carregarHistorico, recarregarAgendamentos, recarregarDashboard, carregando, erro } = useContext(ClienteGendazContext)
   const [ultimosAtendimentos, setUltimosAtendimentos] = useState([])
   const [carregandoAtendimentos, setCarregandoAtendimentos] = useState(false)
   const irParaAgenda = () => {
     if (!slug) return
     navigate(`/meu-gendaz/${slug}/agenda`)
   }
+
+  useEffect(() => {
+    void Promise.allSettled([recarregarDashboard(), recarregarAgendamentos()])
+  }, [recarregarDashboard, recarregarAgendamentos])
 
   useEffect(() => {
     const buscar = async () => {
@@ -197,7 +202,14 @@ export default function Dashboard() {
               </button>
               <button
                 className="gendaz-btn-contato"
-                onClick={() => navigate('suporte')}
+                onClick={() => {
+                  const tel = cliente?.empresa?.telefone
+                  if (tel && somenteNumeros(tel)) {
+                    window.open(`https://wa.me/${somenteNumeros(tel)}`, '_blank')
+                  } else {
+                    navigate('suporte')
+                  }
+                }}
               >
                 <MessageCircle size={18} />
                 <span>Falar com {nomeLojaContato}</span>
@@ -205,10 +217,6 @@ export default function Dashboard() {
               <button className="gendaz-btn-contato" onClick={() => navigate('suporte')}>
                 <LifeBuoy size={18} />
                 <span>Suporte</span>
-              </button>
-              <button className="gendaz-btn-contato" onClick={irParaAgenda}>
-                <Phone size={18} />
-                <span>Agendar</span>
               </button>
             </div>
           </article>

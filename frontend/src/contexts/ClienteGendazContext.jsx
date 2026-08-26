@@ -199,25 +199,8 @@ export function ClienteGendazProvider({ children, slug }) {
 
   useEffect(() => {
     if (!cliente) return undefined
-
-    const intervalDashboard = setInterval(async () => {
-      try {
-        const { data } = await clienteApi.get('/meu-gendaz/dashboard')
-        setDashboard(data)
-      } catch { /* silencioso */ }
-    }, 5 * 60 * 1000)
-
-    const intervalAgendamentos = setInterval(async () => {
-      try {
-        const { data } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
-        setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
-      } catch { /* silencioso */ }
-    }, 5 * 60 * 1000)
-
-    return () => {
-      clearInterval(intervalDashboard)
-      clearInterval(intervalAgendamentos)
-    }
+    // Removido: Atualizações automáticas desativadas para seguir o padrão do /sistema.
+    return () => {} // Cleanup vazio para evitar warnings.
   }, [cliente])
 
   const carregarBeneficios = useCallback(async ({ usarCacheRecente = false } = {}) => {
@@ -281,36 +264,8 @@ export function ClienteGendazProvider({ children, slug }) {
 
   useEffect(() => {
     if (!cliente) return undefined
-
-    let ativo = true
-
-    const atualizarBeneficios = async () => {
-      if (!ativo) return
-      try {
-        await carregarBeneficios({ usarCacheRecente: true })
-      } catch {
-        /* silencioso */
-      }
-    }
-
-    const lidarFocus = () => {
-      void atualizarBeneficios()
-    }
-
-    const lidarVisibilidade = () => {
-      if (document.visibilityState === 'visible') {
-        void atualizarBeneficios()
-      }
-    }
-
-    window.addEventListener('focus', lidarFocus)
-    document.addEventListener('visibilitychange', lidarVisibilidade)
-
-    return () => {
-      ativo = false
-      window.removeEventListener('focus', lidarFocus)
-      document.removeEventListener('visibilitychange', lidarVisibilidade)
-    }
+    // Removido: Atualizações automáticas desativadas para seguir o padrão do /sistema.
+    return () => {} // Cleanup vazio para evitar warnings.
   }, [cliente, carregarBeneficios])
 
   const criarAgendamento = useCallback(async (dados) => {
@@ -341,6 +296,23 @@ export function ClienteGendazProvider({ children, slug }) {
       params: { pagina, limite },
     })
     return data
+  }, [])
+
+  const recarregarAgendamentos = useCallback(async () => {
+    const { data } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
+    setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
+  }, [])
+
+  const recarregarDashboard = useCallback(async () => {
+    const { data } = await clienteApi.get('/meu-gendaz/dashboard')
+    setDashboard(data)
+  }, [])
+
+  const recarregarPerfil = useCallback(async () => {
+    const { data } = await clienteApi.get('/meu-gendaz/perfil')
+    if (data?.cadastroPendente) return
+    setCliente((prev) => ({ ...(prev || {}), ...data }))
+    setPerfilAcesso(data)
   }, [])
 
   const buscarHorarios = useCallback(async (servicoId, profissionalId, data) => {
@@ -420,6 +392,9 @@ export function ClienteGendazProvider({ children, slug }) {
     reagendar,
     cancelarAgendamento,
     carregarHistorico,
+    recarregarAgendamentos,
+    recarregarDashboard,
+    recarregarPerfil,
     buscarHorarios,
     carregarBeneficios,
     usarCupom,
