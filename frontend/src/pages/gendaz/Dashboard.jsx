@@ -181,7 +181,7 @@ export default function Dashboard() {
                   </div>
                 ))}
               </div>
-              <button className="gendaz-btn gendaz-btn--ghost" onClick={() => navigate('beneficios')}>
+              <button className="gendaz-btn gendaz-btn--ghost" onClick={() => navigate(`/meu-gendaz/${slug}/beneficios`)}>
                 Ver todos os beneficios <ChevronRight size={16} />
               </button>
             </article>
@@ -196,7 +196,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="gendaz-botoes-contato">
-              <button className="gendaz-btn-contato" onClick={() => navigate('ia')}>
+              <button className="gendaz-btn-contato" onClick={() => navigate(`/meu-gendaz/${slug}/ia`)}>
                 <Sparkles size={18} />
                 <span>gendazIA</span>
               </button>
@@ -207,14 +207,14 @@ export default function Dashboard() {
                   if (tel && somenteNumeros(tel)) {
                     window.open(`https://wa.me/${somenteNumeros(tel)}`, '_blank')
                   } else {
-                    navigate('suporte')
+                    navigate(`/meu-gendaz/${slug}/suporte`)
                   }
                 }}
               >
                 <MessageCircle size={18} />
                 <span>Falar com {nomeLojaContato}</span>
               </button>
-              <button className="gendaz-btn-contato" onClick={() => navigate('suporte')}>
+              <button className="gendaz-btn-contato" onClick={() => navigate(`/meu-gendaz/${slug}/suporte`)}>
                 <LifeBuoy size={18} />
                 <span>Suporte</span>
               </button>
@@ -231,7 +231,7 @@ export default function Dashboard() {
                 <Clock size={18} />
                 <span>Ultimos atendimentos</span>
               </div>
-              <button className="gendaz-link-mais" onClick={() => navigate('historico')}>
+              <button className="gendaz-link-mais" onClick={() => navigate(`/meu-gendaz/${slug}/historico`)}>
                 Ver mais <ChevronRight size={14} />
               </button>
             </div>
