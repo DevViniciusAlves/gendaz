@@ -281,6 +281,13 @@
     box-shadow: none !important;
   }
 
+  .app-shell .panel:has(> .table-wrap) {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+  }
+
   .app-shell :is(.data-table, .mobile-data-table),
   .app-shell :is(.data-table, .mobile-data-table) thead,
   .app-shell :is(.data-table, .mobile-data-table) tbody,
