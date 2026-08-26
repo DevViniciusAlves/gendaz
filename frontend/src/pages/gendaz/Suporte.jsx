@@ -70,7 +70,9 @@ export default function Suporte() {
   async function carregarChamados() {
     try {
       setCarregando(true)
-      const data = await clienteApi.get('/meu-gendaz/suporte').then((response) => response.data)
+      const data = await clienteApi.get('/meu-gendaz/suporte', {
+        skipMeuGendazLogout: true,
+      }).then((response) => response.data)
       setChamados(Array.isArray(data) ? data : [])
     } catch {
       setChamados([])
@@ -104,6 +106,7 @@ export default function Suporte() {
         tipoOcorrencia: tipoLimpo,
         motivo: motivoLimpo,
         mensagem: mensagemLimpa,
+        skipMeuGendazLogout: true,
       })
       setTipoOcorrencia(TIPOS_OCORRENCIA[0])
       setMotivo('')

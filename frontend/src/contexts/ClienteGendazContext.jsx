@@ -294,22 +294,29 @@ export function ClienteGendazProvider({ children, slug }) {
   const carregarHistorico = useCallback(async (pagina = 1, limite = 10) => {
     const { data } = await clienteApi.get('/meu-gendaz/agendamentos/historico', {
       params: { pagina, limite },
+      skipMeuGendazLogout: true,
     })
     return data
   }, [])
 
   const recarregarAgendamentos = useCallback(async () => {
-    const { data } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
+    const { data } = await clienteApi.get('/meu-gendaz/agendamentos/proximos', {
+      skipMeuGendazLogout: true,
+    })
     setAgendamentos(Array.isArray(data) ? data : data?.agendamentos || [])
   }, [])
 
   const recarregarDashboard = useCallback(async () => {
-    const { data } = await clienteApi.get('/meu-gendaz/dashboard')
+    const { data } = await clienteApi.get('/meu-gendaz/dashboard', {
+      skipMeuGendazLogout: true,
+    })
     setDashboard(data)
   }, [])
 
   const recarregarPerfil = useCallback(async () => {
-    const { data } = await clienteApi.get('/meu-gendaz/perfil')
+    const { data } = await clienteApi.get('/meu-gendaz/perfil', {
+      skipMeuGendazLogout: true,
+    })
     if (data?.cadastroPendente) return
     setCliente((prev) => ({ ...(prev || {}), ...data }))
     setPerfilAcesso(data)
@@ -318,6 +325,7 @@ export function ClienteGendazProvider({ children, slug }) {
   const buscarHorarios = useCallback(async (servicoId, profissionalId, data) => {
     const { data: horarios } = await clienteApi.get('/meu-gendaz/horarios-disponiveis', {
       params: { servicoId, profissionalId, data },
+      skipMeuGendazLogout: true,
     })
     return horarios
   }, [])

@@ -248,6 +248,7 @@ export default function AssistenteIA() {
             role: item.origem === 'ia' ? 'assistant' : 'user',
             content: String(item.texto || ''),
           })),
+          skipMeuGendazLogout: true,
         })
         adicionarMensagem('ia', data?.resposta || 'Não consegui responder agora.', {
           sugestoes: Array.isArray(data?.sugestoes) ? data.sugestoes : [],
