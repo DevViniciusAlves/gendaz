@@ -141,6 +141,7 @@ export default function Logs() {
           </div>
         ) : (
           <Table
+            wrapperClassName="table-panel"
             columns={[
               {
                 key: 'nomeUsuario',

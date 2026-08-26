@@ -1,4 +1,4 @@
-export default function Table({ columns, rows = [], empty = 'Nenhum registro encontrado.', children }) {
+export default function Table({ columns, rows = [], empty = 'Nenhum registro encontrado.', children, wrapperClassName = '' }) {
   const normalizedColumns = columns.map((column) => typeof column === 'string' ? { key: column, label: column } : column)
 
   function renderCell(row, column) {
@@ -9,7 +9,7 @@ export default function Table({ columns, rows = [], empty = 'Nenhum registro enc
   }
 
   return (
-    <div className="table-wrap">
+    <div className={`table-wrap${wrapperClassName ? ` ${wrapperClassName}` : ''}`}>
       <table className="data-table">
         <thead>
           <tr>{normalizedColumns.map((column) => <th key={column.key}>{column.label}</th>)}</tr>

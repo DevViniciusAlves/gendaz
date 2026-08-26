@@ -137,8 +137,7 @@ export default function AssistenteIA() {
     reagendar,
     cancelarAgendamento,
     buscarHorarios,
-    recarregarAgendamentos,
-    recarregarPerfil,
+    sincronizarDados,
   } = useContext(ClienteGendazContext)
 
   const [mensagens, setMensagens] = useState([criarMensagemSistema()])
@@ -149,11 +148,13 @@ export default function AssistenteIA() {
   const [horarios, setHorarios] = useState([])
   const messagesRef = useRef(null)
   const navigate = useNavigate()
+  const { slug } = useParams()
 
   useEffect(() => {
-    void Promise.allSettled([recarregarPerfil(), recarregarAgendamentos()])
-  }, [recarregarPerfil, recarregarAgendamentos])
-  const { slug } = useParams()
+    if (typeof sincronizarDados === 'function') {
+      void sincronizarDados({ exigirSessao: false })
+    }
+  }, [sincronizarDados])
   const irParaAgenda = () => {
     if (!slug) return
     navigate(`/meu-gendaz/${slug}/agenda`)

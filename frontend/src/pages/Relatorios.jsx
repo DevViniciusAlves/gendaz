@@ -182,7 +182,7 @@ function montarLinhaConsultas(item) {
             Exportar CSV
           </Button>
         </div>
-        <Table columns={[
+        <Table wrapperClassName="table-panel" columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
             <div className="report-center-cell">
               <div className="name-cell report-center-name">
@@ -209,7 +209,7 @@ function montarLinhaConsultas(item) {
             Exportar CSV
           </Button>
         </div>
-        <Table columns={[
+        <Table wrapperClassName="table-panel" columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
             <div className="name-cell">
               <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>

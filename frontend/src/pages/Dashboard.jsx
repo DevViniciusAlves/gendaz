@@ -503,6 +503,7 @@ export default function Dashboard() {
               </div>
             ) : (
               <Table
+                wrapperClassName="table-panel"
                 columns={[
                   { key: 'id', label: 'ATENDIMENTO', render: (row) => `#${String(row.id).padStart(4, '0')}` },
                   { key: 'clienteNome', label: 'CLIENTE' },
