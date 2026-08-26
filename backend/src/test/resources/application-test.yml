@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:gendaztest;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;LOCK_TIMEOUT=10000
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+JWT_SECRET: test-jwt-secret-para-spring-security-1234567890
+SUPER_ADMIN_PASSWORD: test-super-admin-password

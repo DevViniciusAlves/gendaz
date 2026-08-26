@@ -1,0 +1,31 @@
+﻿spring:
+  datasource:
+    url: jdbc:h2:mem:Gendaz;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+
+app:
+  frontend-url: http://localhost:5173
+
+payment:
+  provider: ${PAYMENT_PROVIDER:STRIPE}
+  webhook-secret:
+  success-url: http://localhost:5173/sistema/planos
+  cancel-url: http://localhost:5173/sistema/planos
+
+stripe:
+  secret-key: ${STRIPE_SECRET_KEY:}
+  publishable-key: ${STRIPE_PUBLISHABLE_KEY:}
+  webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
+  price-basico-id: ${STRIPE_PRICE_BASICO_ID:}
+  price-pro-id: ${STRIPE_PRICE_PRO_ID:}

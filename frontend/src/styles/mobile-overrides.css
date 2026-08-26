@@ -1,0 +1,2076 @@
+@media (max-width: 768px) {
+  :root {
+    --mobile-shell-gap: 14px;
+    --mobile-card-radius: 14px;
+    --mobile-border: #404040;
+    --mobile-surface: #1a1a1a;
+  }
+
+  /* Força o chat a usar apenas 1 coluna no mobile */
+  .chat-layout {
+    grid-template-columns: 1fr !important;
+    height: 100% !important;
+    min-height: 100dvh !important;
+  }
+
+  /* Oculta a lista de conversas e o painel do cliente no mobile */
+  .conversation-list,
+  .client-panel {
+    display: none !important;
+  }
+
+  /* Força o chat-center a ter altura fixa e rolável */
+  .chat-center {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+    max-height: 100% !important;
+  }
+
+  /* Força o chat-body a ter altura fixa e ser rolável */
+  .chat-body {
+    flex: 1 !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    max-height: calc(100dvh - 180px - env(safe-area-inset-bottom)) !important;
+    height: auto !important;
+  }
+
+  /* Garante que o cabeçalho e rodapé não rolem */
+  .chat-header,
+  .chat-actions,
+  .message-form {
+    flex-shrink: 0 !important;
+  }
+
+  html,
+  body,
+  #root {
+    width: 100%;
+    min-width: 0 !important;
+    overflow-x: hidden;
+  }
+
+  body {
+    min-width: 0 !important;
+  }
+
+  .app-shell,
+  .app-shell .app-main,
+  .app-shell .content,
+  .app-shell .page,
+  .app-shell .page-full {
+    min-width: 0 !important;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    padding-bottom: calc(94px + env(safe-area-inset-bottom));
+  }
+
+  .app-shell .app-main {
+    margin-left: 0 !important;
+  }
+
+  .app-shell .content {
+    padding: 14px 14px calc(120px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .page,
+  .app-shell .page-full {
+    display: grid;
+    gap: var(--mobile-shell-gap);
+  }
+
+  .app-shell .page-title,
+  .app-shell .row-title,
+  .app-shell .panel-head,
+  .app-shell .table-actions,
+  .app-shell .filters,
+  .app-shell .report-filters,
+  .app-shell .financeiro-top-row,
+  .app-shell .financeiro-controls,
+  .app-shell .financeiro-payment-grid,
+  .app-shell .topbar-actions,
+  .app-shell .page-title-actions,
+  .app-shell .schedule-actions,
+  .app-shell .message-form,
+  .app-shell .account-badges,
+  .app-shell .delivery-action {
+    grid-template-columns: 1fr !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .page-title {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .app-shell .page-title h1,
+  .app-shell .dashboard-hero h1 {
+    font-size: clamp(1.9rem, 8vw, 2.4rem) !important;
+    line-height: 1.02 !important;
+    letter-spacing: -0.04em !important;
+  }
+
+  .app-shell .page-title p,
+  .app-shell .dashboard-hero p {
+    max-width: none !important;
+    font-size: 0.95rem !important;
+  }
+
+  .app-shell .panel,
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card,
+  .app-shell .settings-card,
+  .app-shell .client-panel,
+  .app-shell .table-wrap,
+  .app-shell .schedule-card,
+  .app-shell .plan-card,
+  .app-shell .report-filters,
+  .app-shell .search-shell,
+  .app-shell .filters,
+  .app-shell .dashboard-hero,
+  .app-shell .receita-chart-panel,
+  .app-shell .conversation-list,
+  .app-shell .chat-center,
+  .app-shell .support-ticket-item,
+  .app-shell .account-card,
+  .app-shell .booking-link-panel,
+  .app-shell .settings-form-panel {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: var(--mobile-card-radius) !important;
+    background: #1a1a1a !important;
+    border: 1px solid #404040 !important;
+    box-shadow: none !important;
+    overflow: hidden;
+  }
+
+  .app-shell .panel::before,
+  .app-shell .panel::after,
+  .app-shell .metric-card::before,
+  .app-shell .metric-card::after,
+  .app-shell .dashboard-summary-card::before,
+  .app-shell .dashboard-summary-card::after,
+  .app-shell .client-panel::before,
+  .app-shell .client-panel::after,
+  .app-shell .table-wrap::before,
+  .app-shell .table-wrap::after {
+    opacity: 0 !important;
+    display: none !important;
+  }
+
+  .app-shell .dashboard-grid,
+  .app-shell .metric-grid,
+  .app-shell .settings-grid,
+  .app-shell .settings-summary-grid,
+  .app-shell .support-grid,
+  .app-shell .chat-layout,
+  .app-shell .operation-metrics,
+  .app-shell .delivery-stats,
+  .app-shell .plans-grid,
+  .app-shell .plans-grid.detailed,
+  .app-shell .financeiro-metrics,
+  .app-shell .financeiro-top-row,
+  .app-shell .financeiro-payment-grid,
+  .app-shell .booking-preview-grid,
+  .app-shell .booking-schedule-grid,
+  .app-shell .schedule-grid,
+  .app-shell .agenda-header {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .metric-card,
+  .app-shell .dashboard-summary-card,
+  .app-shell .schedule-card,
+  .app-shell .payment-pro-card,
+  .app-shell .payment-checkout-card {
+    min-height: 0 !important;
+  }
+
+  .app-shell .btn,
+  .app-shell .btn-primary,
+  .app-shell .btn-secondary,
+  .app-shell .icon-btn,
+  .app-shell .schedule-actions .btn-action-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 10px 14px !important;
+    border-radius: 10px !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .filters > *,
+  .app-shell .report-filters > *,
+  .app-shell .table-actions > *,
+  .app-shell .page-title-actions > *,
+  .app-shell .financeiro-controls > *,
+  .app-shell .financeiro-payment-grid > *,
+  .app-shell .topbar-actions > *,
+  .app-shell .mass-action-toolbar > * {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .app-shell .field,
+  .app-shell .field input,
+  .app-shell .field select,
+  .app-shell .field textarea,
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-shell .mass-action-toolbar,
+  .app-shell .mass-action-toolbar-inline {
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .bulk-selection-count {
+    text-align: center;
+    font-size: 12px !important;
+    color: #b0b0b0 !important;
+  }
+
+  .app-shell .mass-action-toolbar > div {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .mass-action-toolbar .mass-action-icon-button {
+    width: auto !important;
+    min-width: 140px !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .mass-action-toolbar .mass-action-icon-button span {
+    width: auto !important;
+  }
+
+  .mass-action-mobile-sheet {
+    width: min(100%, 280px) !important;
+  }
+
+  .mass-action-panel-mobile {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .app-shell .table-wrap {
+    overflow: visible !important;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table),
+  .app-shell :is(.data-table, .mobile-data-table) thead,
+  .app-shell :is(.data-table, .mobile-data-table) tbody,
+  .app-shell :is(.data-table, .mobile-data-table) tr,
+  .app-shell :is(.data-table, .mobile-data-table) td {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) {
+    min-width: 0 !important;
+    table-layout: auto !important;
+    border-collapse: separate !important;
+    border-spacing: 0 !important;
+    background: transparent !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) thead {
+    display: none !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody {
+    display: grid !important;
+    gap: 12px !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr {
+    position: relative;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    column-gap: 14px !important;
+    padding: 14px !important;
+    border: 1px solid var(--mobile-border) !important;
+    border-radius: var(--mobile-card-radius) !important;
+    background: var(--mobile-surface) !important;
+    box-shadow: none !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr::after {
+    display: none !important;
+    opacity: 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td {
+    display: grid !important;
+    grid-template-columns: minmax(72px, auto) minmax(0, 1fr) !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 0 !important;
+    border: 0 !important;
+    max-width: none !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td + td {
+    border-top: 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='nome'],
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='clienteNome'],
+  .app-shell :is(.data-table, .mobile-data-table) tbody td:first-child:not([data-column='__selecionar']) {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    min-height: 44px !important;
+    padding: 0 44px 10px 0 !important;
+    margin-bottom: 4px !important;
+    border-bottom: 1px solid var(--mobile-border) !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='nome']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='clienteNome']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='acao']::before,
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='__selecionar']::before {
+    display: none !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='acao'] {
+    position: absolute !important;
+    top: 12px !important;
+    right: 10px !important;
+    display: flex !important;
+    width: 38px !important;
+    padding: 0 !important;
+    border: 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td[data-column='__selecionar'] {
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    width: auto !important;
+    padding: 0 46px 8px 0 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before {
+    content: attr(data-label);
+    display: block !important;
+    color: #8f8f8f !important;
+    font-size: 0.68rem !important;
+    line-height: 1.15 !important;
+    letter-spacing: 0.12em !important;
+    text-transform: uppercase !important;
+    font-weight: 700 !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td > * {
+    min-width: 0;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td .cell-truncate {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: initial !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td .name-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .financeiro-center-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .report-center-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .stacked-cell {
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    width: 100% !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td .report-center-cell .name-cell,
+  .app-shell :is(.data-table, .mobile-data-table) td .financeiro-center-cell .name-cell {
+    justify-content: flex-start !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td .avatar {
+    flex-shrink: 0;
+    width: 38px !important;
+    height: 38px !important;
+    border-radius: 999px !important;
+    background: #111827 !important;
+    color: #ffffff !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child::before {
+    margin-bottom: 2px;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-container,
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .financeiro-center-actions {
+    justify-self: center !important;
+    width: auto !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td:last-child .action-menu-btn {
+    width: 38px !important;
+    min-width: 38px !important;
+    min-height: 38px !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+  }
+
+  .app-shell .promo-actions-desktop {
+    display: none !important;
+  }
+
+  .app-shell .promo-actions-mobile {
+    display: block !important;
+  }
+
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody td {
+    grid-template-columns: minmax(68px, auto) minmax(0, 1fr) !important;
+  }
+
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody tr {
+    padding: 10px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-top-row,
+  .app-shell .financeiro-page .financeiro-controls,
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    gap: 10px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle {
+    min-height: 44px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    background: #1a1a1a !important;
+    border: 1px solid #404040 !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle span {
+    font-size: 14px !important;
+    font-weight: 600 !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-toggle input {
+    width: 22px !important;
+    height: 22px !important;
+    margin: 0 !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-valor-desconto {
+    align-items: flex-start !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-cupom-tag,
+  .app-shell .financeiro-page .financeiro-cupom-vazio {
+    justify-content: flex-start !important;
+  }
+
+  .app-shell .clients-page :is(.data-table, .mobile-data-table) tbody td:first-child,
+  .app-shell .financeiro-page :is(.data-table, .mobile-data-table) tbody td:first-child {
+    padding-top: 0 !important;
+  }
+
+  .app-shell .report-filters .table-actions,
+  .app-shell .clients-page .table-actions,
+  .app-shell .financeiro-page .mass-action-toolbar-inline {
+    margin-top: 0 !important;
+  }
+
+  .app-shell input[type='checkbox'],
+  .app-shell input[type='radio'] {
+    width: 20px !important;
+    min-width: 20px !important;
+    height: 20px !important;
+    min-height: 20px !important;
+    flex: 0 0 20px !important;
+  }
+
+  .app-shell .schedule-settings-grid {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .schedule-day-card {
+    padding: 14px !important;
+    border-radius: 10px !important;
+  }
+
+  .app-shell .schedule-day-toggle {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .app-shell .schedule-day-toggle > div {
+    min-width: 0 !important;
+  }
+
+  .app-shell .schedule-day-toggle strong,
+  .app-shell .schedule-day-toggle small {
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .schedule-day-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .financeiro-page .filters-inline {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .financeiro-page .filters-inline input,
+  .app-shell .financeiro-page .filters-inline select {
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0 12px !important;
+  }
+
+  .app-shell .mass-action-toolbar .btn,
+  .app-shell .mass-action-toolbar-inline .btn,
+  .app-shell .mass-action-icon-button {
+    min-height: 38px !important;
+    padding: 8px 12px !important;
+    font-size: 13px !important;
+  }
+
+  .app-shell .modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    padding: 10px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    background: rgba(5, 5, 8, 0.72) !important;
+    backdrop-filter: blur(10px);
+    z-index: 1000 !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .modal {
+    width: min(100%, 520px) !important;
+    max-width: min(100%, 520px) !important;
+    max-height: calc(100dvh - 28px - env(safe-area-inset-bottom)) !important;
+    margin: 0 auto !important;
+    overflow: auto !important;
+    border-radius: 24px !important;
+  }
+
+  .app-shell .promotions-page .modal-card {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    min-width: 0 !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-bottom)) !important;
+    overflow: auto !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .promotions-page .modal-card,
+  .app-shell .promotions-page .modal-card * {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header > div {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: auto !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header .icon-btn {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header h2 {
+    font-size: 1.15rem !important;
+    line-height: 1.15 !important;
+    margin-bottom: 4px !important;
+  }
+
+  .app-shell .promotions-page .modal-card .modal-header p {
+    font-size: 0.92rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .app-shell .promotions-page .modal-card > form {
+    display: grid !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .grid.grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .promotions-page .modal-card label {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+    align-items: flex-start !important;
+  }
+
+  .app-shell .promotions-page .modal-card label > span {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .app-shell .promotions-page .modal-card label > span > :is(span, small, strong),
+  .app-shell .promotions-page .modal-card .radio-label {
+    display: block !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    line-height: 1.25 !important;
+  }
+
+  .app-shell .promotions-page .modal-card input,
+  .app-shell .promotions-page .modal-card select,
+  .app-shell .promotions-page .modal-card textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .promotions-page .modal-card input:is([type='radio'], [type='checkbox']) {
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    padding: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .form-section > div[style] > label,
+  .app-shell .promotions-page .modal-card .servicos-lista label.cliente-item {
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .promotions-page .modal-card .servicos-lista > div[style] {
+    grid-template-columns: 1fr !important;
+    max-height: 180px !important;
+  }
+
+  .app-shell .promotions-page .modal-card .servicos-lista > div[style]:has(input[placeholder='Filtrar serviço']) {
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: center !important;
+    max-height: none !important;
+  }
+
+  .promotions-modal-backdrop {
+    position: fixed !important;
+    inset: 0 !important;
+    display: grid !important;
+    place-items: center !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    padding: 10px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+    background: rgba(5, 5, 8, 0.78) !important;
+    backdrop-filter: blur(10px);
+    z-index: 3000 !important;
+    overflow: hidden !important;
+  }
+
+  .promotions-modal-card {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    min-width: 0 !important;
+    max-height: calc(100dvh - 20px - env(safe-area-inset-bottom)) !important;
+    overflow: auto !important;
+    padding: 14px !important;
+    box-sizing: border-box !important;
+  }
+
+  .promotions-modal-card,
+  .promotions-modal-card * {
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    white-space: normal !important;
+  }
+
+  .promotions-modal-card .modal-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .promotions-modal-card .modal-header > div,
+  .promotions-modal-card label,
+  .promotions-modal-card label > span {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .promotions-modal-card .modal-header .icon-btn {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+  }
+
+  .promotions-modal-card > form,
+  .promotions-modal-card .grid.grid-2 {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding-inline: 0 !important;
+  }
+
+  .promotions-modal-card input,
+  .promotions-modal-card select,
+  .promotions-modal-card textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+  }
+
+  .promotions-modal-card input:is([type='radio'], [type='checkbox']) {
+    flex: 0 0 18px !important;
+    width: 18px !important;
+    min-width: 18px !important;
+    max-width: 18px !important;
+    height: 18px !important;
+    min-height: 18px !important;
+    padding: 0 !important;
+  }
+
+  .promotions-modal-card .form-section > div[style] > label,
+  .promotions-modal-card .servicos-lista label.cliente-item,
+  .promotions-modal-card .clientes-lista label.cliente-item {
+    display: grid !important;
+    grid-template-columns: 18px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .promotions-modal-card .servicos-lista > div[style],
+  .promotions-modal-card .clientes-lista {
+    grid-template-columns: 1fr !important;
+    max-height: 180px !important;
+  }
+
+  .app-shell .modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: inherit;
+    padding-bottom: 12px !important;
+  }
+
+  .action-menu-mobile-layer {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.46);
+    backdrop-filter: blur(3px);
+    z-index: 2000;
+  }
+
+  .action-menu-mobile-sheet {
+    width: min(100%, 280px);
+    margin: 0 auto;
+  }
+
+  .action-menu-panel-mobile {
+    position: static !important;
+    inset: auto !important;
+    transform: none !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    margin: 0 auto !important;
+    border-radius: 12px !important;
+    padding: 6px !important;
+    background: #222222 !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28) !important;
+  }
+
+  .action-menu-panel-mobile button {
+    min-height: 40px !important;
+    border-radius: 8px !important;
+    justify-content: center !important;
+    text-align: center !important;
+    color: #ffffff !important;
+  }
+
+  .app-shell .notification-panel,
+  .app-shell .account-panel,
+  .app-shell .dropdown-panel:not(.action-menu-panel-mobile) {
+    left: 50% !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+    transform: translateX(-50%) !important;
+    width: min(calc(100vw - 24px), 360px) !important;
+    max-width: min(calc(100vw - 24px), 360px) !important;
+  }
+
+  .marketing-nav-gendo-shell,
+  .marketing-actions-gendo,
+  .hero-new-buttons,
+  .marketing-support-grid,
+  .marketing-showcase-band-inner,
+  .plans-grid.detailed,
+  .contact-band,
+  .marketing-footer,
+  .marketing-split {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .marketing-nav-gendo {
+    padding: 12px 0 !important;
+  }
+
+  .marketing-nav-gendo-shell {
+    padding: 0 14px !important;
+    align-items: center !important;
+  }
+
+  .marketing-nav-links-gendo {
+    display: none !important;
+  }
+
+  .marketing-actions-gendo {
+    width: 100%;
+  }
+
+  .marketing-actions-gendo > * {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-section-new,
+  .marketing-page .hero-section-new {
+    padding: 118px 14px 44px !important;
+  }
+
+  .hero-new-inner {
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 18px !important;
+  }
+
+  .hero-new-title,
+  .hero-line {
+    font-size: clamp(2.25rem, 11vw, 3.5rem) !important;
+    line-height: 0.97 !important;
+    letter-spacing: -0.06em !important;
+    word-break: break-word;
+  }
+
+  .hero-new-sequence {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 8px !important;
+  }
+
+  .hero-sequence-finale {
+    width: 100%;
+    text-align: center;
+  }
+
+  .hero-new-buttons a,
+  .hero-new-buttons .primary-link,
+  .hero-new-buttons .secondary-link {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .hero-new-stats {
+    padding: 0 !important;
+  }
+
+  .hero-new-stats p {
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .marketing-showcase-device {
+    width: 100% !important;
+    min-width: 0 !important;
+    transform: none !important;
+  }
+
+  .marketing-showcase-copy {
+    text-align: left !important;
+  }
+
+  :root[data-theme='light'] .app-shell .panel,
+  :root[data-theme='light'] .app-shell .metric-card,
+  :root[data-theme='light'] .app-shell .dashboard-summary-card,
+  :root[data-theme='light'] .app-shell .settings-card,
+  :root[data-theme='light'] .app-shell .client-panel,
+  :root[data-theme='light'] .app-shell .table-wrap,
+  :root[data-theme='light'] .app-shell .schedule-card,
+  :root[data-theme='light'] .app-shell .report-filters,
+  :root[data-theme='light'] .app-shell .filters,
+  :root[data-theme='light'] .app-shell .dashboard-hero,
+  :root[data-theme='light'] .app-shell .receita-chart-panel,
+  :root[data-theme='light'] .app-shell .conversation-list,
+  :root[data-theme='light'] .app-shell .chat-center {
+    background: #1a1a1a !important;
+    border-color: #404040 !important;
+  }
+
+  :root[data-theme='light'] .app-shell .page-title h1,
+  :root[data-theme='light'] .app-shell .page-title p,
+  :root[data-theme='light'] .app-shell .panel h2,
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td,
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td *,
+  :root[data-theme='light'] .app-shell .content input,
+  :root[data-theme='light'] .app-shell .content select,
+  :root[data-theme='light'] .app-shell .content textarea,
+  :root[data-theme='light'] .app-shell .bulk-selection-count {
+    color: #ffffff !important;
+  }
+
+  :root[data-theme='light'] .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before,
+  :root[data-theme='light'] .app-shell .page-title .section-kicker,
+  :root[data-theme='light'] .app-shell .page-title p,
+  :root[data-theme='light'] .app-shell .bulk-selection-count {
+    color: #b0b0b0 !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell .content {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody tr {
+    padding: 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) tbody td {
+    grid-template-columns: minmax(68px, auto) minmax(0, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .app-shell :is(.data-table, .mobile-data-table) td[data-label]::before {
+    margin-bottom: 0;
+  }
+
+  .app-shell .schedule-day-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .page-title h1,
+  .app-shell .dashboard-hero h1 {
+    font-size: clamp(1.7rem, 9vw, 2.1rem) !important;
+  }
+
+  .hero-new-title,
+  .hero-line {
+    font-size: clamp(2rem, 10.5vw, 2.7rem) !important;
+  }
+}
+
+/* Mobile interno: composicoes proprias por aba, com a Agenda apenas como linguagem visual. */
+@media (max-width: 768px) {
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .settings-users-page,
+    .crm-page,
+    .insights-page
+  ) {
+    --card-mobile-bg: #1a1a1a;
+    --card-mobile-border: #404040;
+    --card-mobile-muted: #a3a3a3;
+    font-size: 14px;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .settings-users-page,
+    .crm-page,
+    .insights-page
+  ) .page-title {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 16px !important;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .settings-users-page,
+    .crm-page,
+    .insights-page
+  ) .page-title h1 {
+    margin: 3px 0 4px !important;
+    font-size: 28px !important;
+    line-height: 1.05 !important;
+    letter-spacing: -0.035em !important;
+  }
+
+  .app-shell :is(
+    .dashboard-page,
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-page,
+    .settings-users-page,
+    .crm-page,
+    .insights-page
+  ) .page-title p {
+    margin: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.45 !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-users-page
+  ) :is(.data-table, .mobile-data-table) tbody {
+    gap: 10px !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-users-page
+  ) :is(.data-table, .mobile-data-table) tbody tr {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0 16px !important;
+    padding: 14px 16px !important;
+    border: 1px solid var(--card-mobile-border) !important;
+    border-radius: 12px !important;
+    background: var(--card-mobile-bg) !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-users-page
+  ) :is(.data-table, .mobile-data-table) tbody td {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    gap: 5px !important;
+    min-width: 0 !important;
+    min-height: 58px !important;
+    padding: 10px 0 !important;
+    border: 0 !important;
+    color: #fff !important;
+    font-size: 13px !important;
+    line-height: 1.3 !important;
+    text-align: left !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-label]::before {
+    margin: 0 !important;
+    color: var(--card-mobile-muted) !important;
+    font-size: 10px !important;
+    line-height: 1.2 !important;
+    letter-spacing: .11em !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td :is(.name-cell, .financeiro-center-cell, .report-center-cell, .stacked-cell) {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    text-align: left !important;
+    font-size: inherit !important;
+    word-break: normal !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao'] {
+    position: static !important;
+    grid-column: 1 / -1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    min-height: 44px !important;
+    padding: 8px 0 0 !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao']::before {
+    display: none !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page
+  ) :is(.data-table, .mobile-data-table) td[data-column='acao'] .action-menu-container {
+    width: auto !important;
+    justify-content: center !important;
+  }
+
+  /* Clientes: identidade, contatos, situacao e historico em blocos claros. */
+  .app-shell .clients-page .data-table td[data-column='nome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 54px !important;
+    padding: 0 52px 12px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='nome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='telefone'],
+  .app-shell .clients-page .data-table td[data-column='email'],
+  .app-shell .clients-page .data-table td[data-column='observacoes'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='email'] {
+    overflow-wrap: anywhere !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='statusCliente'],
+  .app-shell .clients-page .data-table td[data-column='totalGasto'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .clients-page .data-table td[data-column='observacoes'] {
+    min-height: 52px !important;
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  /* Financeiro: cabecalho do cliente, servico largo e pares financeiros. */
+  .app-shell .financeiro-page .financeiro-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-metrics .metric-card {
+    padding: 13px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-controls {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-controls .financeiro-month-field {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-panel {
+    padding: 14px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='clienteNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 54px !important;
+    padding: 0 52px 12px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='clienteNome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='servicoNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 50px !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='statusCliente'],
+  .app-shell .financeiro-page .data-table td[data-column='protocolo'],
+  .app-shell .financeiro-page .data-table td[data-column='valor'],
+  .app-shell .financeiro-page .data-table td[data-column='cupomCodigo'],
+  .app-shell .financeiro-page .data-table td[data-column='metodoPagamento'],
+  .app-shell .financeiro-page .data-table td[data-column='status'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .financeiro-page .data-table td[data-column='valor'] .financeiro-valor-desconto {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+  }
+
+  /* Profissionais e servicos: cards compactos, sem tabela espremida. */
+  .app-shell :is(.professionals-page, .services-page) .data-table td[data-column='nome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 50px !important;
+    padding: 0 52px 10px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .app-shell .professionals-page .data-table td[data-column='telefone'],
+  .app-shell .services-page .data-table td[data-column='descricao'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  .app-shell :is(.professionals-page, .services-page) .data-table td[data-column='status'] {
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  /* Promocoes: codigo vira titulo e descricao ocupa toda a largura. */
+  .app-shell .promotions-page .mobile-data-table td[data-column='codigo'] {
+    grid-column: 1 / -1 !important;
+    min-height: 48px !important;
+    padding: 0 52px 10px 0 !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 15px !important;
+  }
+
+  .app-shell .promotions-page .mobile-data-table td[data-column='codigo']::before {
+    display: none !important;
+  }
+
+  .app-shell .promotions-page .mobile-data-table td[data-column='descricao'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Configuracoes > Usuarios: card de plano e tabela em formato mobile. */
+  .app-shell .settings-users-page {
+    padding-inline: 12px !important;
+    padding-bottom: calc(82px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .settings-users-page > .panel {
+    padding: 16px !important;
+    border-radius: 14px !important;
+    background: #1a1a1a !important;
+    border-color: var(--card-mobile-border) !important;
+    margin-bottom: 14px !important;
+  }
+
+  .app-shell .settings-users-page .panel-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+    align-items: stretch !important;
+  }
+
+  .app-shell .settings-users-page .panel-head > div:last-child {
+    display: grid !important;
+    grid-template-columns: 48px minmax(0, 1fr) !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .settings-users-page .panel-head .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .settings-users-page .table-wrap {
+    overflow: visible !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='tipo'] {
+    grid-column: 1 / 2 !important;
+    order: 1 !important;
+    min-height: 34px !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='papel'] {
+    grid-column: 2 / 3 !important;
+    order: 2 !important;
+    justify-content: flex-end !important;
+    text-align: right !important;
+    min-height: 34px !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='nome'] {
+    grid-column: 1 / -1 !important;
+    order: 3 !important;
+    min-height: 48px !important;
+    padding-top: 10px !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='email'] {
+    grid-column: 1 / -1 !important;
+    order: 4 !important;
+    min-height: 46px !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='status'],
+  .app-shell .settings-users-page .data-table td[data-column='entrada'],
+  .app-shell .settings-users-page .data-table td[data-column='expira'] {
+    order: 5 !important;
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='acao'] {
+    grid-column: 1 / -1 !important;
+    order: 6 !important;
+    justify-content: flex-end !important;
+    min-height: 42px !important;
+    padding-top: 8px !important;
+    border-top: 1px solid rgba(255, 255, 255, .08) !important;
+  }
+
+  .app-shell .settings-users-page .data-table td[data-column='acao'] > div {
+    justify-content: flex-end !important;
+    width: 100% !important;
+  }
+
+  .system-modal .modal-body {
+    display: grid !important;
+    gap: 12px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .system-modal .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+  }
+
+  .system-modal .modal-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .system-modal .promotion-form {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .system-modal .promotion-target-section > div:first-of-type {
+    grid-template-columns: 1fr !important;
+  }
+
+  .system-modal .promotion-target-section .servicos-lista > div:last-child {
+    grid-template-columns: 1fr !important;
+    max-height: 180px !important;
+  }
+
+  .system-modal .crm-send-summary {
+    grid-template-columns: 1fr !important;
+  }
+
+  .system-modal .crm-send-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100% !important;
+  }
+
+  .system-modal .crm-send-actions .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* Relatorios: cliente e servico largos; data, hora e estados em pares. */
+  .app-shell .reports-page .panel-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='clienteNome'] {
+    grid-column: 1 / -1 !important;
+    min-height: 52px !important;
+    padding: 0 0 10px !important;
+    margin-bottom: 2px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='clienteNome'] .name-cell {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .reports-page .data-table td[data-column='servicoNome'],
+  .app-shell .reports-page .data-table td[data-column='observacoes'] {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Configuracoes: formularios de uma coluna e dias sem quebra letra a letra. */
+  .app-shell .settings-page {
+    padding-inline: 12px !important;
+    padding-bottom: calc(92px + env(safe-area-inset-bottom)) !important;
+  }
+
+  .app-shell .settings-page > .panel {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: stretch !important;
+    gap: 14px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+    background: #1a1a1a !important;
+    border-color: var(--card-mobile-border) !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .settings-page > .panel > div:first-child,
+  .app-shell .settings-page .panel-head,
+  .app-shell .settings-page .settings-card-head {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    align-items: start !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .settings-page > .panel > div:first-child > *,
+  .app-shell .settings-page .panel-head > *,
+  .app-shell .settings-page .settings-card-head > * {
+    min-width: 0 !important;
+    max-width: 100% !important;
+  }
+
+  .app-shell .settings-page :is(.settings-form-panel, .settings-card) {
+    padding: 14px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .settings-page :is(.form-grid, .settings-grid, .settings-summary-grid, .booking-link-grid, .schedule-settings-grid) {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .settings-page :is(
+    h2,
+    h3,
+    p,
+    small,
+    span,
+    strong,
+    a,
+    label
+  ) {
+    max-width: 100% !important;
+    min-width: 0 !important;
+    writing-mode: horizontal-tb !important;
+    text-orientation: mixed !important;
+    word-break: normal !important;
+    overflow-wrap: anywhere !important;
+    white-space: normal !important;
+    line-height: 1.35 !important;
+  }
+
+  .app-shell .settings-page :is(.page-title-actions, .settings-form-actions, .booking-link-actions) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .settings-page :is(.page-title-actions, .settings-form-actions, .booking-link-actions) .btn,
+  .app-shell .settings-page > .panel > .btn,
+  .app-shell .settings-page > .panel a.btn {
+    width: 100% !important;
+    min-width: 0 !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .settings-page .settings-ramo-box {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+    align-items: start !important;
+  }
+
+  .app-shell .settings-page .settings-ramo-badge {
+    width: fit-content !important;
+  }
+
+  .app-shell .settings-page :is(input, select, textarea, .PhoneInput, .international-phone) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-shell .settings-page .booking-qr-card {
+    width: 100% !important;
+    min-width: 0 !important;
+    display: grid !important;
+    justify-items: center !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .settings-page .booking-qr-card img {
+    max-width: min(220px, 100%) !important;
+    height: auto !important;
+  }
+
+  .app-shell .settings-page .schedule-day-toggle {
+    display: grid !important;
+    grid-template-columns: 24px minmax(0, 1fr) !important;
+    align-items: start !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .settings-page .schedule-day-toggle :is(strong, small) {
+    display: block !important;
+    width: auto !important;
+    max-width: 100% !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+    line-height: 1.25 !important;
+  }
+
+  .app-shell .settings-page .schedule-day-fields {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* CRM: cada cliente continua sendo um card, mas com densidade de celular. */
+  .app-shell .crm-page .crm-layout,
+  .app-shell .crm-page .crm-cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .crm-page .crm-card {
+    padding: 14px !important;
+    border: 1px solid var(--card-mobile-border) !important;
+    border-radius: 12px !important;
+    background: var(--card-mobile-bg) !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .crm-page .crm-card-header {
+    display: grid !important;
+    grid-template-columns: 40px minmax(0, 1fr) !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .crm-page .crm-card-contact,
+  .app-shell .crm-page .crm-card-name {
+    min-width: 0 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  .app-shell .crm-page .crm-card-metrics {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .crm-page .crm-card-metric {
+    min-width: 0 !important;
+    padding: 9px 6px !important;
+    text-align: center !important;
+  }
+
+  .app-shell .crm-page .crm-card-buttons {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+
+  /* Insights: pilha compacta baseada nas outras abas mobile do sistema. */
+  .app-shell .insights-page {
+    padding: 10px !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-hero {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-hero .btn {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-layout,
+    .insights-summary-panel,
+    .insights-change-risk-row,
+    .insights-bottom-grid,
+    .insights-principais-grid,
+    .insights-change-grid
+  ) {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-sidebar {
+    position: static !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-summary-panel,
+    .insights-changes-card,
+    .insights-risk-card,
+    .insights-section,
+    .insights-ai-chat
+  ) {
+    min-width: 0 !important;
+    padding: 14px !important;
+    border-radius: 14px !important;
+    border-color: var(--card-mobile-border) !important;
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018)),
+      #1a1a1a !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-core-card,
+    .insights-list-item,
+    .insights-highlight-card,
+    .insights-action-row,
+    .insights-change-card,
+    .insights-summary-metric
+  ) {
+    min-width: 0 !important;
+    padding: 12px !important;
+    border-radius: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .app-shell .insights-page .insights-list-item,
+  .app-shell .insights-page .insights-highlight-card {
+    grid-template-columns: 38px minmax(0, 1fr) !important;
+    align-items: start !important;
+  }
+
+  .app-shell .insights-page .insights-list-item__meta,
+  .app-shell .insights-page .insights-action-row__impacto {
+    grid-column: 2 !important;
+    text-align: left !important;
+    white-space: normal !important;
+  }
+
+  .app-shell .insights-page .insights-highlight-card__meta {
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 420px !important;
+    max-height: none !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__body {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .app-shell .insights-page :is(
+    .insights-ai-chat__header,
+    .insights-ai-chat__messages,
+    .insights-ai-chat__message,
+    .insights-ai-chat__suggestions,
+    .insights-ai-chat__form
+  ) {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__header {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__header > div {
+    flex: 1 1 auto !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__toggle {
+    flex: 0 0 40px !important;
+    width: 40px !important;
+    min-width: 40px !important;
+    max-width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__header :is(.section-kicker, h2) {
+    width: auto !important;
+    max-width: 100% !important;
+    writing-mode: horizontal-tb !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__empty {
+    display: grid !important;
+    grid-template-columns: auto minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__empty p {
+    grid-column: 1 / -1 !important;
+    max-width: none !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__bubble {
+    max-width: min(88%, 100%) !important;
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: normal !important;
+  }
+
+  .app-shell .insights-page .insights-ai-chat__suggestion {
+    min-width: 0 !important;
+    overflow-wrap: break-word !important;
+    word-break: normal !important;
+  }
+
+  .app-shell .insights-page :is(h2, h3, p, small, span) {
+    max-width: 100% !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Dashboard: card mais compacto e tabela de atendimentos em formato celular. */
+  .app-shell .dashboard-page .dashboard-hero,
+  .app-shell .dashboard-page .panel,
+  .app-shell .dashboard-page .dashboard-summary-card,
+  .app-shell .dashboard-page .receita-chart-panel {
+    padding: 12px !important;
+    border-radius: 14px !important;
+  }
+
+  .app-shell .dashboard-page .dashboard-hero h1 {
+    font-size: clamp(1.5rem, 7.2vw, 1.95rem) !important;
+    line-height: 1.04 !important;
+  }
+
+  .app-shell .dashboard-page .dashboard-hero p,
+  .app-shell .dashboard-page .section-kicker,
+  .app-shell .dashboard-page .panel-head p,
+  .app-shell .dashboard-page .dashboard-summary-card span,
+  .app-shell .dashboard-page .dashboard-summary-card small {
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  .app-shell .dashboard-page .dashboard-summary-card strong {
+    font-size: 1.05rem !important;
+    line-height: 1.1 !important;
+  }
+
+  .app-shell .dashboard-page .operation-metrics {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .app-shell .dashboard-page .dashboard-grid,
+  .app-shell .dashboard-page .dashboard-side-cards {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .dashboard-page .ranking {
+    gap: 8px !important;
+  }
+
+  .app-shell .dashboard-page .dashboard-ranking-item,
+  .app-shell .dashboard-page .delivery-mini {
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .app-shell .dashboard-page .table-wrap {
+    padding: 0 !important;
+  }
+
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) tbody tr {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 8px !important;
+    padding: 12px !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 12px !important;
+    background: #1a1a1a !important;
+    overflow: hidden !important;
+  }
+
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) tbody td {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+    white-space: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) td[data-label]::before {
+    margin: 0 !important;
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+  }
+
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) td:first-child,
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) td[data-column='clienteNome'] {
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .app-shell .dashboard-page :is(.data-table, .mobile-data-table) td:last-child {
+    justify-content: center !important;
+  }
+
+  .app-shell .dashboard-page .inline-link {
+    font-size: 12px !important;
+  }
+}
+
+@media (max-width: 430px) {
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-users-page
+  ) :is(.data-table, .mobile-data-table) tbody tr {
+    padding: 13px 14px !important;
+    gap: 0 12px !important;
+  }
+
+  .app-shell :is(
+    .clients-page,
+    .financeiro-page,
+    .professionals-page,
+    .services-page,
+    .promotions-page,
+    .reports-page,
+    .settings-users-page
+  ) :is(.data-table, .mobile-data-table) tbody td {
+    min-height: 54px !important;
+    font-size: 12.5px !important;
+  }
+
+  .app-shell .financeiro-page .financeiro-payment-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .app-shell .settings-page .schedule-day-fields {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .caixa-despesas-actions {
+    grid-template-columns: 1fr !important;
+  }
+
+  .app-shell .caixa-despesas-actions .btn {
+    white-space: nowrap;
+  }
+}

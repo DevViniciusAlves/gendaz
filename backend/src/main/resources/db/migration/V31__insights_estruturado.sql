@@ -1,0 +1,11 @@
+ALTER TABLE insights
+    ADD COLUMN IF NOT EXISTS payload_json TEXT;
+
+ALTER TABLE insights
+    ADD COLUMN IF NOT EXISTS origem VARCHAR(24);
+
+ALTER TABLE insights
+    ADD COLUMN IF NOT EXISTS data_referencia TIMESTAMP;
+
+ALTER TABLE insights
+    ADD COLUMN IF NOT EXISTS data_expiracao TIMESTAMP;

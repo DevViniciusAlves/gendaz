@@ -1,0 +1,27 @@
+ALTER TABLE clientes
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ATIVO';
+
+UPDATE clientes
+SET status = COALESCE(status, 'ATIVO')
+WHERE status IS NULL;
+
+ALTER TABLE servicos
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ATIVO';
+
+UPDATE servicos
+SET status = COALESCE(status, 'ATIVO')
+WHERE status IS NULL;
+
+ALTER TABLE profissionais
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ATIVO';
+
+UPDATE profissionais
+SET status = COALESCE(status, 'ATIVO')
+WHERE status IS NULL;
+
+ALTER TABLE conversas
+    ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'ABERTA';
+
+UPDATE conversas
+SET status = COALESCE(status, 'ABERTA')
+WHERE status IS NULL;

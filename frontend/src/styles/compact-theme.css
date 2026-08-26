@@ -1,0 +1,43 @@
+/* =============================================
+   REDUCAO VISUAL DO SISTEMA (SaaS COMPACTO)
+   Escopo restrito a .app-shell (painel interno)
+   ============================================= */
+
+.app-shell { grid-template-columns: 240px minmax(0, 1fr) !important; }
+.app-shell .sidebar { padding: 16px 12px !important; }
+.app-shell .sidebar nav a { padding: 8px 10px !important; font-size: 13px !important; margin-bottom: 2px !important; }
+.app-shell .topbar { padding: 12px 24px !important; height: auto !important; min-height: 54px !important; }
+.app-shell .page { padding: 24px !important; }
+.app-shell .page-title h1 { font-size: 26px !important; margin-bottom: 4px !important; }
+.app-shell .page-title p { font-size: 14px !important; }
+.app-shell .panel, .app-shell .metric-card, .app-shell .settings-card, .app-shell .client-panel, .app-shell .table-wrap { padding: 16px !important; }
+.app-shell .panel-head { margin-bottom: 12px !important; }
+.app-shell .panel h2, .app-shell .panel-head h2, .app-shell .settings-card-text { font-size: 15px !important; margin-bottom: 8px !important; }
+.app-shell .btn { height: 38px !important; padding: 0 12px !important; font-size: 13px !important; }
+.app-shell .input, .app-shell select { height: 40px !important; padding: 0 10px !important; font-size: 13px !important; }
+.app-shell .data-table th, .app-shell .data-table td { padding: 10px 14px !important; font-size: 13px !important; }
+
+/* Dashboard Cards */
+.app-shell .metric-card { padding: 14px !important; }
+.app-shell .metric-card h3 { font-size: 13px !important; }
+.app-shell .metric-card strong { font-size: 24px !important; }
+
+.app-shell .chat-layout { grid-template-columns: 280px 1fr 280px !important; }
+.app-shell .conversation-list { padding: 14px !important; }
+.app-shell .conversation-list h2 { font-size: 15px !important; margin-bottom: 10px !important; }
+.app-shell .conversation-item { padding: 10px !important; gap: 10px !important; }
+.app-shell .conversation-name { font-size: 13px !important; }
+.app-shell .chat-message { padding: 8px 12px !important; font-size: 13px !important; }
+
+/* Agenda Ajustes */
+.app-shell .schedule-card { padding: 10px 14px !important; gap: 12px !important; }
+.app-shell .schedule-time { font-size: 14px !important; }
+.app-shell .schedule-details strong { font-size: 14px !important; }
+
+/* Planos e Config */
+.app-shell .plans-page-title h2 { font-size: 24px !important; }
+.app-shell .plan-card { padding: 20px !important; }
+.app-shell .plan-card h2 { font-size: 16px !important; }
+.app-shell .plan-price { font-size: 26px !important; }
+.app-shell .plan-list { font-size: 13px !important; }
+.app-shell .settings-summary-grid { gap: 16px !important; }

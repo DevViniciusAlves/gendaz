@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:${DATABASE_URL:${JDBC_DATABASE_URL:}}}
+    username: ${SPRING_DATASOURCE_USERNAME:${DATABASE_USERNAME:${JDBC_DATABASE_USERNAME:${PGUSER:}}}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DATABASE_PASSWORD:${JDBC_DATABASE_PASSWORD:${PGPASSWORD:}}}}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      data-source-properties:
+        prepareThreshold: 0
+        preferQueryMode: simple
+      maximum-pool-size: ${DB_MAX_POOL_SIZE:3}
+      minimum-idle: ${DB_MIN_IDLE:0}
+      connection-timeout: ${DB_CONNECTION_TIMEOUT_MS:20000}
+      idle-timeout: ${DB_IDLE_TIMEOUT_MS:120000}
+      max-lifetime: ${DB_MAX_LIFETIME_MS:600000}
+      leak-detection-threshold: ${DB_LEAK_DETECTION_MS:30000}
+  jpa:
+    database-platform: ${SPRING_JPA_DATABASE_PLATFORM:org.hibernate.dialect.PostgreSQLDialect}
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        boot:
+          allow_jdbc_metadata_access: ${HIBERNATE_ALLOW_JDBC_METADATA_ACCESS:false}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    baseline-version: 42
+    validate-on-migrate: ${FLYWAY_VALIDATE_ON_MIGRATE:false}
+    locations: classpath:db/migration
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=100,expireAfterWrite=60s
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: native
+  tomcat:
+    threads:
+      max: ${TOMCAT_MAX_THREADS:16}
+      min-spare: ${TOMCAT_MIN_SPARE_THREADS:2}
+    accept-count: ${TOMCAT_ACCEPT_COUNT:20}
+    connection-timeout: ${TOMCAT_CONNECTION_TIMEOUT_MS:10000}
+
+app:
+  frontend-url: ${FRONTEND_URL}
+  jwt-secret: ${JWT_SECRET}
+  timezone: ${APP_TIMEZONE:America/Cuiaba}
+  outbound-audit:
+    enabled: ${OUTBOUND_AUDIT_ENABLED:false}
+    summary-interval-ms: ${OUTBOUND_AUDIT_SUMMARY_INTERVAL_MS:600000}
