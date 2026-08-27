@@ -281,6 +281,28 @@
     box-shadow: none !important;
   }
 
+  .app-shell .panel:has(> .table-panel),
+  .app-shell .table-panel {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  .app-shell .table-panel .panel-head {
+    padding: 0 0 12px !important;
+  }
+
+  .app-shell .table-panel tbody {
+    display: grid !important;
+    gap: 12px !important;
+  }
+
+  .app-shell .table-panel tbody tr {
+    margin: 0 !important;
+  }
+
   .app-shell :is(.data-table, .mobile-data-table),
   .app-shell :is(.data-table, .mobile-data-table) thead,
   .app-shell :is(.data-table, .mobile-data-table) tbody,

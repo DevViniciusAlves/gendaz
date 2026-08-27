@@ -41,8 +41,8 @@ export default function Historico() {
   }, [carregarHistorico, itensPorPagina])
 
   useEffect(() => {
-    if (cliente) buscar(pagina)
-  }, [cliente, pagina, buscar])
+    buscar(pagina)
+  }, [pagina, buscar])
 
   if (carregando) {
     return (

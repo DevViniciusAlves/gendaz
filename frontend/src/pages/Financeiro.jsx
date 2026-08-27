@@ -709,6 +709,7 @@ export default function Financeiro() {
         {erroPagamentos && <p className="form-error">{erroPagamentos}</p>}
 
         <Table
+          wrapperClassName="table-panel"
           columns={[
             ...(selecionandoPagamentos ? [{
               key: '__selecionar',

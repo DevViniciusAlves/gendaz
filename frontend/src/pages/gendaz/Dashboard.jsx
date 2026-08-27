@@ -7,13 +7,17 @@ import { somenteNumeros } from '../../utils/phoneUtils.js'
 export default function Dashboard() {
   const navigate = useNavigate()
   const { slug } = useParams()
-  const { cliente, dashboard, agendamentos, carregarHistorico, carregando, erro } = useContext(ClienteGendazContext)
+  const { cliente, dashboard, agendamentos, carregarHistorico, recarregarAgendamentos, recarregarDashboard, carregando, erro } = useContext(ClienteGendazContext)
   const [ultimosAtendimentos, setUltimosAtendimentos] = useState([])
   const [carregandoAtendimentos, setCarregandoAtendimentos] = useState(false)
   const irParaAgenda = () => {
     if (!slug) return
     navigate(`/meu-gendaz/${slug}/agenda`)
   }
+
+  useEffect(() => {
+    void Promise.allSettled([recarregarDashboard(), recarregarAgendamentos()])
+  }, [recarregarDashboard, recarregarAgendamentos])
 
   useEffect(() => {
     const buscar = async () => {
@@ -213,10 +217,6 @@ export default function Dashboard() {
               <button className="gendaz-btn-contato" onClick={() => navigate(`/meu-gendaz/${slug}/suporte`)}>
                 <LifeBuoy size={18} />
                 <span>Suporte</span>
-              </button>
-              <button className="gendaz-btn-contato" onClick={irParaAgenda}>
-                <Phone size={18} />
-                <span>Agendar</span>
               </button>
             </div>
           </article>

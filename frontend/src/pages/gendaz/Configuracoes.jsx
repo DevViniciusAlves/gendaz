@@ -9,7 +9,7 @@ const TOAST_LOGOUT_ID = 'meu-gendaz-logout'
 
 export default function Configuracoes() {
   const navigate = useNavigate()
-  const { cliente, configuracoes, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout } = useContext(ClienteGendazContext)
+  const { cliente, configuracoes, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout, recarregarPerfil } = useContext(ClienteGendazContext)
 
   const [formData, setFormData] = useState({ nome: '', telefone: '', email: '' })
   const [notificacoes, setNotificacoes] = useState({ email: true, sms: false, push: true })
@@ -20,6 +20,10 @@ export default function Configuracoes() {
   const [perfilIncompleto, setPerfilIncompleto] = useState(false)
   const [abrirLogout, setAbrirLogout] = useState(false)
   const [saindo, setSaindo] = useState(false)
+
+  useEffect(() => {
+    void recarregarPerfil()
+  }, [recarregarPerfil])
 
   useEffect(() => {
     if (cliente) {

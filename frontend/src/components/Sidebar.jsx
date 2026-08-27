@@ -17,7 +17,7 @@ const items = [
   { key: 'promocoes',     to: '/sistema/promocoes',     label: 'Promoções',      icon: Gift },
   { key: 'financeiro',    to: '/sistema/financeiro',    label: 'Financeiro',     icon: BarChart3,     mobile: true },
   { key: 'relatorios',    to: '/sistema/relatorios',    label: 'Relatórios',     icon: ReceiptText },
-  { key: 'logs',          to: '/sistema/logs',          label: 'Logs',           icon: ScrollText, mobile: true },
+  { key: 'logs',          to: '/sistema/logs',          label: 'Logs',           icon: ScrollText },
   { key: 'configuracoes', to: '/sistema/configuracoes', label: 'Configurações',  icon: Settings },
 ]
 
