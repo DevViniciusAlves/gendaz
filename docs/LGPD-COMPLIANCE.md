@@ -2,7 +2,7 @@
 
 Documento interno de apoio à conformidade com a Lei Geral de Proteção de Dados Pessoais
 (LGPD – Lei nº 13.709/2018). Este documento não substitui parecer jurídico. O controlador está identificado
-publicamente (VINICIUS HENRIQUE FERREIRA ALVES, CPF 034.456.831-82). O encarregado
+publicamente (pessoa física responsável pela gendaz). O encarregado
 de proteção de dados (DPO) está designado pelo canal contato@gendaz.site (agente de
 pequeno porte — Resolução ANPD nº 2/2022). Permanece pendente a definição de prazos
 de retenção. A exclusão física definitiva (LGPD Art. 16) está implementada no endpoint
@@ -10,7 +10,7 @@ de retenção. A exclusão física definitiva (LGPD Art. 16) está implementada 
 
 E-mail oficial de privacidade: `contato@gendaz.site`
 Marca pública: **gendaz**
-Controlador: **VINICIUS HENRIQUE FERREIRA ALVES**, pessoa física, CPF 034.456.831-82 (identificação pública na Política de Privacidade §16 e nos Termos de Uso §2).
+Controlador: **pessoa física responsável pela gendaz** (identificação pública na Política de Privacidade §16 e nos Termos de Uso §2).
 
 ---
 

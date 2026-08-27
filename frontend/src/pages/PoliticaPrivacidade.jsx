@@ -134,7 +134,7 @@ const secoes = [
   {
     titulo: '16. Contato',
     conteudos: [
-      'O controlador dos dados tratados pela gendaz é VINICIUS HENRIQUE FERREIRA ALVES, pessoa física, inscrito no CPF 034.456.831-82, responsável pelo tratamento e pelas decisões sobre os dados.',
+      'O controlador dos dados tratados pela gendaz é o responsável pela plataforma gendaz (pessoa física), que responde pelas decisões sobre o tratamento e pode ser contatado via contato@gendaz.site.',
       'O encarregado de proteção de dados (DPO) pode ser contatado pelo e-mail contato@gendaz.site para tratar de questões de privacidade, reclamações e exercício de direitos dos titulares.',
       `Em caso de dúvidas sobre esta Política de Privacidade ou para exercer seus direitos, entre em contato pelo e-mail ${contatoEmail}.`,
       'O canal oficial de suporte também pode ser utilizado para solicitações relacionadas aos dados tratados na plataforma.',

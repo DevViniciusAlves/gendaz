@@ -330,39 +330,58 @@ public class LgpdService {
         // 2. Cancelar assinaturas Stripe para evitar cobranças futuras
         String stripeStatus = cancelarSubscriptionStripe(usuario.getEmpresa());
 
-        // 3. Desativar checagem de FK nesta transação (PostgreSQL) para permitir exclusão em qualquer ordem
-        entityManager.createNativeQuery("SET LOCAL session_replication_role = 'replica'").executeUpdate();
-
-        // 4. Tabelas-filhas cuja FK não usa empresa_id (subqueries antes dos pais ainda existirem)
-        String[] filhas = new String[] {
+        // 3. Exclusão em ordem topológica de FK (sem session_replication_role,
+        //    que exige privilégio de replicação indisponível no Neon).
+        //    Cada DELETE respeita a dependência pai->filho para não violar FKs.
+        List<String> delecoes = java.util.List.of(
+            // 3.1 Tabelas-filha / tabelas de junção (sem empresa_id ou FK para outra tabela do tenant)
             "DELETE FROM mensagens WHERE conversa_id IN (SELECT id FROM conversas WHERE empresa_id = ?)",
+            "DELETE FROM profissional_dias_trabalho WHERE profissional_id IN (SELECT id FROM profissionais WHERE empresa_id = ?)",
+            "DELETE FROM promocao_servico WHERE promocao_id IN (SELECT id FROM promocoes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_servico WHERE promocao_id IN (SELECT id FROM meu_gendaz_promocoes WHERE empresa_id = ?)",
             "DELETE FROM pagamentos_planos_cobrancas WHERE pagamento_plano_id IN (SELECT id FROM pagamentos_planos WHERE empresa_id = ?)",
+            "DELETE FROM password_reset_tokens WHERE usuario_id IN (SELECT id FROM usuarios WHERE empresa_id = ?)",
+            "DELETE FROM promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_notificacoes WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM crm_contatos WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM notificacoes WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
-            "DELETE FROM promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
-            "DELETE FROM promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
-            "DELETE FROM meu_gendaz_promocao_notificacoes WHERE promocao_id IN (SELECT id FROM meu_gendaz_promocoes WHERE empresa_id = ?)",
-            "DELETE FROM meu_gendaz_promocao_uso WHERE promocao_id IN (SELECT id FROM meu_gendaz_promocoes WHERE empresa_id = ?)",
-            "DELETE FROM password_reset_tokens WHERE usuario_id IN (SELECT id FROM usuarios WHERE empresa_id = ?)"
-        };
-        for (String sql : filhas) {
+            "DELETE FROM notas_fiscais WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM entregas WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM pagamentos WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM caixa_despesas_log WHERE business_id IN (SELECT id FROM empresas WHERE id = ?)",
+            // 3.2 Pais (por empresa_id) — as tabelas-filha já foram removidas
+            "DELETE FROM agendamentos WHERE empresa_id = ?",
+            "DELETE FROM conversas WHERE empresa_id = ?",
+            "DELETE FROM cadastro_idempotencia WHERE empresa_id = ?",
+            "DELETE FROM agenda_blocked_days WHERE empresa_id = ?",
+            "DELETE FROM clientes WHERE empresa_id = ?",
+            "DELETE FROM clientes_emails_bloqueados WHERE empresa_id = ?",
+            "DELETE FROM servicos WHERE empresa_id = ?",
+            "DELETE FROM profissionais WHERE empresa_id = ?",
+            "DELETE FROM log_atividade WHERE empresa_id = ?",
+            "DELETE FROM audit_logs WHERE empresa_id = ?",
+            "DELETE FROM membresia WHERE empresa_id = ?",
+            "DELETE FROM convites_empresa WHERE empresa_id = ?",
+            "DELETE FROM chamados WHERE empresa_id = ?",
+            "DELETE FROM admin_impersonation_sessions WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_acessos WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_otp_challenges WHERE empresa_id = ?",
+            "DELETE FROM pagamentos_planos WHERE empresa_id = ?",
+            "DELETE FROM assinaturas WHERE empresa_id = ?",
+            "DELETE FROM promocoes WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_promocoes WHERE empresa_id = ?",
+            "DELETE FROM formas_pagamento_empresa WHERE empresa_id = ?",
+            "DELETE FROM horario_atendimento WHERE empresa_id = ?",
+            "DELETE FROM insights WHERE empresa_id = ?",
+            "DELETE FROM usuarios WHERE empresa_id = ?",
+            // 3.3 Por fim, a própria empresa
+            "DELETE FROM empresas WHERE id = ?"
+        );
+        for (String sql : delecoes) {
             entityManager.createNativeQuery(sql).setParameter(1, empresaId).executeUpdate();
         }
-
-        // 5. Excluir todas as tabelas com coluna empresa_id (exceto o ledger global admin_audit)
-        List<String> tabelas = entityManager.createNativeQuery(
-                "SELECT table_name FROM information_schema.columns WHERE column_name = 'empresa_id' AND table_schema = 'public'")
-                .getResultList();
-        for (String tabela : tabelas) {
-            if ("admin_audit".equals(tabela)) {
-                continue;
-            }
-            entityManager.createNativeQuery("DELETE FROM " + tabela + " WHERE empresa_id = ?")
-                    .setParameter(1, empresaId).executeUpdate();
-        }
-
-        // 6. Excluir a própria empresa
-        entityManager.createNativeQuery("DELETE FROM empresas WHERE id = ?").setParameter(1, empresaId).executeUpdate();
 
         return new ExcluirContaResponse(
                 "Conta e todos os dados excluidos definitivamente.",
