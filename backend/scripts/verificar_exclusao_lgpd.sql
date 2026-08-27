@@ -47,7 +47,7 @@ BEGIN
             ('promocao_uso', 'cliente_id', 'clientes'),
             ('promocao_notificacao', 'cliente_id', 'clientes'),
             ('meu_gendaz_promocao_uso', 'cliente_id', 'clientes'),
-            ('meu_gendaz_promocao_notificacoes', 'cliente_id', 'clientes'),
+            ('meu_gendaz_promocao_notificacao', 'cliente_id', 'clientes'),
             ('crm_contatos', 'cliente_id', 'clientes'),
             ('notificacoes', 'cliente_id', 'clientes'),
             ('notas_fiscais', 'cliente_id', 'clientes'),

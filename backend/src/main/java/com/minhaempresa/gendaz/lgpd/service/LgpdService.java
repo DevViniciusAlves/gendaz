@@ -73,6 +73,7 @@ import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
 import com.minhaempresa.gendaz.admin.repository.AdminAuditRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -344,7 +345,7 @@ public class LgpdService {
             "DELETE FROM promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM meu_gendaz_promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
-            "DELETE FROM meu_gendaz_promocao_notificacoes WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM crm_contatos WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM notificacoes WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
             "DELETE FROM notas_fiscais WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
@@ -360,9 +361,9 @@ public class LgpdService {
             "DELETE FROM clientes_emails_bloqueados WHERE empresa_id = ?",
             "DELETE FROM servicos WHERE empresa_id = ?",
             "DELETE FROM profissionais WHERE empresa_id = ?",
-            "DELETE FROM log_atividade WHERE empresa_id = ?",
+            "DELETE FROM logs_atividade WHERE empresa_id = ?",
             "DELETE FROM audit_logs WHERE empresa_id = ?",
-            "DELETE FROM membresia WHERE empresa_id = ?",
+            "DELETE FROM membresias WHERE empresa_id = ?",
             "DELETE FROM convites_empresa WHERE empresa_id = ?",
             "DELETE FROM chamados WHERE empresa_id = ?",
             "DELETE FROM admin_impersonation_sessions WHERE empresa_id = ?",
@@ -373,14 +374,23 @@ public class LgpdService {
             "DELETE FROM promocoes WHERE empresa_id = ?",
             "DELETE FROM meu_gendaz_promocoes WHERE empresa_id = ?",
             "DELETE FROM formas_pagamento_empresa WHERE empresa_id = ?",
-            "DELETE FROM horario_atendimento WHERE empresa_id = ?",
+            "DELETE FROM horarios_atendimento WHERE empresa_id = ?",
             "DELETE FROM insights WHERE empresa_id = ?",
             "DELETE FROM usuarios WHERE empresa_id = ?",
             // 3.3 Por fim, a própria empresa
             "DELETE FROM empresas WHERE id = ?"
         );
         for (String sql : delecoes) {
-            entityManager.createNativeQuery(sql).setParameter(1, empresaId).executeUpdate();
+            try {
+                entityManager.createNativeQuery(sql).setParameter(1, empresaId).executeUpdate();
+            } catch (jakarta.persistence.PersistenceException ex) {
+                String msg = ex.getMessage() != null ? ex.getMessage() : "";
+                if (msg.contains("does not exist")) {
+                    log.warn("EXCLUSAO_LGPD: tabela inexistente ignorada (conferir nome no SQL): {}", sql);
+                    continue;
+                }
+                throw ex;
+            }
         }
 
         return new ExcluirContaResponse(
