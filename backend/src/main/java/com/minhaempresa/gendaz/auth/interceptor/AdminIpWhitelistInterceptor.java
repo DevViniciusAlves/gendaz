@@ -23,10 +23,12 @@ public class AdminIpWhitelistInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
         Set<String> ipsPermitidos = carregarIpsPermitidos();
 
-        // Sem whitelist configurada o painel admin fica liberado por IP
-        // (a autenticacao por token continua exigida pelo AdminTokenInterceptor).
+        // Fail-closed: sem whitelist configurada a rota admin NAO existe.
+        // Ela so aparece quando o IP da requisicao estiver na lista.
         if (ipsPermitidos.isEmpty()) {
-            return true;
+            log.warn("Acesso admin negado: ADMIN_ALLOWED_IPS nao configurado (rota admin oculta)");
+            ocultarRota(response);
+            return false;
         }
 
         String ipRequisicao = extrairIpReal(request);
