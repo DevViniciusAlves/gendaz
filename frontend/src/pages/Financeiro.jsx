@@ -1,4 +1,4 @@
-import { Check, Download, Loader, RefreshCw, Trash, X } from 'lucide-react'
+import { Check, Download, Loader, RefreshCw, X } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { RefreshContext } from '../context/RefreshContext.jsx'
@@ -448,7 +448,6 @@ export default function Financeiro() {
     const configs = {
       MARCAR_COMO_PAGO: ['Marcar pagamentos como pagos', 'Tem certeza que deseja marcar os pagamentos selecionados como pagos?', 'Marcar como pago', false],
       MARCAR_COMO_PENDENTE: ['Marcar pagamentos como pendentes', 'Tem certeza que deseja marcar os pagamentos selecionados como pendentes?', 'Marcar como pendente', false],
-      EXCLUIR: ['Excluir pagamentos', 'Tem certeza que deseja excluir os pagamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[acao]
     setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
@@ -535,10 +534,6 @@ export default function Financeiro() {
     } finally {
       setProcessandoStatus(false)
     }
-  }
-
-  function excluirPagamento() {
-    alert('Exclusão em desenvolvimento.')
   }
 
   return (
@@ -699,7 +694,6 @@ export default function Financeiro() {
             actions={[
               { label: 'Marcar como pago', onClick: () => abrirBulkPagamentos('MARCAR_COMO_PAGO') },
               { label: 'Marcar como pendente', onClick: () => abrirBulkPagamentos('MARCAR_COMO_PENDENTE') },
-              { label: 'Excluir', danger: true, onClick: () => abrirBulkPagamentos('EXCLUIR') },
             ]}
           />
            <Button
@@ -774,17 +768,20 @@ export default function Financeiro() {
             {
               key: 'acao',
               label: 'AÇÕES',
-              render: (row) => (
-                <span className="financeiro-center-cell financeiro-center-actions">
-                  <ActionMenu
-                    actions={[
-                      { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') },
-                      { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') },
-                      { label: 'Excluir', icon: Trash, danger: true, onClick: () => excluirPagamento(row.pagamentoId || row.id) },
-                    ]}
-                  />
-                </span>
-              ),
+              render: (row) => {
+                const statusPag = String(row.status || '').toUpperCase()
+                const acoesPagamento = []
+                if (STATUS_CONFIRMADO.has(statusPag)) {
+                  acoesPagamento.push({ label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') })
+                } else {
+                  acoesPagamento.push({ label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') })
+                }
+                return (
+                  <span className="financeiro-center-cell financeiro-center-actions">
+                    <ActionMenu actions={acoesPagamento} />
+                  </span>
+                )
+              },
             },
           ]}
           rows={pagamentosPaginados}
