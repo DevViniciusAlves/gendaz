@@ -769,16 +769,20 @@ export default function Financeiro() {
             {
               key: 'acao',
               label: 'AÇÕES',
-              render: (row) => (
-                <span className="financeiro-center-cell financeiro-center-actions">
-                  <ActionMenu
-                    actions={[
-                      { label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') },
-                      { label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') },
-                    ]}
-                  />
-                </span>
-              ),
+              render: (row) => {
+                const statusPag = String(row.status || '').toUpperCase()
+                const acoesPagamento = []
+                if (STATUS_CONFIRMADO.has(statusPag)) {
+                  acoesPagamento.push({ label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') })
+                } else {
+                  acoesPagamento.push({ label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') })
+                }
+                return (
+                  <span className="financeiro-center-cell financeiro-center-actions">
+                    <ActionMenu actions={acoesPagamento} />
+                  </span>
+                )
+              },
             },
           ]}
           rows={pagamentosPaginados}
