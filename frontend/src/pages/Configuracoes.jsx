@@ -1,4 +1,5 @@
-import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, Send, AlertTriangle } from 'lucide-react'
+import { CalendarClock, Copy, Download, Eye, EyeOff, KeyRound, Link as LinkIcon, RefreshCw, Save, 
+Send, AlertTriangle, Trash2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { appApi } from '../api/appApi.js'
@@ -128,6 +129,7 @@ export default function Configuracoes() {
   const [salvandoHorario, setSalvandoHorario] = useState(false)
   const [exportandoDados, setExportandoDados] = useState(false)
   const [encerrandoConta, setEncerrandoConta] = useState(false)
+  const [excluindoDados, setExcluindoDados] = useState(false)
   const [confirmacao, setConfirmacao] = useState(null)
   const ramoEmpresa = empresa?.ramoDisplayName || (empresa?.ramo ? empresa.ramo.replaceAll('_', ' ') : 'Não identificado')
 
@@ -341,6 +343,19 @@ export default function Configuracoes() {
     } catch (err) {
       setErro(err?.response?.data?.mensagem || 'Não foi possível encerrar a conta.')
       setEncerrandoConta(false)
+    }
+  }
+
+  async function confirmarExclusao() {
+    setConfirmacao(null)
+    setExcluindoDados(true)
+    try {
+      await appApi.excluirDadosLgpd()
+      logout()
+      navigate('/login', { replace: true })
+    } catch (err) {
+      setErro(err?.response?.data?.mensagem || 'Não foi possível excluir a conta definitivamente.')
+      setExcluindoDados(false)
     }
   }
 
@@ -707,7 +722,7 @@ export default function Configuracoes() {
             <div>
               <span className="section-kicker">Privacidade e Dados</span>
               <h2>Gerenciamento de dados</h2>
-              <p>Exporte os dados da empresa ou encerre a conta. O encerramento revoga o acesso de todos os usuários vinculados.</p>
+              <p>Exporte os dados da empresa, encerre a conta (revoga acessos, mantém dados) ou exclua definitivamente todos os dados. A exclusão é irreversível.</p>
             </div>
             <AlertTriangle size={22} color="var(--danger)" />
           </div>
@@ -727,10 +742,20 @@ export default function Configuracoes() {
               icon={AlertTriangle}
               loading={encerrandoConta}
               loadingText="Encerrando conta..."
-              disabled={exportandoDados}
+              disabled={exportandoDados || excluindoDados}
               onClick={() => setConfirmacao('encerrar')}
             >
               Encerrar conta
+            </Button>
+            <Button
+              variant="danger"
+              icon={Trash2}
+              loading={excluindoDados}
+              loadingText="Excluindo conta..."
+              disabled={exportandoDados || encerrandoConta}
+              onClick={() => setConfirmacao('excluir')}
+            >
+              Excluir conta
             </Button>
           </div>
 
@@ -754,6 +779,17 @@ export default function Configuracoes() {
             carregando={encerrandoConta}
             onCancelar={() => setConfirmacao(null)}
             onConfirmar={confirmarEncerramento}
+          />
+
+          <ConfirmacaoModal
+            open={confirmacao === 'excluir'}
+            titulo="Excluir conta definitivamente"
+            tipo="danger"
+            acaoLabel="Excluir definitivamente"
+            mensagem="Atenção: esta ação é irreversível. Todos os dados da empresa, clientes, agendamentos, usuários e registros serão apagados permanentemente e o cancelamento da cobrança será processado. Deseja continuar?"
+            carregando={excluindoDados}
+            onCancelar={() => setConfirmacao(null)}
+            onConfirmar={confirmarExclusao}
           />
         </section>
       )}

@@ -32,6 +32,12 @@ public class LgpdController {
         return ResponseEntity.ok(lgpdService.encerrarConta(usuarioAutenticado));
     }
 
+    @DeleteMapping("/excluir-dados")
+    public ResponseEntity<ExcluirContaResponse> excluirDadosConta() {
+        Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();
+        return ResponseEntity.ok(lgpdService.excluirDadosConta(usuarioAutenticado));
+    }
+
     @PostMapping("/reativar-conta")
     public ResponseEntity<ReativarContaResponse> reativarConta() {
         Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();

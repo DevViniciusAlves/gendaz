@@ -14,7 +14,7 @@ const secoes = [
     titulo: '2. Sobre a gendaz',
     conteudos: [
       'A gendaz é uma plataforma online (Software como Serviço – SaaS) criada para ajudar empresas a organizar agenda, clientes, serviços, profissionais, pagamentos e financeiro em um único sistema.',
-      'A plataforma é operada e mantida pela própria gendaz, que atua como fornecedora da ferramenta de gestão.',
+      'A plataforma é operada e mantida por VINICIUS HENRIQUE FERREIRA ALVES, pessoa física, inscrito no CPF 034.456.831-82, que atua como fornecedora da ferramenta de gestão.',
     ],
   },
   {

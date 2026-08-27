@@ -1096,6 +1096,16 @@ export const appApi = {
     })
   },
 
+  excluirDadosLgpd() {
+    return comNotificacao(() => api.delete('/lgpd/excluir-dados', {
+      headers: usuarioHeaders(),
+    }).then((response) => response.data), {
+      loading: 'Excluindo conta definitivamente...',
+      success: 'Conta excluída definitivamente.',
+      error: 'Não foi possível excluir a conta.',
+    })
+  },
+
   reativarConta() {
     return comNotificacao(async () => {
       await garantirCsrfCookie().catch(() => {})
