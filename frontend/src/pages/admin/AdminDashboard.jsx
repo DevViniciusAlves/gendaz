@@ -1,7 +1,8 @@
-import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, Loader, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, XCircle } from 'lucide-react'
+import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, Loader, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, UserSearch, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
+import AdminCrm from './AdminCrm.jsx'
 import { formatoCompactoReceita } from '../../utils/formatters.js'
 import { normalizarParaApi, exibirTelefone } from '../../utils/phoneUtils.js'
 import InternationalPhoneInput from '../../components/InternationalPhoneInput.jsx'
@@ -21,6 +22,7 @@ const abas = [
   { label: 'Chamados', icon: Ticket },
   { label: 'Logs', icon: ScrollText },
   { label: 'Configuracoes', icon: Settings2 },
+  { label: 'CRM', icon: UserSearch },
 ]
 const STATUS_PAGAMENTO_CONFIRMADO = new Set([
   'PAGO',
@@ -33,6 +35,40 @@ const STATUS_PAGAMENTO_CONFIRMADO = new Set([
   'PAYMENT_APPROVED',
   'PURCHASE_APPROVED',
 ])
+
+const CATEGORIAS_LOG = [
+  { valor: 'USER_LOGIN_SUCCESS', rotulo: 'Login realizado' },
+  { valor: 'USER_LOGIN_FAILED', rotulo: 'Login falhado' },
+  { valor: 'USER_LOGOUT', rotulo: 'Logout' },
+  { valor: 'USER_REGISTER_SUCCESS', rotulo: 'Conta criada' },
+  { valor: 'USER_REGISTER_FAILED', rotulo: 'Falha ao criar conta' },
+  { valor: 'ADMIN_LOGIN_SUCCESS', rotulo: 'Login admin' },
+  { valor: 'ADMIN_LOGIN_FAILED', rotulo: 'Falha login admin' },
+  { valor: 'IMPERSONACAO_INICIADA', rotulo: 'Impersonação iniciada' },
+  { valor: 'IMPERSONACAO_ENCERRADA', rotulo: 'Impersonação encerrada' },
+  { valor: 'EMPRESA_ATIVADA', rotulo: 'Empresa ativada' },
+  { valor: 'EMPRESA_DESATIVADA', rotulo: 'Empresa desativada' },
+  { valor: 'CHAMADO_CRIADO', rotulo: 'Chamado criado' },
+  { valor: 'CHAMADO_ATUALIZADO', rotulo: 'Chamado atualizado' },
+  { valor: 'AGENDAMENTO', rotulo: 'Agendamento' },
+  { valor: 'CLIENTE', rotulo: 'Cliente' },
+  { valor: 'USUARIO', rotulo: 'Usuário' },
+  { valor: 'PAGAMENTO', rotulo: 'Pagamento' },
+  { valor: 'CAIXA_DESPESA', rotulo: 'Caixa / Despesa' },
+  { valor: 'ENTREGA', rotulo: 'Entrega' },
+  { valor: 'MEMBRESIA', rotulo: 'Membresia' },
+  { valor: 'CONFIG_AGENDA', rotulo: 'Configuração' },
+  { valor: 'DIA_BLOQUEADO', rotulo: 'Dia bloqueado' },
+  { valor: 'CONVERSA', rotulo: 'Conversa' },
+  { valor: 'MENSAGEM', rotulo: 'Mensagem' },
+  { valor: 'NOTA_FISCAL', rotulo: 'Nota fiscal' },
+  { valor: 'PROMOCAO', rotulo: 'Promoção' },
+]
+
+function rotuloCategoria(tipo) {
+  const encontrado = CATEGORIAS_LOG.find((c) => c.valor === tipo)
+  return encontrado ? encontrado.rotulo : (tipo || '-')
+}
 
 function todayIso() {
   const hoje = new Date()
@@ -184,7 +220,7 @@ export default function AdminDashboard() {
   const [carregandoAcao, setCarregandoAcao] = useState(false)
   const [recarregando, setRecarregando] = useState('')
   const [filtroPagamento, setFiltroPagamento] = useState({ status: '', plano: '' })
-  const [filtroLog, setFiltroLog] = useState({ tipo: '', severidade: '' })
+  const [filtroLog, setFiltroLog] = useState({ categoria: '', severidade: '' })
   const [pesquisaPagamento, setPesquisaPagamento] = useState('')
   const [pesquisaAprovacao, setPesquisaAprovacao] = useState('')
   const [pesquisaChamado, setPesquisaChamado] = useState('')
@@ -370,10 +406,10 @@ export default function AdminDashboard() {
   )), [chamados, pesquisaChamado])
 
   const logsFiltrados = useMemo(() => (Array.isArray(logs) ? logs : []).filter((item) => {
-    const tipoOk = !filtroLog.tipo || item.tipo?.toLowerCase().includes(filtroLog.tipo.toLowerCase())
+    const categoriaOk = !filtroLog.categoria || rotuloCategoria(item.tipo) === filtroLog.categoria
     const severidadeOk = !filtroLog.severidade || item.severidade === filtroLog.severidade
     const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descricao', 'motivo'])
-    return tipoOk && severidadeOk && buscaOk
+    return categoriaOk && severidadeOk && buscaOk
   }), [logs, filtroLog, pesquisaLog])
 
   function abrirModal(item, tipo) {
@@ -1032,7 +1068,12 @@ export default function AdminDashboard() {
                 onChange={(event) => setPesquisaLog(event.target.value)}
                 placeholder="Pesquisar por evento, empresa ou usuario"
               />
-              <input value={filtroLog.tipo} onChange={(event) => setFiltroLog((atual) => ({ ...atual, tipo: event.target.value }))} placeholder="Filtrar por tipo" />
+              <select value={filtroLog.categoria} onChange={(event) => setFiltroLog((atual) => ({ ...atual, categoria: event.target.value }))}>
+                <option value="">Todas as categorias</option>
+                {CATEGORIAS_LOG.map((cat) => (
+                  <option key={cat.valor} value={cat.rotulo}>{cat.rotulo}</option>
+                ))}
+              </select>
               <select value={filtroLog.severidade} onChange={(event) => setFiltroLog((atual) => ({ ...atual, severidade: event.target.value }))}>
                 <option value="">Todas as severidades</option>
                 <option value="INFO">INFO</option>
@@ -1044,7 +1085,7 @@ export default function AdminDashboard() {
             <Table columns={['Tipo', 'Severidade', 'Admin', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
               {logsFiltrados.map((item) => (
                 <tr key={item.id}>
-                  <td>{item.tipo}</td>
+                  <td>{rotuloCategoria(item.tipo)}</td>
                   <td><StatusBadge status={item.severidade} /></td>
                   <td>{item.admin || '-'}</td>
                   <td>{item.empresa || '-'}</td>
@@ -1121,6 +1162,10 @@ export default function AdminDashboard() {
             <div><span>Status</span><strong>{config?.statusSistema}</strong></div>
             <div><span>Secrets</span><strong>Redigido</strong></div>
           </section>
+        )}
+
+        {aba === 'CRM' && (
+          <AdminCrm />
         )}
       </section>
 

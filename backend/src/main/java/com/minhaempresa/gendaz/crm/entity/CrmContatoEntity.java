@@ -22,7 +22,7 @@ public class CrmContatoEntity {
     @JoinColumn(name = "empresa_id")
     private EmpresaEntity empresa;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
     @JoinColumn(name = "cliente_id")
     private ClienteEntity cliente;
 

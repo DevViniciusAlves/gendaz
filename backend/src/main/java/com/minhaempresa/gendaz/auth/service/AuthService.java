@@ -171,6 +171,7 @@ public class AuthService {
             usuario.setTentativasLoginFalhadas(0);
             usuario.setBloqueadoAte(null);
             usuario.setUltimoLoginFalhado(null);
+            usuario.setUltimoLogin(LocalDateTime.now());
             usuarioRepository.save(usuario);
             ipTrackingService.registrarTentativaBemsucedida(getCurrentClientIp());
 
@@ -329,6 +330,14 @@ public class AuthService {
                         requestIdFinal, idempotencia.getKeyHash());
             }
             log.error("Cadastro falhou para {} em {} ms. erroTipo={}", mascararEmail(email), duracaoMs(inicio), ex.getClass().getSimpleName());
+            auditService.registrarEventoSeguranca(
+                    "USER_REGISTER_FAILED",
+                    "Falha ao criar conta: " + ex.getClass().getSimpleName(),
+                    null,
+                    mascararEmail(email),
+                    getCurrentClientIp(),
+                    getUserAgent(getCurrentRequest())
+            );
             throw ex;
         }
     }
@@ -456,7 +465,24 @@ public class AuthService {
 
     @Transactional
     public void logout(String sessionToken) {
+        UsuarioEntity usuario = null;
+        try {
+            usuario = usuarioRepository.findBySessaoAtiva(sessionToken).orElse(null);
+        } catch (RuntimeException ignored) {
+        }
         usuarioSessionService.encerrarSessao(sessionToken);
+        if (usuario != null) {
+            registrarAuditoriaAutenticacao("USER_LOGOUT", usuario, "Logout realizado");
+        } else {
+            auditService.registrarEventoSeguranca(
+                    "USER_LOGOUT",
+                    "Logout de sessao nao encontrada",
+                    null,
+                    "Desconhecido",
+                    getCurrentClientIp(),
+                    getUserAgent(getCurrentRequest())
+            );
+        }
     }
 
     @Transactional
@@ -713,6 +739,14 @@ public class AuthService {
                 request,
                 mascararEmail(email),
                 "tentativas=" + tentativas
+        );
+        auditService.registrarEventoSeguranca(
+                "USER_LOGIN_FAILED",
+                "Tentativa de login falhada (tentativa " + tentativas + ")",
+                null,
+                mascararEmail(email),
+                getCurrentClientIp(),
+                getUserAgent(request)
         );
     }
 

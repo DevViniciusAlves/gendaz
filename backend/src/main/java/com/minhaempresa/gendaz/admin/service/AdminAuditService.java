@@ -10,6 +10,8 @@ import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -149,5 +151,33 @@ public class AdminAuditService {
                 e.getUserAgent(),
                 e.getDataHora()
         );
+    }
+
+    /**
+     * Registra um evento de seguranca (ex.: login falhado, logout, falha de cadastro)
+     * em sua propria transacao (REQUIRES_NEW), para que o registro de auditoria nao
+     * seja perdido caso a operacao principal sofra rollback. O tenant (empresa) e o
+     * usuario sao informados explicitamente pelo chamador, que ja os resolveu no
+     * servidor; nunca se confia em dados vindos do frontend.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void registrarEventoSeguranca(String tipo, String descricao, Long empresaId,
+                                          String usuarioNome, String ip, String userAgent) {
+        try {
+            AdminAuditEntity audit = new AdminAuditEntity();
+            audit.setEmpresaId(empresaId != null ? empresaId : 0L);
+            audit.setUsuarioId(0L);
+            audit.setUsuarioNome(usuarioNome != null && !usuarioNome.isBlank() ? usuarioNome : "Desconhecido");
+            audit.setAcao(tipo);
+            audit.setEntidade("SECURITY");
+            audit.setEntidadeId(null);
+            audit.setDescricao(descricao != null ? descricao : "");
+            audit.setDataHora(LocalDateTime.now());
+            audit.setIp(ip);
+            audit.setUserAgent(userAgent);
+            adminAuditRepository.save(audit);
+        } catch (Exception e) {
+            log.error("Falha ao registrar evento de seguranca: {}", e.getMessage(), e);
+        }
     }
 }
