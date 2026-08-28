@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Crisp } from "crisp-sdk-web";
 import { MessageCircle } from "lucide-react";
 
 // Integração Crisp (suporte ao cliente) — apenas na landing page.
@@ -10,9 +9,9 @@ import { MessageCircle } from "lucide-react";
 //                              (Settings > Setup & Integrations > Chatbox > Helpdesk)
 //   3. Pesquisa              -> já vem junto da Central de Ajuda (busca de artigos)
 //
-// Usamos um botão fixo próprio (padrão Gendaz, canto inferior direito) para abrir
-// o Crisp, escondendo o launcher padrão. O estilo preto/branco é aplicado via
-// setColorTheme + CSS da classe .gendaz-crisp-launcher.
+// O SDK é carregado dinamicamente dentro do efeito e envolvido em try/catch,
+// para que qualquer falha do Crisp NUNCA derrube a landing page (tela preta).
+// O estilo preto/branco (padrão Gendaz) é aplicado via setColorTheme.
 
 export function CrispChat() {
   const websiteId = import.meta.env.VITE_CRISP_WEBSITE_ID;
@@ -26,30 +25,48 @@ export function CrispChat() {
       return;
     }
 
-    // Conecta ao workspace Crisp (documentação oficial: crisp-sdk-web)
-    Crisp.configure(websiteId, {
-      locale: "pt-br",
-    });
+    let cancelled = false;
 
-    // Tema Gendaz (preto/branco). #111827 = grafite escuro do padrão Gendaz.
-    Crisp.setColorTheme("#111827");
+    (async () => {
+      try {
+        const { Crisp } = await import("crisp-sdk-web");
 
-    // Esconde o launcher padrão do Crisp (usamos o botão Gendaz)
-    Crisp.onLoaded(() => {
-      window.$crisp.push(["do", "launcher:hide"]);
-      setLoaded(true);
-    });
+        if (cancelled) return;
 
-    // Remove o Crisp ao desmontar a landing page
+        Crisp.configure(websiteId, { locale: "pt-br" });
+        Crisp.setColorTheme("#111827");
+
+        Crisp.onLoaded(() => {
+          if (cancelled) return;
+          try {
+            window.$crisp.push(["do", "launcher:hide"]);
+          } catch {
+            /* launcher já pode estar oculto */
+          }
+          setLoaded(true);
+        });
+      } catch (err) {
+        console.error("Crisp: falha ao inicializar o chatbox", err);
+      }
+    })();
+
     return () => {
-      Crisp.reset();
+      cancelled = true;
+      try {
+        // Remove o Crisp ao desmontar a landing page
+        import("crisp-sdk-web").then(({ Crisp }) => Crisp.reset()).catch(() => {});
+      } catch {
+        /* ignore */
+      }
     };
   }, [websiteId]);
 
   if (!websiteId) return null;
 
   function openCrisp() {
-    Crisp.open();
+    import("crisp-sdk-web")
+      .then(({ Crisp }) => Crisp.open())
+      .catch(() => {});
   }
 
   return (
