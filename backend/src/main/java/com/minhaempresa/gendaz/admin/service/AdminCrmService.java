@@ -199,7 +199,7 @@ public class AdminCrmService {
         String slug = empresa.getAgendamentoSlug();
         String titulo = montarTitulo(request.template());
         String subtitulo = montarSubtitulo(request.template());
-        String ctaTexto = "resgate".equals(request.template()) ? "Voltar para o Meu Gendaz" : "Acessar o Meu Gendaz";
+        String ctaTexto = "resgate".equals(request.template()) ? "Voltar para o Gendaz" : "Acessar o Gendaz";
         String corpo = montarCorpo(request.template(), nomeDestino, request.customMessage(), slug);
 
         boolean enviado = resendEmailService.enviarComTemplate(
@@ -353,12 +353,12 @@ public class AdminCrmService {
         };
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
-        String ctaUrl = montarUrlMeuGendaz(slugEmpresa);
+        String ctaUrl = montarUrlGendaz(slugEmpresa);
 
         return """
                 <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">%s</p>
                 <p style="margin:0; font-size:14px; line-height:1.7; color:#6b7280;">
-                  Voce tambem pode acessar diretamente o Meu Gendaz da sua empresa:
+                  Voce tambem pode acessar diretamente o Gendaz da sua empresa:
                   <a href="%s" style="color:#111111; text-decoration:underline; font-weight:700;">%s</a>
                 </p>
                 """.formatted(textoFinal, ctaUrl, ctaUrl);
@@ -371,5 +371,11 @@ public class AdminCrmService {
             return baseNormalizada + "/meu-gendaz";
         }
         return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
+    }
+
+    private String montarUrlGendaz(String slugEmpresa) {
+        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
+        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+        return baseNormalizada + "/sistema/dashboard";
     }
 }
