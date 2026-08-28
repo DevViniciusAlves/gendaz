@@ -12,6 +12,7 @@ import StatusBadge from '../../components/StatusBadge.jsx'
 import Table from '../../components/Table.jsx'
 import GraficoReceitaMes from '../../components/gendaz/GraficoReceitaMes.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
+import OperationToast from '../../components/OperationToast.jsx'
 import logoAdmin from '../../assets/logos/gendaz-logo-branco.png'
 
 const abas = [
@@ -239,6 +240,16 @@ export default function AdminDashboard() {
     const timer = setTimeout(() => setErro(''), 5000)
     return () => clearTimeout(timer)
   }, [erro])
+
+  useEffect(() => {
+    if (!aviso) return
+    window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type: 'success', message: aviso } }))
+  }, [aviso])
+
+  useEffect(() => {
+    if (!erro || modal) return
+    window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type: 'error', message: erro } }))
+  }, [erro, modal])
 
   async function carregarAdmin() {
     setCarregando(true)
@@ -734,12 +745,7 @@ export default function AdminDashboard() {
             </button>
           </div>
         )}
-        {(aviso || (!modal && erro)) && (
-          <div className={`admin-toast ${aviso ? 'success' : 'error'}`} role="status">
-            <span>{aviso || erro}</span>
-            <button type="button" aria-label="Fechar notificacao" onClick={() => { setAviso(''); setErro('') }}>x</button>
-          </div>
-        )}
+        <OperationToast />
 
         {aba === 'Dashboard' && (
           <div className="admin-gendaz-page">

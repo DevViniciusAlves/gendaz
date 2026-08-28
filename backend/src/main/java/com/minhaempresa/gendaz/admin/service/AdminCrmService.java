@@ -322,7 +322,7 @@ public class AdminCrmService {
 
     private String montarAssunto(String template, String nome) {
         return switch (template) {
-            case "resgate" -> "Estamos com saudade, " + nome + "!";
+            case "resgate" -> "Estamos com saudade dos seus agendamentos, " + nome + "!";
             case "reconexao" -> nome + ", sentimos sua falta!";
             case "promocao" -> "Oferta especial pra voce, " + nome + "!";
             case "lembrete" -> nome + ", lembrete do seu proximo compromisso";
@@ -331,12 +331,12 @@ public class AdminCrmService {
     }
 
     private String montarTitulo(String template) {
-        return "resgate".equals(template) ? "Estamos com saudade de voce" : "Queremos falar com voce novamente";
+        return "resgate".equals(template) ? "Estamos com saudade dos seus agendamentos" : "Queremos falar com voce novamente";
     }
 
     private String montarSubtitulo(String template) {
         return "resgate".equals(template)
-                ? "Seu ultimo contato foi ha algum tempo. Volte quando quiser para continuar seu atendimento."
+                ? "Faz tempo que voce nao acessa o Gendaz. Estamos com saudade dos seus agendamentos e queremos voce de volta."
                 : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
     }
 
@@ -345,7 +345,7 @@ public class AdminCrmService {
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
         String mensagemPadrao = switch (template) {
-            case "resgate" -> "Oi " + nomeSafe + "! Sentimos sua falta e queremos te receber novamente. Que tal voltar para um novo atendimento?";
+            case "resgate" -> "Oi " + nomeSafe + "! Faz um tempo que voce nao entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.";
             case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
             case "promocao" -> nomeSafe + ", preparamos uma oferta especial so pra voce! Aproveite e agende seu proximo atendimento com desconto.";
             case "lembrete" -> nomeSafe + ", lembrete: voce tem um compromisso agendado. Se precisar remarcar, esta tudo bem!";
