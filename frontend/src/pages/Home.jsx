@@ -114,11 +114,6 @@ const plans = [
 export default function Home() {
   const navigate = useNavigate()
   const [segmentOffset, setSegmentOffset] = useState(0)
-  
-  return (
-    <>
-      {/* Crisp Chat - Apenas na landing page */}
-      <CrispChat />
 
   function handlePlanClick(plano) {
     navigate(`/criar-conta?plano=${encodeURIComponent(plano.nome)}&preco=${encodeURIComponent(plano.preco)}`)
@@ -134,7 +129,10 @@ export default function Home() {
   }
 
   return (
-    <main id="inicio" className="marketing-page">
+    <>
+      {/* Crisp Chat - Apenas na landing page */}
+      <CrispChat />
+      <main id="inicio" className="marketing-page">
 
       {/* Navbar */}
       <header className="marketing-nav-gendo">
