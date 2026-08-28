@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import com.minhaempresa.gendaz.agendamento.dto.AgendaBlockedDayDtos.BloquearDiaRequest;
 import com.minhaempresa.gendaz.agendamento.entity.AgendaBlockedDayEntity;
 import com.minhaempresa.gendaz.agendamento.repository.AgendaBlockedDayRepository;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
@@ -37,6 +38,7 @@ class AgendaBlockedDayServiceTest {
     @Mock AgendaBlockedDayRepository repository;
     @Mock EmpresaService empresaService;
     @Mock ProfissionalService profissionalService;
+    @Mock LogAtividadeService logAtividadeService;
     @Captor ArgumentCaptor<AgendaBlockedDayEntity> bloqueioCaptor;
     @InjectMocks AgendaBlockedDayService service;
 

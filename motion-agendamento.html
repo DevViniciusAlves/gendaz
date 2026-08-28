@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gendaz — Fluxo de Agendamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  @font-face{font-family:'Faktum Medium';src:url('frontend/public/fonts/Faktum-Medium.woff2') format('woff2');font-weight:400 900;font-style:normal;font-display:swap;}
+  :root {
+    --bg: #1a1a1a; --bg2: #222; --bg3: #2a2a2a; --line: #333;
+    --text: #fff; --muted: #999; --accent: #ff5e29; --green: #10b981;
+    --ff: 'Faktum Medium', 'Poppins', sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#0d0d0d;font-family:var(--ff);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px;}
+  /* forca Faktum Medium em todo o motion */
+  .phone,.screen,.statusbar,.topbar,.topbar *,.content,.view,
+  .search-box,.search-input,.search-hint,.btn,.filters,.filter-input,
+  .ag-card,.ag-card *,.pill,.modal-overlay,.modal,.modal *,.m-field,.m-hint,
+  .csel,.csel-trigger,.csel-opt,.m-date,.m-textarea,.pay-title,.pay-methods,
+  .pay-pill,.btn-voltar,.fin-summary,.fin-stat,.fin-methods,.fin-method,.fin-month,
+  .pay-card,.pay-card *,.bottomnav,.nav-item,.toast,.cursor{font-family:var(--ff) !important;}
+
+  .phone{position:relative;width:390px;height:844px;background:#0a0a0a;border-radius:54px;padding:14px;box-shadow:0 0 0 2px #222,0 0 0 10px #0a0a0a,0 30px 80px rgba(0,0,0,.7);}
+  .phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#0a0a0a;border-radius:0 0 18px 18px;z-index:40;}
+  .phone-notch::after{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:6px;background:#1c1c1c;border-radius:99px;}
+  .screen{position:relative;width:100%;height:100%;background:var(--bg);border-radius:42px;overflow:hidden;display:flex;flex-direction:column;pointer-events:none;user-select:none;}
+
+  .statusbar{height:44px;flex:0 0 44px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;font-size:13px;font-weight:600;color:#fff;z-index:30;}
+  .statusbar .bat{position:relative;width:24px;height:12px;border:1.5px solid #fff;border-radius:3px;}
+  .statusbar .bat::before{content:'';position:absolute;left:1.5px;top:1.5px;bottom:1.5px;width:70%;background:#fff;border-radius:1px;}
+
+  .topbar{flex:0 0 auto;padding:0 18px 12px;display:flex;flex-direction:column;}
+  .topbar-label{font-size:10px;font-weight:800;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .topbar-title{font-size:22px;font-weight:800;color:#fff;line-height:1.15;}
+  .topbar-sub{font-size:11px;color:var(--muted);margin-top:1px;line-height:1.4;}
+  .topbar-pills{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;}
+  .topbar-pill{font-size:9px;font-weight:600;color:var(--muted);background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:5px 8px;white-space:nowrap;}
+  .topbar-pill.underline{text-decoration:underline;}
+  .topbar-bell{width:34px;height:34px;border-radius:10px;background:var(--bg3);border:1px solid var(--line);display:grid;place-items:center;margin-top:5px;}
+  .topbar-bell svg{width:16px;height:16px;color:#fff;}
+  .topbar-user{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--line);border-radius:10px;padding:7px 12px;margin-top:5px;}
+  .topbar-user .av{width:34px;height:34px;border-radius:50%;background:#555;display:grid;place-items:center;font-weight:700;font-size:11px;}
+  .topbar-user .info strong{font-size:12px;color:#fff;}
+  .topbar-user .info small{font-size:9px;color:var(--muted);display:block;}
+  .topbar-user .chev{margin-left:auto;color:var(--muted);font-size:11px;}
+
+  /* CONTENT scrollavel */
+  .content{flex:1 1 auto;overflow-y:auto;position:relative;scroll-behavior:smooth;}
+  .content::-webkit-scrollbar{width:0;}
+  .view{display:none;flex-direction:column;gap:10px;padding:16px;min-height:100%;}
+  .view.active{display:flex;animation:fadeIn .3s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .section-label{font-size:9px;font-weight:800;letter-spacing:.1em;color:var(--text);text-transform:uppercase;}
+  .page-title{font-size:24px;font-weight:800;color:#fff;}
+  .page-sub{font-size:11px;color:var(--muted);line-height:1.4;margin-top:-4px;}
+
+  .search-box{background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:5px;}
+  .search-box label{font-size:11px;font-weight:700;color:var(--muted);}
+  .search-input{width:100%;min-height:40px;padding:0 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:#fff;font-family:'Faktum Medium',inherit;font-size:13px;outline:none;}
+  .search-input::placeholder{color:#555;}
+  .search-hint{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;}
+
+  .btn{width:100%;border:none;border-radius:10px;font-family:'Faktum Medium',inherit;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:filter .15s,transform .1s;}
+  .btn-reload{min-height:42px;background:var(--bg2);color:#fff;border:1px solid var(--line);}
+  .btn-novo{min-height:42px;background:var(--bg2);color:#fff;border:1px solid var(--line);}
+  .btn-export{min-height:40px;background:var(--bg2);color:#fff;border:1px solid var(--line);font-size:12px;}
+
+  .filters{display:flex;flex-direction:column;gap:7px;}
+  .filter-label{font-size:11px;font-weight:700;color:var(--muted);}
+  .filter-input{width:100%;min-height:40px;padding:0 12px;background:var(--bg);border:1px solid var(--line);border-radius:8px;color:#fff;font-family:'Faktum Medium',inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;}
+  .filter-input .chev{color:var(--muted);font-size:10px;}
+
+  .ag-card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px;margin-top:6px;}
+  .ag-card.anim{animation:cardPop .5s cubic-bezier(.2,.9,.24,1.15) both;}
+  @keyframes cardPop{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
+  .ag-card-head{display:flex;align-items:center;gap:9px;padding-bottom:9px;border-bottom:1px solid var(--line);}
+  .ag-avatar{width:34px;height:34px;border-radius:50%;background:#555;color:#fff;display:grid;place-items:center;font-weight:700;font-size:11px;flex:0 0 34px;}
+  .ag-tit{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .ag-nome{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ag-prot{color:var(--muted);font-size:10px;}
+  .pill{font-size:9px;font-weight:800;padding:3px 8px;border-radius:4px;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
+  .pill::before{content:'';width:5px;height:5px;border-radius:50%;background:currentColor;}
+  .pill-pendente{background:rgba(255,149,0,.12);color:#ff9500;}
+  .pill-em{background:rgba(107,255,171,.12);color:#6bffab;}
+  .pill-pausado{background:rgba(251,191,36,.12);color:#fbbf24;}
+  .pill-ativo{background:rgba(16,185,129,.12);color:var(--green);}
+  .pill-aprovado{background:rgba(16,185,129,.12);color:var(--green);}
+  .pill-fin{background:rgba(16,185,129,.15);color:var(--green);border:1.5px solid var(--green);padding:8px 18px;font-size:12px;align-self:center;border-radius:6px;}
+
+  .ag-field{font-size:12px;color:#fff;}
+  .ag-field small{display:block;color:var(--muted);font-size:10px;margin-top:1px;}
+  .ag-actions{display:grid;gap:8px;}
+  .ag-actions.dual{grid-template-columns:1fr 1fr;}
+  .b-iniciar{background:#d1d1d1;color:#000;min-height:38px;font-size:12px;}
+  .b-pausar{background:#fff;color:#000;min-height:38px;font-size:12px;}
+  .b-finalizar{background:var(--green);color:#000;min-height:38px;font-size:12px;font-weight:800;}
+  .b-retomar{background:#fff;color:#000;min-height:38px;font-size:12px;}
+
+  /* MODAL (filho direto do screen, overlay) */
+  .modal-overlay{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:#fff;color:#000;border-radius:16px;width:100%;max-width:340px;display:flex;flex-direction:column;overflow:hidden;animation:modalPop .3s ease both;}
+  .modal.modal-bottom{align-self:flex-end;border-radius:16px 16px 0 0;animation:slideUp .35s ease both;}
+  @keyframes modalPop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
+  @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;}
+  .modal-head h3{font-size:17px;font-weight:700;}
+  .modal-close{width:28px;height:28px;border-radius:8px;border:1.5px solid #ccc;background:none;cursor:pointer;display:grid;place-items:center;color:#333;font-size:16px;font-weight:700;}
+  .modal-body{padding:0 16px;display:flex;flex-direction:column;overflow-y:auto;}
+  .modal-footer{padding:8px 16px 16px;}
+
+  .m-field{margin-bottom:12px;}
+  .m-field label{font-size:11px;font-weight:600;color:#333;display:block;margin-bottom:4px;}
+  .m-hint{font-size:10px;color:#999;margin-top:3px;display:flex;justify-content:space-between;}
+  .csel{position:relative;}
+  .csel-trigger{width:100%;min-height:40px;padding:0 12px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;color:#000;font-family:'Faktum Medium',inherit;font-size:13px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;}
+  .csel-trigger .chev{color:#999;font-size:10px;flex:0 0 auto;}
+  .csel-options{position:absolute;top:100%;left:0;right:0;z-index:10;background:#fff;border:1px solid #ddd;border-radius:0 0 8px 8px;box-shadow:0 8px 20px rgba(0,0,0,.12);display:none;max-height:160px;overflow-y:auto;}
+  .csel.open .csel-options{display:block;}
+  .csel-opt{padding:10px 12px;font-size:13px;cursor:pointer;transition:background .1s;}
+  .csel-opt:hover{background:#e8f4f0;}
+  .csel-opt.selected{background:#d1f0e4;color:#000;font-weight:600;}
+  .m-date{width:100%;min-height:40px;padding:0 12px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;color:#000;font-family:'Faktum Medium',inherit;font-size:13px;}
+  .m-textarea{width:100%;min-height:70px;padding:10px 12px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:8px;color:#000;font-family:'Faktum Medium',inherit;font-size:13px;outline:none;resize:vertical;}
+  .btn-salvar{width:100%;min-height:46px;background:#fff;color:#000;font-weight:800;font-size:14px;border:none;border-radius:0 0 14px 14px;font-family:'Faktum Medium',inherit;}
+
+  .pay-title{font-size:13px;color:#666;margin-bottom:14px;}
+  .pay-methods{display:flex;flex-wrap:wrap;gap:8px;}
+  .pay-pill{
+    padding:10px 18px;border-radius:999px;border:1.5px solid #ccc;
+    background:#fff;color:#000;font-family:'Faktum Medium',inherit;font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;
+  }
+  .pay-pill:hover{border-color:#333;background:#f5f5f5;}
+  .pay-pill-nao{border-style:dashed;}
+  .btn-voltar{width:100%;min-height:44px;background:#111;color:#fff;font-weight:700;border:none;border-radius:10px;font-family:'Faktum Medium',inherit;font-size:14px;cursor:pointer;}
+  .btn-voltar:hover{filter:brightness(1.2);}
+
+  /* financeiro */
+  .fin-summary{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .fin-stat{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;}
+  .fin-stat small{color:var(--muted);font-size:11px;display:block;margin-bottom:2px;}
+  .fin-stat strong{font-size:18px;letter-spacing:-.02em;}
+  .fin-methods{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+  .fin-method{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;font-size:12px;font-weight:600;}
+  .fin-check{width:18px;height:18px;border-radius:4px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:10px;}
+  .fin-month{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-height:40px;display:flex;align-items:center;justify-content:space-between;font-size:13px;color:#fff;}
+
+  .pay-card{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;margin-top:6px;}
+  .pay-card.anim{animation:cardPop .5s cubic-bezier(.2,.9,.24,1.15) both;}
+  .pay-card-head{display:flex;align-items:center;gap:9px;}
+  .pay-card .av{width:34px;height:34px;border-radius:50%;background:#555;display:grid;place-items:center;font-weight:700;font-size:11px;}
+  .pay-card .nome{font-weight:700;font-size:13px;}
+  .pay-card-row{display:flex;gap:14px;}
+  .pay-card-field{flex:1;}
+  .pay-card-field small{font-size:9px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:1px;}
+  .pay-card-field span{font-size:12px;color:#fff;}
+
+  .bottomnav{flex:0 0 60px;display:flex;align-items:stretch;border-top:1px solid rgba(255,255,255,.08);background:var(--bg2);padding-bottom:env(safe-area-inset-bottom);}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:9px;font-weight:600;background:none;border:none;cursor:pointer;font-family:'Faktum Medium',inherit;}
+  .nav-item svg{width:18px;height:18px;}
+  .nav-item.active{color:#fff;}
+
+  .toast{position:absolute;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);background:var(--green);color:#04130d;font-weight:800;font-size:12px;padding:10px 16px;border-radius:10px;z-index:70;opacity:0;box-shadow:0 12px 30px rgba(16,185,129,.35);transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  /* animacao aprovado (igual sistema) */
+  .approve-flash{animation:approveFlash .6s ease both;}
+  @keyframes approveFlash{0%{box-shadow:0 0 0 0 rgba(16,185,129,0);}50%{box-shadow:0 0 0 4px rgba(16,185,129,.5);}100%{box-shadow:0 0 0 0 rgba(16,185,129,0);}}
+  .check-pop{animation:checkPop .5s cubic-bezier(.2,.9,.24,1.15) both;}
+  @keyframes checkPop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+  .cursor{position:absolute;top:0;left:0;z-index:90;width:26px;height:26px;pointer-events:none;transform:translate(-100px,-100px);transition:transform .5s cubic-bezier(.45,.05,.25,1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));}
+
+  /* tela final (logo + saiba mais) */
+  .final-overlay{position:absolute;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;}
+  .final-overlay.active{display:flex;animation:fadeIn .4s ease both;}
+  .final-overlay img{width:150px;height:auto;}
+  .final-btn{background:var(--accent);color:#0b0d12;font-weight:800;font-size:15px;border:none;border-radius:12px;padding:14px 30px;cursor:pointer;font-family:var(--ff);box-shadow:0 8px 24px rgba(255,94,41,.3);transition:filter .15s;}
+  .final-btn:hover{filter:brightness(1.05);}
+  .final-tag{color:var(--muted);font-size:12px;letter-spacing:.04em;text-align:center;line-height:1.5;max-width:240px;}
+  .click-ring{position:absolute;top:8px;left:6px;width:14px;height:14px;border:2px solid var(--accent);border-radius:50%;opacity:0;transform:scale(.4);}
+  .cursor.clicking .click-ring{animation:ring .45s ease-out;}
+  .cursor.clicking svg{transform:scale(.82);}
+  @keyframes ring{0%{opacity:.9;transform:scale(.4);}100%{opacity:0;transform:scale(2.4);}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-notch"></div>
+  <div class="screen" id="screen">
+    <div class="statusbar">
+      <span>14:30</span>
+      <span style="display:flex;gap:6px;align-items:center;font-weight:700">5G<span class="bat"></span></span>
+    </div>
+
+    <div class="topbar">
+      <div class="topbar-label">Opera&ccedil;&atilde;o Gendaz</div>
+      <div class="topbar-title">Vis&atilde;o geral</div>
+      <div class="topbar-sub">Acompanhe sua agenda, conversas e opera&ccedil;&atilde;o di&aacute;ria.</div>
+      <div class="topbar-pills">
+        <span class="topbar-pill">Plano Basico 28 dias restantes / Plano Pro 30 dias restantes</span>
+      </div>
+      <span class="topbar-pill underline" style="width:fit-content;margin-top:5px">Suporte</span>
+      <div class="topbar-bell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="topbar-user">
+        <div class="av">VI</div>
+        <div class="info"><strong>Fernando Morais</strong><small>DONO</small></div>
+        <span class="chev">&#9662;</span>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <!-- AGENDA -->
+      <div class="view" id="view-agenda">
+        <div class="section-label">Agenda Operacional</div>
+        <div class="page-title">Agenda</div>
+        <div class="page-sub">Lista por data com filtros, cria&ccedil;&atilde;o, edi&ccedil;&atilde;o e corre&ccedil;&atilde;o de atendimentos.</div>
+        <div class="search-box">
+          <label>Buscar</label>
+          <input class="search-input" type="text" placeholder="Cliente, servi&ccedil;o ou profissional" />
+          <div class="search-hint"><span>Filtre cliente, servi&ccedil;o ou profissional rapidamente.</span><span>0/80</span></div>
+        </div>
+        <button class="btn btn-reload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+          Recarregar
+        </button>
+        <button class="btn btn-novo" id="btn-novo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/></svg>
+          Novo agendamento
+        </button>
+        <div class="filters">
+          <div class="filter-label">Filtrar por dia</div>
+          <div class="filter-input"><span style="font-size:13px" id="f-data-text">dd/mm/aaaa</span><span class="chev">&#9662;</span></div>
+          <div class="filter-input"><span style="font-size:13px">Todos os profissionais</span><span class="chev">&#9662;</span></div>
+          <div class="filter-input"><span style="font-size:13px">Todos os status</span><span class="chev">&#9662;</span></div>
+        </div>
+
+        <div class="ag-card" id="agcard" data-status="none">
+          <div class="ag-card-head">
+            <div class="ag-avatar" id="ag-avatar">MO</div>
+            <div class="ag-tit">
+              <span class="ag-nome" id="ag-nome">Marina Oliveira</span>
+              <span class="ag-prot" id="ag-prot">#AG-2048</span>
+            </div>
+            <span class="pill pill-pendente" data-show style="display:none">Pendente</span>
+            <span class="pill pill-em" data-show style="display:none">Em atend.</span>
+            <span class="pill pill-pausado" data-show style="display:none">Pausado</span>
+          </div>
+          <div class="ag-field"><strong>Manicure + Gel</strong><small>Ana Souza</small></div>
+          <div class="ag-field"><span style="font-size:11px;color:var(--muted)">27/08/2026 &middot; 16:30 &ndash; 17:10</span></div>
+          <div class="ag-actions">
+            <button class="btn b-iniciar show-ini" style="display:none" id="b-iniciar">Iniciar atendimento</button>
+            <div class="ag-actions dual show-pf" style="display:none" id="b-pf">
+              <button class="btn b-pausar" id="b-pausar">Pausar</button>
+              <button class="btn b-finalizar" id="b-finalizar">Finalizar</button>
+            </div>
+            <button class="btn b-retomar show-ret" style="display:none" id="b-retomar">Retomar atendimento</button>
+            <span class="pill pill-fin show-fin" style="display:none">Finalizado</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FINANCEIRO -->
+      <div class="view" id="view-fin">
+        <div class="section-label">Financeiro</div>
+        <div class="page-title">Financeiro</div>
+        <div class="page-sub">Resumo mensal e pend&ecirc;ncias.</div>
+        <div class="fin-summary">
+          <div class="fin-stat"><small>Total recebido</small><strong id="fin-recebido">R$ 0,00</strong></div>
+          <div class="fin-stat"><small>Total pendente</small><strong id="fin-pendente">R$ 600,00</strong></div>
+        </div>
+        <div class="fin-methods">
+          <div class="fin-method">Pix<span class="fin-check">&#10003;</span></div>
+          <div class="fin-method">D&eacute;bito<span class="fin-check">&#10003;</span></div>
+          <div class="fin-method">Cr&eacute;dito<span class="fin-check">&#10003;</span></div>
+          <div class="fin-method">Parcelado<span class="fin-check">&#10003;</span></div>
+          <div class="fin-method">Dinheiro<span class="fin-check">&#10003;</span></div>
+        </div>
+        <div class="filter-label">M&ecirc;s</div>
+        <div class="fin-month"><span>agosto de 2026</span><span>&#9662;</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
+          <button class="btn btn-export" style="min-height:40px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Exportar CSV
+          </button>
+          <button class="btn btn-reload" style="min-height:40px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+            Recarregar
+          </button>
+        </div>
+        <div class="filter-label">Pagamentos recentes</div>
+        <div class="pay-card" id="pay-card" style="display:none">
+          <div class="pay-card-head">
+            <div class="av">MO</div>
+            <div class="nome" id="pc-nome">Marina Oliveira</div>
+          </div>
+          <div style="padding-top:7px;border-top:1px solid var(--line)">
+            <div class="pay-card-field"><small>Cadastro</small><span><span class="pill pill-ativo">Ativo</span></span></div>
+          </div>
+          <div class="pay-card-field"><small>Servi&ccedil;o</small><span id="pc-serv">Manicure + Gel</span></div>
+          <div class="pay-card-row">
+            <div class="pay-card-field"><small>Protocolo</small><span id="pc-prot">#AG-2048</span></div>
+            <div class="pay-card-field"><small>Valor</small><span>R$ 89,90</span></div>
+          </div>
+          <div class="pay-card-row">
+            <div class="pay-card-field"><small>Cupom</small><span>SEM CUPOM</span></div>
+            <div class="pay-card-field"><small>Forma</small><span id="pc-forma">Pix</span></div>
+          </div>
+          <div class="pay-card-field" style="padding-top:4px"><small>Status</small><span><span class="pill pill-aprovado">Aprovado</span></span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAIS (filhos diretos do screen) -->
+    <div class="modal-overlay" id="modal-novo">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>Criar agendamento</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="m-field"><label>Cliente</label><div class="csel" id="sel-cliente"><div class="csel-trigger"><span class="csel-val">Vinicius Henrique</span><span class="chev">&#9662;</span></div><div class="csel-options"><div class="csel-opt selected" data-val="Vinicius Henrique">Vinicius Henrique</div><div class="csel-opt" data-val="Marina Oliveira">Marina Oliveira</div><div class="csel-opt" data-val="Thiago Nascimento">Thiago Nascimento</div><div class="csel-opt" data-val="testestddds">testestddds</div></div></div></div>
+          <div class="m-field"><label>Servi&ccedil;o</label><div class="csel" id="sel-servico"><div class="csel-trigger"><span class="csel-val">Manicure + Gel</span><span class="chev">&#9662;</span></div><div class="csel-options"><div class="csel-opt selected" data-val="Manicure + Gel">Manicure + Gel</div><div class="csel-opt" data-val="Corte social">Corte social</div><div class="csel-opt" data-val="Design de sobrancelhas">Design de sobrancelhas</div></div></div></div>
+          <div class="m-field"><label>Profissional</label><div class="csel" id="sel-prof"><div class="csel-trigger"><span class="csel-val">Sem prefer&ecirc;ncia</span><span class="chev">&#9662;</span></div><div class="csel-options"><div class="csel-opt selected" data-val="Sem prefer&ecirc;ncia">Sem prefer&ecirc;ncia</div><div class="csel-opt" data-val="Ana Souza">Ana Souza</div><div class="csel-opt" data-val="Carla Lima">Carla Lima</div></div></div></div>
+          <div class="m-field"><label>Data</label><input class="m-date" type="date" id="m-data" value="2026-08-27" /><div class="m-hint"><span>Escolha uma data dentro dos pr&oacute;ximos 2 anos.</span></div></div>
+          <div class="m-field"><label>Hor&aacute;rio</label><div class="csel" id="sel-hora"><div class="csel-trigger"><span class="csel-val">16:30</span><span class="chev">&#9662;</span></div><div class="csel-options"><div class="csel-opt" data-val="11:00">11:00 (indispon&iacute;vel)</div><div class="csel-opt selected" data-val="16:30">16:30</div><div class="csel-opt" data-val="15:00">15:00</div><div class="csel-opt" data-val="15:30">15:30</div></div></div></div>
+          <div class="m-field"><label>Adicionar cupom</label><div class="csel" id="sel-cupom"><div class="csel-trigger"><span class="csel-val">Nenhum cupom</span><span class="chev">&#9662;</span></div><div class="csel-options"><div class="csel-opt selected" data-val="Nenhum cupom">Nenhum cupom</div></div></div></div>
+          <div class="m-field"><label>Observa&ccedil;&otilde;es</label><textarea class="m-textarea" maxlength="300" id="m-obs">Criado pelo painel.</textarea><div class="m-hint"><span>Use uma observa&ccedil;&atilde;o curta.</span><span>19/300</span></div></div>
+        </div>
+        <div class="modal-footer"><button class="btn btn-salvar" id="btn-salvar">Salvar</button></div>
+      </div>
+    </div>
+
+    <div class="modal-overlay" id="modal-pag">
+      <div class="modal">
+        <div class="modal-head">
+          <h3>Finalizar atendimento</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="pay-title">Como o cliente realizou o pagamento?</p>
+          <div class="pay-methods">
+            <button class="pay-pill" id="pay-pix">Pix</button>
+            <button class="pay-pill" id="pay-deb">D&eacute;bito</button>
+            <button class="pay-pill" id="pay-cred">Cr&eacute;dito</button>
+            <button class="pay-pill" id="pay-din">Dinheiro</button>
+            <button class="pay-pill pay-pill-nao" id="pay-nao">N&atilde;o foi pago</button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-voltar">Voltar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="bottomnav">
+      <button class="nav-item" data-nav="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>Dashboard</button>
+      <button class="nav-item active" data-nav="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/></svg>Agenda</button>
+      <button class="nav-item" data-nav="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clientes</button>
+      <button class="nav-item" data-nav="fin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Financeiro</button>
+      <button class="nav-item" data-nav="mais"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>Mais</button>
+    </div>
+
+    <div class="final-overlay" id="finalOverlay">
+      <img src="frontend/src/assets/logos/gendaz-logo-branco.png" alt="Gendaz" />
+      <button class="final-btn">Saiba mais</button>
+      <span class="final-tag">Agenda que vira dinheiro.</span>
+    </div>
+
+    <div class="cursor" id="cursor">
+      <div class="click-ring"></div>
+      <svg viewBox="0 0 24 24" fill="#fff" stroke="#111" stroke-width="1.2" style="width:22px;height:22px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))"><path d="M5 3l5 0c1.1 0 2 .9 2 2l0 5 1.2-3.1c.5-1.3 2.4-1.1 2.6.3l.4 2.3 1.1-1.8c.7-1.1 2.5-.5 2.5.7l0 7c0 3-2.2 5.5-5.2 5.5-2 0-3.3-.8-4.5-2.2l-3.2-3.9c-.9-1.1-.5-2.7.8-3.3.7-.3 1.5-.1 2 .4l.6.7 0-8.6c0-1.1.9-2 2-2l1 0" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+const scr = document.getElementById('screen');
+const cnt = document.getElementById('content');
+const cur = document.getElementById('cursor');
+const toast = document.getElementById('toast');
+let S = 1;
+const sl = ms => new Promise(r => setTimeout(r, ms * S));
+
+/* ====== SOM DE CLIQUE (web audio) ====== */
+let audioCtx = null;
+function initAudio(){
+  try {
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === 'suspended') audioCtx.resume();
+  } catch(e){}
+}
+function playClick(){
+  if(!audioCtx) return;
+  const t = audioCtx.currentTime;
+  const dur = 0.035;
+  const len = Math.floor(audioCtx.sampleRate * dur);
+  const buf = audioCtx.createBuffer(1, len, audioCtx.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<len;i++){
+    const env = Math.pow(1 - i/len, 4);
+    d[i] = (Math.random()*2 - 1) * env;
+  }
+  const src = audioCtx.createBufferSource();
+  src.buffer = buf;
+  const bp = audioCtx.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 0.7;
+  const hp = audioCtx.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 800;
+  const g = audioCtx.createGain(); g.gain.value = 0.5;
+  src.connect(hp).connect(bp).connect(g).connect(audioCtx.destination);
+  src.start(t); src.stop(t + dur);
+}
+document.addEventListener('click', initAudio, { once: true });
+document.addEventListener('keydown', initAudio, { once: true });
+
+function ctr(el) {
+  const s = scr.getBoundingClientRect(), r = el.getBoundingClientRect();
+  return { x: r.left - s.left + r.width / 2, y: r.top - s.top + r.height / 2 };
+}
+async function mv(el) {
+  const p = ctr(el);
+  cur.style.transform = `translate(${p.x - 4}px, ${p.y - 4}px)`;
+  await sl(500);
+}
+async function ck(el) {
+  await mv(el);
+  cur.classList.add('clicking');
+  playClick();
+  await sl(140);
+  cur.classList.remove('clicking');
+  await sl(200);
+}
+async function scrollTo(el) {
+  if (!el) return;
+  el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  await sl(350);
+}
+
+/* custom selects */
+function openSelect(sel){ sel.classList.add('open'); }
+function pickOption(sel, val){
+  sel.querySelectorAll('.csel-opt').forEach(o => o.classList.toggle('selected', o.dataset.val === val));
+  sel.querySelector('.csel-val').textContent = val;
+  sel.classList.remove('open');
+}
+
+function showView(name){
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const v = document.getElementById('view-' + name);
+  if (v) v.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.nav === name));
+  cnt.scrollTop = 0;
+}
+function setStatus(s){
+  const c = document.getElementById('agcard');
+  c.dataset.status = s;
+  const ini=c.querySelector('.show-ini'), pf=c.querySelector('.show-pf'), ret=c.querySelector('.show-ret'), fin=c.querySelector('.show-fin');
+  const pp=c.querySelector('.pill-pendente'), pe=c.querySelector('.pill-em'), ps=c.querySelector('.pill-pausado');
+  [ini,pf,ret,fin,pp,pe,ps].forEach(el=>{ if(el) el.style.display='none'; });
+  if(s==='pendente'){ pp.style.display='inline-flex'; ini.style.display='flex'; }
+  if(s==='em'){ pe.style.display='inline-flex'; pf.style.display='flex'; }
+  if(s==='pausado'){ ps.style.display='inline-flex'; ret.style.display='flex'; }
+  if(s==='finalizado'){ fin.style.display='inline-flex'; }
+}
+function showToast(t){ toast.textContent=t; toast.classList.add('show'); setTimeout(()=>toast.classList.remove('show'), 2000*S); }
+
+/* ====== TIMELINE ====== */
+async function run(){
+  // reset
+  showView('agenda');
+  document.getElementById('agcard').dataset.status='none';
+  document.getElementById('modal-novo').classList.remove('active');
+  document.getElementById('modal-pag').classList.remove('active');
+  document.getElementById('pay-card').style.display='none';
+  document.getElementById('fin-recebido').textContent='R$ 0,00';
+  document.getElementById('fin-pendente').textContent='R$ 600,00';
+  document.getElementById('f-data-text').textContent='dd/mm/aaaa';
+  document.getElementById('finalOverlay').classList.remove('active');
+  await sl(800);
+
+  /* PARTE 1: NOVO AGENDAMENTO */
+  await ck(document.getElementById('btn-novo'));
+  await sl(400);
+  document.getElementById('modal-novo').classList.add('active');
+  await sl(600);
+
+  await ck(document.querySelector('#sel-cliente .csel-trigger'));
+  await sl(300); openSelect(document.getElementById('sel-cliente')); await sl(400);
+  await ck(document.querySelector('#sel-cliente .csel-opt[data-val="Marina Oliveira"]'));
+  pickOption(document.getElementById('sel-cliente'),'Marina Oliveira'); await sl(400);
+
+  await ck(document.querySelector('#sel-servico .csel-trigger'));
+  await sl(300); openSelect(document.getElementById('sel-servico')); await sl(400);
+  await ck(document.querySelector('#sel-servico .csel-opt[data-val="Manicure + Gel"]'));
+  pickOption(document.getElementById('sel-servico'),'Manicure + Gel'); await sl(400);
+
+  await ck(document.querySelector('#sel-prof .csel-trigger'));
+  await sl(300); openSelect(document.getElementById('sel-prof')); await sl(400);
+  await ck(document.querySelector('#sel-prof .csel-opt[data-val="Ana Souza"]'));
+  pickOption(document.getElementById('sel-prof'),'Ana Souza'); await sl(400);
+
+  await ck(document.querySelector('#sel-hora .csel-trigger'));
+  await sl(300); openSelect(document.getElementById('sel-hora')); await sl(400);
+  await ck(document.querySelector('#sel-hora .csel-opt[data-val="16:30"]'));
+  pickOption(document.getElementById('sel-hora'),'16:30'); await sl(400);
+
+  await ck(document.getElementById('btn-salvar'));
+  await sl(300);
+  document.getElementById('modal-novo').classList.remove('active');
+  await sl(600);
+
+  /* PARTE 2: CARD APARECE + ARRASTA P BAIXO */
+  document.getElementById('f-data-text').textContent='27/08/2026';
+  const card = document.getElementById('agcard');
+  card.dataset.status='pendente';
+  card.classList.add('anim');
+  setStatus('pendente');
+  await sl(500);
+  await scrollTo(card);
+  await sl(500);
+
+  /* PARTE 3: INICIAR ATENDIMENTO (animacao) */
+  await scrollTo(document.getElementById('b-iniciar'));
+  await ck(document.getElementById('b-iniciar'));
+  // animacao de iniciar
+  card.classList.remove('anim'); void card.offsetWidth; card.classList.add('anim');
+  setStatus('em');
+  await sl(800);
+
+  /* PARTE 4: FINALIZAR (pausar/finalizar aparecem) -> clica FINALIZAR */
+  await scrollTo(document.getElementById('b-finalizar'));
+  await ck(document.getElementById('b-finalizar'));
+  await sl(400);
+  document.getElementById('modal-pag').classList.add('active');
+  await sl(800);
+
+  /* PARTE 5: PIX -> animacao pagamento aprovado */
+  await ck(document.getElementById('pay-pix'));
+  await sl(300);
+  document.getElementById('modal-pag').classList.remove('active');
+  card.classList.remove('anim'); void card.offsetWidth; card.classList.add('anim'); card.classList.add('approve-flash');
+  setStatus('finalizado');
+  showToast('Pagamento aprovado');
+  await sl(1600);
+
+  /* PARTE 6: FINANCEIRO -> arrasta p baixo -> mostra aprovado */
+  await ck(document.querySelector('.nav-item[data-nav="fin"]'));
+  await sl(400);
+  showView('fin');
+  await sl(600);
+  const pc = document.getElementById('pay-card');
+  pc.style.display='flex';
+  pc.classList.add('anim');
+  document.getElementById('fin-recebido').textContent='R$ 89,90';
+  document.getElementById('fin-pendente').textContent='R$ 510,10';
+  await scrollTo(pc);
+  await sl(3000);
+
+  /* TRANSIÇÃO FINAL: tela logo + saiba mais */
+  await sl(400);
+  document.getElementById('finalOverlay').classList.add('active');
+  await sl(3500);
+}
+function start(){ run().then(()=>setTimeout(start, 1500)); }
+
+document.querySelector('.btn-voltar').addEventListener('click', ()=>{
+  document.getElementById('modal-pag').classList.remove('active');
+});
+document.getElementById('pay-nao').addEventListener('click', ()=>{
+  document.getElementById('modal-pag').classList.remove('active');
+  const c = document.getElementById('agcard');
+  c.classList.remove('anim'); void c.offsetWidth; c.classList.add('anim');
+  setStatus('finalizado');
+  showToast('Atendimento finalizado sem pagamento');
+});
+
+start();
+</script>
+</body>
+</html>

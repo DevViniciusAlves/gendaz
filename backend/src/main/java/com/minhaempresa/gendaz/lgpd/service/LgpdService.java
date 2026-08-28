@@ -2,12 +2,18 @@ package com.minhaempresa.gendaz.lgpd.service;
 
 import com.minhaempresa.gendaz.admin.entity.AuditLogEntity;
 import com.minhaempresa.gendaz.admin.repository.AuditLogRepository;
+import com.minhaempresa.gendaz.agendamento.mapper.AgendamentoMapper;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
+import com.minhaempresa.gendaz.chamado.mapper.ChamadoMapper;
+import com.minhaempresa.gendaz.chamado.repository.ChamadoRepository;
 import com.minhaempresa.gendaz.chamado.service.ChamadoService;
+import com.minhaempresa.gendaz.cliente.mapper.ClienteMapper;
 import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
+import com.minhaempresa.gendaz.conversa.mapper.ConversaMapper;
 import com.minhaempresa.gendaz.conversa.repository.ConversaRepository;
+import com.minhaempresa.gendaz.entrega.mapper.EntregaMapper;
 import com.minhaempresa.gendaz.entrega.repository.EntregaRepository;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.enums.StatusEmpresa;
@@ -22,14 +28,32 @@ import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ExportacaoDadosResponse;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.MeuGendazExportado;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.PlanoExportado;
 import com.minhaempresa.gendaz.lgpd.dto.LgpdDtos.ReativarContaResponse;
+import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
+import com.minhaempresa.gendaz.chamado.dto.ChamadoDtos.ChamadoResponse;
+import com.minhaempresa.gendaz.cliente.dto.ClienteDtos.ClienteResponse;
+import com.minhaempresa.gendaz.conversa.dto.ConversaDtos.ConversaResponse;
+import com.minhaempresa.gendaz.entrega.dto.EntregaDtos.EntregaResponse;
+import com.minhaempresa.gendaz.mensagem.mapper.MensagemMapper;
+import com.minhaempresa.gendaz.mensagem.dto.MensagemDtos.MensagemResponse;
 import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
+import com.minhaempresa.gendaz.notafiscal.dto.NotaFiscalDtos.NotaFiscalResponse;
+import com.minhaempresa.gendaz.notificacao.dto.NotificacaoDtos.NotificacaoResponse;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoPlanoResponse;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.PagamentoResponse;
+import com.minhaempresa.gendaz.profissional.dto.ProfissionalDtos.ProfissionalResponse;
+import com.minhaempresa.gendaz.servico.dto.ServicoDtos.ServicoResponse;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
+import com.minhaempresa.gendaz.notafiscal.mapper.NotaFiscalMapper;
 import com.minhaempresa.gendaz.notafiscal.repository.NotaFiscalRepository;
+import com.minhaempresa.gendaz.notificacao.mapper.NotificacaoMapper;
 import com.minhaempresa.gendaz.notificacao.repository.NotificacaoRepository;
 import com.minhaempresa.gendaz.pagamento.gateway.PaymentGateway;
+import com.minhaempresa.gendaz.pagamento.mapper.PagamentoMapper;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoPlanoRepository;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.gendaz.profissional.mapper.ProfissionalMapper;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
+import com.minhaempresa.gendaz.servico.mapper.ServicoMapper;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
@@ -45,6 +69,11 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoPlanoEntity;
+import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
+import com.minhaempresa.gendaz.admin.repository.AdminAuditRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.PersistenceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -68,12 +97,17 @@ public class LgpdService {
     private final EntregaRepository entregaRepository;
     private final NotificacaoRepository notificacaoRepository;
     private final ChamadoService chamadoService;
+    private final ChamadoRepository chamadoRepository;
     private final AssinaturaService assinaturaService;
     private final FinanceiroService financeiroService;
     private final AuditLogRepository auditLogRepository;
     private final PaymentGateway paymentGateway;
     private final UsuarioSessionService usuarioSessionService;
+    private final AdminAuditRepository adminAuditRepository;
     private final UsuarioMapper usuarioMapper = new UsuarioMapper();
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Transactional(readOnly = true)
     public ExportacaoDadosResponse exportar(Long usuarioId) {
@@ -129,13 +163,53 @@ public class LgpdService {
             log.warn("Nao foi possivel carregar dados do plano para exportacao LGPD. erroTipo={}", e.getClass().getSimpleName());
         }
 
-        // 6. Dados Tecnicos (Audit logs do proprio usuario)
-        List<AuditoriaExportada> auditoria = List.of();
+        // 6. Dados técnicos (logs de auditoria do tenant)
+        List<AuditoriaExportada> auditoria = auditLogRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .map(this::toAuditoria).toList();
 
         // 7. Meu Gendaz (Acesso do titular)
         MeuGendazExportado meuGendaz = meuGendazAcessoRepository.findByEmpresaIdAndEmailIgnoreCase(empresaId, usuario.getEmail())
                 .map(a -> new MeuGendazExportado(a.getNome(), a.getEmail(), a.getStatus().name()))
                 .orElse(null);
+
+        // 8. Dados do negócio do tenant (portabilidade LGPD Art. 18)
+        ClienteMapper clienteMapper = new ClienteMapper();
+        ServicoMapper servicoMapper = new ServicoMapper();
+        ProfissionalMapper profissionalMapper = new ProfissionalMapper();
+        AgendamentoMapper agendamentoMapper = new AgendamentoMapper();
+        ConversaMapper conversaMapper = new ConversaMapper();
+        MensagemMapper mensagemMapper = new MensagemMapper();
+        EntregaMapper entregaMapper = new EntregaMapper();
+        NotificacaoMapper notificacaoMapper = new NotificacaoMapper();
+        NotaFiscalMapper notaFiscalMapper = new NotaFiscalMapper();
+        ChamadoMapper chamadoMapper = new ChamadoMapper();
+        PagamentoMapper pagamentoMapper = new PagamentoMapper();
+
+        List<ClienteResponse> clientes = clienteRepository.findByEmpresaId(empresaId).stream()
+                .map(clienteMapper::toResponse).toList();
+        List<ServicoResponse> servicos = servicoRepository.findByEmpresaId(empresaId).stream()
+                .map(servicoMapper::toResponse).toList();
+        List<ProfissionalResponse> profissionais = profissionalRepository.findByEmpresaId(empresaId).stream()
+                .map(profissionalMapper::toResponse).toList();
+        List<AgendamentoResponse> agendamentos = agendamentoRepository.findByEmpresaId(empresaId).stream()
+                .map(agendamentoMapper::toResponse).toList();
+        List<ConversaResponse> conversas = conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream()
+                .map(conversaMapper::toResponse).toList();
+        List<MensagemResponse> mensagens = conversaRepository.findByEmpresaIdOrderByDataUltimaMensagemDesc(empresaId).stream()
+                .flatMap(c -> mensagemRepository.findByConversaIdOrderByDataEnvioAsc(c.getId()).stream())
+                .map(mensagemMapper::toResponse).toList();
+        List<EntregaResponse> entregas = entregaRepository.findByEmpresaId(empresaId).stream()
+                .map(entregaMapper::toResponse).toList();
+        List<NotificacaoResponse> notificacoes = notificacaoRepository.findByEmpresaId(empresaId).stream()
+                .map(notificacaoMapper::toResponse).toList();
+        List<NotaFiscalResponse> notasFiscais = notaFiscalRepository.findByEmpresaId(empresaId).stream()
+                .map(notaFiscalMapper::toResponse).toList();
+        List<PagamentoResponse> pagamentos = pagamentoRepository.findByEmpresaId(empresaId).stream()
+                .map(pagamentoMapper::toResponse).toList();
+        List<PagamentoPlanoResponse> pagamentosPlano = pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .map(pagamentoMapper::toPlanoResponse).toList();
+        List<ChamadoResponse> chamados = chamadoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+                .map(chamadoMapper::toResponse).toList();
 
         return new ExportacaoDadosResponse(
                 exportacao,
@@ -144,7 +218,19 @@ public class LgpdService {
                 aceites,
                 plano,
                 auditoria,
-                meuGendaz
+                meuGendaz,
+                clientes,
+                servicos,
+                profissionais,
+                agendamentos,
+                conversas,
+                mensagens,
+                entregas,
+                notificacoes,
+                notasFiscais,
+                pagamentos,
+                pagamentosPlano,
+                chamados
         );
     }
 
@@ -217,6 +303,101 @@ public class LgpdService {
                 : "Conta reativada. Seu plano expirou: faca login para regularizar o pagamento.";
         log.info("[LGPD] Conta encerrada reativada pelo DONO: empresa={}, novoStatus={}", empresa.getId(), novoStatus);
         return new ReativarContaResponse(mensagem, empresa.getId(), novoStatus.name());
+    }
+
+    @Transactional
+    public ExcluirContaResponse excluirDadosConta(Long usuarioId) {
+        UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
+        if (usuario.getPerfil() != PerfilUsuario.DONO) {
+            throw new BusinessException("Acesso negado: apenas o dono pode excluir definitivamente a conta.");
+        }
+        if (usuario.getEmpresa() == null) {
+            throw new BusinessException("Usuario sem empresa nao pode solicitar exclusao da conta.");
+        }
+        Long empresaId = usuario.getEmpresa().getId();
+
+        // 1. Registro global de auditoria ANTES da exclusão (não será apagado pelo purge)
+        AdminAuditEntity logExclusao = new AdminAuditEntity();
+        logExclusao.setEmpresaId(empresaId);
+        logExclusao.setUsuarioId(usuario.getId());
+        logExclusao.setUsuarioNome(usuario.getNome() != null ? usuario.getNome() : "Desconhecido");
+        logExclusao.setAcao("EXCLUSAO_DEFINITIVA_DADOS");
+        logExclusao.setEntidade("EMPRESA");
+        logExclusao.setEntidadeId(empresaId);
+        logExclusao.setDescricao("Exclusão irreversível de todos os dados pessoais da conta (LGPD Art. 16).");
+        logExclusao.setDataHora(java.time.LocalDateTime.now());
+        adminAuditRepository.save(logExclusao);
+
+        // 2. Cancelar assinaturas Stripe para evitar cobranças futuras
+        String stripeStatus = cancelarSubscriptionStripe(usuario.getEmpresa());
+
+        // 3. Exclusão em ordem topológica de FK (sem session_replication_role,
+        //    que exige privilégio de replicação indisponível no Neon).
+        //    Cada DELETE respeita a dependência pai->filho para não violar FKs.
+        List<String> delecoes = java.util.List.of(
+            // 3.1 Tabelas-filha / tabelas de junção (sem empresa_id ou FK para outra tabela do tenant)
+            "DELETE FROM mensagens WHERE conversa_id IN (SELECT id FROM conversas WHERE empresa_id = ?)",
+            "DELETE FROM profissional_dias_trabalho WHERE profissional_id IN (SELECT id FROM profissionais WHERE empresa_id = ?)",
+            "DELETE FROM promocao_servico WHERE promocao_id IN (SELECT id FROM promocoes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_servico WHERE promocao_id IN (SELECT id FROM meu_gendaz_promocoes WHERE empresa_id = ?)",
+            "DELETE FROM pagamentos_planos_cobrancas WHERE pagamento_plano_id IN (SELECT id FROM pagamentos_planos WHERE empresa_id = ?)",
+            "DELETE FROM password_reset_tokens WHERE usuario_id IN (SELECT id FROM usuarios WHERE empresa_id = ?)",
+            "DELETE FROM promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_uso WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM meu_gendaz_promocao_notificacao WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM crm_contatos WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM notificacoes WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM notas_fiscais WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM entregas WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM pagamentos WHERE cliente_id IN (SELECT id FROM clientes WHERE empresa_id = ?)",
+            "DELETE FROM caixa_despesas_log WHERE business_id IN (SELECT id FROM empresas WHERE id = ?)",
+            // 3.2 Pais (por empresa_id) — as tabelas-filha já foram removidas
+            "DELETE FROM agendamentos WHERE empresa_id = ?",
+            "DELETE FROM conversas WHERE empresa_id = ?",
+            "DELETE FROM cadastro_idempotencia WHERE empresa_id = ?",
+            "DELETE FROM agenda_blocked_days WHERE empresa_id = ?",
+            "DELETE FROM clientes WHERE empresa_id = ?",
+            "DELETE FROM clientes_emails_bloqueados WHERE empresa_id = ?",
+            "DELETE FROM servicos WHERE empresa_id = ?",
+            "DELETE FROM profissionais WHERE empresa_id = ?",
+            "DELETE FROM logs_atividade WHERE empresa_id = ?",
+            "DELETE FROM audit_logs WHERE empresa_id = ?",
+            "DELETE FROM membresias WHERE empresa_id = ?",
+            "DELETE FROM convites_empresa WHERE empresa_id = ?",
+            "DELETE FROM chamados WHERE empresa_id = ?",
+            "DELETE FROM admin_impersonation_sessions WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_acessos WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_otp_challenges WHERE empresa_id = ?",
+            "DELETE FROM pagamentos_planos WHERE empresa_id = ?",
+            "DELETE FROM assinaturas WHERE empresa_id = ?",
+            "DELETE FROM promocoes WHERE empresa_id = ?",
+            "DELETE FROM meu_gendaz_promocoes WHERE empresa_id = ?",
+            "DELETE FROM formas_pagamento_empresa WHERE empresa_id = ?",
+            "DELETE FROM horarios_atendimento WHERE empresa_id = ?",
+            "DELETE FROM insights WHERE empresa_id = ?",
+            "DELETE FROM usuarios WHERE empresa_id = ?",
+            // 3.3 Por fim, a própria empresa
+            "DELETE FROM empresas WHERE id = ?"
+        );
+        for (String sql : delecoes) {
+            try {
+                entityManager.createNativeQuery(sql).setParameter(1, empresaId).executeUpdate();
+            } catch (jakarta.persistence.PersistenceException ex) {
+                String msg = ex.getMessage() != null ? ex.getMessage() : "";
+                if (msg.contains("does not exist")) {
+                    log.warn("EXCLUSAO_LGPD: tabela inexistente ignorada (conferir nome no SQL): {}", sql);
+                    continue;
+                }
+                throw ex;
+            }
+        }
+
+        return new ExcluirContaResponse(
+                "Conta e todos os dados excluidos definitivamente.",
+                empresaId,
+                "EXCLUIDA",
+                stripeStatus);
     }
 
     private EmpresaEntity buscarEmpresa(Long empresaId) {

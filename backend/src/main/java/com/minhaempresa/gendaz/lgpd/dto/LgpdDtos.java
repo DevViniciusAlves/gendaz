@@ -29,7 +29,19 @@ public final class LgpdDtos {
             AceitesLgpd aceitesLgpd,
             PlanoExportado plano,
             List<AuditoriaExportada> dadosTecnicos,
-            MeuGendazExportado meuGendaz
+            MeuGendazExportado meuGendaz,
+            List<ClienteResponse> clientes,
+            List<ServicoResponse> servicos,
+            List<ProfissionalResponse> profissionais,
+            List<AgendamentoResponse> agendamentos,
+            List<ConversaResponse> conversas,
+            List<MensagemResponse> mensagens,
+            List<EntregaResponse> entregas,
+            List<NotificacaoResponse> notificacoes,
+            List<NotaFiscalResponse> notasFiscais,
+            List<PagamentoResponse> pagamentos,
+            List<PagamentoPlanoResponse> pagamentosPlano,
+            List<ChamadoResponse> chamados
     ) {}
 
     public record AceitesLgpd(
