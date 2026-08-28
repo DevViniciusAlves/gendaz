@@ -23109,3 +23109,68 @@ iframe {
 .app-shell .caixa-despesas-grid .despesas-card strong {
   color: #ff2b32 !important;
 }
+
+/* ============================================================
+   Botão de suporte Crisp (padrão Gendaz) — landing page
+   Fixo no canto inferior direito, preto e branco
+   ============================================================ */
+.gendaz-crisp-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 9999;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: 1px solid rgba(17, 24, 39, 0.12);
+  background: #111827;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(17, 24, 39, 0.28);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+  animation: gendaz-launcher-in 0.4s ease both;
+}
+
+.gendaz-crisp-launcher:hover {
+  transform: translateY(-2px) scale(1.04);
+  background: #0f172a;
+  box-shadow: 0 18px 38px rgba(17, 24, 39, 0.34);
+}
+
+.gendaz-crisp-launcher:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(17, 24, 39, 0.18), 0 14px 30px rgba(17, 24, 39, 0.28);
+}
+
+.gendaz-crisp-launcher-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid #111827;
+  opacity: 0;
+  animation: gendaz-launcher-pulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes gendaz-launcher-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes gendaz-launcher-pulse {
+  0% { opacity: 0.5; transform: scale(1); }
+  70% { opacity: 0; transform: scale(1.5); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@media (max-width: 640px) {
+  .gendaz-crisp-launcher {
+    right: 16px;
+    bottom: 16px;
+    width: 54px;
+    height: 54px;
+  }
+}
