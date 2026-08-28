@@ -1,84 +1,96 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { Crisp } from "crisp-sdk-web";
 import { MessageCircle } from "lucide-react";
 
-// Integração Crisp (suporte ao cliente) — apenas na landing page.
+// Launcher customizado do Crisp — landing page (Gendaz).
 //
-// Abas do chatbox (conforme escopo):
-//   1. Chat (Suporte)        -> funcionando (precisa apenas do VITE_CRISP_WEBSITE_ID)
-//   2. Central de Ajuda      -> ativar "Helpdesk" no painel do Crisp
-//                              (Settings > Setup & Integrations > Chatbox > Helpdesk)
-//   3. Pesquisa              -> já vem junto da Central de Ajuda (busca de artigos)
+// O Crisp já está integrado via script do CloudPages (window.$crisp + window.CRISP_WEBSITE_ID).
+// Aqui NÃO alteramos a integração: apenas (1) ocultamos o launcher padrão e
+// (2) abrimos o chat via API oficial do crisp-sdk-web.
 //
-// O SDK é carregado dinamicamente dentro do efeito e envolvido em try/catch,
-// para que qualquer falha do Crisp NUNCA derrube a landing page (tela preta).
-// O estilo preto/branco (padrão Gendaz) é aplicado via setColorTheme.
+// - launcher:hide  -> comando oficial do Crisp (window.$crisp é uma fila: processado ao carregar)
+// - Crisp.chat.open() -> API oficial para abrir o chat
+//
+// Estilos inline/escopo mantidos neste arquivo (não toca CSS global).
+
+const LAUNCHER_CLASS = "gendaz-crisp-launcher";
 
 export function CrispChat() {
-  const websiteId = import.meta.env.VITE_CRISP_WEBSITE_ID;
-  const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
-    if (!websiteId) {
-      console.warn(
-        "Crisp: VITE_CRISP_WEBSITE_ID não configurado. Defina a variável de ambiente no Render."
-      );
-      return;
+    // Esconde o launcher padrão do Crisp usando o comando oficial.
+    // window.$crisp é uma fila: o comando é aplicado quando o Crisp carrega.
+    try {
+      window.$crisp = window.$crisp || [];
+      window.$crisp.push(["do", "launcher:hide"]);
+    } catch {
+      /* no-op */
     }
+  }, []);
 
-    let cancelled = false;
-
-    (async () => {
-      try {
-        const { Crisp } = await import("crisp-sdk-web");
-
-        if (cancelled) return;
-
-        Crisp.configure(websiteId, { locale: "pt-br" });
-        Crisp.setColorTheme("#111827");
-
-        Crisp.onLoaded(() => {
-          if (cancelled) return;
-          try {
-            window.$crisp.push(["do", "launcher:hide"]);
-          } catch {
-            /* launcher já pode estar oculto */
-          }
-          setLoaded(true);
-        });
-      } catch (err) {
-        console.error("Crisp: falha ao inicializar o chatbox", err);
+  function openChat() {
+    try {
+      // Caso já esteja carregado, abre via SDK oficial.
+      if (window.$crisp && window.$crisp.is) {
+        Crisp.chat.open();
+      } else if (window.CRISP_WEBSITE_ID) {
+        // Ainda carregando: enfileira a abertura (processada quando o Crisp estiver pronto).
+        window.$crisp = window.$crisp || [];
+        window.$crisp.push(["do", "chat:open"]);
       }
-    })();
-
-    return () => {
-      cancelled = true;
-      try {
-        // Remove o Crisp ao desmontar a landing page
-        import("crisp-sdk-web").then(({ Crisp }) => Crisp.reset()).catch(() => {});
-      } catch {
-        /* ignore */
-      }
-    };
-  }, [websiteId]);
-
-  if (!websiteId) return null;
-
-  function openCrisp() {
-    import("crisp-sdk-web")
-      .then(({ Crisp }) => Crisp.open())
-      .catch(() => {});
+    } catch {
+      /* no-op */
+    }
   }
 
   return (
-    <button
-      type="button"
-      className="gendaz-crisp-launcher"
-      onClick={openCrisp}
-      aria-label="Falar com o suporte da Gendaz"
-      data-loaded={loaded ? "true" : "false"}
-    >
-      <MessageCircle size={26} strokeWidth={2} />
-      <span className="gendaz-crisp-launcher-pulse" aria-hidden="true" />
-    </button>
+    <>
+      <style>{`
+        .${LAUNCHER_CLASS} {
+          position: fixed;
+          right: 24px;
+          bottom: 24px;
+          z-index: 9999;
+          width: 60px;
+          height: 60px;
+          border: none;
+          border-radius: 50%;
+          background: #F75B1E;
+          color: #ffffff;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          padding: 0;
+          box-shadow: 0 10px 24px rgba(247, 91, 30, 0.35);
+          transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        }
+        .${LAUNCHER_CLASS}:hover {
+          transform: translateY(-2px) scale(1.04);
+          background: #e14d12;
+          box-shadow: 0 14px 30px rgba(247, 91, 30, 0.45);
+        }
+        .${LAUNCHER_CLASS}:focus-visible {
+          outline: none;
+          box-shadow: 0 0 0 3px rgba(247, 91, 30, 0.35), 0 10px 24px rgba(247, 91, 30, 0.35);
+        }
+        @media (max-width: 640px) {
+          .${LAUNCHER_CLASS} {
+            right: 16px;
+            bottom: 16px;
+            width: 54px;
+            height: 54px;
+          }
+        }
+      `}</style>
+
+      <button
+        type="button"
+        className={LAUNCHER_CLASS}
+        onClick={openChat}
+        aria-label="Falar com o suporte da Gendaz"
+      >
+        <MessageCircle size={26} strokeWidth={2} color="#ffffff" />
+      </button>
+    </>
   );
 }

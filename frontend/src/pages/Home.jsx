@@ -16,7 +16,6 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
 import logoWhite from '../assets/logos/gendazpng.png'
-import { CrispChat } from '../components/CrispChat.jsx'
 import notebookMockupImage from '../assets/marketing/mockup-notebook.png'
 import salaoBarbeariasImage from '../assets/segments/salao-e-barbearias.jpg'
 import barbeariaImage from '../assets/segments/barbearia.jpg'
@@ -130,8 +129,6 @@ export default function Home() {
 
   return (
     <>
-      {/* Crisp Chat - Apenas na landing page */}
-      <CrispChat />
       <main id="inicio" className="marketing-page">
 
       {/* Navbar */}
