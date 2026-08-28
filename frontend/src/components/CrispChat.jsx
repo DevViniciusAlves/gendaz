@@ -19,12 +19,25 @@ export function CrispChat() {
   useEffect(() => {
     // Esconde o launcher padrão do Crisp usando o comando oficial.
     // window.$crisp é uma fila: o comando é aplicado quando o Crisp carrega.
-    try {
-      window.$crisp = window.$crisp || [];
-      window.$crisp.push(["do", "launcher:hide"]);
-    } catch {
-      /* no-op */
-    }
+    // Reaplica algumas vezes porque o script do CloudPages pode montar o
+    // launcher depois do nosso componente, fazendo o comando "perder efeito".
+    const hideDefaultLauncher = () => {
+      try {
+        window.$crisp = window.$crisp || [];
+        window.$crisp.push(["do", "launcher:hide"]);
+      } catch {
+        /* no-op */
+      }
+    };
+
+    hideDefaultLauncher();
+    const timers = [800, 1800, 3000].map((ms) => setTimeout(hideDefaultLauncher, ms));
+    window.addEventListener("load", hideDefaultLauncher);
+
+    return () => {
+      timers.forEach(clearTimeout);
+      window.removeEventListener("load", hideDefaultLauncher);
+    };
   }, []);
 
   function openChat() {
