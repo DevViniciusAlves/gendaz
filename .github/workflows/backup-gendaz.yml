@@ -1,0 +1,222 @@
+name: Backup PostgreSQL PROD
+
+on:
+  schedule:
+    - cron: "30 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: backup-prod
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Backup Neon PROD → Cloudflare R2
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Criar backup do Neon PROD
+        env:
+          DB_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          DB_USER: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          DB_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          echo "Validando configuração..."
+
+          if [ -z "$DB_URL" ]; then
+            echo "ERRO: SPRING_DATASOURCE_URL não está configurado."
+            exit 1
+          fi
+
+          if [ -z "$DB_USER" ]; then
+            echo "ERRO: SPRING_DATASOURCE_USERNAME não está configurado."
+            exit 1
+          fi
+
+          if [ -z "$DB_PASSWORD" ]; then
+            echo "ERRO: SPRING_DATASOURCE_PASSWORD não está configurado."
+            exit 1
+          fi
+
+          DB_URL="${DB_URL#jdbc:}"
+
+          case "$DB_URL" in
+            postgresql://*|postgres://*)
+              echo "URL PostgreSQL detectada."
+              ;;
+            *)
+              echo "ERRO: URL PostgreSQL inválida."
+              exit 1
+              ;;
+          esac
+
+          mkdir -p backups
+
+          BACKUP_DATE=$(date -u +"%Y-%m-%d_%H-%M-%S")
+          BACKUP_NAME="gendaz-prod-${BACKUP_DATE}.sql.gz"
+          BACKUP_FILE="backups/${BACKUP_NAME}"
+
+          echo "Testando conexão com Neon PROD..."
+
+          docker run --rm \
+            -e DB_URL="$DB_URL" \
+            -e DB_USER="$DB_USER" \
+            -e DB_PASSWORD="$DB_PASSWORD" \
+            postgres:18 \
+            sh -c '
+              set -e
+              export PGPASSWORD="$DB_PASSWORD"
+
+              psql \
+                "$DB_URL" \
+                -U "$DB_USER" \
+                -c "SELECT 1;"
+            '
+
+          echo "Conexão com Neon PROD confirmada."
+
+          echo "Criando backup com PostgreSQL 18..."
+
+          docker run --rm \
+            -e DB_URL="$DB_URL" \
+            -e DB_USER="$DB_USER" \
+            -e DB_PASSWORD="$DB_PASSWORD" \
+            -v "$PWD/backups:/backups" \
+            postgres:18 \
+            sh -c '
+              set -e
+              set -o pipefail
+
+              export PGPASSWORD="$DB_PASSWORD"
+
+              pg_dump \
+                "$DB_URL" \
+                -U "$DB_USER" \
+                --format=plain \
+                --no-owner \
+                --no-privileges \
+                | gzip > "/backups/'"${BACKUP_NAME}"'"
+            '
+
+          if [ ! -s "$BACKUP_FILE" ]; then
+            echo "ERRO: arquivo de backup está vazio."
+            exit 1
+          fi
+
+          FILE_SIZE=$(stat -c%s "$BACKUP_FILE")
+
+          echo "Backup criado com sucesso."
+          echo "Arquivo: ${BACKUP_NAME}"
+          echo "Tamanho: ${FILE_SIZE} bytes"
+
+          if [ "$FILE_SIZE" -lt 100 ]; then
+            echo "ERRO: backup muito pequeno."
+            exit 1
+          fi
+
+          echo "Backup validado com sucesso."
+
+      - name: Verificar acesso ao Cloudflare R2
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+
+          echo "Testando acesso ao R2..."
+
+          aws s3api head-bucket \
+            --bucket "$R2_BUCKET" \
+            --endpoint-url "$R2_ENDPOINT"
+
+          echo "Acesso ao R2 confirmado."
+
+      - name: Enviar backup para o R2
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+
+          BACKUP_FILE=$(find backups -type f -name "*.sql.gz" | head -n 1)
+          BACKUP_NAME=$(basename "$BACKUP_FILE")
+
+          echo "Enviando ${BACKUP_NAME} para o R2..."
+
+          aws s3 cp \
+            "$BACKUP_FILE" \
+            "s3://${R2_BUCKET}/postgres/${BACKUP_NAME}" \
+            --endpoint-url "$R2_ENDPOINT"
+
+          echo "Upload concluído com sucesso."
+
+      - name: Manter somente os últimos 15 backups
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          set -euo pipefail
+
+          echo "Verificando backups existentes..."
+
+          aws s3api list-objects-v2 \
+            --bucket "$R2_BUCKET" \
+            --prefix "postgres/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --query 'Contents[].Key' \
+            --output text \
+            | tr '\t' '\n' \
+            | grep -v '^None$' \
+            | sort > /tmp/backups.txt || true
+
+          TOTAL=$(grep -c . /tmp/backups.txt || true)
+
+          echo "Backups encontrados: ${TOTAL}"
+
+          if [ "$TOTAL" -le 15 ]; then
+            echo "Dentro do limite de 15 backups."
+            exit 0
+          fi
+
+          REMOVE_COUNT=$((TOTAL - 15))
+
+          echo "Removendo ${REMOVE_COUNT} backup(s) antigo(s)..."
+
+          head -n "$REMOVE_COUNT" /tmp/backups.txt | while IFS= read -r KEY; do
+            [ -z "$KEY" ] && continue
+
+            echo "Removendo: ${KEY}"
+
+            aws s3 rm \
+              "s3://${R2_BUCKET}/${KEY}" \
+              --endpoint-url "$R2_ENDPOINT"
+          done
+
+          echo "Retenção de 15 backups concluída."
+
+      - name: Mostrar backups atuais
+        env:
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: auto
+        run: |
+          echo "Backups atualmente armazenados:"
+
+          aws s3 ls \
+            "s3://${R2_BUCKET}/postgres/" \
+            --endpoint-url "$R2_ENDPOINT" \
+            --human-readable \
+            --summarize
