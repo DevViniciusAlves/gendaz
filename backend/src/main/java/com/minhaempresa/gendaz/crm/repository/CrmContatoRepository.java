@@ -9,6 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface CrmContatoRepository extends JpaRepository<CrmContatoEntity, Long> {
     List<CrmContatoEntity> findByClienteIdOrderByDataCriacaoDesc(Long clienteId);
+    List<CrmContatoEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
+    Optional<CrmContatoEntity> findFirstByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
     long countByClienteIdAndTemplate(Long clienteId, String template);
     Optional<CrmContatoEntity> findFirstByClienteIdOrderByDataCriacaoDesc(Long clienteId);
     List<CrmContatoEntity> findByClienteIdAndTemplateOrderByDataCriacaoDesc(Long clienteId, String template);

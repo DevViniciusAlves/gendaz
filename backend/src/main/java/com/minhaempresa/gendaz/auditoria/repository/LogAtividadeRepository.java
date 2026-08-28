@@ -27,4 +27,6 @@ public interface LogAtividadeRepository extends JpaRepository<LogAtividadeEntity
     );
 
     List<LogAtividadeEntity> findByEmpresaIdAndEntidadeAndEntidadeId(Long empresaId, String entidade, Long entidadeId);
+
+    List<LogAtividadeEntity> findTop1000ByOrderByDataHoraDesc();
 }

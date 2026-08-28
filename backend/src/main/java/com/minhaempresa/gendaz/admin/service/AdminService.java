@@ -12,6 +12,8 @@ import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.gendaz.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
+import com.minhaempresa.gendaz.auditoria.entity.LogAtividadeEntity;
+import com.minhaempresa.gendaz.auditoria.repository.LogAtividadeRepository;
 import com.minhaempresa.gendaz.auth.service.PasswordService;
 import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
@@ -69,6 +71,9 @@ public class AdminService {
 
     @Autowired
     private PhoneNumberService phoneNumberService;
+
+    @Autowired
+    private LogAtividadeRepository logAtividadeRepository;
 
     @Value("${app.frontend-url:https://gendaz.site}")
     private String frontendUrl;
@@ -550,7 +555,40 @@ public class AdminService {
     @Transactional(readOnly = true)
     public List<AdminAuditLogResponse> logs(String token) {
         exigirAdmin(token);
-        return auditService.listar();
+        List<AdminAuditLogResponse> auditoria = auditService.listar();
+        List<AdminAuditLogResponse> atividade = logAtividadeRepository
+                .findTop1000ByOrderByDataHoraDesc()
+                .stream()
+                .map(this::toAtividadeResponse)
+                .toList();
+        List<AdminAuditLogResponse> todos = new ArrayList<>(auditoria);
+        todos.addAll(atividade);
+        todos.sort(Comparator.comparing(
+                AdminAuditLogResponse::dataCriacao,
+                Comparator.nullsLast(Comparator.reverseOrder())
+        ));
+        return todos;
+    }
+
+    private AdminAuditLogResponse toAtividadeResponse(LogAtividadeEntity l) {
+        String empresa = l.getEmpresa() != null ? String.valueOf(l.getEmpresa().getId()) : "-";
+        String descricao = l.getAcao() != null ? l.getAcao() : "";
+        if (l.getDetalhes() != null && !l.getDetalhes().isBlank()) {
+            descricao = descricao + " - " + l.getDetalhes();
+        }
+        return new AdminAuditLogResponse(
+                l.getId(),
+                l.getEntidade(),
+                "INFO",
+                null,
+                l.getNomeUsuario(),
+                empresa,
+                descricao,
+                l.getDetalhes(),
+                l.getIp(),
+                null,
+                l.getDataHora()
+        );
     }
 
     public AdminConfigResponse configuracoes(String token) {

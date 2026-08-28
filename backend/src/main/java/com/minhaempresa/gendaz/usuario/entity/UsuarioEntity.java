@@ -72,6 +72,9 @@ public class UsuarioEntity {
     @Column(name = "ultimo_login_falhado")
     private LocalDateTime ultimoLoginFalhado;
 
+    @Column(name = "ultimo_login")
+    private LocalDateTime ultimoLogin;
+
     public Integer getTentativasLoginFalhadas() {
         return tentativasLoginFalhadas != null ? tentativasLoginFalhadas : 0;
     }

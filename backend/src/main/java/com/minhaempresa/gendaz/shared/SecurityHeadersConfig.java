@@ -23,6 +23,8 @@ public class SecurityHeadersConfig {
             "/api/health",
             "/health",
             "/api/public/**",
+            "/api/admin",
+            "/api/admin/**",
             "/api/auth/recuperar-senha",
             "/api/auth/redefinir-senha",
             "/api/usuarios/convites/aceitar",
