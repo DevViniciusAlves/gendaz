@@ -12,7 +12,7 @@
   X,
 } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
 import logoWhite from '../assets/logos/gendazpng.png'
@@ -128,7 +128,8 @@ export default function Home() {
   }
 
   return (
-    <main id="inicio" className="marketing-page">
+    <>
+      <main id="inicio" className="marketing-page">
 
       {/* Navbar */}
       <header className="marketing-nav-gendo">
@@ -453,6 +454,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </footer>
     </main>
+    </>
   )
 }
 
