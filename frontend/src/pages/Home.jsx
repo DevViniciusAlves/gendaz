@@ -459,8 +459,8 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </footer>
     </main>
-  )
     </>
+  )
 }
 
 
