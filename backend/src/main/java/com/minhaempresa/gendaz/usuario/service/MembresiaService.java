@@ -129,7 +129,7 @@ public class MembresiaService {
                 nome,
                 executor.getEmpresa().getNomeFantasia(),
                 montarUrlConvite(token),
-                montarUrlConvite(token) + "&ação=recusar"
+                montarUrlConvite(token) + "&acao=recusar"
         );
         if (!enviado) {
             throw new BusinessException("Falha no envio do convite.");
@@ -143,7 +143,7 @@ public class MembresiaService {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         ConviteEmpresaEntity convite = buscarConvite(empresaId, conviteId);
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
-            throw new BusinessException("Convite não esta pendente.");
+            throw new BusinessException("Convite nao esta pendente.");
         }
         if (convite.getReenvios() != null && convite.getReenvios() >= LIMITE_REENVIO) {
             throw new BusinessException("Limite de reenvios atingido.");
@@ -160,7 +160,7 @@ public class MembresiaService {
                 convite.getNomeConvidado(),
                 convite.getEmpresa().getNomeFantasia(),
                 montarUrlConvite(tokenNovo),
-                montarUrlConvite(tokenNovo) + "&ação=recusar"
+                montarUrlConvite(tokenNovo) + "&acao=recusar"
         );
         if (!enviado) {
             throw new BusinessException("Falha no reenvio do convite.");
@@ -174,7 +174,7 @@ public class MembresiaService {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         ConviteEmpresaEntity convite = buscarConvite(empresaId, conviteId);
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
-            throw new BusinessException("Convite não esta pendente.");
+            throw new BusinessException("Convite nao esta pendente.");
         }
         convite.setStatus(StatusConviteEmpresa.CANCELLED);
         convite.setCanceladoEm(LocalDateTime.now());
@@ -188,7 +188,7 @@ public class MembresiaService {
     public ConviteEmpresaResponse recusarConvite(String token) {
         String hash = hash(token);
         ConviteEmpresaEntity convite = conviteRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new ResourceNotFoundException("Convite não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
         if (convite.getStatus() != StatusConviteEmpresa.PENDING) {
             throw new BusinessException("Convite invalido.");
         }
@@ -222,7 +222,7 @@ public class MembresiaService {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         MembresiaEntity membresia = buscarMembresiaUnica(empresaId, usuarioId);
         if (Boolean.TRUE.equals(membresia.getOwner())) {
-            throw new BusinessException("O dono não pode ser removido diretamente.");
+            throw new BusinessException("O dono nao pode ser removido diretamente.");
         }
         UsuarioEntity usuario = membresia.getUsuario();
         Long membroId = membroId(membresia);
@@ -246,7 +246,7 @@ public class MembresiaService {
         UsuarioEntity executor = validarDono(empresaId, usuarioAtualId);
         MembresiaEntity membresia = buscarMembresiaUnica(empresaId, usuarioId);
         if (Boolean.TRUE.equals(membresia.getOwner())) {
-            throw new BusinessException("O dono não pode ser desativado.");
+            throw new BusinessException("O dono nao pode ser desativado.");
         }
         membresia.setStatus(StatusMembresia.INACTIVE);
         membresia.setDataRemocao(LocalDateTime.now());
@@ -428,9 +428,9 @@ public class MembresiaService {
     }
 
     private UsuarioEntity validarDono(Long empresaId, Long usuarioAtualId) {
-        UsuarioEntity usuario = usuarioRepository.findById(usuarioAtualId).orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
+        UsuarioEntity usuario = usuarioRepository.findById(usuarioAtualId).orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         if (usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
-            throw new ResourceNotFoundException("Usuario não encontrado.");
+            throw new ResourceNotFoundException("Usuario nao encontrado.");
         }
         List<MembresiaEntity> membros = membresiaRepository.findAllByEmpresaIdAndUsuarioId(empresaId, usuarioAtualId);
         if (membros.isEmpty()) {
@@ -441,37 +441,37 @@ public class MembresiaService {
         }
         List<MembresiaEntity> membrosAtivos = membros.stream().filter(m -> m.getStatus() == StatusMembresia.ACTIVE).toList();
         if (membrosAtivos.isEmpty()) {
-            throw new BusinessException("Usuario sem permissão.");
+            throw new BusinessException("Usuario sem permissao.");
         }
         if (membrosAtivos.size() > 1) {
             throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
         }
         MembresiaEntity membresia = membrosAtivos.get(0);
         if (!Boolean.TRUE.equals(membresia.getOwner())) {
-            throw new BusinessException("Usuario sem permissão.");
+            throw new BusinessException("Usuario sem permissao.");
         }
         return usuario;
     }
 
     private ConviteEmpresaEntity buscarConvite(Long empresaId, Long conviteId) {
-        ConviteEmpresaEntity convite = conviteRepository.findById(conviteId).orElseThrow(() -> new ResourceNotFoundException("Convite não encontrado."));
-        if (!convite.getEmpresa().getId().equals(empresaId)) throw new ResourceNotFoundException("Convite não encontrado.");
+        ConviteEmpresaEntity convite = conviteRepository.findById(conviteId).orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
+        if (!convite.getEmpresa().getId().equals(empresaId)) throw new ResourceNotFoundException("Convite nao encontrado.");
         return convite;
     }
 
     private ConviteEmpresaEntity buscarConvitePorToken(String token) {
         if (token == null || token.isBlank()) {
-            throw new ResourceNotFoundException("Convite não encontrado.");
+            throw new ResourceNotFoundException("Convite nao encontrado.");
         }
         String hash = hash(token);
         return conviteRepository.findByTokenHash(hash)
-                .orElseThrow(() -> new ResourceNotFoundException("Convite não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Convite nao encontrado."));
     }
 
     private MembresiaEntity buscarMembresiaUnica(Long empresaId, Long usuarioId) {
         List<MembresiaEntity> membros = membresiaRepository.findAllByEmpresaIdAndUsuarioId(empresaId, usuarioId);
         if (membros.isEmpty()) {
-            throw new ResourceNotFoundException("Membro não encontrado.");
+            throw new ResourceNotFoundException("Membro nao encontrado.");
         }
         if (membros.size() > 1) {
             throw new ConflictException("Dados de membresia duplicados. Contate o suporte para regularizacao.");
@@ -493,7 +493,7 @@ public class MembresiaService {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId == null || !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
     }
 
@@ -520,8 +520,8 @@ public class MembresiaService {
         }
     }
 
-    private void registrarAudit(String tipo, UsuarioEntity usuario, EmpresaEntity empresa, String descrição, Long recursoId, String resultado) {
-        try { auditService.registrar(tipo, resultado, usuario != null ? usuario.getId() : null, descrição); } catch (Exception ignored) {}
+    private void registrarAudit(String tipo, UsuarioEntity usuario, EmpresaEntity empresa, String descricao, Long recursoId, String resultado) {
+        try { auditService.registrar(tipo, resultado, usuario != null ? usuario.getId() : null, descricao); } catch (Exception ignored) {}
     }
 
     private void desalocarDadosUsuario(UsuarioEntity usuario, UsuarioEntity executor, Long empresaId) {
@@ -529,7 +529,7 @@ public class MembresiaService {
             return;
         }
         if (usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
-            throw new BusinessException("Usuario sem permissão.");
+            throw new BusinessException("Usuario sem permissao.");
         }
         usuario.setSessaoAtiva(null);
         usuario.setSessaoAtivaMeuGendaz(null);

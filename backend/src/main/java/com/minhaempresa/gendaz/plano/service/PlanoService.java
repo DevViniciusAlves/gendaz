@@ -28,7 +28,7 @@ public class PlanoService {
     @Transactional(readOnly = true)
     public PlanoEntity buscarEntidade(Long id) {
         return planoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Plano não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Plano nao encontrado."));
     }
 
     @Transactional(readOnly = true)
@@ -37,7 +37,7 @@ public class PlanoService {
             throw new BusinessException("Plano invalido. Escolha BASICO ou PRO.");
         }
         return planoRepository.findByNome(nome)
-                .orElseThrow(() -> new ResourceNotFoundException("Plano não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Plano nao encontrado."));
     }
 }
 

@@ -16,7 +16,7 @@ public final class ServicoDtos {
 
     public record SalvarServicoRequest(
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String nome,
-            @Size(max = 300) String descrição,
+            @Size(max = 300) String descricao,
             @Min(5) @Max(720) Integer duracaoMinutos,
             @DecimalMin(value = "0.00", message = "Valor deve ser maior ou igual a zero.") @DecimalMax(value = "999999.99", message = "Valor deve ser menor ou igual a 999999.99.") BigDecimal valor,
             @NotNull Long empresaId
@@ -25,7 +25,7 @@ public final class ServicoDtos {
     public record ServicoResponse(
             Long id,
             String nome,
-            String descrição,
+            String descricao,
             Integer duracaoMinutos,
             BigDecimal valor,
             StatusCadastro status,

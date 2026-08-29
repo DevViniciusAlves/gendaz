@@ -126,7 +126,7 @@ public class CadastroIdempotenciaService {
     /**
      * Deve rodar dentro da MESMA transacao que confirma os dados do cadastro.
      * Assim, se a criacao der commit, o COMPLETED tambem comita; se rolar back,
-     * o COMPLETED não e gravado (a falha real e registrada depois via marcarFalha).
+     * o COMPLETED nao e gravado (a falha real e registrada depois via marcarFalha).
      */
     @Transactional
     public void marcarCompletado(String keyHash, Long empresaId, Long usuarioId, Long assinaturaId,
@@ -164,8 +164,8 @@ public class CadastroIdempotenciaService {
 
     /**
      * Reconstrói a resposta de um cadastro ja concluido (replay) SEM executar
-     * novamente criarContaBase, checkout, e-mails ou trial. Nao guarda sessão na
-     * tabela de idempotencia; para BASIC gera uma nova sessão segura no fluxo de
+     * novamente criarContaBase, checkout, e-mails ou trial. Nao guarda sessao na
+     * tabela de idempotencia; para BASIC gera uma nova sessao segura no fluxo de
      * cadastro (sem tocar em /auth/login).
      */
     @Transactional

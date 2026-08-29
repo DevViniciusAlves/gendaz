@@ -215,12 +215,12 @@ class CadastroIdempotenciaServiceTest {
                 .dataAtualizacao(LocalDateTime.now())
                 .build();
         when(usuarioRepository.findByIdComEmpresa(3L)).thenReturn(Optional.of(usuario));
-        when(usuarioSessionService.renovarSessao(usuario)).thenReturn("sessão-nova");
+        when(usuarioSessionService.renovarSessao(usuario)).thenReturn("sessao-nova");
 
         var resposta = service.recuperarResultado(completo);
 
         assertEquals("ACTIVE", resposta.statusConta());
-        assertEquals("sessão-nova", resposta.sessionToken());
+        assertEquals("sessao-nova", resposta.sessionToken());
         assertEquals("ana@gendaz.com.br", resposta.usuario().email());
         verify(usuarioSessionService).renovarSessao(usuario);
         verify(usuarioSessionService, never()).encerrarSessao(anyString());

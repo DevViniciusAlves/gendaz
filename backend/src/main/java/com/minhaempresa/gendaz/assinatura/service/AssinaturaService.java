@@ -63,8 +63,8 @@ public class AssinaturaService {
     }
 
     /**
-     * Fila de planos com vigencia futura (não vencidos): assinaturas ATIVA ou
-     * TESTE cujo dataFim ainda não passou de hoje. E a base do limite de 2
+     * Fila de planos com vigencia futura (nao vencidos): assinaturas ATIVA ou
+     * TESTE cujo dataFim ainda nao passou de hoje. E a base do limite de 2
      * planos ativos e do encadeamento em sequencia.
      */
     public List<AssinaturaEntity> buscarFilaAtiva(Long empresaId) {
@@ -108,7 +108,7 @@ public class AssinaturaService {
         validarEmpresaAtual(empresaId);
         return buscarAtualPorEmpresa(empresaId)
                 .map(mapper::toResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
     }
 
     @Transactional(readOnly = true)
@@ -148,7 +148,7 @@ public class AssinaturaService {
         // 1) Renovacao: a assinatura vinculada ao pagamento ja existe e e do mesmo plano
         if (assinaturaVinculada != null && assinaturaVinculada.getPlano().getId().equals(plano.getId())) {
             assinaturaVinculada.setStatus(StatusAssinatura.ATIVA);
-            // Idempotencia: se ja esta em vigor (não venceu), mantem onde esta.
+            // Idempotencia: se ja esta em vigor (nao venceu), mantem onde esta.
             if (assinaturaVinculada.getDataFim() != null && assinaturaVinculada.getDataFim().isAfter(hoje)) {
                 return assinaturaRepository.save(assinaturaVinculada);
             }
@@ -223,7 +223,7 @@ public class AssinaturaService {
     /**
      * Marca como EXPIRADA as assinaturas que ja venceram, ativa a proxima da
      * fila quando ela ja comecou e ajusta o status da empresa (INATIVA quando
-     * não ha nenhum plano com vigencia futura).
+     * nao ha nenhum plano com vigencia futura).
      */
     private void processarExpiracaoEFila(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> todas = assinaturaRepository.findByEmpresaId(empresaId);
@@ -258,7 +258,7 @@ public class AssinaturaService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Assinatura não encontrada.");
+            throw new ResourceNotFoundException("Assinatura nao encontrada.");
         }
     }
 

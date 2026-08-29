@@ -45,7 +45,7 @@ class PagamentoControllerTest {
 
     @Test
     void deveBloquearEmpresaDiferenteDaSessao() throws Exception {
-        org.mockito.Mockito.doThrow(new BusinessException("Empresa da sessão não corresponde ao recurso solicitado."))
+        org.mockito.Mockito.doThrow(new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado."))
                 .when(usuarioAutenticadoProvider).exigirEmpresa(99L);
 
         mockMvc.perform(get("/api/pagamentos/empresa/99"))

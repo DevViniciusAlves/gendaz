@@ -245,7 +245,7 @@ public class AdminService {
 
     public UsuarioEntity exigirAdmin(String token) {
         if (token == null || token.isBlank()) {
-            throw new SessaoExpiradaException("Acesso admin não autorizado.");
+            throw new SessaoExpiradaException("Acesso admin nao autorizado.");
         }
         return adminSessionService.validarSessao(token);
     }
@@ -374,7 +374,7 @@ public class AdminService {
         log.info("Super Admin {} solicitou aprovacao manual do pagamento {}", admin.getId(), pagamentoId);
         String transacaoId = request == null ? null : request.transacaoId();
         PagamentoPlanoResponse response = pagamentoService.aprovarPagamentoManual(pagamentoId, transacaoId);
-        String transacao = transacaoId == null || transacaoId.isBlank() ? "não informado" : transacaoId.trim();
+        String transacao = transacaoId == null || transacaoId.isBlank() ? "nao informado" : transacaoId.trim();
         auditService.registrar(
                 "PAYMENT_MANUAL_APPROVED",
                 "SECURITY",
@@ -398,7 +398,7 @@ public class AdminService {
         }
         log.info("Super Admin {} solicitou reversao manual do pagamento {}", admin.getId(), pagamentoId);
         PagamentoPlanoResponse response = pagamentoService.desaprovarPagamentoManual(pagamentoId, request.transacaoId());
-        String transacao = request.transacaoId() == null || request.transacaoId().isBlank() ? "não informado" : request.transacaoId().trim();
+        String transacao = request.transacaoId() == null || request.transacaoId().isBlank() ? "nao informado" : request.transacaoId().trim();
         auditService.registrar(
                 "PAYMENT_MANUAL_REJECTED",
                 "SECURITY",
@@ -420,12 +420,12 @@ public class AdminService {
         String motivo = motivoAdminOuPadrao(request == null ? null : request.motivo(), "Acesso administrativo confirmado pelo Super Admin.");
         log.info("Super Admin {} solicitou acesso a empresa {}", admin.getId(), empresaId);
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         UsuarioEntity dono = usuarioRepository.findByEmpresaIdAndPerfil(empresaId, PerfilUsuario.DONO)
                 .stream()
                 .findFirst()
                 .orElseGet(() -> usuarioRepository.findByEmpresaId(empresaId).stream().findFirst()
-                        .orElseThrow(() -> new ResourceNotFoundException("Usuario da empresa não encontrado.")));
+                        .orElseThrow(() -> new ResourceNotFoundException("Usuario da empresa nao encontrado.")));
         AdminImpersonationSessionEntity session = impersonationSessionRepository.save(AdminImpersonationSessionEntity.builder()
                 .adminUsuarioId(admin.getId())
                 .usuarioImpersonadoId(dono.getId())
@@ -462,7 +462,7 @@ public class AdminService {
         UsuarioEntity admin = exigirAdmin(token);
         validarMotivoAdmin(request.motivo());
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         AssinaturaEntity assinatura = assinaturaService.buscarAtualPorEmpresa(empresaId).orElse(null);
         if (assinatura == null || (assinatura.getStatus() != StatusAssinatura.ATIVA && assinatura.getStatus() != StatusAssinatura.TESTE)) {
             throw new BusinessException("A conta so pode ser ativada quando houver assinatura ativa ou teste valido.");
@@ -478,12 +478,12 @@ public class AdminService {
         UsuarioEntity admin = exigirAdmin(token);
         validarMotivoAdmin(request.motivo());
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         empresa.setStatus(StatusEmpresa.BLOQUEADA);
         EmpresaEntity salva = empresaRepository.save(empresa);
         usuarioRepository.findByEmpresaId(empresaId).stream()
                 .map(UsuarioEntity::getSessaoAtiva)
-                .filter(sessão -> sessão != null && !sessão.isBlank())
+                .filter(sessao -> sessao != null && !sessao.isBlank())
                 .forEach(usuarioSessionService::encerrarSessao);
         auditService.registrar("EMPRESA_DESATIVADA", "SECURITY", admin, null, salva, "Conta bloqueada manualmente pelo Super Admin", request.motivo().trim(), ip, userAgent);
         return montarEmpresaResponse(salva);
@@ -494,7 +494,7 @@ public class AdminService {
         UsuarioEntity admin = exigirAdmin(token);
         validarMotivoAdmin(request.motivo());
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
 
         String nomeFantasia = normalizarTextoObrigatorio(request.nomeFantasia());
         String telefone = normalizarTelefone(request.telefone());
@@ -544,7 +544,7 @@ public class AdminService {
     public void encerrarImpersonacao(String token, Long sessionId, String ip, String userAgent) {
         UsuarioEntity admin = exigirAdmin(token);
         AdminImpersonationSessionEntity session = impersonationSessionRepository.findByIdAndAdminUsuarioIdAndStatus(sessionId, admin.getId(), "ATIVA")
-                .orElseThrow(() -> new ResourceNotFoundException("Sessao de impersonacao não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Sessao de impersonacao nao encontrada."));
         session.setStatus("ENCERRADA");
         session.setEncerradoEm(LocalDateTime.now());
         session.setMotivoEncerramento("MANUAL");
@@ -572,9 +572,9 @@ public class AdminService {
 
     private AdminAuditLogResponse toAtividadeResponse(LogAtividadeEntity l) {
         String empresa = l.getEmpresa() != null ? String.valueOf(l.getEmpresa().getId()) : "-";
-        String descrição = l.getAcao() != null ? l.getAcao() : "";
+        String descricao = l.getAcao() != null ? l.getAcao() : "";
         if (l.getDetalhes() != null && !l.getDetalhes().isBlank()) {
-            descrição = descrição + " - " + l.getDetalhes();
+            descricao = descricao + " - " + l.getDetalhes();
         }
         return new AdminAuditLogResponse(
                 l.getId(),
@@ -583,7 +583,7 @@ public class AdminService {
                 null,
                 l.getNomeUsuario(),
                 empresa,
-                descrição,
+                descricao,
                 l.getDetalhes(),
                 l.getIp(),
                 null,
@@ -591,7 +591,7 @@ public class AdminService {
         );
     }
 
-    public AdminConfigResponse configurações(String token) {
+    public AdminConfigResponse configuracoes(String token) {
         exigirAdmin(token);
         return new AdminConfigResponse(paymentProvider, frontendUrl, "/api", "OPERACIONAL", "1.0.0", "mascarados");
     }
@@ -619,7 +619,7 @@ public class AdminService {
     public AdminChamadoResponse atualizarChamado(String token, Long chamadoId, AtualizarChamadoRequest request, String ip, String userAgent) {
         UsuarioEntity admin = exigirAdmin(token);
         ChamadoEntity chamado = chamadoRepository.findById(chamadoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Chamado não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chamado nao encontrado."));
         var statusAnterior = chamado.getStatus();
         chamado.setStatus(request.status());
         if (request.resposta() != null && !request.resposta().isBlank()) {
@@ -712,11 +712,11 @@ public class AdminService {
 
     private String normalizarTextoObrigatorio(String valor) {
         if (valor == null) {
-            throw new BusinessException("Campo obrigatorio não informado.");
+            throw new BusinessException("Campo obrigatorio nao informado.");
         }
         String normalizado = valor.trim().replaceAll("\\s+", " ");
         if (normalizado.length() < 2) {
-            throw new BusinessException("Campo obrigatorio não informado.");
+            throw new BusinessException("Campo obrigatorio nao informado.");
         }
         return normalizado;
     }

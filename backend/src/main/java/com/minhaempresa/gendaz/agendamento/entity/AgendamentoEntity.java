@@ -59,7 +59,7 @@ public class AgendamentoEntity {
     private String protocolo;
 
     @Column(length = 1000)
-    private String observações;
+    private String observacoes;
 
     @Column(name = "valor_original", precision = 10, scale = 2)
     private BigDecimal valorOriginal;

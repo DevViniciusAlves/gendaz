@@ -40,13 +40,13 @@ class LockDiagnosticTest {
         EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
                 .nomeFantasia("Lock Diag").email("lock@diag.com").status(StatusEmpresa.ATIVA).build());
         promocaoAdminRepository.save(PromocaoEntity.builder()
-                .empresa(empresa).codigo("LOCK").descrição("x")
+                .empresa(empresa).codigo("LOCK").descricao("x")
                 .tipo(TipoPromocao.VALOR_FIXO).valor(new BigDecimal("10.00"))
                 .dataInicio(LocalDateTime.now().minusDays(1)).dataFim(LocalDateTime.now().plusDays(1))
                 .quantidadeLimite(1).quantidadeUsada(0).status(StatusCadastro.ATIVO)
                 .aplicarTodosServicos(true).build());
         MeuGendazPromocaoEntity mirror = promocaoRepository.save(MeuGendazPromocaoEntity.builder()
-                .empresa(empresa).codigo("LOCK").descrição("x")
+                .empresa(empresa).codigo("LOCK").descricao("x")
                 .tipo("VALOR_FIXO").valor(new BigDecimal("10.00"))
                 .dataInicio(LocalDateTime.now().minusDays(1)).dataFim(LocalDateTime.now().plusDays(1))
                 .quantidadeLimite(1).quantidadeUsada(0).status(StatusCadastro.ATIVO)
@@ -84,7 +84,7 @@ class LockDiagnosticTest {
             }
         });
         inicio.countDown();
-        assertEquals(true, primeiroLockou.await(5, TimeUnit.SECONDS), "primeiro não lockou");
+        assertEquals(true, primeiroLockou.await(5, TimeUnit.SECONDS), "primeiro nao lockou");
         boolean segundoBloqueou = !segundoTerminou.await(3, TimeUnit.SECONDS);
         f1.get(10, TimeUnit.SECONDS);
         f2.get(10, TimeUnit.SECONDS);

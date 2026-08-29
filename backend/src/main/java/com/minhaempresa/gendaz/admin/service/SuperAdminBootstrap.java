@@ -90,7 +90,7 @@ public class SuperAdminBootstrap implements CommandLineRunner {
 
     private void atualizarSenhaSeForcado(UsuarioEntity admin) {
         if (!forcePasswordReset) {
-            log.info("Super Admin ja existe. Senha não foi alterada porque SUPER_ADMIN_FORCE_PASSWORD_RESET=false.");
+            log.info("Super Admin ja existe. Senha nao foi alterada porque SUPER_ADMIN_FORCE_PASSWORD_RESET=false.");
             return;
         }
         admin.setSenha(passwordService.hash(superAdminPassword));

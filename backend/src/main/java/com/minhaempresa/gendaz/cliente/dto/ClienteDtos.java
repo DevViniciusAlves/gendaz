@@ -17,7 +17,7 @@ public final class ClienteDtos {
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String nome,
             @NotBlank @TelefoneInternacional String telefone,
             @NotBlank @Email @Size(max = 120) String email,
-            @Size(max = 300) String observações,
+            @Size(max = 300) String observacoes,
             @NotNull Long empresaId
     ) {}
 
@@ -26,7 +26,7 @@ public final class ClienteDtos {
             String nome,
             String telefone,
             String email,
-            String observações,
+            String observacoes,
             StatusCadastro statusCliente,
             Long empresaId,
             LocalDateTime dataCriacao,
@@ -35,7 +35,7 @@ public final class ClienteDtos {
 
     public record AcaoEmMassaClienteRequest(
             @NotNull @Size(max = 10) List<Long> ids,
-            @NotBlank String ação,
+            @NotBlank String acao,
             Long empresaId
     ) {}
 

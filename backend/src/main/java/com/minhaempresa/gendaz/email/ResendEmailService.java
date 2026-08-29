@@ -179,7 +179,7 @@ public class ResendEmailService {
                     corpo,
                     safe(linkAceitar, montarUrlBase()),
                     "Sim, aceitar",
-                    "Se não quiser acessar, pode recusar no proprio email."
+                    "Se nao quiser acessar, pode recusar no proprio email."
             );
             return enviarEmail(email, "Convite para acessar a conta " + safe(empresa, "Gendaz"), html);
         } catch (Exception e) {
@@ -197,7 +197,7 @@ public class ResendEmailService {
             String nomeEmpresa,
             String cupomCodigo,
             String desconto,
-            String descrição,
+            String descricao,
             LocalDateTime validoAte,
             String slug
     ) {
@@ -231,7 +231,7 @@ public class ResendEmailService {
                     codigo,
                     safe(desconto, "-"),
                     dataFim,
-                    safe(descrição, "Temos uma oferta especial para voce. Aproveite antes que acabe!"),
+                    safe(descricao, "Temos uma oferta especial para voce. Aproveite antes que acabe!"),
                     codigo
             );
             return enviarComTemplate(
@@ -342,7 +342,7 @@ public class ResendEmailService {
                     emailCliente,
                     "Lembrete de agendamento",
                     "Voce tem um agendamento marcado",
-                    "Ola %s, não esqueca do seu compromisso.".formatted(safe(nomeCliente, "cliente")),
+                    "Ola %s, nao esqueca do seu compromisso.".formatted(safe(nomeCliente, "cliente")),
                     corpo,
                     montarUrlMeuGendaz(slug) + "/agenda",
                     "Acessar o portal"
@@ -356,7 +356,7 @@ public class ResendEmailService {
     private boolean enviarEmail(String destinatario, String assunto, String html) {
         contarExecucao("ResendEmailService#enviarEmail");
         if (apiKey.isBlank()) {
-            log.warn("[resend] RESEND_API_KEY ausente; email não enviado");
+            log.warn("[resend] RESEND_API_KEY ausente; email nao enviado");
             return false;
         }
 
@@ -397,7 +397,7 @@ public class ResendEmailService {
                 return true;
             }
 
-            log.warn("[resend] resposta não-sucedida status={}", response.statusCode());
+            log.warn("[resend] resposta nao-sucedida status={}", response.statusCode());
             return false;
         } catch (Exception e) {
             log.error("[resend] falha ao enviar email. erroTipo={}", e.getClass().getSimpleName());
@@ -488,7 +488,7 @@ public class ResendEmailService {
                 corpo,
                 linkRecuperacao,
                 "Redefinir senha",
-                "Se voce não solicitou isso, pode ignorar este e-mail."
+                "Se voce nao solicitou isso, pode ignorar este e-mail."
         );
     }
 
@@ -544,7 +544,7 @@ public class ResendEmailService {
                 <p style=\"margin:0 0 10px;\">Seu codigo de acesso e:</p>
                 <div style=\"font-size:32px; font-weight:800; letter-spacing:6px; margin:24px 0; padding:16px 20px; background:#111111; color:#ffffff; border-radius:12px; text-align:center;\">%s</div>
                 <p style=\"margin:0;\">Este codigo expira em 10 minutos.</p>
-                <p style=\"margin:10px 0 0;\">Se voce não solicitou este acesso, ignore este e-mail.</p>
+                <p style=\"margin:10px 0 0;\">Se voce nao solicitou este acesso, ignore este e-mail.</p>
                 """.formatted(codigo);
         return montarEmailPadrao(
                 "Gendaz",
@@ -647,7 +647,7 @@ public class ResendEmailService {
         String tituloFinal = safe(titulo, "");
         String subtituloFinal = safe(subtitulo, "");
         if (tituloFinal.isBlank()) {
-            tituloFinal = subtituloFinal.isBlank() ? "Obrigado pela atenção" : subtituloFinal;
+            tituloFinal = subtituloFinal.isBlank() ? "Obrigado pela atencao" : subtituloFinal;
         }
         return """
                 <html>

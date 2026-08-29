@@ -56,21 +56,21 @@ public class FormaPagamentoEmpresaService {
         }
         switch (metodo) {
             case PIX -> {
-                if (!config.pixAtivo()) throw new BusinessException("Pix não esta habilitado para esta empresa.");
+                if (!config.pixAtivo()) throw new BusinessException("Pix nao esta habilitado para esta empresa.");
                 validarSemParcelamento(parcelasResolvidas);
             }
             case DEBITO -> {
-                if (!config.debitoAtivo()) throw new BusinessException("Debito não esta habilitado para esta empresa.");
+                if (!config.debitoAtivo()) throw new BusinessException("Debito nao esta habilitado para esta empresa.");
                 validarSemParcelamento(parcelasResolvidas);
             }
             case CREDITO -> {
-                if (!config.creditoAtivo()) throw new BusinessException("Credito não esta habilitado para esta empresa.");
+                if (!config.creditoAtivo()) throw new BusinessException("Credito nao esta habilitado para esta empresa.");
                 if (parcelasResolvidas > 1 && !config.parceladoAtivo()) {
-                    throw new BusinessException("Parcelamento não esta habilitado para esta empresa.");
+                    throw new BusinessException("Parcelamento nao esta habilitado para esta empresa.");
                 }
             }
             case DINHEIRO -> {
-                if (!config.dinheiroAtivo()) throw new BusinessException("Dinheiro não esta habilitado para esta empresa.");
+                if (!config.dinheiroAtivo()) throw new BusinessException("Dinheiro nao esta habilitado para esta empresa.");
                 validarSemParcelamento(parcelasResolvidas);
             }
             default -> throw new BusinessException("Forma de pagamento manual invalida.");
@@ -94,7 +94,7 @@ public class FormaPagamentoEmpresaService {
 
     private void validarSemParcelamento(int parcelas) {
         if (parcelas > 1) {
-            throw new BusinessException("Esta forma de pagamento não aceita parcelamento.");
+            throw new BusinessException("Esta forma de pagamento nao aceita parcelamento.");
         }
     }
 
@@ -117,7 +117,7 @@ public class FormaPagamentoEmpresaService {
     private Long resolverEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         return empresaContexto;
     }

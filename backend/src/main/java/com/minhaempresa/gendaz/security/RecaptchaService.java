@@ -68,7 +68,7 @@ public class RecaptchaService {
                     statusCode
             );
             if (statusCode != 200) {
-                log.warn("[recaptcha] validação falhou com status {}", statusCode);
+                log.warn("[recaptcha] validacao falhou com status {}", statusCode);
                 return false;
             }
 
@@ -77,7 +77,7 @@ public class RecaptchaService {
             boolean success = jsonResponse.get("success").getAsBoolean();
             float score = jsonResponse.has("score") ? jsonResponse.get("score").getAsFloat() : 0.0f;
 
-            log.info("[recaptcha] validação={} score={}", success, score);
+            log.info("[recaptcha] validacao={} score={}", success, score);
 
             return success && score >= 0.5f;
 

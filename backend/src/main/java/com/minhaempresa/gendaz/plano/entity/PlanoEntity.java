@@ -21,7 +21,7 @@ public class PlanoEntity {
     private String nome;
 
     @Column(nullable = false)
-    private String descrição;
+    private String descricao;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valorMensal;

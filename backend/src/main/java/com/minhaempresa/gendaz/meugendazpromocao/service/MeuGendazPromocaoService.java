@@ -170,7 +170,7 @@ public class MeuGendazPromocaoService {
 
     /**
      * Validacao completa feita SOMENTE dentro do lock pessimista. Nao
-     * confiar em validação feita anteriormente fora do lock.
+     * confiar em validacao feita anteriormente fora do lock.
      */
     private void validarCupomDentroLock(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, MeuGendazPromocaoEntity promocao, String codigoNormalizado) {
         if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
@@ -178,7 +178,7 @@ public class MeuGendazPromocaoService {
         }
         if (!Boolean.TRUE.equals(promocao.getAplicarTodosServicos())
                 && (promocao.getServicos() == null || promocao.getServicos().stream().noneMatch(s -> s.getId().equals(servico.getId())))) {
-            throw new IllegalArgumentException("Este cupom não e valido para este servico.");
+            throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
         }
         if (usoRepository.existsByPromocaoIdAndClienteId(promocao.getId(), cliente.getId())) {
             throw new IllegalArgumentException("Voce ja usou este cupom.");
@@ -213,7 +213,7 @@ public class MeuGendazPromocaoService {
         }
         if (!Boolean.TRUE.equals(promocao.getAplicarTodosServicos())
                 && promocao.getServicos().stream().noneMatch(s -> s.getId().equals(servico.getId()))) {
-            throw new IllegalArgumentException("Este cupom não e valido para este servico.");
+            throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
         }
         return promocao;
     }

@@ -182,7 +182,7 @@ public class AdminCrmService {
         adminSessionService.validarSessao(token);
 
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new BusinessException("Empresa não encontrada."));
+                .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
 
         UsuarioEntity dono = usuarioRepository.findByEmpresaIdAndPerfil(empresaId, PerfilUsuario.DONO)
                 .stream().findFirst().orElse(null);
@@ -191,7 +191,7 @@ public class AdminCrmService {
                 ? dono.getEmail()
                 : empresa.getEmail();
         if (emailDestino == null || emailDestino.isBlank()) {
-            throw new BusinessException("A empresa não possui e-mail cadastrado para contato.");
+            throw new BusinessException("A empresa nao possui e-mail cadastrado para contato.");
         }
         String nomeDestino = dono != null && dono.getNome() != null ? dono.getNome() : empresa.getNomeFantasia();
 
@@ -234,7 +234,7 @@ public class AdminCrmService {
         adminSessionService.validarSessao(token);
 
         if (!empresaRepository.existsById(empresaId)) {
-            throw new BusinessException("Empresa não encontrada.");
+            throw new BusinessException("Empresa nao encontrada.");
         }
         List<CrmContatoEntity> contatos = crmContatoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId);
         return contatos.stream().map(c -> new HistoricoContatoResponse(
@@ -335,7 +335,7 @@ public class AdminCrmService {
 
     private String montarSubtitulo(String template) {
         return "resgate".equals(template)
-                ? "Faz tempo que voce não acessa o Gendaz. Estamos com saudade dos seus agendamentos e queremos voce de volta."
+                ? "Faz tempo que voce nao acessa o Gendaz. Estamos com saudade dos seus agendamentos e queremos voce de volta."
                 : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
     }
 
@@ -344,8 +344,8 @@ public class AdminCrmService {
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
         String mensagemPadrao = switch (template) {
-            case "resgate" -> "Oi " + nomeSafe + "! Faz um tempo que voce não entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.";
-            case "reconexao" -> nomeSafe + ", faz tempo que não aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
+            case "resgate" -> "Oi " + nomeSafe + "! Faz um tempo que voce nao entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.";
+            case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
             case "promocao" -> nomeSafe + ", preparamos uma oferta especial so pra voce! Aproveite e agende seu proximo atendimento com desconto.";
             case "lembrete" -> nomeSafe + ", lembrete: voce tem um compromisso agendado. Se precisar remarcar, esta tudo bem!";
             default -> "Entre em contato conosco para mais informacoes.";

@@ -17,7 +17,7 @@ public final class CaixaDespesasDtos {
             Long id,
             TipoCaixaDespesasLog tipo,
             String categoria,
-            String descrição,
+            String descricao,
             BigDecimal valor,
             boolean positivo,
             String obs,

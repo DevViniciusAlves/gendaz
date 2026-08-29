@@ -73,10 +73,10 @@ public class EmpresaService {
     public EmpresaEntity buscarEntidade(Long id) {
         Long companyId = CompanyContext.requireCompanyId();
         if (id == null || !companyId.equals(id)) {
-            throw new ResourceNotFoundException("Empresa não encontrada.");
+            throw new ResourceNotFoundException("Empresa nao encontrada.");
         }
         return empresaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
     }
 
     private void validarDadosObrigatorios(String nomeFantasia, String email) {

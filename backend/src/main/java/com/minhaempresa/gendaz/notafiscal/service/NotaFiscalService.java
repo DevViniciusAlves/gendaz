@@ -55,7 +55,7 @@ public class NotaFiscalService {
     @Transactional(readOnly = true)
     public NotaFiscalEntity buscarEntidade(Long id) {
         NotaFiscalEntity notaFiscal = notaFiscalRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Nota fiscal não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Nota fiscal nao encontrada."));
         validarEmpresaAtual(notaFiscal.getEmpresa().getId());
         return notaFiscal;
     }
@@ -63,7 +63,7 @@ public class NotaFiscalService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Nota fiscal não encontrada.");
+            throw new ResourceNotFoundException("Nota fiscal nao encontrada.");
         }
     }
 }

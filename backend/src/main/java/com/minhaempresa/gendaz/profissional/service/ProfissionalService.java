@@ -123,7 +123,7 @@ public class ProfissionalService {
     @Transactional(readOnly = true)
     public ProfissionalEntity buscarEntidade(Long id) {
         ProfissionalEntity profissional = profissionalRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Profissional nao encontrado."));
         validarEmpresaAtual(profissional.getEmpresa().getId());
         return profissional;
     }
@@ -133,7 +133,7 @@ public class ProfissionalService {
         ProfissionalEntity profissional = buscarEntidade(id);
         validarNaoSistema(profissional);
         if (empresaId != null && !empresaId.equals(profissional.getEmpresa().getId())) {
-            throw new BusinessException("Profissional não pertence a empresa informada.");
+            throw new BusinessException("Profissional nao pertence a empresa informada.");
         }
         profissionalRepository.delete(profissional);
         logAtividadeService.registrar("PROFISSIONAL", id, "Removeu profissional " + profissional.getNome());
@@ -171,7 +171,7 @@ public class ProfissionalService {
 
     public void validarTrabalhoNoDia(ProfissionalEntity profissional, LocalDate data) {
         if (!trabalhaNoDia(profissional, data)) {
-            throw new BusinessException("Este profissional não atende no dia selecionado.");
+            throw new BusinessException("Este profissional nao atende no dia selecionado.");
         }
     }
 
@@ -196,14 +196,14 @@ public class ProfissionalService {
 
     private void validarNaoSistema(ProfissionalEntity profissional) {
         if (profissional.isSistema()) {
-            throw new BusinessException("O profissional padrao \"Sem preferencia\" não pode ser alterado ou excluido.");
+            throw new BusinessException("O profissional padrao \"Sem preferencia\" nao pode ser alterado ou excluido.");
         }
     }
 
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Profissional não encontrado.");
+            throw new ResourceNotFoundException("Profissional nao encontrado.");
         }
     }
 }

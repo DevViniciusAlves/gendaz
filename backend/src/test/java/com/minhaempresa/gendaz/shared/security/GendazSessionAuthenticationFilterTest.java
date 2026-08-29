@@ -49,9 +49,9 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void impersonacaoValidaCarregaUsuarioComEmpresaEInjetaContextos() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        AdminImpersonationSessionEntity sessão = sessão(10L, 20L, 30L);
+        AdminImpersonationSessionEntity sessao = sessao(10L, 20L, 30L);
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA);
-        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessão));
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao));
         when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuario));
         AtomicBoolean passouNoController = new AtomicBoolean(false);
         MockHttpServletRequest request = getComCookie("Gendaz_impersonation_session", "token-impersonacao");
@@ -79,7 +79,7 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void impersonacaoComUsuarioInativoRetorna403() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessão(10L, 20L, 30L)));
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao(10L, 20L, 30L)));
         when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.INATIVO, StatusEmpresa.ATIVA)));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -91,7 +91,7 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void impersonacaoComEmpresaInativaRetorna403() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessão(10L, 20L, 30L)));
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao(10L, 20L, 30L)));
         when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA)));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -103,7 +103,7 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void impersonacaoComEmpresaDiferenteDaSessaoRetorna403() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessão(10L, 20L, 30L)));
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao(10L, 20L, 30L)));
         when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuario(20L, 40L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -127,13 +127,13 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void loginNormalContinuaUsandoFindBySessaoAtiva() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(usuarioRepository.findBySessaoAtiva("sessão-normal")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
+        when(usuarioRepository.findBySessaoAtiva("sessao-normal")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
-        filter.doFilterInternal(getComCookie("Gendaz_session", "sessão-normal"), response, new MockFilterChain());
+        filter.doFilterInternal(getComCookie("Gendaz_session", "sessao-normal"), response, new MockFilterChain());
 
         assertEquals(200, response.getStatus());
-        verify(usuarioRepository).findBySessaoAtiva("sessão-normal");
+        verify(usuarioRepository).findBySessaoAtiva("sessao-normal");
         verify(usuarioRepository, never()).findByIdComEmpresa(org.mockito.ArgumentMatchers.anyLong());
         verify(adminImpersonationService, never()).validar(anyString());
     }
@@ -163,25 +163,25 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void empresaEncerradaPermiteSomenteReativarConta() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(usuarioRepository.findBySessaoAtiva("sessão-encerrada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ENCERRADA)));
+        when(usuarioRepository.findBySessaoAtiva("sessao-encerrada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ENCERRADA)));
 
         MockHttpServletResponse painel = new MockHttpServletResponse();
-        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessão-encerrada");
+        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessao-encerrada");
         filter.doFilterInternal(reqPainel, painel, new MockFilterChain());
         assertEquals(403, painel.getStatus());
 
         MockHttpServletResponse exportar = new MockHttpServletResponse();
-        MockHttpServletRequest reqExportar = requestComCookie("GET", "/api/lgpd/exportar", "Gendaz_session", "sessão-encerrada");
+        MockHttpServletRequest reqExportar = requestComCookie("GET", "/api/lgpd/exportar", "Gendaz_session", "sessao-encerrada");
         filter.doFilterInternal(reqExportar, exportar, new MockFilterChain());
         assertEquals(403, exportar.getStatus());
 
         MockHttpServletResponse financeiro = new MockHttpServletResponse();
-        MockHttpServletRequest reqFinanceiro = requestComCookie("GET", "/api/pagamentos/planos/empresa/30/atual", "Gendaz_session", "sessão-encerrada");
+        MockHttpServletRequest reqFinanceiro = requestComCookie("GET", "/api/pagamentos/planos/empresa/30/atual", "Gendaz_session", "sessao-encerrada");
         filter.doFilterInternal(reqFinanceiro, financeiro, new MockFilterChain());
         assertEquals(403, financeiro.getStatus());
 
         MockHttpServletResponse reativar = new MockHttpServletResponse();
-        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessão-encerrada");
+        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessao-encerrada");
         filter.doFilterInternal(reqReativar, reativar, new MockFilterChain());
         assertEquals(200, reativar.getStatus());
     }
@@ -189,15 +189,15 @@ class GendazSessionAuthenticationFilterTest {
     @Test
     void empresaBloqueadaBloqueiaInclusiveReativarConta() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
-        when(usuarioRepository.findBySessaoAtiva("sessão-bloqueada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA)));
+        when(usuarioRepository.findBySessaoAtiva("sessao-bloqueada")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA)));
 
         MockHttpServletResponse painel = new MockHttpServletResponse();
-        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessão-bloqueada");
+        MockHttpServletRequest reqPainel = requestComCookie("GET", "/api/dashboard", "Gendaz_session", "sessao-bloqueada");
         filter.doFilterInternal(reqPainel, painel, new MockFilterChain());
         assertEquals(403, painel.getStatus());
 
         MockHttpServletResponse reativar = new MockHttpServletResponse();
-        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessão-bloqueada");
+        MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessao-bloqueada");
         filter.doFilterInternal(reqReativar, reativar, new MockFilterChain());
         assertEquals(403, reativar.getStatus());
     }
@@ -219,7 +219,7 @@ class GendazSessionAuthenticationFilterTest {
         return request;
     }
 
-    private AdminImpersonationSessionEntity sessão(Long adminId, Long usuarioId, Long empresaId) {
+    private AdminImpersonationSessionEntity sessao(Long adminId, Long usuarioId, Long empresaId) {
         return AdminImpersonationSessionEntity.builder()
                 .id(1L)
                 .adminUsuarioId(adminId)

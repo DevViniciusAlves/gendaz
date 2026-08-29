@@ -35,7 +35,7 @@ public class EntregaEntity {
     private StatusEntrega status;
 
     @Column(length = 1000)
-    private String observações;
+    private String observacoes;
 
     private LocalDate dataPrevisao;
 }

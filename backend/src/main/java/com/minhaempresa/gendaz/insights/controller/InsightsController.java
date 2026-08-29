@@ -36,7 +36,7 @@ public class InsightsController {
         validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa não identificada."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
         return insightsService.buscarUltimoDashboardPersistido(empresaId)
                 .<ResponseEntity<?>>map(ResponseEntity::ok)
@@ -62,7 +62,7 @@ public class InsightsController {
         validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa não identificada."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
         DashboardResponse dashboard = insightsService.recalcularDashboard(empresaId, periodo);
         return ResponseEntity.ok(dashboard);
@@ -83,14 +83,14 @@ public class InsightsController {
                     "scoreGeral", 0,
                     "alertas", List.of(),
                     "oportunidades", List.of(),
-                    "ações", List.of()
+                    "acoes", List.of()
             ));
         }
         return ResponseEntity.ok(Map.of(
                 "scoreGeral", dashboard.scoreGeral(),
                 "alertas", dashboard.alertas(),
                 "oportunidades", dashboard.oportunidades(),
-                "ações", dashboard.ações()
+                "acoes", dashboard.acoes()
         ));
     }
 
@@ -117,7 +117,7 @@ public class InsightsController {
         validarPlanoPro();
         empresaId = resolverEmpresaId(empresaId);
         if (empresaId == null) {
-            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa não identificada."));
+            return ResponseEntity.badRequest().body(Map.of("mensagem", "Empresa nao identificada."));
         }
         String respostaChat = insightsService.analisarPergunta(empresaId, request.pergunta(), request.historico());
         insightsService.salvarAnalise(empresaId, "pergunta", request.pergunta(), respostaChat);
@@ -154,7 +154,7 @@ public class InsightsController {
     private Long resolverEmpresaId(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-                throw new BusinessException("Empresa da sessão não corresponde ao Insights solicitado.");
+                throw new BusinessException("Empresa da sessão nao corresponde ao Insights solicitado.");
             }
         return empresaContexto;
     }

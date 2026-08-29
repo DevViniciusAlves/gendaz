@@ -47,14 +47,14 @@ public class AdminImpersonationService {
     public StartImpersonationResult iniciar(String adminToken, Long empresaId, Long usuarioId, HttpServletRequest request) {
         UsuarioEntity admin = adminService.exigirAdmin(adminToken);
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         if (empresa.getStatus() != StatusEmpresa.ATIVA) {
             throw new BusinessException("Empresa indisponivel para impersonacao.");
         }
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         if (usuario.getEmpresa() == null || !empresaId.equals(usuario.getEmpresa().getId())) {
-            throw new BusinessException("Usuario não pertence a empresa informada.");
+            throw new BusinessException("Usuario nao pertence a empresa informada.");
         }
         if (usuario.getStatus() != StatusUsuario.ATIVO) {
             throw new BusinessException("Usuario indisponivel para impersonacao.");
@@ -64,12 +64,12 @@ public class AdminImpersonationService {
         }
 
         LocalDateTime agora = LocalDateTime.now();
-        repository.findByAdminUsuarioIdAndStatus(admin.getId(), STATUS_ATIVA).forEach(sessão -> encerrar(sessão, STATUS_ENCERRADA, agora));
+        repository.findByAdminUsuarioIdAndStatus(admin.getId(), STATUS_ATIVA).forEach(sessao -> encerrar(sessao, STATUS_ENCERRADA, agora));
 
         String rawToken = gerarToken();
         String tokenHash = hash(rawToken);
         LocalDateTime expiraEm = agora.plusMinutes(ttlMinutes > 0 ? ttlMinutes : 30);
-        AdminImpersonationSessionEntity sessão = repository.save(AdminImpersonationSessionEntity.builder()
+        AdminImpersonationSessionEntity sessao = repository.save(AdminImpersonationSessionEntity.builder()
                 .adminUsuarioId(admin.getId())
                 .usuarioImpersonadoId(usuario.getId())
                 .empresaId(empresa.getId())
@@ -83,7 +83,7 @@ public class AdminImpersonationService {
 
         log.info("[ADMIN_IMPERSONATION] START adminId={} usuarioId={} empresaId={} ip={} userAgent={}", admin.getId(), usuario.getId(), empresa.getId(), ip(request), limitar(userAgent(request), 200));
         registrarMonitoramento("ADMIN_IMPERSONATION_START", request, String.valueOf(admin.getId()), "usuarioId=" + usuario.getId() + "; empresaId=" + empresa.getId());
-        return new StartImpersonationResult(rawToken, sessão.getId(), empresa.getId(), usuario.getId(), expiraEm);
+        return new StartImpersonationResult(rawToken, sessao.getId(), empresa.getId(), usuario.getId(), expiraEm);
     }
 
     @Transactional
@@ -91,11 +91,11 @@ public class AdminImpersonationService {
         if (rawToken == null || rawToken.isBlank()) {
             return Optional.empty();
         }
-        Optional<AdminImpersonationSessionEntity> sessão = repository.findBySessionTokenHashAndStatus(hash(rawToken), STATUS_ATIVA);
-        if (sessão.isEmpty()) {
+        Optional<AdminImpersonationSessionEntity> sessao = repository.findBySessionTokenHashAndStatus(hash(rawToken), STATUS_ATIVA);
+        if (sessao.isEmpty()) {
             return Optional.empty();
         }
-        AdminImpersonationSessionEntity ativa = sessão.get();
+        AdminImpersonationSessionEntity ativa = sessao.get();
         if (ativa.getExpiraEm().isBefore(LocalDateTime.now())) {
             encerrar(ativa, STATUS_EXPIRADA, LocalDateTime.now());
             log.info("[ADMIN_IMPERSONATION] EXPIRED adminId={} usuarioId={} empresaId={}", ativa.getAdminUsuarioId(), ativa.getUsuarioImpersonadoId(), ativa.getEmpresaId());
@@ -106,15 +106,15 @@ public class AdminImpersonationService {
 
     @Transactional
     public Optional<CurrentImpersonationResult> atual(String rawToken) {
-        return validar(rawToken).map(sessão -> new CurrentImpersonationResult(true, sessão.getAdminUsuarioId(), sessão.getUsuarioImpersonadoId(), sessão.getEmpresaId(), sessão.getExpiraEm()));
+        return validar(rawToken).map(sessao -> new CurrentImpersonationResult(true, sessao.getAdminUsuarioId(), sessao.getUsuarioImpersonadoId(), sessao.getEmpresaId(), sessao.getExpiraEm()));
     }
 
     @Transactional
     public void encerrarPorToken(String rawToken, HttpServletRequest request) {
-        validar(rawToken).ifPresent(sessão -> {
-            encerrar(sessão, STATUS_ENCERRADA, LocalDateTime.now());
-            log.info("[ADMIN_IMPERSONATION] END adminId={} usuarioId={} empresaId={} motivo=MANUAL", sessão.getAdminUsuarioId(), sessão.getUsuarioImpersonadoId(), sessão.getEmpresaId());
-            registrarMonitoramento("ADMIN_IMPERSONATION_END", request, String.valueOf(sessão.getAdminUsuarioId()), "usuarioId=" + sessão.getUsuarioImpersonadoId() + "; empresaId=" + sessão.getEmpresaId());
+        validar(rawToken).ifPresent(sessao -> {
+            encerrar(sessao, STATUS_ENCERRADA, LocalDateTime.now());
+            log.info("[ADMIN_IMPERSONATION] END adminId={} usuarioId={} empresaId={} motivo=MANUAL", sessao.getAdminUsuarioId(), sessao.getUsuarioImpersonadoId(), sessao.getEmpresaId());
+            registrarMonitoramento("ADMIN_IMPERSONATION_END", request, String.valueOf(sessao.getAdminUsuarioId()), "usuarioId=" + sessao.getUsuarioImpersonadoId() + "; empresaId=" + sessao.getEmpresaId());
         });
     }
 
@@ -128,14 +128,14 @@ public class AdminImpersonationService {
             }
             return sb.toString();
         } catch (Exception e) {
-            throw new IllegalStateException("Nao foi possivel gerar hash da sessão.", e);
+            throw new IllegalStateException("Nao foi possivel gerar hash da sessao.", e);
         }
     }
 
-    private void encerrar(AdminImpersonationSessionEntity sessão, String status, LocalDateTime quando) {
-        sessão.setStatus(status);
-        sessão.setEncerradoEm(quando);
-        sessão.setMotivoEncerramento(status.equals(STATUS_EXPIRADA) ? "EXPIRADA" : "MANUAL");
+    private void encerrar(AdminImpersonationSessionEntity sessao, String status, LocalDateTime quando) {
+        sessao.setStatus(status);
+        sessao.setEncerradoEm(quando);
+        sessao.setMotivoEncerramento(status.equals(STATUS_EXPIRADA) ? "EXPIRADA" : "MANUAL");
     }
 
     private String gerarToken() {

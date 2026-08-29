@@ -1,7 +1,7 @@
 package com.minhaempresa.gendaz.agendamentopublico.dto;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
-import com.minhaempresa.gendaz.configuração.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
+import com.minhaempresa.gendaz.configuracao.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
 import com.minhaempresa.gendaz.shared.TelefoneInternacional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -32,7 +32,7 @@ public final class AgendamentoPublicoDtos {
     public record BookingServicoResponse(
             Long id,
             String nome,
-            String descrição,
+            String descricao,
             Integer duracaoMinutos,
             BigDecimal valor
     ) {}
@@ -54,7 +54,7 @@ public final class AgendamentoPublicoDtos {
             @NotBlank @Size(min = 2, max = 80) @Pattern(regexp = "^[\\p{L}\\s]+$", message = "Nome deve conter apenas letras.") String clienteNome,
             @NotBlank @TelefoneInternacional String clienteTelefone,
             @Email @Size(max = 120) String clienteEmail,
-            @Size(max = 500) String observação
+            @Size(max = 500) String observacao
     ) {}
 
     public record AgendamentoPublicoResponse(

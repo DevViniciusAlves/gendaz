@@ -41,7 +41,7 @@ public class EmpresaController {
     private void validarNaoAtendente() {
         PerfilUsuario perfil = usuarioAutenticadoProvider.exigirPerfil();
         if (perfil == PerfilUsuario.ATENDENTE) {
-            throw new BusinessException("Seu perfil não permite alterar dados da empresa.");
+            throw new BusinessException("Seu perfil nao permite alterar dados da empresa.");
         }
     }
 }

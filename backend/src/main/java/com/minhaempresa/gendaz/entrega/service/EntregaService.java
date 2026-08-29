@@ -39,7 +39,7 @@ public class EntregaService {
                 .empresa(empresa)
                 .endereco(sanitizacaoService.textoObrigatorio(request.endereco()))
                 .status(StatusEntrega.PENDENTE)
-                .observações(sanitizacaoService.texto(request.observações()))
+                .observacoes(sanitizacaoService.texto(request.observacoes()))
                 .dataPrevisao(request.dataPrevisao())
                 .build();
         EntregaEntity salva = entregaRepository.save(entrega);
@@ -65,7 +65,7 @@ public class EntregaService {
     @Transactional(readOnly = true)
     public EntregaEntity buscarEntidade(Long id) {
         EntregaEntity entrega = entregaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Entrega não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Entrega nao encontrada."));
         validarEmpresaAtual(entrega.getEmpresa().getId());
         return entrega;
     }
@@ -73,7 +73,7 @@ public class EntregaService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Entrega não encontrada.");
+            throw new ResourceNotFoundException("Entrega nao encontrada.");
         }
     }
 }

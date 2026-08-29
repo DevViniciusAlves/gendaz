@@ -1,8 +1,8 @@
 package com.minhaempresa.gendaz.horarioatendimento.service;
 
-import com.minhaempresa.gendaz.configuração.dto.HorarioAtendimentoDtos.HorarioAtendimentoItemRequest;
-import com.minhaempresa.gendaz.configuração.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
-import com.minhaempresa.gendaz.configuração.dto.HorarioAtendimentoDtos.SalvarHorariosAtendimentoRequest;
+import com.minhaempresa.gendaz.configuracao.dto.HorarioAtendimentoDtos.HorarioAtendimentoItemRequest;
+import com.minhaempresa.gendaz.configuracao.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
+import com.minhaempresa.gendaz.configuracao.dto.HorarioAtendimentoDtos.SalvarHorariosAtendimentoRequest;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.horarioatendimento.entity.HorarioAtendimentoEntity;
 import com.minhaempresa.gendaz.horarioatendimento.enums.DiaSemanaAtendimento;
@@ -84,7 +84,7 @@ public class HorarioAtendimentoService {
     public void validarHorarioAtendimento(Long empresaId, LocalDate data, LocalTime horaInicio, LocalTime horaFim) {
         HorarioAtendimentoEntity horario = obterHorarioEfetivo(empresaId, data);
         if (!horario.isAtivo()) {
-            throw new BusinessException("A empresa não atende neste dia.");
+            throw new BusinessException("A empresa nao atende neste dia.");
         }
         if (horaInicio == null || horaFim == null) {
             throw new BusinessException("Horario invalido.");
@@ -190,9 +190,9 @@ public class HorarioAtendimentoService {
 
     private EmpresaEntity buscarEmpresaDoUsuario(Long usuarioId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa não possui horarios de atendimento.");
+            throw new BusinessException("Usuario sem empresa nao possui horarios de atendimento.");
         }
         return usuario.getEmpresa();
     }

@@ -54,7 +54,7 @@ class LgpdServiceTest {
         assertEquals("ATIVA", response.statusEmpresa());
         assertEquals(StatusEmpresa.ATIVA, empresa.getStatus());
         verify(empresaRepository).save(empresa);
-        verify(usuarioSessionService).encerrarSessao("sessão-restrita");
+        verify(usuarioSessionService).encerrarSessao("sessao-restrita");
     }
 
     @Test
@@ -74,7 +74,7 @@ class LgpdServiceTest {
     }
 
     @Test
-    @DisplayName("ENCERRADA + usuario que não e DONO -> rejeitado")
+    @DisplayName("ENCERRADA + usuario que nao e DONO -> rejeitado")
     void reativarContaNaoDonoDeveSerNegado() {
         EmpresaEntity empresa = empresa(StatusEmpresa.ENCERRADA);
         UsuarioEntity atendente = usuario(PerfilUsuario.ATENDENTE, empresa);
@@ -84,7 +84,7 @@ class LgpdServiceTest {
     }
 
     @Test
-    @DisplayName("BLOQUEADA -> não pode ser reativada pelo endpoint")
+    @DisplayName("BLOQUEADA -> nao pode ser reativada pelo endpoint")
     void reativarContaDeEmpresaBloqueadaDeveSerNegada() {
         EmpresaEntity empresa = empresa(StatusEmpresa.BLOQUEADA);
         UsuarioEntity dono = usuario(PerfilUsuario.DONO, empresa);
@@ -95,7 +95,7 @@ class LgpdServiceTest {
     }
 
     @Test
-    @DisplayName("INATIVA -> não esta encerrada, não pode ser reativada por este fluxo")
+    @DisplayName("INATIVA -> nao esta encerrada, nao pode ser reativada por este fluxo")
     void reativarContaDeEmpresaInativaDeveSerNegada() {
         EmpresaEntity empresa = empresa(StatusEmpresa.INATIVA);
         UsuarioEntity dono = usuario(PerfilUsuario.DONO, empresa);
@@ -122,7 +122,7 @@ class LgpdServiceTest {
                 .perfil(perfil)
                 .status(StatusUsuario.ATIVO)
                 .empresa(empresa)
-                .sessaoAtiva("sessão-restrita")
+                .sessaoAtiva("sessao-restrita")
                 .build();
     }
 }

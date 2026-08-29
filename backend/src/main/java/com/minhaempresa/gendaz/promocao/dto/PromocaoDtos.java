@@ -13,7 +13,7 @@ public final class PromocaoDtos {
 
     public record PromocaoRequest(
             @NotBlank @Size(max = 80) String codigo,
-            @Size(max = 180) String descrição,
+            @Size(max = 180) String descricao,
             @NotNull TipoPromocao tipo,
             @NotNull @Positive BigDecimal valor,
             @NotNull LocalDateTime dataInicio,
@@ -26,7 +26,7 @@ public final class PromocaoDtos {
     public record PromocaoResponse(
             Long id,
             String codigo,
-            String descrição,
+            String descricao,
             TipoPromocao tipo,
             BigDecimal valor,
             LocalDateTime dataInicio,
@@ -64,7 +64,7 @@ public final class PromocaoDtos {
     public record PromocaoResumoResponse(
             Long promocaoId,
             String codigo,
-            String descrição,
+            String descricao,
             Long totalClientesUsaram,
             Long totalUsos,
             Long totalNotificacoes,

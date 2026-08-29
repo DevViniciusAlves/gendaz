@@ -126,7 +126,7 @@ public class UsuarioController {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId == null || !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
     }
 }

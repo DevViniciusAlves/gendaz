@@ -62,7 +62,7 @@ public class PagamentoController {
         return ResponseEntity.ok(pagamentoService.atualizarStatus(id, request));
     }
 
-    @PostMapping("/ações-em-massa")
+    @PostMapping("/acoes-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaPagamentoRequest request, HttpServletRequest http) {
         if (request.empresaId() != null) {
             validarEmpresaAutenticada(request.empresaId());
@@ -142,7 +142,7 @@ public class PagamentoController {
     private void validarNaoAtendente() {
         PerfilUsuario perfil = usuarioAutenticadoProvider.exigirPerfil();
         if (perfil == PerfilUsuario.ATENDENTE) {
-            throw new BusinessException("Seu perfil não permite comprar ou editar planos.");
+            throw new BusinessException("Seu perfil nao permite comprar ou editar planos.");
         }
     }
 

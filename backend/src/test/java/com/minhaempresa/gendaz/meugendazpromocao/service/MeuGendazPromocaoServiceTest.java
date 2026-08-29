@@ -82,7 +82,7 @@ class MeuGendazPromocaoServiceTest {
                 .empresa(empresa)
                 .promocaoOrigemId(999L)
                 .codigo(codigo)
-                .descrição("Cupom de teste")
+                .descricao("Cupom de teste")
                 .tipo(tipo)
                 .valor(new BigDecimal(valor))
                 .dataInicio(LocalDateTime.now().minusDays(1))

@@ -70,7 +70,7 @@ public class UsuarioService {
                 empresa.getNomeFantasia()
         );
         if (!emailBoasVindas) {
-            log.warn("Usuario criado, mas o email de boas-vindas não foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
+            log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
         }
         // Registrar auditoria
         adminAuditService.registrar("Criar", "Usuário", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
@@ -138,7 +138,7 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioEntity buscarEntidade(Long id) {
         UsuarioEntity usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         validarEmpresaAtual(usuario.getEmpresa() == null ? null : usuario.getEmpresa().getId());
         return usuario;
     }
@@ -147,7 +147,7 @@ public class UsuarioService {
     public UsuarioEntity buscarPorEmail(String email) {
         List<UsuarioEntity> usuarios = usuarioRepository.findUsuariosPainelByEmailIgnoreCase(email, PERFIS_PAINEL_DIRETOS);
         if (usuarios.isEmpty()) {
-            throw new ResourceNotFoundException("Usuario não encontrado.");
+            throw new ResourceNotFoundException("Usuario nao encontrado.");
         }
         if (usuarios.size() > 1) {
             throw new ConflictException("Dados de usuario duplicados. Contate o suporte para regularizacao.");
@@ -170,7 +170,7 @@ public class UsuarioService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Usuario não encontrado.");
+            throw new ResourceNotFoundException("Usuario nao encontrado.");
         }
     }
 }

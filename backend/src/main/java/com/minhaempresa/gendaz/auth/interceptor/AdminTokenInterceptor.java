@@ -38,7 +38,7 @@ public class AdminTokenInterceptor implements HandlerInterceptor {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-        response.getWriter().write("{\"mensagem\":\"Acesso admin não autorizado.\"}");
+        response.getWriter().write("{\"mensagem\":\"Acesso admin nao autorizado.\"}");
         return false;
     }
 }

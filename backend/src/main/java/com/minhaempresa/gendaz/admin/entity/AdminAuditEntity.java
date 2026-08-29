@@ -24,7 +24,7 @@ public class AdminAuditEntity {
     private String usuarioNome;
 
     @Column(nullable = false)
-    private String ação;
+    private String acao;
 
     @Column(nullable = false)
     private String entidade;
@@ -32,7 +32,7 @@ public class AdminAuditEntity {
     private Long entidadeId;
 
     @Column(nullable = false, length = 1000)
-    private String descrição;
+    private String descricao;
 
     @Column(nullable = false)
     private LocalDateTime dataHora;

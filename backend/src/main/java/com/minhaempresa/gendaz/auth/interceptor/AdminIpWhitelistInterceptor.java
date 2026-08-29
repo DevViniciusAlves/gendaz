@@ -26,7 +26,7 @@ public class AdminIpWhitelistInterceptor implements HandlerInterceptor {
         // Fail-closed: sem whitelist configurada a rota admin NAO existe.
         // Ela so aparece quando o IP da requisicao estiver na lista.
         if (ipsPermitidos.isEmpty()) {
-            log.warn("Acesso admin negado: ADMIN_ALLOWED_IPS não configurado (rota admin oculta)");
+            log.warn("Acesso admin negado: ADMIN_ALLOWED_IPS nao configurado (rota admin oculta)");
             ocultarRota(response);
             return false;
         }

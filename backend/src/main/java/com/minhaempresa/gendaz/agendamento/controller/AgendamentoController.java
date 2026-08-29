@@ -32,7 +32,7 @@ public class AgendamentoController {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
     }
 
@@ -162,7 +162,7 @@ public class AgendamentoController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/ações-em-massa")
+    @PostMapping("/acoes-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaAgendamentoRequest request) {
         validarEmpresaAtual(request.empresaId());
         return ResponseEntity.ok(agendamentoBulkService.executar(request));

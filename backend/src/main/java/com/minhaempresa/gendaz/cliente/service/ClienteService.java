@@ -80,7 +80,7 @@ public class ClienteService {
                     .nome(nome)
                     .telefone(telefone)
                     .email(email)
-                    .observações(sanitizacaoService.texto(request.observações()))
+                    .observacoes(sanitizacaoService.texto(request.observacoes()))
                     .status(StatusCadastro.ATIVO)
                     .empresa(empresa)
                     .build();
@@ -135,7 +135,7 @@ public class ClienteService {
         cliente.setNome(nome);
         cliente.setTelefone(telefone);
         cliente.setEmail(email);
-        cliente.setObservacoes(sanitizacaoService.texto(request.observações()));
+        cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
         ClienteEntity salvo = clienteRepository.save(cliente);
         clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
         auditService.registrar("CLIENTE_ATUALIZADO", "Cliente", salvo.getId(), "Cliente atualizado");

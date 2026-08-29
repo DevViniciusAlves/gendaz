@@ -16,7 +16,7 @@ public final class InsightsDtos {
 
     public record InsightItem(
             String titulo,
-            String descrição,
+            String descricao,
             String impacto,
             String urgencia,
             String tipo
@@ -24,7 +24,7 @@ public final class InsightsDtos {
 
     public record InsightOpportunity(
             String titulo,
-            String descrição,
+            String descricao,
             String motivo,
             String impactoEstimado,
             String prioridade
@@ -32,7 +32,7 @@ public final class InsightsDtos {
 
     public record InsightRecommendedAction(
             String titulo,
-            String descrição,
+            String descricao,
             String motivo,
             String impactoEstimado,
             String prioridade,
@@ -40,7 +40,7 @@ public final class InsightsDtos {
     ) {}
 
     public record InsightAction(
-            String descrição,
+            String descricao,
             String urgencia,
             String impactoEstimado
     ) {}
@@ -52,7 +52,7 @@ public final class InsightsDtos {
             List<InsightItem> principais,
             List<InsightItem> alertas,
             List<InsightItem> oportunidades,
-            List<InsightAction> ações,
+            List<InsightAction> acoes,
             String impactoTotal,
             LocalDateTime geradoEm
     ) {}
@@ -63,7 +63,7 @@ public final class InsightsDtos {
             Integer scoreGeral,
             List<InsightItem> principais,
             List<InsightOpportunity> oportunidades,
-            List<InsightRecommendedAction> ações,
+            List<InsightRecommendedAction> acoes,
             String impactoTotal,
             LocalDateTime geradoEm,
             LocalDateTime validoAte,
@@ -79,7 +79,7 @@ public final class InsightsDtos {
     public record MeuGendazIAResponse(
             String resposta,
             List<String> sugestoes,
-            String ação,
+            String acao,
             LocalDateTime timestamp
     ) {}
 

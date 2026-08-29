@@ -39,12 +39,12 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaInativaDeveAcessarConsultarPlanoAtual() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("GET");
         request.setRequestURI("/api/pagamentos/planos/empresa/30/atual");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         request.addHeader("Origin", "https://gendaz.site");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -57,12 +57,12 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaInativaDeveAcessarIniciarPagamentoBasico() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("POST");
         request.setRequestURI("/api/pagamentos/planos/basico/iniciar");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         request.addHeader("Origin", "https://gendaz.site");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -75,12 +75,12 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaInativaDeveAcessarIniciarPagamentoPro() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("POST");
         request.setRequestURI("/api/pagamentos/planos/pro/iniciar");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         request.addHeader("Origin", "https://gendaz.site");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -93,12 +93,12 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaInativaNaoDeveAcessarRotaComum() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("GET");
         request.setRequestURI("/api/dashboard/resumo");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         request.addHeader("Origin", "https://gendaz.site");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
@@ -111,10 +111,10 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaBloqueadaNaoDeveAcessarRotaDeReativacao() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/pagamentos/planos/empresa/30/atual");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, new MockFilterChain());
@@ -126,10 +126,10 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void usuarioInativoNaoDeveAcessarRotaDeReativacao() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.INATIVO, StatusEmpresa.INATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/pagamentos/planos/empresa/30/atual");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, new MockFilterChain());
@@ -141,10 +141,10 @@ class GendazSessionAuthenticationFilterReactivationTest {
     void empresaAtivaDeveAcessarRotaComum() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA);
-        when(usuarioRepository.findBySessaoAtiva("sessão-valida")).thenReturn(Optional.of(usuario));
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
         MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard/resumo");
-        request.setCookies(new Cookie("Gendaz_session", "sessão-valida"));
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, new MockFilterChain());

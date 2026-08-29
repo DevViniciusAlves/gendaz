@@ -32,7 +32,7 @@ public class MeuGendazPromocaoSyncService {
         }
 
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
 
         Map<Long, PromocaoEntity> promocoesAtuais = new LinkedHashMap<>();
         for (PromocaoEntity promocao : promocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId)) {
@@ -76,7 +76,7 @@ public class MeuGendazPromocaoSyncService {
             return;
         }
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
         PromocaoEntity promocao = promocaoRepository.findByIdAndEmpresaId(promocaoId, empresaId)
                 .orElse(null);
         if (promocao == null) {
@@ -114,7 +114,7 @@ public class MeuGendazPromocaoSyncService {
                     .empresa(empresa)
                     .promocaoOrigemId(promocao.getId())
                     .codigo(promocao.getCodigo())
-                    .descrição(promocao.getDescricao())
+                    .descricao(promocao.getDescricao())
                     .tipo(promocao.getTipo() == null ? null : promocao.getTipo().name())
                     .valor(promocao.getValor())
                     .dataInicio(promocao.getDataInicio())
@@ -153,12 +153,12 @@ public class MeuGendazPromocaoSyncService {
     }
 
     /**
-     * Sincroniza a coleção ManyToMany de servicos do mirror de forma idempotente.
+     * Sincroniza a colecao ManyToMany de servicos do mirror de forma idempotente.
      * <p>
-     * Nunca substitui a coleção persistida por um Set externo: quando os ids dos
-     * servicos não mudaram, nada e feito (evita dirty-check e o INSERT duplicado na
+     * Nunca substitui a colecao persistida por um Set externo: quando os ids dos
+     * servicos nao mudaram, nada e feito (evita dirty-check e o INSERT duplicado na
      * join table {@code meu_gendaz_promocao_servico}, cuja PK e composta). Quando
-     * mudaram, aplica o diff diretamente na coleção gerenciada pelo Hibernate.
+     * mudaram, aplica o diff diretamente na colecao gerenciada pelo Hibernate.
      */
     private void sincronizarServicos(MeuGendazPromocaoEntity mirror, PromocaoEntity promocao) {
         Set<ServicoEntity> novos = promocao.getServicos() == null

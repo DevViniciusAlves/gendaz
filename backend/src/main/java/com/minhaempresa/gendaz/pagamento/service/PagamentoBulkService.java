@@ -34,21 +34,21 @@ public class PagamentoBulkService {
         validarQuantidade(request.ids());
         Long companyId = CompanyContext.getCompanyId();
         if (companyId == null) {
-            throw new BusinessException("Empresa logada não encontrada.");
+            throw new BusinessException("Empresa logada nao encontrada.");
         }
         if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
-        String ação = request.ação() == null ? "" : request.ação().trim().toUpperCase();
+        String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
         Set<Long> idsUnicos = new HashSet<>(request.ids());
         List<FalhaAcaoItem> falhas = new ArrayList<>();
         int processados = 0;
         for (Long id : idsUnicos) {
             try {
                 PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaId(id, companyId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
                 StatusPagamento statusAnterior = pagamento.getStatus();
-                switch (ação) {
+                switch (acao) {
                     case "MARCAR_COMO_PAGO" -> {
                         formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());
                         var metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
@@ -68,12 +68,12 @@ public class PagamentoBulkService {
                         processados++;
                         continue;
                     }
-                    default -> throw new BusinessException("Acao de pagamento não suportada.");
+                    default -> throw new BusinessException("Acao de pagamento nao suportada.");
                 }
                 pagamentoRepository.save(pagamento);
-                if (ação.equals("MARCAR_COMO_PAGO") && statusAnterior != StatusPagamento.PAGO) {
+                if (acao.equals("MARCAR_COMO_PAGO") && statusAnterior != StatusPagamento.PAGO) {
                     caixaDespesasService.registrarPagamentoAprovado(pagamento);
-                } else if (ação.equals("MARCAR_COMO_PENDENTE") && statusAnterior == StatusPagamento.PAGO) {
+                } else if (acao.equals("MARCAR_COMO_PENDENTE") && statusAnterior == StatusPagamento.PAGO) {
                     caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
                 }
                 processados++;

@@ -167,7 +167,7 @@ public class MeuGendazAuthService {
         }
         EmpresaEntity empresa = empresaOpt.get();
         if (sessionToken == null || sessionToken.isBlank()) {
-            throw new SessaoExpiradaException("Sessao não encontrada. Faca login novamente.");
+            throw new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente.");
         }
         MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), sessionToken)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
@@ -248,7 +248,7 @@ public class MeuGendazAuthService {
             throw new BusinessException("Slug da empresa invalido.");
         }
         return empresaRepository.findByAgendamentoSlug(normalizado)
-                .orElseThrow(() -> new BusinessException("Empresa não encontrada."));
+                .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
     }
 
     private String normalizarSlug(String slug) {

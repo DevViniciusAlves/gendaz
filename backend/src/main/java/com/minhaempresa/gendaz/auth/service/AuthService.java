@@ -133,7 +133,7 @@ public class AuthService {
             if (usuario.precisaCaptcha()) {
                 String captchaToken = request.recaptchaToken();
                 if (captchaToken == null || captchaToken.isBlank()) {
-                    log.warn("[login] CAPTCHA requerido para {} mas não foi enviado", mascararEmail(email));
+                    log.warn("[login] CAPTCHA requerido para {} mas nao foi enviado", mascararEmail(email));
                     throw new BusinessException("CAPTCHA_REQUIRED");
                 }
                 if (!recaptchaService.validarCaptcha(captchaToken)) {
@@ -366,7 +366,7 @@ public class AuthService {
                     cadastro.usuario().getEmpresa() == null ? "Gendaz" : cadastro.usuario().getEmpresa().getNomeFantasia()
             );
             if (!emailBoasVindas) {
-                log.warn("Email de boas-vindas não enviado para {}", mascararEmail(cadastro.usuario().getEmail()));
+                log.warn("Email de boas-vindas nao enviado para {}", mascararEmail(cadastro.usuario().getEmail()));
             }
 
             String planoNome = cadastro.assinatura() != null && cadastro.assinatura().getPlano() != null
@@ -426,7 +426,7 @@ public class AuthService {
                     token
             );
             if (!enviado) {
-                log.warn("Email de recuperacao não enviado para {}", mascararEmail(usuario.getEmail()));
+                log.warn("Email de recuperacao nao enviado para {}", mascararEmail(usuario.getEmail()));
             }
         });
     }
@@ -476,7 +476,7 @@ public class AuthService {
         } else {
             auditService.registrarEventoSeguranca(
                     "USER_LOGOUT",
-                    "Logout de sessão não encontrada",
+                    "Logout de sessao nao encontrada",
                     null,
                     "Desconhecido",
                     getCurrentClientIp(),
@@ -534,7 +534,7 @@ public class AuthService {
         UsuarioEntity usuario = usuarioRepository.findBySessaoAtiva(sessionToken)
                 .orElseThrow(() -> new SessaoExpiradaException("Usuário autenticado inválido."));
         if (usuarioId != null && !usuario.getId().equals(usuarioId)) {
-            log.warn("Header X-Usuario-Id divergente da sessão. header={}, sessão={}", usuarioId, usuario.getId());
+            log.warn("Header X-Usuario-Id divergente da sessao. header={}, sessao={}", usuarioId, usuario.getId());
         }
         if (usuario.getStatus() != StatusUsuario.ATIVO || usuario.getStatus() == StatusUsuario.REMOVIDO) {
             throw new BusinessException("Usuário inativo.");
@@ -558,7 +558,7 @@ public class AuthService {
                     .usuario(usuario)
                     .empresa(usuario.getEmpresa())
                     .status(StatusMembresia.ACTIVE)
-                    .função(usuario.getPerfil() == PerfilUsuario.DONO
+                    .funcao(usuario.getPerfil() == PerfilUsuario.DONO
                             ? com.minhaempresa.gendaz.membresia.enums.FuncaoMembresia.OWNER
                             : com.minhaempresa.gendaz.membresia.enums.FuncaoMembresia.MEMBER)
                     .owner(usuario.getPerfil() == PerfilUsuario.DONO)
@@ -716,11 +716,11 @@ public class AuthService {
         return visivel + "@" + dominio;
     }
 
-    private void registrarAuditoriaAutenticacao(String tipo, UsuarioEntity usuario, String descrição) {
+    private void registrarAuditoriaAutenticacao(String tipo, UsuarioEntity usuario, String descricao) {
         try {
-            auditService.registrar(tipo, "INFO", null, usuario, usuario.getEmpresa(), descrição, null, null, null);
+            auditService.registrar(tipo, "INFO", null, usuario, usuario.getEmpresa(), descricao, null, null, null);
         } catch (RuntimeException ex) {
-            log.error("Auditoria de autenticacao falhou e foi ignorada para não derrubar login/cadastro. tipo={}, usuarioId={}",
+            log.error("Auditoria de autenticacao falhou e foi ignorada para nao derrubar login/cadastro. tipo={}, usuarioId={}",
                     tipo, usuario == null ? null : usuario.getId(), ex);
         }
     }

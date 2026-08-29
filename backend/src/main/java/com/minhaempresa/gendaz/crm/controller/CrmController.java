@@ -36,7 +36,7 @@ public class CrmController {
         validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         empresaId = empresaContexto;
         List<CrmClienteResponse> clientes = crmService.listarClientes(empresaId, segment, search, orderBy, period);
@@ -52,7 +52,7 @@ public class CrmController {
         validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         empresaId = empresaContexto;
         try {
@@ -73,7 +73,7 @@ public class CrmController {
         validarPlanoPro();
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         empresaId = empresaContexto;
         return ResponseEntity.ok(crmService.historicoContatos(empresaId, clienteId));

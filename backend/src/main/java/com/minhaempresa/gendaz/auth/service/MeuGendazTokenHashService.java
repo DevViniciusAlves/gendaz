@@ -38,7 +38,7 @@ public class MeuGendazTokenHashService {
                 secret = System.getenv("MEU_GENDAZ_OTP_SECRET");
             }
             if (secret == null || secret.isBlank()) {
-                throw new IllegalStateException("MEU_GENDAZ_OTP_SECRET não configurado.");
+                throw new IllegalStateException("MEU_GENDAZ_OTP_SECRET nao configurado.");
             }
             Mac mac = Mac.getInstance("HmacSHA256");
             mac.init(new SecretKeySpec(secret.getBytes(StandardCharsets.UTF_8), "HmacSHA256"));

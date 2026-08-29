@@ -1,4 +1,4 @@
-package com.minhaempresa.gendaz.configuração.dto;
+package com.minhaempresa.gendaz.configuracao.dto;
 
 import com.minhaempresa.gendaz.horarioatendimento.enums.DiaSemanaAtendimento;
 import jakarta.validation.Valid;

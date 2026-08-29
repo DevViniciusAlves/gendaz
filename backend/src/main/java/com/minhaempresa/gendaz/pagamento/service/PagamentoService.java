@@ -413,7 +413,7 @@ public class PagamentoService {
     public PagamentoPlanoResponse consultarPagamentoPlano(Long empresaId, Long pagamentoId) {
         validarEmpresaAtual(empresaId);
         return mapper.toPlanoResponse(pagamentoPlanoRepository.findByIdAndEmpresaId(pagamentoId, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado.")));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado.")));
     }
 
     @Transactional
@@ -437,7 +437,7 @@ public class PagamentoService {
             case PAYMENT_REJECTED -> new VerificarPagamentoPlanoResponse("REJECTED", "Pagamento recusado. Gere uma nova cobranca e tente novamente.", pagamento.getEmpresa().getStatus(), assinatura == null ? null : assinatura.getStatus(), pagamentoResponse);
             case PAYMENT_CANCELED -> new VerificarPagamentoPlanoResponse("CANCELED", "Pagamento cancelado. Gere uma nova cobranca para continuar.", pagamento.getEmpresa().getStatus(), assinatura == null ? null : assinatura.getStatus(), pagamentoResponse);
             case PAYMENT_EXPIRED -> new VerificarPagamentoPlanoResponse("EXPIRED", "Pagamento expirado. Gere uma nova cobranca para continuar.", pagamento.getEmpresa().getStatus(), assinatura == null ? null : assinatura.getStatus(), pagamentoResponse);
-            default -> new VerificarPagamentoPlanoResponse("PENDING", "Pagamento ainda não foi confirmado. Aguarde alguns minutos e tente novamente.", pagamento.getEmpresa().getStatus(), assinatura == null ? null : assinatura.getStatus(), pagamentoResponse);
+            default -> new VerificarPagamentoPlanoResponse("PENDING", "Pagamento ainda nao foi confirmado. Aguarde alguns minutos e tente novamente.", pagamento.getEmpresa().getStatus(), assinatura == null ? null : assinatura.getStatus(), pagamentoResponse);
         };
     }
 
@@ -488,7 +488,7 @@ public class PagamentoService {
     @Transactional
     public PagamentoPlanoEntity registrarCheckoutStripeConcluido(String stripeSessionId, String subscriptionId, String stripeCustomerId, Long pagamentoPlanoId, String paymentReference) {
         PagamentoPlanoEntity pagamento = localizarPagamentoStripe(stripeSessionId, pagamentoPlanoId, paymentReference)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado."));
         pagamento.setProvider("STRIPE");
         pagamento.setProviderPaymentId(stripeSessionId);
         pagamento.setStripeSessionId(stripeSessionId);
@@ -550,7 +550,7 @@ public class PagamentoService {
     @Transactional
     public PagamentoPlanoResponse aprovarPagamentoManual(Long pagamentoId, String transacaoId) {
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findById(pagamentoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado."));
         if (transacaoId != null && !transacaoId.isBlank()) {
             pagamento.setProviderPaymentId(transacaoId.trim());
         }
@@ -564,7 +564,7 @@ public class PagamentoService {
     @Transactional
     public PagamentoPlanoResponse desaprovarPagamentoManual(Long pagamentoId, String transacaoId) {
         PagamentoPlanoEntity pagamento = pagamentoPlanoRepository.findById(pagamentoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento do plano nao encontrado."));
         if (transacaoId != null && !transacaoId.isBlank()) {
             pagamento.setProviderPaymentId(transacaoId.trim());
         }
@@ -585,7 +585,7 @@ public class PagamentoService {
     public PagamentoEntity buscarEntidade(Long id) {
         Long empresaId = CompanyContext.requireCompanyId();
         return pagamentoRepository.findByIdAndEmpresaId(id, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
     }
 
     @Transactional(readOnly = true)
@@ -760,13 +760,13 @@ public class PagamentoService {
             aplicarStatusPagamentoPlano(pagamento, confirmado.status());
             return pagamentoPlanoRepository.save(pagamento);
         } catch (BusinessException ex) {
-            log.warn("Consulta direta ao gateway não confirmou pagamento {}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
+            log.warn("Consulta direta ao gateway nao confirmou pagamento {}. erroTipo={}", pagamento.getId(), ex.getClass().getSimpleName());
             return pagamento;
         }
     }
 
-    private void registrarAuditoriaAutomatica(String tipo, EmpresaEntity empresa, String descrição) {
-        auditService.registrar(tipo, "Pagamento", null, descrição);
+    private void registrarAuditoriaAutomatica(String tipo, EmpresaEntity empresa, String descricao) {
+        auditService.registrar(tipo, "Pagamento", null, descricao);
     }
 
     private String gerarPaymentReference() {

@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class ClienteEmailBloqueadoService {
-    private static final String MENSAGEM_BLOQUEIO = "Este email não é permitido entrar no meu gendaz";
+    private static final String MENSAGEM_BLOQUEIO = "Este email nao é permitido entrar no meu gendaz";
 
     private final ClienteEmailBloqueadoRepository repository;
 

@@ -125,7 +125,7 @@ public class StripePaymentGateway implements PaymentGateway {
     private String successUrlComSessionId() {
         String url = paymentGatewayProperties.getSuccessUrl();
         if (url == null || url.isBlank()) {
-            throw new BusinessException("PAYMENT_SUCCESS_URL não configurada.");
+            throw new BusinessException("PAYMENT_SUCCESS_URL nao configurada.");
         }
         if (url.contains("{CHECKOUT_SESSION_ID}")) {
             return url;
@@ -220,11 +220,11 @@ public class StripePaymentGateway implements PaymentGateway {
 
     private void validarConfiguracao(PagamentoPlanoEntity pagamento) {
         if (stripeProperties.getSecretKey() == null || stripeProperties.getSecretKey().isBlank()) {
-            throw new BusinessException("STRIPE_SECRET_KEY não configurada.");
+            throw new BusinessException("STRIPE_SECRET_KEY nao configurada.");
         }
         String priceId = stripeProperties.priceIdParaPlano(pagamento.getPlano().getNome());
         if (priceId == null || priceId.isBlank()) {
-            throw new BusinessException("Price ID Stripe não configurado para o plano " + pagamento.getPlano().getNome() + ".");
+            throw new BusinessException("Price ID Stripe nao configurado para o plano " + pagamento.getPlano().getNome() + ".");
         }
     }
 }
