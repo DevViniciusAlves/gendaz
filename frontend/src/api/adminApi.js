@@ -58,6 +58,10 @@ export const adminApi = {
     return api.get('/admin/logs').then((response) => response.data)
   },
 
+  limparLogs() {
+    return api.delete('/admin/logs').then((response) => response.data)
+  },
+
   configurações() {
     return api.get('/admin/configurações').then((response) => response.data)
   },

@@ -233,6 +233,7 @@ export default function AdminDashboard() {
   const [pesquisaLog, setPesquisaLog] = useState('')
   const [mesLog, setMesLog] = useState(mesAtualIso())
   const [paginaLog, setPaginaLog] = useState(1)
+  const [limpandoLogs, setLimpandoLogs] = useState(false)
   const motivoValido = motivo.trim().length >= 8
   const motivoRestante = Math.max(0, 8 - motivo.trim().length)
 
@@ -369,6 +370,25 @@ export default function AdminDashboard() {
       setErro(mensagemErroApi(error, 'Nao foi possivel recarregar os dados agora.'))
     } finally {
       setRecarregando('')
+    }
+  }
+
+  async function confirmarLimparLogs() {
+    if (logsFiltrados.length === 0) return
+    const confirmado = window.confirm(
+      `Tem certeza que deseja apagar TODOS os logs do sistema (acoes de admin e de usuarios)? Esta acao nao pode ser desfeita.`
+    )
+    if (!confirmado) return
+    setLimpandoLogs(true)
+    try {
+      await adminApi.limparLogs()
+      setLogs([])
+      setPaginaLog(1)
+      setAviso('Historico de logs apagado com sucesso.')
+    } catch (error) {
+      setErro(mensagemErroApi(error, 'Nao foi possivel limpar os logs agora.'))
+    } finally {
+      setLimpandoLogs(false)
     }
   }
 
@@ -1083,6 +1103,9 @@ export default function AdminDashboard() {
                 <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Logs'} loadingText="Recarregando...">
                   Recarregar
                 </Button>
+                <Button icon={Trash2} variant="danger" onClick={confirmarLimparLogs} disabled={limpandoLogs || logsFiltrados.length === 0}>
+                  Limpar logs
+                </Button>
               </div>
             </div>
             <div className="admin-filters">
@@ -1127,12 +1150,12 @@ export default function AdminDashboard() {
                 />
               </label>
             </div>
-            <Table columns={['Tipo', 'Severidade', 'Admin', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
+            <Table columns={['Tipo', 'Severidade', 'Usuario', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
               {logsPagina.map((item) => (
                 <tr key={item.id}>
                   <td>{rotuloCategoria(item.tipo)}</td>
                   <td><StatusBadge status={item.severidade} /></td>
-                  <td>{item.admin || '-'}</td>
+                  <td>{item.usuario || item.admin || '-'}</td>
                   <td>{item.empresa || '-'}</td>
                   <td>{item.descrição}</td>
                   <td>{item.motivo || '-'}</td>

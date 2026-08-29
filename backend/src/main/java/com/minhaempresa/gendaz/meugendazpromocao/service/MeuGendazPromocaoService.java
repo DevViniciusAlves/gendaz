@@ -8,6 +8,7 @@ import com.minhaempresa.gendaz.meugendazpromocao.repository.*;
 import com.minhaempresa.gendaz.promocao.entity.PromocaoEntity;
 import com.minhaempresa.gendaz.promocao.repository.PromocaoRepository;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -30,6 +31,7 @@ public class MeuGendazPromocaoService {
     private final MeuGendazPromocaoNotificacaoRepository notificacaoRepository;
     private final MeuGendazPromocaoSyncService syncService;
     private final PromocaoRepository adminPromocaoRepository;
+    private final LogAtividadeService logAtividadeService;
 
     @Transactional
     public List<PromocaoClienteResponse> listarPromocoes(ClienteEntity cliente) {
@@ -158,6 +160,7 @@ public class MeuGendazPromocaoService {
         BigDecimal desconto = calcularDesconto(servico, bloqueada);
         if (agendamentoId != null) {
             registrarUso(cliente, bloqueada, agendamentoId, desconto);
+            logAtividadeService.registrar("CUPOM", bloqueada.getId(), "Cliente " + cliente.getNome() + " usou cupom " + bloqueada.getCodigo());
         }
         return new CupomAplicadoResult(
                 bloqueada.getCodigo(),

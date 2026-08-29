@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ConversaService {
     private final ConversaRepository conversaRepository;
     private final ClienteService clienteService;
     private final EmpresaService empresaService;
+    private final LogAtividadeService logAtividadeService;
     private final ConversaMapper mapper = new ConversaMapper();
 
     @Transactional
@@ -37,7 +39,9 @@ public class ConversaService {
                 .ultimaMensagem("Conversa iniciada.")
                 .dataUltimaMensagem(LocalDateTime.now())
                 .build();
-        return mapper.toResponse(conversaRepository.save(conversa));
+        ConversaResponse response = mapper.toResponse(conversaRepository.save(conversa));
+        logAtividadeService.registrar("CONVERSA", conversa.getId(), "Iniciou conversa com " + cliente.getNome());
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -63,7 +67,9 @@ public class ConversaService {
         ConversaEntity conversa = buscarEntidade(id);
         conversa.setStatus(StatusConversa.FINALIZADA);
         conversa.setDataUltimaMensagem(LocalDateTime.now());
-        return mapper.toResponse(conversaRepository.save(conversa));
+        ConversaResponse response = mapper.toResponse(conversaRepository.save(conversa));
+        logAtividadeService.registrar("CONVERSA", conversa.getId(), "Finalizou conversa com " + (conversa.getCliente() != null ? conversa.getCliente().getNome() : "cliente"));
+        return response;
     }
 
     @Transactional(readOnly = true)

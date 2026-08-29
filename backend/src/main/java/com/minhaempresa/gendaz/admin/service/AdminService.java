@@ -97,7 +97,8 @@ public class AdminService {
             SecurityMonitoringService securityMonitoringService,
             PagamentoService pagamentoService,
             ProfissionalService profissionalService,
-            AdminSessionService adminSessionService
+            AdminSessionService adminSessionService,
+            LogAtividadeRepository logAtividadeRepository
     ) {
         this.usuarioRepository = usuarioRepository;
         this.empresaRepository = empresaRepository;
@@ -114,6 +115,7 @@ public class AdminService {
         this.pagamentoService = pagamentoService;
         this.profissionalService = profissionalService;
         this.adminSessionService = adminSessionService;
+        this.logAtividadeRepository = logAtividadeRepository;
     }
 
     public AdminService(
@@ -146,6 +148,7 @@ public class AdminService {
                 null,
                 pagamentoService,
                 profissionalService,
+                null,
                 null
         );
     }
@@ -179,6 +182,7 @@ public class AdminService {
                 null,
                 pagamentoService,
                 profissionalService,
+                null,
                 null
         );
     }
@@ -211,6 +215,7 @@ public class AdminService {
                 null,
                 pagamentoService,
                 profissionalService,
+                null,
                 null
         );
     }
@@ -568,6 +573,15 @@ public class AdminService {
                 Comparator.nullsLast(Comparator.reverseOrder())
         ));
         return todos;
+    }
+
+    @Transactional
+    public void limparLogs(String token) {
+        exigirAdmin(token);
+        auditService.limpar();
+        if (logAtividadeRepository != null) {
+            logAtividadeRepository.deleteAll();
+        }
     }
 
     private AdminAuditLogResponse toAtividadeResponse(LogAtividadeEntity l) {

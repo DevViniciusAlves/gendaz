@@ -13,6 +13,7 @@ import com.minhaempresa.gendaz.mensagem.mapper.MensagemMapper;
 import com.minhaempresa.gendaz.mensagem.repository.MensagemRepository;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -26,6 +27,7 @@ public class MensagemService {
     private final ConversaService conversaService;
     private final AgendamentoService agendamentoService;
     private final SanitizacaoService sanitizacaoService;
+    private final LogAtividadeService logAtividadeService;
     private final MensagemMapper mapper = new MensagemMapper();
 
     @Transactional(readOnly = true)
@@ -60,7 +62,11 @@ public class MensagemService {
                 .dataEnvio(LocalDateTime.now())
                 .build();
         conversaService.atualizarUltimaMensagem(conversa, conteudo);
-        return mapper.toResponse(mensagemRepository.save(mensagem));
+        MensagemResponse response = mapper.toResponse(mensagemRepository.save(mensagem));
+        if (direcao == DirecaoMensagem.EMPRESA_PARA_CLIENTE) {
+            logAtividadeService.registrar("MENSAGEM", mensagem.getId(), "Enviou mensagem ao cliente na conversa " + conversa.getId());
+        }
+        return response;
     }
 }
 

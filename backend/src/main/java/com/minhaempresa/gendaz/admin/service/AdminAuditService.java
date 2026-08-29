@@ -137,6 +137,13 @@ public class AdminAuditService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Remove permanentemente todos os logs de auditoria administrativa.
+     */
+    public void limpar() {
+        adminAuditRepository.deleteAll();
+    }
+
     private AdminAuditLogResponse toResponse(AdminAuditEntity e) {
         return new AdminAuditLogResponse(
                 e.getId(),
