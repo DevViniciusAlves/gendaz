@@ -29,7 +29,7 @@ const novoFormulario = {
   data: todayIso(),
   horaInicio: '11:00',
   status: 'PENDENTE',
-  observacoes: 'Criado pelo painel.',
+  observações: 'Criado pelo painel.',
 }
 
 function limiteDataMaxima() {
@@ -335,7 +335,7 @@ export default function Agenda() {
     })
   }
 
-  function abrirBulk(acao) {
+  function abrirBulk(ação) {
     if (!selectedCount) {
       setErroAcao('Selecione pelo menos um item.')
       return
@@ -346,8 +346,8 @@ export default function Agenda() {
       PENDENTE: ['Marcar como pendentes', 'Tem certeza que deseja marcar os agendamentos selecionados como pendentes?', 'Marcar como pendente', false],
       EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
     }
-    const cfg = configs[acao]
-    setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
+    const cfg = configs[ação]
+    setBulkModal({ ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
   }
 
   async function executarBulk() {
@@ -355,7 +355,7 @@ export default function Agenda() {
     setBulkExecutando(true)
     setErroAcao('')
     try {
-      await appApi.acaoEmMassaAgendamentos(selecionados, bulkModal.acao)
+      await appApi.acaoEmMassaAgendamentos(selecionados, bulkModal.ação)
       await reload(true)
       limparSelecao()
     } catch (error) {
@@ -377,7 +377,7 @@ export default function Agenda() {
       horaInicio: payload.horaInicio,
       cupomCodigo: payload.cupomCodigo || '',
       status: payload.status,
-      observacoes: payload.observacoes,
+      observações: payload.observações,
     }
   }
 
@@ -402,7 +402,7 @@ export default function Agenda() {
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
       if (horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
     }
-    if ((payload.observacoes || '').length > 300) return 'Observações deve ter até 300 caracteres.'
+    if ((payload.observações || '').length > 300) return 'Observações deve ter até 300 caracteres.'
     return ''
   }
 
@@ -471,7 +471,7 @@ export default function Agenda() {
       })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
-      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
+      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente não encontrado')
         ? 'Você precisa cadastrar o cliente primeiro. Vá em Clientes → Novo cliente.'
         : mensagemErro || 'Não foi possível criar o agendamento.'
       setErroCriar(mensagemFormatada)
@@ -489,7 +489,7 @@ export default function Agenda() {
       data: agendamento.data,
       horaInicio: agendamento.horaInicio,
       status: agendamento.status,
-      observacoes: agendamento.observacoes || '',
+      observações: agendamento.observações || '',
     })
     setErroEditar('')
     setModalEditar(true)
@@ -519,7 +519,7 @@ export default function Agenda() {
       })
     } catch (error) {
       const mensagemErro = error.response?.data?.mensagem || error.response?.data?.message || ''
-      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente nao encontrado')
+      const mensagemFormatada = mensagemErro.includes('Cliente não encontrado') || mensagemErro.includes('Cliente não encontrado')
         ? 'Você precisa cadastrar o cliente primeiro. Vá em Clientes → Novo cliente.'
         : mensagemErro || 'Não foi possível salvar o agendamento.'
       setErroEditar(mensagemFormatada)
@@ -575,7 +575,7 @@ export default function Agenda() {
       })
     } catch (error) {
       const mensagem = String(error.response?.data?.mensagem || error.response?.data?.message || error.message || '')
-      const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento nao encontrado') || mensagem.toLowerCase().includes('agendamento não encontrado')
+      const jaNaoExiste = error.response?.status === 404 || mensagem.toLowerCase().includes('agendamento não encontrado') || mensagem.toLowerCase().includes('agendamento não encontrado')
       if (!jaNaoExiste) {
         setAcaoEmAndamento(null)
         setErroAcao(mensagem || 'Não foi possível excluir o agendamento.')
@@ -786,28 +786,28 @@ export default function Agenda() {
             acaoCarregando={acaoEmAndamento}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
-              descricao: 'Tem certeza que deseja iniciar este atendimento?',
-              acao: () => iniciarAtendimento(ag),
+              descrição: 'Tem certeza que deseja iniciar este atendimento?',
+              ação: () => iniciarAtendimento(ag),
               acaoLabel: 'Iniciar',
             })}
             onPausar={(ag) => setConfirmacao({
               titulo: 'Pausar atendimento',
-              descricao: 'Tem certeza que deseja pausar este atendimento?',
-              acao: () => pausarAtendimento(ag),
+              descrição: 'Tem certeza que deseja pausar este atendimento?',
+              ação: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
             })}
             onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
-              descricao: 'Tem certeza que deseja cancelar este agendamento?',
-              acao: () => cancelarAgendamento(ag.id),
+              descrição: 'Tem certeza que deseja cancelar este agendamento?',
+              ação: () => cancelarAgendamento(ag.id),
               acaoLabel: 'Cancelar',
             })}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
-              descricao: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
-              acao: () => excluirAgendamento(ag.id),
+              descrição: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
+              ação: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}
           />
@@ -859,12 +859,12 @@ export default function Agenda() {
               <option value="">Nenhum cupom</option>
               {promocoesAplicaveis.map((cupom) => (
                 <option key={cupom.id} value={cupom.codigo}>
-                  {cupom.codigo} - {cupom.descricao}
+                  {cupom.codigo} - {cupom.descrição}
                 </option>
               ))}
             </select>
           </label>
-          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
+          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} /><small className={form.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observações.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" loading={salvandoCriar} loadingText="Salvando...">Salvar</Button>
         </form>
@@ -897,7 +897,7 @@ export default function Agenda() {
               <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             )}
             {carregandoHorariosEditar && <small className="field-hint">Carregando horários disponíveis...</small>}
-            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
+            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observações} onChange={(e) => setEdicao({ ...edicao, observações: e.target.value })} /><small className={edicao.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observações.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" loading={salvandoEditar} loadingText="Salvando...">Salvar correções</Button>
           </form>
@@ -947,7 +947,7 @@ export default function Agenda() {
       </Modal>
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>
         <div className="form-grid">
-          <p className="panel-description">{confirmacao?.descricao}</p>
+          <p className="panel-description">{confirmacao?.descrição}</p>
           <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
             <Button variant="secondary" type="button" onClick={() => setConfirmacao(null)}>Cancelar</Button>
             <Button
@@ -956,10 +956,10 @@ export default function Agenda() {
               onClick={async () => {
                 if (confirmandoAcao) return
                 setConfirmandoAcao(true)
-                const acao = confirmacao?.acao
+                const ação = confirmacao?.ação
                 setConfirmacao(null)
                 try {
-                  if (acao) await acao()
+                  if (ação) await ação()
                 } finally {
                   setConfirmandoAcao(false)
                 }
@@ -973,7 +973,7 @@ export default function Agenda() {
       <BulkConfirmModal
         open={Boolean(bulkModal)}
         title={bulkModal?.titulo || 'Confirmar ação'}
-        description={bulkModal?.descricao || ''}
+        description={bulkModal?.descrição || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
         loading={bulkExecutando}

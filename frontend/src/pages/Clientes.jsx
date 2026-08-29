@@ -17,7 +17,7 @@ import { exibirTelefone, normalizarParaApi, normalizarParaInput, obterExemploTel
 import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import { exportarCsv, formatarData, dataHojeDdMmAAAA } from '../utils/csvExport.js'
 
-const formInicial = { nome: '', telefone: '', email: '', observacoes: '' }
+const formInicial = { nome: '', telefone: '', email: '', observações: '' }
 
 function limparNome(valor) {
   return valor.replace(/[^\p{L}\s]/gu, '')
@@ -79,7 +79,7 @@ export default function Clientes() {
     })
   }
 
-  function abrirBulk(acao) {
+  function abrirBulk(ação) {
     if (!selectedCount) {
       setErro('Selecione pelo menos um item.')
       return
@@ -87,24 +87,24 @@ export default function Clientes() {
     const config = {
       ATIVAR: {
         titulo: 'Ativar clientes',
-        descricao: 'Tem certeza que deseja ativar os clientes selecionados?',
+        descrição: 'Tem certeza que deseja ativar os clientes selecionados?',
         confirmLabel: 'Ativar',
         danger: false,
       },
       DESATIVAR: {
         titulo: 'Desativar clientes',
-        descricao: 'Tem certeza que deseja desativar os clientes selecionados?',
+        descrição: 'Tem certeza que deseja desativar os clientes selecionados?',
         confirmLabel: 'Desativar',
         danger: false,
       },
       EXCLUIR: {
         titulo: 'Excluir clientes',
-        descricao: 'Tem certeza que deseja excluir os clientes selecionados? Essa ação não poderá ser desfeita.',
+        descrição: 'Tem certeza que deseja excluir os clientes selecionados? Essa ação não poderá ser desfeita.',
         confirmLabel: 'Excluir',
         danger: true,
       },
-    }[acao]
-    setBulkModal({ acao, ...config })
+    }[ação]
+    setBulkModal({ ação, ...config })
   }
 
   async function executarBulk() {
@@ -112,11 +112,11 @@ export default function Clientes() {
     setBulkExecutando(true)
     setErro('')
     try {
-      if (bulkModal.acao === 'ATIVAR') {
+      if (bulkModal.ação === 'ATIVAR') {
         await appApi.ativarClientesEmMassa(selecionados)
-      } else if (bulkModal.acao === 'DESATIVAR') {
+      } else if (bulkModal.ação === 'DESATIVAR') {
         await appApi.desativarClientesEmMassa(selecionados)
-      } else if (bulkModal.acao === 'EXCLUIR') {
+      } else if (bulkModal.ação === 'EXCLUIR') {
         await appApi.excluirClientesEmMassa(selecionados)
       }
       await reload(true)
@@ -145,9 +145,9 @@ export default function Clientes() {
     }
     setConfirmacao({
       titulo: 'Exportar clientes',
-      descricao: `Deseja exportar todos os ${clientes.length} cliente(s)?`,
+      descrição: `Deseja exportar todos os ${clientes.length} cliente(s)?`,
       acaoLabel: 'Exportar',
-      acao: async () => {
+      ação: async () => {
         const columns = [
           'ID', 'Nome', 'Telefone', 'E-mail', 'Situação do cliente', 'Total gasto',
           'Quantidade de atendimentos', 'Último atendimento', 'Data de cadastro', 'Observações'
@@ -162,7 +162,7 @@ export default function Clientes() {
           cliente.quantidadeAtendimentos || 0,
           cliente.ultimoAtendimento ? formatarData(cliente.ultimoAtendimento) : '',
           cliente.dataCriacao ? formatarData(cliente.dataCriacao) : '',
-          cliente.observacoes || '',
+          cliente.observações || '',
         ])
         exportarCsv({
           fileName: `clientes-gendaz-${dataHojeDdMmAAAA()}.csv`,
@@ -182,15 +182,15 @@ export default function Clientes() {
       nome: cliente.nome || '',
       telefone: normalizarParaInput(cliente.telefone || ''),
       email: cliente.email || '',
-      observacoes: cliente.observacoes || '',
+      observações: cliente.observações || '',
     })
     setErro('')
     setModal(true)
   }
 
   function ativarDesativar(cliente) {
-    const acao = cliente.statusCliente === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
-    acao.then(() => reload(true)).catch((error) => {
+    const ação = cliente.statusCliente === 'ATIVO' ? appApi.desativarCliente(cliente.id) : appApi.ativarCliente(cliente.id)
+    ação.then(() => reload(true)).catch((error) => {
       setErro(error.response?.data?.mensagem || 'Não foi possível alterar o status do cliente.')
     })
   }
@@ -208,9 +208,9 @@ export default function Clientes() {
   async function excluir(cliente) {
     setConfirmacao({
       titulo: 'Excluir cliente',
-      descricao: `Tem certeza que deseja excluir ${cliente.nome}? O nome original será preservado e os vínculos históricos continuarão disponíveis. Não será possível reverter.`,
+      descrição: `Tem certeza que deseja excluir ${cliente.nome}? O nome original será preservado e os vínculos históricos continuarão disponíveis. Não será possível reverter.`,
       acaoLabel: 'Excluir',
-      acao: async () => {
+      ação: async () => {
         setErro('')
         try {
           await appApi.excluirCliente(cliente.id)
@@ -260,7 +260,7 @@ export default function Clientes() {
         nome,
         telefone,
         email,
-        observacoes: form.observacoes?.trim() || null,
+        observações: form.observações?.trim() || null,
       }
       if (clienteEditando) {
         await appApi.atualizarCliente(clienteEditando, payload)
@@ -356,12 +356,12 @@ export default function Clientes() {
           { key: 'email', label: 'E-MAIL' },
           { key: 'statusCliente', label: 'SITUAÇÃO DO CLIENTE', render: (row) => <StatusBadge status={row.statusCliente || row.status || 'ATIVO'} /> },
           { key: 'totalGasto', label: 'TOTAL GASTO', render: (row) => currency(row.totalGasto) },
-          { key: 'observacoes', label: 'HISTÓRICO', render: (row) => (
+          { key: 'observações', label: 'HISTÓRICO', render: (row) => (
              <div className="stacked-cell">
-               <strong>{row.statusCliente === 'EXCLUIDO' ? 'Excluído' : (row.observacoes || 'Sem histórico')}</strong>
+               <strong>{row.statusCliente === 'EXCLUIDO' ? 'Excluído' : (row.observações || 'Sem histórico')}</strong>
              </div>
           ) },
-          { key: 'acao', label: 'AÇÕES', render: (row) => (
+          { key: 'ação', label: 'AÇÕES', render: (row) => (
             row.statusCliente === 'EXCLUIDO' ? null : (
             <ActionMenu
               actions={[
@@ -388,7 +388,7 @@ export default function Clientes() {
             required
           />
           <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
            <Button type="submit" loading={salvando} loadingText="Salvando...">
              Salvar
@@ -398,16 +398,16 @@ export default function Clientes() {
 
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
-          <p>{confirmacao?.descricao}</p>
+          <p>{confirmacao?.descrição}</p>
           <div className="confirm-actions">
             <Button variant="secondary" type="button" onClick={() => setConfirmacao(null)}>Cancelar</Button>
            <Button
              type="button"
              loading={false}
              onClick={async () => {
-               const acao = confirmacao?.acao
+               const ação = confirmacao?.ação
                setConfirmacao(null)
-               if (acao) await acao()
+               if (ação) await ação()
              }}
            >
              {confirmacao?.acaoLabel || 'Confirmar'}
@@ -418,7 +418,7 @@ export default function Clientes() {
       <BulkConfirmModal
         open={Boolean(bulkModal)}
         title={bulkModal?.titulo || 'Confirmar ação'}
-        description={bulkModal?.descricao || ''}
+        description={bulkModal?.descrição || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
         loading={bulkExecutando}

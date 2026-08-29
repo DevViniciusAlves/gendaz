@@ -91,7 +91,7 @@ public class CaixaDespesasController {
     private void exigirDonoOuAdmin() {
         PerfilUsuario perfil = usuarioProvider.exigirPerfil();
         if (perfil != PerfilUsuario.DONO && perfil != PerfilUsuario.SUPER_ADMIN) {
-            throw new BusinessException("Seu perfil nao permite gerenciar o caixa e as despesas.");
+            throw new BusinessException("Seu perfil não permite gerenciar o caixa e as despesas.");
         }
     }
 }

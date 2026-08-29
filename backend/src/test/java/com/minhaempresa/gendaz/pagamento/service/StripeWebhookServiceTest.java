@@ -128,8 +128,8 @@ class StripeWebhookServiceTest {
     void webhookComAssinaturaInvalidaERejeitado() throws Exception {
         String payload = checkoutCompletedPayload();
         long timestamp = System.currentTimeMillis() / 1000L;
-        // Assinatura valida para OUTRO payload: verifica que a validacao de
-        // assinatura (Stripe-Signature + raw body + secret) rejeita chaves/AIVs nao confiaveis.
+        // Assinatura valida para OUTRO payload: verifica que a validação de
+        // assinatura (Stripe-Signature + raw body + secret) rejeita chaves/AIVs não confiaveis.
         String sigDeOutroPayload = assinaturaValida("{\"object\":\"event\",\"type\":\"outro\"}", timestamp);
 
         BusinessException ex = assertThrows(BusinessException.class,

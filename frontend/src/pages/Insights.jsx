@@ -37,19 +37,19 @@ function iconPorTipo(tipo) {
   if (valor.includes('cliente')) return Users
   if (valor.includes('finance')) return TrendingUp
   if (valor.includes('agenda') || valor.includes('ocios')) return Calendar
-  if (valor.includes('acao') || valor.includes('açao') || valor.includes('ação')) return Wrench
+  if (valor.includes('ação') || valor.includes('açao') || valor.includes('ação')) return Wrench
   return AlertCircle
 }
 
 function destinoPorTipo(item) {
   const tipo = String(item?.tipo || '').toLowerCase()
-  const texto = `${item?.titulo || ''} ${item?.descricao || ''}`.toLowerCase()
+  const texto = `${item?.titulo || ''} ${item?.descrição || ''}`.toLowerCase()
 
   if (tipo.includes('cliente') || texto.includes('cliente')) return '/sistema/clientes'
   if (tipo.includes('finance') || texto.includes('cobran') || texto.includes('pagamento') || texto.includes('receita') || texto.includes('faturamento')) return '/sistema/financeiro'
   if (tipo.includes('agenda') || tipo.includes('ocios') || texto.includes('agenda') || texto.includes('ocios')) return '/sistema/agenda'
   if (tipo.includes('servico') || texto.includes('serviço') || texto.includes('servico')) return '/sistema/servicos'
-  if (tipo.includes('acao') || texto.includes('campanha') || texto.includes('promoç')) return '/sistema/promocoes'
+  if (tipo.includes('ação') || texto.includes('campanha') || texto.includes('promoç')) return '/sistema/promocoes'
   return '/sistema/dashboard'
 }
 
@@ -71,9 +71,9 @@ function resumoTexto(dashboard) {
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas).length
   const oportunidades = safeArray(dashboard?.oportunidades).length
-  const acoes = safeArray(dashboard?.acoes).length
+  const ações = safeArray(dashboard?.ações).length
 
-  return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${acoes} recomendações prioritárias.`
+  return `Analisei sua empresa nos últimos 30 dias. Score ${score}/100, ${alertas} alertas, ${oportunidades} oportunidades e ${ações} recomendações prioritárias.`
 }
 
 function getStatusScore(score) {
@@ -98,7 +98,7 @@ export default function Insights() {
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const oportunidades = safeArray(dashboard?.oportunidades)
-  const recomendacoes = safeArray(dashboard?.acoes)
+  const recomendacoes = safeArray(dashboard?.ações)
   const principais = safeArray(dashboard?.principais).slice(0, 3)
   const impactoTotal = dashboard?.impactoTotal || 'Sem impacto calculado'
   const dataAnalise = dashboard?.geradoEm
@@ -225,7 +225,7 @@ export default function Insights() {
                         </div>
                         <div className="insights-change-card__content">
                           <span>{item.titulo || item.tipo || 'Mudança'}</span>
-                          <p>{item.descricao || 'Atualização detectada nos dados da empresa.'}</p>
+                          <p>{item.descrição || 'Atualização detectada nos dados da empresa.'}</p>
                         </div>
                         <strong>{badgeImpacto(item)}</strong>
                       </article>
@@ -266,7 +266,7 @@ export default function Insights() {
                         </div>
                         <div>
                           <h3>{item.titulo || 'Insight principal'}</h3>
-                          <p>{item.descricao || 'Atualização importante detectada nos dados reais.'}</p>
+                          <p>{item.descrição || 'Atualização importante detectada nos dados reais.'}</p>
                         </div>
                       </div>
                       <div className="insights-core-card__footer">
@@ -289,13 +289,13 @@ export default function Insights() {
                 <div className="section-kicker">Oportunidades para crescer</div>
                 <div className="insights-list">
                   {oportunidades.slice(0, 3).map((item, index) => (
-                    <article key={`${item.titulo || item.descricao || index}`} className="insights-list-item insights-list-item--oportunidade">
+                    <article key={`${item.titulo || item.descrição || index}`} className="insights-list-item insights-list-item--oportunidade">
                       <div className="insights-list-item__icon">
                         <Zap size={18} />
                       </div>
                       <div className="insights-list-item__content">
-                        <strong>{item.titulo || item.descricao || 'Oportunidade'}</strong>
-                        <p>{item.descricao || item.impacto || 'Sem descrição'}</p>
+                        <strong>{item.titulo || item.descrição || 'Oportunidade'}</strong>
+                        <p>{item.descrição || item.impacto || 'Sem descrição'}</p>
                       </div>
                       <div className="insights-list-item__meta">
                         <small>Impacto estimado</small>
@@ -315,7 +315,7 @@ export default function Insights() {
                       <Wand2 size={22} />
                     </div>
                     <div className="insights-highlight-card__content">
-                      <strong>{acaoPrincipal.descricao || acaoPrincipal.titulo || 'Ação prioritária'}</strong>
+                      <strong>{acaoPrincipal.descrição || acaoPrincipal.titulo || 'Ação prioritária'}</strong>
                       <p>{acaoPrincipal.impactoEstimado || acaoPrincipal.impacto || acaoPrincipal.urgencia || 'Ação sugerida com base nos dados.'}</p>
                       <div className="insights-highlight-card__meta">
                         <div>
@@ -337,17 +337,17 @@ export default function Insights() {
               <section className="panel insights-section">
                 <div className="section-kicker">Ações recomendadas pela IA</div>
                 <div className="insights-action-list">
-                  {recomendacoes.slice(0, 3).map((acao, index) => (
-                    <div key={`${acao.descricao || index}`} className="insights-action-row">
+                  {recomendacoes.slice(0, 3).map((ação, index) => (
+                    <div key={`${ação.descrição || index}`} className="insights-action-row">
                       <label className="insights-check">
                         <input type="checkbox" readOnly />
                         <span />
                       </label>
                       <div className="insights-action-row__content">
-                        <strong>{acao.descricao}</strong>
-                        <p>{acao.impactoEstimado || acao.urgencia || 'Ação sugerida'}</p>
+                        <strong>{ação.descrição}</strong>
+                        <p>{ação.impactoEstimado || ação.urgencia || 'Ação sugerida'}</p>
                       </div>
-                      <span className="insights-action-row__impacto">{formatCurrency(acao.impactoEstimado || acao.impacto)}</span>
+                      <span className="insights-action-row__impacto">{formatCurrency(ação.impactoEstimado || ação.impacto)}</span>
                     </div>
                   ))}
                   {recomendacoes.length === 0 && <p className="insights-empty">Nenhuma ação prioritária no momento.</p>}
@@ -427,7 +427,7 @@ export default function Insights() {
                       </div>
                       <div className="insights-modal-item__content">
                         <strong>{item.titulo || 'Insight'}</strong>
-                        <p>{item.descricao || 'Sem descrição.'}</p>
+                        <p>{item.descrição || 'Sem descrição.'}</p>
                       </div>
                       <div className="insights-modal-item__meta">
                         <small>Impacto</small>

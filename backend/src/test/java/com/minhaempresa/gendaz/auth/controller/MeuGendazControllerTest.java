@@ -84,7 +84,7 @@ class MeuGendazControllerTest {
     void deveEncerrarSessaoELimparCookieNoLogout() throws Exception {
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa Teste").agendamentoSlug("gendaz-pro").build();
 
-        MeuGendazAcessoEntity acesso = MeuGendazAcessoEntity.builder().id(10L).email("cliente@teste.com").nome("Cliente").empresa(empresa).sessaoAtiva("sessao-meu-gendaz").build();
+        MeuGendazAcessoEntity acesso = MeuGendazAcessoEntity.builder().id(10L).email("cliente@teste.com").nome("Cliente").empresa(empresa).sessaoAtiva("sessão-meu-gendaz").build();
 
         when(empresaRepository.findByAgendamentoSlug(anyString())).thenReturn(Optional.of(empresa));
         when(meuGendazAcessoRepository.findBySessaoAtiva(anyString())).thenReturn(Optional.of(acesso));
@@ -92,7 +92,7 @@ class MeuGendazControllerTest {
 
         mockMvc.perform(post("/api/meu-gendaz/auth/logout")
                         .header("X-Meu-Gendaz-Slug", "gendaz-pro")
-                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessao-meu-gendaz")))
+                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessão-meu-gendaz")))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("meu_gendaz_session_gendaz-pro", 0));
     }
@@ -106,7 +106,7 @@ class MeuGendazControllerTest {
 
         mockMvc.perform(post("/api/meu-gendaz/auth/logout")
                         .header("X-Meu-Gendaz-Slug", "gendaz-pro")
-                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessao-meu-gendaz")))
+                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessão-meu-gendaz")))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("meu_gendaz_session_gendaz-pro", 0));
     }
@@ -115,17 +115,17 @@ class MeuGendazControllerTest {
     void naoDeveEncerrarSessaoDeOutraEmpresaNoLogout() throws Exception {
         EmpresaEntity empresaRequest = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa Teste").agendamentoSlug("gendaz-pro").build();
         EmpresaEntity outraEmpresa = EmpresaEntity.builder().id(2L).nomeFantasia("Outra Empresa").agendamentoSlug("outra-empresa").build();
-        MeuGendazAcessoEntity acessoOutraEmpresa = MeuGendazAcessoEntity.builder().id(20L).email("cliente@teste.com").nome("Cliente").empresa(outraEmpresa).sessaoAtiva("sessao-meu-gendaz").build();
+        MeuGendazAcessoEntity acessoOutraEmpresa = MeuGendazAcessoEntity.builder().id(20L).email("cliente@teste.com").nome("Cliente").empresa(outraEmpresa).sessaoAtiva("sessão-meu-gendaz").build();
 
         when(empresaRepository.findByAgendamentoSlug(anyString())).thenReturn(Optional.of(empresaRequest));
         when(meuGendazAcessoRepository.findBySessaoAtiva(anyString())).thenReturn(Optional.of(acessoOutraEmpresa));
 
         mockMvc.perform(post("/api/meu-gendaz/auth/logout")
                         .header("X-Meu-Gendaz-Slug", "gendaz-pro")
-                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessao-meu-gendaz")))
+                        .cookie(new jakarta.servlet.http.Cookie("meu_gendaz_session_gendaz-pro", "sessão-meu-gendaz")))
                 .andExpect(status().isOk())
                 .andExpect(cookie().maxAge("meu_gendaz_session_gendaz-pro", 0));
 
-        verify(usuarioSessionService, never()).encerrarSessaoMeuGendaz(20L, "sessao-meu-gendaz");
+        verify(usuarioSessionService, never()).encerrarSessaoMeuGendaz(20L, "sessão-meu-gendaz");
     }
 }

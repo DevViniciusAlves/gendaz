@@ -113,7 +113,7 @@ public class AgendamentoService {
                     .horaFim(horaFim)
                     .status(StatusAgendamento.PENDENTE)
                     .protocolo(gerarProtocoloSeNecessario(null))
-                    .observacoes(sanitizacaoService.texto(request.observacoes()))
+                    .observações(sanitizacaoService.texto(request.observações()))
                     .build();
             AgendamentoEntity salvo = salvarAgendamentoComProtocolo(agendamento);
             Map<String, Object> contextoSucesso = new LinkedHashMap<>();
@@ -141,7 +141,7 @@ public class AgendamentoService {
                 } catch (Exception e) {
                     Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
                     contextoCupomErro.put("agendamentoId", salvo.getId());
-                    log.warn("[agendamento-debug] cupom nao aplicado. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoCupomErro);
+                    log.warn("[agendamento-debug] cupom não aplicado. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoCupomErro);
                 }
             }
             BigDecimal valorFinal = valorOriginal.subtract(desconto).max(BigDecimal.ZERO);
@@ -506,7 +506,7 @@ public class AgendamentoService {
         agendamento.setHoraInicio(request.horaInicio());
         agendamento.setHoraFim(horaFim);
         agendamento.setStatus(request.status());
-        agendamento.setObservacoes(sanitizacaoService.texto(request.observacoes()));
+        agendamento.setObservacoes(sanitizacaoService.texto(request.observações()));
 
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Editou agendamento de " + cliente.getNome());
         return mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -515,7 +515,7 @@ public class AgendamentoService {
     @Transactional(readOnly = true)
     public AgendamentoEntity buscarEntidade(Long id) {
         AgendamentoEntity agendamento = agendamentoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
         validarEmpresaAtual(agendamento.getEmpresa().getId());
         return agendamento;
     }
@@ -528,7 +528,7 @@ public class AgendamentoService {
 
     private void validarEmpresa(AgendamentoEntity agendamento, Long empresaId) {
         if (empresaId != null && (agendamento.getEmpresa() == null || !empresaId.equals(agendamento.getEmpresa().getId()))) {
-            throw new BusinessException("Agendamento nao pertence a empresa informada.");
+            throw new BusinessException("Agendamento não pertence a empresa informada.");
         }
     }
 
@@ -556,7 +556,7 @@ public class AgendamentoService {
 
     private void validarProfissionalAgendamento(EmpresaEntity empresa, ProfissionalEntity profissional, LocalDate data) {
         if (profissional == null || empresa == null || profissional.getEmpresa() == null || !profissional.getEmpresa().getId().equals(empresa.getId())) {
-            throw new BusinessException("Profissional nao pertence a empresa informada.");
+            throw new BusinessException("Profissional não pertence a empresa informada.");
         }
         if (profissional.getStatus() != com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO) {
             throw new BusinessException("Profissional indisponivel.");
@@ -575,7 +575,7 @@ public class AgendamentoService {
         ZoneId zoneId = resolverZoneId(empresa.getTimezone());
         LocalDate hoje = LocalDate.now(zoneId);
         if (data.isBefore(hoje) || data.isAfter(hoje.plusYears(2))) {
-            throw new BusinessException("Data do agendamento nao pode ser no passado.");
+            throw new BusinessException("Data do agendamento não pode ser no passado.");
         }
         horarioAtendimentoService.validarHorarioAtendimento(empresaId, data, horaInicio, horaFim);
         if (data.isEqual(hoje) && horaInicio.isBefore(LocalTime.now(zoneId))) {
@@ -639,7 +639,7 @@ public class AgendamentoService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Agendamento nao encontrado.");
+            throw new ResourceNotFoundException("Agendamento não encontrado.");
         }
     }
 }

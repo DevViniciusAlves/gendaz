@@ -33,7 +33,7 @@ public class PromocaoEntity {
     private String codigo;
 
     @Column(nullable = true, length = 180)
-    private String descricao;
+    private String descrição;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)

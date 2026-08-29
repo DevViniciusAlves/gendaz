@@ -40,7 +40,7 @@ public class AuditLogEntity {
     private EmpresaEntity empresa;
 
     @Column(length = 500)
-    private String descricao;
+    private String descrição;
 
     @Column(length = 1000)
     private String motivo;

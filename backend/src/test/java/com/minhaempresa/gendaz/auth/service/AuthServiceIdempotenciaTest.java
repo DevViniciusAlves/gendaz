@@ -93,7 +93,7 @@ class AuthServiceIdempotenciaTest {
         lenient().when(assinaturaService.criarPendentePagamento(any(), any())).thenReturn(assinatura());
         lenient().when(assinaturaService.toResponse(any(AssinaturaEntity.class))).thenReturn(assinaturaResponse());
         lenient().when(resendEmailService.enviarBoasVindas(any(), any(), any())).thenReturn(true);
-        lenient().when(usuarioSessionService.renovarSessao(any())).thenReturn("sessao-nova");
+        lenient().when(usuarioSessionService.renovarSessao(any())).thenReturn("sessão-nova");
         lenient().when(cadastroIdempotenciaService.calcularKeyHash(any())).thenReturn(KEY_HASH);
         lenient().when(cadastroIdempotenciaService.calcularFingerprint(any(), any(), any(), any(), any(), anyBoolean()))
                 .thenReturn(FINGERPRINT);
@@ -186,7 +186,7 @@ class AuthServiceIdempotenciaTest {
         LoginResponse resposta = authService.criarConta(request("basico"), "key-a", "req-1");
 
         assertEquals("ACTIVE", resposta.statusConta());
-        assertEquals("sessao-nova", resposta.sessionToken());
+        assertEquals("sessão-nova", resposta.sessionToken());
         verify(empresaRepository, times(1)).save(any(EmpresaEntity.class));
         verify(assinaturaService, times(1)).criarTesteGratis(any(), any());
         verify(resendEmailService).enviarBoasVindas(eq("ana@gendaz.com.br"), anyString(), anyString());
@@ -200,12 +200,12 @@ class AuthServiceIdempotenciaTest {
                 .thenReturn(ReservaResultado.completado(registro(CadastroIdempotenciaStatus.COMPLETED)));
         when(cadastroIdempotenciaService.recuperarResultado(any()))
                 .thenReturn(new LoginResponse("Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
-                        usuarioResponse(), assinaturaResponse(), null, "ACTIVE", "sessao-replay", null));
+                        usuarioResponse(), assinaturaResponse(), null, "ACTIVE", "sessão-replay", null));
 
         LoginResponse resposta = authService.criarConta(request("basico"), "key-a", "req-2");
 
         assertEquals("ACTIVE", resposta.statusConta());
-        assertEquals("sessao-replay", resposta.sessionToken());
+        assertEquals("sessão-replay", resposta.sessionToken());
         verify(empresaRepository, never()).save(any(EmpresaEntity.class));
         verify(assinaturaService, never()).criarTesteGratis(any(), any());
         verify(resendEmailService, never()).enviarBoasVindas(anyString(), anyString(), anyString());

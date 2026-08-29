@@ -46,16 +46,16 @@ public class InsightsService {
     @Transactional(readOnly = true)
     public Optional<DashboardResponse> buscarUltimoDashboardPersistido(Long empresaId) {
         validarAcessoEmpresa(empresaId);
-        log.info("[INSIGHTS] empresa={} acao=READ_SNAPSHOT", empresaId);
+        log.info("[INSIGHTS] empresa={} ação=READ_SNAPSHOT", empresaId);
         Optional<InsightEntity> ultimo = ultimoDashboard(empresaId);
-        log.info("[INSIGHTS] empresa={} acao=READ_SNAPSHOT snapshotEncontrado={}", empresaId, ultimo.isPresent());
+        log.info("[INSIGHTS] empresa={} ação=READ_SNAPSHOT snapshotEncontrado={}", empresaId, ultimo.isPresent());
         return ultimo.flatMap(this::parseDashboard);
     }
 
     @Transactional
     public DashboardResponse recalcularDashboard(Long empresaId, Integer periodo) {
         validarAcessoEmpresa(empresaId);
-        log.info("[INSIGHTS] empresa={} acao=SYNC_START", empresaId);
+        log.info("[INSIGHTS] empresa={} ação=SYNC_START", empresaId);
         Map<String, Object> dados = analyzer.coletarDados(empresaId, periodo);
         DashboardResponse fallback = construirDashboardLocal(empresaId, dados, "MANUAL");
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(appTimezone));
@@ -68,7 +68,7 @@ public class InsightsService {
         }
 
         InsightEntity salvo = salvarDashboard(empresaId, dados, gerado, "MANUAL", agora);
-        log.info("[INSIGHTS] empresa={} acao=SYNC_SAVED snapshotId={}", empresaId, salvo.getId());
+        log.info("[INSIGHTS] empresa={} ação=SYNC_SAVED snapshotId={}", empresaId, salvo.getId());
         return parseDashboard(salvo).orElse(gerado);
     }
 
@@ -83,18 +83,18 @@ public class InsightsService {
                 Regras de ouro:
                 - Os dados que voce recebe servem apenas para voce pensar. Nunca mostre ao usuario JSON, objetos, IDs, nomes de campos, estruturas de banco, scores, numeros soltos sem contexto ou qualquer dado bruto. Use tudo isso de forma invisivel para montar a resposta.
                 - Nunca responda como relatorio ou como maquina. Evite frases prontas e corporativas como "com base nos dados fornecidos", "foi identificado que", "score geral", "impacto total" ou listas excessivamente estruturadas.
-                - Escreva em portugues do Brasil, de forma natural, direta e conversada. Varie o jeito de construir as frases, tenha personalidade e soe como alguem falando com o dono da empresa, nao como um texto gerado por IA.
+                - Escreva em portugues do Brasil, de forma natural, direta e conversada. Varie o jeito de construir as frases, tenha personalidade e soe como alguem falando com o dono da empresa, não como um texto gerado por IA.
                 - Use os dados da empresa para dar contexto real. Se vir que um servico esta indo bem ou que ha clientes parados, fale disso naturalmente, sem revelar como os dados estao organizados.
                 - Seja objetiva: respostas curtas e uteis por padrao. So se aprofunde quando a pergunta pedir ou quando houver uma chance clara de ajudar.
-                - Nao invente informacao. Se faltar dado, diga com naturalidade que nao tem essa informacao e, se fizer sentido, sugira o que o usuario pode olhar.
-                - Aja como consultora: interprete os numeros, aponte oportunidades, explique problemas e sugira acoes praticas, em vez de so repetir o que recebeu.
+                - Nao invente informação. Se faltar dado, diga com naturalidade que não tem essa informação e, se fizer sentido, sugira o que o usuario pode olhar.
+                - Aja como consultora: interprete os numeros, aponte oportunidades, explique problemas e sugira ações praticas, em vez de so repetir o que recebeu.
                 - Faca o usuario sentir que esta conversando com quem conhece o negocio dele. Use o nome da empresa ou detalhes relevantes quando ajudar a conversa, mas sem exagerar.
                 - Evite cara de IA: nada de emojis, titulos em toda resposta, frases genericas, repeticoes, linguagem corporativa artificial ou estruturas sempre iguais.
                 - Pergunta simples recebe resposta simples. Nao despeje tudo que sabe sobre a empresa se a pergunta for especifica.
                 - Quando um dado for importante, explique o que ele significa para o negocio. Em vez de "o servico X teve 35 agendamentos", diga algo como "o servico X esta sendo o mais procurado, entao pode valer destacar ele mais na divulgacao".
                 - Nunca reproduza o contexto interno que voce recebeu. O contexto e apenas fonte de conhecimento para voce montar a resposta final.
 
-                Antes de responder, confira: estou falando como pessoa? estou respondendo exatamente o que foi perguntado? estou usando os dados da empresa de forma natural? escondi completamente JSON e informacoes internas? minha resposta parece uma conversa real e nao um relatorio?
+                Antes de responder, confira: estou falando como pessoa? estou respondendo exatamente o que foi perguntado? estou usando os dados da empresa de forma natural? escondi completamente JSON e informacoes internas? minha resposta parece uma conversa real e não um relatorio?
                 """;
         String promptUsuario = """
                 Dados da empresa:
@@ -131,8 +131,8 @@ public class InsightsService {
                     Prefira frases curtas, fluidas e espontaneas.
                     Nao invente valores, horarios ou servicos.
                     Ajude o cliente com duvidas sobre agendar, reagendar, cancelar, servicos, precos, profissionais, horarios e promocoes.
-                    Se a pergunta pedir acao, conduza o atendimento passo a passo.
-                    Quando faltar informacao, pergunte apenas a proxima coisa que precisa.
+                    Se a pergunta pedir ação, conduza o atendimento passo a passo.
+                    Quando faltar informação, pergunte apenas a proxima coisa que precisa.
                     Se o cliente quiser agendar, pedir o servico, a data e o horario de forma natural, uma coisa por vez.
                     Se quiser reagendar, pedir a identificacao do agendamento e a nova data/horario.
                     Se quiser cancelar, confirmar o agendamento e, se necessario, o motivo.
@@ -140,7 +140,7 @@ public class InsightsService {
                     {
                       "resposta": "texto",
                       "sugestoes": ["opcao 1", "opcao 2", "opcao 3"],
-                      "acao": "agenda|reagendar|cancelar|servicos|precos|nenhuma"
+                      "ação": "agenda|reagendar|cancelar|servicos|precos|nenhuma"
                     }
                     """;
             String promptUsuario = """
@@ -161,12 +161,12 @@ public class InsightsService {
                         Map<String, Object> json = objectMapper.readValue(resposta.get(), new TypeReference<>() {});
                         String texto = stringValor(json.get("resposta"));
                         List<String> sugestoes = listaStrings(json.get("sugestoes"));
-                        String acao = stringValor(json.get("acao"));
+                        String ação = stringValor(json.get("ação"));
                         if (!texto.isBlank()) {
                             return new MeuGendazIAResponse(
                                     humanizarTexto(texto),
                                     sugestoes,
-                                    acao == null || acao.isBlank() ? "nenhuma" : acao.trim().toLowerCase(),
+                                    ação == null || ação.isBlank() ? "nenhuma" : ação.trim().toLowerCase(),
                                     LocalDateTime.now(ZoneId.of(appTimezone))
                             );
                         }
@@ -223,7 +223,7 @@ public class InsightsService {
             return null;
         }
         if (empresaId != null && !empresaId.equals(insight.getEmpresaId())) {
-            throw new BusinessException("Insight nao encontrado para a empresa atual.");
+            throw new BusinessException("Insight não encontrado para a empresa atual.");
         }
         return insight;
     }
@@ -237,7 +237,7 @@ public class InsightsService {
 
     @Scheduled(cron = "0 0 6 * * *", zone = "${app.timezone:America/Cuiaba}")
     public void analisarEmpresasAgendado() {
-        log.info("[INSIGHTS] acao=SCHEDULED_SKIP_DASHBOARD motivo=snapshot_dashboard_apenas_manual");
+        log.info("[INSIGHTS] ação=SCHEDULED_SKIP_DASHBOARD motivo=snapshot_dashboard_apenas_manual");
     }
 
     private DashboardResponse gerarDashboardNovo(Long empresaId, Integer periodo, Map<String, Object> dados, DashboardResponse fallback, String origem) {
@@ -246,10 +246,10 @@ public class InsightsService {
                 Voce e uma IA consultora de negocios para pequenas empresas de servicos.
                 Voce deve analisar apenas os dados fornecidos.
                 Nao invente numeros.
-                Nao cite dados que nao existem no payload.
+                Nao cite dados que não existem no payload.
                 Nao retorne texto fora do JSON.
                 Responda sempre em portugues do Brasil.
-                Se nao houver dados suficientes, explique isso no campo descricao.
+                Se não houver dados suficientes, explique isso no campo descrição.
                 Gere recomendacoes praticas e acionaveis.
                 Adapte as recomendacoes ao ramo informado.
                 """;
@@ -261,7 +261,7 @@ public class InsightsService {
                 Diretrizes por ramo:
                 - BARBERSHOP: foco em recorrencia, retorno rapido, barba e servicos complementares.
                 - SALAO_CABELO: foco em recorrencia, combos, tratamentos, coloracao e fidelizacao.
-                - PERSONAL_TRAINER: foco em retenção, pacotes de sessoes, frequencia semanal e acompanhamento.
+                - PERSONAL_TRAINER: foco em retenção, pacotes de sessões, frequencia semanal e acompanhamento.
                 - CLINICA_FISIOTERAPIA: foco em reavaliacao, continuidade de tratamento e follow-up.
                 - CLINICA_ODONTOLOGIA: foco em prevençao, retorno periodico e agenda preventiva.
                 - OUTRO: use recomendacoes genericas e praticas, sem inventar servicos.
@@ -269,16 +269,16 @@ public class InsightsService {
                 Estrutura esperada:
                 {
                   "alertas": [
-                    {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"alerta"}
+                    {"titulo":"", "descrição":"", "impacto":"", "urgencia":"", "tipo":"alerta"}
                   ],
                   "principais": [
-                    {"titulo":"", "descricao":"", "impacto":"", "urgencia":"", "tipo":"acao"}
+                    {"titulo":"", "descrição":"", "impacto":"", "urgencia":"", "tipo":"ação"}
                   ],
                   "oportunidades": [
-                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média"}
+                    {"titulo":"", "descrição":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média"}
                   ],
-                  "acoes": [
-                    {"titulo":"", "descricao":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média", "status":"Pendente"}
+                  "ações": [
+                    {"titulo":"", "descrição":"", "motivo":"", "impactoEstimado":"", "prioridade":"Média", "status":"Pendente"}
                   ]
                 }
 
@@ -287,8 +287,8 @@ public class InsightsService {
                 - Retorne no máximo 4 ações.
                 - Se houver pendências, devolva ações para cobrança e recuperação.
                 - So recomende reativacao de clientes quando clientes.inativos_status ou resumo.clientes_inativos for maior que 0.
-                - Se clientes.inativos_status for 0, nao cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
-                - Se nao houver sinal real suficiente, devolva arrays vazios para oportunidades e acoes.
+                - Se clientes.inativos_status for 0, não cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
+                - Se não houver sinal real suficiente, devolva arrays vazios para oportunidades e ações.
                 - Se houver serviço sem venda ou profissional ocioso, devolva ações práticas.
                 - Se a Groq não conseguir estimar impacto, use "Impacto não estimado".
 
@@ -335,11 +335,11 @@ public class InsightsService {
         List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receita30, receita60, servicos, profissionais);
         List<InsightItem> principais = montarInsightsPrincipais(dados);
         List<InsightItem> oportunidades = new ArrayList<>();
-        List<InsightAction> acoes = new ArrayList<>();
+        List<InsightAction> ações = new ArrayList<>();
 
         if (pendente > 0) {
             oportunidades.add(new InsightItem("Cobrança ativa", "Entrar em contato com clientes com pagamento em aberto.", "Existe valor recuperável no financeiro.", formatarMoeda(pendente), "Alta"));
-            acoes.add(new InsightAction("Cobrar pagamentos pendentes", "Alta", formatarMoeda(pendente)));
+            ações.add(new InsightAction("Cobrar pagamentos pendentes", "Alta", formatarMoeda(pendente)));
         }
         if (servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) == 0)) {
             oportunidades.add(new InsightItem("Divulgar serviço sem venda", "Há serviço sem conversão no período.", "O catálogo da empresa mostra um serviço sem movimento recente.", "Impacto não estimado", "Média"));
@@ -360,26 +360,26 @@ public class InsightsService {
         if (groq.containsKey("oportunidades")) {
             oportunidades = limitarOportunidades(groq.get("oportunidades"), oportunidades);
         }
-        if (groq.containsKey("acoes")) {
-            acoes = limitarAcoes(groq.get("acoes"), acoes);
+        if (groq.containsKey("ações")) {
+            ações = limitarAcoes(groq.get("ações"), ações);
         }
         if (groq.containsKey("acoes_recomendadas")) {
-            acoes = limitarAcoes(groq.get("acoes_recomendadas"), acoes);
+            ações = limitarAcoes(groq.get("acoes_recomendadas"), ações);
         }
         if (groq.containsKey("recomendacoes")) {
-            acoes = limitarAcoes(groq.get("recomendacoes"), acoes);
+            ações = limitarAcoes(groq.get("recomendacoes"), ações);
         }
 
         principais = filtrarItensSemBaseReal(principais, clientesInativos, servicosInativos, profissionaisInativos);
         alertas = filtrarItensSemBaseReal(alertas, clientesInativos, servicosInativos, profissionaisInativos);
         oportunidades = filtrarItensSemBaseReal(oportunidades, clientesInativos, servicosInativos, profissionaisInativos);
-        acoes = filtrarAcoesSemBaseReal(acoes, clientesInativos, servicosInativos, profissionaisInativos);
+        ações = filtrarAcoesSemBaseReal(ações, clientesInativos, servicosInativos, profissionaisInativos);
 
-        if (acoes.isEmpty()) {
-            acoes = List.of(new InsightAction("Nenhuma acao recomendada no momento", "Baixa", "Os dados reais nao indicam uma acao prioritaria agora"));
+        if (ações.isEmpty()) {
+            ações = List.of(new InsightAction("Nenhuma ação recomendada no momento", "Baixa", "Os dados reais não indicam uma ação prioritaria agora"));
         }
         if (oportunidades.isEmpty()) {
-            oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados nao mostram uma acao prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
+            oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados não mostram uma ação prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
@@ -391,7 +391,7 @@ public class InsightsService {
                 principais,
                 alertas,
                 oportunidades.size() > 3 ? oportunidades.subList(0, 3) : oportunidades,
-                acoes.size() > 4 ? acoes.subList(0, 4) : acoes,
+                ações.size() > 4 ? ações.subList(0, 4) : ações,
                 impactoTotal,
                 LocalDateTime.now(ZoneId.of(appTimezone))
         );
@@ -434,7 +434,7 @@ public class InsightsService {
         String ramo = stringValor(dados.get("empresaRamo"));
         String display = stringValor(dados.get("empresaRamoDisplayName"));
         if (ramo.isBlank() && display.isBlank()) {
-            return "OUTRO - ramo nao identificado";
+            return "OUTRO - ramo não identificado";
         }
         if (ramo.isBlank()) {
             return display;
@@ -456,7 +456,7 @@ public class InsightsService {
             }
             return Optional.of(objectMapper.readValue(insight.getResposta(), DashboardResponse.class));
         } catch (Exception e) {
-            log.warn("[INSIGHTS] empresa={} acao=READ_SNAPSHOT_PARSE_ERROR snapshotId={} erroTipo={}", insight.getEmpresaId(), insight.getId(), e.getClass().getSimpleName());
+            log.warn("[INSIGHTS] empresa={} ação=READ_SNAPSHOT_PARSE_ERROR snapshotId={} erroTipo={}", insight.getEmpresaId(), insight.getId(), e.getClass().getSimpleName());
             return Optional.empty();
         }
     }
@@ -490,37 +490,37 @@ public class InsightsService {
         String perguntaNormalizada = pergunta == null ? "" : pergunta.toLowerCase().trim();
         List<String> sugestoes = new ArrayList<>();
         String resposta;
-        String acao = "nenhuma";
+        String ação = "nenhuma";
 
         // Detectar intenção da pergunta
         if (perguntaNormalizada.matches(".*(agendar|marcar|reservar|horario|horário|disponibilidade).*")) {
             resposta = "Claro! Para agendar, me diga qual serviço você gostaria e qual dia/horário prefere. Vamos confirmar tudo para você.";
             sugestoes = List.of("Quero agendar um serviço", "Ver horários disponíveis", "Ver serviços");
-            acao = "agenda";
+            ação = "agenda";
         } else if (perguntaNormalizada.matches(".*(reagendar|remarcar|alterar|mudar|trocar).*")) {
             resposta = "Para reagendar, me informe qual agendamento você quer alterar e qual o novo dia/horário.";
             sugestoes = List.of("Reagendar agendamento", "Ver meus agendamentos", "Cancelar agendamento");
-            acao = "reagendar";
+            ação = "reagendar";
         } else if (perguntaNormalizada.matches(".*(cancelar|desmarcar|remover|excluir).*")) {
             resposta = "Para cancelar, me diga qual agendamento você quer desmarcar. Se precisar, pode informar o motivo.";
             sugestoes = List.of("Cancelar agendamento", "Ver meus agendamentos");
-            acao = "cancelar";
+            ação = "cancelar";
         } else if (perguntaNormalizada.matches(".*(serviço|servicos|tratamento|procedimento|o que voces fazem|o que voces oferecem).*")) {
             resposta = "Oferecemos diversos serviços. Me diga qual você tem interesse ou se quer ver a lista completa.";
             sugestoes = List.of("Ver serviços", "Quero agendar", "Ver preços");
-            acao = "servicos";
+            ação = "servicos";
         } else if (perguntaNormalizada.matches(".*(preço|preco|valor|quanto custa|orçamento|orcamento|pagamento|forma de pagamento).*")) {
             resposta = "Os preços variam de acordo com o serviço. Me diga qual serviço você quer saber o valor ou se prefere ver a lista de preços.";
             sugestoes = List.of("Ver preços", "Quero agendar", "Ver serviços");
-            acao = "precos";
+            ação = "precos";
         } else if (perguntaNormalizada.matches(".*(profissional|quem vai me atender|atendente|especialista).*")) {
             resposta = "Temos uma equipe qualificada para te atender. Me diga se você tem preferência por alguém ou se quer ver a lista de profissionais.";
             sugestoes = List.of("Ver profissionais", "Quero agendar", "Ver serviços");
-            acao = "servicos";
+            ação = "servicos";
         } else if (perguntaNormalizada.matches(".*(promoção|promocao|desconto|oferta|cupom).*")) {
             resposta = "Às vezes temos promoções! Me diga se você quer saber das ofertas atuais ou se quer agendar com desconto.";
             sugestoes = List.of("Ver promoções", "Quero agendar", "Ver serviços");
-            acao = "servicos";
+            ação = "servicos";
         } else {
             resposta = "Posso te ajudar com agendamentos, reagendamentos, cancelamentos, serviços, preços, profissionais e promoções. Como posso te ajudar?";
             sugestoes = List.of("Quero agendar", "Reagendar", "Cancelar", "Ver serviços");
@@ -529,14 +529,14 @@ public class InsightsService {
         return new MeuGendazIAResponse(
                 resposta,
                 sugestoes,
-                acao,
+                ação,
                 LocalDateTime.now(ZoneId.of(appTimezone))
         );
     }
 
     private void validarAcessoEmpresa(Long empresaId) {
         if (empresaId == null) {
-            throw new BusinessException("Empresa nao identificada.");
+            throw new BusinessException("Empresa não identificada.");
         }
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (!empresaContexto.equals(empresaId)) {
@@ -549,7 +549,7 @@ public class InsightsService {
         List<InsightItem> itens = new ArrayList<>();
         for (Object item : lista) {
             if (item instanceof Map<?, ?> mapa) {
-                itens.add(new InsightItem(stringValor(mapa.get("titulo")), stringValor(mapa.get("descricao")), stringValor(mapa.get("impacto")), stringValor(mapa.get("urgencia")), stringValor(mapa.get("tipo"))));
+                itens.add(new InsightItem(stringValor(mapa.get("titulo")), stringValor(mapa.get("descrição")), stringValor(mapa.get("impacto")), stringValor(mapa.get("urgencia")), stringValor(mapa.get("tipo"))));
             }
         }
         return itens;
@@ -641,7 +641,7 @@ public class InsightsService {
                     "Priorize a cobrança dos pagamentos em aberto para recuperar caixa imediato.",
                     formatarMoeda(pendente),
                     "Alta",
-                    "acao"
+                    "ação"
             );
         }
         if (profissionaisSemMovimento > 0 || servicosSemMovimento > 0) {
@@ -650,7 +650,7 @@ public class InsightsService {
                     "Redistribua a agenda e divulgue os itens sem movimento para gerar novas conversões.",
                     profissionaisSemMovimento + " profissionais e " + servicosSemMovimento + " serviços sem movimento",
                     "Média",
-                    "acao"
+                    "ação"
             );
         }
         if (quedaReceita) {
@@ -659,7 +659,7 @@ public class InsightsService {
                     "Compense a queda recente de faturamento com uma campanha comercial para os serviços com melhor potencial.",
                     "Receita recente abaixo do período anterior",
                     "Média",
-                    "acao"
+                    "ação"
             );
         }
         return new InsightItem(
@@ -667,7 +667,7 @@ public class InsightsService {
                 "Mantenha a operação atual e acompanhe os sinais da empresa diariamente.",
                 "Sem ação crítica no momento",
                 "Baixa",
-                "acao"
+                "ação"
         );
     }
 
@@ -721,8 +721,8 @@ public class InsightsService {
     private InsightItem montarPrincipalClienteRisco(long atRisk, boolean clienteEmRisco) {
         return new InsightItem(
                 "Base de Clientes",
-                "A base cadastrada nao mostra alerta de clientes no momento.",
-                "Sem acao critica pelos dados atuais",
+                "A base cadastrada não mostra alerta de clientes no momento.",
+                "Sem ação critica pelos dados atuais",
                 "Baixa",
                 "cliente"
         );
@@ -738,7 +738,7 @@ public class InsightsService {
         List<InsightItem> itens = new ArrayList<>();
         for (Object item : lista) {
             if (item instanceof Map<?, ?> mapa) {
-                itens.add(new InsightItem(stringValor(mapa.get("titulo")), stringValor(mapa.get("descricao")), stringValor(mapa.get("impactoEstimado")), stringValor(mapa.get("prioridade")), "oportunidade"));
+                itens.add(new InsightItem(stringValor(mapa.get("titulo")), stringValor(mapa.get("descrição")), stringValor(mapa.get("impactoEstimado")), stringValor(mapa.get("prioridade")), "oportunidade"));
             }
         }
         return itens.isEmpty() ? fallback : itens.size() > 3 ? itens.subList(0, 3) : itens;
@@ -749,10 +749,10 @@ public class InsightsService {
         List<InsightAction> itens = new ArrayList<>();
         for (Object item : lista) {
             if (item instanceof Map<?, ?> mapa) {
-                String descricao = primeiroNaoVazio(mapa, "descricao", "titulo", "texto");
+                String descrição = primeiroNaoVazio(mapa, "descrição", "titulo", "texto");
                 String urgencia = primeiroNaoVazio(mapa, "prioridade", "urgencia", "status");
                 String impacto = primeiroNaoVazio(mapa, "impactoEstimado", "impacto", "valor", "resposta");
-                itens.add(new InsightAction(descricao, urgencia, impacto));
+                itens.add(new InsightAction(descrição, urgencia, impacto));
             }
         }
         return itens.isEmpty() ? fallback : itens.size() > 4 ? itens.subList(0, 4) : itens;
@@ -765,10 +765,10 @@ public class InsightsService {
                 .toList();
     }
 
-    private List<InsightAction> filtrarAcoesSemBaseReal(List<InsightAction> acoes, long clientesInativos, long servicosInativos, long profissionaisInativos) {
-        if (acoes == null || acoes.isEmpty()) return List.of();
-        return acoes.stream()
-                .filter(acao -> temBaseReal(textoDaAcao(acao), clientesInativos, servicosInativos, profissionaisInativos))
+    private List<InsightAction> filtrarAcoesSemBaseReal(List<InsightAction> ações, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+        if (ações == null || ações.isEmpty()) return List.of();
+        return ações.stream()
+                .filter(ação -> temBaseReal(textoDaAcao(ação), clientesInativos, servicosInativos, profissionaisInativos))
                 .toList();
     }
 
@@ -796,18 +796,18 @@ public class InsightsService {
 
     private String textoDoItem(InsightItem item) {
         if (item == null) return "";
-        return String.join(" ", item.titulo(), item.descricao(), item.impacto(), item.urgencia(), item.tipo());
+        return String.join(" ", item.titulo(), item.descrição(), item.impacto(), item.urgencia(), item.tipo());
     }
 
-    private String textoDaAcao(InsightAction acao) {
-        if (acao == null) return "";
-        return String.join(" ", acao.descricao(), acao.urgencia(), acao.impactoEstimado());
+    private String textoDaAcao(InsightAction ação) {
+        if (ação == null) return "";
+        return String.join(" ", ação.descrição(), ação.urgencia(), ação.impactoEstimado());
     }
 
     private List<InsightAction> montarAcoesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
-        List<InsightAction> acoes = new ArrayList<>();
+        List<InsightAction> ações = new ArrayList<>();
         if (pendente > 0) {
-            acoes.add(new InsightAction(
+            ações.add(new InsightAction(
                     "Cobrar pagamentos pendentes",
                     "Alta",
                     formatarMoeda(pendente)
@@ -816,34 +816,34 @@ public class InsightsService {
         boolean servicoSemVenda = servicos.stream().anyMatch(s -> longo(s.get("vendas_30d")) <= 0);
         boolean profissionalOcioso = profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) <= 0);
         if (servicoSemVenda) {
-            acoes.add(new InsightAction(
+            ações.add(new InsightAction(
                     "Divulgar serviço sem venda",
                     "Média",
                     "Criar campanha para o serviço com menor movimento"
             ));
         }
         if (profissionalOcioso) {
-            acoes.add(new InsightAction(
+            ações.add(new InsightAction(
                     "Redistribuir agenda",
                     "Média",
                     "Aproveitar profissionais com baixa ocupação"
             ));
         }
-        if (acoes.isEmpty() && receita60 > 0 && receita30 < receita60) {
-            acoes.add(new InsightAction(
+        if (ações.isEmpty() && receita60 > 0 && receita30 < receita60) {
+            ações.add(new InsightAction(
                     "Recuperar receita perdida",
                     "Média",
                     "Divulgar os servicos com melhor potencial para recuperar faturamento"
             ));
         }
-        if (acoes.isEmpty()) {
-            acoes.add(new InsightAction(
+        if (ações.isEmpty()) {
+            ações.add(new InsightAction(
                     "Acompanhar indicadores",
                     "Baixa",
                     "Nenhum sinal crítico suficiente para ação imediata"
             ));
         }
-        return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
+        return ações.size() > 4 ? ações.subList(0, 4) : ações;
     }
 
     private List<InsightItem> montarOportunidadesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
@@ -889,7 +889,7 @@ public class InsightsService {
         if (oportunidades.isEmpty()) {
             oportunidades.add(new InsightItem(
                     "Sem recomendacao no momento",
-                    "Os dados reais sincronizados nao mostram uma acao prioritaria agora.",
+                    "Os dados reais sincronizados não mostram uma ação prioritaria agora.",
                     "Sem sinal forte no período analisado.",
                     "Baixa",
                     "Média"

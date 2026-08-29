@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class CryptoService {
-    // Fundacao incremental: nao criptografar e-mail/telefone de login/busca sem migration com hash normalizado e coluna criptografada separada.
+    // Fundacao incremental: não criptografar e-mail/telefone de login/busca sem migration com hash normalizado e coluna criptografada separada.
     private static final String ALGORITHM = "AES";
     private static final String TRANSFORMATION = "AES/GCM/NoPadding";
     private static final int KEY_BYTES = 32;
@@ -87,7 +87,7 @@ public class CryptoService {
 
     private SecretKeySpec requireKey() {
         if (keySpec == null) {
-            throw new IllegalStateException("APP_DATA_ENCRYPTION_KEY nao configurada.");
+            throw new IllegalStateException("APP_DATA_ENCRYPTION_KEY não configurada.");
         }
         return keySpec;
     }

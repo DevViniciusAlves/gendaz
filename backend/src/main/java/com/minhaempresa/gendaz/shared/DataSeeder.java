@@ -198,13 +198,13 @@ public class DataSeeder implements CommandLineRunner {
                 .nome(empresa.getNomeFantasia() + " Cliente")
                 .telefone("5565999111111")
                 .email("cliente@" + empresa.getId() + ".com")
-                .observacoes("Cliente de teste.")
+                .observações("Cliente de teste.")
                 .empresa(empresa)
                 .build());
 
         ServicoEntity servico = servicoRepository.save(ServicoEntity.builder()
                 .nome("Consulta")
-                .descricao("Atendimento completo")
+                .descrição("Atendimento completo")
                 .duracaoMinutos(60)
                 .valor(new BigDecimal("180.00"))
                 .status(StatusCadastro.ATIVO)
@@ -228,7 +228,7 @@ public class DataSeeder implements CommandLineRunner {
                 .horaInicio(LocalTime.of(9, 0))
                 .horaFim(LocalTime.of(10, 0))
                 .status(StatusAgendamento.CONFIRMADO)
-                .observacoes("Chegar 10 minutos antes.")
+                .observações("Chegar 10 minutos antes.")
                 .build());
 
         ConversaEntity conversa = conversaRepository.save(ConversaEntity.builder()

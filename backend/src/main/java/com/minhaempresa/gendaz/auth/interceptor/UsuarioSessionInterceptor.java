@@ -45,27 +45,27 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        String sessao = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
+        String sessão = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
 
         if (isAdminSession(request)) {
-            if (sessao != null && !sessao.isBlank()) {
-                usuarioRepository.findBySessaoAtiva(sessao).ifPresent(this::registrarEmpresaAtual);
+            if (sessão != null && !sessão.isBlank()) {
+                usuarioRepository.findBySessaoAtiva(sessão).ifPresent(this::registrarEmpresaAtual);
             }
             return true;
         }
 
-        if (sessao == null || sessao.isBlank()) {
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
+        if (sessão == null || sessão.isBlank()) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao não encontrada.");
             return false;
         }
 
-        Optional<UsuarioEntity> usuarioDaSessao = usuarioRepository.findBySessaoAtiva(sessao);
+        Optional<UsuarioEntity> usuarioDaSessao = usuarioRepository.findBySessaoAtiva(sessão);
         if (usuarioDaSessao.isEmpty()) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao invalida.");
             return false;
         }
         if (!origemPermitida(request)) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem nao permitida.");
+            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem não permitida.");
             return false;
         }
         registrarEmpresaAtual(usuarioDaSessao.get());

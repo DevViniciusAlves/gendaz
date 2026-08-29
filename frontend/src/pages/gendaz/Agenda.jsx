@@ -27,7 +27,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const [horarios, setHorarios] = useState([])
   const hoje = new Date()
   const dataHoje = hoje.toISOString().slice(0, 10)
-  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
+  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observações: '', cupomCodigo: '' })
   const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
@@ -161,14 +161,14 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           )}
           <label>
             <span>Observações (opcional)</span>
-            <textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Alguma observação..." />
+            <textarea value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} placeholder="Alguma observação..." />
           </label>
           <label>
             <span>Adicionar cupom</span>
             <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
               <option value="">Sem cupom</option>
               {cuponsAplicaveis.map((cupom) => (
-                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao}</option>
+                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descrição}</option>
               ))}
             </select>
           </label>

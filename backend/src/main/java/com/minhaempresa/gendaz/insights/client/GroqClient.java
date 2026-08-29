@@ -116,7 +116,7 @@ public class GroqClient {
         }
 
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            log.warn("[insights-groq] resposta nao-sucedida status={} corpo={}", response.statusCode(), response.body());
+            log.warn("[insights-groq] resposta não-sucedida status={} corpo={}", response.statusCode(), response.body());
             try {
                 HttpRequest modelsRequest = HttpRequest.newBuilder()
                         .uri(URI.create("https://api.groq.com/openai/v1/models"))

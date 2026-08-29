@@ -241,7 +241,7 @@ public class LgpdService {
             throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");
         }
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa nao pode solicitar exclusao da conta.");
+            throw new BusinessException("Usuario sem empresa não pode solicitar exclusão da conta.");
         }
         Long empresaId = usuario.getEmpresa().getId();
         EmpresaEntity empresa = buscarEmpresa(empresaId);
@@ -280,11 +280,11 @@ public class LgpdService {
             throw new BusinessException("Acesso negado: apenas o dono pode reativar a conta.");
         }
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa nao pode reativar a conta.");
+            throw new BusinessException("Usuario sem empresa não pode reativar a conta.");
         }
         EmpresaEntity empresa = buscarEmpresa(usuario.getEmpresa().getId());
         if (empresa.getStatus() != StatusEmpresa.ENCERRADA) {
-            throw new BusinessException("Esta conta nao esta encerrada.");
+            throw new BusinessException("Esta conta não esta encerrada.");
         }
 
         // Decisao sempre pela vigencia real do plano/trial existente (somente leitura das regras atuais).
@@ -293,7 +293,7 @@ public class LgpdService {
         empresa.setStatus(novoStatus);
         empresaRepository.save(empresa);
 
-        // Encerra a sessao restrita usada para a reativacao: o dono fara novo login normal.
+        // Encerra a sessão restrita usada para a reativacao: o dono fara novo login normal.
         if (usuario.getSessaoAtiva() != null && !usuario.getSessaoAtiva().isBlank()) {
             usuarioSessionService.encerrarSessao(usuario.getSessaoAtiva());
         }
@@ -312,7 +312,7 @@ public class LgpdService {
             throw new BusinessException("Acesso negado: apenas o dono pode excluir definitivamente a conta.");
         }
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa nao pode solicitar exclusao da conta.");
+            throw new BusinessException("Usuario sem empresa não pode solicitar exclusão da conta.");
         }
         Long empresaId = usuario.getEmpresa().getId();
 
@@ -402,12 +402,12 @@ public class LgpdService {
 
     private EmpresaEntity buscarEmpresa(Long empresaId) {
         return empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
     }
 
     private Long obterEmpresaId(UsuarioEntity usuario) {
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario nao possui empresa vinculada.");
+            throw new BusinessException("Usuario não possui empresa vinculada.");
         }
         return usuario.getEmpresa().getId();
     }

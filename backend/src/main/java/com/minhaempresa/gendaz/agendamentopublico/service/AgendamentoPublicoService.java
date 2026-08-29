@@ -8,7 +8,7 @@ import com.minhaempresa.gendaz.agendamentopublico.dto.AgendamentoPublicoDtos.Boo
 import com.minhaempresa.gendaz.agendamentopublico.dto.AgendamentoPublicoDtos.BookingProfissionalResponse;
 import com.minhaempresa.gendaz.agendamentopublico.dto.AgendamentoPublicoDtos.BookingServicoResponse;
 import com.minhaempresa.gendaz.agendamentopublico.dto.AgendamentoPublicoDtos.CriarAgendamentoPublicoRequest;
-import com.minhaempresa.gendaz.configuracao.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
+import com.minhaempresa.gendaz.configuração.dto.HorarioAtendimentoDtos.HorarioAtendimentoResponse;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
 import com.minhaempresa.gendaz.assinatura.repository.AssinaturaRepository;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
@@ -123,7 +123,7 @@ public class AgendamentoPublicoService {
         validarRecursoDaEmpresa(empresa.getId(), request.servicoId(), request.profissionalId());
 
         ClienteEntity cliente = buscarOuCriarCliente(empresa, request);
-        String observacao = normalizarObservacao(request.observacao());
+        String observação = normalizarObservacao(request.observação());
         AgendamentoResponse agendamento = agendamentoService.criar(new CriarAgendamentoRequest(
                 cliente.getId(),
                 request.servicoId(),
@@ -132,7 +132,7 @@ public class AgendamentoPublicoService {
                 request.data(),
                 request.horaInicio(),
                 request.cupomCodigo(),
-                observacao == null ? "Criado pelo link publico de agendamento." : observacao
+                observação == null ? "Criado pelo link publico de agendamento." : observação
         ));
 
         return new AgendamentoPublicoResponse("Agendamento solicitado com sucesso.", agendamento);
@@ -149,7 +149,7 @@ public class AgendamentoPublicoService {
                         .nome(normalizarNome(request.clienteNome()))
                         .telefone(telefone)
                         .email(normalizarEmail(request.clienteEmail()))
-                        .observacoes(normalizarObservacao(request.observacao()))
+                        .observações(normalizarObservacao(request.observação()))
                         .empresa(empresa)
                         .build()));
     }
@@ -160,9 +160,9 @@ public class AgendamentoPublicoService {
         if (email != null) {
             cliente.setEmail(email);
         }
-        String observacao = normalizarObservacao(request.observacao());
-        if (observacao != null) {
-            cliente.setObservacoes(observacao);
+        String observação = normalizarObservacao(request.observação());
+        if (observação != null) {
+            cliente.setObservacoes(observação);
         }
         return clienteRepository.save(cliente);
     }
@@ -187,21 +187,21 @@ public class AgendamentoPublicoService {
 
     private EmpresaEntity buscarEmpresa(String slugOuEmpresaId) {
         if (slugOuEmpresaId == null || slugOuEmpresaId.isBlank() || slugOuEmpresaId.matches("\\d+")) {
-            throw new ResourceNotFoundException("Empresa nao encontrada.");
+            throw new ResourceNotFoundException("Empresa não encontrada.");
         }
         return empresaRepository.findByAgendamentoSlug(slugOuEmpresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
     }
 
     private void validarRecursoDaEmpresa(Long empresaId, Long servicoId, Long profissionalId) {
         ServicoEntity servico = servicoRepository.findById(servicoId)
-                .orElseThrow(() -> new ResourceNotFoundException("Servico nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Servico não encontrado."));
         if (!servico.getEmpresa().getId().equals(empresaId) || servico.getStatus() != StatusCadastro.ATIVO) {
             throw new BusinessException("Servico indisponivel.");
         }
         if (profissionalId != null) {
             ProfissionalEntity profissional = profissionalRepository.findById(profissionalId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Profissional nao encontrado."));
+                    .orElseThrow(() -> new ResourceNotFoundException("Profissional não encontrado."));
             if (!profissional.getEmpresa().getId().equals(empresaId) || profissional.getStatus() != StatusCadastro.ATIVO) {
                 throw new BusinessException("Profissional indisponivel.");
             }
@@ -232,8 +232,8 @@ public class AgendamentoPublicoService {
     }
 
     private String normalizarObservacao(String valor) {
-        String observacao = valor == null ? "" : valor.trim().replaceAll("\\s+", " ");
-        return observacao.isBlank() ? null : observacao;
+        String observação = valor == null ? "" : valor.trim().replaceAll("\\s+", " ");
+        return observação.isBlank() ? null : observação;
     }
 
     private String normalizarIp(String ip) {

@@ -33,7 +33,7 @@ class AdminImpersonationGuardFilterTest {
         filter.doFilterInternal(request, response, new MockFilterChain());
 
         assertEquals(403, response.getStatus());
-        assertTrue(response.getContentAsString().contains("Acao nao permitida durante impersonacao administrativa"));
+        assertTrue(response.getContentAsString().contains("Acao não permitida durante impersonacao administrativa"));
         verify(securityMonitoringService).registrarEvento(
                 eq("ADMIN_IMPERSONATION_BLOCKED_ACTION"),
                 eq("SECURITY"),

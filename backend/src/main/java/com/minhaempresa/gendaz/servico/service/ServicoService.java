@@ -54,7 +54,7 @@ public class ServicoService {
             java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
             ServicoEntity servico = ServicoEntity.builder()
                     .nome(sanitizacaoService.textoObrigatorio(request.nome()))
-                    .descricao(sanitizacaoService.texto(request.descricao()))
+                    .descrição(sanitizacaoService.texto(request.descrição()))
                     .duracaoMinutos(duracao)
                     .valor(val)
                     .status(StatusCadastro.ATIVO)
@@ -93,7 +93,7 @@ public class ServicoService {
         Integer duracao = request.duracaoMinutos() != null ? request.duracaoMinutos() : 30;
         java.math.BigDecimal val = request.valor() != null ? request.valor() : java.math.BigDecimal.ZERO;
         servico.setNome(sanitizacaoService.textoObrigatorio(request.nome()));
-        servico.setDescricao(sanitizacaoService.texto(request.descricao()));
+        servico.setDescricao(sanitizacaoService.texto(request.descrição()));
         servico.setDuracaoMinutos(duracao);
         servico.setValor(val);
         ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
@@ -136,21 +136,21 @@ public class ServicoService {
     @Transactional(readOnly = true)
     public ServicoEntity buscarEntidade(Long id) {
         ServicoEntity servico = servicoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Servico nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Servico não encontrado."));
         validarEmpresaAtual(servico.getEmpresa().getId());
         return servico;
     }
 
     private void validarEmpresa(ServicoEntity servico, Long empresaId) {
         if (empresaId == null || !servico.getEmpresa().getId().equals(empresaId)) {
-            throw new ResourceNotFoundException("Servico nao encontrado.");
+            throw new ResourceNotFoundException("Servico não encontrado.");
         }
     }
 
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new ResourceNotFoundException("Servico nao encontrado.");
+            throw new ResourceNotFoundException("Servico não encontrado.");
         }
     }
 }

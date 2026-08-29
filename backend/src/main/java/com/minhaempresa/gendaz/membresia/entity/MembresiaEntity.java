@@ -40,7 +40,7 @@ public class MembresiaEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private FuncaoMembresia funcao;
+    private FuncaoMembresia função;
 
     @Column(name = "is_owner", nullable = false)
     private Boolean owner;
@@ -70,8 +70,8 @@ public class MembresiaEntity {
         if (status == null) {
             status = StatusMembresia.ACTIVE;
         }
-        if (funcao == null) {
-            funcao = FuncaoMembresia.MEMBER;
+        if (função == null) {
+            função = FuncaoMembresia.MEMBER;
         }
         if (owner == null) {
             owner = false;

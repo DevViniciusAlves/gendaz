@@ -182,7 +182,7 @@ public class AdminCrmService {
         adminSessionService.validarSessao(token);
 
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new BusinessException("Empresa nao encontrada."));
+                .orElseThrow(() -> new BusinessException("Empresa não encontrada."));
 
         UsuarioEntity dono = usuarioRepository.findByEmpresaIdAndPerfil(empresaId, PerfilUsuario.DONO)
                 .stream().findFirst().orElse(null);
@@ -191,7 +191,7 @@ public class AdminCrmService {
                 ? dono.getEmail()
                 : empresa.getEmail();
         if (emailDestino == null || emailDestino.isBlank()) {
-            throw new BusinessException("A empresa nao possui e-mail cadastrado para contato.");
+            throw new BusinessException("A empresa não possui e-mail cadastrado para contato.");
         }
         String nomeDestino = dono != null && dono.getNome() != null ? dono.getNome() : empresa.getNomeFantasia();
 
@@ -201,14 +201,13 @@ public class AdminCrmService {
         String subtitulo = montarSubtitulo(request.template());
         String ctaTexto = "resgate".equals(request.template()) ? "Voltar para o Gendaz" : "Acessar o Gendaz";
         String corpo = montarCorpo(request.template(), nomeDestino, request.customMessage(), slug);
-
         boolean enviado = resendEmailService.enviarComTemplate(
                 emailDestino,
                 assunto,
                 titulo,
                 subtitulo,
                 corpo,
-                montarUrlMeuGendaz(slug),
+                montarUrlMeuGendaz(request.template(), slug),
                 ctaTexto
         );
 
@@ -235,7 +234,7 @@ public class AdminCrmService {
         adminSessionService.validarSessao(token);
 
         if (!empresaRepository.existsById(empresaId)) {
-            throw new BusinessException("Empresa nao encontrada.");
+            throw new BusinessException("Empresa não encontrada.");
         }
         List<CrmContatoEntity> contatos = crmContatoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId);
         return contatos.stream().map(c -> new HistoricoContatoResponse(
@@ -336,7 +335,7 @@ public class AdminCrmService {
 
     private String montarSubtitulo(String template) {
         return "resgate".equals(template)
-                ? "Faz tempo que voce nao acessa o Gendaz. Estamos com saudade dos seus agendamentos e queremos voce de volta."
+                ? "Faz tempo que voce não acessa o Gendaz. Estamos com saudade dos seus agendamentos e queremos voce de volta."
                 : "A Gendaz esta pronta para atender voce de novo com praticidade e proximidade.";
     }
 
@@ -345,15 +344,15 @@ public class AdminCrmService {
         String msgPersonalizada = customMessage != null && !customMessage.isBlank() ? customMessage : null;
 
         String mensagemPadrao = switch (template) {
-            case "resgate" -> "Oi " + nomeSafe + "! Faz um tempo que voce nao entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.";
-            case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
+            case "resgate" -> "Oi " + nomeSafe + "! Faz um tempo que voce não entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.";
+            case "reconexao" -> nomeSafe + ", faz tempo que não aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
             case "promocao" -> nomeSafe + ", preparamos uma oferta especial so pra voce! Aproveite e agende seu proximo atendimento com desconto.";
             case "lembrete" -> nomeSafe + ", lembrete: voce tem um compromisso agendado. Se precisar remarcar, esta tudo bem!";
             default -> "Entre em contato conosco para mais informacoes.";
         };
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
-        String ctaUrl = montarUrlGendaz(slugEmpresa);
+        String ctaUrl = montarUrlGendaz(template, slugEmpresa);
 
         return """
                 <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">%s</p>
@@ -364,18 +363,27 @@ public class AdminCrmService {
                 """.formatted(textoFinal, ctaUrl, ctaUrl);
     }
 
-    private String montarUrlMeuGendaz(String slugEmpresa) {
-        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
-        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    private String montarUrlMeuGendaz(String template, String slugEmpresa) {
+        if ("resgate".equals(template) || "reconexao".equals(template)) {
+            return montarUrlBase();
+        }
+        String baseNormalizada = montarUrlBase();
         if (slugEmpresa == null || slugEmpresa.isBlank()) {
             return baseNormalizada + "/meu-gendaz";
         }
         return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
     }
 
-    private String montarUrlGendaz(String slugEmpresa) {
-        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
-        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    private String montarUrlGendaz(String template, String slugEmpresa) {
+        if ("resgate".equals(template) || "reconexao".equals(template)) {
+            return montarUrlBase();
+        }
+        String baseNormalizada = montarUrlBase();
         return baseNormalizada + "/sistema/dashboard";
+    }
+
+    private String montarUrlBase() {
+        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
+        return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     }
 }

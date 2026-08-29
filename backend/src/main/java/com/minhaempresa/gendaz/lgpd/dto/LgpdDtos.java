@@ -67,7 +67,7 @@ public final class LgpdDtos {
 
     public record EmpresaExportada(Long id, String nomeFantasia, String telefone, String email, String agendamentoSlug, String status, String timezone, String ramo, LocalDateTime dataCriacao, LocalDateTime dataAtualizacao) {}
 
-    public record AuditoriaExportada(Long id, String tipo, String severidade, String descricao, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
+    public record AuditoriaExportada(Long id, String tipo, String severidade, String descrição, String motivo, String ip, String userAgent, LocalDateTime dataCriacao) {}
 
     public record ExcluirContaResponse(String mensagem, Long empresaId, String statusEmpresa, String stripeStatus) {}
 

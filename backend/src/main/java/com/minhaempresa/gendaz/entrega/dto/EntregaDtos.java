@@ -15,7 +15,7 @@ public final class EntregaDtos {
             @Size(min = 5, max = 180)
             @NotBlank String endereco,
             @Size(max = 300)
-            String observacoes,
+            String observações,
             LocalDate dataPrevisao
     ) {}
 
@@ -28,7 +28,7 @@ public final class EntregaDtos {
             Long empresaId,
             String endereco,
             StatusEntrega status,
-            String observacoes,
+            String observações,
             LocalDate dataPrevisao
     ) {}
 }

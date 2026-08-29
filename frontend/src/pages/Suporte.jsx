@@ -201,7 +201,7 @@ export default function Suporte() {
                 <p>{item.mensagem}</p>
                 <span className="support-ticket-meta">Prioridade: {PRIORIDADE_LABEL[item.prioridade] || 'Media'}</span>
                 {item.assunto === ASSUNTO_BUG && (
-                  <span className="status status-atencao" style={{ marginLeft: 8 }} title="Bug de sistema com prioridade alta">
+                  <span className="status status-atenção" style={{ marginLeft: 8 }} title="Bug de sistema com prioridade alta">
                     <span className="status-dot">●</span>
                     Prioridade alta
                   </span>

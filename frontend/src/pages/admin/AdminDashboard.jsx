@@ -182,8 +182,8 @@ function rotuloPlano(valor) {
 }
 
 const PLANOS_PADRAO_ADMIN = [
-  { id: 'BASICO', nome: 'BASICO', descricao: 'Agenda, clientes e servicos.' },
-  { id: 'PRO', nome: 'PRO', descricao: 'Agenda com financeiro, pagamentos e relatorios.' },
+  { id: 'BASICO', nome: 'BASICO', descrição: 'Agenda, clientes e servicos.' },
+  { id: 'PRO', nome: 'PRO', descrição: 'Agenda com financeiro, pagamentos e relatorios.' },
 ]
 
 function normalizarPlanosAdmin(planosRecebidos) {
@@ -260,7 +260,7 @@ export default function AdminDashboard() {
         adminApi.pagamentos(),
         adminApi.chamados(),
         adminApi.logs(),
-        adminApi.configuracoes(),
+        adminApi.configurações(),
         adminApi.planos(),
       ])
 
@@ -322,7 +322,7 @@ export default function AdminDashboard() {
         setPagamentos(listaPagamentos)
         setPagamentosModeracao(Array.isArray(pagamentosModeracao) ? pagamentosModeracao : [])
       } catch {
-        // polling silencioso para nao poluir o painel com erros
+        // polling silencioso para não poluir o painel com erros
       }
     }
 
@@ -419,7 +419,7 @@ export default function AdminDashboard() {
   const logsFiltrados = useMemo(() => (Array.isArray(logs) ? logs : []).filter((item) => {
     const categoriaOk = !filtroLog.categoria || rotuloCategoria(item.tipo) === filtroLog.categoria
     const severidadeOk = !filtroLog.severidade || item.severidade === filtroLog.severidade
-    const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descricao', 'motivo'])
+    const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descrição', 'motivo'])
     return categoriaOk && severidadeOk && buscaOk
   }), [logs, filtroLog, pesquisaLog])
 
@@ -472,7 +472,7 @@ export default function AdminDashboard() {
   async function confirmarImpersonacao() {
     if (!modal) return
     if (!modal.usuarioId) {
-      setErro('Usuario responsavel da empresa nao encontrado para inspecao.')
+      setErro('Usuario responsavel da empresa não encontrado para inspecao.')
       return
     }
     setCarregandoAcao(true)
@@ -541,7 +541,7 @@ export default function AdminDashboard() {
       setModal(null)
       setAviso(modal.tipo === 'empresa-ativar' ? 'Conta ativada com sucesso.' : 'Conta desativada com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('A conta foi atualizada, mas nao foi possivel recarregar a tabela agora.')
+        setErro('A conta foi atualizada, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, modal.tipo === 'empresa-ativar' ? 'Nao foi possivel ativar a conta.' : 'Nao foi possivel desativar a conta.'))
@@ -569,7 +569,7 @@ export default function AdminDashboard() {
       setModal(null)
       setAviso('Dados da empresa atualizados com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('A empresa foi atualizada, mas nao foi possivel recarregar a tabela agora.')
+        setErro('A empresa foi atualizada, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel atualizar os dados da empresa.'))
@@ -654,7 +654,7 @@ export default function AdminDashboard() {
 
   async function removerPlanoDaConta(assinatura) {
     if (!modal) return
-    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe nao restar nenhum plano, a conta ficara inativa.`)
+    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe não restar nenhum plano, a conta ficara inativa.`)
     if (!semPlano) return
     setSalvandoAssinatura(true)
     setErro('')
@@ -664,7 +664,7 @@ export default function AdminDashboard() {
       setEditandoAssinaturaId(null)
       setAviso('Plano removido da conta com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('O plano foi removido, mas nao foi possivel recarregar a tabela agora.')
+        setErro('O plano foi removido, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel remover o plano.'))
@@ -1095,7 +1095,7 @@ export default function AdminDashboard() {
                   <td><StatusBadge status={item.severidade} /></td>
                   <td>{item.admin || '-'}</td>
                   <td>{item.empresa || '-'}</td>
-                  <td>{item.descricao}</td>
+                  <td>{item.descrição}</td>
                   <td>{item.motivo || '-'}</td>
                   <td>{formatarDataHora(item.dataCriacao)}</td>
                 </tr>
@@ -1243,7 +1243,7 @@ export default function AdminDashboard() {
                             >
                               <option value="">Selecionar plano</option>
                               {planos.map((plano) => (
-                                <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                                <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descrição}</option>
                               ))}
                             </select>
                             <input
@@ -1289,7 +1289,7 @@ export default function AdminDashboard() {
                         >
                           <option value="">Selecionar plano</option>
                           {planos.map((plano) => (
-                            <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                            <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descrição}</option>
                           ))}
                         </select>
                       </label>
@@ -1387,7 +1387,7 @@ export default function AdminDashboard() {
                   value={chamadoEdicao.resposta}
                   maxLength={1200}
                   onChange={(event) => setChamadoEdicao((atual) => ({ ...atual, resposta: event.target.value }))}
-                  placeholder="Registre uma resposta ou observacao para a equipe"
+                  placeholder="Registre uma resposta ou observação para a equipe"
                 />
                 <small className={chamadoEdicao.resposta.length >= 1200 ? 'field-hint limit-reached' : 'field-hint'}>
                   <strong>{chamadoEdicao.resposta.length}/1200</strong>
@@ -1418,7 +1418,7 @@ export default function AdminDashboard() {
                       setMotivo(event.target.value)
                       if (erro) setErro('')
                     }}
-                    placeholder="Descreva o motivo da acao"
+                    placeholder="Descreva o motivo da ação"
                   />
                   <small className={motivo.length >= 500 || (!motivoValido && motivo.length > 0) ? 'field-hint limit-reached' : 'field-hint'}>
                     {motivo.length >= 500

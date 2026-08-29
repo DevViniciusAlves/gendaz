@@ -12,25 +12,25 @@ const mensagens = {
   FINALIZAR: 'Tem certeza que deseja finalizar o atendimento deste cliente?',
 }
 
-export default function ConfirmacaoAcao({ open, acao, agendamento, onConfirmar, onCancelar, carregando = false }) {
-  if (!open || !acao || !agendamento) return null
+export default function ConfirmacaoAcao({ open, ação, agendamento, onConfirmar, onCancelar, carregando = false }) {
+  if (!open || !ação || !agendamento) return null
 
   return (
     <div className="confirmacao-overlay" onClick={onCancelar}>
       <div className="confirmacao-conteudo" onClick={(e) => e.stopPropagation()}>
         <div className="confirmacao-header">
-          <h3>{titulos[acao] || acao}</h3>
+          <h3>{titulos[ação] || ação}</h3>
           <button className="confirmacao-close" onClick={onCancelar} type="button">
             <X size={18} />
           </button>
         </div>
-        <p className="confirmacao-mensagem">{mensagens[acao] || 'Confirme a ação.'}</p>
+        <p className="confirmacao-mensagem">{mensagens[ação] || 'Confirme a ação.'}</p>
         <p className="confirmacao-cliente">{agendamento.clienteNome} — #{agendamento.protocolo || '------'}</p>
         <div className="confirmacao-botoes">
           <button className="confirmacao-botao confirmacao-botao-cancelar" onClick={onCancelar} type="button" disabled={carregando}>
             Cancelar
           </button>
-          <button className="confirmacao-botao confirmacao-botao-confirmar" onClick={() => onConfirmar(acao, agendamento)} type="button" disabled={carregando}>
+          <button className="confirmacao-botao confirmacao-botao-confirmar" onClick={() => onConfirmar(ação, agendamento)} type="button" disabled={carregando}>
             {carregando ? <><Loader className="spin" size={16} /> Confirmando...</> : 'Confirmar'}
           </button>
         </div>

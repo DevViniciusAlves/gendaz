@@ -11,7 +11,7 @@ public final class MeuGendazPromocaoDtos {
     public record PromocaoClienteResponse(
             Long id,
             String codigo,
-            String descricao,
+            String descrição,
             String tipo,
             BigDecimal valor,
             LocalDateTime dataFim,

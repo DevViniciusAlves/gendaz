@@ -120,7 +120,7 @@ class AdminServiceTest {
                 .id(20L)
                 .empresa(empresa)
                 .perfil(PerfilUsuario.DONO)
-                .sessaoAtiva("sessao-cliente")
+                .sessaoAtiva("sessão-cliente")
                 .build();
 
         when(adminSessionService.validarSessao("token-admin")).thenReturn(admin);
@@ -137,7 +137,7 @@ class AdminServiceTest {
 
         assertEquals(StatusEmpresa.BLOQUEADA, empresa.getStatus());
         assertEquals("BLOQUEADA", response.statusEmpresa());
-        verify(usuarioSessionService).encerrarSessao("sessao-cliente");
+        verify(usuarioSessionService).encerrarSessao("sessão-cliente");
     }
 }
 

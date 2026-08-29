@@ -130,7 +130,7 @@ public class RenderDatabaseEnvironmentPostProcessor implements EnvironmentPostPr
 
     private void logDatasourceTarget(String source, String jdbcUrl) {
         if (!StringUtils.hasText(jdbcUrl)) {
-            System.out.println("[database-config] datasource nao configurado por variavel de ambiente.");
+            System.out.println("[database-config] datasource não configurado por variavel de ambiente.");
             return;
         }
         try {

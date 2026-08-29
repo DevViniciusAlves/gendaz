@@ -76,7 +76,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             }
 
             if (usuario == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao não encontrada.");
                 return;
             }
             if (!usuarioAtivo(usuario, request)) {
@@ -88,7 +88,7 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
             if (!origemPermitida(request)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem nao permitida.");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem não permitida.");
                 return;
             }
 

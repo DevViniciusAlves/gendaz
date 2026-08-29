@@ -132,14 +132,14 @@ public class CrmService {
     @Transactional
     public Map<String, Object> enviarMensagem(Long empresaId, Long clienteId, EnviarMensagemRequest request) {
         ClienteEntity cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new BusinessException("Cliente nao encontrado."));
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
 
         if (cliente.getEmpresa() == null || !Objects.equals(cliente.getEmpresa().getId(), empresaId)) {
-            throw new BusinessException("Empresa nao foi encontrada");
+            throw new BusinessException("Empresa não foi encontrada");
         }
 
         if (cliente.getEmail() == null || cliente.getEmail().isBlank()) {
-            throw new BusinessException("Cliente nao possui e-mail cadastrado.");
+            throw new BusinessException("Cliente não possui e-mail cadastrado.");
         }
 
         String assunto = montarAssunto(request.template(), cliente.getNome());
@@ -181,9 +181,9 @@ public class CrmService {
     @Transactional(readOnly = true)
     public List<HistoricoContatoResponse> historicoContatos(Long empresaId, Long clienteId) {
         ClienteEntity cliente = clienteRepository.findById(clienteId)
-                .orElseThrow(() -> new BusinessException("Cliente nao encontrado."));
+                .orElseThrow(() -> new BusinessException("Cliente não encontrado."));
         if (cliente.getEmpresa() == null || !Objects.equals(cliente.getEmpresa().getId(), empresaId)) {
-            throw new BusinessException("Empresa nao foi encontrada");
+            throw new BusinessException("Empresa não foi encontrada");
         }
         List<CrmContatoEntity> contatos = crmContatoRepository.findByClienteIdOrderByDataCriacaoDesc(clienteId);
         return contatos.stream().map(c -> new HistoricoContatoResponse(
@@ -308,7 +308,7 @@ public class CrmService {
 
         String mensagemPadrao = switch (template) {
             case "resgate" -> "Oi " + nomeSafe + "! Sentimos sua falta e queremos te receber novamente. Que tal voltar para um novo atendimento?";
-            case "reconexao" -> nomeSafe + ", faz tempo que nao aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
+            case "reconexao" -> nomeSafe + ", faz tempo que não aparece por aqui! Queremos saber como voce esta e deixar tudo pronto para sua volta.";
             case "promocao" -> nomeSafe + ", preparamos uma oferta especial so pra voce! Aproveite e agende seu proximo atendimento com desconto.";
             case "lembrete" -> nomeSafe + ", lembrete: voce tem um compromisso agendado. Se precisar remarcar, esta tudo bem!";
             default -> "Entre em contato conosco para mais informacoes.";

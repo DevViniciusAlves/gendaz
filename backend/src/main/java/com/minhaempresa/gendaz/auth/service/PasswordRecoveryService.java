@@ -37,7 +37,7 @@ public class PasswordRecoveryService {
     @Transactional
     public void redefinirSenha(String token, String novaSenha, String confirmarNovaSenha) {
         if (!novaSenha.equals(confirmarNovaSenha)) {
-            throw new BusinessException("As senhas nao coincidem.");
+            throw new BusinessException("As senhas não coincidem.");
         }
         passwordService.validarSenha(novaSenha);
         PasswordResetTokenEntity resetToken = tokenRepository.findByTokenHashAndUsadoFalse(hash(token))

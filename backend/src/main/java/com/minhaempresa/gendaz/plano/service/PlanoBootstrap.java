@@ -22,11 +22,11 @@ public class PlanoBootstrap implements CommandLineRunner {
         garantirPlano("PRO", "Tudo do Plano básico + Até 3 usuários na conta | CRM integrado | Insights com GendazIA no controle | Financeiro completo: caixa, despesas pagamentos automatizados", VALOR_PRO_MENSAL);
     }
 
-    private void garantirPlano(String nome, String descricao, BigDecimal valorMensal) {
+    private void garantirPlano(String nome, String descrição, BigDecimal valorMensal) {
         PlanoEntity plano = planoRepository.findByNome(nome).orElseGet(() -> PlanoEntity.builder()
                 .nome(nome)
                 .build());
-        plano.setDescricao(descricao);
+        plano.setDescricao(descrição);
         plano.setValorMensal(valorMensal);
         plano.setStatus(StatusPlano.ATIVO);
         planoRepository.save(plano);

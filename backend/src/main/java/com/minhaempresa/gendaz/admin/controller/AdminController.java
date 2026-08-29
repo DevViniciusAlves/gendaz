@@ -87,9 +87,9 @@ public class AdminController {
         return ResponseEntity.ok(adminService.logs(tokenAdmin(http)));
     }
 
-    @GetMapping("/configuracoes")
-    public ResponseEntity<AdminConfigResponse> configuracoes(HttpServletRequest http) {
-        return ResponseEntity.ok(adminService.configuracoes(tokenAdmin(http)));
+    @GetMapping("/configurações")
+    public ResponseEntity<AdminConfigResponse> configurações(HttpServletRequest http) {
+        return ResponseEntity.ok(adminService.configurações(tokenAdmin(http)));
     }
 
     @GetMapping("/chamados")

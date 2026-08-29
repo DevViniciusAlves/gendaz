@@ -58,7 +58,7 @@ export default function Login() {
         ? 'E-mail ou senha incorretos.'
         : error.response?.data?.mensagem
           || error.response?.data?.message
-          || (error.code === 'ECONNABORTED' ? 'A conexao demorou demais. Tente novamente em instantes.' : null)
+          || (error.code === 'ECONNABORTED' ? 'A conexão demorou demais. Tente novamente em instantes.' : null)
           || 'Nao foi possivel entrar. Verifique e-mail e senha.'
       setErro(mensagem)
     } finally {
@@ -129,7 +129,7 @@ export default function Login() {
         <div className="login-links-v2">
           <Link to="/recuperar-senha" className="login-link-v2">Esqueci minha senha</Link>
           <p className="login-helper-v2">
-            Ainda nao tem conta? <Link to="/criar-conta" className="login-link-v2">Teste gratis por 7 dias</Link>
+            Ainda não tem conta? <Link to="/criar-conta" className="login-link-v2">Teste gratis por 7 dias</Link>
           </p>
         </div>
       </section>

@@ -18,7 +18,7 @@ public final class MembresiaDtos {
             String nome,
             String email,
             StatusMembresia status,
-            FuncaoMembresia funcao,
+            FuncaoMembresia função,
             Boolean owner,
             LocalDateTime dataEntrada,
             LocalDateTime dataRemocao,

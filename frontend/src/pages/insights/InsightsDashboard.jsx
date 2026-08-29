@@ -53,16 +53,16 @@ export default function InsightsDashboard({ dashboard }) {
       <section className="panel">
         <h2>Ações recomendadas</h2>
         <div className="insights-actions">
-          {(dashboard.acoes || []).map((acao, index) => (
-            <div key={`${acao.descricao || 'acao'}-${index}`} className="insights-action">
+          {(dashboard.ações || []).map((ação, index) => (
+            <div key={`${ação.descrição || 'ação'}-${index}`} className="insights-action">
               <div>
-                <strong>{acao.descricao}</strong>
-                <p>{acao.impactoEstimado}</p>
+                <strong>{ação.descrição}</strong>
+                <p>{ação.impactoEstimado}</p>
               </div>
-              <span>{acao.urgencia}</span>
+              <span>{ação.urgencia}</span>
             </div>
           ))}
-          {(dashboard.acoes || []).length === 0 && <p className="insights-empty">Sem ações sugeridas.</p>}
+          {(dashboard.ações || []).length === 0 && <p className="insights-empty">Sem ações sugeridas.</p>}
         </div>
       </section>
 

@@ -35,17 +35,17 @@ public class LogAtividadeService {
     private final ClientIpResolver ipResolver;
 
     /**
-     * Registra uma acao de negocio de forma assincrona e resiliente.
+     * Registra uma ação de negocio de forma assincrona e resiliente.
      * O tenant (empresa) e o usuario responsavel sao SEMPRE resolvidos no servidor,
      * jamais confiando em dados enviados pelo frontend.
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void registrar(String entidade, Long entidadeId, String acao) {
-        registrar(entidade, entidadeId, acao, null);
+    public void registrar(String entidade, Long entidadeId, String ação) {
+        registrar(entidade, entidadeId, ação, null);
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
-    public void registrar(String entidade, Long entidadeId, String acao, String detalhes) {
+    public void registrar(String entidade, Long entidadeId, String ação, String detalhes) {
         try {
             Long empresaId = CompanyContext.getCompanyId();
             UsuarioEntity usuario = null;
@@ -82,14 +82,14 @@ public class LogAtividadeService {
                     .nomeUsuario(nomeUsuario)
                     .entidade(entidade)
                     .entidadeId(entidadeId)
-                    .acao(acao)
+                    .ação(ação)
                     .detalhes(detalhes)
                     .ip(ip)
                     .dataHora(LocalDateTime.now())
                     .build());
         } catch (Exception e) {
-            log.warn("[log-atividade] falha ao registrar atividade. entidade={} acao={} erroTipo={}",
-                    entidade, acao, e.getClass().getSimpleName());
+            log.warn("[log-atividade] falha ao registrar atividade. entidade={} ação={} erroTipo={}",
+                    entidade, ação, e.getClass().getSimpleName());
         }
     }
 

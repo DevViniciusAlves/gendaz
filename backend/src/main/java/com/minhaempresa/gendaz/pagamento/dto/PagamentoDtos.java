@@ -121,7 +121,7 @@ String customerName,
 
     public record AcaoEmMassaPagamentoRequest(
             @NotNull @Size(max = 10) List<Long> ids,
-            @NotNull String acao,
+            @NotNull String ação,
             Long empresaId,
             MetodoPagamento metodoPagamento,
             Integer parcelas

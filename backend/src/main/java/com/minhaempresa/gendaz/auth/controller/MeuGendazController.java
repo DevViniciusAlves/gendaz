@@ -80,7 +80,7 @@ public class MeuGendazController {
     private String slugAtual(HttpServletRequest request) {
         String slug = request.getHeader("X-Meu-Gendaz-Slug");
         if (slug == null || slug.isBlank()) {
-            throw new SessaoExpiradaException("Slug da empresa nao informado.");
+            throw new SessaoExpiradaException("Slug da empresa não informado.");
         }
         return slug.trim().toLowerCase();
     }
@@ -97,9 +97,9 @@ public class MeuGendazController {
     private MeuGendazAcessoEntity findAcessoFromSession(HttpServletRequest request) {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
-                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+                .orElseThrow(() -> new SessaoExpiradaException("Loja não encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
-                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao não encontrada. Faca login novamente."));
         
         MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
@@ -112,7 +112,7 @@ public class MeuGendazController {
     private EmpresaEntity empresaAtual(HttpServletRequest request) {
         String slug = slugAtual(request);
         return empresaRepository.findByAgendamentoSlug(slug)
-                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+                .orElseThrow(() -> new SessaoExpiradaException("Loja não encontrada."));
     }
 
     private MeuGendazOtpChallengeEntity findOnboardingFromSession(HttpServletRequest request, EmpresaEntity empresa) {
@@ -126,9 +126,9 @@ public class MeuGendazController {
     private ClienteEntity findClienteFromSession(HttpServletRequest request) {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
-                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+                .orElseThrow(() -> new SessaoExpiradaException("Loja não encontrada."));
         String session = CookieHelper.lerCookie(request, nomeCookie(slug))
-                .orElseThrow(() -> new SessaoExpiradaException("Sessao nao encontrada. Faca login novamente."));
+                .orElseThrow(() -> new SessaoExpiradaException("Sessao não encontrada. Faca login novamente."));
 
         MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session)
                 .orElseThrow(() -> new SessaoExpiradaException("Sessao invalida. Faca login novamente."));
@@ -136,7 +136,7 @@ public class MeuGendazController {
         ClienteEntity cliente;
         try {
             cliente = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(empresa.getId(), acesso.getEmail())
-                    .orElseThrow(() -> new SessaoExpiradaException("Cadastro nao encontrado. Complete seu cadastro para continuar."));
+                    .orElseThrow(() -> new SessaoExpiradaException("Cadastro não encontrado. Complete seu cadastro para continuar."));
         } catch (Exception e) {
             throw new SessaoExpiradaException("Sessao invalida. Faca login novamente.");
         }
@@ -148,7 +148,7 @@ public class MeuGendazController {
 
     private Long getEmpresaId(ClienteEntity cliente) {
         if (cliente.getEmpresa() == null) {
-            throw new BusinessException("Empresa nao encontrada para este cliente.");
+            throw new BusinessException("Empresa não encontrada para este cliente.");
         }
         return cliente.getEmpresa().getId();
     }
@@ -157,7 +157,7 @@ public class MeuGendazController {
     public ResponseEntity<?> empresaPorSlug(@PathVariable String slug) {
         Optional<EmpresaEntity> empresa = empresaRepository.findByAgendamentoSlug(slug);
         if (empresa.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("mensagem", "Empresa nao encontrada."));
+            return ResponseEntity.status(404).body(Map.of("mensagem", "Empresa não encontrada."));
         }
         EmpresaEntity e = empresa.get();
         Map<String, Object> result = new LinkedHashMap<>();
@@ -171,10 +171,10 @@ public class MeuGendazController {
             try {
                 MeuGendazAcessoEntity acesso = findAcessoFromSession(request);
                 if (acesso.getEmpresa() == null) {
-                    throw new SessaoExpiradaException("Empresa nao encontrada para este acesso.");
+                    throw new SessaoExpiradaException("Empresa não encontrada para este acesso.");
                 }
                 EmpresaEntity empresa = empresaRepository.findById(acesso.getEmpresa().getId())
-                        .orElseThrow(() -> new SessaoExpiradaException("Empresa nao encontrada para este acesso."));
+                        .orElseThrow(() -> new SessaoExpiradaException("Empresa não encontrada para este acesso."));
                 Optional<ClienteEntity> clienteOpt = clienteRepository.findFirstByEmpresaIdAndEmailIgnoreCase(
                         empresa.getId(),
                         acesso.getEmail()
@@ -328,7 +328,7 @@ public class MeuGendazController {
                     java.time.LocalDate.parse(body.get("data").toString()),
                     java.time.LocalTime.parse(body.get("hora").toString()),
                     body.get("cupomCodigo") != null ? body.get("cupomCodigo").toString() : null,
-                    body.get("observacoes") != null ? body.get("observacoes").toString() : null
+                    body.get("observações") != null ? body.get("observações").toString() : null
             );
             AgendamentoResponse response = agendamentoService.criar(agendamentoRequest);
             return ResponseEntity.ok(response);
@@ -379,7 +379,7 @@ public class MeuGendazController {
     public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
         String slug = slugAtual(request);
         EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug)
-                .orElseThrow(() -> new SessaoExpiradaException("Loja nao encontrada."));
+                .orElseThrow(() -> new SessaoExpiradaException("Loja não encontrada."));
         String cookieName = nomeCookie(slug);
         String session = CookieHelper.lerCookie(request, cookieName).orElse(null);
         if (session != null && !session.isBlank()) {
@@ -592,7 +592,7 @@ public class MeuGendazController {
                 acesso = findAcessoFromSession(request);
                 empresa = acesso.getEmpresa() == null ? null : empresaRepository.findById(acesso.getEmpresa().getId()).orElse(null);
                 if (empresa == null) {
-                    throw new BusinessException("Empresa nao encontrada para este acesso.");
+                    throw new BusinessException("Empresa não encontrada para este acesso.");
                 }
                 email = acesso.getEmail() == null ? "" : acesso.getEmail().trim().toLowerCase();
             } catch (SessaoExpiradaException semSessaoDefinitiva) {
@@ -611,7 +611,7 @@ public class MeuGendazController {
                 erros.add("Nome deve ter pelo menos 3 caracteres.");
             }
             if (nome.matches("^\\d+$")) {
-                erros.add("Nome nao pode conter apenas numeros.");
+                erros.add("Nome não pode conter apenas numeros.");
             }
             if (email.isBlank() || !email.contains("@") || !email.contains(".")) {
                 erros.add("Email invalido.");

@@ -28,12 +28,12 @@ public class AdminAuditService {
     /**
      * Registra um log de auditoria.
      *
-     * @param acao      Ação realizada (ex: "Criar", "Editar", "Excluir").
+     * @param ação      Ação realizada (ex: "Criar", "Editar", "Excluir").
      * @param entidade  Entidade afetada (ex: "Cliente", "Agendamento").
      * @param entidadeId ID da entidade afetada (opcional).
-     * @param descricao Descrição detalhada da ação (ex: "Criou cliente Cleiton").
+     * @param descrição Descrição detalhada da ação (ex: "Criou cliente Cleiton").
      */
-    public void registrar(String acao, String entidade, Long entidadeId, String descricao) {
+    public void registrar(String ação, String entidade, Long entidadeId, String descrição) {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
             audit.setEmpresaId(CompanyContext.requireCompanyId()); // Use CompanyContext.requireCompanyId() para garantir empresa
@@ -49,10 +49,10 @@ public class AdminAuditService {
             
             audit.setUsuarioId(usuarioId != null ? usuarioId : 0L); // 0L representa sistema/anônimo se não autenticado
             audit.setUsuarioNome(usuarioNome);
-            audit.setAcao(acao);
+            audit.setAcao(ação);
             audit.setEntidade(entidade);
             audit.setEntidadeId(entidadeId);
-            audit.setDescricao(descricao);
+            audit.setDescricao(descrição);
             audit.setDataHora(LocalDateTime.now());
             
             // TODO: Obter IP e User-Agent do request (opcional)
@@ -69,12 +69,12 @@ public class AdminAuditService {
     /**
      * Registra um log de auditoria sem entidadeId.
      *
-     * @param acao      Ação realizada.
+     * @param ação      Ação realizada.
      * @param entidade  Entidade afetada.
-     * @param descricao Descrição detalhada da ação.
+     * @param descrição Descrição detalhada da ação.
      */
-    public void registrar(String acao, String entidade, String descricao) {
-        registrar(acao, entidade, null, descricao);
+    public void registrar(String ação, String entidade, String descrição) {
+        registrar(ação, entidade, null, descrição);
     }
 
     /**
@@ -90,18 +90,18 @@ public class AdminAuditService {
     /**
      * Registra um log de auditoria com dados completos de seguranca (compatibilidade).
      *
-     * @param acao      Ação realizada.
+     * @param ação      Ação realizada.
      * @param severidade Severidade/categoria do log.
      * @param admin     Administrador responsavel (opcional).
      * @param usuario   Usuário afetado (opcional).
      * @param empresa   Empresa afetada (opcional).
-     * @param descricao Descrição da ação.
+     * @param descrição Descrição da ação.
      * @param motivo    Motivo adicional (opcional).
      * @param ip        Endereço IP (opcional).
      * @param userAgent User-Agent (opcional).
      */
-    public void registrar(String acao, String severidade, UsuarioEntity admin, UsuarioEntity usuario,
-                          EmpresaEntity empresa, String descricao, String motivo, String ip, String userAgent) {
+    public void registrar(String ação, String severidade, UsuarioEntity admin, UsuarioEntity usuario,
+                          EmpresaEntity empresa, String descrição, String motivo, String ip, String userAgent) {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
             Long empresaId = empresa != null ? empresa.getId() : CompanyContext.requireCompanyId();
@@ -112,10 +112,10 @@ public class AdminAuditService {
             audit.setUsuarioId(usuarioId != null ? usuarioId : 0L);
             audit.setUsuarioNome(usuarioNome != null ? usuarioNome : "Sistema");
 
-            audit.setAcao(acao);
+            audit.setAcao(ação);
             audit.setEntidade(severidade != null ? severidade : "AUDITORIA");
             audit.setEntidadeId(null);
-            audit.setDescricao(motivo != null && !motivo.isBlank() ? descricao + " - " + motivo : descricao);
+            audit.setDescricao(motivo != null && !motivo.isBlank() ? descrição + " - " + motivo : descrição);
             audit.setDataHora(LocalDateTime.now());
             audit.setIp(ip);
             audit.setUserAgent(userAgent);
@@ -155,13 +155,13 @@ public class AdminAuditService {
 
     /**
      * Registra um evento de seguranca (ex.: login falhado, logout, falha de cadastro)
-     * em sua propria transacao (REQUIRES_NEW), para que o registro de auditoria nao
+     * em sua propria transacao (REQUIRES_NEW), para que o registro de auditoria não
      * seja perdido caso a operacao principal sofra rollback. O tenant (empresa) e o
      * usuario sao informados explicitamente pelo chamador, que ja os resolveu no
      * servidor; nunca se confia em dados vindos do frontend.
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void registrarEventoSeguranca(String tipo, String descricao, Long empresaId,
+    public void registrarEventoSeguranca(String tipo, String descrição, Long empresaId,
                                           String usuarioNome, String ip, String userAgent) {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
@@ -171,7 +171,7 @@ public class AdminAuditService {
             audit.setAcao(tipo);
             audit.setEntidade("SECURITY");
             audit.setEntidadeId(null);
-            audit.setDescricao(descricao != null ? descricao : "");
+            audit.setDescricao(descrição != null ? descrição : "");
             audit.setDataHora(LocalDateTime.now());
             audit.setIp(ip);
             audit.setUserAgent(userAgent);

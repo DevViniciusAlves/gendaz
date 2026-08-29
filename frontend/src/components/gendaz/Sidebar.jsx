@@ -10,7 +10,7 @@ const items = [
   { to: 'ia', label: 'gendazIA', icon: MessageCircle, mobile: true },
   { to: 'promocoes', label: 'Promocoes', icon: Ticket },
   { to: 'suporte', label: 'Suporte', icon: LifeBuoy },
-  { to: 'configuracoes', label: 'Configuracoes', icon: Settings2 },
+  { to: 'configurações', label: 'Configuracoes', icon: Settings2 },
 ]
 
 const primaryMobileItems = items.filter((item) => item.mobile)

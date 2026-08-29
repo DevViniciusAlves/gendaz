@@ -67,7 +67,7 @@ public class RamoDeteccaoService {
                 "reabilitação",
                 "massagem terapeutica",
                 "massagem terapêutica",
-                "sessao fisio",
+                "sessão fisio",
                 "sessão fisio"
         ));
         PALAVRAS_CHAVE.put(RamoEmpresa.CLINICA_ODONTOLOGIA, List.of(
@@ -87,7 +87,7 @@ public class RamoDeteccaoService {
     @Transactional
     public EmpresaEntity sincronizarRamoSeNecessario(EmpresaEntity empresa) {
         if (empresa == null) {
-            throw new ResourceNotFoundException("Empresa nao encontrada.");
+            throw new ResourceNotFoundException("Empresa não encontrada.");
         }
 
         Long empresaId = empresa.getId();
@@ -108,7 +108,7 @@ public class RamoDeteccaoService {
     @Transactional
     public EmpresaEntity sincronizarRamoDaEmpresa(Long empresaId) {
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
 
         List<ServicoEntity> servicosAtivos = servicoRepository.findByEmpresaIdAndStatusOrderByIdAsc(empresaId, StatusCadastro.ATIVO);
         if (servicosAtivos.isEmpty()) {
@@ -129,7 +129,7 @@ public class RamoDeteccaoService {
     @Transactional
     public void limparRamoSeSemServicos(Long empresaId) {
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
 
         if (servicoRepository.countByEmpresaId(empresaId) == 0 && empresa.getRamo() != null) {
             empresa.setRamo(null);

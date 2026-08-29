@@ -55,7 +55,7 @@ public class UsuarioAutenticadoProvider {
     public void exigirEmpresa(Long empresaId) {
         Long empresaContexto = exigirEmpresaId();
         if (empresaId == null || !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
         }
     }
 }

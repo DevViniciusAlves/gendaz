@@ -54,12 +54,12 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
                     filterChain.doFilter(request, response);
                     return;
                 }
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Slug da empresa nao informado.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Slug da empresa não informado.");
                 return;
             }
             EmpresaEntity empresa = empresaRepository.findByAgendamentoSlug(slug).orElse(null);
             if (empresa == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Loja nao encontrada.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Loja não encontrada.");
                 return;
             }
             
@@ -75,7 +75,7 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
 
             String session = CookieHelper.lerCookie(request, nomeCookie(slug)).orElse(null);
             if (session == null || session.isBlank()) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao nao encontrada.");
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao não encontrada.");
                 return;
             }
             MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findByEmpresaIdAndSessaoAtiva(empresa.getId(), session).orElse(null);
@@ -84,7 +84,7 @@ public class MeuGendazSessionAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
             if (!origemPermitida(request)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem nao permitida.");
+                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Origem não permitida.");
                 return;
             }
 

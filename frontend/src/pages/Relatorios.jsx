@@ -83,7 +83,7 @@ function montarLinhaConsultas(item) {
       item.horaInicio || '',
       item.horaFim || '',
       item.status || '',
-      item.observacoes || '',
+      item.observações || '',
     ]
   }
 
@@ -97,7 +97,7 @@ function montarLinhaConsultas(item) {
       currency(item.valor || 0),
       formatarData(item.data),
       item.horaInicio || '',
-      item.observacoes || '',
+      item.observações || '',
     ]
   }
 
@@ -220,7 +220,7 @@ function montarLinhaConsultas(item) {
           ) },
           { key: 'servicoNome', label: 'SERVIÇO' },
           { key: 'data', label: 'DATA' },
-          { key: 'observacoes', label: 'OBSERVAÇÃO' },
+          { key: 'observações', label: 'OBSERVAÇÃO' },
         ]} rows={canceladosPaginados} empty="Nenhum cancelamento no período." />
         <Pagination page={paginaCanceladosAtual} totalPages={totalPaginasCancelados} totalItems={cancelados.length} pageSize={itensPorPagina} onPageChange={setPaginaCancelados} />
       </section>

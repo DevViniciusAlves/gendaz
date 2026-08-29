@@ -56,7 +56,7 @@ public class CaixaDespesasService {
 
     private EmpresaEntity carregarEmpresa(Long empresaId) {
         return empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
     }
 
     private UsuarioEntity carregarUsuario(Long usuarioId) {
@@ -95,7 +95,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse removerCaixaManual(Long empresaId, Long logId, Long usuarioId) {
         exigirPlanoPro(empresaId);
         CaixaDespesasLogEntity log = logRepository.findByIdAndBusinessId(logId, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Registro nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Registro não encontrado."));
         if (log.getTipo() != TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA) {
             throw new BusinessException("Apenas adicoes manuais de caixa podem ser removidas.");
         }
@@ -114,7 +114,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse removerDespesasManual(Long empresaId, Long logId, Long usuarioId) {
         exigirPlanoPro(empresaId);
         CaixaDespesasLogEntity log = logRepository.findByIdAndBusinessId(logId, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Registro nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Registro não encontrado."));
         if (log.getTipo() != TipoCaixaDespesasLog.ADICAO_MANUAL_DESPESAS) {
             throw new BusinessException("Apenas adicoes manuais de despesas podem ser removidas.");
         }
@@ -187,8 +187,8 @@ public class CaixaDespesasService {
         BigDecimal valor = pagamento.getValor();
         empresa.setCaixaTotal(empresa.getCaixaTotal().add(valor));
         empresaRepository.save(empresa);
-        String descricao = buildDescricaoPagamento(pagamento);
-        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_APROVADO, valor, descricao, null, null, pagamento.getAgendamento());
+        String descrição = buildDescricaoPagamento(pagamento);
+        registrarLog(empresa, TipoCaixaDespesasLog.PAGAMENTO_APROVADO, valor, descrição, null, null, pagamento.getAgendamento());
         logAtividadeService.registrar("CAIXA_DESPESA", empresa.getId(), "Registrou entrada de caixa por pagamento aprovado de R$ " + (valor != null ? valor.toPlainString() : "0"));
     }
 
@@ -245,7 +245,7 @@ public class CaixaDespesasService {
             case ADICAO_MANUAL_DESPESAS, REMOCAO_MANUAL_DESPESAS -> "DESPESAS";
         };
 
-        String descricao = switch (log.getTipo()) {
+        String descrição = switch (log.getTipo()) {
             case PAGAMENTO_APROVADO -> buildPagamentoHistorico(log, "Aprovado");
             case PAGAMENTO_CANCELADO -> buildPagamentoHistorico(log, "Pendente");
             case PAGAMENTO_REMOVIDO -> buildPagamentoHistorico(log, "Removido");
@@ -257,7 +257,7 @@ public class CaixaDespesasService {
                 log.getId(),
                 log.getTipo(),
                 categoria,
-                descricao,
+                descrição,
                 log.getValor(),
                 positivo,
                 log.getObs(),
@@ -282,17 +282,17 @@ public class CaixaDespesasService {
 
     private String buildManualHistorico(CaixaDespesasLogEntity log, String categoria, boolean positivo) {
         String nome = log.getUsuario() != null ? log.getUsuario().getNome() : "Usuario";
-        String acao = positivo ? "Adicionou" : "Removeu";
-        return categoria + " - " + nome + " - " + acao;
+        String ação = positivo ? "Adicionou" : "Removeu";
+        return categoria + " - " + nome + " - " + ação;
     }
 
-    private void registrarLog(EmpresaEntity empresa, TipoCaixaDespesasLog tipo, BigDecimal valor, String descricao,
+    private void registrarLog(EmpresaEntity empresa, TipoCaixaDespesasLog tipo, BigDecimal valor, String descrição,
                               String obs, UsuarioEntity usuario, AgendamentoEntity agendamento) {
         CaixaDespesasLogEntity log = CaixaDespesasLogEntity.builder()
                 .business(empresa)
                 .tipo(tipo)
                 .valor(valor)
-                .descricao(descricao)
+                .descrição(descrição)
                 .obs(obs)
                 .usuario(usuario)
                 .agendamento(agendamento)

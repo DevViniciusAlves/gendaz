@@ -6,6 +6,6 @@ import java.math.BigDecimal;
 public final class PlanoDtos {
     private PlanoDtos() {}
 
-    public record PlanoResponse(Long id, String nome, String descricao, BigDecimal valorMensal, StatusPlano status) {}
+    public record PlanoResponse(Long id, String nome, String descrição, BigDecimal valorMensal, StatusPlano status) {}
 }
 

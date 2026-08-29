@@ -65,9 +65,9 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public PrimeirosPassosResponse primeirosPassos(Long usuarioId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuario nao encontrado."));
+                .orElseThrow(() -> new BusinessException("Usuario não encontrado."));
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa nao possui primeiros passos.");
+            throw new BusinessException("Usuario sem empresa não possui primeiros passos.");
         }
         return construirPrimeirosPassos(usuario.getEmpresa());
     }
@@ -75,10 +75,10 @@ public class DashboardService {
     @Transactional(readOnly = true)
     public DashboardResumoResponse resumo(Long usuarioId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new BusinessException("Usuario nao encontrado."));
+                .orElseThrow(() -> new BusinessException("Usuario não encontrado."));
         EmpresaEntity empresa = usuario.getEmpresa();
         if (empresa == null) {
-            throw new BusinessException("Usuario sem empresa nao possui resumo do dashboard.");
+            throw new BusinessException("Usuario sem empresa não possui resumo do dashboard.");
         }
 
         Long empresaId = empresa.getId();
@@ -159,12 +159,12 @@ public class DashboardService {
 
         List<PrimeiroPassoItem> etapas = new ArrayList<>();
         etapas.add(new PrimeiroPassoItem("servico", "Cadastrar um servico", "Crie seu primeiro servico", "/sistema/servicos", temServico));
-        etapas.add(new PrimeiroPassoItem("horario-servico", "Definir horarios do servico", "Configure a disponibilidade", "/sistema/configuracoes", temServico));
+        etapas.add(new PrimeiroPassoItem("horario-servico", "Definir horarios do servico", "Configure a disponibilidade", "/sistema/configurações", temServico));
         if (planoComProfissionais) {
             etapas.add(new PrimeiroPassoItem("profissional", "Cadastrar um profissional", "Adicione quem realiza os servicos", "/sistema/profissionais", temProfissional));
-            etapas.add(new PrimeiroPassoItem("horario-profissional", "Definir horarios do profissional", "Configure a agenda de trabalho", "/sistema/configuracoes", temProfissional));
+            etapas.add(new PrimeiroPassoItem("horario-profissional", "Definir horarios do profissional", "Configure a agenda de trabalho", "/sistema/configurações", temProfissional));
         }
-        etapas.add(new PrimeiroPassoItem("link-agendamento", "Compartilhar link de agendamento", "Copie o link publico da empresa", "/sistema/configuracoes", temLinkAgendamento));
+        etapas.add(new PrimeiroPassoItem("link-agendamento", "Compartilhar link de agendamento", "Copie o link publico da empresa", "/sistema/configurações", temLinkAgendamento));
         int concluidos = (int) etapas.stream().filter(PrimeiroPassoItem::concluido).count();
         return new PrimeirosPassosResponse(concluidos, etapas.size(), etapas);
     }

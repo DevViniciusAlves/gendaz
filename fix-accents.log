@@ -1,0 +1,63 @@
+=== Iniciando correção de acentos ===
+Diretório: /mnt/e/gendazz
+Data: Sat Aug 29 18:04:11 -04 2026
+
+📝 Processando arquivos Java...
+⚙️ Processando arquivos JavaScript/JSX...
+✓ Corrigido: /mnt/e/gendazz/frontend/src/api/adminApi.js
+✓ Corrigido: /mnt/e/gendazz/frontend/src/api/appApi.js
+✓ Corrigido: /mnt/e/gendazz/frontend/src/components/ClientPanel.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/components/ConfirmacaoAcao.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/components/gendaz/Sidebar.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/components/Sidebar.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/contexts/AuthContext.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/contexts/ClienteGendazContext.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/data/mockData.js
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/admin/AdminDashboard.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/admin/crm/AdminSendMessageModal.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Agenda.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Booking.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Clientes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Configuracoes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Convite.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/CriarConta.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/crm/SendMessageModal.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Entregas.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Financeiro.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Agenda.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/AssistenteIA.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Beneficios.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Configuracoes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Dashboard.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Historico.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Promocoes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/gendaz/Suporte.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Gendaz.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Home.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/insights/InsightCard.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/insights/InsightDetail.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/insights/InsightsDashboard.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Insights.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Login.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Logs.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/NotasFiscais.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/PagamentoPendente.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/PagamentoRetorno.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Pedidos.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Planos.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Profissionais.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Promocoes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Relatorios.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Servicos.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Suporte.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/Usuarios.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/pages/UsuariosEmpresa.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/routes/AppRoutes.jsx
+✓ Corrigido: /mnt/e/gendazz/frontend/src/services/localStore.js
+
+=== Resultado ===
+Total de arquivos modificados: 50
+Log: /mnt/e/gendazz/fix-accents.log
+✅ Processo concluído!
+
+Rollback: find /mnt/e/gendazz -name '*.bak' -exec sh -c 'mv "$1" "${1%.bak}"' _ {} \;

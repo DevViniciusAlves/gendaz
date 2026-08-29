@@ -39,7 +39,7 @@ public class LogAtividadeEntity {
     private Long entidadeId;
 
     @Column(length = 500, nullable = false)
-    private String acao;
+    private String ação;
 
     @Column(length = 1000)
     private String detalhes;

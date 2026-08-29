@@ -3,9 +3,9 @@ import { ClienteGendazContext } from '../../contexts/ClienteGendazContext.jsx'
 import { BadgePercent, Ticket, Gift, Coins, Users, Copy, Check, Loader } from 'lucide-react'
 
 const proximosBeneficios = [
-  { icon: Gift, titulo: 'Programa de fidelidade', descricao: 'Futuro módulo de pontos e recompensas.' },
-  { icon: Coins, titulo: 'Cashback', descricao: 'Recurso futuro para valor de volta.' },
-  { icon: Users, titulo: 'Indique um amigo', descricao: 'Área pronta para campanhas de indicação.' },
+  { icon: Gift, titulo: 'Programa de fidelidade', descrição: 'Futuro módulo de pontos e recompensas.' },
+  { icon: Coins, titulo: 'Cashback', descrição: 'Recurso futuro para valor de volta.' },
+  { icon: Users, titulo: 'Indique um amigo', descrição: 'Área pronta para campanhas de indicação.' },
 ]
 
 export default function Beneficios() {
@@ -89,7 +89,7 @@ export default function Beneficios() {
                     <strong>{item.titulo}</strong>
                     <span className="gendaz-desconto">{item.desconto}% OFF</span>
                   </div>
-                  <span>{item.descricao}</span>
+                  <span>{item.descrição}</span>
                   {item.cupom && <small>Cupom: <strong>{item.cupom}</strong></small>}
                   <small>Válido até {item.validade}</small>
                   {!item.elegivel && <small className="gendaz-texto-aviso">Você não é elegível</small>}
@@ -135,11 +135,11 @@ export default function Beneficios() {
 
       {proximosBeneficios.length > 0 && (
         <div className="gendaz-grid gendaz-grid--two">
-          {proximosBeneficios.map(({ icon: Icon, titulo, descricao }) => (
+          {proximosBeneficios.map(({ icon: Icon, titulo, descrição }) => (
             <article className="gendaz-card" key={titulo}>
               <Icon size={18} />
               <strong>{titulo}</strong>
-              <span>{descricao}</span>
+              <span>{descrição}</span>
             </article>
           ))}
         </div>

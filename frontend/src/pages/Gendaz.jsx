@@ -294,7 +294,7 @@ function GendazCadastroGate({ slug }) {
       return
     }
     if (/^\d+$/.test(nomeLimpo)) {
-      setErro('Nome nao pode conter apenas numeros.')
+      setErro('Nome não pode conter apenas numeros.')
       return
     }
 
@@ -442,7 +442,7 @@ function GendazContent({ slug }) {
   if (bloqueiaTela) {
     return (
       <main className="gendaz-loading">
-        <p>Carregando sessao...</p>
+        <p>Carregando sessão...</p>
       </main>
     )
   }

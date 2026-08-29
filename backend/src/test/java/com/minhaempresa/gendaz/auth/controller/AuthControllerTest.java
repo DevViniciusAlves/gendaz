@@ -75,7 +75,7 @@ class AuthControllerTest {
     @Test
     void criarContaRepassaHeadersDeIdempotenciaParaOServico() throws Exception {
         when(authService.criarConta(any(), eq("chave-a"), eq("req-1")))
-                .thenReturn(new LoginResponse("Conta criada com sucesso.", usuarioTeste(), null, null, "ACTIVE", "sessao-nova", null));
+                .thenReturn(new LoginResponse("Conta criada com sucesso.", usuarioTeste(), null, null, "ACTIVE", "sessão-nova", null));
 
         mockMvc.perform(post("/api/auth/criar-conta")
                         .contentType("application/json")
@@ -91,7 +91,7 @@ class AuthControllerTest {
     @Test
     void criarContaSemHeadersChamaServicoComNull() throws Exception {
         when(authService.criarConta(any(), eq(null), eq(null)))
-                .thenReturn(new LoginResponse("Conta criada com sucesso.", usuarioTeste(), null, null, "ACTIVE", "sessao-nova", null));
+                .thenReturn(new LoginResponse("Conta criada com sucesso.", usuarioTeste(), null, null, "ACTIVE", "sessão-nova", null));
 
         mockMvc.perform(post("/api/auth/criar-conta")
                         .contentType("application/json")
@@ -111,7 +111,7 @@ class AuthControllerTest {
     void deveRealizarLoginComCredenciais() throws Exception {
         LocalDateTime agora = LocalDateTime.now();
         UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@Gendaz.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", true, null, null, null, null, null, agora, agora);
-        when(authService.login(any())).thenReturn(new LoginResponse("ok", usuario, null, null, "ACTIVE", "sessao-teste"));
+        when(authService.login(any())).thenReturn(new LoginResponse("ok", usuario, null, null, "ACTIVE", "sessão-teste"));
 
         mockMvc.perform(post("/api/auth/login")
                         .contentType("application/json")
@@ -127,10 +127,10 @@ class AuthControllerTest {
     void deveRenovarSessaoComCookie() throws Exception {
         LocalDateTime agora = LocalDateTime.now();
         UsuarioResponse usuario = new UsuarioResponse(1L, "Usuario Teste", "teste@Gendaz.com", PerfilUsuario.DONO, StatusUsuario.ATIVO, 1L, "Empresa", true, null, null, null, null, null, agora, agora);
-        when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessao-renovada"));
+        when(authService.refresh(any())).thenReturn(new RefreshResponse("ok", usuario, null, null, "ACTIVE", "sessão-renovada"));
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new Cookie("Gendaz_session", "sessao-antiga")))
+                        .cookie(new Cookie("Gendaz_session", "sessão-antiga")))
                 .andExpect(cookie().exists("Gendaz_session"))
                 .andExpect(status().isOk());
     }

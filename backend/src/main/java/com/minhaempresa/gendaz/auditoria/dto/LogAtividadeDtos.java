@@ -10,7 +10,7 @@ public final class LogAtividadeDtos {
     public record LogAtividadeResponse(
             Long id,
             String nomeUsuario,
-            String acao,
+            String ação,
             String entidade,
             Long entidadeId,
             String detalhes,

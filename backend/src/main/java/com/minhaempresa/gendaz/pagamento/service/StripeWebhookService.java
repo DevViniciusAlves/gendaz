@@ -65,7 +65,7 @@ public class StripeWebhookService {
             throw new BusinessException("Assinatura Stripe ausente.");
         }
         if (stripeProperties.getWebhookSecret() == null || stripeProperties.getWebhookSecret().isBlank()) {
-            throw new BusinessException("STRIPE_WEBHOOK_SECRET nao configurado.");
+            throw new BusinessException("STRIPE_WEBHOOK_SECRET não configurado.");
         }
         try {
             return Webhook.constructEvent(payload, sigHeader, stripeProperties.getWebhookSecret());
@@ -96,7 +96,7 @@ public class StripeWebhookService {
                     paymentReference
             );
         } else {
-            log.warn("Checkout Session completada mas nao paga ou incompleta: status={}, paymentStatus={}", status, paymentStatus);
+            log.warn("Checkout Session completada mas não paga ou incompleta: status={}, paymentStatus={}", status, paymentStatus);
         }
     }
 

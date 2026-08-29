@@ -47,7 +47,7 @@ public class CaixaDespesasLogEntity {
     private BigDecimal valor;
 
     @Column(columnDefinition = "TEXT")
-    private String descricao;
+    private String descrição;
 
     @Column(columnDefinition = "TEXT")
     private String obs;

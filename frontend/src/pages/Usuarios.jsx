@@ -29,7 +29,7 @@ export default function Usuarios() {
         { key: 'status', label: 'Situação', render: (row) => <StatusBadge status={row.status} /> },
         { key: 'presenca', label: 'Presença', render: (row) => <StatusBadge status={row.presenca} /> },
         { key: 'ultimoAcesso', label: 'Último acesso' },
-        { key: 'acao', label: 'Ações', render: (row) => <button className="icon-btn" aria-label={`Alternar usuário ${row.nome}`} onClick={() => alternarUsuario(row.id)}><Power size={16} /></button> },
+        { key: 'ação', label: 'Ações', render: (row) => <button className="icon-btn" aria-label={`Alternar usuário ${row.nome}`} onClick={() => alternarUsuario(row.id)}><Power size={16} /></button> },
       ]} rows={data.equipe} />
     </section>
   )

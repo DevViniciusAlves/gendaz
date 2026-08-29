@@ -252,7 +252,7 @@ export default function AssistenteIA() {
         })
         adicionarMensagem('ia', data?.resposta || 'Não consegui responder agora.', {
           sugestoes: Array.isArray(data?.sugestoes) ? data.sugestoes : [],
-          acao: data?.acao,
+          ação: data?.ação,
         })
       } catch (err) {
         adicionarMensagem('ia', err?.response?.status === 401
@@ -340,7 +340,7 @@ export default function AssistenteIA() {
             profissionalId: dadosFluxo.profissionalId,
             data: dadosFluxo.data,
             hora: dadosFluxo.hora,
-            observacoes: dadosFluxo.observacoes || '',
+            observações: dadosFluxo.observações || '',
             cupomCodigo: dadosFluxo.cupomCodigo || '',
           })
           adicionarMensagem('ia', 'Agendamento confirmado com sucesso. Se quiser, posso ajudar com outro atendimento.')
@@ -537,9 +537,9 @@ export default function AssistenteIA() {
                     ))}
                   </div>
                 )}
-                {item.acao && (
+                {item.ação && (
                   <div className="gendaz-chat__acao">
-                    <Calendar size={14} /> Ação sugerida: {String(item.acao)}
+                    <Calendar size={14} /> Ação sugerida: {String(item.ação)}
                     <button className="gendaz-btn gendaz-btn--small gendaz-btn--primary" onClick={irParaAgenda}>
                       <ArrowRight size={14} /> Ir para agenda
                     </button>

@@ -12,12 +12,12 @@ const TEMPLATES = {
   resgate: {
     titulo: 'Enviar "Resgate"',
     assunto: 'Estamos com saudade',
-      mensagem: 'Oi {nome}! Faz um tempo que voce nao entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.',
+      mensagem: 'Oi {nome}! Faz um tempo que voce não entra no Gendaz. O que aconteceu? Estamos com saudade dos seus agendamentos e queremos voce de volta por aqui.',
   },
   reconexao: {
     titulo: 'Enviar "Reconexao"',
     assunto: 'Sentimos sua falta',
-    mensagem: '{nome}, faz tempo que nao aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?',
+    mensagem: '{nome}, faz tempo que não aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?',
   },
   promocao: {
     titulo: 'Enviar "Promocao"',

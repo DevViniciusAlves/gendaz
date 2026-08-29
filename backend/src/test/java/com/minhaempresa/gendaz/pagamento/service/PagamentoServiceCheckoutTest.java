@@ -210,8 +210,8 @@ class PagamentoServiceCheckoutTest {
         var resposta = pagamentoService.verificarPagamentoPlano(1L, 100L);
 
         assertEquals("EXPIRED", resposta.statusVerificacao());
-        // Evidencia da lacuna: o caminho autenticado nao re-consulta a Stripe para estados EXPIRED,
-        // portanto um pagamento confirmado no limite e que tenha sido expirado nao e recuperado por aqui.
+        // Evidencia da lacuna: o caminho autenticado não re-consulta a Stripe para estados EXPIRED,
+        // portanto um pagamento confirmado no limite e que tenha sido expirado não e recuperado por aqui.
         verify(paymentGateway, never()).consultarPagamentoPlano(any(PagamentoPlanoEntity.class));
     }
 

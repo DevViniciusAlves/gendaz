@@ -22,7 +22,7 @@ public class ServicoEntity {
     private String nome;
 
     @Column(length = 1000)
-    private String descricao;
+    private String descrição;
 
     @Column(nullable = false)
     private Integer duracaoMinutos;

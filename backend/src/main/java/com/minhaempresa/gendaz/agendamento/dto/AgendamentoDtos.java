@@ -22,7 +22,7 @@ public final class AgendamentoDtos {
             @NotNull LocalTime horaInicio,
             String cupomCodigo,
             @Size(max = 300)
-            String observacoes
+            String observações
     ) {}
 
     public record RemarcarAgendamentoRequest(@NotNull LocalDate data, @NotNull LocalTime horaInicio) {}
@@ -38,7 +38,7 @@ public final class AgendamentoDtos {
             @NotNull LocalTime horaInicio,
             @NotNull StatusAgendamento status,
             @Size(max = 300)
-            String observacoes
+            String observações
     ) {}
 
 public record AgendamentoResponse(
@@ -56,7 +56,7 @@ public record AgendamentoResponse(
             LocalTime horaInicio,
             LocalTime horaFim,
             StatusAgendamento status,
-            String observacoes,
+            String observações,
             BigDecimal valorOriginal,
             BigDecimal valorDesconto,
             BigDecimal valorFinal,
@@ -68,7 +68,7 @@ public record AgendamentoResponse(
 
     public record AcaoEmMassaAgendamentoRequest(
             @NotNull @Size(max = 10) List<Long> ids,
-            @NotNull String acao,
+            @NotNull String ação,
             Long empresaId
     ) {}
 

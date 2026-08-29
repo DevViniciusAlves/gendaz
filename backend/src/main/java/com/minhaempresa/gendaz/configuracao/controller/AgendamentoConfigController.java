@@ -1,8 +1,8 @@
-package com.minhaempresa.gendaz.configuracao.controller;
+package com.minhaempresa.gendaz.configuração.controller;
 
-import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AgendamentoLinkResponse;
-import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AtualizarAgendamentoSlugRequest;
-import com.minhaempresa.gendaz.configuracao.service.AgendamentoConfigService;
+import com.minhaempresa.gendaz.configuração.dto.AgendamentoConfigDtos.AgendamentoLinkResponse;
+import com.minhaempresa.gendaz.configuração.dto.AgendamentoConfigDtos.AtualizarAgendamentoSlugRequest;
+import com.minhaempresa.gendaz.configuração.service.AgendamentoConfigService;
 import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/configuracoes/agendamento")
+@RequestMapping("/api/configurações/agendamento")
 @RequiredArgsConstructor
 public class AgendamentoConfigController {
     private final AgendamentoConfigService service;

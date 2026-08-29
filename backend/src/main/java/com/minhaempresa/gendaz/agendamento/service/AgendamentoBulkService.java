@@ -31,20 +31,20 @@ public class AgendamentoBulkService {
         validarQuantidade(request.ids());
         Long companyId = CompanyContext.requireCompanyId();
         if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
         }
-        String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
+        String ação = request.ação() == null ? "" : request.ação().trim().toUpperCase();
         Set<Long> idsUnicos = new HashSet<>(request.ids());
         List<FalhaAcaoItem> falhas = new ArrayList<>();
         int processados = 0;
         for (Long id : idsUnicos) {
             try {
                 AgendamentoEntity agendamento = agendamentoRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Agendamento não encontrado."));
                 if (!agendamento.getEmpresa().getId().equals(companyId)) {
-                    throw new ResourceNotFoundException("Agendamento nao encontrado.");
+                    throw new ResourceNotFoundException("Agendamento não encontrado.");
                 }
-                switch (acao) {
+                switch (ação) {
                     case "FINALIZAR" -> agendamento.setStatus(StatusAgendamento.FINALIZADO);
                     case "CANCELAR" -> agendamento.setStatus(StatusAgendamento.CANCELADO);
                     case "PENDENTE" -> agendamento.setStatus(StatusAgendamento.PENDENTE);
@@ -55,11 +55,11 @@ public class AgendamentoBulkService {
                         processados++;
                         continue;
                     }
-                    case "DESATIVAR" -> throw new BusinessException("Desativar nao e uma acao suportada para agendamentos.");
-                    default -> throw new BusinessException("Acao de agendamento nao suportada.");
+                    case "DESATIVAR" -> throw new BusinessException("Desativar não e uma ação suportada para agendamentos.");
+                    default -> throw new BusinessException("Acao de agendamento não suportada.");
                 }
                 agendamentoRepository.save(agendamento);
-                logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), verboAcao(acao) + " agendamento " + agendamento.getId());
+                logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), verboAcao(ação) + " agendamento " + agendamento.getId());
                 processados++;
             } catch (RuntimeException ex) {
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));
@@ -77,8 +77,8 @@ public class AgendamentoBulkService {
         }
     }
 
-    private String verboAcao(String acao) {
-        return switch (acao) {
+    private String verboAcao(String ação) {
+        return switch (ação) {
             case "FINALIZAR" -> "Finalizou";
             case "CANCELAR" -> "Cancelou";
             case "PENDENTE" -> "Marcou como pendente";

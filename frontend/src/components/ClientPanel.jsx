@@ -21,7 +21,7 @@ export default function ClientPanel({ cliente, agendamentos }) {
         </div>
       ))}
       <h3>Observações internas</h3>
-      <p>{cliente.observacoes}</p>
+      <p>{cliente.observações}</p>
     </aside>
   )
 }

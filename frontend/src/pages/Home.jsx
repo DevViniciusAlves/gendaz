@@ -57,7 +57,7 @@ const growthSegments = [
   { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage },
   { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage },
   { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage },
-  { title: 'Personal Trainers', subtitle: 'Aulas, sessoes e planos mensais', badge: 'Academias', image: personalTrainerImage },
+  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage },
   { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage },
   { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage },
   { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage },
@@ -77,7 +77,7 @@ const plans = [
     subtitulo: 'Agenda simples',
     preco: 'R$ 29,90/mês',
     extra: '7 dias grátis',
-    descricao: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
+    descrição: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
     beneficios: [
       'Financeiro - Pagamentos automatizados - Relatórios',
       'Histórico ilimitado',
@@ -97,7 +97,7 @@ const plans = [
     subtitulo: 'Gestão completa com financeiro',
     preco: 'R$ 79,90/mês',
     extra: '7 dias grátis',
-    descricao: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
+    descrição: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
     beneficios: [
       'Tudo do Plano Básico +',
       'Até 3 usuários na conta',
@@ -348,7 +348,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
                   <strong className="plan-price">{plano.preco}</strong>
                 </div>
 
-                <p className="plan-description">{plano.descricao}</p>
+                <p className="plan-description">{plano.descrição}</p>
 
                 <div className="plan-section">
                   <h3>Benefícios</h3>

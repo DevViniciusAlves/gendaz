@@ -105,7 +105,7 @@ public class AuthController {
         try {
             authService.logout(sessionToken);
         } catch (BusinessException ex) {
-            log.debug("Logout sem sessao valida (best-effort). erroTipo={}", ex.getClass().getSimpleName());
+            log.debug("Logout sem sessão valida (best-effort). erroTipo={}", ex.getClass().getSimpleName());
         }
         cookieService.limparCookie(http, response, SESSION_COOKIE);
         cookieService.limparCookie(http, response, LEGACY_SESSION_COOKIE);

@@ -11,7 +11,7 @@ export default function InsightDetail({ insight, onClose }) {
             ×
           </button>
         </div>
-        <p>{insight.descricao}</p>
+        <p>{insight.descrição}</p>
         <div className="insights-detail-grid">
           <div>
             <span>Impacto</span>

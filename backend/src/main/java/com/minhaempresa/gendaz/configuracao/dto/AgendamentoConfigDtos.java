@@ -1,4 +1,4 @@
-package com.minhaempresa.gendaz.configuracao.dto;
+package com.minhaempresa.gendaz.configuração.dto;
 
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;

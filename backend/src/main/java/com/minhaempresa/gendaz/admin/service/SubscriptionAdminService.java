@@ -89,10 +89,10 @@ public class SubscriptionAdminService {
     @Transactional
     public List<AssinaturaAdminResponse> editarAssinatura(Long empresaId, Long subscriptionId, EditarAssinaturaRequest request) {
         AssinaturaEntity assinatura = assinaturaRepository.findById(subscriptionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Assinatura não encontrada."));
 
         if (!assinatura.getEmpresa().getId().equals(empresaId)) {
-            throw new BusinessException("Assinatura nao pertence a esta empresa.");
+            throw new BusinessException("Assinatura não pertence a esta empresa.");
         }
 
         if (request.planoId() != null) {
@@ -130,7 +130,7 @@ public class SubscriptionAdminService {
     @Transactional
     public List<AssinaturaAdminResponse> criarAssinatura(Long empresaId, CriarAssinaturaRequest request) {
         EmpresaEntity empresa = empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
         PlanoEntity plano = planoService.buscarEntidade(request.planoId());
 
         if (contarFilaAtiva(empresaId) >= LIMITE_PLANOS_ATIVOS) {
@@ -165,17 +165,17 @@ public class SubscriptionAdminService {
 
     /**
      * Remove um plano da conta do cliente. Pagamentos que apontavam para a
-     * assinatura sao desvinculados antes da exclusao. Os planos restantes sao
+     * assinatura sao desvinculados antes da exclusão. Os planos restantes sao
      * reencadeados e, quando nenhum plano com vigencia resta, a conta fica
      * INATIVA.
      */
     @Transactional
     public List<AssinaturaAdminResponse> removerAssinatura(Long empresaId, Long subscriptionId) {
         AssinaturaEntity assinatura = assinaturaRepository.findById(subscriptionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Assinatura não encontrada."));
 
         if (!assinatura.getEmpresa().getId().equals(empresaId)) {
-            throw new BusinessException("Assinatura nao pertence a esta empresa.");
+            throw new BusinessException("Assinatura não pertence a esta empresa.");
         }
 
         List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findByAssinaturaId(subscriptionId);
@@ -192,7 +192,7 @@ public class SubscriptionAdminService {
     /**
      * Reencadeia a fila de planos ativos (ATIVA ou TESTE) apos a remocao de um
      * plano. Se o plano removido estava em vigor, o proximo passa a valer hoje.
-     * Planos que vinham depois do removido sao deslocados para cima. Quando nao
+     * Planos que vinham depois do removido sao deslocados para cima. Quando não
      * sobra nenhum plano com vigencia futura, a conta e marcada como INATIVA.
      */
     private void reordenarFilaAposRemocao(Long empresaId, AssinaturaEntity removida) {
@@ -255,7 +255,7 @@ public class SubscriptionAdminService {
     }
 
     /**
-     * Quantidade de planos na fila de vigencia (ATIVA ou TESTE, ainda nao vencidos).
+     * Quantidade de planos na fila de vigencia (ATIVA ou TESTE, ainda não vencidos).
      * Base do limite de 2 planos simultaneos.
      */
     private long contarFilaAtiva(Long empresaId) {
@@ -268,7 +268,7 @@ public class SubscriptionAdminService {
 
     /**
      * Proxima data de inicio para um novo plano: dia seguinte ao fim do ultimo
-     * plano ativo da fila (ou hoje quando nao ha fila).
+     * plano ativo da fila (ou hoje quando não ha fila).
      */
     private LocalDate proximaDataInicio(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> fila = assinaturaRepository.findByEmpresaId(empresaId).stream()

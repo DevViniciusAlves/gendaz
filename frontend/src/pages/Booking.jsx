@@ -74,7 +74,7 @@ export default function Booking() {
   const [horaInicio, setHoraInicio] = useState('')
   const [busca, setBusca] = useState('')
   const [horarios, setHorarios] = useState([])
-  const [cliente, setCliente] = useState({ nome: '', telefone: '', email: '', observacao: '' })
+  const [cliente, setCliente] = useState({ nome: '', telefone: '', email: '', observação: '' })
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState('')
   const [loading, setLoading] = useState(true)
@@ -148,7 +148,7 @@ export default function Booking() {
     return (booking?.servicos || []).filter((servico) => (
       !termo
       || servico.nome.toLowerCase().includes(termo)
-      || String(servico.descricao || '').toLowerCase().includes(termo)
+      || String(servico.descrição || '').toLowerCase().includes(termo)
     ))
   }, [booking?.servicos, busca])
 
@@ -173,7 +173,7 @@ export default function Booking() {
     setData(hoje)
     setHoraInicio('')
     setBusca('')
-    setCliente({ nome: '', telefone: '', email: '', observacao: '' })
+    setCliente({ nome: '', telefone: '', email: '', observação: '' })
     setHorarios([])
   }
 
@@ -213,7 +213,7 @@ export default function Booking() {
         clienteNome: cliente.nome.trim(),
         clienteTelefone: telefone,
         clienteEmail: cliente.email.trim() || null,
-        observacao: cliente.observacao.trim() || null,
+        observação: cliente.observação.trim() || null,
       })
 
       const protocolo = response?.agendamento?.protocolo
@@ -386,7 +386,7 @@ export default function Booking() {
                       }}
                     >
                       <strong>{servico.nome}</strong>
-                      <span>{servico.descricao || 'Serviço disponível para agendamento.'}</span>
+                      <span>{servico.descrição || 'Serviço disponível para agendamento.'}</span>
                       <small>{servico.duracaoMinutos} min · {moeda(servico.valor)}</small>
                     </button>
                   ))
@@ -399,7 +399,7 @@ export default function Booking() {
                     <span>{servicoSelecionado.nome}</span>
                     <strong>{servicoSelecionado.duracaoMinutos} min · {moeda(servicoSelecionado.valor)}</strong>
                   </div>
-                  <p>{servicoSelecionado.descricao || 'Serviço disponível para agendamento.'}</p>
+                  <p>{servicoSelecionado.descrição || 'Serviço disponível para agendamento.'}</p>
                 </div>
               )}
             </div>
@@ -493,14 +493,14 @@ export default function Booking() {
             <label className="field field-wide">
               <span>Observação</span>
               <textarea
-                value={cliente.observacao}
-                onChange={(event) => setCliente({ ...cliente, observacao: event.target.value })}
+                value={cliente.observação}
+                onChange={(event) => setCliente({ ...cliente, observação: event.target.value })}
                 maxLength={500}
                 placeholder="Opcional"
               />
-              <small className={cliente.observacao.length >= 500 ? 'field-hint limit-reached' : 'field-hint'}>
-                {cliente.observacao.length >= 500 ? 'Limite de caracteres atingido.' : 'Opcional para recados ao profissional.'}
-                <strong>{cliente.observacao.length}/500</strong>
+              <small className={cliente.observação.length >= 500 ? 'field-hint limit-reached' : 'field-hint'}>
+                {cliente.observação.length >= 500 ? 'Limite de caracteres atingido.' : 'Opcional para recados ao profissional.'}
+                <strong>{cliente.observação.length}/500</strong>
               </small>
             </label>
 

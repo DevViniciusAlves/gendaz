@@ -40,7 +40,7 @@ public class MeuGendazPromocaoEntity {
     private String codigo;
 
     @Column(nullable = true, length = 180)
-    private String descricao;
+    private String descrição;
 
     @Column(nullable = false, length = 20)
     private String tipo;

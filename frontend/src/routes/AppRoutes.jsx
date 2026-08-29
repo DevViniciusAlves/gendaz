@@ -48,7 +48,7 @@ import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === 'CONTA_ENCERRADA') {
     return <Navigate to="/conta-encerrada" replace />
   }
@@ -57,7 +57,7 @@ function PrivateRoute({ children }) {
 
 function ClientRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -74,7 +74,7 @@ function ClientRoute({ children }) {
 
 function PlanRoute({ routeKey, children }) {
   const { usuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) {
     return <Navigate to="/admin/dashboard" replace />
   }
@@ -90,7 +90,7 @@ function PlanRoute({ routeKey, children }) {
 
 function ContaInativaRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -101,7 +101,7 @@ function ContaInativaRoute({ children }) {
 
 function ContaEncerradaRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -112,7 +112,7 @@ function ContaEncerradaRoute({ children }) {
 
 function AdminRoute({ children }) {
   const { adminUsuario, usuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario) return children
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) return <Navigate to="/admin/login" replace />
   if (usuario) return <Navigate to="/sistema/dashboard" replace />
@@ -153,7 +153,7 @@ export default function AppRoutes() {
         <Route path="suporte" element={<GendazSuporte />} />
         <Route path="beneficios" element={<GendazBeneficios />} />
         <Route path="promocoes" element={<GendazPromocoes />} />
-        <Route path="configuracoes" element={<GendazConfiguracoes />} />
+        <Route path="configurações" element={<GendazConfiguracoes />} />
       </Route>
       <Route path="/dashboard" element={<Navigate to="/sistema/dashboard" replace />} />
       <Route path="/sistema" element={<ClientRoute><AppLayout /></ClientRoute>}>
@@ -171,8 +171,8 @@ export default function AppRoutes() {
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
         <Route path="logs" element={<PlanRoute routeKey="logs"><Logs /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
-        <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />
-        <Route path="configuracoes/usuarios" element={<PlanRoute routeKey="configuracoes"><UsuariosEmpresa /></PlanRoute>} />
+        <Route path="configurações" element={<PlanRoute routeKey="configurações"><Configuracoes /></PlanRoute>} />
+        <Route path="configurações/usuarios" element={<PlanRoute routeKey="configurações"><UsuariosEmpresa /></PlanRoute>} />
         <Route path="suporte" element={<Suporte />} />
         <Route path="conta" element={<Conta />} />
         <Route path="*" element={<NotFound />} />

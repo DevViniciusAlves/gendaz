@@ -5,7 +5,7 @@ export default function InsightCard({ insight, tipo, onClick }) {
         <strong>{insight.titulo}</strong>
         <span>{insight.urgencia}</span>
       </div>
-      <p>{insight.descricao}</p>
+      <p>{insight.descrição}</p>
       <small>{insight.impacto}</small>
     </button>
   )

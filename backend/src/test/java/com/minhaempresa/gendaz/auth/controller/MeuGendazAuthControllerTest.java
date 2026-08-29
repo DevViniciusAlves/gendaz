@@ -58,7 +58,7 @@ class MeuGendazAuthControllerTest {
     @Test
     void deveValidarCodigoEGravarCookieDaSessao() throws Exception {
         when(authService.validarCodigo(anyString(), anyString(), anyString(), anyString()))
-                .thenReturn(new MeuGendazAuthResponse("Login realizado com sucesso.", "cliente@teste.com", "sessao-meu-gendaz", "ACTIVE"));
+                .thenReturn(new MeuGendazAuthResponse("Login realizado com sucesso.", "cliente@teste.com", "sessão-meu-gendaz", "ACTIVE"));
 
         mockMvc.perform(post("/api/meu-gendaz/auth/validar-codigo")
                         .contentType("application/json")
@@ -73,11 +73,11 @@ class MeuGendazAuthControllerTest {
     @Test
     void deveRenovarSessaoUsandoCookieDaEmpresa() throws Exception {
         when(authService.refreshSessao(anyString(), anyString()))
-                .thenReturn(new MeuGendazAuthResponse("Sessao renovada com sucesso.", "cliente@teste.com", "sessao-renovada", "ACTIVE"));
+                .thenReturn(new MeuGendazAuthResponse("Sessao renovada com sucesso.", "cliente@teste.com", "sessão-renovada", "ACTIVE"));
 
         mockMvc.perform(post("/api/meu-gendaz/auth/refresh")
                         .header("X-Meu-Gendaz-Slug", "gendaz-pro")
-                        .cookie(new Cookie("meu_gendaz_session_gendaz-pro", "sessao-antiga")))
+                        .cookie(new Cookie("meu_gendaz_session_gendaz-pro", "sessão-antiga")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sessionToken").value(""))
                 .andExpect(cookie().exists("meu_gendaz_session_gendaz-pro"));

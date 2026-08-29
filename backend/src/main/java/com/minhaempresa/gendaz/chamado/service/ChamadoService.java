@@ -44,7 +44,7 @@ public class ChamadoService {
         UsuarioEntity usuario = buscarUsuario(usuarioId);
         EmpresaEntity empresa = usuario.getEmpresa();
         if (empresa == null) {
-            throw new BusinessException("Usuario sem empresa nao pode abrir chamado.");
+            throw new BusinessException("Usuario sem empresa não pode abrir chamado.");
         }
         String origemNormalizada = normalizarOrigem(origem);
         PrioridadeChamado prioridadeAutomatica = prioridadePorAssunto(request.assunto());
@@ -66,7 +66,7 @@ public class ChamadoService {
     @Transactional
     public ChamadoResponse criarMeuGendaz(CriarChamadoRequest request, MeuGendazAcessoEntity acesso) {
         if (acesso == null || acesso.getEmpresa() == null) {
-            throw new BusinessException("Acesso do Meu Gendaz sem empresa nao pode abrir chamado.");
+            throw new BusinessException("Acesso do Meu Gendaz sem empresa não pode abrir chamado.");
         }
         EmpresaEntity empresa = acesso.getEmpresa();
         PrioridadeChamado prioridadeAutomatica = prioridadePorAssunto(request.assunto());
@@ -89,7 +89,7 @@ public class ChamadoService {
         UsuarioEntity usuario = buscarUsuario(usuarioId);
         if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN) {
             if (usuario.getEmpresa() == null || !usuario.getEmpresa().getId().equals(empresaId)) {
-                throw new BusinessException("Acesso nao autorizado aos chamados desta empresa.");
+                throw new BusinessException("Acesso não autorizado aos chamados desta empresa.");
             }
         }
         return chamadoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId)
@@ -131,10 +131,10 @@ public class ChamadoService {
     @Transactional
     public ChamadoResponse atualizar(Long id, AtualizarChamadoRequest request, UsuarioEntity admin) {
         if (admin.getPerfil() != PerfilUsuario.SUPER_ADMIN) {
-            throw new BusinessException("Acesso nao autorizado.");
+            throw new BusinessException("Acesso não autorizado.");
         }
         ChamadoEntity chamado = chamadoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Chamado nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Chamado não encontrado."));
         StatusChamado statusAnterior = chamado.getStatus();
         chamado.setStatus(request.status());
         if (request.resposta() != null && !request.resposta().isBlank()) {
@@ -149,7 +149,7 @@ public class ChamadoService {
 
     private UsuarioEntity buscarUsuario(Long usuarioId) {
         return usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
     }
 
     private String normalizarOrigem(String origem) {

@@ -36,7 +36,7 @@ public class ClienteEntity {
     private String email;
 
     @Column(length = 1000)
-    private String observacoes;
+    private String observações;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

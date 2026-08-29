@@ -52,7 +52,7 @@ public class AdminImpersonationGuardFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setCharacterEncoding(StandardCharsets.UTF_8.name());
             response.setContentType(MediaType.APPLICATION_JSON_VALUE + ";charset=UTF-8");
-            response.getWriter().write("{\"mensagem\":\"Acao nao permitida durante impersonacao administrativa.\"}");
+            response.getWriter().write("{\"mensagem\":\"Acao não permitida durante impersonacao administrativa.\"}");
             return;
         }
         filterChain.doFilter(request, response);

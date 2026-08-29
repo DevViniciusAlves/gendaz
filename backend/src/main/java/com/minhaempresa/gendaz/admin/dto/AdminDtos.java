@@ -103,7 +103,7 @@ public record AdminAtualizarEmpresaRequest(
             String admin,
             String usuario,
             String empresa,
-            String descricao,
+            String descrição,
             String motivo,
             String ip,
             String userAgent,

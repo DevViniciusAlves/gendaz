@@ -49,7 +49,7 @@ public class ClienteBulkService {
         validarQuantidade(request.ids());
         Long companyId = CompanyContext.requireCompanyId();
         if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
         }
         Set<Long> idsUnicos = new HashSet<>(request.ids());
         List<FalhaAcaoItem> falhas = new ArrayList<>();
@@ -57,9 +57,9 @@ public class ClienteBulkService {
         for (Long id : idsUnicos) {
             try {
                 ClienteEntity cliente = clienteRepository.findById(id)
-                        .orElseThrow(() -> new ResourceNotFoundException("Cliente nao encontrado."));
+                        .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
                 if (!cliente.getEmpresa().getId().equals(companyId)) {
-                    throw new ResourceNotFoundException("Cliente nao encontrado.");
+                    throw new ResourceNotFoundException("Cliente não encontrado.");
                 }
 
                 cliente.setStatus(StatusCadastro.INATIVO);

@@ -49,7 +49,7 @@ public class AgendaBlockedDayService {
         if (request.profissionalId() != null) {
             profissional = profissionalService.buscarEntidade(request.profissionalId());
             if (profissional.getEmpresa() == null || !profissional.getEmpresa().getId().equals(empresaAutenticadaId)) {
-                throw new BusinessException("Profissional nao pertence a empresa informada.");
+                throw new BusinessException("Profissional não pertence a empresa informada.");
             }
         }
 
@@ -74,7 +74,7 @@ public class AgendaBlockedDayService {
         CompanyContext.exigirEmpresa(empresaId);
 
         AgendaBlockedDayEntity entity = repository.findByIdAndEmpresaId(id, empresaAutenticadaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Dia bloqueado nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Dia bloqueado não encontrado."));
         LocalDate data = entity.getData();
         repository.delete(entity);
         logAtividadeService.registrar("DIA_BLOQUEADO", id, "Desbloqueou dia " + data);

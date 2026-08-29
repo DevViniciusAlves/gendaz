@@ -30,7 +30,7 @@ public class ClienteController {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = com.minhaempresa.gendaz.shared.CompanyContext.requireCompanyId();
         if (empresaId != null && !empresaContexto.equals(empresaId)) {
-            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+            throw new com.minhaempresa.gendaz.shared.BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
         }
     }
 
@@ -116,7 +116,7 @@ public class ClienteController {
         return ResponseEntity.ok(clienteService.alterarStatus(id, empresaId, StatusCadastro.INATIVO));
     }
 
-    @PostMapping("/acoes-em-massa")
+    @PostMapping("/ações-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaClienteRequest request) {
         return ResponseEntity.ok(clienteBulkService.excluir(request));
     }

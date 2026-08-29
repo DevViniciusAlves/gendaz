@@ -90,7 +90,7 @@ class TenantIsolationServiceTest {
     @Test
     void mensagensCrossTenantDevemFalharAntesDeRetornarDados() {
         CompanyContext.setCompanyId(1L);
-        when(conversaService.buscarEntidade(20L)).thenThrow(new ResourceNotFoundException("Conversa nao encontrada."));
+        when(conversaService.buscarEntidade(20L)).thenThrow(new ResourceNotFoundException("Conversa não encontrada."));
 
         assertThrows(ResourceNotFoundException.class, () -> mensagemService.listarPorConversa(20L));
 
@@ -136,7 +136,7 @@ class TenantIsolationServiceTest {
     @Test
     void agendamentosPorClienteCrossTenantDevemFalharSemConsultarAgendamentos() {
         CompanyContext.setCompanyId(1L);
-        when(clienteService.buscarEntidade(20L)).thenThrow(new ResourceNotFoundException("Cliente nao encontrado."));
+        when(clienteService.buscarEntidade(20L)).thenThrow(new ResourceNotFoundException("Cliente não encontrado."));
 
         assertThrows(ResourceNotFoundException.class, () -> agendamentoService.listarPorCliente(20L));
 
@@ -214,7 +214,7 @@ class TenantIsolationServiceTest {
         PlanoEntity plano = PlanoEntity.builder()
                 .id(id)
                 .nome("Plano " + id)
-                .descricao("Plano")
+                .descrição("Plano")
                 .valorMensal(BigDecimal.TEN)
                 .status(StatusPlano.ATIVO)
                 .build();

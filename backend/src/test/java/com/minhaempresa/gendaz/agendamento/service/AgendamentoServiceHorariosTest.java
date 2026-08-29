@@ -157,7 +157,7 @@ class AgendamentoServiceHorariosTest {
         List<String> horarios = agendamentoService.horariosDisponiveis(empresaId, null, servicoId, data);
 
         assertFalse(horarios.isEmpty());
-        assertFalse(horarios.contains("09:00"), "Horario ocupado nao deve aparecer");
+        assertFalse(horarios.contains("09:00"), "Horario ocupado não deve aparecer");
         assertTrue(horarios.contains("08:00"));
         assertTrue(horarios.contains("10:00"));
     }

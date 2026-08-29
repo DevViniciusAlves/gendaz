@@ -51,7 +51,7 @@ class CryptoServiceTest {
 
         service.inicializar();
         IllegalStateException ex = assertThrows(IllegalStateException.class, () -> service.encrypt("dado sensivel"));
-        assertTrue(ex.getMessage().contains("nao configurada"));
+        assertTrue(ex.getMessage().contains("não configurada"));
     }
 
     private CryptoService serviceComChaveValida() {

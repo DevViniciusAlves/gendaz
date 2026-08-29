@@ -76,7 +76,7 @@ export default function NotasFiscais() {
           { key: 'valor', label: 'Valor', render: (row) => currency(row.valor) },
           { key: 'dataEmissao', label: 'Data', render: (row) => new Date(row.dataEmissao).toLocaleDateString('pt-BR') },
           { key: 'diagnostico', label: 'Diagnóstico', render: (row) => <span className={row.status === 'REPROVADA' ? 'danger-text' : ''}>{row.diagnostico}</span> },
-          { key: 'acoes', label: 'Ações', render: (row) => <div className="table-actions"><button className="icon-btn" title="Baixar nota" aria-label={`Baixar nota ${row.numeroFake}`} onClick={() => baixarNota(row)}><Download size={16} /></button><button className="icon-btn" title="Corrigir nota" aria-label={`Corrigir nota ${row.numeroFake}`} onClick={() => corrigirNota(row.id)}><Pencil size={16} /></button><button className="icon-btn" title="Reemitir" aria-label={`Reemitir nota ${row.numeroFake}`} onClick={() => corrigirNota(row.id)}><RefreshCw size={16} /></button></div> },
+          { key: 'ações', label: 'Ações', render: (row) => <div className="table-actions"><button className="icon-btn" title="Baixar nota" aria-label={`Baixar nota ${row.numeroFake}`} onClick={() => baixarNota(row)}><Download size={16} /></button><button className="icon-btn" title="Corrigir nota" aria-label={`Corrigir nota ${row.numeroFake}`} onClick={() => corrigirNota(row.id)}><Pencil size={16} /></button><button className="icon-btn" title="Reemitir" aria-label={`Reemitir nota ${row.numeroFake}`} onClick={() => corrigirNota(row.id)}><RefreshCw size={16} /></button></div> },
         ]} rows={data.notasFiscais} />
       </section>
     </section>

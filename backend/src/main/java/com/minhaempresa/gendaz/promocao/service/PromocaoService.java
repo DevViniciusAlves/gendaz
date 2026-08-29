@@ -59,7 +59,7 @@ public class PromocaoService {
         PromocaoEntity promocao = PromocaoEntity.builder()
                 .empresa(empresa)
                 .codigo(request.codigo().trim().toUpperCase())
-                .descricao(request.descricao() == null ? null : request.descricao().trim())
+                .descrição(request.descrição() == null ? null : request.descrição().trim())
                 .tipo(request.tipo())
                 .valor(request.valor())
                 .dataInicio(request.dataInicio())
@@ -88,7 +88,7 @@ public class PromocaoService {
         validarCodigoUnico(empresaId, request.codigo(), id);
 
         promocao.setCodigo(request.codigo().trim().toUpperCase());
-        promocao.setDescricao(request.descricao() == null ? null : request.descricao().trim());
+        promocao.setDescricao(request.descrição() == null ? null : request.descrição().trim());
         promocao.setTipo(request.tipo());
         promocao.setValor(request.valor());
         promocao.setDataInicio(request.dataInicio());
@@ -283,17 +283,17 @@ public class PromocaoService {
 
     private PromocaoEntity buscarDaEmpresa(Long empresaId, Long id) {
         return promocaoRepository.findByIdAndEmpresaId(id, empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Promocao nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Promocao não encontrada."));
     }
 
     private EmpresaEntity buscarEmpresa(Long empresaId) {
         return empresaRepository.findById(empresaId)
-                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa não encontrada."));
     }
 
     private void validarDatas(LocalDateTime dataInicio, LocalDateTime dataFim) {
         if (dataInicio.isAfter(dataFim)) {
-            throw new BusinessException("Data inicial nao pode ser depois da data final.");
+            throw new BusinessException("Data inicial não pode ser depois da data final.");
         }
     }
 
@@ -312,7 +312,7 @@ public class PromocaoService {
     private void validarEmpresaAtual(Long empresaId) {
         Long companyId = CompanyContext.requireCompanyId();
         if (empresaId == null || !companyId.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessao nao corresponde a Promocoes solicitadas.");
+            throw new BusinessException("Empresa da sessão não corresponde a Promocoes solicitadas.");
         }
     }
 

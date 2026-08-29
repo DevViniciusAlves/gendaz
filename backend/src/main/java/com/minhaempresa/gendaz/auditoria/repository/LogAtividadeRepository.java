@@ -16,7 +16,7 @@ public interface LogAtividadeRepository extends JpaRepository<LogAtividadeEntity
             select l from LogAtividadeEntity l
             where l.empresa.id = :empresaId
               and (:entidade is null or l.entidade = :entidade)
-              and (:termo is null or lower(l.acao) like lower(:termo) or lower(l.nomeUsuario) like lower(:termo))
+              and (:termo is null or lower(l.ação) like lower(:termo) or lower(l.nomeUsuario) like lower(:termo))
             order by l.dataHora desc
             """)
     Page<LogAtividadeEntity> pesquisar(

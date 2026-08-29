@@ -1,7 +1,7 @@
-package com.minhaempresa.gendaz.configuracao.service;
+package com.minhaempresa.gendaz.configuração.service;
 
-import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AgendamentoLinkResponse;
-import com.minhaempresa.gendaz.configuracao.dto.AgendamentoConfigDtos.AtualizarAgendamentoSlugRequest;
+import com.minhaempresa.gendaz.configuração.dto.AgendamentoConfigDtos.AgendamentoLinkResponse;
+import com.minhaempresa.gendaz.configuração.dto.AgendamentoConfigDtos.AtualizarAgendamentoSlugRequest;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
@@ -55,9 +55,9 @@ public class AgendamentoConfigService {
 
     private EmpresaEntity buscarEmpresaDoUsuario(Long usuarioId) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario não encontrado."));
         if (usuario.getEmpresa() == null) {
-            throw new BusinessException("Usuario sem empresa nao possui link de agendamento.");
+            throw new BusinessException("Usuario sem empresa não possui link de agendamento.");
         }
         return usuario.getEmpresa();
     }

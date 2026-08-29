@@ -23,15 +23,15 @@ public class UsuarioSessionService {
 
     @Transactional
     public synchronized String renovarSessao(UsuarioEntity usuario) {
-        String sessao = UUID.randomUUID().toString();
+        String sessão = UUID.randomUUID().toString();
         UsuarioEntity usuarioBloqueado = usuarioRepository.findByIdForUpdate(usuario.getId())
                 .orElseThrow(() -> new SessaoExpiradaException("Usuario autenticado invalido."));
-        usuarioBloqueado.setSessaoAtiva(sessao);
+        usuarioBloqueado.setSessaoAtiva(sessão);
         usuarioRepository.save(usuarioBloqueado);
 
-        sessionWebSocketHandler.notifySessionInvalidated(usuario.getId(), sessao);
+        sessionWebSocketHandler.notifySessionInvalidated(usuario.getId(), sessão);
 
-        return sessao;
+        return sessão;
     }
 
     @Transactional
@@ -58,10 +58,10 @@ public class UsuarioSessionService {
         if (usuarioBloqueado.getSessaoAtiva() != null && !usuarioBloqueado.getSessaoAtiva().isBlank()) {
             return usuarioBloqueado.getSessaoAtiva();
         }
-        String sessao = UUID.randomUUID().toString();
-        usuarioBloqueado.setSessaoAtiva(sessao);
+        String sessão = UUID.randomUUID().toString();
+        usuarioBloqueado.setSessaoAtiva(sessão);
         usuarioRepository.save(usuarioBloqueado);
-        return sessao;
+        return sessão;
     }
 
     @Transactional(readOnly = true)
@@ -75,13 +75,13 @@ public class UsuarioSessionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean sessaoValida(Long usuarioId, String sessao) {
-        if (usuarioId == null || sessao == null || sessao.isBlank()) {
+    public boolean sessaoValida(Long usuarioId, String sessão) {
+        if (usuarioId == null || sessão == null || sessão.isBlank()) {
             return false;
         }
         return usuarioRepository.findById(usuarioId)
                 .filter(usuario -> usuario.getStatus() == StatusUsuario.ATIVO)
-                .filter(usuario -> sessao.equals(usuario.getSessaoAtiva()))
+                .filter(usuario -> sessão.equals(usuario.getSessaoAtiva()))
                 .filter(usuario -> usuario.getPerfil() == PerfilUsuario.SUPER_ADMIN
                         || usuario.getEmpresa() == null
                         || usuario.getEmpresa().getStatus() == StatusEmpresa.ATIVA)
@@ -89,24 +89,24 @@ public class UsuarioSessionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean sessaoValida(Long usuarioId, String sessao, Long empresaId) {
-        if (usuarioId == null || sessao == null || sessao.isBlank() || empresaId == null) {
+    public boolean sessaoValida(Long usuarioId, String sessão, Long empresaId) {
+        if (usuarioId == null || sessão == null || sessão.isBlank() || empresaId == null) {
             return false;
         }
         return usuarioRepository.findById(usuarioId)
                 .filter(usuario -> usuario.getEmpresa() != null)
                 .filter(usuario -> empresaId.equals(usuario.getEmpresa().getId()))
                 .filter(usuario -> usuario.getStatus() == StatusUsuario.ATIVO)
-                .filter(usuario -> sessao.equals(usuario.getSessaoAtiva()))
+                .filter(usuario -> sessão.equals(usuario.getSessaoAtiva()))
                 .isPresent();
     }
 
     @Transactional
-    public void encerrarSessao(String sessao) {
-        if (sessao == null || sessao.isBlank()) {
+    public void encerrarSessao(String sessão) {
+        if (sessão == null || sessão.isBlank()) {
             return;
         }
-        usuarioRepository.findBySessaoAtiva(sessao)
+        usuarioRepository.findBySessaoAtiva(sessão)
                 .ifPresent(usuario -> {
                     usuario.setSessaoAtiva(null);
                     usuarioRepository.save(usuario);
@@ -116,12 +116,12 @@ public class UsuarioSessionService {
 
     @Transactional
     public synchronized String criarSessaoMeuGendaz(MeuGendazAcessoEntity acesso) {
-        String sessao = UUID.randomUUID().toString();
+        String sessão = UUID.randomUUID().toString();
         MeuGendazAcessoEntity acessoAtual = meuGendazAcessoRepository.findById(acesso.getId())
                 .orElseThrow(() -> new SessaoExpiradaException("Acesso do Meu Gendaz invalido."));
-        acessoAtual.setSessaoAtiva(sessao);
+        acessoAtual.setSessaoAtiva(sessão);
         meuGendazAcessoRepository.save(acessoAtual);
-        return sessao;
+        return sessão;
     }
 
     @Transactional
@@ -134,26 +134,26 @@ public class UsuarioSessionService {
     }
 
     @Transactional(readOnly = true)
-    public boolean sessaoValidaMeuGendaz(Long acessoId, String sessao, Long empresaId) {
-        if (acessoId == null || sessao == null || sessao.isBlank() || empresaId == null) {
+    public boolean sessaoValidaMeuGendaz(Long acessoId, String sessão, Long empresaId) {
+        if (acessoId == null || sessão == null || sessão.isBlank() || empresaId == null) {
             return false;
         }
         return meuGendazAcessoRepository.findById(acessoId)
                 .filter(acesso -> acesso.getEmpresa() != null)
                 .filter(acesso -> empresaId.equals(acesso.getEmpresa().getId()))
                 .filter(acesso -> acesso.getStatus() == StatusUsuario.ATIVO)
-                .filter(acesso -> sessao.equals(acesso.getSessaoAtiva()))
+                .filter(acesso -> sessão.equals(acesso.getSessaoAtiva()))
                 .isPresent();
     }
 
     @Transactional
-    public void encerrarSessaoMeuGendaz(Long acessoId, String sessao) {
-        if (acessoId == null || sessao == null || sessao.isBlank()) {
+    public void encerrarSessaoMeuGendaz(Long acessoId, String sessão) {
+        if (acessoId == null || sessão == null || sessão.isBlank()) {
             return;
         }
         MeuGendazAcessoEntity acesso = meuGendazAcessoRepository.findById(acessoId)
                 .orElseThrow(() -> new SessaoExpiradaException("Acesso do Meu Gendaz invalido."));
-        if (sessao.equals(acesso.getSessaoAtiva())) {
+        if (sessão.equals(acesso.getSessaoAtiva())) {
             acesso.setSessaoAtiva(null);
             meuGendazAcessoRepository.save(acesso);
         }
