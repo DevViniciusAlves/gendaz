@@ -840,6 +840,20 @@ html .admin-gendaz .admin-filters {
   border-radius: 14px !important;
 }
 
+html .admin-gendaz .admin-filters .admin-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+html .admin-gendaz .admin-filters .admin-filter-field > span {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.55);
+  padding-left: 2px;
+}
+
 html .admin-gendaz .admin-filters .search-shell,
 html .admin-gendaz .search-shell {
   display: flex;
