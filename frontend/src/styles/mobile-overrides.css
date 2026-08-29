@@ -2052,10 +2052,11 @@
     font-size: 12px !important;
   }
 
-  /* Crisp: sobe o botao para nao bloquear a nav inferior */
-  #crisp-chat,
-  .crisp-client {
-    bottom: calc(80px + env(safe-area-inset-bottom)) !important;
+  /* Crisp: sobe o botao para nao bloquear a nav inferior.
+     O launcher do Crisp usa position:fixed proprio, entao nao basta
+     mudar bottom no container. translateY desloca todo o widget. */
+  #crisp-chatbox {
+    transform: translateY(calc(-84px - env(safe-area-inset-bottom))) !important;
   }
 }
 
