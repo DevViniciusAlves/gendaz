@@ -31,7 +31,7 @@ public class AdminAuditService {
      * @param acao      Ação realizada (ex: "Criar", "Editar", "Excluir").
      * @param entidade  Entidade afetada (ex: "Cliente", "Agendamento").
      * @param entidadeId ID da entidade afetada (opcional).
-     * @param descricao Descrição detalhada da acao (ex: "Criou cliente Cleiton").
+     * @param descricao Descrição detalhada da ação (ex: "Criou cliente Cleiton").
      */
     public void registrar(String acao, String entidade, Long entidadeId, String descricao) {
         try {
@@ -71,7 +71,7 @@ public class AdminAuditService {
      *
      * @param acao      Ação realizada.
      * @param entidade  Entidade afetada.
-     * @param descricao Descrição detalhada da acao.
+     * @param descricao Descrição detalhada da ação.
      */
     public void registrar(String acao, String entidade, String descricao) {
         registrar(acao, entidade, null, descricao);
@@ -95,7 +95,7 @@ public class AdminAuditService {
      * @param admin     Administrador responsavel (opcional).
      * @param usuario   Usuário afetado (opcional).
      * @param empresa   Empresa afetada (opcional).
-     * @param descricao Descrição da acao.
+     * @param descricao Descrição da ação.
      * @param motivo    Motivo adicional (opcional).
      * @param ip        Endereço IP (opcional).
      * @param userAgent User-Agent (opcional).

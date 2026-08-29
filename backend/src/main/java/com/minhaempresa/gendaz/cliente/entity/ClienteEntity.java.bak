@@ -55,8 +55,8 @@ public class ClienteEntity {
         this.telefone = telefone;
     }
 
-    // Invariante defensiva APENAS do formato canônico de persistencia (somente dígitos,
-    // no máximo 15). A validacao semântica real do número (país, plano de numeração)
+    // Invariante defensiva APENAS do formato canônico de persistência (somente dígitos,
+    // no máximo 15). A validação semântica real do número (país, plano de numeração)
     // ocorre antes, no PhoneNumberService. A Entity não conhece DDD, DDI nem país.
     public void validarTelefone() {
         if (telefone == null || telefone.isBlank()) {

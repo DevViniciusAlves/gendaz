@@ -31,7 +31,7 @@ public class AdminAuthenticationFilter extends OncePerRequestFilter {
         if (!uri.startsWith("/api/admin/")) {
             return true;
         }
-        // Permitir login e /access sem autenticacao via filtro (serão tratados pelo SecurityFilterChain ou auth controller)
+        // Permitir login e /access sem autenticação via filtro (serão tratados pelo SecurityFilterChain ou auth controller)
         return uri.equals("/api/admin/auth/login") || uri.equals("/api/admin/access");
     }
 

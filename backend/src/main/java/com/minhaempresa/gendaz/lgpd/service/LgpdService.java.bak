@@ -238,7 +238,7 @@ public class LgpdService {
     public ExcluirContaResponse encerrarConta(Long usuarioId) {
         UsuarioEntity usuario = usuarioService.buscarEntidade(usuarioId);
         if (usuario.getPerfil() != PerfilUsuario.DONO) {
-            throw new BusinessException("Acesso negado: apenas o dono pode realizar esta acao.");
+            throw new BusinessException("Acesso negado: apenas o dono pode realizar esta ação.");
         }
         if (usuario.getEmpresa() == null) {
             throw new BusinessException("Usuario sem empresa nao pode solicitar exclusao da conta.");
@@ -316,7 +316,7 @@ public class LgpdService {
         }
         Long empresaId = usuario.getEmpresa().getId();
 
-        // 1. Registro global de auditoria ANTES da exclusao (não será apagado pelo purge)
+        // 1. Registro global de auditoria ANTES da exclusão (não será apagado pelo purge)
         AdminAuditEntity logExclusao = new AdminAuditEntity();
         logExclusao.setEmpresaId(empresaId);
         logExclusao.setUsuarioId(usuario.getId());

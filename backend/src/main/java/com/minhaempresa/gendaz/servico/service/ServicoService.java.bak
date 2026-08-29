@@ -39,7 +39,7 @@ public class ServicoService {
     @Transactional
     public ServicoResponse salvar(SalvarServicoRequest request) {
         Long empresaContexto = CompanyContext.requireCompanyId();
-        // Força o empresaId da sessao, ignorando o do request para evitar cross-tenant
+        // Força o empresaId da sessão, ignorando o do request para evitar cross-tenant
         Long empresaIdFinal = empresaContexto;
         
         Map<String, Object> contextoInicio = new LinkedHashMap<>();
