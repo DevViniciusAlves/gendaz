@@ -108,6 +108,36 @@ const plans = [
     cta: 'Escolher Pro',
     destaque: true,
   },
+  {
+    nome: 'Plano Plus',
+    subtitulo: 'Mais capacidade para sua equipe',
+    preco: 'R$ 109,90/mês',
+    extra: '7 dias grátis',
+    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
+    beneficios: [
+      'Tudo do Plano Pro +',
+      'Até 7 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Plus',
+  },
+  {
+    nome: 'Plano Enterprise',
+    subtitulo: 'Escalabilidade máxima',
+    preco: 'R$ 149,90/mês',
+    extra: '7 dias grátis',
+    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
+    beneficios: [
+      'Tudo do Plano Plus +',
+      'Até 15 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Enterprise',
+  },
 ]
 
 export default function Home() {
