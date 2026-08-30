@@ -1008,13 +1008,13 @@ export const appApi = {
   },
 
   obterLinkAgendamento() {
-    return api.get('/configurações/agendamento/link', {
+    return api.get('/configuracoes/agendamento/link', {
       headers: usuarioHeaders(),
     }).then((response) => response.data)
   },
 
   atualizarLinkAgendamento(slug) {
-    return comNotificacao(() => api.put('/configurações/agendamento/link', { slug }, {
+    return comNotificacao(() => api.put('/configuracoes/agendamento/link', { slug }, {
       headers: usuarioHeaders(),
     }).then((response) => response.data), {
       loading: 'Salvando link... aguarde',
@@ -1046,13 +1046,13 @@ export const appApi = {
   },
 
   listarHorariosAtendimento() {
-    return api.get('/configurações/horario-atendimento', {
+    return api.get('/configuracoes/horario-atendimento', {
       headers: usuarioHeaders(),
     }).then((response) => response.data)
   },
 
   salvarHorariosAtendimento(horarios) {
-    return comNotificacao(() => api.put('/configurações/horario-atendimento', { horarios }, {
+    return comNotificacao(() => api.put('/configuracoes/horario-atendimento', { horarios }, {
       headers: usuarioHeaders(),
     }).then((response) => response.data), {
       loading: 'Salvando horários... aguarde',
