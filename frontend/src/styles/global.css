@@ -1365,7 +1365,7 @@ tbody tr:hover { background: #fffaf5; }
 .plan-list strong, .plan-list small { display: flex; align-items: center; gap: 8px; margin: 0; }
 .plan-list-muted small { color: var(--text); }
 .plan-action-link { width: 100%; min-height: 44px; }
-.plans-page-title { width: min(980px, 100%); margin: 0 auto; }
+.plans-page-title { width: min(980px, 100%); margin: 0 auto; text-align: center; }
 
 .app-shell .content .plans-centered-grid {
   width: min(1400px, 100%) !important;

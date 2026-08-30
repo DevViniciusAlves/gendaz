@@ -433,7 +433,7 @@ export default function Planos() {
       <div className="plans-grid detailed plans-centered-grid">
         {planos.map((plano, index) => (
           <ScrollReveal className={plano.destaque ? 'plan-card highlight plan-card-sale' : 'plan-card plan-card-sale'} delay={index * 100} key={plano.nome}>
-            {plano.destaque && <span className="recommended-badge">Mais recomendado</span>}
+            {plano.destaque && <span className="recommended-badge">Mais usado</span>}
             <div className="plan-card-body">
                 <div className="plan-head">
                   <div>

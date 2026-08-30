@@ -363,7 +363,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
               style={{ '--pricing-stagger': `${index * 40}ms` }}
               key={plano.nome}
             >
-              {plano.destaque && <span className="recommended-badge">Mais recomendado</span>}
+              {plano.destaque && <span className="recommended-badge">Mais usado</span>}
               <div className="plan-card-body pricing-card-body">
                   <div className="plan-head">
                     <div>

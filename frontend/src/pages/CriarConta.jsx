@@ -20,14 +20,26 @@ const PLANOS_INFO = {
     possuiTesteGratis: true,
     subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
   },
+  PLUS: {
+    nome: 'Plus',
+    preco: 'R$ 109,90/mês',
+    possuiTesteGratis: true,
+    subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
+  },
+  ENTERPRISE: {
+    nome: 'Enterprise',
+    preco: 'R$ 149,90/mês',
+    possuiTesteGratis: true,
+    subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
+  },
 }
 
 function normalizarPlano(planoParam) {
-  const texto = String(planoParam || '').toUpperCase()
-  if (texto === 'BASICO') return 'BASICO'
-  if (texto === 'PRO') return 'PRO'
-  if (texto === 'PLUS') return 'PLUS'
-  if (texto === 'ENTERPRISE') return 'ENTERPRISE'
+  const texto = String(planoParam || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (texto === 'BASICO' || texto.includes('PLANO BASICO') || texto.includes('PLANO BÁSICO')) return 'BASICO'
+  if (texto === 'PRO' || texto.includes('PLANO PRO')) return 'PRO'
+  if (texto === 'PLUS' || texto.includes('PLANO PLUS')) return 'PLUS'
+  if (texto === 'ENTERPRISE' || texto.includes('PLANO ENTERPRISE')) return 'ENTERPRISE'
   return texto
 }
 
