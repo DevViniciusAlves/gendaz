@@ -166,34 +166,6 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>io.sentry</groupId>
-                <artifactId>sentry-maven-plugin</artifactId>
-                <version>4.14.0</version>
-                <configuration>
-                    <org>gendaz</org>
-                    <project>gendaz</project>
-                    <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
-                    <includeSourceContext>true</includeSourceContext>
-                    <release>${project.version}</release>
-                </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>io.sentry</groupId>
-                        <artifactId>sentry-maven-plugin</artifactId>
-                        <version>4.14.0</version>
-                    </dependency>
-                </dependencies>
-                <executions>
-                    <execution>
-                        <id>upload-sourcemaps</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>upload-sourcemaps</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 </project>

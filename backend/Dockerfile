@@ -5,9 +5,7 @@ WORKDIR /app
 COPY pom.xml .
 COPY src ./src
 
-RUN --mount=type=secret,id=sentry_auth_token,dst=/etc/secrets/sentry_auth_token \
-    export SENTRY_AUTH_TOKEN=$(cat /etc/secrets/sentry_auth_token 2>/dev/null || true) && \
-    mvn clean package -DskipTests
+RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
