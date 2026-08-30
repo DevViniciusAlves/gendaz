@@ -6,6 +6,16 @@
     --mobile-surface: #1a1a1a;
   }
 
+  /* Crisp chat widget: sobe acima da nav inferior mobile */
+  #crisp-chatbox {
+    bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+
+  #crisp-chatbox > div,
+  #crisp-chatbox > div > div {
+    bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+  }
+
   /* Força o chat a usar apenas 1 coluna no mobile */
   .chat-layout {
     grid-template-columns: 1fr !important;

@@ -12,9 +12,8 @@ export function CrispProvider() {
       /* Crisp já inicializado ou indisponível */
     }
 
-    // No mobile, sobe o launcher do Crisp para não bloquear a nav inferior.
-    // Mantém position:fixed para o ícone permanecer fixo ao rolar a página.
     const MOBILE_MAX = 768
+    const BOTTOM_OFFSET = 'calc(100px + env(safe-area-inset-bottom))'
 
     const raiseLauncherOnMobile = () => {
       if (window.innerWidth > MOBILE_MAX) return
@@ -22,22 +21,26 @@ export function CrispProvider() {
       const box = document.getElementById('crisp-chatbox')
       if (!box) return
 
-      // Já vem com position:fixed do Crisp; garante o bottom elevado
-      // Varre todos os filhos fixos e sobe o bottom
-      const offset = 'calc(130px + env(safe-area-inset-bottom))'
+      box.style.setProperty('bottom', BOTTOM_OFFSET, 'important')
+
       for (const child of box.querySelectorAll('*')) {
         const pos = getComputedStyle(child).position
         if (pos === 'fixed' || pos === 'absolute') {
-          child.style.setProperty('bottom', offset, 'important')
+          child.style.setProperty('bottom', BOTTOM_OFFSET, 'important')
         }
       }
-      // Fallback: sobe o próprio container também
-      box.style.setProperty('bottom', offset, 'important')
     }
 
     raiseLauncherOnMobile()
+
+    const observer = new MutationObserver(raiseLauncherOnMobile)
+    observer.observe(document.body, { childList: true, subtree: true })
+
     window.addEventListener('resize', raiseLauncherOnMobile)
-    return () => window.removeEventListener('resize', raiseLauncherOnMobile)
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('resize', raiseLauncherOnMobile)
+    }
   }, [websiteId])
 
   return null
