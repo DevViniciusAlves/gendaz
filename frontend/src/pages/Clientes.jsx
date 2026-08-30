@@ -104,7 +104,7 @@ export default function Clientes() {
         danger: true,
       },
     }[ação]
-    setBulkModal({ ação, ...config })
+    setBulkModal({ acao: ação, ...config })
   }
 
   async function executarBulk() {
@@ -112,11 +112,11 @@ export default function Clientes() {
     setBulkExecutando(true)
     setErro('')
     try {
-      if (bulkModal.ação === 'ATIVAR') {
+      if (bulkModal.acao === 'ATIVAR') {
         await appApi.ativarClientesEmMassa(selecionados)
-      } else if (bulkModal.ação === 'DESATIVAR') {
+      } else if (bulkModal.acao === 'DESATIVAR') {
         await appApi.desativarClientesEmMassa(selecionados)
-      } else if (bulkModal.ação === 'EXCLUIR') {
+      } else if (bulkModal.acao === 'EXCLUIR') {
         await appApi.excluirClientesEmMassa(selecionados)
       }
       await reload(true)

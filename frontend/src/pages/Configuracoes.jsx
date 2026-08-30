@@ -391,7 +391,7 @@ export default function Configuracoes() {
             <p className="settings-card-muted">Convide, remova e reative membros da conta.</p>
           </div>
           <Link
-            to={perfilAtendente ? '#' : '/sistema/configurações/usuarios'}
+            to={perfilAtendente ? '#' : '/sistema/configuracoes/usuarios'}
             className={`btn btn-primary${perfilAtendente ? ' is-disabled' : ''}`}
             onClick={perfilAtendente ? (event) => event.preventDefault() : undefined}
             aria-disabled={perfilAtendente}

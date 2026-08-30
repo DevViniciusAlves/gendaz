@@ -347,7 +347,7 @@ export default function Agenda() {
       EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[ação]
-    setBulkModal({ ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
+    setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
   }
 
   async function executarBulk() {
@@ -355,7 +355,7 @@ export default function Agenda() {
     setBulkExecutando(true)
     setErroAcao('')
     try {
-      await appApi.acaoEmMassaAgendamentos(selecionados, bulkModal.ação)
+      await appApi.acaoEmMassaAgendamentos(selecionados, bulkModal.acao)
       await reload(true)
       limparSelecao()
     } catch (error) {

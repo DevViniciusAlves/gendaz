@@ -7,11 +7,11 @@ let memoryUser = null
 export const PLANOS = {
   BASICO: {
     nome: 'Plano Basico',
-    rotas: ['dashboard', 'agenda', 'clientes', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configurações'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
   },
   PRO: {
     nome: 'Plano Pro',
-    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configurações'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
   },
 }
 

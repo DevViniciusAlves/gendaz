@@ -153,7 +153,7 @@ export default function AppRoutes() {
         <Route path="suporte" element={<GendazSuporte />} />
         <Route path="beneficios" element={<GendazBeneficios />} />
         <Route path="promocoes" element={<GendazPromocoes />} />
-        <Route path="configurações" element={<GendazConfiguracoes />} />
+        <Route path="configuracoes" element={<GendazConfiguracoes />} />
       </Route>
       <Route path="/dashboard" element={<Navigate to="/sistema/dashboard" replace />} />
       <Route path="/sistema" element={<ClientRoute><AppLayout /></ClientRoute>}>
@@ -171,8 +171,8 @@ export default function AppRoutes() {
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
         <Route path="logs" element={<PlanRoute routeKey="logs"><Logs /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
-        <Route path="configurações" element={<PlanRoute routeKey="configurações"><Configuracoes /></PlanRoute>} />
-        <Route path="configurações/usuarios" element={<PlanRoute routeKey="configurações"><UsuariosEmpresa /></PlanRoute>} />
+        <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />
+        <Route path="configuracoes/usuarios" element={<PlanRoute routeKey="configuracoes"><UsuariosEmpresa /></PlanRoute>} />
         <Route path="suporte" element={<Suporte />} />
         <Route path="conta" element={<Conta />} />
         <Route path="*" element={<NotFound />} />

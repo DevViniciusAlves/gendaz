@@ -450,7 +450,7 @@ export default function Financeiro() {
       MARCAR_COMO_PENDENTE: ['Marcar pagamentos como pendentes', 'Tem certeza que deseja marcar os pagamentos selecionados como pendentes?', 'Marcar como pendente', false],
     }
     const cfg = configs[ação]
-    setBulkModal({ ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
+    setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
   }
 
   async function executarBulkPagamentos() {
@@ -458,13 +458,13 @@ export default function Financeiro() {
     setBulkExecutando(true)
     setErroPagamentos('')
     try {
-      if (bulkModal.ação === 'MARCAR_COMO_PAGO') {
+      if (bulkModal.acao === 'MARCAR_COMO_PAGO') {
         setPagamentoManual({ tipo: 'bulk' })
         setBulkModal(null)
         return
       }
-      await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, bulkModal.ação)
-      if (bulkModal.ação === 'MARCAR_COMO_PAGO') {
+      await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, bulkModal.acao)
+      if (bulkModal.acao === 'MARCAR_COMO_PAGO') {
         atualizarContagem()
       }
       await reload(true)

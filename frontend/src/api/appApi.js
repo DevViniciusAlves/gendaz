@@ -645,7 +645,7 @@ export const appApi = {
   },
 
   ativarClientesEmMassa(ids) {
-    return comNotificacao(() => api.post('/clientes/ações-em-massa', { ids, ação: 'ATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
+    return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'ATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Ativando clientes... aguarde',
       success: 'Clientes ativados com sucesso.',
       error: 'Não foi possível ativar os clientes.',
@@ -653,7 +653,7 @@ export const appApi = {
   },
 
   desativarClientesEmMassa(ids) {
-    return comNotificacao(() => api.post('/clientes/ações-em-massa', { ids, ação: 'DESATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
+    return comNotificacao(() => api.post('/clientes/acoes-em-massa', { ids, acao: 'DESATIVAR', empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Desativando clientes... aguarde',
       success: 'Clientes desativados com sucesso.',
       error: 'Não foi possível desativar os clientes.',
@@ -787,8 +787,8 @@ export const appApi = {
     })
   },
 
-  acaoEmMassaAgendamentos(ids, ação) {
-    return comNotificacao(() => api.post('/agendamentos/ações-em-massa', { ids, ação, empresaId: empresaIdAtual() }).then((response) => response.data), {
+  acaoEmMassaAgendamentos(ids, acao) {
+    return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
       loading: 'Processando agendamentos... aguarde',
       success: 'Agendamentos processados com sucesso.',
       error: 'Não foi possível processar os agendamentos.',
@@ -839,8 +839,8 @@ export const appApi = {
     })
   },
 
-  acaoEmMassaPagamentos(ids, ação, extra = {}) {
-    return comNotificacao(() => api.post('/pagamentos/ações-em-massa', { ids, ação, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
+  acaoEmMassaPagamentos(ids, acao, extra = {}) {
+    return comNotificacao(() => api.post('/pagamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
       loading: 'Processando pagamentos... aguarde',
       success: 'Pagamentos processados com sucesso.',
       error: 'Não foi possível processar os pagamentos.',

@@ -268,7 +268,7 @@ export default function AdminDashboard() {
         adminApi.pagamentos(),
         adminApi.chamados(),
         adminApi.logs(),
-        adminApi.configurações(),
+        adminApi.configuracoes(),
         adminApi.planos(),
       ])
 
