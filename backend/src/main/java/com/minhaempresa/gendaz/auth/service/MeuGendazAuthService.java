@@ -17,6 +17,9 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
 import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
+import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -155,7 +158,24 @@ public class MeuGendazAuthService {
 
     @Transactional
     public MeuGendazAuthResponse validarCodigo(String slug, String email, String codigo) {
-        return validarCodigo(slug, email, codigo, "unknown");
+        String ip = "unknown";
+        try {
+            ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+            if (attrs != null) {
+                HttpServletRequest request = attrs.getRequest();
+                if (request != null) {
+                    String xff = request.getHeader("X-Forwarded-For");
+                    if (xff != null && !xff.isEmpty()) {
+                        ip = xff.split(",")[0].trim();
+                    } else {
+                        ip = request.getRemoteAddr();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao obter IP da requisicao para OTP, usando unknown", e);
+        }
+        return validarCodigo(slug, email, codigo, ip);
     }
 
     @Transactional

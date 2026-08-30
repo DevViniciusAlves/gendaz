@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -43,6 +44,11 @@ public class AuthController {
                 ));
             }
             throw ex;
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(429).body(Map.of(
+                    "erro", "Sistema sobrecarregado",
+                    "mensagem", "Muitas tentativas. Tente novamente em instantes."
+            ));
         } catch (RuntimeException ex) {
             log.error("Erro no POST /api/auth/login para email={}. erroTipo={}", mascararEmail(request.email()), ex.getClass().getSimpleName());
             throw ex;
@@ -50,7 +56,7 @@ public class AuthController {
     }
 
     @PostMapping("/criar-conta")
-    public ResponseEntity<LoginResponse> criarConta(
+    public ResponseEntity<?> criarConta(
             @Valid @RequestBody CriarContaRequest request,
             @RequestHeader(value = "X-Idempotency-Key", required = false) String idempotencyKey,
             @RequestHeader(value = "X-Request-Id", required = false) String requestId,
@@ -64,6 +70,11 @@ public class AuthController {
                 cookieService.adicionarCookie(http, response, SESSION_COOKIE, login.sessionToken(), SESSION_COOKIE_MAX_AGE);
             }
             return ResponseEntity.ok(new LoginResponse(login.mensagem(), login.usuario(), login.assinatura(), login.pagamentoPlano(), login.statusConta(), null, login.motivoInatividade()));
+        } catch (ResponseStatusException ex) {
+            return ResponseEntity.status(429).body(Map.of(
+                    "erro", "Sistema sobrecarregado",
+                    "mensagem", "Muitas tentativas. Tente novamente em instantes."
+            ));
         } catch (RuntimeException ex) {
             log.error("Erro no POST /api/auth/criar-conta para email={} requestId={}. erroTipo={}", mascararEmail(request.email()), requestId, ex.getClass().getSimpleName());
             throw ex;
