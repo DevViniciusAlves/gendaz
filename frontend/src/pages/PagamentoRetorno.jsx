@@ -30,11 +30,11 @@ export default function PagamentoRetorno({ tipo }) {
   const pagamento = pendente?.pagamentoPlano
   const aprovado = status === 'APPROVED' || pagamento?.status === 'PAYMENT_APPROVED'
   const cancelado = tipo === 'cancelado' || status === 'CANCELED'
-  const titulo = aprovado ? 'Pagamento aprovado' : cancelado ? 'Pagamento nao finalizado' : 'Retorno do pagamento'
-  const descricao = aprovado
+  const titulo = aprovado ? 'Pagamento aprovado' : cancelado ? 'Pagamento não finalizado' : 'Retorno do pagamento'
+  const descrição = aprovado
     ? 'Sua conta Pro foi liberada. Entre novamente para acessar o painel.'
     : cancelado
-      ? 'O pagamento nao foi concluido. Voce pode voltar para a tela de pagamento e tentar novamente.'
+      ? 'O pagamento não foi concluido. Voce pode voltar para a tela de pagamento e tentar novamente.'
       : 'Recebemos o retorno da Stripe. Confirme o status para liberar a conta quando o pagamento for aprovado.'
 
   async function consultarStatus(sid = sessionId) {
@@ -83,7 +83,7 @@ export default function PagamentoRetorno({ tipo }) {
         </div>
 
         <h1 className="payment-result-title">{titulo}</h1>
-        <p className="payment-result-description">{mensagem || descricao}</p>
+        <p className="payment-result-description">{mensagem || descrição}</p>
 
         {pagamento && (
           <div className="payment-result-status">

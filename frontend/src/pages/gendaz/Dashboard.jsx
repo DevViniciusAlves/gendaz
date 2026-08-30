@@ -122,7 +122,7 @@ export default function Dashboard() {
           <div className="gendaz-empty-state">
             <Calendar size={48} />
             <h3>Sem agendamentos proximos</h3>
-            <p>Voce nao possui agendamentos no momento.</p>
+            <p>Voce não possui agendamentos no momento.</p>
             <button className="gendaz-btn gendaz-btn--primary" onClick={irParaAgenda}>
               <Plus size={16} /> Agendar Agora
             </button>
@@ -171,7 +171,7 @@ export default function Dashboard() {
                         {promo.tipo === 'PERCENTUAL' ? `${promo.valor}% OFF` : `R$ ${Number(promo.valor).toFixed(2)}`}
                       </span>
                     </div>
-                    <span>{promo.descricao}</span>
+                    <span>{promo.descrição}</span>
                     <small>
                       {promo.aplicarTodosServicos
                         ? 'Aplicável a todos os serviços'
@@ -286,8 +286,8 @@ export default function Dashboard() {
 
       {/* BANNER ACAO RAPIDA */}
       {!proximo && (
-        <article className="gendaz-card gendaz-card--acao-rapida">
-          <div className="gendaz-acao-content">
+        <article className="gendaz-card gendaz-card--ação-rapida">
+          <div className="gendaz-ação-content">
             <div>
               <h3>Agende Agora</h3>
               <p>Clique abaixo para fazer seu primeiro agendamento</p>

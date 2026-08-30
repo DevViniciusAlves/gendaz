@@ -57,7 +57,7 @@ export default function Historico() {
       <header className="gendaz-page__header">
         <span className="gendaz-kicker">Historico</span>
         <h1>Atendimentos passados</h1>
-        <p>Servicos, profissionais, valores pagos e observacoes.</p>
+        <p>Servicos, profissionais, valores pagos e observações.</p>
       </header>
 
       {erro && <div className="gendaz-erro">{erro}</div>}
@@ -77,7 +77,7 @@ export default function Historico() {
               const desconto = item.valorDesconto
               const cupomCodigo = item.cupomCodigo
               const temDesconto = cupomCodigo && desconto != null && Number(desconto) > 0
-              const observacao = [item.observacoes, item.observacao]
+              const observação = [item.observações, item.observação]
                 .find((texto) => texto && String(texto).trim().toLowerCase() !== 'criado pelo painel.')
 
               return (
@@ -123,8 +123,8 @@ export default function Historico() {
                       )}
                     </div>
                   </div>
-                  {observacao && (
-                    <p className="gendaz-historico-observacao">{observacao}</p>
+                  {observação && (
+                    <p className="gendaz-historico-observação">{observação}</p>
                   )}
                 </article>
               )
@@ -147,7 +147,7 @@ export default function Historico() {
         <div className="gendaz-card gendaz-card--empty">
           <div className="gendaz-empty-state">
             <h3>Sem historico</h3>
-            <p>Voce ainda nao possui atendimentos registrados.</p>
+            <p>Voce ainda não possui atendimentos registrados.</p>
           </div>
         </div>
       )}

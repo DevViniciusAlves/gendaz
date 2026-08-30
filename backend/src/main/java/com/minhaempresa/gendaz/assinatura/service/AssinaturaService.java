@@ -240,7 +240,7 @@ public class AssinaturaService {
         }
 
         // Removido: transição PENDENTE_PAGAMENTO → ATIVA baseada apenas na data é incorreta.
-        // Assinatura paga só pode ser ativada por pagamento aprovado ou ação administrativa explícita.
+        // Assinatura paga só pode ser ativada por pagamento aprovado ou acao administrativa explícita.
 
         List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
         if (fila.isEmpty()) {

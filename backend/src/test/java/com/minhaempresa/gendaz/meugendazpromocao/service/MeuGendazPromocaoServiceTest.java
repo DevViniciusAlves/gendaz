@@ -47,6 +47,8 @@ class MeuGendazPromocaoServiceTest {
     private MeuGendazPromocaoSyncService syncService;
     @Mock
     private PromocaoRepository adminPromocaoRepository;
+    @Mock
+    private com.minhaempresa.gendaz.auditoria.service.LogAtividadeService logAtividadeService;
 
     private MeuGendazPromocaoService service;
 
@@ -62,7 +64,8 @@ class MeuGendazPromocaoServiceTest {
                 usoRepository,
                 notificacaoRepository,
                 syncService,
-                adminPromocaoRepository
+                adminPromocaoRepository,
+                logAtividadeService
         );
         empresa = EmpresaEntity.builder().id(1L).build();
         outraEmpresa = EmpresaEntity.builder().id(2L).build();

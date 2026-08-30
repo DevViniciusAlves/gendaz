@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gendaz — CRM Relacionamento</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+<style>
+  @font-face{font-family:'Faktum Medium';src:url('frontend/public/fonts/Faktum-Medium.woff2') format('woff2');font-weight:400 900;font-style:normal;font-display:swap;}
+  :root {
+    --bg: #242424; --bg2: #242424; --bg3: #242424; --line: #555555;
+    --text: #fff; --muted: #aaa; --accent: #ff5e29; --green: #10b981;
+    --ff: 'Faktum Medium', 'Poppins', sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;background:#242424;font-family:var(--ff);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px;}
+
+  .phone,.phone *,.screen,.screen *,
+  .statusbar,.topbar,.topbar *,
+  .content,.view,.view *,
+  .bottomnav,.nav-item,.toast,.cursor,
+  .crm-filters,.crm-filters *,
+  .crm-card,.crm-card *,
+  .crm-count,.crm-count *,
+  #modal-send,#modal-send *,#modal-hist,#modal-hist *,
+  .final-overlay,.final-overlay *{font-family:var(--ff) !important;}
+
+  .phone{position:relative;width:390px;height:844px;background:#242424;border-radius:54px;padding:14px;box-shadow:0 0 0 2px #555,0 0 0 10px #242424,0 30px 80px rgba(0,0,0,.7);}
+  .phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#0a0a0a;border-radius:0 0 18px 18px;z-index:40;}
+  .phone-notch::after{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:6px;background:#1c1c1c;border-radius:99px;}
+  .screen{position:relative;width:100%;height:100%;background:var(--bg);border-radius:42px;overflow:hidden;display:flex;flex-direction:column;pointer-events:none;user-select:none;}
+
+  .statusbar{height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-size:12px;font-weight:600;color:#fff;z-index:30;}
+  .statusbar .bat{position:relative;width:24px;height:12px;border:1.5px solid #fff;border-radius:3px;}
+  .statusbar .bat::before{content:'';position:absolute;left:1.5px;top:1.5px;bottom:1.5px;width:70%;background:#fff;border-radius:1px;}
+
+  .topbar{flex:0 0 auto;padding:0 16px 8px;display:flex;flex-direction:column;}
+  .topbar-label{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
+  .topbar-title{font-size:20px;font-weight:800;color:#fff;line-height:1.15;}
+  .topbar-sub{font-size:10px;color:var(--muted);margin-top:1px;line-height:1.4;}
+  .topbar-pills{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+  .topbar-pill{font-size:8px;font-weight:600;color:var(--muted);background:var(--bg3);border:1px solid var(--line);border-radius:6px;padding:4px 7px;white-space:nowrap;}
+  .topbar-pill.underline{text-decoration:underline;}
+  .topbar-bell{width:30px;height:30px;border-radius:8px;background:var(--bg3);border:1px solid var(--line);display:grid;place-items:center;margin-top:4px;}
+  .topbar-bell svg{width:14px;height:14px;color:#fff;}
+  .topbar-user{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--line);border-radius:8px;padding:6px 10px;margin-top:4px;}
+  .topbar-user .av{width:30px;height:30px;border-radius:50%;background:#2d6a4f;display:grid;place-items:center;font-weight:700;font-size:10px;color:#fff;}
+  .topbar-user .info{display:flex;flex-direction:column;}
+  .topbar-user .info strong{font-size:11px;color:#fff;}
+  .topbar-user .info small{font-size:8px;color:var(--muted);display:block;}
+  .topbar-user .chev{margin-left:auto;color:var(--muted);font-size:11px;}
+
+  .content{flex:1 1 auto;overflow-y:auto;position:relative;scroll-behavior:smooth;}
+  .content::-webkit-scrollbar{width:0;}
+  .view{display:none;flex-direction:column;gap:10px;padding:12px 14px;min-height:100%;}
+  .view.active{display:flex;animation:fadeIn .3s ease both;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+
+  .crm-filters{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;}
+  .crm-filters h4{font-size:12px;font-weight:700;color:var(--accent);}
+  .crm-flabel{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;}
+  .seg-list{display:flex;flex-direction:column;gap:7px;}
+  .seg-opt{display:flex;align-items:center;gap:7px;font-size:12px;color:#fff;cursor:pointer;}
+  .seg-opt input[type=radio]{accent-color:#fff;width:13px;height:13px;cursor:pointer;flex:0 0 auto;}
+  .seg-dot{width:6px;height:6px;border-radius:50%;flex:0 0 auto;}
+  .crm-search{position:relative;}
+  .crm-search input{width:100%;height:32px;padding:0 10px 0 28px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:#fff;font-size:11px;outline:none;}
+  .crm-search input::placeholder{color:#555;}
+  .crm-search svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);color:var(--muted);width:12px;height:12px;}
+  .crm-select{width:100%;height:32px;padding:0 10px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:space-between;}
+  .crm-limpar{background:none;border:none;color:var(--muted);font-size:11px;text-align:left;cursor:pointer;padding:0;}
+  .crm-limpar:hover{color:#fff;}
+  .crm-count{font-size:11px;color:var(--muted);margin-top:2px;}
+  .crm-count b{color:#fff;}
+
+  .bottomnav{flex:0 0 50px;display:flex;align-items:center;border-top:1px solid rgba(255,255,255,.08);background:var(--bg2);padding:0 8px;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--muted);font-size:8px;font-weight:600;background:none;border:none;cursor:pointer;padding:4px 0 2px;}
+  .nav-item svg{width:16px;height:16px;stroke-width:1.8;}
+  .nav-item.active{color:#fff;}
+
+  .crm-cards{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
+  .crm-card{display:grid;gap:0;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);
+    background:linear-gradient(180deg, rgba(36,36,36,0.98), rgba(20,20,20,0.98));
+    box-shadow:0 12px 30px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.03);}
+  .crm-card.anim{animation:cardPop .5s cubic-bezier(.2,.9,.24,1.15) both;}
+  @keyframes cardPop{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
+
+  .crm-card-header{display:flex;gap:8px;align-items:flex-start;min-width:0;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .crm-card-avatar{width:32px;height:38px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;background:#2d6a4f;color:#fff;font-size:11px;font-weight:800;letter-spacing:.04em;}
+  .crm-card-headline{min-width:0;flex:1;display:grid;gap:4px;}
+  .crm-card-name-row{display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0;}
+  .crm-card-name{font-size:12px;font-weight:800;line-height:1.2;color:#fff;word-break:break-word;}
+  .crm-card-badge{display:inline-flex;align-items:center;min-height:18px;padding:0 6px;border-radius:999px;font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;}
+  .crm-card-contact{display:grid;gap:2px;min-width:0;}
+  .crm-card-contact span{display:inline-flex;align-items:center;gap:4px;min-width:0;color:rgba(255,255,255,0.6);font-size:9px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .crm-card-contact svg{flex:0 0 auto;}
+
+  .crm-card-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;padding:8px 0;}
+  .crm-card-metric{display:grid;gap:3px;}
+  .crm-card-metric-value{color:#fff;font-size:12px;font-weight:800;line-height:1.15;}
+  .crm-card-metric-label{display:flex;align-items:center;flex-wrap:wrap;gap:3px;color:rgba(255,255,255,0.6);font-size:9px;line-height:1.2;}
+  .crm-card-risk{display:inline-flex;align-items:center;padding:2px 6px;border-radius:999px;border:1px solid currentColor;font-size:8px;font-weight:800;line-height:1;}
+
+  .crm-card-agenda,.crm-card-actions-log{display:grid;gap:3px;padding:8px 0;border-top:1px solid rgba(255,255,255,0.08);color:rgba(255,255,255,0.6);font-size:9px;line-height:1.2;}
+  .crm-card-agenda strong,.crm-card-actions-log-title{color:#fff;font-weight:800;}
+  .crm-card-actions-log-item{color:rgba(255,255,255,0.6);word-break:break-word;}
+  .crm-card-actions-empty{opacity:.7;}
+
+  .crm-card-footer{display:flex;flex-direction:column;gap:6px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.08);}
+  .crm-card-buttons{display:flex;flex-wrap:wrap;gap:5px;}
+  .crm-chip-btn{min-height:26px;padding:0 9px;border-radius:999px;border:1px solid transparent;color:#fff;font-size:9px;font-weight:800;line-height:1;cursor:pointer;}
+  .crm-chip-btn.verde{background:#4bab3a;}
+  .crm-chip-btn.vermelho{background:#dc2626;}
+  .crm-history-btn{align-self:flex-start;min-height:26px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,0.10);background:transparent;color:#fff;font-size:9px;font-weight:700;cursor:pointer;}
+
+  .modal-overlay{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.active{display:flex;}
+  .modal{background:#fff;color:#000;border-radius:16px;width:100%;max-width:340px;display:flex;flex-direction:column;overflow:hidden;animation:modalPop .3s ease both;}
+  @keyframes modalPop{from{opacity:0;transform:scale(.94);}to{opacity:1;transform:none;}}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 10px;}
+  .modal-head h3{font-size:16px;font-weight:700;color:#111;}
+  .modal-close{width:28px;height:28px;border-radius:8px;border:1.5px solid #ccc;background:none;cursor:pointer;display:grid;place-items:center;color:#333;font-size:16px;font-weight:700;}
+  .modal-body{padding:0 16px;display:flex;flex-direction:column;overflow-y:auto;}
+  .modal-footer{padding:8px 16px 16px;}
+
+  .crm-send-summary{margin-bottom:12px;}
+  .crm-send-detail{display:flex;flex-direction:column;gap:4px;margin-bottom:10px;}
+  .crm-send-detail span{font-size:10px;color:#888;font-weight:600;}
+  .crm-send-detail strong{font-size:13px;color:#111;font-weight:700;word-break:break-word;padding:8px 10px;background:#fff;border:1px solid #e0e0e0;border-radius:8px;}
+  .crm-send-message{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
+  .crm-send-message>span{font-size:11px;color:#555;font-weight:600;}
+  .crm-send-preview{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:12px;font-size:12px;line-height:1.5;color:#222;}
+  .crm-send-toggle{display:flex;align-items:center;gap:8px;font-size:12px;color:#555;margin-bottom:14px;cursor:pointer;}
+  .crm-send-toggle input{accent-color:#333;}
+  .send-actions{display:flex;flex-direction:column;gap:8px;margin-top:4px;}
+  .send-actions .b-cancel{width:100%;min-height:42px;background:#fff;color:#000;border:1.5px solid #ccc;border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;font-family:var(--ff);}
+  .send-actions .b-enviar{width:100%;min-height:42px;background:#e5e5e5;color:#000;border:none;border-radius:10px;font-weight:800;font-size:13px;cursor:pointer;font-family:var(--ff);}
+  .send-actions .b-enviar:hover{filter:brightness(1.05);}
+
+  .hist-table{width:100%;border-collapse:collapse;font-size:11px;}
+  .hist-table th{text-align:left;padding:8px 6px;color:#6b7280;font-weight:700;border-bottom:1px solid #e5e7eb;}
+  .hist-table td{padding:8px 6px;color:#111827;border-bottom:1px solid #f3f4f6;}
+
+  .toast{position:absolute;left:50%;bottom:80px;transform:translateX(-50%) translateY(20px);background:var(--green);color:#04130d;font-weight:800;font-size:12px;padding:10px 16px;border-radius:10px;z-index:70;opacity:0;box-shadow:0 12px 30px rgba(16,185,129,.35);transition:opacity .3s,transform .3s;pointer-events:none;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+  .cursor{position:absolute;top:0;left:0;z-index:90;width:26px;height:26px;pointer-events:none;transform:translate(-100px,-100px);transition:transform .5s cubic-bezier(.45,.05,.25,1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));}
+  .final-overlay{position:absolute;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;}
+  .final-overlay.active{display:flex;animation:fadeIn .4s ease both;}
+  .final-overlay img{width:150px;height:auto;}
+  .final-btn{background:var(--accent);color:#0b0d12;font-weight:800;font-size:15px;border:none;border-radius:12px;padding:14px 30px;cursor:pointer;font-family:var(--ff);box-shadow:0 8px 24px rgba(255,94,41,.3);transition:filter .15s;}
+  .final-btn:hover{filter:brightness(1.05);}
+  .final-tag{color:var(--muted);font-size:12px;letter-spacing:.04em;text-align:center;line-height:1.5;max-width:240px;}
+  .click-ring{position:absolute;top:8px;left:6px;width:14px;height:14px;border:2px solid var(--accent);border-radius:50%;opacity:0;transform:scale(.4);}
+  .cursor.clicking .click-ring{animation:ring .45s ease-out;}
+  .cursor.clicking svg{transform:scale(.82);}
+  @keyframes ring{0%{opacity:.9;transform:scale(.4);}100%{opacity:0;transform:scale(2.4);}}
+</style>
+</head>
+<body>
+
+<div class="phone">
+  <div class="phone-notch"></div>
+  <div class="screen" id="screen">
+    <div class="statusbar">
+      <span>14:30</span>
+      <span style="display:flex;gap:6px;align-items:center;font-weight:700">5G<span class="bat"></span></span>
+    </div>
+
+    <div class="topbar">
+      <div class="topbar-label">Opera&ccedil;&atilde;o Gendaz</div>
+      <div class="topbar-title">Vis&atilde;o geral</div>
+      <div class="topbar-sub">Acompanhe sua agenda, conversas e opera&ccedil;&atilde;o di&aacute;ria.</div>
+      <div class="topbar-pills">
+        <span class="topbar-pill underline">Plano Pro 30 dias restantes</span>
+      </div>
+      <span class="topbar-pill underline" style="width:fit-content;margin-top:5px">Suporte</span>
+      <div class="topbar-bell">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+      </div>
+      <div class="topbar-user">
+        <div class="av">K9</div>
+        <div class="info"><strong>Barbearia K9</strong><small>DONO</small></div>
+        <span class="chev">&#9662;</span>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="view" id="view-crm">
+        <div style="display:flex;flex-direction:column;gap:2px;">
+          <div class="topbar-label" style="letter-spacing:.12em">Relacionamento</div>
+          <div style="font-size:26px;font-weight:800;color:#fff;line-height:1.1;">CRM - Relacionamento com Clientes</div>
+          <div style="font-size:11px;color:var(--muted);line-height:1.4;">Acompanhe, segmente e automatize contatos com seus clientes.</div>
+        </div>
+
+        <div class="crm-filters">
+          <h4>Filtros</h4>
+          <div>
+            <span class="crm-flabel">Segmenta&ccedil;&atilde;o</span>
+            <div class="seg-list">
+              <label class="seg-opt" data-seg="todos"><input type="radio" name="seg" checked /><span class="seg-text">Todos</span></label>
+              <label class="seg-opt" data-seg="at_risk"><input type="radio" name="seg" /><span class="seg-dot" style="background:#ef4444"></span><span class="seg-text">Alto Risco</span></label>
+              <label class="seg-opt" data-seg="regular"><input type="radio" name="seg" /><span class="seg-dot" style="background:#f59e0b"></span><span class="seg-text">Regular</span></label>
+              <label class="seg-opt" data-seg="novo"><input type="radio" name="seg" /><span class="seg-dot" style="background:#4bab3a"></span><span class="seg-text">Novo</span></label>
+            </div>
+          </div>
+          <div>
+            <span class="crm-flabel">Buscar</span>
+            <div class="crm-search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+              <input type="text" placeholder="Nome, telefone..." />
+            </div>
+          </div>
+          <div>
+            <span class="crm-flabel">Ordenar por</span>
+            <div class="crm-select"><span>&Uacute;ltimos adicionados</span><span style="color:var(--muted)">&#9662;</span></div>
+          </div>
+          <div>
+            <span class="crm-flabel">Per&iacute;odo</span>
+            <div class="crm-select"><span>&Uacute;ltimos 30 dias</span><span style="color:var(--muted)">&#9662;</span></div>
+          </div>
+          <button class="crm-limpar" id="btn-limpar">Limpar filtros</button>
+        </div>
+
+        <div class="crm-count">Mostrando <b id="crm-n">3</b> clientes</div>
+
+        <div class="crm-cards" id="crm-cards">
+
+          <!-- FERNANDO MORAIS — NOVO -->
+          <article class="crm-card" data-seg="novo">
+            <header class="crm-card-header">
+              <div class="crm-card-avatar">FE</div>
+              <div class="crm-card-headline">
+                <div class="crm-card-name-row">
+                  <span class="crm-card-name">Fernando morais</span>
+                  <span class="crm-card-badge" style="background:rgba(75,171,58,.12);color:#4bab3a">NOVO</span>
+                </div>
+                <div class="crm-card-contact">
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg> +55 66 99360-3222</span>
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> viniciushf0360@gmail.com</span>
+                </div>
+              </div>
+            </header>
+            <section class="crm-card-metrics">
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">Inativo 0 dias</div>
+                <div class="crm-card-metric-label"><span class="crm-card-risk" style="color:#dc2626;border-color:#dc262633">87% RISCO</span></div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">R$ 0,00</div>
+                <div class="crm-card-metric-label">Gasto total <span style="opacity:.7">|</span> Gasto m&eacute;dio: R$ 0,00</div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">30d</div>
+                <div class="crm-card-metric-label">Frequ&ecirc;ncia</div>
+              </div>
+            </section>
+            <section class="crm-card-agenda">
+              <span><strong>&Uacute;ltima:</strong> &mdash;</span>
+              <span><strong>Pr&oacute;xima:</strong> &mdash; [N&atilde;o agendado]</span>
+            </section>
+            <section class="crm-card-actions-log">
+              <div class="crm-card-actions-log-title">&Uacute;ltimas a&ccedil;&otilde;es</div>
+              <div class="crm-card-actions-empty">Nenhuma a&ccedil;&atilde;o registrada.</div>
+            </section>
+            <footer class="crm-card-footer">
+              <div class="crm-card-buttons">
+                <button class="crm-chip-btn verde" data-act="resgate" data-cli="Fernando morais">Resgatar</button>
+                <button class="crm-chip-btn vermelho" data-act="reconexao" data-cli="Fernando morais">Reconex&atilde;o</button>
+              </div>
+              <button class="crm-history-btn" data-act="historico" data-cli="Fernando morais">Ver Hist&oacute;rico</button>
+            </footer>
+          </article>
+
+          <!-- MARINA OLIVEIRA — ALTO RISCO -->
+          <article class="crm-card" data-seg="at_risk">
+            <header class="crm-card-header">
+              <div class="crm-card-avatar" style="background:#8b2f2f;">MO</div>
+              <div class="crm-card-headline">
+                <div class="crm-card-name-row">
+                  <span class="crm-card-name">Marina Oliveira</span>
+                  <span class="crm-card-badge" style="background:#fee2e2;color:#dc2626">Alto Risco</span>
+                </div>
+                <div class="crm-card-contact">
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg> (11) 91234-5678</span>
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> marina@email.com</span>
+                </div>
+              </div>
+            </header>
+            <section class="crm-card-metrics">
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">Inativo 64 dias</div>
+                <div class="crm-card-metric-label"><span class="crm-card-risk" style="color:#dc2626;border-color:#dc262633">82% RISCO</span></div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">R$ 1.240,00</div>
+                <div class="crm-card-metric-label">Gasto total <span style="opacity:.7">|</span> Gasto m&eacute;dio: R$ 155,00</div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">45d</div>
+                <div class="crm-card-metric-label">Frequ&ecirc;ncia</div>
+              </div>
+            </section>
+            <section class="crm-card-agenda">
+              <span><strong>&Uacute;ltima:</strong> 12/06/2026</span>
+              <span><strong>Pr&oacute;xima:</strong> &mdash; [N&atilde;o agendado]</span>
+            </section>
+            <section class="crm-card-actions-log">
+              <div class="crm-card-actions-log-title">&Uacute;ltimas a&ccedil;&otilde;es</div>
+              <div class="crm-card-actions-log-item">&bull; Email resgate: 5 dias atr&aacute;s (abriu &#10003;)</div>
+            </section>
+            <footer class="crm-card-footer">
+              <div class="crm-card-buttons">
+                <button class="crm-chip-btn verde" data-act="resgate" data-cli="Marina Oliveira">Resgatar</button>
+                <button class="crm-chip-btn vermelho" data-act="reconexao" data-cli="Marina Oliveira">Reconex&atilde;o</button>
+              </div>
+              <button class="crm-history-btn" data-act="historico" data-cli="Marina Oliveira">Ver Hist&oacute;rico</button>
+            </footer>
+          </article>
+
+          <!-- JOAO PEDRO — REGULAR -->
+          <article class="crm-card" data-seg="regular">
+            <header class="crm-card-header">
+              <div class="crm-card-avatar" style="background:#7a5c1f;">JP</div>
+              <div class="crm-card-headline">
+                <div class="crm-card-name-row">
+                  <span class="crm-card-name">Jo&atilde;o Pedro</span>
+                  <span class="crm-card-badge" style="background:#ffedd5;color:#ea580c">Regular</span>
+                </div>
+                <div class="crm-card-contact">
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72c.13.96.36 1.9.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0122 16.92z"/></svg> (11) 98877-1234</span>
+                  <span><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 6l-10 7L2 6"/></svg> joao@email.com</span>
+                </div>
+              </div>
+            </header>
+            <section class="crm-card-metrics">
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">Inativo 22 dias</div>
+                <div class="crm-card-metric-label"><span class="crm-card-risk" style="color:#f59e0b;border-color:#f59e0b33">48% RISCO</span></div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">R$ 680,00</div>
+                <div class="crm-card-metric-label">Gasto total <span style="opacity:.7">|</span> Gasto m&eacute;dio: R$ 97,00</div>
+              </div>
+              <div class="crm-card-metric">
+                <div class="crm-card-metric-value">30d</div>
+                <div class="crm-card-metric-label">Frequ&ecirc;ncia</div>
+              </div>
+            </section>
+            <section class="crm-card-agenda">
+              <span><strong>&Uacute;ltima:</strong> 05/08/2026</span>
+              <span><strong>Pr&oacute;xima:</strong> 28/08/2026 [Agendado]</span>
+            </section>
+            <section class="crm-card-actions-log">
+              <div class="crm-card-actions-log-title">&Uacute;ltimas a&ccedil;&otilde;es</div>
+              <div class="crm-card-actions-empty">Nenhuma a&ccedil;&atilde;o registrada.</div>
+            </section>
+            <footer class="crm-card-footer">
+              <div class="crm-card-buttons">
+                <button class="crm-chip-btn verde" data-act="resgate" data-cli="Jo&atilde;o Pedro">Resgatar</button>
+                <button class="crm-chip-btn vermelho" data-act="reconexao" data-cli="Jo&atilde;o Pedro">Reconex&atilde;o</button>
+              </div>
+              <button class="crm-history-btn" data-act="historico" data-cli="Jo&atilde;o Pedro">Ver Hist&oacute;rico</button>
+            </footer>
+          </article>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL ENVIAR -->
+    <div class="modal-overlay" id="modal-send">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="send-title">Enviar &ldquo;Resgate&rdquo;</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="crm-send-summary">
+            <div class="crm-send-detail"><span>Cliente</span><strong id="send-cli">Fernando morais</strong></div>
+            <div class="crm-send-detail"><span>E-mail</span><strong id="send-email">viniciushf0360@gmail.com</strong></div>
+          </div>
+          <div class="crm-send-message">
+            <span>Mensagem padr&atilde;o</span>
+            <div class="crm-send-preview" id="send-msg">Oi Fernando morais! Ta muito tempo sem nos ver. Que tal agendar um horario essa semana? Estamos de portas abertas pra voce!</div>
+          </div>
+          <label class="crm-send-toggle">
+            <input type="checkbox" />
+            <span>Personalizar mensagem</span>
+          </label>
+          <div class="send-actions">
+            <button class="b-cancel" id="send-cancel">Cancelar</button>
+            <button class="b-enviar" id="send-enviar">Enviar agora</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL HISTORICO -->
+    <div class="modal-overlay" id="modal-hist">
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="hist-title">Hist&oacute;rico de Contatos</h3>
+          <button class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <table class="hist-table">
+            <thead><tr><th>Data</th><th>Tipo</th><th>Assunto</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>24/08 14:30</td><td>Email</td><td>Estamos com saudade</td><td>Abriu &#10003;</td></tr>
+              <tr><td>10/07 09:12</td><td>Email</td><td>Sentimos sua falta</td><td>N&atilde;o abriu</td></tr>
+              <tr><td>02/06 16:00</td><td>SMS</td><td>Lembrete</td><td>Enviado</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button class="b-cancel" id="hist-close" style="width:100%;">Fechar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <div class="bottomnav">
+      <button class="nav-item" data-nav="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg>Dashboard</button>
+      <button class="nav-item" data-nav="agenda"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 9h18M8 2v4M16 2v4" stroke-linecap="round"/></svg>Agenda</button>
+      <button class="nav-item" data-nav="clientes"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>Clientes</button>
+      <button class="nav-item" data-nav="fin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>Financeiro</button>
+    </div>
+
+    <div class="final-overlay" id="finalOverlay">
+      <img src="frontend/src/assets/logos/gendaz-logo-branco.png" alt="Gendaz" />
+      <button class="final-btn">Saiba mais</button>
+      <span class="final-tag">Relacionamento que volta a agendar.</span>
+    </div>
+
+    <div class="cursor" id="cursor">
+      <div class="click-ring"></div>
+      <svg viewBox="0 0 24 24" fill="#fff" stroke="#111" stroke-width="1.2" style="width:22px;height:22px;filter:drop-shadow(0 3px 5px rgba(0,0,0,.45))"><path d="M5 3l5 0c1.1 0 2 .9 2 2l0 5 1.2-3.1c.5-1.3 2.4-1.1 2.6.3l.4 2.3 1.1-1.8c.7-1.1 2.5-.5 2.5.7l0 7c0 3-2.2 5.5-5.2 5.5-2 0-3.3-.8-4.5-2.2l-3.2-3.9c-.9-1.1-.5-2.7.8-3.3.7-.3 1.5-.1 2 .4l.6.7 0-8.6c0-1.1.9-2 2-2l1 0" stroke-linejoin="round"/></svg>
+    </div>
+  </div>
+</div>
+
+<script>
+const scr=document.getElementById('screen'),cnt=document.getElementById('content'),cur=document.getElementById('cursor'),toast=document.getElementById('toast');
+let S=1;const sl=ms=>new Promise(r=>setTimeout(r,ms*S));
+
+let audioCtx=null;
+function initAudio(){try{if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();if(audioCtx.state==='suspended')audioCtx.resume();}catch(e){}}
+function playClick(){if(!audioCtx)return;const t=audioCtx.currentTime,dur=.035,len=Math.floor(audioCtx.sampleRate*dur),buf=audioCtx.createBuffer(1,len,audioCtx.sampleRate),d=buf.getChannelData(0);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,4);const src=audioCtx.createBufferSource();src.buffer=buf;const bp=audioCtx.createBiquadFilter();bp.type='bandpass';bp.frequency.value=2600;bp.Q.value=.7;const hp=audioCtx.createBiquadFilter();hp.type='highpass';hp.frequency.value=800;const g=audioCtx.createGain();g.gain.value=.5;src.connect(hp).connect(bp).connect(g).connect(audioCtx.destination);src.start(t);src.stop(t+dur);}
+document.addEventListener('click',initAudio,{once:true});
+document.addEventListener('keydown',initAudio,{once:true});
+
+function ctr(el){const s=scr.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-s.left+r.width/2,y:r.top-s.top+r.height/2};}
+async function mv(el){const p=ctr(el);cur.style.transform=`translate(${p.x-4}px,${p.y-4}px)`;await sl(500);}
+async function ck(el){await mv(el);cur.classList.add('clicking');playClick();await sl(140);cur.classList.remove('clicking');await sl(200);}
+
+function scrollToEl(el){if(!el)return;el.scrollIntoView({block:'center',behavior:'smooth'});}
+function scrollReset(){cnt.scrollTop=0;}
+
+function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));const v=document.getElementById('view-'+name);if(v)v.classList.add('active');cnt.scrollTop=0;}
+function showToast(t){toast.textContent=t;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2000*S);}
+
+function applyFilter(seg){let n=0;document.querySelectorAll('.crm-card').forEach(c=>{const ok=(seg==='todos'||c.dataset.seg===seg);c.style.display=ok?'':'none';if(ok)n++;});document.getElementById('crm-n').textContent=n;}
+function selectSeg(btn){document.querySelectorAll('.seg-opt').forEach(o=>o.classList.remove('selected'));btn.classList.add('selected');btn.querySelector('input').checked=true;applyFilter(btn.dataset.seg);}
+
+function openSend(cli,tmpl){
+  document.getElementById('send-cli').textContent=cli;
+  const em={'Fernando morais':'viniciushf0360@gmail.com','Marina Oliveira':'marina@email.com','João Pedro':'joao@email.com'}[cli]||'cliente@email.com';
+  document.getElementById('send-email').textContent=em;
+  const T={resgate:{t:'Enviar "Resgate"',m:'Oi {nome}! Ta muito tempo sem nos ver. Que tal agendar um horario essa semana? Estamos de portas abertas pra voce!'},reconexao:{t:'Enviar "Reconexão"',m:'{nome}, faz tempo que não aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?'}};
+  const tt=T[tmpl]||T.resgate;
+  document.getElementById('send-title').textContent=tt.t;
+  document.getElementById('send-msg').textContent=tt.m.replace('{nome}',cli);
+  document.getElementById('modal-send').classList.add('active');
+}
+function closeSend(){document.getElementById('modal-send').classList.remove('active');}
+function openHist(cli){document.getElementById('hist-title').textContent='Histórico de Contatos: '+cli;document.getElementById('modal-hist').classList.add('active');}
+function closeHist(){document.getElementById('modal-hist').classList.remove('active');}
+
+/* ====== TIMELINE ====== */
+async function run(){
+  showView('crm');
+  applyFilter('todos');
+  document.querySelectorAll('.seg-opt').forEach(o=>o.classList.remove('selected'));
+  document.querySelector('.seg-opt[data-seg="todos"]').classList.add('selected');
+  document.querySelector('.seg-opt[data-seg="todos"] input').checked=true;
+  closeSend();closeHist();
+  document.getElementById('finalOverlay').classList.remove('active');
+  scrollReset();
+  await sl(800);
+
+  /* PASSO 1: Scroll ate Fernando (NOVO) — clica Resgatar */
+  const cardFernando=document.querySelector('.crm-card[data-seg="novo"]');
+  scrollToEl(cardFernando);await sl(1200);
+  await ck(cardFernando.querySelector('.crm-chip-btn[data-act="resgate"]'));
+  openSend('Fernando morais','resgate');
+  await sl(1800);
+  await ck(document.getElementById('send-enviar'));
+  closeSend();
+  showToast('Email enviado pra Fernando!');
+  await sl(1800);
+
+  /* PASSO 2: Ver historico de Fernando */
+  scrollToEl(cardFernando);await sl(800);
+  await ck(cardFernando.querySelector('.crm-history-btn'));
+  openHist('Fernando morais');
+  await sl(2000);
+  await ck(document.getElementById('hist-close'));
+  closeHist();
+  await sl(800);
+
+  /* PASSO 3: Filtra Alto Risco — clica Reconexao na Marina */
+  scrollReset();await sl(400);
+  await ck(document.querySelector('.seg-opt[data-seg="at_risk"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="at_risk"]'));
+  await sl(1000);
+  const cardMarina=document.querySelector('.crm-card[data-seg="at_risk"]');
+  scrollToEl(cardMarina);await sl(1200);
+  await ck(cardMarina.querySelector('.crm-chip-btn[data-act="reconexao"]'));
+  openSend('Marina Oliveira','reconexao');
+  await sl(1800);
+  await ck(document.getElementById('send-enviar'));
+  closeSend();
+  showToast('Email de reconexao enviado!');
+  await sl(1800);
+
+  /* PASSO 4: Sobe a tela de volta — volta pra cima */
+  scrollReset();await sl(1000);
+
+  /* PASSO 5: Filtra Regular — fica 4 seg e volta pro CRM */
+  await ck(document.querySelector('.seg-opt[data-seg="regular"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="regular"]'));
+  await sl(1000);
+  const cardJoao=document.querySelector('.crm-card[data-seg="regular"]');
+  scrollToEl(cardJoao);await sl(1200);
+  await sl(4000);
+
+  /* PASSO 6: Volta pra Todos */
+  scrollReset();await sl(400);
+  await ck(document.querySelector('.seg-opt[data-seg="todos"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="todos"]'));
+  await sl(800);
+
+  /* PASSO 7: Tela Saiba mais */
+  await sl(500);
+  document.getElementById('finalOverlay').classList.add('active');
+  await sl(4000);
+}
+function start(){run().then(()=>setTimeout(start,1500));}
+
+document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',()=>{closeSend();closeHist();}));
+document.getElementById('send-cancel').addEventListener('click',closeSend);
+document.getElementById('hist-close').addEventListener('click',closeHist);
+
+start();
+</script>
+</body>
+</html>

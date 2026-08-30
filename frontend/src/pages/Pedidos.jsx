@@ -47,7 +47,7 @@ export default function Pedidos() {
         { key: 'produto', label: 'Produto' },
         { key: 'valor', label: 'Valor', render: (row) => currency(row.valor) },
         { key: 'status', label: 'Status', render: (row) => <StatusBadge status={row.status} /> },
-        { key: 'acao', label: 'Alterar status', render: (row) => <select value={row.status} onChange={(event) => alterarStatus(row.id, event.target.value)}>{statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}</select> },
+        { key: 'ação', label: 'Alterar status', render: (row) => <select value={row.status} onChange={(event) => alterarStatus(row.id, event.target.value)}>{statusOptions.map((status) => <option key={status} value={status}>{status}</option>)}</select> },
       ]} rows={pedidos} />
     </section>
   )

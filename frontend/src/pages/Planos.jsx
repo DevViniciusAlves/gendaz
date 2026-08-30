@@ -14,7 +14,7 @@ const planosBase = [
     nome: 'Plano Básico',
     subtitulo: 'Agenda simples',
     extra: '7 dias grátis',
-    descricao: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
+    descrição: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
     beneficios: [
       'Financeiro - Pagamentos automatizados - Relatórios',
       'Histórico ilimitado',
@@ -35,7 +35,7 @@ const planosBase = [
     nome: 'Plano Pro',
     subtitulo: 'Gestão completa com financeiro',
     extra: '7 dias grátis',
-    descricao: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
+    descrição: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
     beneficios: [
       'Tudo do Plano Básico +',
       'Até 3 usuários na conta',
@@ -50,7 +50,7 @@ const planosBase = [
 ]
 
 const statusPagamentoTexto = {
-  PAYMENT_PENDING: 'Pagamento nao realizado',
+  PAYMENT_PENDING: 'Pagamento não realizado',
   PAYMENT_APPROVED: 'Pagamento aprovado',
   PAYMENT_REJECTED: 'Pagamento recusado',
   PAYMENT_CANCELED: 'Pagamento cancelado',
@@ -166,7 +166,7 @@ export default function Planos() {
       return
     }
     if (perfilAtendente) {
-      setErro('Seu perfil nao permite comprar ou editar planos.')
+      setErro('Seu perfil não permite comprar ou editar planos.')
       return
     }
     if (limiteAtingido) {
@@ -203,7 +203,7 @@ export default function Planos() {
       return
     }
     if (perfilAtendente) {
-      setErro('Seu perfil nao permite comprar ou editar planos.')
+      setErro('Seu perfil não permite comprar ou editar planos.')
       return
     }
     if (limiteAtingido) {
@@ -277,7 +277,7 @@ export default function Planos() {
         <span className="section-kicker">Comercial</span>
         <h1>Planos do atendimento</h1>
         <p>Escolha o plano que melhor se encaixa na rotina do seu atendimento.</p>
-        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil nao pode comprar ou editar planos.</p>}
+        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil não pode comprar ou editar planos.</p>}
       </div>
 
       {usuario && (
@@ -290,7 +290,7 @@ export default function Planos() {
           </div>
 
           {filaAtiva.length === 0 && (
-            <p className="plan-payment-note">Voce ainda nao possui um plano ativo. Escolha um plano abaixo para comecar.</p>
+            <p className="plan-payment-note">Voce ainda não possui um plano ativo. Escolha um plano abaixo para comecar.</p>
           )}
           {filaAtiva.length === 1 && !limiteAtingido && (
             <p className="plan-payment-note">
@@ -379,7 +379,7 @@ export default function Planos() {
                 <strong className="plan-price">{plano.preco}</strong>
               </div>
 
-              <p className="plan-description">{plano.descricao}</p>
+              <p className="plan-description">{plano.descrição}</p>
 
               <div className="plan-section">
                 <h3>Benefícios</h3>

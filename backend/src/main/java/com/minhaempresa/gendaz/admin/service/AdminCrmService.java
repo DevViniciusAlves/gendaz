@@ -201,14 +201,13 @@ public class AdminCrmService {
         String subtitulo = montarSubtitulo(request.template());
         String ctaTexto = "resgate".equals(request.template()) ? "Voltar para o Gendaz" : "Acessar o Gendaz";
         String corpo = montarCorpo(request.template(), nomeDestino, request.customMessage(), slug);
-
         boolean enviado = resendEmailService.enviarComTemplate(
                 emailDestino,
                 assunto,
                 titulo,
                 subtitulo,
                 corpo,
-                montarUrlMeuGendaz(slug),
+                montarUrlMeuGendaz(request.template(), slug),
                 ctaTexto
         );
 
@@ -353,7 +352,7 @@ public class AdminCrmService {
         };
 
         String textoFinal = msgPersonalizada != null ? msgPersonalizada : mensagemPadrao;
-        String ctaUrl = montarUrlGendaz(slugEmpresa);
+        String ctaUrl = montarUrlGendaz(template, slugEmpresa);
 
         return """
                 <p style="margin:0 0 12px; font-size:15px; line-height:1.8; color:#111111;">%s</p>
@@ -364,18 +363,27 @@ public class AdminCrmService {
                 """.formatted(textoFinal, ctaUrl, ctaUrl);
     }
 
-    private String montarUrlMeuGendaz(String slugEmpresa) {
-        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
-        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    private String montarUrlMeuGendaz(String template, String slugEmpresa) {
+        if ("resgate".equals(template) || "reconexao".equals(template)) {
+            return montarUrlBase();
+        }
+        String baseNormalizada = montarUrlBase();
         if (slugEmpresa == null || slugEmpresa.isBlank()) {
             return baseNormalizada + "/meu-gendaz";
         }
         return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
     }
 
-    private String montarUrlGendaz(String slugEmpresa) {
-        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
-        String baseNormalizada = base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
+    private String montarUrlGendaz(String template, String slugEmpresa) {
+        if ("resgate".equals(template) || "reconexao".equals(template)) {
+            return montarUrlBase();
+        }
+        String baseNormalizada = montarUrlBase();
         return baseNormalizada + "/sistema/dashboard";
+    }
+
+    private String montarUrlBase() {
+        String base = frontendUrl == null || frontendUrl.isBlank() ? "https://gendaz.site" : frontendUrl.trim();
+        return base.endsWith("/") ? base.substring(0, base.length() - 1) : base;
     }
 }

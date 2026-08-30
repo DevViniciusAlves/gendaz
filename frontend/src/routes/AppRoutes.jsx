@@ -48,7 +48,7 @@ import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
 
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (usuario?.statusConta === 'ACCOUNT_INACTIVE' && usuario?.motivoInatividade === 'CONTA_ENCERRADA') {
     return <Navigate to="/conta-encerrada" replace />
   }
@@ -57,7 +57,7 @@ function PrivateRoute({ children }) {
 
 function ClientRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -74,7 +74,7 @@ function ClientRoute({ children }) {
 
 function PlanRoute({ routeKey, children }) {
   const { usuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) {
     return <Navigate to="/admin/dashboard" replace />
   }
@@ -90,7 +90,7 @@ function PlanRoute({ routeKey, children }) {
 
 function ContaInativaRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -101,7 +101,7 @@ function ContaInativaRoute({ children }) {
 
 function ContaEncerradaRoute({ children }) {
   const { usuario, adminUsuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario && !usuario) return <Navigate to="/admin/dashboard" replace />
   if (!usuario) return <Navigate to="/login" replace />
   if (usuario.perfil === 'SUPER_ADMIN' && !impersonation) {
@@ -112,7 +112,7 @@ function ContaEncerradaRoute({ children }) {
 
 function AdminRoute({ children }) {
   const { adminUsuario, usuario, impersonation, authLoading } = useAuth()
-  if (authLoading) return <div className="page"><p>Carregando sessao...</p></div>
+  if (authLoading) return <div className="page"><p>Carregando sessão...</p></div>
   if (adminUsuario) return children
   if (usuario?.perfil === 'SUPER_ADMIN' && !impersonation) return <Navigate to="/admin/login" replace />
   if (usuario) return <Navigate to="/sistema/dashboard" replace />

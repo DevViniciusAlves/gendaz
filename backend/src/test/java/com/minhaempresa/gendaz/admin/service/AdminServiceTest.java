@@ -59,7 +59,8 @@ class AdminServiceTest {
             securityMonitoringService,
             pagamentoService,
             profissionalService,
-            adminSessionService
+            adminSessionService,
+            null
     );
 
     @Test

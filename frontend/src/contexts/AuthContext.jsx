@@ -104,7 +104,7 @@ export function AuthProvider({ children }) {
     if (isMeuGendazPath()) return
     if (transicaoSessaoRef.current) return
     if (!usuario) return
-    console.warn('[auth-debug] websocket invalidacao de sessao recebida')
+    console.warn('[auth-debug] websocket invalidacao de sessão recebida')
     logout('session_invalidated')
     setSessionExpired(true)
   }, { enabled: !isMeuGendazPath() })
@@ -268,11 +268,11 @@ export function AuthProvider({ children }) {
           || mensagem.includes('indisponivel')
           || mensagem.includes('suspensa')
         const falhaFatal = status === 401
-          || mensagem.includes('sessao foi encerrada')
+          || mensagem.includes('sessão foi encerrada')
           || mensagem.includes('sessão foi encerrada')
           || mensagem.includes('usuario autenticado invalido')
           || mensagem.includes('usuário autenticado inválido')
-          || mensagem.includes('sessao expirada')
+          || mensagem.includes('sessão expirada')
           || mensagem.includes('sessão expirada')
         if (contaMarcadaInativa) {
           const motivoSuspensaoAdmin = mensagem.includes('indisponível')

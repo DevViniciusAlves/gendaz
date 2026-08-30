@@ -840,6 +840,20 @@ html .admin-gendaz .admin-filters {
   border-radius: 14px !important;
 }
 
+html .admin-gendaz .admin-filters .admin-filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+html .admin-gendaz .admin-filters .admin-filter-field > span {
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 245, 245, 0.55);
+  padding-left: 2px;
+}
+
 html .admin-gendaz .admin-filters .search-shell,
 html .admin-gendaz .search-shell {
   display: flex;
@@ -1524,6 +1538,7 @@ html .admin-gendaz .status-aprovado,
 html .admin-gendaz .status-ativo,
 html .admin-gendaz .status-ativa,
 html .admin-gendaz .status-ativo-pagamento,
+html .admin-gendaz .status-payment-approved,
 html .admin-gendaz .status-resolvido,
 html .admin-gendaz .status-info,
 html .admin-gendaz .status-finalizado {
@@ -1536,7 +1551,6 @@ html .admin-gendaz .status-finalizado {
 html .admin-gendaz .status-pendente,
 html .admin-gendaz .status-pendente-pagamento,
 html .admin-gendaz .status-payment-pending,
-html .admin-gendaz .status-payment-approved,
 html .admin-gendaz .status-em-analise,
 html .admin-gendaz .status-em-análise,
 html .admin-gendaz .status-warning,

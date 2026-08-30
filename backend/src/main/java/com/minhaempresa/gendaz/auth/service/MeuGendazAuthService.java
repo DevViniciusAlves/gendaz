@@ -101,7 +101,7 @@ public class MeuGendazAuthService {
         EmpresaEntity empresa = empresaOpt.get();
         String normalizado = normalizarEmail(email);
         clienteEmailBloqueadoService.validarAcesso(empresa.getId(), normalizado);
-        // Limite de tentativas de validação por IP mais restrito para evitar brute force de OTP
+        // Limite de tentativas de validacao por IP mais restrito para evitar brute force de OTP
         persistentRateLimitService.consumir("OTP_VALIDATE_IP:" + normalizarIp(ip), 5, Duration.ofMinutes(10), securityProperties.getOtp().blockDuration());
 
         MeuGendazOtpChallengeEntity challenge = challengeRepository.findByEmpresaIdAndEmailForUpdate(empresa.getId(), normalizado)

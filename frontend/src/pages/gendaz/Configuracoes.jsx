@@ -9,7 +9,7 @@ const TOAST_LOGOUT_ID = 'meu-gendaz-logout'
 
 export default function Configuracoes() {
   const navigate = useNavigate()
-  const { cliente, configuracoes, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout, recarregarPerfil } = useContext(ClienteGendazContext)
+  const { cliente, configurações, atualizarPerfil, atualizarNotificacoes, atualizarPrivacidade, logout, recarregarPerfil } = useContext(ClienteGendazContext)
 
   const [formData, setFormData] = useState({ nome: '', telefone: '', email: '' })
   const [notificacoes, setNotificacoes] = useState({ email: true, sms: false, push: true })
@@ -40,17 +40,17 @@ export default function Configuracoes() {
   }, [cliente])
 
   useEffect(() => {
-    if (configuracoes) {
+    if (configurações) {
       setNotificacoes({
-        email: configuracoes.notificacoes?.email ?? true,
-        sms: configuracoes.notificacoes?.sms ?? false,
-        push: configuracoes.notificacoes?.push ?? true,
+        email: configurações.notificacoes?.email ?? true,
+        sms: configurações.notificacoes?.sms ?? false,
+        push: configurações.notificacoes?.push ?? true,
       })
       setPrivacidade({
-        compartilharHistorico: configuracoes.compartilharHistorico ?? false,
+        compartilharHistorico: configurações.compartilharHistorico ?? false,
       })
     }
-  }, [configuracoes])
+  }, [configurações])
 
   function mostrarMensagem(texto) {
     setMensagem(texto)
@@ -64,9 +64,9 @@ export default function Configuracoes() {
     if (!formData.nome || formData.nome.trim().length < 3) {
       novosErros.nome = 'Nome deve ter pelo menos 3 caracteres.'
     } else if (formData.nome.trim() === 'Cliente') {
-      novosErros.nome = 'Complete seu nome, nao use "Cliente".'
+      novosErros.nome = 'Complete seu nome, não use "Cliente".'
     } else if (/^\d+$/.test(formData.nome.trim())) {
-      novosErros.nome = 'Nome nao pode conter apenas numeros.'
+      novosErros.nome = 'Nome não pode conter apenas numeros.'
     }
 
     const erroTelefone = validarTelefone(formData.telefone)
@@ -152,7 +152,7 @@ export default function Configuracoes() {
       <header className="gendaz-page__header">
         <span className="gendaz-kicker">Configuracoes</span>
         <h1>Meu perfil e preferencias</h1>
-        <p>Nome, telefone, notificacoes, privacidade e sessao.</p>
+        <p>Nome, telefone, notificacoes, privacidade e sessão.</p>
       </header>
 
       {mensagem && <div className="gendaz-mensagem gendaz-mensagem--sucesso">{mensagem}</div>}
@@ -235,7 +235,7 @@ export default function Configuracoes() {
 
         <article className="gendaz-panel">
           <div className="gendaz-panel__head"><LogOut size={18} /><h2>Sair da conta</h2></div>
-          <p>Sua sessao pode permanecer salva por longo periodo no mesmo dispositivo.</p>
+          <p>Sua sessão pode permanecer salva por longo periodo no mesmo dispositivo.</p>
           <button className="gendaz-btn gendaz-btn--danger" type="button" onClick={() => setAbrirLogout(true)} disabled={saindo}>
             {saindo ? <><Loader className="spin" size={16} /> Saindo...</> : <><LogOut size={16} /> Sair</>}
           </button>

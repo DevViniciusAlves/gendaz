@@ -188,9 +188,9 @@ export default function Profissionais() {
     if (acaoId) return
     setConfirmacao({
       titulo: 'Excluir profissional',
-      descricao: `Deseja excluir o profissional "${profissional.nome}"? Esta ação é permanente e não terá como retornar.`,
+      descrição: `Deseja excluir o profissional "${profissional.nome}"? Esta ação é permanente e não terá como retornar.`,
       acaoLabel: 'Excluir',
-      acao: async () => {
+      ação: async () => {
         setAcaoId(profissional.id)
         setErro('')
         try {
@@ -226,7 +226,7 @@ export default function Profissionais() {
         { key: 'especialidade', label: 'ESPECIALIDADE' },
         { key: 'telefone', label: 'TELEFONE', render: (row) => <span>{exibirTelefone(row.telefone)}</span> },
         { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
-        { key: 'acao', label: 'AÇÕES', render: (row) => (
+        { key: 'ação', label: 'AÇÕES', render: (row) => (
           <ActionMenu
             actions={[
               { label: 'Editar', icon: Pencil, onClick: () => abrirEdicao(row) },
@@ -263,15 +263,15 @@ export default function Profissionais() {
 
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
-          <p>{confirmacao?.descricao}</p>
+          <p>{confirmacao?.descrição}</p>
           <div className="confirm-actions">
             <Button variant="secondary" type="button" onClick={() => setConfirmacao(null)}>Cancelar</Button>
             <Button
               type="button"
               onClick={async () => {
-                const acao = confirmacao?.acao
+                const ação = confirmacao?.ação
                 setConfirmacao(null)
-                if (acao) await acao()
+                if (ação) await ação()
               }}
             >
               {confirmacao?.acaoLabel || 'Confirmar'}

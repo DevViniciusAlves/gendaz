@@ -97,7 +97,7 @@ function atualizarHorario(lista, index, campo, valor) {
 }
 
 export default function Configuracoes() {
-  const [data, , { reload }] = useLocalData('configuracoes')
+  const [data, , { reload }] = useLocalData('configurações')
   const { usuario, logout } = useAuth()
   const navigate = useNavigate()
   const [empresa, setEmpresa] = useState(data.empresa)
@@ -483,7 +483,7 @@ export default function Configuracoes() {
 
         {perfilAtendente && (
           <p className="plan-payment-note plan-payment-helper">
-            Seu perfil nao permite alterar os dados da empresa.
+            Seu perfil não permite alterar os dados da empresa.
           </p>
         )}
 

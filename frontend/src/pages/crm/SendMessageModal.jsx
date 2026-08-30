@@ -17,7 +17,7 @@ const TEMPLATES = {
   reconexao: {
     titulo: 'Enviar "Reconexao"',
     assunto: 'Sentimos sua falta',
-    mensagem: '{nome}, faz tempo que nao aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?',
+    mensagem: '{nome}, faz tempo que não aparece por aqui! Queremos saber como voce esta. Que tal um novo atendimento?',
   },
   promocao: {
     titulo: 'Enviar "Promocao"',

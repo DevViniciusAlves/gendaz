@@ -176,7 +176,7 @@ export default function CriarConta() {
     }
 
     if (form.senha !== form.confirmarSenha) {
-      setErro('As senhas nao coincidem.')
+      setErro('As senhas não coincidem.')
       return
     }
 

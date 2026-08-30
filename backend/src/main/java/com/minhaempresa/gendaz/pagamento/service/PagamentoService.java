@@ -617,7 +617,7 @@ public class PagamentoService {
     private void validarEmpresaAtual(Long empresaId) {
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (empresaId == null || !empresaContexto.equals(empresaId)) {
-            throw new BusinessException("Empresa da sessão não corresponde ao recurso solicitado.");
+            throw new BusinessException("Empresa da sessao não corresponde ao recurso solicitado.");
         }
     }
 

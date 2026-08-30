@@ -83,10 +83,10 @@ public class InsightsService {
                 Regras de ouro:
                 - Os dados que voce recebe servem apenas para voce pensar. Nunca mostre ao usuario JSON, objetos, IDs, nomes de campos, estruturas de banco, scores, numeros soltos sem contexto ou qualquer dado bruto. Use tudo isso de forma invisivel para montar a resposta.
                 - Nunca responda como relatorio ou como maquina. Evite frases prontas e corporativas como "com base nos dados fornecidos", "foi identificado que", "score geral", "impacto total" ou listas excessivamente estruturadas.
-                - Escreva em portugues do Brasil, de forma natural, direta e conversada. Varie o jeito de construir as frases, tenha personalidade e soe como alguem falando com o dono da empresa, nao como um texto gerado por IA.
+                - Escreva em portugues do Brasil, de forma natural, direta e conversada. Varie o jeito de construir as frases, tenha personalidade e soe como alguem falando com o dono da empresa, não como um texto gerado por IA.
                 - Use os dados da empresa para dar contexto real. Se vir que um servico esta indo bem ou que ha clientes parados, fale disso naturalmente, sem revelar como os dados estao organizados.
                 - Seja objetiva: respostas curtas e uteis por padrao. So se aprofunde quando a pergunta pedir ou quando houver uma chance clara de ajudar.
-                - Nao invente informacao. Se faltar dado, diga com naturalidade que nao tem essa informacao e, se fizer sentido, sugira o que o usuario pode olhar.
+                - Nao invente informacao. Se faltar dado, diga com naturalidade que não tem essa informacao e, se fizer sentido, sugira o que o usuario pode olhar.
                 - Aja como consultora: interprete os numeros, aponte oportunidades, explique problemas e sugira acoes praticas, em vez de so repetir o que recebeu.
                 - Faca o usuario sentir que esta conversando com quem conhece o negocio dele. Use o nome da empresa ou detalhes relevantes quando ajudar a conversa, mas sem exagerar.
                 - Evite cara de IA: nada de emojis, titulos em toda resposta, frases genericas, repeticoes, linguagem corporativa artificial ou estruturas sempre iguais.
@@ -94,7 +94,7 @@ public class InsightsService {
                 - Quando um dado for importante, explique o que ele significa para o negocio. Em vez de "o servico X teve 35 agendamentos", diga algo como "o servico X esta sendo o mais procurado, entao pode valer destacar ele mais na divulgacao".
                 - Nunca reproduza o contexto interno que voce recebeu. O contexto e apenas fonte de conhecimento para voce montar a resposta final.
 
-                Antes de responder, confira: estou falando como pessoa? estou respondendo exatamente o que foi perguntado? estou usando os dados da empresa de forma natural? escondi completamente JSON e informacoes internas? minha resposta parece uma conversa real e nao um relatorio?
+                Antes de responder, confira: estou falando como pessoa? estou respondendo exatamente o que foi perguntado? estou usando os dados da empresa de forma natural? escondi completamente JSON e informacoes internas? minha resposta parece uma conversa real e não um relatorio?
                 """;
         String promptUsuario = """
                 Dados da empresa:
@@ -223,7 +223,7 @@ public class InsightsService {
             return null;
         }
         if (empresaId != null && !empresaId.equals(insight.getEmpresaId())) {
-            throw new BusinessException("Insight nao encontrado para a empresa atual.");
+            throw new BusinessException("Insight não encontrado para a empresa atual.");
         }
         return insight;
     }
@@ -246,10 +246,10 @@ public class InsightsService {
                 Voce e uma IA consultora de negocios para pequenas empresas de servicos.
                 Voce deve analisar apenas os dados fornecidos.
                 Nao invente numeros.
-                Nao cite dados que nao existem no payload.
+                Nao cite dados que não existem no payload.
                 Nao retorne texto fora do JSON.
                 Responda sempre em portugues do Brasil.
-                Se nao houver dados suficientes, explique isso no campo descricao.
+                Se não houver dados suficientes, explique isso no campo descricao.
                 Gere recomendacoes praticas e acionaveis.
                 Adapte as recomendacoes ao ramo informado.
                 """;
@@ -284,12 +284,12 @@ public class InsightsService {
 
                 Regras:
                 - Retorne no máximo 3 oportunidades.
-                - Retorne no máximo 4 ações.
-                - Se houver pendências, devolva ações para cobrança e recuperação.
+                - Retorne no máximo 4 acoes.
+                - Se houver pendências, devolva acoes para cobrança e recuperação.
                 - So recomende reativacao de clientes quando clientes.inativos_status ou resumo.clientes_inativos for maior que 0.
-                - Se clientes.inativos_status for 0, nao cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
-                - Se nao houver sinal real suficiente, devolva arrays vazios para oportunidades e acoes.
-                - Se houver serviço sem venda ou profissional ocioso, devolva ações práticas.
+                - Se clientes.inativos_status for 0, não cite clientes inativos, reativacao de clientes, churn ou clientes em risco.
+                - Se não houver sinal real suficiente, devolva arrays vazios para oportunidades e acoes.
+                - Se houver serviço sem venda ou profissional ocioso, devolva acoes práticas.
                 - Se a Groq não conseguir estimar impacto, use "Impacto não estimado".
 
                 Dados:
@@ -376,10 +376,10 @@ public class InsightsService {
         acoes = filtrarAcoesSemBaseReal(acoes, clientesInativos, servicosInativos, profissionaisInativos);
 
         if (acoes.isEmpty()) {
-            acoes = List.of(new InsightAction("Nenhuma acao recomendada no momento", "Baixa", "Os dados reais nao indicam uma acao prioritaria agora"));
+            acoes = List.of(new InsightAction("Nenhuma acao recomendada no momento", "Baixa", "Os dados reais não indicam uma acao prioritaria agora"));
         }
         if (oportunidades.isEmpty()) {
-            oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados nao mostram uma acao prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
+            oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados não mostram uma acao prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
         }
 
         int score = calcularScore((int) atRisk, pendente, receita30, receita60);
@@ -434,7 +434,7 @@ public class InsightsService {
         String ramo = stringValor(dados.get("empresaRamo"));
         String display = stringValor(dados.get("empresaRamoDisplayName"));
         if (ramo.isBlank() && display.isBlank()) {
-            return "OUTRO - ramo nao identificado";
+            return "OUTRO - ramo não identificado";
         }
         if (ramo.isBlank()) {
             return display;
@@ -536,7 +536,7 @@ public class InsightsService {
 
     private void validarAcessoEmpresa(Long empresaId) {
         if (empresaId == null) {
-            throw new BusinessException("Empresa nao identificada.");
+            throw new BusinessException("Empresa não identificada.");
         }
         Long empresaContexto = CompanyContext.requireCompanyId();
         if (!empresaContexto.equals(empresaId)) {
@@ -665,7 +665,7 @@ public class InsightsService {
         return new InsightItem(
                 "Próxima Melhor Ação",
                 "Mantenha a operação atual e acompanhe os sinais da empresa diariamente.",
-                "Sem ação crítica no momento",
+                "Sem acao crítica no momento",
                 "Baixa",
                 "acao"
         );
@@ -721,7 +721,7 @@ public class InsightsService {
     private InsightItem montarPrincipalClienteRisco(long atRisk, boolean clienteEmRisco) {
         return new InsightItem(
                 "Base de Clientes",
-                "A base cadastrada nao mostra alerta de clientes no momento.",
+                "A base cadastrada não mostra alerta de clientes no momento.",
                 "Sem acao critica pelos dados atuais",
                 "Baixa",
                 "cliente"
@@ -840,7 +840,7 @@ public class InsightsService {
             acoes.add(new InsightAction(
                     "Acompanhar indicadores",
                     "Baixa",
-                    "Nenhum sinal crítico suficiente para ação imediata"
+                    "Nenhum sinal crítico suficiente para acao imediata"
             ));
         }
         return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
@@ -889,7 +889,7 @@ public class InsightsService {
         if (oportunidades.isEmpty()) {
             oportunidades.add(new InsightItem(
                     "Sem recomendacao no momento",
-                    "Os dados reais sincronizados nao mostram uma acao prioritaria agora.",
+                    "Os dados reais sincronizados não mostram uma acao prioritaria agora.",
                     "Sem sinal forte no período analisado.",
                     "Baixa",
                     "Média"

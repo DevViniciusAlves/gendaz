@@ -12,7 +12,7 @@ import { exibirTelefone } from '../utils/phoneUtils.js'
 
 const emptyForm = {
   codigo: '',
-  descricao: '',
+  descrição: '',
   tipo: 'PERCENTUAL',
   valor: '',
   dataInicio: '',
@@ -115,7 +115,7 @@ export default function Promocoes() {
     setEditing(cupom)
     setForm({
       codigo: cupom.codigo || '',
-      descricao: cupom.descricao || '',
+      descrição: cupom.descrição || '',
       tipo: cupom.tipo || 'PERCENTUAL',
       valor: String(cupom.valor ?? ''),
       dataInicio: toDateTimeLocal(cupom.dataInicio),
@@ -276,7 +276,7 @@ export default function Promocoes() {
     const termo = termoServico.toLowerCase()
     if (!termo) return true
     return String(servico.nome || '').toLowerCase().includes(termo)
-      || String(servico.descricao || '').toLowerCase().includes(termo)
+      || String(servico.descrição || '').toLowerCase().includes(termo)
   })
 
   return (
@@ -329,7 +329,7 @@ export default function Promocoes() {
               {filtered.map((cupom) => (
                 <tr key={cupom.id}>
                   <td data-label="CÓDIGO" data-column="codigo"><strong>{cupom.codigo}</strong></td>
-                  <td data-label="DESCRIÇÃO" data-column="descricao">{cupom.descricao}</td>
+                  <td data-label="DESCRIÇÃO" data-column="descrição">{cupom.descrição}</td>
                   <td data-label="DESCONTO" data-column="desconto">{cupom.tipo === 'PERCENTUAL' ? `${cupom.valor}%` : currency(cupom.valor)}</td>
                   <td data-label="VIGÊNCIA" data-column="vigencia">{cupom.dataFim ? new Date(cupom.dataFim).toLocaleDateString('pt-BR') : 'Sem prazo'}</td>
                   <td data-label="STATUS" data-column="status">
@@ -338,7 +338,7 @@ export default function Promocoes() {
                       : <span className="status status-muted"><AlertTriangle size={14} /> Inativo</span>}
                   </td>
                   <td data-label="USO" data-column="uso">{cupom.quantidadeUsada}/{cupom.quantidadeLimite ?? '∞'}</td>
-                  <td data-label="AÇÕES" data-column="acao">
+                  <td data-label="AÇÕES" data-column="ação">
                     <div className="promo-actions-desktop" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                       <button type="button" className="btn-secondary" onClick={() => abrirEdicao(cupom)}><Pencil size={14} /> Editar</button>
                       <button type="button" className="btn-secondary" onClick={() => abrirNotificar(cupom)}><Megaphone size={14} /> Notificar</button>
@@ -379,7 +379,7 @@ export default function Promocoes() {
         <form onSubmit={salvar} className="form-grid promotion-form">
               <p className="panel-description field-wide">Preencha os dados do cupom e escolha como ele será aplicado.</p>
               <label className="field"><span>Código</span><input value={form.codigo} onChange={(e) => setForm((c) => ({ ...c, codigo: e.target.value }))} /></label>
-              <label className="field"><span>Descrição (opcional)</span><input value={form.descricao} onChange={(e) => setForm((c) => ({ ...c, descricao: e.target.value }))} /></label>
+              <label className="field"><span>Descrição (opcional)</span><input value={form.descrição} onChange={(e) => setForm((c) => ({ ...c, descrição: e.target.value }))} /></label>
               <label className="field"><span>Tipo</span><select value={form.tipo} onChange={(e) => setForm((c) => ({ ...c, tipo: e.target.value }))}><option value="PERCENTUAL">Percentual</option><option value="VALOR_FIXO">Valor fixo</option></select></label>
               <label className="field"><span>Valor</span><input value={form.valor} onChange={(e) => setForm((c) => ({ ...c, valor: e.target.value }))} /></label>
               <label className="field"><span>Início</span><input type="datetime-local" value={form.dataInicio} onChange={(e) => setForm((c) => ({ ...c, dataInicio: e.target.value }))} /></label>
@@ -495,7 +495,7 @@ export default function Promocoes() {
                           />
                           <span style={{ display: 'grid', gap: 1, minWidth: 0 }}>
                             <strong style={{ fontSize: 13, lineHeight: 1.1 }}>{servico.nome}</strong>
-                            <small style={{ lineHeight: 1.1 }}>{servico.descricao || 'Sem descrição'}</small>
+                            <small style={{ lineHeight: 1.1 }}>{servico.descrição || 'Sem descrição'}</small>
                           </span>
                         </label>
                       ))}
@@ -658,7 +658,7 @@ export default function Promocoes() {
             <div className="modal-header" style={{ padding: 0, border: 0, marginBottom: 16 }}>
               <div>
                 <h2 style={{ marginBottom: 6 }}>Uso da promoção</h2>
-                <p>{resumo.codigo} - {resumo.descricao}</p>
+                <p>{resumo.codigo} - {resumo.descrição}</p>
               </div>
               <button type="button" className="icon-btn" onClick={() => setUsoAberto(false)} aria-label="Fechar">
                 <X size={18} />

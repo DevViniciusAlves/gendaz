@@ -68,7 +68,7 @@ public class RamoDeteccaoService {
                 "massagem terapeutica",
                 "massagem terapêutica",
                 "sessao fisio",
-                "sessão fisio"
+                "sessao fisio"
         ));
         PALAVRAS_CHAVE.put(RamoEmpresa.CLINICA_ODONTOLOGIA, List.of(
                 "odonto",

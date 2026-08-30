@@ -10,6 +10,7 @@ import Button from '../../components/Button.jsx'
 import Modal from '../../components/Modal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import Table from '../../components/Table.jsx'
+import Pagination from '../../components/Pagination.jsx'
 import GraficoReceitaMes from '../../components/gendaz/GraficoReceitaMes.jsx'
 import { useAuth } from '../../contexts/AuthContext.jsx'
 import OperationToast from '../../components/OperationToast.jsx'
@@ -75,6 +76,10 @@ function todayIso() {
   const hoje = new Date()
   const offset = hoje.getTimezoneOffset() * 60000
   return new Date(hoje.getTime() - offset).toISOString().slice(0, 10)
+}
+
+function mesAtualIso() {
+  return todayIso().slice(0, 7)
 }
 
 function statusNormalizado(valor) {
@@ -182,8 +187,8 @@ function rotuloPlano(valor) {
 }
 
 const PLANOS_PADRAO_ADMIN = [
-  { id: 'BASICO', nome: 'BASICO', descricao: 'Agenda, clientes e servicos.' },
-  { id: 'PRO', nome: 'PRO', descricao: 'Agenda com financeiro, pagamentos e relatorios.' },
+  { id: 'BASICO', nome: 'BASICO', descrição: 'Agenda, clientes e servicos.' },
+  { id: 'PRO', nome: 'PRO', descrição: 'Agenda com financeiro, pagamentos e relatorios.' },
 ]
 
 function normalizarPlanosAdmin(planosRecebidos) {
@@ -226,6 +231,9 @@ export default function AdminDashboard() {
   const [pesquisaAprovacao, setPesquisaAprovacao] = useState('')
   const [pesquisaChamado, setPesquisaChamado] = useState('')
   const [pesquisaLog, setPesquisaLog] = useState('')
+  const [mesLog, setMesLog] = useState(mesAtualIso())
+  const [paginaLog, setPaginaLog] = useState(1)
+  const [limpandoLogs, setLimpandoLogs] = useState(false)
   const motivoValido = motivo.trim().length >= 8
   const motivoRestante = Math.max(0, 8 - motivo.trim().length)
 
@@ -322,7 +330,7 @@ export default function AdminDashboard() {
         setPagamentos(listaPagamentos)
         setPagamentosModeracao(Array.isArray(pagamentosModeracao) ? pagamentosModeracao : [])
       } catch {
-        // polling silencioso para nao poluir o painel com erros
+        // polling silencioso para não poluir o painel com erros
       }
     }
 
@@ -362,6 +370,25 @@ export default function AdminDashboard() {
       setErro(mensagemErroApi(error, 'Nao foi possivel recarregar os dados agora.'))
     } finally {
       setRecarregando('')
+    }
+  }
+
+  async function confirmarLimparLogs() {
+    if (logsFiltrados.length === 0) return
+    const confirmado = window.confirm(
+      `Tem certeza que deseja apagar TODOS os logs do sistema (acoes de admin e de usuarios)? Esta acao nao pode ser desfeita.`
+    )
+    if (!confirmado) return
+    setLimpandoLogs(true)
+    try {
+      await adminApi.limparLogs()
+      setLogs([])
+      setPaginaLog(1)
+      setAviso('Historico de logs apagado com sucesso.')
+    } catch (error) {
+      setErro(mensagemErroApi(error, 'Nao foi possivel limpar os logs agora.'))
+    } finally {
+      setLimpandoLogs(false)
     }
   }
 
@@ -416,12 +443,23 @@ export default function AdminDashboard() {
     contemTermo(item, pesquisaChamado, ['assunto', 'empresa', 'usuario', 'status', 'resposta'])
   )), [chamados, pesquisaChamado])
 
-  const logsFiltrados = useMemo(() => (Array.isArray(logs) ? logs : []).filter((item) => {
-    const categoriaOk = !filtroLog.categoria || rotuloCategoria(item.tipo) === filtroLog.categoria
-    const severidadeOk = !filtroLog.severidade || item.severidade === filtroLog.severidade
-    const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descricao', 'motivo'])
-    return categoriaOk && severidadeOk && buscaOk
-  }), [logs, filtroLog, pesquisaLog])
+  const logsFiltrados = useMemo(() => {
+    const lista = (Array.isArray(logs) ? logs : []).filter((item) => {
+      const categoriaOk = !filtroLog.categoria || rotuloCategoria(item.tipo) === filtroLog.categoria
+      const severidadeOk = !filtroLog.severidade || item.severidade === filtroLog.severidade
+      const buscaOk = contemTermo(item, pesquisaLog, ['tipo', 'severidade', 'admin', 'usuario', 'empresa', 'descrição', 'motivo'])
+      const mesOk = !mesLog || String(item.dataCriacao || '').slice(0, 7) === mesLog
+      return categoriaOk && severidadeOk && buscaOk && mesOk
+    })
+    return lista.sort((a, b) => String(b.dataCriacao || '').localeCompare(String(a.dataCriacao || '')))
+  }, [logs, filtroLog, pesquisaLog, mesLog])
+
+  const LOGS_POR_PAGINA = 20
+  const totalPaginasLog = Math.max(1, Math.ceil(logsFiltrados.length / LOGS_POR_PAGINA))
+  const logsPagina = useMemo(() => {
+    const inicio = (paginaLog - 1) * LOGS_POR_PAGINA
+    return logsFiltrados.slice(inicio, inicio + LOGS_POR_PAGINA)
+  }, [logsFiltrados, paginaLog])
 
   function abrirModal(item, tipo) {
     setModal({ ...item, tipo })
@@ -472,7 +510,7 @@ export default function AdminDashboard() {
   async function confirmarImpersonacao() {
     if (!modal) return
     if (!modal.usuarioId) {
-      setErro('Usuario responsavel da empresa nao encontrado para inspecao.')
+      setErro('Usuario responsavel da empresa não encontrado para inspecao.')
       return
     }
     setCarregandoAcao(true)
@@ -541,7 +579,7 @@ export default function AdminDashboard() {
       setModal(null)
       setAviso(modal.tipo === 'empresa-ativar' ? 'Conta ativada com sucesso.' : 'Conta desativada com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('A conta foi atualizada, mas nao foi possivel recarregar a tabela agora.')
+        setErro('A conta foi atualizada, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, modal.tipo === 'empresa-ativar' ? 'Nao foi possivel ativar a conta.' : 'Nao foi possivel desativar a conta.'))
@@ -569,7 +607,7 @@ export default function AdminDashboard() {
       setModal(null)
       setAviso('Dados da empresa atualizados com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('A empresa foi atualizada, mas nao foi possivel recarregar a tabela agora.')
+        setErro('A empresa foi atualizada, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel atualizar os dados da empresa.'))
@@ -654,7 +692,7 @@ export default function AdminDashboard() {
 
   async function removerPlanoDaConta(assinatura) {
     if (!modal) return
-    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe nao restar nenhum plano, a conta ficara inativa.`)
+    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe não restar nenhum plano, a conta ficara inativa.`)
     if (!semPlano) return
     setSalvandoAssinatura(true)
     setErro('')
@@ -664,7 +702,7 @@ export default function AdminDashboard() {
       setEditandoAssinaturaId(null)
       setAviso('Plano removido da conta com sucesso.')
       carregarAdmin().catch(() => {
-        setErro('O plano foi removido, mas nao foi possivel recarregar a tabela agora.')
+        setErro('O plano foi removido, mas não foi possivel recarregar a tabela agora.')
       })
     } catch (error) {
       setErro(mensagemErroApi(error, 'Nao foi possivel remover o plano.'))
@@ -1065,42 +1103,73 @@ export default function AdminDashboard() {
                 <Button icon={RefreshCw} variant="secondary" onClick={recarregarAbaAtual} loading={recarregando === 'Logs'} loadingText="Recarregando...">
                   Recarregar
                 </Button>
+                <Button icon={Trash2} variant="danger" onClick={confirmarLimparLogs} disabled={limpandoLogs || logsFiltrados.length === 0}>
+                  Limpar logs
+                </Button>
               </div>
             </div>
             <div className="admin-filters">
               <input
                 value={pesquisaLog}
                 maxLength={120}
-                onChange={(event) => setPesquisaLog(event.target.value)}
+                onChange={(event) => {
+                  setPaginaLog(1)
+                  setPesquisaLog(event.target.value)
+                }}
                 placeholder="Pesquisar por evento, empresa ou usuario"
               />
-              <select value={filtroLog.categoria} onChange={(event) => setFiltroLog((atual) => ({ ...atual, categoria: event.target.value }))}>
+              <select value={filtroLog.categoria} onChange={(event) => {
+                setPaginaLog(1)
+                setFiltroLog((atual) => ({ ...atual, categoria: event.target.value }))
+              }}>
                 <option value="">Todas as categorias</option>
                 {CATEGORIAS_LOG.map((cat) => (
                   <option key={cat.valor} value={cat.rotulo}>{cat.rotulo}</option>
                 ))}
               </select>
-              <select value={filtroLog.severidade} onChange={(event) => setFiltroLog((atual) => ({ ...atual, severidade: event.target.value }))}>
+              <select value={filtroLog.severidade} onChange={(event) => {
+                setPaginaLog(1)
+                setFiltroLog((atual) => ({ ...atual, severidade: event.target.value }))
+              }}>
                 <option value="">Todas as severidades</option>
                 <option value="INFO">INFO</option>
                 <option value="WARNING">WARNING</option>
                 <option value="SECURITY">SECURITY</option>
                 <option value="ERROR">ERROR</option>
               </select>
+              <label className="admin-filter-field">
+                <span>Mês</span>
+                <input
+                  type="month"
+                  value={mesLog}
+                  onChange={(event) => {
+                    setPaginaLog(1)
+                    setMesLog(event.target.value)
+                  }}
+                  aria-label="Filtrar por mês"
+                />
+              </label>
             </div>
-            <Table columns={['Tipo', 'Severidade', 'Admin', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
-              {logsFiltrados.map((item) => (
+            <Table columns={['Tipo', 'Severidade', 'Usuario', 'Empresa', 'Descricao', 'Motivo', 'Data']}>
+              {logsPagina.map((item) => (
                 <tr key={item.id}>
                   <td>{rotuloCategoria(item.tipo)}</td>
                   <td><StatusBadge status={item.severidade} /></td>
-                  <td>{item.admin || '-'}</td>
+                  <td>{item.usuario || item.admin || '-'}</td>
                   <td>{item.empresa || '-'}</td>
-                  <td>{item.descricao}</td>
+                  <td>{item.descrição}</td>
                   <td>{item.motivo || '-'}</td>
                   <td>{formatarDataHora(item.dataCriacao)}</td>
                 </tr>
               ))}
             </Table>
+            <Pagination
+              page={paginaLog}
+              totalPages={totalPaginasLog}
+              totalItems={logsFiltrados.length}
+              pageSize={LOGS_POR_PAGINA}
+              onPageChange={setPaginaLog}
+            />
           </section>
         )}
 
@@ -1243,7 +1312,7 @@ export default function AdminDashboard() {
                             >
                               <option value="">Selecionar plano</option>
                               {planos.map((plano) => (
-                                <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                                <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descrição}</option>
                               ))}
                             </select>
                             <input
@@ -1289,7 +1358,7 @@ export default function AdminDashboard() {
                         >
                           <option value="">Selecionar plano</option>
                           {planos.map((plano) => (
-                            <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descricao}</option>
+                            <option key={plano.id} value={plano.id}>{plano.nome} - {plano.descrição}</option>
                           ))}
                         </select>
                       </label>
@@ -1387,7 +1456,7 @@ export default function AdminDashboard() {
                   value={chamadoEdicao.resposta}
                   maxLength={1200}
                   onChange={(event) => setChamadoEdicao((atual) => ({ ...atual, resposta: event.target.value }))}
-                  placeholder="Registre uma resposta ou observacao para a equipe"
+                  placeholder="Registre uma resposta ou observação para a equipe"
                 />
                 <small className={chamadoEdicao.resposta.length >= 1200 ? 'field-hint limit-reached' : 'field-hint'}>
                   <strong>{chamadoEdicao.resposta.length}/1200</strong>
@@ -1418,7 +1487,7 @@ export default function AdminDashboard() {
                       setMotivo(event.target.value)
                       if (erro) setErro('')
                     }}
-                    placeholder="Descreva o motivo da acao"
+                    placeholder="Descreva o motivo da ação"
                   />
                   <small className={motivo.length >= 500 || (!motivoValido && motivo.length > 0) ? 'field-hint limit-reached' : 'field-hint'}>
                     {motivo.length >= 500

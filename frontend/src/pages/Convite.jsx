@@ -10,7 +10,7 @@ export default function Convite() {
   const [params] = useSearchParams()
   const navigate = useNavigate()
   const token = useMemo(() => params.get('token') || '', [params])
-  const acao = useMemo(() => String(params.get('acao') || 'confirmar').toLowerCase(), [params])
+  const ação = useMemo(() => String(params.get('ação') || 'confirmar').toLowerCase(), [params])
   const [dados, setDados] = useState({ nome: '', email: '', empresaNome: '', valido: false })
   const [senha, setSenha] = useState('')
   const [confirmarSenha, setConfirmarSenha] = useState('')
@@ -76,7 +76,7 @@ export default function Convite() {
       return
     }
     if (senha !== confirmarSenha) {
-      setErro('As senhas nao coincidem.')
+      setErro('As senhas não coincidem.')
       return
     }
     setCarregando(true)
@@ -139,7 +139,7 @@ export default function Convite() {
               <Link to="/login" className="inline-link">Voltar para o login</Link>
             </p>
           </>
-        ) : acao === 'senha' ? (
+        ) : ação === 'senha' ? (
           <>
             <p className="login-helper-v2">Confirme seus dados e crie sua senha para entrar no SaaS.</p>
             <form onSubmit={criarSenha} className="login-form-v2">
@@ -201,7 +201,7 @@ export default function Convite() {
             {erro && <p className="form-error">{erro}</p>}
             {mensagem && <p className="success-text">{mensagem}</p>}
             <div className="invite-choice-grid-v2">
-              <Button className="invite-choice-btn-v2" type="button" onClick={() => navigate(`/convite?token=${encodeURIComponent(token)}&acao=senha`, { replace: true })}>Sim, aceitar</Button>
+              <Button className="invite-choice-btn-v2" type="button" onClick={() => navigate(`/convite?token=${encodeURIComponent(token)}&ação=senha`, { replace: true })}>Sim, aceitar</Button>
               <Button className="invite-choice-btn-v2" variant="secondary" type="button" onClick={recusar} loading={carregando} loadingText="Recusando...">Nao, recusar</Button>
             </div>
           </>

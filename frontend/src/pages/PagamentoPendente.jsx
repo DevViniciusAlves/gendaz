@@ -21,7 +21,7 @@ function mensagemPadrao(status) {
   if (status === 'PAYMENT_REJECTED') return 'Pagamento recusado. Gere uma nova cobranca e tente novamente.'
   if (status === 'PAYMENT_CANCELED') return 'Pagamento cancelado. Gere uma nova cobranca para continuar.'
   if (status === 'PAYMENT_EXPIRED') return 'Pagamento expirado. Gere uma nova cobranca para continuar.'
-  return 'Pagamento ainda nao foi confirmado. Aguarde alguns minutos e tente novamente.'
+  return 'Pagamento ainda não foi confirmado. Aguarde alguns minutos e tente novamente.'
 }
 
 export default function PagamentoPendente() {
@@ -194,7 +194,7 @@ export default function PagamentoPendente() {
           <div>
             <strong>Pagamento</strong>
             <h2>Checkout seguro da Stripe</h2>
-            <p>Finalize o pagamento direto no checkout da Stripe. Os dados da conta ja seguem vinculados pela sessao.</p>
+            <p>Finalize o pagamento direto no checkout da Stripe. Os dados da conta ja seguem vinculados pela sessão.</p>
           </div>
 
           {checkoutAtivoAtual && (

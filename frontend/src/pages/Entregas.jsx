@@ -9,7 +9,7 @@ import Pagination from '../components/Pagination.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency, nextId } from '../services/localStore.js'
 
-const formInicial = { clienteId: 1, endereco: '', observacoes: '', dataPrevisao: '2026-06-18' }
+const formInicial = { clienteId: 1, endereco: '', observações: '', dataPrevisao: '2026-06-18' }
 
 export default function Entregas() {
   const [data, setData] = useLocalData('entregas')
@@ -41,7 +41,7 @@ export default function Entregas() {
     setErro('')
     const cliente = (Array.isArray(data.clientes) ? data.clientes : []).find((item) => item.id === Number(form.clienteId))
     const endereco = form.endereco.trim().replace(/\s+/g, ' ')
-    const observacoes = form.observacoes.trim()
+    const observações = form.observações.trim()
 
     if (!cliente) {
       setErro('Selecione um cliente valido.')
@@ -51,7 +51,7 @@ export default function Entregas() {
       setErro('Endereco deve ter entre 5 e 180 caracteres.')
       return
     }
-    if (observacoes.length > 300) {
+    if (observações.length > 300) {
       setErro('Observacoes deve ter ate 300 caracteres.')
       return
     }
@@ -65,7 +65,7 @@ export default function Entregas() {
         clienteNome: cliente.nome,
         responsavel: 'Equipe interna',
         endereco,
-        observacoes,
+        observações,
         dataPrevisao: form.dataPrevisao,
         horaInicio: '18:00',
         horaFim: '19:00',
@@ -91,7 +91,7 @@ export default function Entregas() {
         <div>
           <span className="section-kicker">Logistica</span>
           <h1>Entregas</h1>
-          <p>Pesquisa por protocolo ou cliente, indicadores e atualizacao de status.</p>
+          <p>Pesquisa por protocolo ou cliente, indicadores e atualização de status.</p>
         </div>
         <Button icon={Plus} onClick={abrirModal}>Criar entrega</Button>
       </div>
@@ -123,7 +123,7 @@ export default function Entregas() {
           { key: 'dataPrevisao', label: 'Data', render: (row) => new Date(`${row.dataPrevisao}T12:00:00`).toLocaleDateString('pt-BR') },
           { key: 'horaInicio', label: 'Horario', render: (row) => <div className="stacked"><strong>{row.horaInicio}</strong><small>ate {row.horaFim}</small></div> },
           { key: 'total', label: 'Total', render: (row) => currency(row.total) },
-          { key: 'acao', label: 'Status da entrega', render: (row) => <div className="delivery-action"><select value={row.status} onChange={(e) => atualizarStatus(row.id, e.target.value)}><option value="NOVO">Novo</option><option value="PENDENTE">Pendente</option><option value="EM_SEPARACAO">Em separacao</option><option value="SAIU_PARA_ENTREGA">Saiu para entrega</option><option value="ENTREGUE">Entregue</option><option value="CANCELADA">Cancelada</option></select><button className="icon-btn" title="Ver entrega" aria-label={`Ver entrega ${row.protocolo}`}><Eye size={16} /></button></div> },
+          { key: 'ação', label: 'Status da entrega', render: (row) => <div className="delivery-action"><select value={row.status} onChange={(e) => atualizarStatus(row.id, e.target.value)}><option value="NOVO">Novo</option><option value="PENDENTE">Pendente</option><option value="EM_SEPARACAO">Em separacao</option><option value="SAIU_PARA_ENTREGA">Saiu para entrega</option><option value="ENTREGUE">Entregue</option><option value="CANCELADA">Cancelada</option></select><button className="icon-btn" title="Ver entrega" aria-label={`Ver entrega ${row.protocolo}`}><Eye size={16} /></button></div> },
         ]} rows={entregasPaginadas} />
         <Pagination page={paginaAtual} totalPages={totalPaginas} totalItems={entregas.length} pageSize={itensPorPagina} onPageChange={setPagina} />
       </section>
@@ -132,7 +132,7 @@ export default function Entregas() {
         <form className="form-grid" onSubmit={salvar}>
           <label className="field"><span>Cliente</span><select value={form.clienteId} onChange={(e) => setForm({ ...form, clienteId: e.target.value })}>{(Array.isArray(data.clientes) ? data.clientes : []).map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
           <Input label="Endereco" helper="Informe um endereco objetivo." maxLength={180} value={form.endereco} onChange={(e) => setForm({ ...form, endereco: e.target.value })} required />
-          <Input label="Observacoes" helper="Use uma observacao curta." maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
+          <Input label="Observacoes" helper="Use uma observação curta." maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} />
           <Input label="Data prevista" helper="Escolha uma data valida." type="date" value={form.dataPrevisao} onChange={(e) => setForm({ ...form, dataPrevisao: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
           <Button type="submit">Salvar</Button>

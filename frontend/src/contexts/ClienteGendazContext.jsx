@@ -45,7 +45,7 @@ export function ClienteGendazProvider({ children, slug }) {
   const [agendamentos, setAgendamentos] = useState([])
   const [dashboard, setDashboard] = useState(null)
   const [beneficios, setBeneficios] = useState({ promocoes: [], cupons: [] })
-  const [configuracoes, setConfiguracoes] = useState(null)
+  const [configurações, setConfiguracoes] = useState(null)
   const [servicos, setServicos] = useState([])
   const [profissionais, setProfissionais] = useState([])
   const sincronizandoRef = useRef(null)
@@ -390,7 +390,7 @@ export function ClienteGendazProvider({ children, slug }) {
     dashboard,
     agendamentos,
     beneficios,
-    configuracoes,
+    configurações,
     servicos,
     profissionais,
     carregando,
@@ -529,7 +529,7 @@ function gerarRespostaLocal(intencao, texto, contexto) {
         }
       }
       const lista = promos.map((p, i) =>
-        `${i + 1}. ${p.titulo} — ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descricao}`
+        `${i + 1}. ${p.titulo} — ${p.desconto}% OFF${p.cupom ? ` (Cupom: ${p.cupom})` : ''}\n   ${p.descrição}`
       ).join('\n\n')
       return {
         resposta: `Promoções disponíveis:\n\n${lista}\n\nQuer agendar aproveitando alguma promoção?`,

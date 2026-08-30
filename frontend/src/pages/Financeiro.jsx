@@ -421,7 +421,7 @@ export default function Financeiro() {
         item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
         item.dataPagamento ? formatarData(item.dataPagamento) : '',
         '',
-        item.observacoes || item.agendamento?.observacoes || '',
+        item.observações || item.agendamento?.observações || '',
       ]),
     })
   }
@@ -443,14 +443,14 @@ export default function Financeiro() {
     })
   }
 
-  function abrirBulkPagamentos(acao) {
+  function abrirBulkPagamentos(ação) {
     if (!totalSelecionadosPagamentos) return
     const configs = {
       MARCAR_COMO_PAGO: ['Marcar pagamentos como pagos', 'Tem certeza que deseja marcar os pagamentos selecionados como pagos?', 'Marcar como pago', false],
       MARCAR_COMO_PENDENTE: ['Marcar pagamentos como pendentes', 'Tem certeza que deseja marcar os pagamentos selecionados como pendentes?', 'Marcar como pendente', false],
     }
-    const cfg = configs[acao]
-    setBulkModal({ acao, titulo: cfg[0], descricao: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
+    const cfg = configs[ação]
+    setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
   }
 
   async function executarBulkPagamentos() {
@@ -767,7 +767,7 @@ export default function Financeiro() {
             { key: 'metodoPagamento', label: 'FORMA', render: (row) => <span className="financeiro-center-cell">{metodoLegivel(row.metodoPagamento, row.parcelas, row.parcelaAtual)}</span> },
             { key: 'status', label: 'STATUS', render: (row) => <span className="financeiro-center-cell"><StatusBadge status={statusSimples(row.status)} /></span> },
             {
-              key: 'acao',
+              key: 'ação',
               label: 'AÇÕES',
               render: (row) => {
                 const statusPag = String(row.status || '').toUpperCase()
@@ -829,7 +829,7 @@ export default function Financeiro() {
       <BulkConfirmModal
         open={Boolean(bulkModal)}
         title={bulkModal?.titulo || 'Confirmar ação'}
-        description={bulkModal?.descricao || ''}
+        description={bulkModal?.descrição || ''}
         confirmLabel={bulkModal?.confirmLabel || 'Confirmar'}
         danger={Boolean(bulkModal?.danger)}
         loading={bulkExecutando}
@@ -937,7 +937,7 @@ export default function Financeiro() {
                     historico.itens.map((item) => (
                         <tr key={item.id}>
                            <td>
-                             {item.descricao}
+                             {item.descrição}
                            </td>
                            <td className={item.positivo ? 'success-text' : 'danger-text'}>
                              {item.positivo ? '+' : '-'}{currency(item.valor)}

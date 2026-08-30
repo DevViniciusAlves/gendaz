@@ -267,7 +267,7 @@ export default function Suporte() {
                 <div style={{ display: 'grid', justifyItems: 'end', gap: 10 }}>
                   <StatusBadge status={item.status} />
                   {ehBugChamado(item) && (
-                    <span className="status status-atencao" title="Bug de sistema com prioridade alta">
+                    <span className="status status-atenção" title="Bug de sistema com prioridade alta">
                       <span className="status-dot">●</span>
                       Prioridade alta
                     </span>

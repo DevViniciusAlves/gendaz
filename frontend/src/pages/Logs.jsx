@@ -40,7 +40,7 @@ export default function Logs() {
         const dataApi = await logsApi.listar({
           data: dataFiltro || undefined,
           usuario: usuarioFiltro.trim() || undefined,
-          acao: acaoFiltro.trim() || undefined,
+          ação: acaoFiltro.trim() || undefined,
           page: pagina,
           size: ITENS_POR_PAGINA,
         })
@@ -76,7 +76,7 @@ export default function Logs() {
       <div className="page-title">
         <span className="section-kicker">Auditoria</span>
         <h1>Logs de atividade</h1>
-        <p>Registro de todas as acoes realizadas na sua empresa. Somente leitura.</p>
+        <p>Registro de todas as ações realizadas na sua empresa. Somente leitura.</p>
       </div>
 
       <div className="panel report-filters">
@@ -156,9 +156,9 @@ export default function Logs() {
                 ),
               },
               {
-                key: 'acao',
+                key: 'ação',
                 label: 'AÇÃO',
-                render: (row) => <span className="report-center-cell">{row.acao || '-'}</span>,
+                render: (row) => <span className="report-center-cell">{row.ação || '-'}</span>,
               },
               {
                 key: 'dataHora',

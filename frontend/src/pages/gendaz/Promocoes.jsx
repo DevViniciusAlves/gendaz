@@ -131,7 +131,7 @@ export default function Promocoes() {
                         {cupom.tipo === 'PERCENTUAL' ? `${cupom.valor}% OFF` : moeda(cupom.valor)}
                       </span>
                     </div>
-                    <span>{cupom.descricao}</span>
+                    <span>{cupom.descrição}</span>
                     <small className="gendaz-promocoes__meta">
                       <Clock3 size={14} />
                       Válido até {formatarData(cupom.dataFim)}

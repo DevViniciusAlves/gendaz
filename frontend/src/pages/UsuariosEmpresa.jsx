@@ -68,7 +68,7 @@ export default function UsuariosEmpresa() {
       nome: item.nome,
       email: item.email,
       status: item.owner ? 'Dono' : String(item.status || '-'),
-      papel: item.owner ? 'OWNER' : String(item.funcao || 'MEMBER'),
+      papel: item.owner ? 'OWNER' : String(item.função || 'MEMBER'),
       entrada: formatDate(item.dataEntrada),
       expira: '-',
       convite: '-',
@@ -148,10 +148,10 @@ export default function UsuariosEmpresa() {
     if (perfilAtendente) return
     setConfirmacao({
       titulo: 'Excluir conta',
-      descricao: `Tem certeza que deseja excluir a conta de ${row.nome || row.email}? Essa ação apagará a conta do sistema e o login será perdido. Não será possível reverter.`,
+      descrição: `Tem certeza que deseja excluir a conta de ${row.nome || row.email}? Essa ação apagará a conta do sistema e o login será perdido. Não será possível reverter.`,
       confirmLabel: 'Sim, excluir',
       danger: true,
-      acao: async () => {
+      ação: async () => {
         setExecutandoExclusao(true)
         try {
           await appApi.removerMembroUsuario(row.usuarioId)
@@ -182,7 +182,7 @@ export default function UsuariosEmpresa() {
             <Button icon={Plus} onClick={() => setModalOpen(true)} disabled={limiteAtingido || perfilAtendente}>Adicionar usuário</Button>
           </div>
         </div>
-        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil nao permite adicionar usuarios.</p>}
+        {perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu perfil não permite adicionar usuarios.</p>}
         {limiteAtingido && !perfilAtendente && <p className="plan-payment-note plan-payment-helper">Seu plano atingiu o limite de usuários.</p>}
         {error && <p className="form-error">{error}</p>}
       </div>
@@ -196,7 +196,7 @@ export default function UsuariosEmpresa() {
           { key: 'papel', label: 'Função' },
           { key: 'entrada', label: 'Entrada' },
           { key: 'expira', label: 'Expira' },
-          { key: 'acao', label: 'Ações', render: (row) => (
+          { key: 'ação', label: 'Ações', render: (row) => (
             <div style={{ display: 'flex', gap: 8 }}>
               {row.tipo === 'Convite' && (
                 <>
@@ -241,15 +241,15 @@ export default function UsuariosEmpresa() {
       <BulkConfirmModal
         open={Boolean(confirmacao)}
         title={confirmacao?.titulo || 'Confirmar ação'}
-        description={confirmacao?.descricao || ''}
+        description={confirmacao?.descrição || ''}
         confirmLabel={confirmacao?.confirmLabel || 'Confirmar'}
         danger={Boolean(confirmacao?.danger)}
         loading={executandoExclusao}
         onCancel={() => setConfirmacao(null)}
         onConfirm={async () => {
-          if (!confirmacao?.acao) return
+          if (!confirmacao?.ação) return
           try {
-            await confirmacao.acao()
+            await confirmacao.ação()
             setConfirmacao(null)
           } catch (err) {
             setError(err.response?.data?.mensagem || 'Nao foi possivel excluir a conta.')

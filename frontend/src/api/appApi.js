@@ -33,7 +33,7 @@ function emitirToast(type, message) {
   }))
 }
 
-async function comNotificacao(acao, textos = {}) {
+async function comNotificacao(ação, textos = {}) {
   const {
     loading = 'Processando... aguarde',
     success = 'Operação concluída com sucesso.',
@@ -42,7 +42,7 @@ async function comNotificacao(acao, textos = {}) {
 
   emitirToast('loading', loading)
   try {
-    const resultado = await acao()
+    const resultado = await ação()
     emitirToast('success', success)
     return resultado
   } catch (err) {
@@ -180,7 +180,7 @@ function criarBaseLocal(scope, usuario) {
   if (scope === 'pagamentos') return { ...base, clientes: data.clientes, pagamentos: data.pagamentos, empresa: data.empresa }
   if (scope === 'relatorios') return { ...base, clientes: data.clientes, servicos: data.servicos, agendamentos: data.agendamentos, empresa: data.empresa }
   if (scope === 'dashboard') return { ...base, empresa: data.empresa, clientes: data.clientes, servicos: data.servicos, profissionais: data.profissionais, agendamentos: data.agendamentos, conversas: data.conversas, pagamentos: data.pagamentos, financeiro: data.financeiro, planos: data.planos }
-  if (scope === 'configuracoes') return { ...base, empresa: data.empresa }
+  if (scope === 'configurações') return { ...base, empresa: data.empresa }
   if (scope === 'produtos') return { ...base, produtos: data.produtos, empresa: data.empresa }
   if (scope === 'pedidos') return { ...base, pedidos: data.pedidos, produtos: data.produtos, empresa: data.empresa }
   if (scope === 'entregas') return { ...base, entregas: data.entregas, clientes: data.clientes, empresa: data.empresa }
@@ -359,7 +359,7 @@ export const appApi = {
         ])
         return { empresa, clientesBase, servicosBase, agendamentosBase }
       },
-      configuracoes: async () => {
+      configurações: async () => {
         const empresa = await api.get(`/empresas/${empresaId}`).then((response) => response.data)
         return { empresa }
       },
@@ -688,8 +688,8 @@ export const appApi = {
   },
 
   alterarStatusServico(id, statusAtual) {
-    const acao = statusAtual === 'ATIVO' ? 'desativar' : 'ativar'
-    return api.patch(`/servicos/${id}/${acao}`).then((response) => response.data)
+    const ação = statusAtual === 'ATIVO' ? 'desativar' : 'ativar'
+    return api.patch(`/servicos/${id}/${ação}`).then((response) => response.data)
   },
 
   excluirServico(id) {
@@ -709,8 +709,8 @@ export const appApi = {
   },
 
   alterarStatusProfissional(id, statusAtual) {
-    const acao = statusAtual === 'ATIVO' ? 'desativar' : 'ativar'
-    return api.patch(`/profissionais/${id}/${acao}`).then((response) => response.data)
+    const ação = statusAtual === 'ATIVO' ? 'desativar' : 'ativar'
+    return api.patch(`/profissionais/${id}/${ação}`).then((response) => response.data)
   },
 
   atualizarProfissional(id, payload) {

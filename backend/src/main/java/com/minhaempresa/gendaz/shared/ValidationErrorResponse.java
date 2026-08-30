@@ -12,7 +12,7 @@ public record ValidationErrorResponse(
         Map<String, String> campos
 ) {
     public static ValidationErrorResponse of(String mensagem, String caminho, Map<String, String> campos) {
-        return new ValidationErrorResponse(LocalDateTime.now(), 400, "Erro de validação", mensagem, caminho, campos);
+        return new ValidationErrorResponse(LocalDateTime.now(), 400, "Erro de validacao", mensagem, caminho, campos);
     }
 }
 

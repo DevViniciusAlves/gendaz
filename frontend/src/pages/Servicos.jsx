@@ -11,7 +11,7 @@ import ActionMenu from '../components/ActionMenu.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency } from '../services/localStore.js'
 
-const formInicial = { nome: '', descricao: '', duracaoMinutos: 30, valor: 100 }
+const formInicial = { nome: '', descrição: '', duracaoMinutos: 30, valor: 100 }
 
 function formatarDuracao(minutos) {
   const total = Number(minutos) || 0
@@ -61,7 +61,7 @@ export default function Servicos() {
     setErro('')
 
     const nome = form.nome.trim().replace(/\s+/g, ' ')
-    const descricao = form.descricao?.trim() || null
+    const descrição = form.descrição?.trim() || null
     const duracaoMinutos = form.duracaoMinutos ? Number(form.duracaoMinutos) : null
     const valor = form.valor !== '' && form.valor !== null && form.valor !== undefined ? Number(form.valor) : null
 
@@ -73,7 +73,7 @@ export default function Servicos() {
       setErro('Nome deve conter apenas letras.')
       return
     }
-    if (descricao && descricao.length > 300) {
+    if (descrição && descrição.length > 300) {
       setErro('Descrição deve ter até 300 caracteres.')
       return
     }
@@ -88,7 +88,7 @@ export default function Servicos() {
 
     setSalvando(true)
     try {
-      const payload = { nome, descricao, valor, duracaoMinutos }
+      const payload = { nome, descrição, valor, duracaoMinutos }
       if (servicoEditando) {
         await appApi.atualizarServico(servicoEditando, payload)
       } else {
@@ -123,7 +123,7 @@ export default function Servicos() {
     setServicoEditando(servico.id)
     setForm({
       nome: servico.nome || '',
-      descricao: servico.descricao || '',
+      descrição: servico.descrição || '',
       duracaoMinutos: servico.duracaoMinutos !== null && servico.duracaoMinutos !== undefined ? servico.duracaoMinutos : '',
       valor: servico.valor !== null && servico.valor !== undefined ? servico.valor : '',
     })
@@ -135,9 +135,9 @@ export default function Servicos() {
     if (acaoId) return
     setConfirmacao({
       titulo: 'Excluir serviço',
-      descricao: `Tem certeza que deseja remover ${servico.nome}? Essa ação é permanente e não terá como retornar.`,
+      descrição: `Tem certeza que deseja remover ${servico.nome}? Essa ação é permanente e não terá como retornar.`,
       acaoLabel: 'Excluir',
-      acao: async () => {
+      ação: async () => {
         setAcaoId(servico.id)
         setErro('')
         try {
@@ -177,11 +177,11 @@ export default function Servicos() {
 
       <Table columns={[
         { key: 'nome', label: 'NOME' },
-        { key: 'descricao', label: 'DESCRIÇÃO' },
+        { key: 'descrição', label: 'DESCRIÇÃO' },
         { key: 'duracaoMinutos', label: 'DURAÇÃO', render: (row) => formatarDuracao(row.duracaoMinutos) },
         { key: 'valor', label: 'VALOR', render: (row) => currency(row.valor) },
         { key: 'status', label: 'STATUS', render: (row) => <StatusBadge status={row.status} /> },
-        { key: 'acao', label: 'AÇÕES', render: (row) => (
+        { key: 'ação', label: 'AÇÕES', render: (row) => (
           <ActionMenu
             actions={[
               { label: 'Editar', icon: Pencil, onClick: () => editar(row) },
@@ -195,7 +195,7 @@ export default function Servicos() {
       <Modal title={servicoEditando ? 'Editar serviço' : 'Cadastrar serviço'} open={modal} onClose={() => setModal(false)}>
         <form className="form-grid" onSubmit={salvar}>
           <Input label="Nome" helper="Digite apenas letras." maxLength={80} value={form.nome} onChange={(e) => setForm({ ...form, nome: e.target.value.replace(/[^\p{L}\s]/gu, '') })} required />
-          <Input label="Descrição" helper="Limite a descrição ao essencial." maxLength={300} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+          <Input label="Descrição" helper="Limite a descrição ao essencial." maxLength={300} value={form.descrição} onChange={(e) => setForm({ ...form, descrição: e.target.value })} />
           <Input label="Duração em minutos" helper="Digite apenas números, entre 5 e 720." type="number" min="5" max="720" value={form.duracaoMinutos} onChange={(e) => setForm({ ...form, duracaoMinutos: e.target.value.replace(/\D/g, '') })} />
           <Input label="Valor" helper="Informe um valor maior que zero." type="number" min="0.01" step="0.01" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} />
           {erro && <p className="form-error field-wide">{erro}</p>}
@@ -205,15 +205,15 @@ export default function Servicos() {
 
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => setConfirmacao(null)}>
         <div className="confirm-box">
-          <p>{confirmacao?.descricao}</p>
+          <p>{confirmacao?.descrição}</p>
           <div className="confirm-actions">
             <Button variant="secondary" type="button" onClick={() => setConfirmacao(null)}>Cancelar</Button>
             <Button
               type="button"
               onClick={async () => {
-                const acao = confirmacao?.acao
+                const ação = confirmacao?.ação
                 setConfirmacao(null)
-                if (acao) await acao()
+                if (ação) await ação()
               }}
             >
               {confirmacao?.acaoLabel || 'Confirmar'}
