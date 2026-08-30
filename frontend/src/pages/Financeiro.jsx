@@ -147,7 +147,7 @@ export default function Financeiro() {
 
   const { usuario } = useAuth()
   const planoAtual = String(usuario?.plano || '').toUpperCase()
-  const isPlanoPro = planoAtual === 'PRO'
+  const isPlanoComRecursosAvancados = planoAtual === 'PRO' || planoAtual === 'PLUS' || planoAtual === 'ENTERPRISE'
 
   const [caixaDespesas, setCaixaDespesas] = useState(null)
   const [modalAdicionar, setModalAdicionar] = useState(null)
@@ -182,9 +182,9 @@ export default function Financeiro() {
   }, [])
 
   useEffect(() => {
-    if (!isPlanoPro) return
+    if (!isPlanoComRecursosAvancados) return
     carregarTotaisCaixaDespesas()
-  }, [isPlanoPro])
+  }, [isPlanoComRecursosAvancados])
 
   async function carregarTotaisCaixaDespesas() {
     try {
@@ -547,14 +547,14 @@ export default function Financeiro() {
         </div>
       </div>
 
-      {!isPlanoPro && (
+      {!isPlanoComRecursosAvancados && (
         <div className="metric-grid compact financeiro-metrics">
           <DashboardCard title="Total recebido" value={currency(recebido)} />
           <DashboardCard title="Total pendente" value={currency(pendente)} />
         </div>
       )}
 
-      {isPlanoPro && (
+      {isPlanoComRecursosAvancados && (
         <div className="metric-grid compact financeiro-metrics caixa-despesas-grid">
           <article className="metric-card caixa-card">
             <div>

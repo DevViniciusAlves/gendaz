@@ -24,8 +24,11 @@ const PLANOS_INFO = {
 
 function normalizarPlano(planoParam) {
   const texto = String(planoParam || '').toUpperCase()
-  if (texto.includes('PRO')) return 'PRO'
-  return 'BASICO'
+  if (texto === 'BASICO') return 'BASICO'
+  if (texto === 'PRO') return 'PRO'
+  if (texto === 'PLUS') return 'PLUS'
+  if (texto === 'ENTERPRISE') return 'ENTERPRISE'
+  return texto
 }
 
 function normalizarTexto(valor) {

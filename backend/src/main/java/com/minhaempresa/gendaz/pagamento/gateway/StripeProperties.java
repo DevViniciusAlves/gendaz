@@ -16,10 +16,14 @@ public class StripeProperties {
     private String webhookSecret = "";
     private String priceBasicoId = "";
     private String priceProId = "";
+    private String pricePlusId = "";
+    private String priceEnterpriseId = "";
 
     public String priceIdParaPlano(String planoNome) {
         if ("BASICO".equalsIgnoreCase(planoNome)) return priceBasicoId;
         if ("PRO".equalsIgnoreCase(planoNome)) return priceProId;
+        if ("PLUS".equalsIgnoreCase(planoNome)) return pricePlusId;
+        if ("ENTERPRISE".equalsIgnoreCase(planoNome)) return priceEnterpriseId;
         throw new BusinessException("Plano invalido para Stripe.");
     }
 }

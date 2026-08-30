@@ -76,6 +76,26 @@ public class PagamentoController {
         return ResponseEntity.ok(Map.of("count", pagamentoService.contarPendentes(empresaId)));
     }
 
+    @PostMapping("/planos/iniciar")
+    public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPlano(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
+        validarNaoAtendente();
+        validarEmpresaAutenticada(request.empresaId());
+        String plano = request.plano() == null ? "PRO" : request.plano().toUpperCase();
+        if (!"BASICO".equals(plano) && !"PRO".equals(plano) && !"PLUS".equals(plano) && !"ENTERPRISE".equals(plano)) {
+            throw new BusinessException("Plano invalido. Escolha BASICO, PRO, PLUS ou ENTERPRISE.");
+        }
+        return ResponseEntity.ok(pagamentoService.iniciarPagamentoPlano(
+                request.empresaId(),
+                plano,
+                request.metodoPagamento(),
+                request.customerName(),
+                request.customerEmail(),
+                request.customerPhone(),
+                request.antifraudProfilingAttemptReference(),
+                request.forceNew() != null && request.forceNew()
+        ));
+    }
+
     @PostMapping("/planos/pro/iniciar")
     public ResponseEntity<PagamentoPlanoResponse> iniciarPagamentoPro(@Valid @RequestBody IniciarPagamentoPlanoRequest request, HttpServletRequest http) {
         validarNaoAtendente();

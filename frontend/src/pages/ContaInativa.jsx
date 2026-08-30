@@ -247,6 +247,8 @@ export default function ContaInativa() {
                     <select value={planoSelecionado} onChange={trocarPlano} aria-label="Plano">
                       <option value="BASICO">Básico</option>
                       <option value="PRO">Pro</option>
+                      <option value="PLUS">Plus</option>
+                      <option value="ENTERPRISE">Enterprise</option>
                     </select>
                   </div>
                 </div>

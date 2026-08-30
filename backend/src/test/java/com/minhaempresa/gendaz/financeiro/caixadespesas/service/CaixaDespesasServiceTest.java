@@ -67,10 +67,10 @@ class CaixaDespesasServiceTest {
 
     @Test
     void deveAdicionarAoCaixaApenasNoPlanoPro() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(false);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(false);
         assertThrows(BusinessException.class, () -> service.adicionarCaixaManual(1L, new BigDecimal("100"), "obs", 5L));
 
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         CaixaDespesasTotaisResponse resposta = service.adicionarCaixaManual(1L, new BigDecimal("100"), "obs", 5L);
         assertEquals(0, new BigDecimal("100").compareTo(resposta.caixaTotal()));
         assertEquals(0, BigDecimal.ZERO.compareTo(resposta.despesasTotal()));
@@ -78,14 +78,14 @@ class CaixaDespesasServiceTest {
 
     @Test
     void deveRejeitarValorInvalido() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         assertThrows(BusinessException.class, () -> service.adicionarCaixaManual(1L, BigDecimal.ZERO, "obs", 5L));
         assertThrows(BusinessException.class, () -> service.adicionarCaixaManual(1L, new BigDecimal("-10"), "obs", 5L));
     }
 
     @Test
     void deveRemoverAdicaoManualDeCaixa() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         service.adicionarCaixaManual(1L, new BigDecimal("50"), "obs", 5L);
 
         CaixaDespesasLogEntity log = new CaixaDespesasLogEntity();
@@ -101,7 +101,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void naoDeveRemoverLogQueNaoSejaAdicaoManual() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         CaixaDespesasLogEntity log = new CaixaDespesasLogEntity();
         log.setId(11L);
         log.setBusiness(empresa);
@@ -114,7 +114,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void deveListarHistoricoPaginado() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         CaixaDespesasLogEntity log = new CaixaDespesasLogEntity();
         log.setId(1L);
         log.setTipo(TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA);
@@ -132,7 +132,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void deveRegistrarPagamentoAprovadoNoCaixa() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
 
         PagamentoEntity pagamento = new PagamentoEntity();
         pagamento.setId(2L);
@@ -152,7 +152,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void naoDeveRegistrarPagamentoAprovadoForaDoPlanoPro() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(false);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(false);
         PagamentoEntity pagamento = new PagamentoEntity();
         pagamento.setEmpresa(empresa);
         pagamento.setValor(new BigDecimal("200"));
@@ -162,7 +162,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void deveRegistrarPagamentoCanceladoEPuxarDoCaixaQuandoPago() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         PagamentoEntity pagamento = new PagamentoEntity();
         pagamento.setId(3L);
         pagamento.setEmpresa(empresa);
@@ -175,7 +175,7 @@ class CaixaDespesasServiceTest {
 
     @Test
     void naoDevePuxarDoCaixaAoCancelarPendente() {
-        when(assinaturaService.isPlanoPro(1L)).thenReturn(true);
+        when(assinaturaService.isPlanoComRecursosAvancados(1L)).thenReturn(true);
         PagamentoEntity pagamento = new PagamentoEntity();
         pagamento.setEmpresa(empresa);
         pagamento.setValor(new BigDecimal("150"));

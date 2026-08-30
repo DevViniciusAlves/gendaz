@@ -20,7 +20,7 @@ public class PlanoService {
     @Transactional(readOnly = true)
     public List<PlanoResponse> listar() {
         return planoRepository.findAll().stream()
-                .filter(plano -> plano.getNome().equals("BASICO") || plano.getNome().equals("PRO"))
+                .filter(plano -> plano.getNome().equals("BASICO") || plano.getNome().equals("PRO") || plano.getNome().equals("PLUS") || plano.getNome().equals("ENTERPRISE"))
                 .map(mapper::toResponse)
                 .toList();
     }
@@ -33,8 +33,8 @@ public class PlanoService {
 
     @Transactional(readOnly = true)
     public PlanoEntity buscarPorNomePermitido(String nome) {
-        if (nome == null || (!nome.equals("BASICO") && !nome.equals("PRO"))) {
-            throw new BusinessException("Plano invalido. Escolha BASICO ou PRO.");
+        if (nome == null || (!nome.equals("BASICO") && !nome.equals("PRO") && !nome.equals("PLUS") && !nome.equals("ENTERPRISE"))) {
+            throw new BusinessException("Plano invalido. Escolha BASICO, PRO, PLUS ou ENTERPRISE.");
         }
         return planoRepository.findByNome(nome)
                 .orElseThrow(() -> new ResourceNotFoundException("Plano nao encontrado."));

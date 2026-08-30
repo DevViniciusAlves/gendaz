@@ -671,8 +671,8 @@ public class PagamentoService {
 
     private String normalizarPlano(String planoNome) {
         String plano = planoNome == null ? "PRO" : planoNome.trim().toUpperCase(Locale.ROOT);
-        if (!plano.equals("BASICO") && !plano.equals("PRO")) {
-            throw new BusinessException("Plano invalido. Escolha BASICO ou PRO.");
+        if (!plano.equals("BASICO") && !plano.equals("PRO") && !plano.equals("PLUS") && !plano.equals("ENTERPRISE")) {
+            throw new BusinessException("Plano invalido. Escolha BASICO, PRO, PLUS ou ENTERPRISE.");
         }
         return plano;
     }

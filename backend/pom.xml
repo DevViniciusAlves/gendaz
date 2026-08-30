@@ -25,6 +25,18 @@
         <lombok.version>1.18.34</lombok.version>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.sentry</groupId>
+                <artifactId>sentry-bom</artifactId>
+                <version>7.14.0</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -118,6 +130,10 @@
             <artifactId>libphonenumber</artifactId>
             <version>8.13.52</version>
         </dependency>
+        <dependency>
+            <groupId>io.sentry</groupId>
+            <artifactId>sentry-spring-boot-starter-jakarta</artifactId>
+        </dependency>
     </dependencies>
 
     <build>
@@ -149,6 +165,34 @@
                         </exclude>
                     </excludes>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.sentry</groupId>
+                <artifactId>sentry-maven-plugin</artifactId>
+                <version>4.14.0</version>
+                <configuration>
+                    <org>gendaz</org>
+                    <project>gendaz</project>
+                    <authToken>${env.SENTRY_AUTH_TOKEN}</authToken>
+                    <includeSourceContext>true</includeSourceContext>
+                    <release>${project.version}</release>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>io.sentry</groupId>
+                        <artifactId>sentry-maven-plugin</artifactId>
+                        <version>4.14.0</version>
+                    </dependency>
+                </dependencies>
+                <executions>
+                    <execution>
+                        <id>upload-sourcemaps</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>upload-sourcemaps</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

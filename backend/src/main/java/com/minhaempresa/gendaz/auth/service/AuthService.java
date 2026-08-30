@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.auth.service;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
+import com.minhaempresa.gendaz.assinatura.mapper.AssinaturaMapper;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.CriarContaRequest;
@@ -69,6 +70,7 @@ public class AuthService {
     private final EmpresaRepository empresaRepository;
     private final PlanoService planoService;
     private final AssinaturaService assinaturaService;
+    private final AssinaturaMapper assinaturaMapper = new AssinaturaMapper();
     private final PagamentoService pagamentoService;
     private final PasswordRecoveryService passwordRecoveryService;
     private final ResendEmailService resendEmailService;
@@ -180,7 +182,7 @@ public class AuthService {
             PagamentoPlanoResponse pagamentoPlano = null;
             if (usuario.getEmpresa() != null) {
                 AssinaturaEntity assinaturaAtual = assinaturaService.buscarAtualPorEmpresa(usuario.getEmpresa().getId()).orElse(null);
-                assinatura = assinaturaAtual == null ? null : assinaturaService.toResponse(assinaturaAtual);
+                assinatura = assinaturaAtual == null ? null : assinaturaMapper.toResponse(assinaturaAtual);
                 pagamentoPlano = pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(usuario.getEmpresa()).orElse(null);
                 if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
                     String sessionToken = usuarioSessionService.renovarSessao(usuario);
@@ -352,10 +354,12 @@ public class AuthService {
         CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
 
         PagamentoPlanoResponse pagamentoPlano = null;
-        if ("PRO".equalsIgnoreCase(cadastro.assinatura().getPlano().getNome())) {
+        String planoOnboarding = cadastro.assinatura() != null && cadastro.assinatura().getPlano() != null
+                ? cadastro.assinatura().getPlano().getNome() : request.plano();
+        if ("PRO".equalsIgnoreCase(planoOnboarding) || "PLUS".equalsIgnoreCase(planoOnboarding) || "ENTERPRISE".equalsIgnoreCase(planoOnboarding)) {
             pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
                     cadastro.empresaId(),
-                    "PRO",
+                    planoOnboarding,
                     MetodoPagamento.CREDIT_CARD,
                     cadastro.usuario().getNome(),
                     cadastro.usuario().getEmail(),
@@ -393,13 +397,27 @@ public class AuthService {
             }
         }
 
+        if (pagamentoPlano != null) {
+            log.info("Cadastro concluido com pagamento pendente para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
+            registrarAuditoriaAutenticacao("USER_REGISTER_PENDING_PAYMENT", cadastro.usuario(), "Conta criada: pagamento do plano pendente");
+            return new LoginResponse(
+                    "Cadastro criado. A conta " + (planoOnboarding != null ? planoOnboarding : "Pro") + " aguarda confirmacao de pagamento.",
+                    mapper.toResponse(cadastro.usuario()),
+                    assinaturaMapper.toResponse(cadastro.assinatura()),
+                    pagamentoPlano,
+                    "ACCOUNT_PENDING_PAYMENT",
+                    null,
+                    "PAGAMENTO_PENDENTE"
+            );
+        }
+
         log.info("Cadastro concluido para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
         String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
         registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
         return new LoginResponse(
                 "Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
                 mapper.toResponse(cadastro.usuario()),
-                assinaturaService.toResponse(cadastro.assinatura()),
+                assinaturaMapper.toResponse(cadastro.assinatura()),
                 pagamentoPlano,
                 "ACTIVE",
                 sessionToken,
@@ -669,7 +687,12 @@ public class AuthService {
                 .versaoPolitica(VERSAO_PRIVACIDADE)
                 .build());
 
-        AssinaturaEntity assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
+        AssinaturaEntity assinatura;
+        if ("BASICO".equalsIgnoreCase(planoEscolhido.getNome())) {
+            assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
+        } else {
+            assinatura = assinaturaService.criarPendentePagamento(empresa, planoEscolhido);
+        }
         log.info("Conta criada: empresa={}, usuario={}, assinatura={}, plano={}, status={}",
                 empresa.getId(), usuario.getId(), assinatura.getId(), planoEscolhido.getNome(), assinatura.getStatus());
         return new CadastroContaCriada(empresa.getId(), usuario, assinatura);

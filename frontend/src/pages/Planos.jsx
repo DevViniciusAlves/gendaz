@@ -47,6 +47,38 @@ const planosBase = [
     precoFallback: 79.90,
     destaque: true,
   },
+  {
+    codigo: 'PLUS',
+    nome: 'Plano Plus',
+    subtitulo: 'Mais capacidade para sua equipe',
+    extra: '7 dias grátis',
+    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
+    beneficios: [
+      'Tudo do Plano Pro +',
+      'Até 7 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Plus',
+    precoFallback: 109.90,
+  },
+  {
+    codigo: 'ENTERPRISE',
+    nome: 'Plano Enterprise',
+    subtitulo: 'Escalabilidade máxima',
+    extra: '7 dias grátis',
+    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
+    beneficios: [
+      'Tudo do Plano Plus +',
+      'Até 15 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Enterprise',
+    precoFallback: 149.90,
+  },
 ]
 
 const statusPagamentoTexto = {
@@ -265,9 +297,46 @@ export default function Planos() {
       navigate(`/criar-conta?plano=${encodeURIComponent(plano.codigo)}`)
       return
     }
-    if (plano.codigo === 'BASICO') {
-      iniciarPagamentoBasico()
+    if (plano.codigo === 'BASICO' || plano.codigo === 'PLUS' || plano.codigo === 'ENTERPRISE') {
+      iniciarPagamentoPlano(plano.codigo)
       return
+    }
+  }
+
+  async function iniciarPagamentoPlano(codigoPlano) {
+    if (!usuario) {
+      navigate(`/criar-conta?plano=${encodeURIComponent(codigoPlano)}`)
+      return
+    }
+    if (perfilAtendente) {
+      setErro('Seu perfil não permite comprar ou editar planos.')
+      return
+    }
+    if (limiteAtingido) {
+      setErro('Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.')
+      return
+    }
+
+    setErro('')
+    setPlanoCarregando(codigoPlano)
+    try {
+      const pagamento = await appApi.iniciarPagamentoPlano({
+        empresaId: usuario.empresaId,
+        metodoPagamento: 'CREDIT_CARD',
+        plano: codigoPlano,
+        customerName: usuario.nome,
+        customerEmail: usuario.email,
+        customerPhone: usuario.telefone,
+        antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
+        forceNew: true,
+      })
+      setPagamentoPlano(pagamento)
+      setCheckoutSolicitado(true)
+      atualizarUsuario({ pagamentoPlano: pagamento })
+    } catch (error) {
+      setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
+    } finally {
+      setPlanoCarregando(null)
     }
   }
 

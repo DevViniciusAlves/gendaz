@@ -367,7 +367,12 @@ public class MembresiaService {
         AssinaturaEntity assinatura = assinaturaService.buscarAtualPorEmpresa(empresaId).orElse(null);
         if (assinatura == null || assinatura.getStatus() == StatusAssinatura.EXPIRADA) return 1;
         PlanoEntity plano = assinatura.getPlano();
-        return "PRO".equalsIgnoreCase(plano.getNome()) ? 3 : 1;
+        if (plano == null) return 1;
+        String nomePlano = plano.getNome();
+        if ("ENTERPRISE".equalsIgnoreCase(nomePlano)) return 15;
+        if ("PLUS".equalsIgnoreCase(nomePlano)) return 7;
+        if ("PRO".equalsIgnoreCase(nomePlano)) return 3;
+        return 1;
     }
 
     private void validarLimite(Long empresaId) {

@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.auth.idempotencia.service;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.repository.AssinaturaRepository;
+import com.minhaempresa.gendaz.assinatura.mapper.AssinaturaMapper;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.LoginResponse;
 import com.minhaempresa.gendaz.auth.idempotencia.entity.CadastroIdempotenciaEntity;
@@ -47,6 +48,7 @@ public class CadastroIdempotenciaService {
     private final UsuarioSessionService usuarioSessionService;
     private final TransactionTemplate novaTransacao;
     private final UsuarioMapper usuarioMapper = new UsuarioMapper();
+    private final AssinaturaMapper assinaturaMapper = new AssinaturaMapper();
 
     public CadastroIdempotenciaService(
             CadastroIdempotenciaRepository repository,
@@ -178,7 +180,7 @@ public class CadastroIdempotenciaService {
         UsuarioEntity usuario = usuarioRepository.findByIdComEmpresa(usuarioId)
                 .orElseThrow(() -> new IllegalStateException("Cadastro concluido sem usuario registrado na idempotencia."));
         AssinaturaEntity assinatura = assinaturaId == null ? null : assinaturaRepository.findById(assinaturaId).orElse(null);
-        AssinaturaResponse assinaturaRes = assinatura == null ? null : assinaturaService.toResponse(assinatura);
+        AssinaturaResponse assinaturaRes = assinatura == null ? null : assinaturaMapper.toResponse(assinatura);
 
         boolean pendentePagamento = STATUS_CONTA_PENDENTE_PAGAMENTO.equals(statusConta) || pagamentoPlanoId != null;
         PagamentoPlanoResponse pagamento = null;

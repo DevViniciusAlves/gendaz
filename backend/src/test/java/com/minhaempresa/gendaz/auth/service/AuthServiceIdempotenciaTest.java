@@ -89,9 +89,8 @@ class AuthServiceIdempotenciaTest {
             String nome = invocacao.getArgument(0);
             return "pro".equalsIgnoreCase(nome) ? planoPro() : planoBasico();
         });
-        lenient().when(assinaturaService.criarTesteGratis(any(), any())).thenReturn(assinatura());
-        lenient().when(assinaturaService.criarPendentePagamento(any(), any())).thenReturn(assinatura());
-        lenient().when(assinaturaService.toResponse(any(AssinaturaEntity.class))).thenReturn(assinaturaResponse());
+        lenient().when(assinaturaService.criarTesteGratis(any(), any())).thenAnswer(invocacao -> assinaturaComPlano(invocacao.getArgument(1)));
+        lenient().when(assinaturaService.criarPendentePagamento(any(), any())).thenAnswer(invocacao -> assinaturaComPlano(invocacao.getArgument(1)));
         lenient().when(resendEmailService.enviarBoasVindas(any(), any(), any())).thenReturn(true);
         lenient().when(usuarioSessionService.renovarSessao(any())).thenReturn("sessao-nova");
         lenient().when(cadastroIdempotenciaService.calcularKeyHash(any())).thenReturn(KEY_HASH);
@@ -135,7 +134,20 @@ class AuthServiceIdempotenciaTest {
     }
 
     private AssinaturaEntity assinatura() {
-        return AssinaturaEntity.builder().id(5L).build();
+        return assinaturaComPlano(planoBasico());
+    }
+
+    private AssinaturaEntity assinaturaComPlano(PlanoEntity plano) {
+        return AssinaturaEntity.builder()
+                .id(5L)
+                .empresa(empresa())
+                .plano(plano)
+                .status(StatusAssinatura.TESTE)
+                .dataInicio(java.time.LocalDate.now())
+                .dataFim(java.time.LocalDate.now().plusDays(7))
+                .dataInicioTeste(java.time.LocalDate.now())
+                .dataFimTeste(java.time.LocalDate.now().plusDays(7))
+                .build();
     }
 
     private PlanoEntity planoBasico() {
