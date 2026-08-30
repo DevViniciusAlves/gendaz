@@ -22,16 +22,17 @@ export function CrispProvider() {
       const box = document.getElementById('crisp-chatbox')
       if (!box) return
 
-      // Procura o launcher: primeiro tenta o botão <button>, depois o .crisp-client
-      const launcher =
-        box.querySelector('button') ||
-        box.querySelector('.crisp-client')
-
-      if (!launcher) return
-
       // Já vem com position:fixed do Crisp; garante o bottom elevado
-      // 130px coloca acima da nav inferior do /sistema (que tem ~94px + safe-area)
-      launcher.style.setProperty('bottom', 'calc(130px + env(safe-area-inset-bottom))', 'important')
+      // Varre todos os filhos fixos e sobe o bottom
+      const offset = 'calc(130px + env(safe-area-inset-bottom))'
+      for (const child of box.querySelectorAll('*')) {
+        const pos = getComputedStyle(child).position
+        if (pos === 'fixed' || pos === 'absolute') {
+          child.style.setProperty('bottom', offset, 'important')
+        }
+      }
+      // Fallback: sobe o próprio container também
+      box.style.setProperty('bottom', offset, 'important')
     }
 
     raiseLauncherOnMobile()
