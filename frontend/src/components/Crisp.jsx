@@ -30,7 +30,8 @@ export function CrispProvider() {
       if (!launcher) return
 
       // Já vem com position:fixed do Crisp; garante o bottom elevado
-      launcher.style.setProperty('bottom', 'calc(84px + env(safe-area-inset-bottom))', 'important')
+      // 130px coloca acima da nav inferior do /sistema (que tem ~94px + safe-area)
+      launcher.style.setProperty('bottom', 'calc(130px + env(safe-area-inset-bottom))', 'important')
     }
 
     raiseLauncherOnMobile()
