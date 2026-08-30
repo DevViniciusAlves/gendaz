@@ -8,12 +8,12 @@
 <style>
   @font-face{font-family:'Faktum Medium';src:url('frontend/public/fonts/Faktum-Medium.woff2') format('woff2');font-weight:400 900;font-style:normal;font-display:swap;}
   :root {
-    --bg: #1a1a1a; --bg2: #222; --bg3: #2a2a2a; --line: #333;
-    --text: #fff; --muted: #999; --accent: #ff5e29; --green: #10b981;
+    --bg: #242424; --bg2: #242424; --bg3: #242424; --line: #555555;
+    --text: #fff; --muted: #aaa; --accent: #ff5e29; --green: #10b981;
     --ff: 'Faktum Medium', 'Poppins', sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;background:#0d0d0d;font-family:var(--ff);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px;}
+  html,body{height:100%;background:#242424;font-family:var(--ff);color:var(--text);display:flex;align-items:center;justify-content:center;padding:20px;}
 
   .phone,.phone *,.screen,.screen *,
   .statusbar,.topbar,.topbar *,
@@ -25,7 +25,7 @@
   #modal-send,#modal-send *,#modal-hist,#modal-hist *,
   .final-overlay,.final-overlay *{font-family:var(--ff) !important;}
 
-  .phone{position:relative;width:390px;height:844px;background:#0a0a0a;border-radius:54px;padding:14px;box-shadow:0 0 0 2px #222,0 0 0 10px #0a0a0a,0 30px 80px rgba(0,0,0,.7);}
+  .phone{position:relative;width:390px;height:844px;background:#242424;border-radius:54px;padding:14px;box-shadow:0 0 0 2px #555,0 0 0 10px #242424,0 30px 80px rgba(0,0,0,.7);}
   .phone-notch{position:absolute;top:14px;left:50%;transform:translateX(-50%);width:150px;height:30px;background:#0a0a0a;border-radius:0 0 18px 18px;z-index:40;}
   .phone-notch::after{content:'';position:absolute;top:9px;left:50%;transform:translateX(-50%);width:54px;height:6px;background:#1c1c1c;border-radius:99px;}
   .screen{position:relative;width:100%;height:100%;background:var(--bg);border-radius:42px;overflow:hidden;display:flex;flex-direction:column;pointer-events:none;user-select:none;}
@@ -34,7 +34,6 @@
   .statusbar .bat{position:relative;width:24px;height:12px;border:1.5px solid #fff;border-radius:3px;}
   .statusbar .bat::before{content:'';position:absolute;left:1.5px;top:1.5px;bottom:1.5px;width:70%;background:#fff;border-radius:1px;}
 
-  /* TOPBAR — identica ao print */
   .topbar{flex:0 0 auto;padding:0 16px 8px;display:flex;flex-direction:column;}
   .topbar-label{font-size:9px;font-weight:800;letter-spacing:.08em;color:var(--text);text-transform:uppercase;}
   .topbar-title{font-size:20px;font-weight:800;color:#fff;line-height:1.15;}
@@ -57,9 +56,8 @@
   .view.active{display:flex;animation:fadeIn .3s ease both;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
 
-  /* FILTROS — identicos ao print */
   .crm-filters{background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:12px;}
-  .crm-filters h4{font-size:12px;font-weight:700;color:#fff;}
+  .crm-filters h4{font-size:12px;font-weight:700;color:var(--accent);}
   .crm-flabel{font-size:10px;font-weight:700;color:var(--muted);display:block;margin-bottom:6px;}
   .seg-list{display:flex;flex-direction:column;gap:7px;}
   .seg-opt{display:flex;align-items:center;gap:7px;font-size:12px;color:#fff;cursor:pointer;}
@@ -75,16 +73,14 @@
   .crm-count{font-size:11px;color:var(--muted);margin-top:2px;}
   .crm-count b{color:#fff;}
 
-  /* BOTTOMNAV — identico ao print */
   .bottomnav{flex:0 0 50px;display:flex;align-items:center;border-top:1px solid rgba(255,255,255,.08);background:var(--bg2);padding:0 8px;}
   .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;color:var(--muted);font-size:8px;font-weight:600;background:none;border:none;cursor:pointer;padding:4px 0 2px;}
   .nav-item svg{width:16px;height:16px;stroke-width:1.8;}
   .nav-item.active{color:#fff;}
 
-  /* CARDS — identicos ao print */
   .crm-cards{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
   .crm-card{display:grid;gap:0;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,0.08);
-    background:linear-gradient(180deg, rgba(26,26,26,0.98), rgba(16,16,16,0.98));
+    background:linear-gradient(180deg, rgba(36,36,36,0.98), rgba(20,20,20,0.98));
     box-shadow:0 12px 30px rgba(0,0,0,0.24), inset 0 1px 0 rgba(255,255,255,0.03);}
   .crm-card.anim{animation:cardPop .5s cubic-bezier(.2,.9,.24,1.15) both;}
   @keyframes cardPop{from{opacity:0;transform:translateY(14px) scale(.98);}to{opacity:1;transform:none;}}
@@ -99,7 +95,6 @@
   .crm-card-contact span{display:inline-flex;align-items:center;gap:4px;min-width:0;color:rgba(255,255,255,0.6);font-size:9px;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .crm-card-contact svg{flex:0 0 auto;}
 
-  /* metricas em 3 colunas — compactas */
   .crm-card-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 10px;padding:8px 0;}
   .crm-card-metric{display:grid;gap:3px;}
   .crm-card-metric-value{color:#fff;font-size:12px;font-weight:800;line-height:1.15;}
@@ -118,7 +113,6 @@
   .crm-chip-btn.vermelho{background:#dc2626;}
   .crm-history-btn{align-self:flex-start;min-height:26px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,0.10);background:transparent;color:#fff;font-size:9px;font-weight:700;cursor:pointer;}
 
-  /* MODAIS — idênticos ao print */
   .modal-overlay{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;}
   .modal-overlay.active{display:flex;}
   .modal{background:#fff;color:#000;border-radius:16px;width:100%;max-width:340px;display:flex;flex-direction:column;overflow:hidden;animation:modalPop .3s ease both;}
@@ -151,7 +145,6 @@
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
   .cursor{position:absolute;top:0;left:0;z-index:90;width:26px;height:26px;pointer-events:none;transform:translate(-100px,-100px);transition:transform .5s cubic-bezier(.45,.05,.25,1);filter:drop-shadow(0 4px 6px rgba(0,0,0,.5));}
-
   .final-overlay{position:absolute;inset:0;z-index:80;background:var(--bg);display:none;flex-direction:column;align-items:center;justify-content:center;gap:26px;}
   .final-overlay.active{display:flex;animation:fadeIn .4s ease both;}
   .final-overlay img{width:150px;height:auto;}
@@ -174,7 +167,6 @@
       <span style="display:flex;gap:6px;align-items:center;font-weight:700">5G<span class="bat"></span></span>
     </div>
 
-    <!-- TOPBAR — identica ao print -->
     <div class="topbar">
       <div class="topbar-label">Opera&ccedil;&atilde;o Gendaz</div>
       <div class="topbar-title">Vis&atilde;o geral</div>
@@ -187,15 +179,13 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
       </div>
       <div class="topbar-user">
-        <div class="av">GE</div>
-        <div class="info"><strong>gENDAZ BA</strong><small>DONO</small></div>
+        <div class="av">K9</div>
+        <div class="info"><strong>Barbearia K9</strong><small>DONO</small></div>
         <span class="chev">&#9662;</span>
       </div>
     </div>
 
     <div class="content" id="content">
-
-      <!-- CRM -->
       <div class="view" id="view-crm">
         <div style="display:flex;flex-direction:column;gap:2px;">
           <div class="topbar-label" style="letter-spacing:.12em">Relacionamento</div>
@@ -203,7 +193,6 @@
           <div style="font-size:11px;color:var(--muted);line-height:1.4;">Acompanhe, segmente e automatize contatos com seus clientes.</div>
         </div>
 
-        <!-- FILTROS — identicos ao print -->
         <div class="crm-filters">
           <h4>Filtros</h4>
           <div>
@@ -379,7 +368,7 @@
       </div>
     </div>
 
-    <!-- MODAL ENVIAR — identico ao print -->
+    <!-- MODAL ENVIAR -->
     <div class="modal-overlay" id="modal-send">
       <div class="modal">
         <div class="modal-head">
@@ -465,7 +454,9 @@ document.addEventListener('keydown',initAudio,{once:true});
 function ctr(el){const s=scr.getBoundingClientRect(),r=el.getBoundingClientRect();return{x:r.left-s.left+r.width/2,y:r.top-s.top+r.height/2};}
 async function mv(el){const p=ctr(el);cur.style.transform=`translate(${p.x-4}px,${p.y-4}px)`;await sl(500);}
 async function ck(el){await mv(el);cur.classList.add('clicking');playClick();await sl(140);cur.classList.remove('clicking');await sl(200);}
-async function scrollToEl(el){if(!el)return;el.scrollIntoView({block:'center',behavior:'smooth'});await sl(350);}
+
+function scrollToEl(el){if(!el)return;el.scrollIntoView({block:'center',behavior:'smooth'});}
+function scrollReset(){cnt.scrollTop=0;}
 
 function showView(name){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));const v=document.getElementById('view-'+name);if(v)v.classList.add('active');cnt.scrollTop=0;}
 function showToast(t){toast.textContent=t;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2000*S);}
@@ -496,64 +487,65 @@ async function run(){
   document.querySelector('.seg-opt[data-seg="todos"] input').checked=true;
   closeSend();closeHist();
   document.getElementById('finalOverlay').classList.remove('active');
-  await sl(600);
-
-  /* PARTE 1: MOSTRA OS 3 CLIENTES — scroll natural */
-  const cards=document.querySelectorAll('.crm-card');
-  await scrollToEl(cards[0]);
-  await sl(1500);
-  await scrollToEl(cards[1]);
-  await sl(1500);
-  await scrollToEl(cards[2]);
-  await sl(1200);
-
-  /* PARTE 2: FILTRA ALTO RISCO */
-  await ck(document.querySelector('.seg-opt[data-seg="at_risk"]'));
-  selectSeg(document.querySelector('.seg-opt[data-seg="at_risk"]'));
+  scrollReset();
   await sl(800);
-  await scrollToEl(document.querySelector('.crm-card[data-seg="at_risk"]'));
-  await sl(1500);
 
-  /* PARTE 3: FILTRA REGULAR */
-  await ck(document.querySelector('.seg-opt[data-seg="regular"]'));
-  selectSeg(document.querySelector('.seg-opt[data-seg="regular"]'));
-  await sl(800);
-  await scrollToEl(document.querySelector('.crm-card[data-seg="regular"]'));
-  await sl(1500);
-
-  /* PARTE 4: VOLTA TODOS */
-  await ck(document.querySelector('.seg-opt[data-seg="todos"]'));
-  selectSeg(document.querySelector('.seg-opt[data-seg="todos"]'));
-  await sl(600);
-
-  /* PARTE 5: RESGATAR MARINA */
-  await scrollToEl(document.querySelector('.crm-card[data-seg="at_risk"]'));
-  await sl(500);
-  await ck(document.querySelector('.crm-card[data-seg="at_risk"] .crm-chip-btn[data-act="resgate"]'));
-  openSend('Marina Oliveira','resgate');
-  await sl(1600);
+  /* PASSO 1: Scroll ate Fernando (NOVO) — clica Resgatar */
+  const cardFernando=document.querySelector('.crm-card[data-seg="novo"]');
+  scrollToEl(cardFernando);await sl(1200);
+  await ck(cardFernando.querySelector('.crm-chip-btn[data-act="resgate"]'));
+  openSend('Fernando morais','resgate');
+  await sl(1800);
   await ck(document.getElementById('send-enviar'));
   closeSend();
-  showToast('Email enviado pra Marina!');
-  await sl(1700);
-
-  /* PARTE 6: VER HISTORICO */
-  await ck(document.querySelector('.crm-card[data-seg="at_risk"] .crm-history-btn'));
-  openHist('Marina Oliveira');
+  showToast('Email enviado pra Fernando!');
   await sl(1800);
+
+  /* PASSO 2: Ver historico de Fernando */
+  scrollToEl(cardFernando);await sl(800);
+  await ck(cardFernando.querySelector('.crm-history-btn'));
+  openHist('Fernando morais');
+  await sl(2000);
   await ck(document.getElementById('hist-close'));
   closeHist();
-  await sl(700);
+  await sl(800);
 
-  /* PARTE 7: LIMPA FILTROS */
-  await ck(document.getElementById('btn-limpar'));
-  applyFilter('todos');
-  await sl(600);
+  /* PASSO 3: Filtra Alto Risco — clica Reconexao na Marina */
+  scrollReset();await sl(400);
+  await ck(document.querySelector('.seg-opt[data-seg="at_risk"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="at_risk"]'));
+  await sl(1000);
+  const cardMarina=document.querySelector('.crm-card[data-seg="at_risk"]');
+  scrollToEl(cardMarina);await sl(1200);
+  await ck(cardMarina.querySelector('.crm-chip-btn[data-act="reconexao"]'));
+  openSend('Marina Oliveira','reconexao');
+  await sl(1800);
+  await ck(document.getElementById('send-enviar'));
+  closeSend();
+  showToast('Email de reconexao enviado!');
+  await sl(1800);
 
-  /* TRANSIÇÃO FINAL */
-  await sl(400);
+  /* PASSO 4: Sobe a tela de volta — volta pra cima */
+  scrollReset();await sl(1000);
+
+  /* PASSO 5: Filtra Regular — fica 4 seg e volta pro CRM */
+  await ck(document.querySelector('.seg-opt[data-seg="regular"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="regular"]'));
+  await sl(1000);
+  const cardJoao=document.querySelector('.crm-card[data-seg="regular"]');
+  scrollToEl(cardJoao);await sl(1200);
+  await sl(4000);
+
+  /* PASSO 6: Volta pra Todos */
+  scrollReset();await sl(400);
+  await ck(document.querySelector('.seg-opt[data-seg="todos"]'));
+  selectSeg(document.querySelector('.seg-opt[data-seg="todos"]'));
+  await sl(800);
+
+  /* PASSO 7: Tela Saiba mais */
+  await sl(500);
   document.getElementById('finalOverlay').classList.add('active');
-  await sl(3500);
+  await sl(4000);
 }
 function start(){run().then(()=>setTimeout(start,1500));}
 

@@ -2052,12 +2052,9 @@
     font-size: 12px !important;
   }
 
-  /* Crisp: sobe o botao para nao bloquear a nav inferior.
-     O launcher do Crisp usa position:fixed proprio, entao nao basta
-     mudar bottom no container. translateY desloca todo o widget. */
-  #crisp-chatbox {
-    transform: translateY(calc(-84px - env(safe-area-inset-bottom))) !important;
-  }
+  /* Crisp: o posicionamento do launcher é resolvido via JS em Crisp.jsx,
+     porque a classe do launcher é dinâmica e ele usa position:fixed próprio.
+     Não usar transform aqui: ele quebrava o fixed e o ícone rolava com a página. */
 }
 
 @media (max-width: 430px) {
