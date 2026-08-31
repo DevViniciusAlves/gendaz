@@ -29,7 +29,9 @@ public class SecurityHeadersConfig {
             "/api/usuarios/convites/recusar",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
-            "/api/pagamentos/webhook/stripe"
+            "/api/pagamentos/webhook/stripe",
+            "/api/admin",
+            "/api/admin/**"
     };
 
     @Bean
