@@ -156,9 +156,9 @@ export default function Logs() {
                 ),
               },
               {
-                key: 'ação',
+                key: 'acao',
                 label: 'AÇÃO',
-                render: (row) => <span className="report-center-cell">{row.ação || '-'}</span>,
+                render: (row) => <span className="report-center-cell">{row.acao || '-'}</span>,
               },
               {
                 key: 'dataHora',

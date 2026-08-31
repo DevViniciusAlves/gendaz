@@ -27,7 +27,7 @@ const planosBase = [
       'Até 3 usuários',
       'Financeiro completo',
     ],
-    cta: 'Começar no Básico',
+    cta: 'Assinar Básico',
     precoFallback: 29.90,
   },
   {
@@ -354,7 +354,7 @@ export default function Planos() {
           <div className="panel-head">
             <div>
               <span className="section-kicker">Plano atual</span>
-              <h2>{planoVigente === 'PRO' ? 'Plano Pro em vigor' : 'Plano Basico em vigor'}</h2>
+              <h2>{planoVigente === 'PRO' ? 'Plano Pro em vigor' : planoVigente === 'PLUS' ? 'Plano Plus em vigor' : planoVigente === 'ENTERPRISE' ? 'Plano Enterprise em vigor' : 'Plano Basico em vigor'}</h2>
             </div>
           </div>
 
@@ -432,7 +432,7 @@ export default function Planos() {
 
       <div className="plans-grid detailed plans-centered-grid">
         {planos.map((plano, index) => (
-          <ScrollReveal className={plano.destaque ? 'plan-card highlight plan-card-sale' : 'plan-card plan-card-sale'} delay={index * 100} key={plano.nome}>
+          <ScrollReveal className="plan-card plan-card-sale" delay={index * 100} key={plano.nome}>
             {plano.destaque && <span className="recommended-badge">Mais usado</span>}
             <div className="plan-card-body">
                 <div className="plan-head">
@@ -440,7 +440,6 @@ export default function Planos() {
                   <h2 style={{ color: '#ffa95e' }}>{plano.nome}</h2>
                   <p className="plan-subtitle">{plano.subtitulo}</p>
                 </div>
-                {plano.destaque && <ShieldCheck size={20} />}
               </div>
 
               <div className="plan-price-block">
@@ -490,7 +489,7 @@ export default function Planos() {
             <button
               type="button"
               onClick={() => handlePlanClick(plano)}
-              className={plano.destaque ? 'btn btn-primary plan-action-link' : 'btn btn-secondary plan-action-link'}
+              className="btn btn-primary plan-action-link"
               disabled={planoCarregando != null || limiteAtingido || perfilAtendente}
             >
               {planoCarregando === plano.codigo
