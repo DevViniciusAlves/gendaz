@@ -168,7 +168,6 @@ public class PagamentoService {
     public void expirarCheckoutPorTimeout(PagamentoPlanoEntity pagamento) {
         if (pagamento == null) return;
         
-        // Recarregar o PagamentoPlano atual para confirmar estado
         pagamento = pagamentoPlanoRepository.findById(pagamento.getId()).orElse(pagamento);
         
         if (pagamento.getStatus() != StatusPagamento.PAYMENT_PENDING) {
@@ -266,6 +265,31 @@ public class PagamentoService {
 
         if (assinaturaService.buscarFilaAtiva(empresaId).size() >= 2) {
             throw new BusinessException("Você já possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.");
+        }
+
+        // 2. Procurar PAYMENT_PENDING do mesmo plano
+        if (!forceNew) {
+            Optional<PagamentoPlanoEntity> pendenteOpt = pagamentoPlanoRepository
+                    .findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(empresaId, plano.getId(), StatusPagamento.PAYMENT_PENDING);
+
+            if (pendenteOpt.isPresent()) {
+                PagamentoPlanoEntity pendente = pendenteOpt.get();
+                
+                // 3. Validar prazo do backend
+                if (pendente.getDataExpiracao() != null && pendente.getDataExpiracao().isAfter(LocalDateTime.now())) {
+                    // Validar que existe checkoutUrl e stripeSessionId utilizáveis
+                    if (pendente.getCheckoutUrl() != null && !pendente.getCheckoutUrl().isBlank()
+                            && pendente.getStripeSessionId() != null && !pendente.getStripeSessionId().isBlank()) {
+                        log.info("Checkout reutilizado: pagamentoId={}, empresaId={}, plano={}",
+                                pendente.getId(), empresaId, plano.getNome());
+                        return pendente;
+                    }
+                } else {
+                    // Se o prazo venceu, finalizar a expiração com segurança
+                    log.info("Checkout pendente encontrado, porém vencido. Expirando com segurança: pagamentoId={}", pendente.getId());
+                    expirarCheckoutPorTimeout(pendente);
+                }
+            }
         }
 
         // 2b. Troca de plano: expirar checkout pendente de plano diferente antes de criar novo

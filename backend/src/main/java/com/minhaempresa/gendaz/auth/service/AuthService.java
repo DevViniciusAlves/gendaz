@@ -518,7 +518,7 @@ public class AuthService {
         if (!sessaoRestritaEncerrada) {
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                     && usuario.getEmpresa() != null
-                    && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+                    && usuario.getEmpresa().getStatus() == StatusEmpresa.BLOQUEADA) {
                 throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
             }
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
