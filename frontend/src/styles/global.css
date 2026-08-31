@@ -1353,7 +1353,7 @@ tbody tr:hover { background: #fffaf5; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
 .tag-list span { padding: 4px 10px; border-radius: 999px; background: var(--primary-soft); color: var(--brand); font-size: 12px; font-weight: 500; }
 .plan-summary { padding-top: 12px; border-top: 1px solid var(--line); }
-.plan-card-sale { min-height: 100%; grid-template-rows: auto 1fr auto; }
+.plan-card-sale { height: 100%; grid-template-rows: auto 1fr auto; }
 .plan-card-body { display: grid; gap: 18px; align-content: start; }
 .plan-subtitle { margin: 4px 0 0; color: var(--muted); }
 .plan-price-block { display: grid; gap: 4px; }
@@ -1379,7 +1379,7 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .plan-card {
   display: grid;
   gap: 18px;
-  min-height: 100%;
+  height: 100%;
   padding: 24px !important;
   background: var(--surface) !important;
   backdrop-filter: blur(18px) saturate(120%) !important;
@@ -13328,7 +13328,7 @@ tbody tr:hover { background: #fffaf5; }
 .app-shell .content .plan-card {
   display: grid;
   gap: 18px;
-  min-height: 100%;
+  height: 100%;
   padding: 24px !important;
   background: var(--surface) !important;
   backdrop-filter: blur(18px) saturate(120%) !important;
