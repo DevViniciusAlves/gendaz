@@ -1,7 +1,9 @@
 package com.minhaempresa.gendaz.shared.security;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -135,7 +137,20 @@ class GendazSessionAuthenticationFilterTest {
         assertEquals(200, response.getStatus());
         verify(usuarioRepository).findBySessaoAtiva("sessao-normal");
         verify(usuarioRepository, never()).findByIdComEmpresa(org.mockito.ArgumentMatchers.anyLong());
-        verify(adminImpersonationService, never()).validar(anyString());
+        verifyNoInteractions(adminImpersonationService);
+    }
+
+    @Test
+    void semCookieImpersonationNemSessaoNormalRetorna401() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard");
+        request.addHeader("Origin", "http://localhost:5173");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, new MockFilterChain());
+
+        assertEquals(401, response.getStatus());
+        verifyNoInteractions(adminImpersonationService);
     }
 
     @Test
@@ -200,6 +215,130 @@ class GendazSessionAuthenticationFilterTest {
         MockHttpServletRequest reqReativar = requestComCookie("POST", "/api/lgpd/reativar-conta", "Gendaz_session", "sessao-bloqueada");
         filter.doFilterInternal(reqReativar, reativar, new MockFilterChain());
         assertEquals(403, reativar.getStatus());
+    }
+
+    @Test
+    void sessaoNormalComImpersonationValidaDaPrioridadeAImpersonation() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        AdminImpersonationSessionEntity sessao = sessao(10L, 20L, 30L);
+        UsuarioEntity usuarioImpersonado = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA);
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao));
+        when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuarioImpersonado));
+
+        AtomicBoolean passouNoController = new AtomicBoolean(false);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard");
+        request.addHeader("Origin", "http://localhost:5173");
+        request.setCookies(
+                new Cookie("Gendaz_impersonation_session", "token-impersonacao"),
+                new Cookie("Gendaz_session", "sessao-admin-normal")
+        );
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, (req, res) -> {
+            passouNoController.set(true);
+            assertEquals(30L, CompanyContext.getCompanyId());
+            assertEquals(20L, SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+            assertTrue(SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                    .anyMatch(a -> "ROLE_ADMIN_IMPERSONATION".equals(a.getAuthority())));
+            assertEquals(true, req.getAttribute("adminImpersonation"));
+        });
+
+        assertTrue(passouNoController.get());
+        assertEquals(200, response.getStatus());
+        verify(usuarioRepository).findByIdComEmpresa(20L);
+        verify(usuarioRepository, never()).findBySessaoAtiva(anyString());
+    }
+
+    @Test
+    void impersonationExpiradaNaoConcedeRoleNemEmpresa() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(adminImpersonationService.validar("token-expirado")).thenReturn(Optional.empty());
+        AtomicBoolean passouNoController = new AtomicBoolean(false);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard");
+        request.addHeader("Origin", "http://localhost:5173");
+        request.setCookies(new Cookie("Gendaz_impersonation_session", "token-expirado"));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, (req, res) -> passouNoController.set(true));
+
+        // Sem sessao normal, cookie invalido nao pode conceder acesso
+        assertEquals(401, response.getStatus());
+        assertEquals(false, passouNoController.get());
+        verify(usuarioRepository, never()).findByIdComEmpresa(anyLong());
+    }
+
+    @Test
+    void impersonationInvalidaComSessaoNormalVoltaAoFluxoNormalSemRoleAdmin() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(adminImpersonationService.validar("token-invalido")).thenReturn(Optional.empty());
+        when(usuarioRepository.findBySessaoAtiva("sessao-normal")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
+
+        AtomicBoolean passouNoController = new AtomicBoolean(false);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/dashboard");
+        request.addHeader("Origin", "http://localhost:5173");
+        request.setCookies(
+                new Cookie("Gendaz_impersonation_session", "token-invalido"),
+                new Cookie("Gendaz_session", "sessao-normal")
+        );
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, (req, res) -> {
+            passouNoController.set(true);
+            assertNull(req.getAttribute("adminImpersonation"));
+            assertTrue(SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                    .noneMatch(a -> "ROLE_ADMIN_IMPERSONATION".equals(a.getAuthority())));
+        });
+
+        assertTrue(passouNoController.get());
+        assertEquals(200, response.getStatus());
+        verify(usuarioRepository).findBySessaoAtiva("sessao-normal");
+    }
+
+    @Test
+    void CompanyContextLimpoAposRequestNormal() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(usuarioRepository.findBySessaoAtiva("sessao-normal")).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilterInternal(getComCookie("Gendaz_session", "sessao-normal"), response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        assertEquals(null, CompanyContext.getCompanyId());
+        verifyNoInteractions(adminImpersonationService);
+    }
+
+    @Test
+    void CompanyContextLimpoAposRequestImpersonation() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        when(adminImpersonationService.validar("token-impersonacao")).thenReturn(Optional.of(sessao(10L, 20L, 30L)));
+        when(usuarioRepository.findByIdComEmpresa(20L)).thenReturn(Optional.of(usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
+
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilterInternal(getComCookie("Gendaz_impersonation_session", "token-impersonacao"), response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+        assertEquals(null, CompanyContext.getCompanyId());
+    }
+
+    @Test
+    void encerrarImpersonationRestauraFluxoNormal() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        // Apos sair da impersonation o cookie nao esta mais presente: so Gendaz_session
+        when(usuarioRepository.findBySessaoAtiva("sessao-admin")).thenReturn(Optional.of(usuario(40L, 50L, StatusUsuario.ATIVO, StatusEmpresa.ATIVA)));
+
+        AtomicBoolean passouNoController = new AtomicBoolean(false);
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        filter.doFilterInternal(getComCookie("Gendaz_session", "sessao-admin"), response, (req, res) -> {
+            passouNoController.set(true);
+            assertNull(req.getAttribute("adminImpersonation"));
+            assertEquals(50L, CompanyContext.getCompanyId());
+        });
+
+        assertTrue(passouNoController.get());
+        assertEquals(200, response.getStatus());
+        verify(usuarioRepository).findBySessaoAtiva("sessao-admin");
+        verify(usuarioRepository, never()).findByIdComEmpresa(anyLong());
+        verifyNoInteractions(adminImpersonationService);
     }
 
     private GendazSessionAuthenticationFilter filtro() {

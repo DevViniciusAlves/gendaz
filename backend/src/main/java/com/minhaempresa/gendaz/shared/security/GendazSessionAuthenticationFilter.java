@@ -56,22 +56,27 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         UsuarioEntity usuario = null;
         try {
-            String session = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
             boolean impersonation = false;
             AdminImpersonationSessionEntity impersonationSession = null;
 
-            if (session != null && !session.isBlank()) {
-                usuario = usuarioRepository.findBySessaoAtiva(session).orElse(null);
-                if (usuario == null) {
-                    response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao invalida.");
-                    return;
-                }
-            } else {
-                String impersonationToken = CookieHelper.lerCookie(request, "Gendaz_impersonation_session").orElse(null);
+            // Impersonation has priority: if a valid impersonation session exists, use it
+            String impersonationToken = CookieHelper.lerCookie(request, "Gendaz_impersonation_session").orElse(null);
+            if (impersonationToken != null && !impersonationToken.isBlank()) {
                 impersonationSession = adminImpersonationService.validar(impersonationToken).orElse(null);
                 if (impersonationSession != null) {
                     usuario = usuarioRepository.findByIdComEmpresa(impersonationSession.getUsuarioImpersonadoId()).orElse(null);
                     impersonation = true;
+                }
+            }
+            if (impersonationSession == null) {
+                // No valid impersonation → normal session flow
+                String session = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
+                if (session != null && !session.isBlank()) {
+                    usuario = usuarioRepository.findBySessaoAtiva(session).orElse(null);
+                    if (usuario == null) {
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Sessao invalida.");
+                        return;
+                    }
                 }
             }
 
