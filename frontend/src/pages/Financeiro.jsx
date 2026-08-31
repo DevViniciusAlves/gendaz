@@ -38,6 +38,7 @@ function valorTextoPagamento(pagamento) {
 }
 
 function dataReferenciaPagamento(item, agendamentoMap) {
+  if (item?.dataPagamento) return String(item.dataPagamento)
   const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.id)
   const dataAgendamento = agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || ''
   return String(dataAgendamento || valorTextoPagamento(item) || '')
@@ -51,7 +52,10 @@ function ehCreditoParcelado(pagamento) {
 function adicionarMeses(dataTexto, meses) {
   const [ano, mes, dia] = String(dataTexto || '').slice(0, 10).split('-').map(Number)
   if (!ano || !mes || !dia) return dataTexto
-  const data = new Date(ano, mes - 1 + meses, dia, 12, 0, 0, 0)
+  const data = new Date(ano, mes - 1, 1, 12, 0, 0, 0)
+  data.setMonth(data.getMonth() + meses)
+  const ultimoDiaMes = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate()
+  data.setDate(Math.min(dia, ultimoDiaMes))
   return data.toISOString().slice(0, 10)
 }
 

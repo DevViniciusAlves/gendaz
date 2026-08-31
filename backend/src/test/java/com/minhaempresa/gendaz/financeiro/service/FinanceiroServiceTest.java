@@ -14,7 +14,9 @@ import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ResumoFinanceiroResponse;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -49,21 +51,21 @@ class FinanceiroServiceTest {
     @Test
     void deveUsarEmpresaDaSessaoQuandoParametroNaoForEnviado() {
         CompanyContext.setCompanyId(9L);
-        when(pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(eq(9L), any(), any())).thenReturn(List.of());
-        when(pagamentoRepository.findByEmpresaIdAndStatus(eq(9L), eq(StatusPagamento.PENDENTE))).thenReturn(List.of());
-        when(agendamentoRepository.findByEmpresaId(eq(9L))).thenReturn(List.of());
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L))).thenReturn(List.of());
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any())).thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
 
         assertDoesNotThrow(() -> {
             ResumoFinanceiroResponse resposta = service.resumo(null, 8, 2026);
             org.junit.jupiter.api.Assertions.assertNotNull(resposta);
         });
 
-        verify(pagamentoRepository).findByEmpresaIdAndDataPagamentoBetween(eq(9L), any(), any());
-        verify(pagamentoRepository).findByEmpresaIdAndStatus(eq(9L), eq(StatusPagamento.PENDENTE));
-        verify(agendamentoRepository).findByEmpresaId(eq(9L));
+        verify(pagamentoRepository).findByEmpresaIdForFinanceiro(eq(9L));
     }
 
-@Test
+    @Test
     void deveRejeitarEmpresaDivergenteDaSessao() {
         CompanyContext.setCompanyId(9L);
 
@@ -73,35 +75,240 @@ class FinanceiroServiceTest {
     @Test
     void financeiroSomaOValorFinalPersistidoNoPagamento() {
         CompanyContext.setCompanyId(9L);
-        EmpresaEntity empresa = EmpresaEntity.builder().id(9L).build();
-        ClienteEntity cliente = ClienteEntity.builder().id(2L).nome("Ana").build();
-        PagamentoEntity pagoComCupom = PagamentoEntity.builder()
-                .id(1L).empresa(empresa).cliente(cliente)
-                .valor(new BigDecimal("50.00"))
-                .status(StatusPagamento.PAGO)
-                .dataPagamento(LocalDateTime.now())
-                .build();
-        PagamentoEntity pagoCheio = PagamentoEntity.builder()
-                .id(2L).empresa(empresa).cliente(cliente)
-                .valor(new BigDecimal("100.00"))
-                .status(StatusPagamento.PAGO)
-                .dataPagamento(LocalDateTime.now())
-                .build();
-        PagamentoEntity pendente = PagamentoEntity.builder()
-                .id(3L).empresa(empresa).cliente(cliente)
-                .valor(new BigDecimal("30.00"))
-                .status(StatusPagamento.PENDENTE)
-                .build();
-        when(pagamentoRepository.findByEmpresaIdAndDataPagamentoBetween(eq(9L), any(), any()))
-                .thenReturn(List.of(pagoComCupom, pagoCheio));
-        when(pagamentoRepository.findByEmpresaIdAndStatus(eq(9L), eq(StatusPagamento.PENDENTE)))
-                .thenReturn(List.of(pendente));
-        when(agendamentoRepository.findByEmpresaId(eq(9L))).thenReturn(List.of());
+
+        PagamentoDtos.PagamentoResponse pagoComCupom = criarPagamentoResponse(1L, 9L, new BigDecimal("50.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.of(2026, 8, 15, 10, 0));
+        PagamentoDtos.PagamentoResponse pagoCheio = criarPagamentoResponse(2L, 9L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.of(2026, 8, 20, 14, 0));
+        PagamentoDtos.PagamentoResponse pendente = criarPagamentoResponse(3L, 9L, new BigDecimal("30.00"), StatusPagamento.PENDENTE, MetodoPagamento.PIX, null, LocalDateTime.of(2026, 8, 10, 9, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagoComCupom, pagoCheio, pendente));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(new BigDecimal("30.00"));
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
 
         ResumoFinanceiroResponse resposta = service.resumo(null, 8, 2026);
 
         assertEquals(0, new BigDecimal("150.00").compareTo(resposta.totalRecebidoMes()));
         assertEquals(0, new BigDecimal("30.00").compareTo(resposta.totalPendente()));
+    }
+
+    @Test
+    void credito3xEmMarcoDeveDistribuir100PorMes() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse marco = service.resumo(null, 3, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(marco.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse abril = service.resumo(null, 4, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(abril.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse maio = service.resumo(null, 5, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(maio.totalRecebidoMes()));
+    }
+
+    @Test
+    void credito3xSomaTotalDeveSerExatamente100() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("100.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        BigDecimal total = BigDecimal.ZERO;
+        for (int m = 3; m <= 5; m++) {
+            ResumoFinanceiroResponse resp = service.resumo(null, m, 2026);
+            total = total.add(resp.totalRecebidoMes());
+        }
+        assertEquals(0, new BigDecimal("100.00").compareTo(total));
+    }
+
+    @Test
+    void pagamento1xDeveFicarIntegralmenteNoMesOriginal() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("200.00"), StatusPagamento.PAGO,
+                MetodoPagamento.PIX, 1, LocalDateTime.of(2026, 6, 5, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse junho = service.resumo(null, 6, 2026);
+        assertEquals(0, new BigDecimal("200.00").compareTo(junho.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse julho = service.resumo(null, 7, 2026);
+        assertEquals(0, BigDecimal.ZERO.compareTo(julho.totalRecebidoMes()));
+    }
+
+    @Test
+    void pagamentoPIXDinheiroDeveComportamentoAntigoPreservado() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamentoPix = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("150.00"), StatusPagamento.PAGO,
+                MetodoPagamento.PIX, null, LocalDateTime.of(2026, 4, 12, 10, 0));
+        PagamentoDtos.PagamentoResponse pagamentoDinheiro = criarPagamentoResponse(
+                2L, 9L, new BigDecimal("75.00"), StatusPagamento.PAGO,
+                MetodoPagamento.DINHEIRO, null, LocalDateTime.of(2026, 4, 15, 14, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamentoPix, pagamentoDinheiro));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse abril = service.resumo(null, 4, 2026);
+        assertEquals(0, new BigDecimal("225.00").compareTo(abril.totalRecebidoMes()));
+    }
+
+    @Test
+    void credito2xDezembroParaJaneiro() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("200.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 2, LocalDateTime.of(2025, 12, 20, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse dezembro = service.resumo(null, 12, 2025);
+        assertEquals(0, new BigDecimal("100.00").compareTo(dezembro.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse janeiro = service.resumo(null, 1, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(janeiro.totalRecebidoMes()));
+    }
+
+    @Test
+    void dataFinalDoMesNaoDeveGerarErro() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 1, 31, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse janeiro = service.resumo(null, 1, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(janeiro.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse fevereiro = service.resumo(null, 2, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(fevereiro.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse marco = service.resumo(null, 3, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(marco.totalRecebidoMes()));
+    }
+
+    @Test
+    void filtroMarcoDeveMostrarApenasParcelaDeMarco() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse marco = service.resumo(null, 3, 2026);
+        assertEquals(1, marco.pagamentosRecentes().size());
+        assertEquals(0, new BigDecimal("100.00").compareTo(marco.pagamentosRecentes().get(0).valor()));
+    }
+
+    @Test
+    void filtroAbrilDeveMostrarApenasParcelaDeAbril() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse abril = service.resumo(null, 4, 2026);
+        assertEquals(1, abril.pagamentosRecentes().size());
+        assertEquals(0, new BigDecimal("100.00").compareTo(abril.pagamentosRecentes().get(0).valor()));
+    }
+
+    @Test
+    void resumoCardMensalUsaSomenteValorDaParcelaDaqueleMes() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse marco = service.resumo(null, 3, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(marco.totalRecebidoMes()));
+        assertEquals(1, marco.pagamentosRecentes().size());
+    }
+
+    private PagamentoDtos.PagamentoResponse criarPagamentoResponse(
+            Long id, Long empresaId, BigDecimal valor, StatusPagamento status,
+            MetodoPagamento metodo, Integer parcelas, LocalDateTime dataPagamento) {
+        return new PagamentoDtos.PagamentoResponse(
+                id, null, "PROTO-" + id, "Servico", 2L, "Cliente",
+                empresaId, valor, metodo, parcelas, status, dataPagamento,
+                com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO);
     }
 }
 
