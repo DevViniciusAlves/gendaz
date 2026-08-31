@@ -23,15 +23,15 @@ public class SecurityHeadersConfig {
             "/api/health",
             "/health",
             "/api/public/**",
-            "/api/admin",
-            "/api/admin/**",
             "/api/auth/recuperar-senha",
             "/api/auth/redefinir-senha",
             "/api/usuarios/convites/aceitar",
             "/api/usuarios/convites/recusar",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo",
-            "/api/pagamentos/webhook/stripe"
+            "/api/pagamentos/webhook/stripe",
+            "/api/admin",
+            "/api/admin/**"
     };
 
     @Bean
@@ -65,7 +65,12 @@ public class SecurityHeadersConfig {
                                 "/health",
                                 "/api/health",
                                 "/api/auth/csrf",
+                                "/api/planos",
                                 "/api/usuarios/convites/publico"
+                        ).permitAll()
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/meu-gendaz/empresa/*",
+                                "/api/meu-gendaz/perfil"
                         ).permitAll()
                         .requestMatchers(HttpMethod.POST,
                                 "/api/auth/login",
