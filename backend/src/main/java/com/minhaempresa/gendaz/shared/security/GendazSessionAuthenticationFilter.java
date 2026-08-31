@@ -54,9 +54,9 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        UsuarioEntity usuario = null;
         try {
             String session = CookieHelper.lerCookie(request, "Gendaz_session").orElse(null);
-            UsuarioEntity usuario = null;
             boolean impersonation = false;
             AdminImpersonationSessionEntity impersonationSession = null;
 
@@ -95,6 +95,8 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             if (usuario.getEmpresa() != null) {
                 CompanyContext.setCompanyId(usuario.getEmpresa().getId());
             }
+            // Para SUPER_ADMIN, nao setar CompanyContext (operacao sem empresa obrigatoria)
+            // Usuario com empresa tera CompanyContext definido normalmente
             List<SimpleGrantedAuthority> authorities = new java.util.ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_" + usuario.getPerfil().name()));
             if (impersonation) {
@@ -114,14 +116,19 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
         } finally {
             SecurityContextHolder.clearContext();
-            CompanyContext.clear();
+            // Apenas limpar CompanyContext se usuario existir e tiver empresa definida
+            // Para Super Admin (usuario sem empresa), nao limpar
+            if (usuario != null && usuario.getEmpresa() != null) {
+                CompanyContext.clear();
+            }
         }
     }
 
     private boolean isPublicRoute(HttpServletRequest request) {
         String uri = request.getRequestURI();
         String method = request.getMethod();
-        if (("GET".equalsIgnoreCase(method) && ("/health".equals(uri) || "/api/health".equals(uri)))
+        if (("GET".equalsIgnoreCase(method) && "/api/planos".equals(uri))
+                || ("GET".equalsIgnoreCase(method) && ("/health".equals(uri) || "/api/health".equals(uri)))
                 || ("GET".equalsIgnoreCase(method) && "/api/auth/csrf".equals(uri))
                 || ("GET".equalsIgnoreCase(method) && "/api/usuarios/convites/publico".equals(uri))
                 || ("POST".equalsIgnoreCase(method) && List.of(

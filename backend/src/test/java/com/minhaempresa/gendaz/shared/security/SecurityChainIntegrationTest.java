@@ -50,6 +50,20 @@ class SecurityChainIntegrationTest {
     }
 
     @Test
+    void catalogoDePlanosEPublicoMesmoSemSessaoAtiva() throws Exception {
+        mockMvc.perform(get("/api/planos"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void alteracaoDePlanoDeContaViaAdminExigeAutenticacaoAdmin() throws Exception {
+        mockMvc.perform(post("/api/admin/empresas/1/subscriptions")
+                        .contentType(APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void aceiteERecusaDeConviteNaoSaoBloqueadosPorSessaoOuCsrf() throws Exception {
         mockMvc.perform(post("/api/usuarios/convites/aceitar")
                         .contentType(APPLICATION_JSON)
