@@ -37,10 +37,23 @@ function valorTextoPagamento(pagamento) {
   )
 }
 
+function dataReferenciaAgendamento(item, agendamentoMap) {
+  const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.pagamentoId || item.id)
+  return String(agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || '')
+}
+
+function dataReferenciaFinanceira(item, agendamentoMap) {
+  const status = String(item?.status || '').toUpperCase()
+  const isPendente = STATUS_PENDENTE.has(status)
+  if (isPendente) {
+    return dataReferenciaAgendamento(item, agendamentoMap) || ''
+  }
+  if (item?.dataPagamento) return String(item.dataPagamento)
+  return ''
+}
+
 function dataReferenciaPagamento(item, agendamentoMap) {
-  const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.id)
-  const dataAgendamento = agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || ''
-  return String(dataAgendamento || valorTextoPagamento(item) || '')
+  return dataReferenciaFinanceira(item, agendamentoMap) || dataReferenciaAgendamento(item, agendamentoMap)
 }
 
 function ehCreditoParcelado(pagamento) {
@@ -51,7 +64,10 @@ function ehCreditoParcelado(pagamento) {
 function adicionarMeses(dataTexto, meses) {
   const [ano, mes, dia] = String(dataTexto || '').slice(0, 10).split('-').map(Number)
   if (!ano || !mes || !dia) return dataTexto
-  const data = new Date(ano, mes - 1 + meses, dia, 12, 0, 0, 0)
+  const data = new Date(ano, mes - 1, 1, 12, 0, 0, 0)
+  data.setMonth(data.getMonth() + meses)
+  const ultimoDiaMes = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate()
+  data.setDate(Math.min(dia, ultimoDiaMes))
   return data.toISOString().slice(0, 10)
 }
 
@@ -79,6 +95,7 @@ function ordenarMaisRecente(a, b) {
 }
 
 function statusSimples(statusAtual) {
+  if (['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'].includes(statusAtual)) return 'CANCELADO'
   return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
@@ -129,8 +146,7 @@ export default function Financeiro() {
   const { atualizarContagem } = usePendentes()
   const [mes, setMes] = useState(mesReferenciaAtual())
   const [recarregando, setRecarregando] = useState(false)
-  const [statusPagamento, setStatusPagamento] = useState('mes_atual')
-  const [periodoPagamento, setPeriodoPagamento] = useState('')
+  const [statusPagamento, setStatusPagamento] = useState('todos')
   const [metodoPagamento, setMetodoPagamento] = useState('todos')
   const [protocoloPagamento, setProtocoloPagamento] = useState('')
   const [paginaPagamento, setPaginaPagamento] = useState(1)
@@ -312,7 +328,10 @@ export default function Financeiro() {
   }, [data.pagamentos])
 
   const pagamentosDoMes = useMemo(() => pagamentosExpandidos
-    .filter((item) => dataReferenciaPagamento(item, agendamentoMap).startsWith(mes))
+    .filter((item) => {
+      const dataRef = dataReferenciaFinanceira(item, agendamentoMap)
+      return dataRef.startsWith(mes)
+    })
     .sort(ordenarMaisRecente), [pagamentosExpandidos, mes, agendamentoMap])
 
   const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
@@ -322,9 +341,8 @@ export default function Financeiro() {
         if (statusPagamento === 'PENDENTE') matchesStatus = STATUS_PENDENTE.has(statusNormalizado)
         else if (statusPagamento === 'PAGO') matchesStatus = STATUS_CONFIRMADO.has(statusNormalizado)
         else if (statusPagamento === 'CANCELADO') matchesStatus = STATUS_CANCELADO.has(statusNormalizado)
-        const dataRef = dataReferenciaPagamento(item, agendamentoMap)
+        const dataRef = dataReferenciaFinanceira(item, agendamentoMap)
         const matchesMes = dataRef.startsWith(mes)
-        const matchesPeriodo = !periodoPagamento || dataRef.startsWith(periodoPagamento)
         const matchesMetodo = metodoPagamento === 'todos'
           || item.metodoPagamento === metodoPagamento
           || (metodoPagamento === 'PIX' && item.metodoPagamento === 'PIX_AUTO')
@@ -332,9 +350,9 @@ export default function Financeiro() {
         const textoProtocolo = String(item.protocolo || item.agendamento?.protocolo || '').toLowerCase()
         const matchesProtocolo = !protocoloPagamento.trim()
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
-        return matchesStatus && matchesMes && matchesPeriodo && matchesMetodo && matchesProtocolo
+        return matchesStatus && matchesMes && matchesMetodo && matchesProtocolo
       })
-      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes, agendamentoMap])
+      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, protocoloPagamento, statusPagamento, mes, agendamentoMap])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)
@@ -396,7 +414,7 @@ export default function Financeiro() {
   async function exportarFinanceiro({ modo, dataInicial, dataFinal }) {
     const registros = pagamentosExpandidos.filter((item) => {
       if (modo !== 'periodo') return true
-      const dataBase = dataReferenciaPagamento(item, agendamentoMap).slice(0, 10)
+      const dataBase = dataReferenciaFinanceira(item, agendamentoMap).slice(0, 10)
       return dataBase >= dataInicial && dataBase <= dataFinal
     })
     if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
@@ -654,7 +672,6 @@ export default function Financeiro() {
         <h2>Pagamentos recentes</h2>
         <div className="filters filters-inline">
           <select value={statusPagamento} onChange={(e) => setStatusPagamento(e.target.value)}>
-            <option value="mes_atual">Mês atual</option>
             <option value="todos">Todos os status</option>
             <option value="PENDENTE">Pendente</option>
             <option value="PAGO">Pago</option>
@@ -667,12 +684,6 @@ export default function Financeiro() {
             placeholder="Protocolo"
             aria-label="Filtrar por protocolo"
             maxLength={20}
-          />
-          <input
-            type="month"
-            value={periodoPagamento}
-            onChange={(e) => setPeriodoPagamento(e.target.value)}
-            aria-label="Periodo do pagamento"
           />
           <select value={metodoPagamento} onChange={(e) => setMetodoPagamento(e.target.value)}>
             <option value="todos">Todos os metodos</option>
