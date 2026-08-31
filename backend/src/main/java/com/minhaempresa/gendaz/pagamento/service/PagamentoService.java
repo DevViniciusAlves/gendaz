@@ -168,7 +168,10 @@ public class PagamentoService {
     public void expirarCheckoutPorTimeout(PagamentoPlanoEntity pagamento) {
         if (pagamento == null) return;
         
+<<<<<<< HEAD
         // Recarregar o PagamentoPlano atual para confirmar estado
+=======
+>>>>>>> origin/stage
         pagamento = pagamentoPlanoRepository.findById(pagamento.getId()).orElse(pagamento);
         
         if (pagamento.getStatus() != StatusPagamento.PAYMENT_PENDING) {
@@ -176,6 +179,7 @@ public class PagamentoService {
             return;
         }
 
+<<<<<<< HEAD
         // Verificar o estado real da Stripe antes de expirar
         try {
             Optional<PaymentGatewayWebhook> stripeInfo = paymentGateway.consultarPagamentoPlano(pagamento);
@@ -204,6 +208,62 @@ public class PagamentoService {
         }
 
         // Marcar PAYMENT_EXPIRED pelo caminho isolado de timeout
+=======
+        // CASO 1: Consulta Stripe — resultado determina ação
+        Optional<PaymentGatewayWebhook> stripeInfo;
+        try {
+            stripeInfo = paymentGateway.consultarPagamentoPlano(pagamento);
+        } catch (Exception ex) {
+            log.warn("Falha ao consultar Stripe para checkout id={}. será reprocessado. erroTipo={}",
+                    pagamento.getId(), ex.getClass().getSimpleName());
+            return;
+        }
+
+        if (stripeInfo.isEmpty()) {
+            // Session não encontrada OU Stripe indisponível — não marcar como expirado,
+            // aguardar nova tentativa do scheduler
+            log.info("Consulta Stripe não retornou resultado para checkout id={}. será reprocessado.", pagamento.getId());
+            return;
+        }
+
+        PaymentGatewayWebhook info = stripeInfo.get();
+
+        // CASO 1: Stripe já aprovou — processar aprovação
+        if (info.status() == StatusPagamento.PAYMENT_APPROVED) {
+            log.info("Evitando expiração do checkout id={} pois pagamento concluído na Stripe.", pagamento.getId());
+            liberarContaPorPagamentoAprovado(pagamento, "CORRIDA_TIMEOUT");
+            pagamento = pagamentoPlanoRepository.save(pagamento);
+            logAtividadeService.registrar("PAGAMENTO_PLANO", pagamento.getId(),
+                    "Confirmou pagamento do plano por timeout " + (pagamento.getPlano() != null ? pagamento.getPlano().getNome() : ""));
+            return;
+        }
+
+        // CASO 3: Stripe já expirou — sincronizar estado local
+        if (info.status() == StatusPagamento.PAYMENT_EXPIRED) {
+            log.info("Stripe já expirou checkout id={}. sincronizando estado local.", pagamento.getId());
+            pagamento.setStatus(StatusPagamento.PAYMENT_EXPIRED);
+            PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
+            logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
+                    "Expirou checkout do plano (sincronizado Stripe) " + (pagamentoSalvo.getPlano() != null ? pagamentoSalvo.getPlano().getNome() : ""));
+            log.info("Checkout expirado por timeout (sync Stripe): pagamentoId={}, empresaId={}, plano={}",
+                    pagamento.getId(), pagamento.getEmpresa().getId(), pagamento.getPlano().getNome());
+            return;
+        }
+
+        // CASO 2: Session ainda OPEN — tentar expirar na Stripe
+        if (pagamento.getStripeSessionId() != null) {
+            try {
+                paymentGateway.expirarCheckoutSessionThrows(pagamento.getStripeSessionId());
+            } catch (Exception ex) {
+                // CASO 5: expiração falhou — NÃO marcar como expirado, reprocessar depois
+                log.warn("Falha ao expirar Session Stripe para checkout id={}. será reprocessado. erroTipo={}",
+                        pagamento.getId(), ex.getClass().getSimpleName());
+                return;
+            }
+        }
+
+        // Session expirada com sucesso na Stripe — marcar localmente como expirado
+>>>>>>> origin/stage
         pagamento.setStatus(StatusPagamento.PAYMENT_EXPIRED);
         PagamentoPlanoEntity pagamentoSalvo = pagamentoPlanoRepository.save(pagamento);
         logAtividadeService.registrar("PAGAMENTO_PLANO", pagamentoSalvo.getId(),
@@ -267,6 +327,23 @@ public class PagamentoService {
             }
         }
 
+<<<<<<< HEAD
+=======
+        // 2b. Troca de plano: expirar checkout pendente de plano diferente antes de criar novo
+        List<PagamentoPlanoEntity> todosPendentes = pagamentoPlanoRepository
+                .findByEmpresaIdAndStatusOrderByDataCriacaoDesc(empresaId, StatusPagamento.PAYMENT_PENDING);
+        for (PagamentoPlanoEntity antigo : todosPendentes) {
+            if (antigo.getPlano() != null && !antigo.getPlano().getId().equals(plano.getId())
+                    && antigo.getStripeSessionId() != null && !antigo.getStripeSessionId().isBlank()) {
+                paymentGateway.expirarCheckoutSessionThrows(antigo.getStripeSessionId());
+                antigo.setStatus(StatusPagamento.PAYMENT_EXPIRED);
+                pagamentoPlanoRepository.save(antigo);
+                log.info("Checkout antigo do plano {} expirado com sucesso na Stripe para troca: pagamentoId={}",
+                        antigo.getPlano().getNome(), antigo.getId());
+            }
+        }
+
+>>>>>>> origin/stage
         // 4. Se não existir ou estava vencido, criar um novo checkout
         PagamentoPlanoEntity pagamento = novoPagamentoPlano(
                 empresa, plano, metodoPagamento, customerName, customerEmail, customerPhone,
@@ -747,7 +824,11 @@ public class PagamentoService {
         }
 
         boolean possuiVigenciaFutura = !assinaturaService.buscarFilaAtiva(empresa.getId()).isEmpty();
+<<<<<<< HEAD
         empresa.setStatus(possuiVigenciaFutura ? StatusEmpresa.ATIVA : StatusEmpresa.PENDENTE_PAGAMENTO);
+=======
+        empresa.setStatus(possuiVigenciaFutura ? StatusEmpresa.ATIVA : StatusEmpresa.INATIVA);
+>>>>>>> origin/stage
     }
 
     private PagamentoPlanoEntity sincronizarPagamentoComGateway(PagamentoPlanoEntity pagamento) {

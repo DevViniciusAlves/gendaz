@@ -87,7 +87,11 @@ public class AssinaturaService {
     @Transactional
     public Optional<AssinaturaEntity> buscarAtualPorEmpresa(Long empresaId) {
         LocalDate hoje = LocalDate.now();
+<<<<<<< HEAD
         processarExpiracaoEFila(empresaId, hoje);
+=======
+        processarExpiracaoDaEmpresa(empresaId, hoje);
+>>>>>>> origin/stage
 
         List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
         Optional<AssinaturaEntity> vigente = fila.stream()
@@ -252,6 +256,14 @@ public class AssinaturaService {
      * fila quando ela ja comecou e ajusta o status da empresa (INATIVA quando
      * nao ha nenhum plano com vigencia futura).
      */
+<<<<<<< HEAD
+=======
+    @Transactional
+    public void processarExpiracaoDaEmpresa(Long empresaId, LocalDate hoje) {
+        processarExpiracaoEFila(empresaId, hoje);
+    }
+
+>>>>>>> origin/stage
     private void processarExpiracaoEFila(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> todas = assinaturaRepository.findByEmpresaId(empresaId);
 

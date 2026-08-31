@@ -43,6 +43,10 @@ import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
 import org.springframework.web.server.ResponseStatusException;
 import jakarta.servlet.http.HttpServletRequest;
+<<<<<<< HEAD
+=======
+import java.time.LocalDate;
+>>>>>>> origin/stage
 import java.time.LocalDateTime;
 import java.time.Duration;
 import java.util.List;
@@ -198,6 +202,7 @@ public class AuthService {
                     );
                 }
                 if (usuario.getEmpresa().getStatus() == StatusEmpresa.PENDENTE_PAGAMENTO) {
+<<<<<<< HEAD
                     log.info("Login pendente de pagamento para {}", mascararEmail(email));
                     return new LoginResponse(
                             "Conta aguardando confirmacao de pagamento.",
@@ -206,6 +211,38 @@ public class AuthService {
                             pagamentoPlano,
                             "ACCOUNT_PENDING_PAYMENT",
                             null,
+=======
+                    AssinaturaEntity assinaturaEmpresa = assinaturaService.buscarAtualPorEmpresa(usuario.getEmpresa().getId()).orElse(null);
+                    boolean assinaturaValida = assinaturaEmpresa != null
+                            && (assinaturaEmpresa.getStatus() == StatusAssinatura.ATIVA || assinaturaEmpresa.getStatus() == StatusAssinatura.TESTE)
+                            && assinaturaEmpresa.getDataFim() != null
+                            && assinaturaEmpresa.getDataFim().isAfter(LocalDate.now());
+                    if (assinaturaValida) {
+                        log.info("Login pendente de pagamento (com assinatura valida) para {}", mascararEmail(email));
+                        return new LoginResponse(
+                                "Conta aguardando confirmacao de pagamento.",
+                                mapper.toResponse(usuario),
+                                assinatura,
+                                pagamentoPlano,
+                                "ACCOUNT_PENDING_PAYMENT",
+                                null,
+                                "PAGAMENTO_PENDENTE"
+                        );
+                    }
+                    if (usuario.getEmpresa().getStatus() != StatusEmpresa.INATIVA) {
+                        usuario.getEmpresa().setStatus(StatusEmpresa.INATIVA);
+                        empresaRepository.save(usuario.getEmpresa());
+                    }
+                    log.info("Login empresa sem assinatura valida (legado PENDENTE_PAGAMENTO) redirecionando para conta inativa {}", mascararEmail(email));
+                    String sessionToken = usuarioSessionService.renovarSessao(usuario);
+                    return new LoginResponse(
+                            "Sua conta encontra-se inativa. Regularize a mensalidade para continuar usando o gendaz.",
+                            mapper.toResponse(usuario),
+                            assinatura,
+                            pagamentoPlano,
+                            "ACCOUNT_INACTIVE",
+                            sessionToken,
+>>>>>>> origin/stage
                             "PAGAMENTO_PENDENTE"
                     );
                 }
@@ -495,7 +532,11 @@ public class AuthService {
         if (!sessaoRestritaEncerrada) {
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN
                     && usuario.getEmpresa() != null
+<<<<<<< HEAD
                     && usuario.getEmpresa().getStatus() != StatusEmpresa.ATIVA) {
+=======
+                    && usuario.getEmpresa().getStatus() == StatusEmpresa.BLOQUEADA) {
+>>>>>>> origin/stage
                 throw new BusinessException("Conta indisponível. Entre em contato com o suporte.");
             }
             if (usuario.getPerfil() != PerfilUsuario.SUPER_ADMIN

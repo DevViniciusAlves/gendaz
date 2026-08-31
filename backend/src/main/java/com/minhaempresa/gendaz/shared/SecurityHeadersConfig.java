@@ -4,6 +4,7 @@ import com.minhaempresa.gendaz.shared.security.AdminAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.AdminImpersonationGuardFilter;
 import com.minhaempresa.gendaz.shared.security.GendazSessionAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.MeuGendazSessionAuthenticationFilter;
+<<<<<<< HEAD
 import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,6 +13,10 @@ import java.util.stream.Stream;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
+=======
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+>>>>>>> origin/stage
 import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
@@ -19,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+<<<<<<< HEAD
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -35,6 +41,13 @@ public class SecurityHeadersConfig {
         this.frontendUrl = frontendUrl;
         this.environment = environment;
     }
+=======
+
+@Configuration
+public class SecurityHeadersConfig {
+    @Value("${app.frontend-url:https://gendaz.site}")
+    private String frontendUrl;
+>>>>>>> origin/stage
 
     private static final String[] CSRF_IGNORADOS = {
             "/api/health",
@@ -52,6 +65,7 @@ public class SecurityHeadersConfig {
     };
 
     @Bean
+<<<<<<< HEAD
     public CorsConfigurationSource corsConfigurationSource() {
         boolean production = Arrays.asList(environment.getActiveProfiles()).contains("prod");
         List<String> allowedOrigins = production
@@ -94,6 +108,8 @@ public class SecurityHeadersConfig {
     }
 
     @Bean
+=======
+>>>>>>> origin/stage
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             GendazSessionAuthenticationFilter gendazSessionAuthenticationFilter,
