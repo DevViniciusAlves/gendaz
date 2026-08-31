@@ -126,7 +126,7 @@ class FinanceiroServiceTest {
 
         PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
                 1L, 9L, new BigDecimal("100.00"), StatusPagamento.PAGO,
-                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 3, 10, 10, 0));
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 8, 10, 10, 0));
 
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
                 .thenReturn(List.of(pagamento));
@@ -136,11 +136,16 @@ class FinanceiroServiceTest {
         when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
         when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
 
-        BigDecimal total = BigDecimal.ZERO;
-        for (int m = 3; m <= 5; m++) {
-            ResumoFinanceiroResponse resp = service.resumo(null, m, 2026);
-            total = total.add(resp.totalRecebidoMes());
-        }
+        ResumoFinanceiroResponse agosto = service.resumo(null, 8, 2026);
+        assertEquals(0, new BigDecimal("33.33").compareTo(agosto.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse setembro = service.resumo(null, 9, 2026);
+        assertEquals(0, new BigDecimal("33.33").compareTo(setembro.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse outubro = service.resumo(null, 10, 2026);
+        assertEquals(0, new BigDecimal("33.34").compareTo(outubro.totalRecebidoMes()));
+
+        BigDecimal total = agosto.totalRecebidoMes().add(setembro.totalRecebidoMes()).add(outubro.totalRecebidoMes());
         assertEquals(0, new BigDecimal("100.00").compareTo(total));
     }
 
@@ -188,6 +193,50 @@ class FinanceiroServiceTest {
 
         ResumoFinanceiroResponse abril = service.resumo(null, 4, 2026);
         assertEquals(0, new BigDecimal("225.00").compareTo(abril.totalRecebidoMes()));
+    }
+
+    @Test
+    void pagamentoDebitoDeveFicarIntegralmenteNoMesOriginal() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("80.00"), StatusPagamento.PAGO,
+                MetodoPagamento.DEBITO, null, LocalDateTime.of(2026, 5, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse maio = service.resumo(null, 5, 2026);
+        assertEquals(0, new BigDecimal("80.00").compareTo(maio.totalRecebidoMes()));
+
+        ResumoFinanceiroResponse junho = service.resumo(null, 6, 2026);
+        assertEquals(0, BigDecimal.ZERO.compareTo(junho.totalRecebidoMes()));
+    }
+
+    @Test
+    void filtroOutubroDeveMostrarApenasParcelaDeOutubro() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.PAGO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 8, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse outubro = service.resumo(null, 10, 2026);
+        assertEquals(1, outubro.pagamentosRecentes().size());
+        assertEquals(0, new BigDecimal("100.00").compareTo(outubro.pagamentosRecentes().get(0).valor()));
     }
 
     @Test
