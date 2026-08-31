@@ -189,6 +189,8 @@ function rotuloPlano(valor) {
 const PLANOS_PADRAO_ADMIN = [
   { id: 'BASICO', nome: 'BASICO', descrição: 'Agenda, clientes e servicos.' },
   { id: 'PRO', nome: 'PRO', descrição: 'Agenda com financeiro, pagamentos e relatorios.' },
+  { id: 'PLUS', nome: 'PLUS', descrição: 'Mais capacidade para sua equipe.' },
+  { id: 'ENTERPRISE', nome: 'ENTERPRISE', descrição: 'Escalabilidade máxima.' },
 ]
 
 function normalizarPlanosAdmin(planosRecebidos) {
@@ -1025,6 +1027,8 @@ export default function AdminDashboard() {
                 <option value="">Todos os planos</option>
                 <option value="BASICO">Básico</option>
                 <option value="PRO">Pro</option>
+                <option value="PLUS">Plus</option>
+                <option value="ENTERPRISE">Enterprise</option>
               </select>
             </div>
             <Table columns={['Empresa', 'Responsavel', 'E-mail', 'Telefone', 'Plano', 'Valor', 'Gateway', 'Status', 'Status empresa', 'Vencimento', 'Pagamento', 'Acoes']}>

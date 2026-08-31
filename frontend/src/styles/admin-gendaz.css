@@ -1309,6 +1309,20 @@ html .admin-gendaz .admin-assinatura__meta small {
   -webkit-text-fill-color: #0b0b0b !important;
 }
 
+html .admin-gendaz .admin-assinatura .status,
+html .admin-gendaz .admin-assinaturas-block .status {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+  background: rgba(11, 11, 11, 0.08) !important;
+  border-color: rgba(11, 11, 11, 0.15) !important;
+}
+
+html .admin-gendaz .admin-assinatura .status .status-dot,
+html .admin-gendaz .admin-assinaturas-block .status .status-dot {
+  color: #0b0b0b !important;
+  -webkit-text-fill-color: #0b0b0b !important;
+}
+
 html .admin-gendaz .admin-assinatura select,
 html .admin-gendaz .admin-assinatura input,
 html .admin-gendaz .admin-assinatura button,

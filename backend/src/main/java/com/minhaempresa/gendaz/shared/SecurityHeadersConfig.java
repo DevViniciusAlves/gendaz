@@ -77,7 +77,7 @@ public class SecurityHeadersConfig {
                                 "/api/meu-gendaz/auth/validar-codigo",
                                 "/api/meu-gendaz/auth/logout"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/meu-gendaz/empresa/*", "/api/meu-gendaz/perfil").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/planos", "/api/meu-gendaz/empresa/*", "/api/meu-gendaz/perfil").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/api/meu-gendaz/perfil").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/pagamentos/planos/webhook", "/api/pagamentos/webhook/stripe").permitAll()
