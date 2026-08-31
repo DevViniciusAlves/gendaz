@@ -4,8 +4,14 @@ import com.minhaempresa.gendaz.shared.security.AdminAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.AdminImpersonationGuardFilter;
 import com.minhaempresa.gendaz.shared.security.GendazSessionAuthenticationFilter;
 import com.minhaempresa.gendaz.shared.security.MeuGendazSessionAuthenticationFilter;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpMethod;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.config.Customizer;
@@ -13,11 +19,22 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
 public class SecurityHeadersConfig {
-    @Value("${app.frontend-url:https://gendaz.site}")
-    private String frontendUrl;
+    private final String frontendUrl;
+    private final Environment environment;
+
+    public SecurityHeadersConfig(
+            @Value("${app.frontend-url:https://gendaz.site}") String frontendUrl,
+            Environment environment
+    ) {
+        this.frontendUrl = frontendUrl;
+        this.environment = environment;
+    }
 
     private static final String[] CSRF_IGNORADOS = {
             "/api/health",
@@ -33,6 +50,48 @@ public class SecurityHeadersConfig {
             "/api/admin",
             "/api/admin/**"
     };
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        boolean production = Arrays.asList(environment.getActiveProfiles()).contains("prod");
+        List<String> allowedOrigins = production
+                ? Stream.concat(
+                        Arrays.stream(frontendUrl.split(",")),
+                        Stream.of(
+                                "https://gendaz.site",
+                                "https://www.gendaz.site"
+                        )
+                ).toList()
+                : List.of(
+                        "http://localhost:5173",
+                        "http://127.0.0.1:5173",
+                        "http://localhost:5174",
+                        "http://127.0.0.1:5174"
+                );
+
+        Set<String> origens = new LinkedHashSet<>();
+        for (String origem : allowedOrigins) {
+            if (origem != null && !origem.isBlank()) {
+                origens.add(origem.trim());
+            }
+        }
+
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(origens.stream().toList());
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        config.setAllowedHeaders(List.of(
+                "Authorization", "Content-Type", "Accept", "Origin",
+                "X-Requested-With", "X-Meu-Gendaz-Slug", "X-Usuario-Id",
+                "X-XSRF-TOKEN", "X-Idempotency-Key", "X-Request-Id"
+        ));
+        config.setExposedHeaders(List.of("Set-Cookie", "Retry-After"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", config);
+        return source;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
