@@ -13,6 +13,14 @@ export const PLANOS = {
     nome: 'Plano Pro',
     rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
   },
+  PLUS: {
+    nome: 'Plano Plus',
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+  },
+  ENTERPRISE: {
+    nome: 'Plano Enterprise',
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+  },
 }
 
 export function emptyData(usuario = null) {

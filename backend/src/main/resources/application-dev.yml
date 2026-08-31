@@ -29,3 +29,5 @@ stripe:
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   price-basico-id: ${STRIPE_PRICE_BASICO_ID:}
   price-pro-id: ${STRIPE_PRICE_PRO_ID:}
+  price-plus-id: ${STRIPE_PRICE_PLUS_ID:}
+  price-enterprise-id: ${STRIPE_PRICE_ENTERPRISE_ID:}

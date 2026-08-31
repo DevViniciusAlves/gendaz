@@ -13,6 +13,8 @@ import org.springframework.stereotype.Component;
 public class PlanoBootstrap implements CommandLineRunner {
     public static final BigDecimal VALOR_BASICO_MENSAL = new BigDecimal("29.90");
     public static final BigDecimal VALOR_PRO_MENSAL = new BigDecimal("79.90");
+    public static final BigDecimal VALOR_PLUS_MENSAL = new BigDecimal("109.90");
+    public static final BigDecimal VALOR_ENTERPRISE_MENSAL = new BigDecimal("149.90");
 
     private final PlanoRepository planoRepository;
 
@@ -20,6 +22,8 @@ public class PlanoBootstrap implements CommandLineRunner {
     public void run(String... args) {
         garantirPlano("BASICO", "Financeiro - Pagamentos automatizados - Relatórios | Histórico ilimitado | Agendamentos ilimitados | Confirmação de agendamentos | Não inclui: CRM integrado, Insights, Até 3 usuários, Financeiro completo", VALOR_BASICO_MENSAL);
         garantirPlano("PRO", "Tudo do Plano básico + Até 3 usuários na conta | CRM integrado | Insights com GendazIA no controle | Financeiro completo: caixa, despesas pagamentos automatizados", VALOR_PRO_MENSAL);
+        garantirPlano("PLUS", "Tudo do Plano Pro + Até 7 usuários na conta | CRM integrado | Insights com GendazIA no controle | Financeiro completo: caixa, despesas pagamentos automatizados", VALOR_PLUS_MENSAL);
+        garantirPlano("ENTERPRISE", "Tudo do Plano Plus + Até 15 usuários na conta | CRM integrado | Insights com GendazIA no controle | Financeiro completo: caixa, despesas pagamentos automatizados", VALOR_ENTERPRISE_MENSAL);
     }
 
     private void garantirPlano(String nome, String descricao, BigDecimal valorMensal) {

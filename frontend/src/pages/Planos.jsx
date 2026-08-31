@@ -27,7 +27,7 @@ const planosBase = [
       'Até 3 usuários',
       'Financeiro completo',
     ],
-    cta: 'Começar no Básico',
+    cta: 'Assinar Básico',
     precoFallback: 29.90,
   },
   {
@@ -46,6 +46,38 @@ const planosBase = [
     cta: 'Assinar Pro',
     precoFallback: 79.90,
     destaque: true,
+  },
+  {
+    codigo: 'PLUS',
+    nome: 'Plano Plus',
+    subtitulo: 'Mais capacidade para sua equipe',
+    extra: '7 dias grátis',
+    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
+    beneficios: [
+      'Tudo do Plano Pro +',
+      'Até 7 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Plus',
+    precoFallback: 109.90,
+  },
+  {
+    codigo: 'ENTERPRISE',
+    nome: 'Plano Enterprise',
+    subtitulo: 'Escalabilidade máxima',
+    extra: '7 dias grátis',
+    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
+    beneficios: [
+      'Tudo do Plano Plus +',
+      'Até 15 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Enterprise',
+    precoFallback: 149.90,
   },
 ]
 
@@ -265,9 +297,46 @@ export default function Planos() {
       navigate(`/criar-conta?plano=${encodeURIComponent(plano.codigo)}`)
       return
     }
-    if (plano.codigo === 'BASICO') {
-      iniciarPagamentoBasico()
+    if (plano.codigo === 'BASICO' || plano.codigo === 'PLUS' || plano.codigo === 'ENTERPRISE') {
+      iniciarPagamentoPlano(plano.codigo)
       return
+    }
+  }
+
+  async function iniciarPagamentoPlano(codigoPlano) {
+    if (!usuario) {
+      navigate(`/criar-conta?plano=${encodeURIComponent(codigoPlano)}`)
+      return
+    }
+    if (perfilAtendente) {
+      setErro('Seu perfil não permite comprar ou editar planos.')
+      return
+    }
+    if (limiteAtingido) {
+      setErro('Voce ja possui 2 planos ativos. Aguarde um deles expirar para contratar novamente.')
+      return
+    }
+
+    setErro('')
+    setPlanoCarregando(codigoPlano)
+    try {
+      const pagamento = await appApi.iniciarPagamentoPlano({
+        empresaId: usuario.empresaId,
+        metodoPagamento: 'CREDIT_CARD',
+        plano: codigoPlano,
+        customerName: usuario.nome,
+        customerEmail: usuario.email,
+        customerPhone: usuario.telefone,
+        antifraudProfilingAttemptReference: usuario.id ? `agendeasy-${usuario.id}` : '',
+        forceNew: true,
+      })
+      setPagamentoPlano(pagamento)
+      setCheckoutSolicitado(true)
+      atualizarUsuario({ pagamentoPlano: pagamento })
+    } catch (error) {
+      setErro(error.response?.data?.mensagem || 'Nao foi possivel iniciar o pagamento.')
+    } finally {
+      setPlanoCarregando(null)
     }
   }
 
@@ -285,7 +354,7 @@ export default function Planos() {
           <div className="panel-head">
             <div>
               <span className="section-kicker">Plano atual</span>
-              <h2>{planoVigente === 'PRO' ? 'Plano Pro em vigor' : 'Plano Basico em vigor'}</h2>
+              <h2>{planoVigente === 'PRO' ? 'Plano Pro em vigor' : planoVigente === 'PLUS' ? 'Plano Plus em vigor' : planoVigente === 'ENTERPRISE' ? 'Plano Enterprise em vigor' : 'Plano Basico em vigor'}</h2>
             </div>
           </div>
 
@@ -363,15 +432,14 @@ export default function Planos() {
 
       <div className="plans-grid detailed plans-centered-grid">
         {planos.map((plano, index) => (
-          <ScrollReveal className={plano.destaque ? 'plan-card highlight plan-card-sale' : 'plan-card plan-card-sale'} delay={index * 100} key={plano.nome}>
-            {plano.destaque && <span className="recommended-badge">Mais recomendado</span>}
+          <ScrollReveal className="plan-card plan-card-sale" delay={index * 100} key={plano.nome}>
+            {plano.destaque && <span className="recommended-badge">Mais usado</span>}
             <div className="plan-card-body">
                 <div className="plan-head">
                   <div>
                   <h2 style={{ color: '#ffa95e' }}>{plano.nome}</h2>
                   <p className="plan-subtitle">{plano.subtitulo}</p>
                 </div>
-                {plano.destaque && <ShieldCheck size={20} />}
               </div>
 
               <div className="plan-price-block">
@@ -421,7 +489,7 @@ export default function Planos() {
             <button
               type="button"
               onClick={() => handlePlanClick(plano)}
-              className={plano.destaque ? 'btn btn-primary plan-action-link' : 'btn btn-secondary plan-action-link'}
+              className="btn btn-primary plan-action-link"
               disabled={planoCarregando != null || limiteAtingido || perfilAtendente}
             >
               {planoCarregando === plano.codigo

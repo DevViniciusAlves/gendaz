@@ -43,7 +43,7 @@ public class CaixaDespesasService {
     private final LogAtividadeService logAtividadeService;
 
     private void exigirPlanoPro(Long empresaId) {
-        if (!assinaturaService.isPlanoPro(empresaId)) {
+        if (!assinaturaService.isPlanoComRecursosAvancados(empresaId)) {
             throw new BusinessException("Recurso disponivel apenas no plano PRO.");
         }
     }
@@ -181,7 +181,7 @@ public class CaixaDespesasService {
     @Transactional
     public void registrarPagamentoAprovado(PagamentoEntity pagamento) {
         EmpresaEntity empresa = pagamento.getEmpresa();
-        if (!assinaturaService.isPlanoPro(empresa.getId())) {
+        if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
         BigDecimal valor = pagamento.getValor();
@@ -195,7 +195,7 @@ public class CaixaDespesasService {
     @Transactional
     public void registrarPagamentoRemovido(PagamentoEntity pagamento, Long usuarioId) {
         EmpresaEntity empresa = pagamento.getEmpresa();
-        if (!assinaturaService.isPlanoPro(empresa.getId())) {
+        if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
         BigDecimal valor = pagamento.getValor();
@@ -210,7 +210,7 @@ public class CaixaDespesasService {
     @Transactional
     public void registrarPagamentoCancelado(PagamentoEntity pagamento, Long usuarioId, StatusPagamento statusAnterior) {
         EmpresaEntity empresa = pagamento.getEmpresa();
-        if (!assinaturaService.isPlanoPro(empresa.getId())) {
+        if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
         BigDecimal valor = pagamento.getValor();

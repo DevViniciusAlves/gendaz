@@ -90,7 +90,7 @@ const plans = [
       'Até 3 usuários',
       'Financeiro completo',
     ],
-    cta: 'Começar no Básico',
+    cta: 'Assinar Básico',
   },
   {
     nome: 'Plano Pro',
@@ -105,8 +105,38 @@ const plans = [
       'Insights com GendazIA no controle',
       'Financeiro completo: caixa, despesas pagamentos automatizados',
     ],
-    cta: 'Escolher Pro',
+    cta: 'Assinar Pro',
     destaque: true,
+  },
+  {
+    nome: 'Plano Plus',
+    subtitulo: 'Mais capacidade para sua equipe',
+    preco: 'R$ 109,90/mês',
+    extra: '7 dias grátis',
+    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
+    beneficios: [
+      'Tudo do Plano Pro +',
+      'Até 7 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Plus',
+  },
+  {
+    nome: 'Plano Enterprise',
+    subtitulo: 'Escalabilidade máxima',
+    preco: 'R$ 149,90/mês',
+    extra: '7 dias grátis',
+    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
+    beneficios: [
+      'Tudo do Plano Plus +',
+      'Até 15 usuários na conta',
+      'CRM integrado',
+      'Insights com GendazIA no controle',
+      'Financeiro completo: caixa, despesas pagamentos automatizados',
+    ],
+    cta: 'Assinar Enterprise',
   },
 ]
 
@@ -329,18 +359,17 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <div className="plans-grid detailed plans-centered-grid pricing-grid">
             {plans.map((plano, index) => (
             <article
-              className={plano.destaque ? 'plan-card highlight plan-card-sale pricing-card pricing-card-pro premium-border' : 'plan-card plan-card-sale pricing-card pricing-card-basic premium-border'}
+              className="plan-card plan-card-sale pricing-card premium-border"
               style={{ '--pricing-stagger': `${index * 40}ms` }}
               key={plano.nome}
             >
-              {plano.destaque && <span className="recommended-badge">Mais recomendado</span>}
+              {plano.destaque && <span className="recommended-badge">Mais usado</span>}
               <div className="plan-card-body pricing-card-body">
                   <div className="plan-head">
                     <div>
                       <h2 style={{ color: '#ff5e29' }}>{plano.nome}</h2>
                       <p className="plan-subtitle">{plano.subtitulo}</p>
                     </div>
-                  {plano.destaque && <ShieldCheck size={20} className="plan-head-icon" />}
                 </div>
 
                 <div className="plan-price-block">
@@ -354,7 +383,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
                   <h3>Benefícios</h3>
                   <div className="plan-list">
                     {plano.beneficios.map((item) => (
-                      <strong key={item} className={item === 'Tudo do Plano Básico +' ? 'plan-list-tudo-basico' : ''}>
+                      <strong key={item}>
                         <Check size={16} style={{ color: '#22c55e' }} />{item}
                       </strong>
                     ))}
@@ -390,7 +419,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
               <button
                 type="button"
                 onClick={() => handlePlanClick(plano)}
-                className={plano.destaque ? 'btn btn-primary plan-action-link pricing-cta pricing-cta-pro' : 'btn btn-secondary plan-action-link pricing-cta pricing-cta-basic'}
+                className="btn btn-primary plan-action-link pricing-cta"
               >
                 {plano.cta}
               </button>

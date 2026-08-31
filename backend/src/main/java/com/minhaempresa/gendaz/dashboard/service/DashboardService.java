@@ -154,7 +154,8 @@ public class DashboardService {
         boolean temLinkAgendamento = empresa.getAgendamentoSlug() != null && !empresa.getAgendamentoSlug().isBlank();
         boolean planoComProfissionais = assinaturaService.buscarAtualPorEmpresa(empresaId)
                 .map(AssinaturaEntity::getPlano)
-                .map(plano -> "PRO".equalsIgnoreCase(plano.getNome()) || "BASICO".equalsIgnoreCase(plano.getNome()))
+                .map(plano -> "PRO".equalsIgnoreCase(plano.getNome()) || "BASICO".equalsIgnoreCase(plano.getNome())
+                        || "PLUS".equalsIgnoreCase(plano.getNome()) || "ENTERPRISE".equalsIgnoreCase(plano.getNome()))
                 .orElse(false);
 
         List<PrimeiroPassoItem> etapas = new ArrayList<>();

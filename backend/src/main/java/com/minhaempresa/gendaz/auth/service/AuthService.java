@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.auth.service;
 import com.minhaempresa.gendaz.assinatura.dto.AssinaturaDtos.AssinaturaResponse;
 import com.minhaempresa.gendaz.assinatura.entity.AssinaturaEntity;
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
+import com.minhaempresa.gendaz.assinatura.mapper.AssinaturaMapper;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
 import com.minhaempresa.gendaz.auth.dto.AuthDtos.CriarContaRequest;
@@ -40,6 +41,7 @@ import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
 import com.minhaempresa.gendaz.usuario.mapper.UsuarioMapper;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import com.minhaempresa.gendaz.usuario.service.UsuarioService;
+import org.springframework.web.server.ResponseStatusException;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.Duration;
@@ -68,6 +70,7 @@ public class AuthService {
     private final EmpresaRepository empresaRepository;
     private final PlanoService planoService;
     private final AssinaturaService assinaturaService;
+    private final AssinaturaMapper assinaturaMapper = new AssinaturaMapper();
     private final PagamentoService pagamentoService;
     private final PasswordRecoveryService passwordRecoveryService;
     private final ResendEmailService resendEmailService;
@@ -104,16 +107,16 @@ public class AuthService {
         String email = normalizarEmail(request.email());
         String ip = getCurrentClientIp();
         
-        // Rate limiting de proteção contra brute force por IP
-        persistentRateLimitService.consumir("LOGIN_IP:" + ip, 5, Duration.ofMinutes(1), Duration.ofMinutes(15));
-        
-        log.info("[LOGIN-SERVICE] chegou no AuthService email={}", mascararEmail(email));
-        log.info("Login solicitado para {}", mascararEmail(email));
-        
-        // Rate limiting por IP antes de qualquer processamento pesado
-        persistentRateLimitService.consumir("LOGIN_IP_GLOBAL:" + getCurrentClientIp(), 20, Duration.ofMinutes(1), Duration.ofMinutes(15));
-        
         try {
+            // Rate limiting de proteção contra brute force por IP
+            persistentRateLimitService.consumir("LOGIN_IP:" + ip, 5, Duration.ofMinutes(1), Duration.ofMinutes(15));
+            
+            log.info("[LOGIN-SERVICE] chegou no AuthService email={}", mascararEmail(email));
+            log.info("Login solicitado para {}", mascararEmail(email));
+            
+            // Rate limiting por IP antes de qualquer processamento pesado
+            persistentRateLimitService.consumir("LOGIN_IP_GLOBAL:" + getCurrentClientIp(), 20, Duration.ofMinutes(1), Duration.ofMinutes(15));
+            
             UsuarioEntity usuario = resolverUsuarioUnicoPorEmail(email);
 
             if (usuario == null || usuario.getStatus() != StatusUsuario.ATIVO) {
@@ -179,7 +182,7 @@ public class AuthService {
             PagamentoPlanoResponse pagamentoPlano = null;
             if (usuario.getEmpresa() != null) {
                 AssinaturaEntity assinaturaAtual = assinaturaService.buscarAtualPorEmpresa(usuario.getEmpresa().getId()).orElse(null);
-                assinatura = assinaturaAtual == null ? null : assinaturaService.toResponse(assinaturaAtual);
+                assinatura = assinaturaAtual == null ? null : assinaturaMapper.toResponse(assinaturaAtual);
                 pagamentoPlano = pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(usuario.getEmpresa()).orElse(null);
                 if (usuario.getEmpresa().getStatus() == StatusEmpresa.ENCERRADA) {
                     String sessionToken = usuarioSessionService.renovarSessao(usuario);
@@ -259,13 +262,15 @@ public class AuthService {
             return new LoginResponse("Login realizado com sucesso.", mapper.toResponse(usuario), assinatura, null, "ACTIVE", sessionToken);
         } catch (BusinessException ex) {
             throw ex;
+        } catch (ResponseStatusException ex) {
+            throw ex;
         } catch (RuntimeException ex) {
             log.error("Login falhou para {} em {} ms. erroTipo={}", mascararEmail(email), duracaoMs(inicio), ex.getClass().getSimpleName());
             throw ex;
         }
     }
 
-@Transactional
+    @Transactional
     public LoginResponse criarConta(CriarContaRequest request, String idempotencyKey, String requestId) {
         long inicio = System.nanoTime();
         String email = normalizarEmail(request.email());
@@ -323,6 +328,8 @@ public class AuthService {
                         requestIdFinal, keyHash, resultado.statusConta());
             }
             return resultado;
+        } catch (ResponseStatusException ex) {
+            throw ex;
         } catch (RuntimeException ex) {
             if (idempotencia != null) {
                 cadastroIdempotenciaService.marcarFalha(idempotencia.getKeyHash());
@@ -345,19 +352,6 @@ public class AuthService {
     private LoginResponse executarCriacaoConta(CriarContaRequest request, String email, String telefone,
                                                String nomeEmpresa, String nomeProprietario) {
         CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
-
-        PagamentoPlanoResponse pagamentoPlano = null;
-        if ("PRO".equalsIgnoreCase(cadastro.assinatura().getPlano().getNome())) {
-            pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
-                    cadastro.empresaId(),
-                    "PRO",
-                    MetodoPagamento.CREDIT_CARD,
-                    cadastro.usuario().getNome(),
-                    cadastro.usuario().getEmail(),
-                    cadastro.usuario().getEmpresa().getTelefone(),
-                    null
-            );
-        }
 
         if (cadastro.usuario() != null) {
             boolean emailBoasVindas = resendEmailService.enviarBoasVindas(
@@ -394,8 +388,8 @@ public class AuthService {
         return new LoginResponse(
                 "Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
                 mapper.toResponse(cadastro.usuario()),
-                assinaturaService.toResponse(cadastro.assinatura()),
-                pagamentoPlano,
+                assinaturaMapper.toResponse(cadastro.assinatura()),
+                null,
                 "ACTIVE",
                 sessionToken,
                 null
@@ -664,7 +658,9 @@ public class AuthService {
                 .versaoPolitica(VERSAO_PRIVACIDADE)
                 .build());
 
-        AssinaturaEntity assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
+        AssinaturaEntity assinatura;
+        // Todos os planos (BÁSICO, PRO, PLUS, ENTERPRISE) iniciam com trial de 7 dias
+        assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
         log.info("Conta criada: empresa={}, usuario={}, assinatura={}, plano={}, status={}",
                 empresa.getId(), usuario.getId(), assinatura.getId(), planoEscolhido.getNome(), assinatura.getStatus());
         return new CadastroContaCriada(empresa.getId(), usuario, assinatura);

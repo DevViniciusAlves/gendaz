@@ -45,6 +45,8 @@ stripe:
   webhook-secret: ${STRIPE_WEBHOOK_SECRET:}
   price-basico-id: ${STRIPE_PRICE_BASICO_ID:}
   price-pro-id: ${STRIPE_PRICE_PRO_ID:}
+  price-plus-id: ${STRIPE_PRICE_PLUS_ID:}
+  price-enterprise-id: ${STRIPE_PRICE_ENTERPRISE_ID:}
 
 
 
@@ -57,4 +59,14 @@ resend:
   api-key: ${RESEND_API_KEY:}
   from-email: ${RESEND_FROM_EMAIL:no-reply@gendaz.site}
   from-name: ${RESEND_FROM_NAME:Gendaz}
+
+sentry:
+  dsn: ${SENTRY_DSN:}
+  environment: ${SENTRY_ENVIRONMENT:development}
+  traces-sample-rate: ${SENTRY_TRACES_SAMPLE_RATE:1.0}
+  enable-tracing: ${SENTRY_ENABLE_TRACING:true}
+  send-default-pii: true
+  logging:
+    minimum-event-level: error
+    minimum-breadcrumb-level: info
 

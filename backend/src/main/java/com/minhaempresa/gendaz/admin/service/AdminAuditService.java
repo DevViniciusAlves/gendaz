@@ -31,13 +31,14 @@ public class AdminAuditService {
      * @param acao      Ação realizada (ex: "Criar", "Editar", "Excluir").
      * @param entidade  Entidade afetada (ex: "Cliente", "Agendamento").
      * @param entidadeId ID da entidade afetada (opcional).
+     * @param empresaId ID da empresa afetada (obtido diretamente da entidade operada).
      * @param descricao Descrição detalhada da acao (ex: "Criou cliente Cleiton").
      */
-    public void registrar(String acao, String entidade, Long entidadeId, String descricao) {
+    public void registrar(String acao, String entidade, Long entidadeId, Long empresaId, String descricao) {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
-            audit.setEmpresaId(CompanyContext.requireCompanyId()); // Use CompanyContext.requireCompanyId() para garantir empresa
-            
+            audit.setEmpresaId(empresaId != null ? empresaId : 0L);
+
             Long usuarioId = null;
             String usuarioNome = "Sistema";
             try {
@@ -46,35 +47,49 @@ public class AdminAuditService {
             } catch (Exception e) {
                 log.debug("Nenhum usuario autenticado encontrado para o log de auditoria, registrando como 'Sistema'.");
             }
-            
-            audit.setUsuarioId(usuarioId != null ? usuarioId : 0L); // 0L representa sistema/anônimo se não autenticado
+
+            audit.setUsuarioId(usuarioId != null ? usuarioId : 0L);
             audit.setUsuarioNome(usuarioNome);
             audit.setAcao(acao);
             audit.setEntidade(entidade);
             audit.setEntidadeId(entidadeId);
             audit.setDescricao(descricao);
             audit.setDataHora(LocalDateTime.now());
-            
-            // TODO: Obter IP e User-Agent do request (opcional)
             audit.setIp(null);
             audit.setUserAgent(null);
-            
+
             adminAuditRepository.save(audit);
         } catch (Exception e) {
             log.error("Falha ao registrar auditoria: {}", e.getMessage(), e);
         }
     }
 
+    /**
+     * Registra um log de auditoria usando CompanyContext como empresaId.
+     * Para operações de admin/Super Admin que não possuem CompanyContext,
+     * usar o overload com empresaId explícito.
+     *
+     * @param acao      Ação realizada.
+     * @param entidade  Entidade afetada.
+     * @param entidadeId ID da entidade afetada (opcional).
+     * @param descricao Descrição detalhada da acao.
+     */
+    public void registrar(String acao, String entidade, Long entidadeId, String descricao) {
+        Long empresaId = CompanyContext.getCompanyId();
+        registrar(acao, entidade, entidadeId, empresaId, descricao);
+    }
 
     /**
-     * Registra um log de auditoria sem entidadeId.
+     * Registra um log de auditoria sem entidadeId e sem empresaId explícito.
+     * Usa CompanyContext como fallback para retrocompatibilidade.
      *
      * @param acao      Ação realizada.
      * @param entidade  Entidade afetada.
      * @param descricao Descrição detalhada da acao.
      */
     public void registrar(String acao, String entidade, String descricao) {
-        registrar(acao, entidade, null, descricao);
+        Long empresaId = CompanyContext.getCompanyId();
+        registrar(acao, entidade, null, empresaId, descricao);
     }
 
     /**
@@ -104,7 +119,8 @@ public class AdminAuditService {
                           EmpresaEntity empresa, String descricao, String motivo, String ip, String userAgent) {
         try {
             AdminAuditEntity audit = new AdminAuditEntity();
-            Long empresaId = empresa != null ? empresa.getId() : CompanyContext.requireCompanyId();
+            Long empresaId = empresa != null ? empresa.getId() : null;
+            empresaId = empresaId != null ? empresaId : 0L;
             audit.setEmpresaId(empresaId);
 
             Long usuarioId = usuario != null ? usuario.getId() : (admin != null ? admin.getId() : null);
@@ -135,6 +151,15 @@ public class AdminAuditService {
         return adminAuditRepository.findAllByOrderByDataHoraDesc().stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Retorna todas as entidades de auditoria (Super Admin), mais recentes primeiro.
+     *
+     * @return Lista de entidades de auditoria.
+     */
+    public List<AdminAuditEntity> listarEntidades() {
+        return adminAuditRepository.findAllByOrderByDataHoraDesc();
     }
 
     /**

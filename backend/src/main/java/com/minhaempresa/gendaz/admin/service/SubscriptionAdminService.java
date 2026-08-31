@@ -155,6 +155,14 @@ public class SubscriptionAdminService {
                 .build();
         assinaturaRepository.save(nova);
 
+        // Ao atribuir um plano válido e ativo, garantir que a empresa volte a ATIVA
+        // Esta regra é consistente com processarExpiracaoEFila, que seta INATIVA
+        // quando não há planos vigentes. O inverso também deve ser verdadeiro.
+        if (empresa.getStatus() != StatusEmpresa.ATIVA) {
+            empresa.setStatus(StatusEmpresa.ATIVA);
+            empresaRepository.save(empresa);
+        }
+
         List<AssinaturaEntity> fila = assinaturaRepository.findByEmpresaId(empresaId);
         fila.sort(Comparator.comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(AssinaturaEntity::getId));

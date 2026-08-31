@@ -20,11 +20,26 @@ const PLANOS_INFO = {
     possuiTesteGratis: true,
     subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
   },
+  PLUS: {
+    nome: 'Plus',
+    preco: 'R$ 109,90/mês',
+    possuiTesteGratis: true,
+    subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
+  },
+  ENTERPRISE: {
+    nome: 'Enterprise',
+    preco: 'R$ 149,90/mês',
+    possuiTesteGratis: true,
+    subtitulo: 'Seu teste gratis de 7 dias comeca apos o cadastro.',
+  },
 }
 
 function normalizarPlano(planoParam) {
-  const texto = String(planoParam || '').toUpperCase()
-  if (texto.includes('PRO')) return 'PRO'
+  const texto = String(planoParam || '').toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (texto === 'BASICO' || texto.includes('PLANO BASICO')) return 'BASICO'
+  if (texto === 'PRO' || texto.includes('PLANO PRO')) return 'PRO'
+  if (texto === 'PLUS' || texto.includes('PLANO PLUS')) return 'PLUS'
+  if (texto === 'ENTERPRISE' || texto.includes('PLANO ENTERPRISE')) return 'ENTERPRISE'
   return 'BASICO'
 }
 
@@ -220,7 +235,11 @@ export default function CriarConta() {
             <button
               type="button"
               className="cc-plan-switch-v2"
-              onClick={() => setPlano((c) => (c === 'PRO' ? 'BASICO' : 'PRO'))}
+              onClick={() => setPlano((c) => {
+                const ordem = ['BASICO', 'PRO', 'PLUS', 'ENTERPRISE']
+                const idx = ordem.indexOf(c)
+                return ordem[(idx + 1) % ordem.length]
+              })}
             >
               <RefreshCw size={13} /> Trocar
             </button>

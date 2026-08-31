@@ -111,14 +111,26 @@ public class AssinaturaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Assinatura nao encontrada."));
     }
 
-    @Transactional(readOnly = true)
-    public boolean isPlanoPro(Long empresaId) {
+    public int obterLimiteUsuarios(Long empresaId) {
         LocalDate hoje = LocalDate.now();
-        return assinaturaRepository.findByEmpresaId(empresaId).stream()
+        Optional<AssinaturaEntity> assinatura = assinaturaRepository.findByEmpresaId(empresaId).stream()
                 .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
                         || a.getStatus() == StatusAssinatura.TESTE)
                 .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
-                .anyMatch(a -> a.getPlano() != null && "PRO".equals(a.getPlano().getNome()));
+                .sorted(Comparator
+                        .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(AssinaturaEntity::getId))
+                .findFirst();
+
+        if (assinatura.isEmpty()) return 1;
+
+        String nomePlano = assinatura.get().getPlano().getNome();
+        return switch (nomePlano.toUpperCase()) {
+            case "ENTERPRISE" -> 15;
+            case "PLUS" -> 7;
+            case "PRO" -> 3;
+            default -> 1;
+        };
     }
 
     /**
@@ -181,9 +193,24 @@ public class AssinaturaService {
         return assinaturaRepository.save(nova);
     }
 
-    public AssinaturaResponse toResponse(AssinaturaEntity assinatura) {
-        return mapper.toResponse(assinatura);
+    @Transactional(readOnly = true)
+    public boolean isPlanoComRecursosAvancados(Long empresaId) {
+        LocalDate hoje = LocalDate.now();
+        Optional<AssinaturaEntity> assinatura = assinaturaRepository.findByEmpresaId(empresaId).stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
+                        || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+                .sorted(Comparator
+                        .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
+                        .thenComparing(AssinaturaEntity::getId))
+                .findFirst();
+
+        if (assinatura.isEmpty()) return false;
+
+        String nomePlano = assinatura.get().getPlano().getNome();
+        return "PRO".equalsIgnoreCase(nomePlano) || "PLUS".equalsIgnoreCase(nomePlano) || "ENTERPRISE".equalsIgnoreCase(nomePlano);
     }
+
 
     /**
      * Reencadeia as assinaturas futuras a partir de uma assinatura alterada

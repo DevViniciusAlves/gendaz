@@ -23,7 +23,7 @@ public class InsightsController {
     private final AssinaturaService assinaturaService;
 
     private void validarPlanoPro() {
-        if (!assinaturaService.isPlanoPro(CompanyContext.requireCompanyId())) {
+        if (!assinaturaService.isPlanoComRecursosAvancados(CompanyContext.requireCompanyId())) {
             throw new BusinessException("Esta funcionalidade requer o plano PRO.");
         }
     }

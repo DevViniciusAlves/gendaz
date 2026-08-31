@@ -2,7 +2,6 @@ package com.minhaempresa.gendaz.admin.controller;
 
 import com.minhaempresa.gendaz.admin.entity.AdminAuditEntity;
 import com.minhaempresa.gendaz.admin.service.AdminAuditService;
-import com.minhaempresa.gendaz.shared.CompanyContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,14 +18,13 @@ public class AdminAuditController {
     private final AdminAuditService adminAuditService;
 
     /**
-     * Retorna todos os logs de auditoria da empresa.
+     * Retorna todos os logs de auditoria (Super Admin tem visao global).
      *
      * @return Lista de logs de auditoria.
      */
     @GetMapping
     public ResponseEntity<List<AdminAuditEntity>> getAll() {
-        Long empresaId = CompanyContext.getCompanyId();
-        List<AdminAuditEntity> logs = adminAuditService.findByEmpresaIdOrderByDataHoraDesc(empresaId);
+        List<AdminAuditEntity> logs = adminAuditService.listarEntidades();
         return ResponseEntity.ok(logs);
     }
 }
