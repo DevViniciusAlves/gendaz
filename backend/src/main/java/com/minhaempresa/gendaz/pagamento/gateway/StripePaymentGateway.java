@@ -51,11 +51,14 @@ public class StripePaymentGateway implements PaymentGateway {
 
         String customerId = resolverOuCriarStripeCustomer(pagamento.getEmpresa(), pagamento.getCustomerEmail(), pagamento.getCustomerName());
 
+        long expiresAtEpochSeconds = Instant.now().getEpochSecond() + 30 * 60;
+
         SessionCreateParams.Builder params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                 .setSuccessUrl(successUrlComSessionId())
                 .setCancelUrl(paymentGatewayProperties.getCancelUrl())
                 .setCustomer(customerId)
+                .setExpiresAt(expiresAtEpochSeconds)
                 .addLineItem(lineItem)
                 .putMetadata("empresaId", String.valueOf(pagamento.getEmpresa().getId()))
                 .putMetadata("pagamentoPlanoId", String.valueOf(pagamento.getId()))
@@ -210,6 +213,25 @@ public class StripePaymentGateway implements PaymentGateway {
             }
         } catch (StripeException ex) {
             log.warn("Erro ao expirar session na Stripe. erroTipo={}", ex.getClass().getSimpleName());
+        }
+    }
+
+    @Override
+    public void expirarCheckoutSessionThrows(String sessionId) {
+        if (sessionId == null || sessionId.isBlank()) {
+            return;
+        }
+        Stripe.apiKey = stripeProperties.getSecretKey();
+        try {
+            Session session = Session.retrieve(sessionId);
+            if ("open".equals(session.getStatus())) {
+                session.expire();
+                log.info("Checkout Session Stripe expirada com sucesso (throws)");
+            } else {
+                log.info("Checkout Session Stripe com status terminal: status={}", session.getStatus());
+            }
+        } catch (StripeException ex) {
+            throw new BusinessException("Falha ao expirar Checkout Session na Stripe: " + ex.getMessage());
         }
     }
 

@@ -61,6 +61,7 @@ class AuthServiceTest {
     @BeforeEach
     void setup() {
         lenient().when(passwordService.matches(anyString(), anyString())).thenReturn(true);
+        lenient().when(assinaturaService.buscarAtualPorEmpresa(any())).thenReturn(Optional.empty());
     }
 
     @Test

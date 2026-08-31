@@ -39,10 +39,6 @@ export default function Login() {
     setCarregando(true)
     try {
       const resultado = await login(email, senha)
-      if (resultado?.pendingPayment) {
-        navigate('/pagamento-pendente')
-        return
-      }
       if (resultado?.statusConta === 'ACCOUNT_INACTIVE') {
         if (resultado?.motivoInatividade === 'CONTA_ENCERRADA') {
           navigate('/conta-encerrada')

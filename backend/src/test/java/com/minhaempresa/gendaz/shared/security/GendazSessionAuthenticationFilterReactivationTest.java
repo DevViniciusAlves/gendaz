@@ -108,13 +108,52 @@ class GendazSessionAuthenticationFilterReactivationTest {
     }
 
     @Test
-    void empresaBloqueadaNaoDeveAcessarRotaDeReativacao() throws Exception {
+    void empresaInativaDeveAcessarIniciarPagamentoPlano() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
+        
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setRequestURI("/api/pagamentos/planos/iniciar");
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
+        request.addHeader("Origin", "https://gendaz.site");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, new MockFilterChain());
+
+        assertEquals(200, response.getStatus());
+    }
+
+    @Test
+    void empresaBloqueadaNaoDeveAcessarIniciarPagamentoPlano() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA);
         when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/pagamentos/planos/empresa/30/atual");
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setRequestURI("/api/pagamentos/planos/iniciar");
         request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
+        request.addHeader("Origin", "https://gendaz.site");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        filter.doFilterInternal(request, response, new MockFilterChain());
+
+        assertEquals(403, response.getStatus());
+    }
+
+    @Test
+    void usuarioInativoNaoDeveAcessarIniciarPagamentoPlano() throws Exception {
+        GendazSessionAuthenticationFilter filter = filtro();
+        UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.INATIVO, StatusEmpresa.INATIVA);
+        when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
+        
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setMethod("POST");
+        request.setRequestURI("/api/pagamentos/planos/iniciar");
+        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
+        request.addHeader("Origin", "https://gendaz.site");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, new MockFilterChain());

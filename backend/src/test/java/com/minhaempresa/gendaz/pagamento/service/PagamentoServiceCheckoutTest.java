@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -156,8 +158,11 @@ class PagamentoServiceCheckoutTest {
         when(assinaturaService.buscarFilaAtiva(1L)).thenReturn(List.of());
         when(pagamentoPlanoRepository.findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(
                 1L, 2L, StatusPagamento.PAYMENT_PENDING)).thenReturn(Optional.of(vencido));
+        when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of(vencido));
         when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(vencido));
-        when(paymentGateway.consultarPagamentoPlano(vencido)).thenReturn(Optional.empty());
+        when(paymentGateway.consultarPagamentoPlano(vencido)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_expired", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_PENDING, new BigDecimal("89.00"))));
         when(paymentGatewayProperties.getCheckout()).thenReturn(new PaymentGatewayProperties.CheckoutProperties());
         when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
         when(paymentGateway.criarPagamentoPlano(any(PagamentoPlanoEntity.class))).thenAnswer(i -> new PaymentGatewayResponse(
@@ -166,7 +171,7 @@ class PagamentoServiceCheckoutTest {
         PagamentoPlanoResponse resultado = pagamentoService.iniciarPagamentoPlano(1L, "PRO", MetodoPagamento.CREDIT_CARD);
 
         // O checkout anterior foi expirado com seguranca...
-        verify(paymentGateway).expirarCheckoutSession("cs_test_expired");
+        verify(paymentGateway).expirarCheckoutSessionThrows("cs_test_expired");
         // ... e so um novo pedido criou um novo checkout/session.
         verify(paymentGateway).criarPagamentoPlano(any(PagamentoPlanoEntity.class));
         assertNotNull(resultado);
@@ -254,5 +259,334 @@ class PagamentoServiceCheckoutTest {
                 () -> pagamentoService.buscarUltimoPagamentoPlanoPendenteParaLogin(EmpresaEntity.builder().build()));
         verify(pagamentoPlanoRepository, never())
                 .findByEmpresaIdAndStatusOrderByDataCriacaoDesc(anyLong(), any());
+    }
+
+    // =====================================================================
+    // TESTE 1: Checkout criado — dataExpiracao = criacao + 15 minutos
+    // =====================================================================
+    @Test
+    void checkoutCriadoDeveTerDataExpiracao15MinutosNoFuturo() {
+        CompanyContext.setCompanyId(1L);
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+
+        when(empresaRepository.findByIdWithLock(1L)).thenReturn(Optional.of(empresa));
+        when(planoService.buscarPorNomePermitido("PRO")).thenReturn(plano);
+        when(assinaturaService.buscarFilaAtiva(1L)).thenReturn(List.of());
+        when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of());
+        when(paymentGatewayProperties.getCheckout()).thenReturn(new PaymentGatewayProperties.CheckoutProperties());
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(paymentGateway.criarPagamentoPlano(any(PagamentoPlanoEntity.class))).thenAnswer(i -> {
+            PagamentoPlanoEntity p = i.getArgument(0);
+            return new PaymentGatewayResponse("STRIPE", "cs_new", "AGE-PRO-NEW", "AGE-PRO-NEW",
+                    "https://checkout.stripe.com/c/pay_new", LocalDateTime.now().plusMinutes(15));
+        });
+
+        pagamentoService.iniciarPagamentoPlano(1L, "PRO", MetodoPagamento.CREDIT_CARD);
+
+        verify(pagamentoPlanoRepository, atLeastOnce()).save(any(PagamentoPlanoEntity.class));
+    }
+
+    // =====================================================================
+    // TESTE 2: Checkout antes dos 15 minutos — não expira
+    // =====================================================================
+    @Test
+    void checkoutDentroDoPrazoNaoDeveExpirar() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pendente = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().plusMinutes(10), "cs_test_1", "https://checkout.stripe.com/c/pay_1");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pendente));
+
+        pagamentoService.expirarCheckoutPorTimeout(pendente);
+
+        assertEquals(StatusPagamento.PAYMENT_PENDING, pendente.getStatus());
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 3: Checkout vencido, Stripe OPEN, expiração funciona
+    // =====================================================================
+    @Test
+    void checkoutVencidoStripeOpenExpiracaoFuncionaDeveMarcarExpirado() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_open", "https://checkout.stripe.com/c/pay_open");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_open", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_PENDING, new BigDecimal("89.00"))));
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        verify(paymentGateway).expirarCheckoutSessionThrows("cs_test_open");
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pagamento.getStatus());
+    }
+
+    // =====================================================================
+    // TESTE 4: Checkout vencido, Stripe já aprovou — não expira
+    // =====================================================================
+    @Test
+    void checkoutVencidoStripeJaAprovadoNaoDeveExpirar() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_paid", "https://checkout.stripe.com/c/pay_paid");
+        AssinaturaEntity assinatura = AssinaturaEntity.builder().id(5L).empresa(empresa).plano(plano).status(StatusAssinatura.ATIVA).build();
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_paid", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_APPROVED, new BigDecimal("89.00"))));
+        when(assinaturaService.ativarPlanoPago(empresa, plano, null)).thenReturn(assinatura);
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_APPROVED, pagamento.getStatus());
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 5: Checkout vencido, consulta Stripe falha — não marcar expirado
+    // =====================================================================
+    @Test
+    void checkoutVencidoConsultaStripeFalhaNaoDeveMarcarExpirado() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_fail", "https://checkout.stripe.com/c/pay_fail");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenThrow(new BusinessException("Stripe indisponível"));
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_PENDING, pagamento.getStatus());
+        verify(pagamentoPlanoRepository, never()).save(any(PagamentoPlanoEntity.class));
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 6: Consulta funciona, Session OPEN, expire() falha
+    // =====================================================================
+    @Test
+    void checkoutVencidoSessionOpenExpiracaoFalhaNaoDeveMarcarExpirado() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_err", "https://checkout.stripe.com/c/pay_err");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_err", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_PENDING, new BigDecimal("89.00"))));
+        doThrow(new BusinessException("Falha ao expirar session")).when(paymentGateway).expirarCheckoutSessionThrows("cs_test_err");
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_PENDING, pagamento.getStatus());
+        verify(pagamentoPlanoRepository, never()).save(any(PagamentoPlanoEntity.class));
+    }
+
+    // =====================================================================
+    // TESTE 7: Stripe já informa expired — sincronizar
+    // =====================================================================
+    @Test
+    void checkoutVencidoStripeJaExpiradoDeveSincronizarParaExpirado() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_exp", "https://checkout.stripe.com/c/pay_exp");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_exp", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_EXPIRED, new BigDecimal("89.00"))));
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pagamento.getStatus());
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 8: Pagamento local já APPROVED — scheduler não altera
+    // =====================================================================
+    @Test
+    void pagamentoJaAprovadoNaoDeveSerAlteradoPeloScheduler() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_ap", "https://checkout.stripe.com/c/pay_ap");
+        pagamento.setStatus(StatusPagamento.PAYMENT_APPROVED);
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_APPROVED, pagamento.getStatus());
+        verify(paymentGateway, never()).consultarPagamentoPlano(any());
+        verify(pagamentoPlanoRepository, never()).save(any(PagamentoPlanoEntity.class));
+    }
+
+    // =====================================================================
+    // TESTE 9: Pagamento local já PAYMENT_EXPIRED — scheduler não altera
+    // =====================================================================
+    @Test
+    void pagamentoJaExpiradoNaoDeveSerAlteradoPeloScheduler() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_ex2", "https://checkout.stripe.com/c/pay_ex2");
+        pagamento.setStatus(StatusPagamento.PAYMENT_EXPIRED);
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pagamento.getStatus());
+        verify(paymentGateway, never()).consultarPagamentoPlano(any());
+        verify(pagamentoPlanoRepository, never()).save(any(PagamentoPlanoEntity.class));
+    }
+
+    // =====================================================================
+    // TESTE 10: Scheduler roda duas vezes — idempotente
+    // =====================================================================
+    @Test
+    void schedulerDuasVezesDeveSerIdempotente() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_id", "https://checkout.stripe.com/c/pay_id");
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_id", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_PENDING, new BigDecimal("89.00"))));
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        // Primeira execução — expira
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pagamento.getStatus());
+
+        // Limpar invocações para isolar verificação da segunda chamada
+        org.mockito.Mockito.clearInvocations(paymentGateway);
+
+        // Segunda execução — status já é terminal, ignora
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pagamento.getStatus());
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 11: Checkout PRO ativo, troca para BASICO, expiração funciona
+    // =====================================================================
+    @Test
+    void trocaPlanoProParaBasicoExpiracaoFuncionaDeveCriarNovoCheckout() {
+        CompanyContext.setCompanyId(1L);
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity planoPro = plano(2L, "PRO");
+        PlanoEntity planoBasico = plano(3L, "BASICO");
+        PagamentoPlanoEntity pendentePro = pagamentoPendente(
+                empresa, planoPro, LocalDateTime.now().plusMinutes(5), "cs_pro_old", "https://checkout.stripe.com/c/pay_pro");
+
+        when(empresaRepository.findByIdWithLock(1L)).thenReturn(Optional.of(empresa));
+        when(planoService.buscarPorNomePermitido("BASICO")).thenReturn(planoBasico);
+        when(assinaturaService.buscarFilaAtiva(1L)).thenReturn(List.of());
+        // Sem checkout pendente para BASICO
+        when(pagamentoPlanoRepository.findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(
+                1L, 3L, StatusPagamento.PAYMENT_PENDING)).thenReturn(Optional.empty());
+        // Checkout pendente para PRO
+        when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of(pendentePro));
+        when(paymentGatewayProperties.getCheckout()).thenReturn(new PaymentGatewayProperties.CheckoutProperties());
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+        when(paymentGateway.criarPagamentoPlano(any(PagamentoPlanoEntity.class))).thenAnswer(i -> {
+            PagamentoPlanoEntity p = i.getArgument(0);
+            p.setStripeSessionId("cs_basico_new");
+            return new PaymentGatewayResponse(
+                    "STRIPE", "cs_basico_new", "AGE-BAS-NEW", "AGE-BAS-NEW",
+                    "https://checkout.stripe.com/c/pay_basico", LocalDateTime.now().plusMinutes(15));
+        });
+
+        PagamentoPlanoResponse resultado = pagamentoService.iniciarPagamentoPlano(1L, "BASICO", MetodoPagamento.CREDIT_CARD);
+
+        // Checkout PRO antigo foi expirado na Stripe
+        verify(paymentGateway).expirarCheckoutSessionThrows("cs_pro_old");
+        assertEquals(StatusPagamento.PAYMENT_EXPIRED, pendentePro.getStatus());
+        // Novo checkout BASICO foi criado
+        verify(paymentGateway).criarPagamentoPlano(any(PagamentoPlanoEntity.class));
+        assertNotNull(resultado);
+        assertEquals("cs_basico_new", resultado.stripeSessionId());
+    }
+
+    // =====================================================================
+    // TESTE 12: Checkout PRO ativo, troca para BASICO, expiração Stripe falha
+    // =====================================================================
+    @Test
+    void trocaPlanoProParaBasicoExpiracaoStripeFalhaNaoDeveCriarNovoCheckout() {
+        CompanyContext.setCompanyId(1L);
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity planoPro = plano(2L, "PRO");
+        PlanoEntity planoBasico = plano(3L, "BASICO");
+        PagamentoPlanoEntity pendentePro = pagamentoPendente(
+                empresa, planoPro, LocalDateTime.now().plusMinutes(5), "cs_pro_old2", "https://checkout.stripe.com/c/pay_pro2");
+
+        when(empresaRepository.findByIdWithLock(1L)).thenReturn(Optional.of(empresa));
+        when(planoService.buscarPorNomePermitido("BASICO")).thenReturn(planoBasico);
+        when(assinaturaService.buscarFilaAtiva(1L)).thenReturn(List.of());
+        when(pagamentoPlanoRepository.findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(
+                1L, 3L, StatusPagamento.PAYMENT_PENDING)).thenReturn(Optional.empty());
+        when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
+                1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of(pendentePro));
+        doThrow(new BusinessException("Stripe indisponível")).when(paymentGateway).expirarCheckoutSessionThrows("cs_pro_old2");
+
+        assertThrows(BusinessException.class,
+                () -> pagamentoService.iniciarPagamentoPlano(1L, "BASICO", MetodoPagamento.CREDIT_CARD));
+
+        // PRO antigo não foi marcado como expirado localmente (Stripe falhou)
+        assertEquals(StatusPagamento.PAYMENT_PENDING, pendentePro.getStatus());
+        // Novo checkout BASICO NÃO foi criado
+        verify(paymentGateway, never()).criarPagamentoPlano(any(PagamentoPlanoEntity.class));
+    }
+
+    // =====================================================================
+    // TESTE 13: Pagamento aprovado momentos antes da expiração — aprovação vence
+    // =====================================================================
+    @Test
+    void pagamentoAprovadoAntesDaExpiracaoDevePrevalecer() {
+        EmpresaEntity empresa = empresa(1L, StatusEmpresa.ATIVA);
+        PlanoEntity plano = plano(2L, "PRO");
+        PagamentoPlanoEntity pagamento = pagamentoPendente(
+                empresa, plano, LocalDateTime.now().minusMinutes(1), "cs_test_race", "https://checkout.stripe.com/c/pay_race");
+        AssinaturaEntity assinatura = AssinaturaEntity.builder().id(5L).empresa(empresa).plano(plano).status(StatusAssinatura.ATIVA).build();
+
+        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(pagamento));
+        when(paymentGateway.consultarPagamentoPlano(pagamento)).thenReturn(Optional.of(new PaymentGatewayWebhook(
+                "evt_1", "cs_test_race", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_APPROVED, new BigDecimal("89.00"))));
+        when(assinaturaService.ativarPlanoPago(empresa, plano, null)).thenReturn(assinatura);
+        when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
+
+        pagamentoService.expirarCheckoutPorTimeout(pagamento);
+
+        assertEquals(StatusPagamento.PAYMENT_APPROVED, pagamento.getStatus());
+        verify(paymentGateway, never()).expirarCheckoutSessionThrows(any());
+    }
+
+    // =====================================================================
+    // TESTE 14: Empresa A tenta operar checkout da Empresa B — bloqueado
+    // =====================================================================
+    @Test
+    void empresaATentandoOperarCheckoutDaEmpresaBDeveSerBloqueado() {
+        CompanyContext.setCompanyId(1L);
+        EmpresaEntity empresaB = empresa(2L, StatusEmpresa.ATIVA);
+
+        when(pagamentoPlanoRepository.findByIdAndEmpresaId(100L, 1L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> pagamentoService.consultarPagamentoPlano(1L, 100L));
     }
 }
