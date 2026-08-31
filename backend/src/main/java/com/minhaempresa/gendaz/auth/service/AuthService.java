@@ -353,21 +353,6 @@ public class AuthService {
                                                String nomeEmpresa, String nomeProprietario) {
         CadastroContaCriada cadastro = criarContaBase(request, email, telefone, nomeEmpresa, nomeProprietario);
 
-        PagamentoPlanoResponse pagamentoPlano = null;
-        String planoOnboarding = cadastro.assinatura() != null && cadastro.assinatura().getPlano() != null
-                ? cadastro.assinatura().getPlano().getNome() : request.plano();
-        if ("PRO".equalsIgnoreCase(planoOnboarding) || "PLUS".equalsIgnoreCase(planoOnboarding) || "ENTERPRISE".equalsIgnoreCase(planoOnboarding)) {
-            pagamentoPlano = pagamentoService.iniciarPagamentoPlanoOnboarding(
-                    cadastro.empresaId(),
-                    planoOnboarding,
-                    MetodoPagamento.CREDIT_CARD,
-                    cadastro.usuario().getNome(),
-                    cadastro.usuario().getEmail(),
-                    cadastro.usuario().getEmpresa().getTelefone(),
-                    null
-            );
-        }
-
         if (cadastro.usuario() != null) {
             boolean emailBoasVindas = resendEmailService.enviarBoasVindas(
                     cadastro.usuario().getEmail(),
@@ -397,20 +382,6 @@ public class AuthService {
             }
         }
 
-        if (pagamentoPlano != null) {
-            log.info("Cadastro concluido com pagamento pendente para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
-            registrarAuditoriaAutenticacao("USER_REGISTER_PENDING_PAYMENT", cadastro.usuario(), "Conta criada: pagamento do plano pendente");
-            return new LoginResponse(
-                    "Cadastro criado. A conta " + (planoOnboarding != null ? planoOnboarding : "Pro") + " aguarda confirmacao de pagamento.",
-                    mapper.toResponse(cadastro.usuario()),
-                    assinaturaMapper.toResponse(cadastro.assinatura()),
-                    pagamentoPlano,
-                    "ACCOUNT_PENDING_PAYMENT",
-                    null,
-                    "PAGAMENTO_PENDENTE"
-            );
-        }
-
         log.info("Cadastro concluido para {} em {} ms", mascararEmail(email), duracaoMs(System.nanoTime()));
         String sessionToken = usuarioSessionService.renovarSessao(cadastro.usuario());
         registrarAuditoriaAutenticacao("USER_REGISTER_SUCCESS", cadastro.usuario(), "Conta criada com sucesso");
@@ -418,7 +389,7 @@ public class AuthService {
                 "Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
                 mapper.toResponse(cadastro.usuario()),
                 assinaturaMapper.toResponse(cadastro.assinatura()),
-                pagamentoPlano,
+                null,
                 "ACTIVE",
                 sessionToken,
                 null
@@ -688,11 +659,8 @@ public class AuthService {
                 .build());
 
         AssinaturaEntity assinatura;
-        if ("BASICO".equalsIgnoreCase(planoEscolhido.getNome())) {
-            assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
-        } else {
-            assinatura = assinaturaService.criarPendentePagamento(empresa, planoEscolhido);
-        }
+        // Todos os planos (BÁSICO, PRO, PLUS, ENTERPRISE) iniciam com trial de 7 dias
+        assinatura = assinaturaService.criarTesteGratis(empresa, planoEscolhido);
         log.info("Conta criada: empresa={}, usuario={}, assinatura={}, plano={}, status={}",
                 empresa.getId(), usuario.getId(), assinatura.getId(), planoEscolhido.getNome(), assinatura.getStatus());
         return new CadastroContaCriada(empresa.getId(), usuario, assinatura);

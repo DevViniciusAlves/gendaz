@@ -10820,8 +10820,9 @@ tbody tr:hover { background: #fffaf5; }
 }
 
 .pricing-section .pricing-subtitle {
-  margin: 10px 0 0;
+  margin: 10px auto 0;
   max-width: 720px;
+  text-align: center;
 }
 
 .pricing-section .pricing-grid {
