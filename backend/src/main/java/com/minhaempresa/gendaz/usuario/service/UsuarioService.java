@@ -73,7 +73,7 @@ public class UsuarioService {
             log.warn("Usuario criado, mas o email de boas-vindas nao foi enviado para {}", securityMonitoringService.mascararEmail(salvo.getEmail()));
         }
         // Registrar auditoria
-        adminAuditService.registrar("Criar", "Usuário", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
+        adminAuditService.registrar("Criar", "Usuário", salvo.getId(), empresa.getId(), "Adicionou " + salvo.getNome() + " como usuário");
         logAtividadeService.registrar("USUARIO", salvo.getId(), "Adicionou " + salvo.getNome() + " como usuário");
         return mapper.toResponse(salvo);
     }
@@ -106,7 +106,7 @@ public class UsuarioService {
         usuario.setPerfil(request.perfil());
         UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Editar", "Usuário", salvo.getId(), "Editou usuário " + nomeAnterior);
+        adminAuditService.registrar("Editar", "Usuário", salvo.getId(), salvo.getEmpresa() != null ? salvo.getEmpresa().getId() : 0L, "Editou usuário " + nomeAnterior);
         logAtividadeService.registrar("USUARIO", salvo.getId(), "Alterou perfil de " + salvo.getNome());
         return mapper.toResponse(salvo);
     }
@@ -118,7 +118,7 @@ public class UsuarioService {
         usuario.setStatus(StatusUsuario.ATIVO);
         UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Ativar", "Usuário", salvo.getId(), "Ativou usuário " + salvo.getNome());
+        adminAuditService.registrar("Ativar", "Usuário", salvo.getId(), salvo.getEmpresa() != null ? salvo.getEmpresa().getId() : 0L, "Ativou usuário " + salvo.getNome());
         logAtividadeService.registrar("USUARIO", salvo.getId(), "Ativou usuário " + salvo.getNome());
         return mapper.toResponse(salvo);
     }
@@ -130,7 +130,7 @@ public class UsuarioService {
         usuario.setStatus(StatusUsuario.INATIVO);
         UsuarioEntity salvo = usuarioRepository.save(usuario);
         // Registrar auditoria
-        adminAuditService.registrar("Desativar", "Usuário", salvo.getId(), "Desativou usuário " + salvo.getNome());
+        adminAuditService.registrar("Desativar", "Usuário", salvo.getId(), salvo.getEmpresa() != null ? salvo.getEmpresa().getId() : 0L, "Desativou usuário " + salvo.getNome());
         logAtividadeService.registrar("USUARIO", salvo.getId(), "Desativou usuário " + salvo.getNome());
         return mapper.toResponse(salvo);
     }
