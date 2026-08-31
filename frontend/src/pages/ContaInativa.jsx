@@ -98,14 +98,11 @@ export default function ContaInativa() {
       setMensagem('Não encontramos uma conta ativa neste navegador.')
       return
     }
-<<<<<<< HEAD
     if (checkoutAtivo(pagamento)) {
       setTipoMensagem('info')
       setMensagem('Já existe uma cobrança pendente e ativa. Verifique seu pagamento ou abra o checkout.')
       return
     }
-=======
->>>>>>> origin/stage
     setMensagem('')
     setTipoMensagem('')
     setGerando(true)

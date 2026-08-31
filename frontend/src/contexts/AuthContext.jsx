@@ -438,36 +438,19 @@ export function AuthProvider({ children }) {
       return { adminAccess: true, admin: adminResponse.admin }
     }
 if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta === 'PAYMENT_REQUIRED') {
-<<<<<<< HEAD
-      const pending = {
-        email,
-        usuario: response.usuario,
-        assinatura: response.assinatura,
-        pagamentoPlano: response.pagamentoPlano,
-        mensagem: response.mensagem,
-        statusConta: response.statusConta,
-=======
       const userInativo = {
         ...response.usuario,
         plano: response.assinatura?.planoNome || response.usuario?.plano || null,
         assinatura: response.assinatura,
         statusConta: 'ACCOUNT_INACTIVE',
->>>>>>> origin/stage
         motivoInatividade: response.motivoInatividade || 'PAGAMENTO_PENDENTE',
       }
       clearLocalData()
       clearSensitiveStorage()
-<<<<<<< HEAD
-      limparSessaoUsuario()
-      pendingPaymentMemory = pending
-      setUsuario(null)
-      return { pendingPayment: true, ...pending }
-=======
       pendingPaymentMemory = null
       salvarUsuarioSessao(userInativo)
       setUsuario(userInativo)
       return userInativo
->>>>>>> origin/stage
     }
     if (response.statusConta === 'ACCOUNT_INACTIVE') {
       const userInativo = {

@@ -11,8 +11,6 @@ public interface PaymentGateway {
     void cancelarSubscription(String subscriptionId);
     void expirarCheckoutSession(String sessionId);
 
-<<<<<<< HEAD
-=======
     /**
      * Expira a Checkout Session no gateway. Lança exceção se o gateway estiver indisponível
      * ou se a expiração falhar por motivo transiente. Não lança se a session já estiver em
@@ -22,7 +20,6 @@ public interface PaymentGateway {
      */
     void expirarCheckoutSessionThrows(String sessionId);
 
->>>>>>> origin/stage
     default Optional<PaymentGatewayWebhook> consultarPagamentoPlano(PagamentoPlanoEntity pagamento) {
         return Optional.empty();
     }

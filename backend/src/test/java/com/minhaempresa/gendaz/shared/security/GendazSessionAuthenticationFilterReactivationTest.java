@@ -108,9 +108,6 @@ class GendazSessionAuthenticationFilterReactivationTest {
     }
 
     @Test
-<<<<<<< HEAD
-    void empresaBloqueadaNaoDeveAcessarRotaDeReativacao() throws Exception {
-=======
     void empresaInativaDeveAcessarIniciarPagamentoPlano() throws Exception {
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.INATIVA);
@@ -130,15 +127,10 @@ class GendazSessionAuthenticationFilterReactivationTest {
 
     @Test
     void empresaBloqueadaNaoDeveAcessarIniciarPagamentoPlano() throws Exception {
->>>>>>> origin/stage
         GendazSessionAuthenticationFilter filter = filtro();
         UsuarioEntity usuario = usuario(20L, 30L, StatusUsuario.ATIVO, StatusEmpresa.BLOQUEADA);
         when(usuarioRepository.findBySessaoAtiva("sessao-valida")).thenReturn(Optional.of(usuario));
         
-<<<<<<< HEAD
-        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/pagamentos/planos/empresa/30/atual");
-        request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
-=======
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("POST");
         request.setRequestURI("/api/pagamentos/planos/iniciar");
@@ -162,7 +154,6 @@ class GendazSessionAuthenticationFilterReactivationTest {
         request.setRequestURI("/api/pagamentos/planos/iniciar");
         request.setCookies(new Cookie("Gendaz_session", "sessao-valida"));
         request.addHeader("Origin", "https://gendaz.site");
->>>>>>> origin/stage
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         filter.doFilterInternal(request, response, new MockFilterChain());

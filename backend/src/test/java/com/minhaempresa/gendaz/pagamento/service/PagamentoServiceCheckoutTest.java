@@ -5,11 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-<<<<<<< HEAD
-=======
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
->>>>>>> origin/stage
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -161,16 +158,11 @@ class PagamentoServiceCheckoutTest {
         when(assinaturaService.buscarFilaAtiva(1L)).thenReturn(List.of());
         when(pagamentoPlanoRepository.findFirstByEmpresaIdAndPlanoIdAndStatusOrderByDataCriacaoDesc(
                 1L, 2L, StatusPagamento.PAYMENT_PENDING)).thenReturn(Optional.of(vencido));
-<<<<<<< HEAD
-        when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(vencido));
-        when(paymentGateway.consultarPagamentoPlano(vencido)).thenReturn(Optional.empty());
-=======
         when(pagamentoPlanoRepository.findByEmpresaIdAndStatusOrderByDataCriacaoDesc(
                 1L, StatusPagamento.PAYMENT_PENDING)).thenReturn(List.of(vencido));
         when(pagamentoPlanoRepository.findById(100L)).thenReturn(Optional.of(vencido));
         when(paymentGateway.consultarPagamentoPlano(vencido)).thenReturn(Optional.of(new PaymentGatewayWebhook(
                 "evt_1", "cs_test_expired", "AGE-PRO-ABC", "AGE-PRO-ABC", StatusPagamento.PAYMENT_PENDING, new BigDecimal("89.00"))));
->>>>>>> origin/stage
         when(paymentGatewayProperties.getCheckout()).thenReturn(new PaymentGatewayProperties.CheckoutProperties());
         when(pagamentoPlanoRepository.save(any(PagamentoPlanoEntity.class))).thenAnswer(i -> i.getArguments()[0]);
         when(paymentGateway.criarPagamentoPlano(any(PagamentoPlanoEntity.class))).thenAnswer(i -> new PaymentGatewayResponse(
@@ -179,11 +171,7 @@ class PagamentoServiceCheckoutTest {
         PagamentoPlanoResponse resultado = pagamentoService.iniciarPagamentoPlano(1L, "PRO", MetodoPagamento.CREDIT_CARD);
 
         // O checkout anterior foi expirado com seguranca...
-<<<<<<< HEAD
-        verify(paymentGateway).expirarCheckoutSession("cs_test_expired");
-=======
         verify(paymentGateway).expirarCheckoutSessionThrows("cs_test_expired");
->>>>>>> origin/stage
         // ... e so um novo pedido criou um novo checkout/session.
         verify(paymentGateway).criarPagamentoPlano(any(PagamentoPlanoEntity.class));
         assertNotNull(resultado);
@@ -272,8 +260,6 @@ class PagamentoServiceCheckoutTest {
         verify(pagamentoPlanoRepository, never())
                 .findByEmpresaIdAndStatusOrderByDataCriacaoDesc(anyLong(), any());
     }
-<<<<<<< HEAD
-=======
 
     // =====================================================================
     // TESTE 1: Checkout criado — dataExpiracao = criacao + 15 minutos
@@ -603,5 +589,4 @@ class PagamentoServiceCheckoutTest {
         assertThrows(ResourceNotFoundException.class,
                 () -> pagamentoService.consultarPagamentoPlano(1L, 100L));
     }
->>>>>>> origin/stage
 }

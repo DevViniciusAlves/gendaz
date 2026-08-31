@@ -181,14 +181,9 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
         boolean isVerificarPagamentoRoute = "GET".equalsIgnoreCase(method) && uri.matches("/api/pagamentos/planos/empresa/\\d+/\\d+/verificar$");
         boolean isIniciarBasicoRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/basico/iniciar".equals(uri);
         boolean isIniciarProRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/pro/iniciar".equals(uri);
-<<<<<<< HEAD
-        
-        return isPlanoAtualRoute || isVerificarPagamentoRoute || isIniciarBasicoRoute || isIniciarProRoute;
-=======
         boolean isIniciarPlanoRoute = "POST".equalsIgnoreCase(method) && "/api/pagamentos/planos/iniciar".equals(uri);
         
         return isPlanoAtualRoute || isVerificarPagamentoRoute || isIniciarBasicoRoute || isIniciarProRoute || isIniciarPlanoRoute;
->>>>>>> origin/stage
     }
 
     private boolean origemPermitida(HttpServletRequest request) {

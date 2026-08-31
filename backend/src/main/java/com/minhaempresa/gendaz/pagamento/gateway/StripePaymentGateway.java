@@ -51,20 +51,14 @@ public class StripePaymentGateway implements PaymentGateway {
 
         String customerId = resolverOuCriarStripeCustomer(pagamento.getEmpresa(), pagamento.getCustomerEmail(), pagamento.getCustomerName());
 
-<<<<<<< HEAD
-=======
         long expiresAtEpochSeconds = Instant.now().getEpochSecond() + 30 * 60;
 
->>>>>>> origin/stage
         SessionCreateParams.Builder params = SessionCreateParams.builder()
                 .setMode(SessionCreateParams.Mode.SUBSCRIPTION)
                 .setSuccessUrl(successUrlComSessionId())
                 .setCancelUrl(paymentGatewayProperties.getCancelUrl())
                 .setCustomer(customerId)
-<<<<<<< HEAD
-=======
                 .setExpiresAt(expiresAtEpochSeconds)
->>>>>>> origin/stage
                 .addLineItem(lineItem)
                 .putMetadata("empresaId", String.valueOf(pagamento.getEmpresa().getId()))
                 .putMetadata("pagamentoPlanoId", String.valueOf(pagamento.getId()))
@@ -223,8 +217,6 @@ public class StripePaymentGateway implements PaymentGateway {
     }
 
     @Override
-<<<<<<< HEAD
-=======
     public void expirarCheckoutSessionThrows(String sessionId) {
         if (sessionId == null || sessionId.isBlank()) {
             return;
@@ -244,7 +236,6 @@ public class StripePaymentGateway implements PaymentGateway {
     }
 
     @Override
->>>>>>> origin/stage
     public PaymentGatewayWebhook consultarPagamentoWebhook(String providerPaymentId, String assinatura, String requestId) {
         throw new BusinessException("Consulta de webhook legado desativada. Use o webhook Stripe assinado.");
     }
