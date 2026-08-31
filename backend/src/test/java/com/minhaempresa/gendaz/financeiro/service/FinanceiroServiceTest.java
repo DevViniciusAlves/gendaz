@@ -351,6 +351,65 @@ class FinanceiroServiceTest {
         assertEquals(1, marco.pagamentosRecentes().size());
     }
 
+    @Test
+    void canceladoContinuaVisivelMasNaoContaComoRecebido() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pago = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("100.00"), StatusPagamento.PAGO,
+                MetodoPagamento.PIX, null, LocalDateTime.of(2026, 8, 10, 10, 0));
+        PagamentoDtos.PagamentoResponse cancelado = criarPagamentoResponse(
+                2L, 9L, new BigDecimal("50.00"), StatusPagamento.CANCELADO,
+                MetodoPagamento.PIX, null, LocalDateTime.of(2026, 8, 15, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pago, cancelado));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse agosto = service.resumo(null, 8, 2026);
+        assertEquals(0, new BigDecimal("100.00").compareTo(agosto.totalRecebidoMes()),
+                "Cancelado nao deve entrar em recebido");
+        assertEquals(2, agosto.pagamentosRecentes().size(),
+                "Cancelado deve aparecer no historico");
+    }
+
+    @Test
+    void canceladoParceladoContinuaVisivelEmTodasCompetencias() {
+        CompanyContext.setCompanyId(9L);
+
+        PagamentoDtos.PagamentoResponse pagamento = criarPagamentoResponse(
+                1L, 9L, new BigDecimal("300.00"), StatusPagamento.CANCELADO,
+                MetodoPagamento.CREDITO, 3, LocalDateTime.of(2026, 8, 10, 10, 0));
+
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(eq(9L)))
+                .thenReturn(List.of(pagamento));
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(9L), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(agendamentoRepository.countConsultasFinalizadas(eq(9L))).thenReturn(0L);
+        when(agendamentoRepository.resumoClientesMaisAgendados(eq(9L), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendadosFinanceiro(eq(9L), any(), any())).thenReturn(List.of());
+
+        ResumoFinanceiroResponse agosto = service.resumo(null, 8, 2026);
+        assertEquals(0, BigDecimal.ZERO.compareTo(agosto.totalRecebidoMes()),
+                "Cancelado nao conta como recebido");
+        assertEquals(1, agosto.pagamentosRecentes().size(),
+                "Cancelado parcela 1/3 aparece em agosto");
+
+        ResumoFinanceiroResponse setembro = service.resumo(null, 9, 2026);
+        assertEquals(0, BigDecimal.ZERO.compareTo(setembro.totalRecebidoMes()));
+        assertEquals(1, setembro.pagamentosRecentes().size(),
+                "Cancelado parcela 2/3 aparece em setembro");
+
+        ResumoFinanceiroResponse outubro = service.resumo(null, 10, 2026);
+        assertEquals(0, BigDecimal.ZERO.compareTo(outubro.totalRecebidoMes()));
+        assertEquals(1, outubro.pagamentosRecentes().size(),
+                "Cancelado parcela 3/3 aparece em outubro");
+    }
+
     private PagamentoDtos.PagamentoResponse criarPagamentoResponse(
             Long id, Long empresaId, BigDecimal valor, StatusPagamento status,
             MetodoPagamento metodo, Integer parcelas, LocalDateTime dataPagamento) {

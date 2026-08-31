@@ -135,6 +135,8 @@ public class PagamentoService {
                 throw new BusinessException("Informe a forma de pagamento para marcar como pago.");
             }
             pagamento.setDataPagamento(LocalDateTime.now());
+        } else if (request.status() == StatusPagamento.CANCELADO) {
+            // CANCELADO preserva historico: dataPagamento, metodoPagamento, parcelas
         } else {
             pagamento.setDataPagamento(null);
             pagamento.setMetodoPagamento(null);

@@ -37,11 +37,18 @@ function valorTextoPagamento(pagamento) {
   )
 }
 
-function dataReferenciaPagamento(item, agendamentoMap) {
+function dataReferenciaAgendamento(item, agendamentoMap) {
+  const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.pagamentoId || item.id)
+  return String(agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || item.dataPagamento || '')
+}
+
+function dataReferenciaFinanceira(item) {
   if (item?.dataPagamento) return String(item.dataPagamento)
-  const agendamento = agendamentoMap && agendamentoMap.get(item.agendamentoId || item.id)
-  const dataAgendamento = agendamento?.data || agendamento?.dataAgendamento || item.agendamento?.data || ''
-  return String(dataAgendamento || valorTextoPagamento(item) || '')
+  return valorTextoPagamento(item) || ''
+}
+
+function dataReferenciaPagamento(item, agendamentoMap) {
+  return dataReferenciaFinanceira(item) || dataReferenciaAgendamento(item, agendamentoMap)
 }
 
 function ehCreditoParcelado(pagamento) {
@@ -83,6 +90,7 @@ function ordenarMaisRecente(a, b) {
 }
 
 function statusSimples(statusAtual) {
+  if (['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'].includes(statusAtual)) return 'CANCELADO'
   return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
@@ -316,8 +324,8 @@ export default function Financeiro() {
   }, [data.pagamentos])
 
   const pagamentosDoMes = useMemo(() => pagamentosExpandidos
-    .filter((item) => dataReferenciaPagamento(item, agendamentoMap).startsWith(mes))
-    .sort(ordenarMaisRecente), [pagamentosExpandidos, mes, agendamentoMap])
+    .filter((item) => dataReferenciaFinanceira(item).startsWith(mes))
+    .sort(ordenarMaisRecente), [pagamentosExpandidos, mes])
 
   const pagamentosFiltrados = useMemo(() => pagamentosExpandidos
       .filter((item) => {
@@ -326,7 +334,7 @@ export default function Financeiro() {
         if (statusPagamento === 'PENDENTE') matchesStatus = STATUS_PENDENTE.has(statusNormalizado)
         else if (statusPagamento === 'PAGO') matchesStatus = STATUS_CONFIRMADO.has(statusNormalizado)
         else if (statusPagamento === 'CANCELADO') matchesStatus = STATUS_CANCELADO.has(statusNormalizado)
-        const dataRef = dataReferenciaPagamento(item, agendamentoMap)
+        const dataRef = dataReferenciaFinanceira(item)
         const matchesMes = dataRef.startsWith(mes)
         const matchesPeriodo = !periodoPagamento || dataRef.startsWith(periodoPagamento)
         const matchesMetodo = metodoPagamento === 'todos'
@@ -338,7 +346,7 @@ export default function Financeiro() {
           || textoProtocolo.includes(protocoloPagamento.trim().toLowerCase())
         return matchesStatus && matchesMes && matchesPeriodo && matchesMetodo && matchesProtocolo
       })
-      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes, agendamentoMap])
+      .sort(ordenarMaisRecente), [metodoPagamento, pagamentosExpandidos, periodoPagamento, protocoloPagamento, statusPagamento, mes])
 
   const totalPaginasPagamentos = Math.max(1, Math.ceil(pagamentosFiltrados.length / itensPorPaginaPagamentos))
   const paginaAtualPagamentos = Math.min(paginaPagamento, totalPaginasPagamentos)
@@ -400,7 +408,7 @@ export default function Financeiro() {
   async function exportarFinanceiro({ modo, dataInicial, dataFinal }) {
     const registros = pagamentosExpandidos.filter((item) => {
       if (modo !== 'periodo') return true
-      const dataBase = dataReferenciaPagamento(item, agendamentoMap).slice(0, 10)
+      const dataBase = dataReferenciaFinanceira(item).slice(0, 10)
       return dataBase >= dataInicial && dataBase <= dataFinal
     })
     if (!registros.length) throw new Error('Nenhum registro encontrado para exportação.')
