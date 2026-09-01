@@ -1333,7 +1333,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <Modal title={acaoModalTitulo(modal)} open={Boolean(modal)} onClose={() => setModal(null)}>
+      <Modal title={acaoModalTitulo(modal)} open={Boolean(modal)} onClose={() => setModal(null)} portalClassName="admin-gendaz">
         <div className="confirm-box">
           {modal?.tipo === 'pagamento-detalhes' ? (
             <div className="admin-detail-list">
