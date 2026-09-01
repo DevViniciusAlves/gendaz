@@ -1269,14 +1269,22 @@ html .admin-gendaz .admin-assinatura {
   color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura *,
-html .admin-gendaz .admin-assinaturas-block *,
-html .admin-gendaz .admin-assinatura .field span,
-html .admin-gendaz .admin-assinaturas-block .field span,
-html .admin-gendaz .admin-assinatura .field-hint,
-html .admin-gendaz .admin-assinaturas-block .field-hint {
+html .admin-gendaz .admin-assinatura .field > span,
+html .admin-gendaz .admin-assinatura__add .field > span {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
+}
+
+html .admin-gendaz .admin-assinatura .field-hint,
+html .admin-gendaz .admin-assinatura__add .field-hint {
+  color: rgba(11, 11, 11, 0.62) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.62) !important;
+}
+
+html .admin-gendaz .admin-assinatura input::placeholder,
+html .admin-gendaz .admin-assinatura__add input::placeholder {
+  color: rgba(11, 11, 11, 0.42) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.42) !important;
 }
 
 html .admin-gendaz .admin-assinatura__head {
@@ -1325,12 +1333,11 @@ html .admin-gendaz .admin-assinaturas-block .status .status-dot {
 
 html .admin-gendaz .admin-assinatura select,
 html .admin-gendaz .admin-assinatura input,
-html .admin-gendaz .admin-assinatura button,
-html .admin-gendaz .admin-assinaturas-block select,
-html .admin-gendaz .admin-assinaturas-block input,
-html .admin-gendaz .admin-assinaturas-block button {
+html .admin-gendaz .admin-assinatura__add select,
+html .admin-gendaz .admin-assinatura__add input {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
+  caret-color: #0b0b0b !important;
 }
 
 html .admin-gendaz .admin-assinatura select,
@@ -1342,6 +1349,7 @@ html .admin-gendaz .admin-assinatura input {
 html .admin-gendaz .admin-assinatura .btn-secondary {
   background: #111111 !important;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
 html .admin-gendaz .admin-assinatura .btn-secondary span,
@@ -1353,6 +1361,7 @@ html .admin-gendaz .admin-assinatura .btn-secondary svg {
 html .admin-gendaz .admin-assinatura .btn-ghost {
   background: #ffffff !important;
   color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
   border-color: rgba(11, 11, 11, 0.18) !important;
 }
 
@@ -1366,7 +1375,7 @@ html .admin-gendaz .admin-assinatura__add {
   display: grid;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid var(--gd-border);
+  border: 1px dashed rgba(11, 11, 11, 0.25) !important;
   border-radius: 12px;
   background: #ffffff !important;
   color: #0b0b0b !important;
@@ -1398,6 +1407,8 @@ html .admin-gendaz .admin-assinatura__add .field > span {
 html .admin-gendaz .admin-assinatura__add select,
 html .admin-gendaz .admin-assinatura__add input {
   min-height: 42px;
+  background: #ffffff !important;
+  border: 1px solid rgba(11, 11, 11, 0.22) !important;
 }
 
 html .admin-gendaz .admin-assinatura__add .btn-secondary {
@@ -1415,6 +1426,7 @@ html .admin-gendaz .admin-assinatura__add .btn-secondary svg {
 html .admin-gendaz .admin-assinatura__add .btn-ghost {
   background: #ffffff !important;
   color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
   border-color: rgba(11, 11, 11, 0.18) !important;
 }
 
@@ -1460,7 +1472,7 @@ html .admin-gendaz .admin-assinatura__edit input {
 }
 
 html .admin-gendaz .admin-assinatura__edit .btn,
-html .admin-gendaz .admin-assinatura__add-btn .btn {
+html .admin-gendaz .admin-assinatura__add-btn {
   min-height: 38px;
   padding: 0 12px;
   font-size: 13px;
@@ -1473,7 +1485,7 @@ html .admin-gendaz .admin-assinatura__editar {
   font-size: 13px !important;
 }
 
-html .admin-gendaz .admin-assinatura__remover {
+html .admin-gendaz .admin-assinatura .btn-ghost.admin-assinatura__remover {
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -1482,21 +1494,22 @@ html .admin-gendaz .admin-assinatura__remover {
   padding: 0 12px !important;
   font-size: 13px !important;
   color: #f87171 !important;
+  -webkit-text-fill-color: #f87171 !important;
   border-color: rgba(248, 113, 113, 0.35) !important;
   background: rgba(248, 113, 113, 0.08) !important;
 }
 
-html .admin-gendaz .admin-assinatura__remover:hover:not(:disabled) {
+html .admin-gendaz .admin-assinatura .btn-ghost.admin-assinatura__remover:hover:not(:disabled) {
   color: #fca5a5 !important;
+  -webkit-text-fill-color: #fca5a5 !important;
   border-color: rgba(248, 113, 113, 0.55) !important;
   background: rgba(248, 113, 113, 0.14) !important;
 }
 
-html .admin-gendaz .admin-assinatura__add {
-  border: 1px dashed var(--gd-border-strong);
-  border-radius: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.02);
+html .admin-gendaz .admin-assinatura .btn-ghost.admin-assinatura__remover span,
+html .admin-gendaz .admin-assinatura .btn-ghost.admin-assinatura__remover svg {
+  color: #f87171 !important;
+  stroke: #f87171 !important;
 }
 
 html .admin-gendaz .admin-assinatura__add-btn {

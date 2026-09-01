@@ -22,9 +22,12 @@ public class DashboardController {
     }
 
     @GetMapping("/resumo")
-    public ResponseEntity<DashboardResumoResponse> resumo() {
+    public ResponseEntity<DashboardResumoResponse> resumo(
+            @RequestParam(required = false) Long empresaId,
+            @RequestParam(required = false) Integer mes,
+            @RequestParam(required = false) Integer ano) {
         Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();
-        return ResponseEntity.ok(dashboardService.resumo(usuarioAutenticado));
+        return ResponseEntity.ok(dashboardService.resumo(usuarioAutenticado, empresaId, mes, ano));
     }
 }
 

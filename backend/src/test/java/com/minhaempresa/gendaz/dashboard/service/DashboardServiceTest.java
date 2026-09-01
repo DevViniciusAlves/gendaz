@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.dashboard.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
@@ -13,17 +14,22 @@ import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
 import com.minhaempresa.gendaz.conversa.repository.ConversaRepository;
+import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardReceitaDiaItem;
 import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardResumoResponse;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
+import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
+import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,11 +74,25 @@ class DashboardServiceTest {
                 anyLong(), any(), any(), any())).thenReturn(List.of());
         when(agendamentoRepository.findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(anyLong(), any())).thenReturn(List.of());
         when(agendamentoRepository.resumoServicosMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
-        when(pagamentoRepository.resumoReceitaPorDia(anyLong(), any(), any(), any())).thenReturn(List.of());
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L)).thenReturn(List.of());
         when(pagamentoRepository.findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(anyLong(), any()))
                 .thenReturn(List.of());
         when(assinaturaService.buscarAtualPorEmpresa(1L)).thenReturn(Optional.empty());
         when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(1L), any())).thenReturn(BigDecimal.ZERO);
+    }
+
+    private PagamentoDtos.PagamentoResponse pagamento(
+            Long id, BigDecimal valor, StatusPagamento status, MetodoPagamento metodo,
+            Integer parcelas, LocalDateTime dataPagamento) {
+        return new PagamentoDtos.PagamentoResponse(
+                id, null, "PROTO-" + id, "Servico", 2L, "Cliente",
+                1L, valor, metodo, parcelas, status, dataPagamento, StatusCadastro.ATIVO);
+    }
+
+    private BigDecimal somaReceitaPorDia(DashboardResumoResponse response) {
+        return response.receitaPorDia().stream()
+                .map(DashboardReceitaDiaItem::valor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
     @Test
@@ -81,7 +101,7 @@ class DashboardServiceTest {
         when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(2L);
 
-        DashboardResumoResponse response = service.resumo(7L);
+        DashboardResumoResponse response = service.resumo(7L, null, null, null);
 
         assertEquals(2L, response.agendamentosHoje());
         verify(agendamentoRepository).countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(
@@ -90,20 +110,19 @@ class DashboardServiceTest {
     }
 
     @Test
-    void pendenciaCobrancaNaoIncluiPagoNemCancelado() {
+    void pendenciaCobrancaUsaSomenteStatusPendente() {
         preparaResumoBasico();
         when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(0L);
 
-        service.resumo(7L);
+        service.resumo(7L, null, null, null);
 
         ArgumentCaptor<List<StatusPagamento>> statusCaptor = ArgumentCaptor.forClass(List.class);
-        verify(pagamentoRepository, org.mockito.Mockito.times(2))
+        verify(pagamentoRepository, org.mockito.Mockito.times(1))
                 .somarValorByEmpresaIdAndStatusIn(eq(1L), statusCaptor.capture());
-        // A segunda chamada e a de pendencia de cobranca (STATUS_PENDENTE)
-        List<StatusPagamento> statuses = statusCaptor.getAllValues().get(1);
+        // Receita confirmada nao usa mais o somatorio sem periodo; so a pendencia de cobranca (estado atual)
+        List<StatusPagamento> statuses = statusCaptor.getValue();
         assertEquals(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING), statuses);
-        // CANCELADO nao faz parte dos status de pendencia de cobranca
     }
 
     @Test
@@ -112,9 +131,184 @@ class DashboardServiceTest {
         when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(0L);
 
-        service.resumo(7L);
+        service.resumo(7L, null, null, null);
 
         verify(pagamentoRepository).findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(
                 eq(1L), eq(StatusPagamento.PENDENTE));
+    }
+
+    @Test
+    void receitaDoMesRespeitaMesSelecionado() {
+        preparaResumoBasico();
+        LocalDate hoje = LocalDate.now();
+        LocalDate mesAnterior = hoje.minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse mesAnteriorResposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+        assertEquals(0, new BigDecimal("100.00").compareTo(mesAnteriorResposta.receitaConfirmada()));
+        assertEquals(mesAnterior.lengthOfMonth(), mesAnteriorResposta.receitaPorDia().size());
+
+        DashboardResumoResponse mesAtualResposta = service.resumo(7L, null, hoje.getMonthValue(), hoje.getYear());
+        assertEquals(0, BigDecimal.ZERO.compareTo(mesAtualResposta.receitaConfirmada()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(somaReceitaPorDia(mesAtualResposta)));
+    }
+
+    @Test
+    void credito3xSegueCompetenciaFinanceiraDoMesSelecionado() {
+        preparaResumoBasico();
+        LocalDate hoje = LocalDate.now();
+        LocalDate mesPagamento = hoje.minusMonths(2).withDayOfMonth(1);
+        LocalDate mesCompetencia1 = mesPagamento;
+        LocalDate mesCompetencia2 = mesPagamento.plusMonths(1);
+        LocalDate mesCompetencia3 = mesPagamento.plusMonths(2);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.CREDITO, 3, mesPagamento.atTime(10, 0))));
+
+        // Parcela 1/3 no mes do pagamento
+        DashboardResumoResponse p1 = service.resumo(7L, null, mesCompetencia1.getMonthValue(), mesCompetencia1.getYear());
+        assertEquals(0, new BigDecimal("33.33").compareTo(p1.receitaConfirmada()));
+
+        // Parcela 2/3 no mes seguinte (mesmo que o pagamento original tenha sido criado no mes anterior)
+        DashboardResumoResponse p2 = service.resumo(7L, null, mesCompetencia2.getMonthValue(), mesCompetencia2.getYear());
+        assertEquals(0, new BigDecimal("33.33").compareTo(p2.receitaConfirmada()));
+
+        // Parcela 3/3 no segundo mes seguinte
+        DashboardResumoResponse p3 = service.resumo(7L, null, mesCompetencia3.getMonthValue(), mesCompetencia3.getYear());
+        assertEquals(0, new BigDecimal("33.34").compareTo(p3.receitaConfirmada()));
+
+        // Soma das competencias fecha exatamente o valor total
+        BigDecimal total = p1.receitaConfirmada().add(p2.receitaConfirmada()).add(p3.receitaConfirmada());
+        assertEquals(0, new BigDecimal("100.00").compareTo(total));
+    }
+
+    @Test
+    void canceladoNaoEntraNaReceita() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("50.00"), StatusPagamento.CANCELADO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(resposta.receitaConfirmada()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(somaReceitaPorDia(resposta)));
+    }
+
+    @Test
+    void pendenteNaoEntraNaReceita() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("30.00"), StatusPagamento.PENDENTE, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, BigDecimal.ZERO.compareTo(resposta.receitaConfirmada()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(somaReceitaPorDia(resposta)));
+    }
+
+    @Test
+    void pagamentoAprovadoEntraNaReceita() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("70.00"), StatusPagamento.PAYMENT_APPROVED, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, new BigDecimal("70.00").compareTo(resposta.receitaConfirmada()));
+    }
+
+    @Test
+    void mesAtualReceitaPorDiaTerminaNoDiaDeHoje() {
+        preparaResumoBasico();
+        LocalDate hoje = LocalDate.now();
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.now())));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, null, null);
+
+        assertEquals(hoje.getDayOfMonth(), resposta.receitaPorDia().size(),
+                "Mes atual nao pode gerar dias futuros");
+        assertEquals(hoje.toString(), resposta.receitaPorDia().get(resposta.receitaPorDia().size() - 1).data(),
+                "Ultimo ponto deve ser a data de hoje");
+    }
+
+    @Test
+    void mesPassadoGeraMesCompleto() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(mesAnterior.lengthOfMonth(), resposta.receitaPorDia().size());
+    }
+
+    @Test
+    void diaSemReceitaApareceComoZero() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("25.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        long diasComValor = resposta.receitaPorDia().stream()
+                .filter(item -> item.valor().compareTo(BigDecimal.ZERO) != 0)
+                .count();
+        assertEquals(1, diasComValor);
+        assertEquals(0, BigDecimal.ZERO.compareTo(resposta.receitaPorDia().get(0).valor()));
+    }
+
+    @Test
+    void cardReceitaIgualSomaDoGrafico() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(
+                        pagamento(1L, new BigDecimal("40.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(2).atTime(10, 0)),
+                        pagamento(2L, new BigDecimal("60.00"), StatusPagamento.PAYMENT_APPROVED, MetodoPagamento.DEBITO, null, mesAnterior.withDayOfMonth(20).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, resposta.receitaConfirmada().setScale(2).compareTo(somaReceitaPorDia(resposta).setScale(2)),
+                "Receita do mes deve ser igual a soma dos pontos do grafico");
+    }
+
+    @Test
+    void mesInvalidoRejeitado() {
+        preparaResumoBasico();
+
+        assertThrows(BusinessException.class, () -> service.resumo(7L, null, 0, 2026));
+        assertThrows(BusinessException.class, () -> service.resumo(7L, null, 13, 2026));
+    }
+
+    @Test
+    void anoInvalidoRejeitado() {
+        preparaResumoBasico();
+
+        assertThrows(BusinessException.class, () -> service.resumo(7L, null, 5, 1999));
+        assertThrows(BusinessException.class, () -> service.resumo(7L, null, 5, 2101));
+    }
+
+    @Test
+    void empresaDivergenteDaSessaoRejeitada() {
+        preparaResumoBasico();
+
+        assertThrows(BusinessException.class, () -> service.resumo(7L, 999L, null, null));
+    }
+
+    @Test
+    void mesAnoDefaultUsamMesAtual() {
+        preparaResumoBasico();
+        LocalDate hoje = LocalDate.now();
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.now())));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, null, null);
+
+        assertEquals(hoje.getDayOfMonth(), resposta.receitaPorDia().size());
+        assertEquals(0, resposta.receitaConfirmada().setScale(2).compareTo(somaReceitaPorDia(resposta).setScale(2)));
     }
 }

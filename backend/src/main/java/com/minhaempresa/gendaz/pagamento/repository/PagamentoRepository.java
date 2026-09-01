@@ -4,7 +4,6 @@ import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -195,16 +194,6 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
               and p.status in :statuses
             """)
     BigDecimal somarValorByEmpresaIdAndStatusIn(Long empresaId, List<StatusPagamento> statuses);
-    @Query("""
-            select cast(p.dataPagamento as date), coalesce(sum(p.valor), 0)
-            from PagamentoEntity p
-            where p.empresa.id = :empresaId
-              and p.status in :statuses
-              and p.dataPagamento between :inicio and :fim
-            group by cast(p.dataPagamento as date)
-            order by cast(p.dataPagamento as date)
-            """)
-    List<Object[]> resumoReceitaPorDia(Long empresaId, List<StatusPagamento> statuses, LocalDateTime inicio, LocalDateTime fim);
     boolean existsByClienteId(Long clienteId);
     boolean existsByAgendamentoId(Long agendamentoId);
     long countByEmpresaIdAndStatus(Long empresaId, StatusPagamento status);

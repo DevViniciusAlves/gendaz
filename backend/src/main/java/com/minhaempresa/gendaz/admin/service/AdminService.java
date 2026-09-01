@@ -1,5 +1,8 @@
 package com.minhaempresa.gendaz.admin.service;
 
+import com.minhaempresa.gendaz.admin.dto.AdminAssinaturaDtos.AdminAssinaturaOperacaoRequest;
+import com.minhaempresa.gendaz.admin.dto.AdminAssinaturaDtos.CriarAssinaturaRequest;
+import com.minhaempresa.gendaz.admin.dto.AdminAssinaturaDtos.EditarAssinaturaRequest;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.*;
 import com.minhaempresa.gendaz.admin.entity.AdminImpersonationSessionEntity;
 import com.minhaempresa.gendaz.admin.repository.AdminImpersonationSessionRepository;
@@ -71,6 +74,9 @@ public class AdminService {
 
     @Autowired
     private PhoneNumberService phoneNumberService;
+
+    @Autowired
+    private SubscriptionAdminService subscriptionAdminService;
 
     @Autowired
     private LogAtividadeRepository logAtividadeRepository;
@@ -525,8 +531,12 @@ public class AdminService {
         }
 
         boolean alterarAssinatura = request.planoId() != null || request.diasPlano() != null;
+        boolean alterarAssinaturas = request.assinaturas() != null && !request.assinaturas().isEmpty();
         if (alterarAssinatura) {
             atualizarPlanoEAjustarPrazo(empresa, request);
+        }
+        if (alterarAssinaturas) {
+            aplicarAlteracoesAssinaturas(empresaId, request.assinaturas());
         }
 
         auditService.registrar(
@@ -535,7 +545,7 @@ public class AdminService {
                 admin,
                 null,
                 salva,
-                alterarAssinatura
+                alterarAssinatura || alterarAssinaturas
                         ? "Dados basicos da empresa e plano atualizados pelo Super Admin"
                         : "Dados basicos da empresa atualizados pelo Super Admin",
                 request.motivo().trim(),
@@ -722,6 +732,49 @@ public class AdminService {
 
         assinaturaRepository.save(assinatura);
         assinaturaService.reposicionarFuturas(empresa.getId(), assinatura.getId());
+    }
+
+    private void aplicarAlteracoesAssinaturas(Long empresaId, List<AdminAssinaturaOperacaoRequest> operacoes) {
+        List<AdminAssinaturaOperacaoRequest> remocoes = operacoes.stream()
+                .filter(op -> "REMOVER".equalsIgnoreCase(op.operacao()))
+                .toList();
+        List<AdminAssinaturaOperacaoRequest> edicoes = operacoes.stream()
+                .filter(op -> "EDITAR".equalsIgnoreCase(op.operacao()))
+                .toList();
+        List<AdminAssinaturaOperacaoRequest> criacoes = operacoes.stream()
+                .filter(op -> "CRIAR".equalsIgnoreCase(op.operacao()))
+                .toList();
+        if (remocoes.size() + edicoes.size() + criacoes.size() != operacoes.size()) {
+            throw new BusinessException("Operacao de assinatura invalida.");
+        }
+
+        for (AdminAssinaturaOperacaoRequest op : remocoes) {
+            if (op.subscriptionId() == null) {
+                throw new BusinessException("Assinatura invalida para remocao.");
+            }
+            subscriptionAdminService.removerAssinatura(empresaId, op.subscriptionId());
+        }
+
+        for (AdminAssinaturaOperacaoRequest op : edicoes) {
+            if (op.subscriptionId() == null || op.planoId() == null) {
+                throw new BusinessException("Assinatura ou plano invalidos para edicao.");
+            }
+            subscriptionAdminService.editarAssinatura(
+                    empresaId,
+                    op.subscriptionId(),
+                    new EditarAssinaturaRequest(op.planoId(), op.dias(), op.dataInicio(), op.dataFim(), op.status())
+            );
+        }
+
+        for (AdminAssinaturaOperacaoRequest op : criacoes) {
+            if (op.planoId() == null) {
+                throw new BusinessException("Selecione um plano para adicionar a conta.");
+            }
+            subscriptionAdminService.criarAssinatura(
+                    empresaId,
+                    new CriarAssinaturaRequest(op.planoId(), op.dias(), op.dataInicio(), op.dataFim(), op.status())
+            );
+        }
     }
 
     private String normalizarTextoObrigatorio(String valor) {

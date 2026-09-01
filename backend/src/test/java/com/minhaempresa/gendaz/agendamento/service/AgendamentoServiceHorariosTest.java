@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository.AgendamentoHorarioProjection;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
@@ -50,6 +51,7 @@ class AgendamentoServiceHorariosTest {
     @Mock PagamentoRepository pagamentoRepository;
     @Mock SanitizacaoService sanitizacaoService;
     @Mock ResendEmailService resendEmailService;
+    @Mock LogAtividadeService logAtividadeService;
     @InjectMocks AgendamentoService agendamentoService;
 
     private EmpresaEntity criarEmpresa(Long id) {

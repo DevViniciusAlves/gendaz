@@ -15,9 +15,10 @@ import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardResumoRespon
 import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.PrimeiroPassoItem;
 import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.PrimeirosPassosResponse;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
-import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.gendaz.pagamento.service.ReceitaCompetenciaHelper;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -26,7 +27,6 @@ import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -74,28 +74,40 @@ public class DashboardService {
     }
 
     @Transactional(readOnly = true)
-    public DashboardResumoResponse resumo(Long usuarioId) {
+    public DashboardResumoResponse resumo(Long usuarioId, Long empresaIdParam, Integer mesParam, Integer anoParam) {
         UsuarioEntity usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new BusinessException("Usuario nao encontrado."));
         EmpresaEntity empresa = usuario.getEmpresa();
         if (empresa == null) {
             throw new BusinessException("Usuario sem empresa nao possui resumo do dashboard.");
         }
+        if (empresaIdParam != null && !empresa.getId().equals(empresaIdParam)) {
+            throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
+        }
 
         Long empresaId = empresa.getId();
         LocalDate hoje = LocalDate.now();
-        LocalDate inicioPeriodoDia = hoje.withDayOfMonth(1);
-        LocalDateTime inicioPeriodo = inicioPeriodoDia.atStartOfDay();
-        LocalDateTime fimPeriodo = hoje.withDayOfMonth(hoje.lengthOfMonth()).atTime(LocalTime.MAX);
+        int mes = mesParam != null ? mesParam : hoje.getMonthValue();
+        int ano = anoParam != null ? anoParam : hoje.getYear();
+        validarPeriodo(mes, ano);
+
+        LocalDate inicioPeriodoDia = LocalDate.of(ano, mes, 1);
+        LocalDate fimPeriodoDia = inicioPeriodoDia.withDayOfMonth(inicioPeriodoDia.lengthOfMonth());
+        boolean mesAtual = inicioPeriodoDia.equals(hoje.withDayOfMonth(1));
+        LocalDate fimReferencia = mesAtual ? hoje : fimPeriodoDia;
+
         log.info("[dashboard-debug] empresaId={}", empresaId);
-        log.info("[dashboard-debug] periodo mensal inicio={} fim={}", inicioPeriodo, fimPeriodo);
+        log.info("[dashboard-debug] periodo mes={} ano={} inicio={} fim={} mesAtual={}", mes, ano, inicioPeriodoDia, fimReferencia, mesAtual);
 
         long agendamentosHoje = agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(empresaId, hoje, StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO);
         long conversasAbertas = conversaRepository.countAbertasByEmpresaId(empresaId);
         long clientesCadastrados = clienteRepository.countByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
         long servicosAtivos = servicoRepository.countAtivosByEmpresaId(empresaId);
 
-        BigDecimal receitaConfirmada = valorOuZero(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaId, STATUS_RECEITA_CONFIRMADA));
+        List<PagamentoDtos.PagamentoResponse> receitasDoMes = pagamentosConfirmadosNoPeriodo(empresaId, inicioPeriodoDia, fimReferencia);
+        BigDecimal receitaConfirmada = receitasDoMes.stream()
+                .map(PagamentoDtos.PagamentoResponse::valor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
         BigDecimal pendenteCobranca = valorOuZero(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaId, STATUS_PENDENTE));
 
         List<DashboardAgendamentoItem> proximosAgendamentos = agendamentoRepository
@@ -120,7 +132,7 @@ public class DashboardService {
                 .map(this::toItemResumo)
                 .toList();
 
-        List<DashboardReceitaDiaItem> receitaPorDia = pagamentosPorDia(empresaId, inicioPeriodo, fimPeriodo);
+        List<DashboardReceitaDiaItem> receitaPorDia = montarReceitaPorDia(inicioPeriodoDia, fimReferencia, receitasDoMes);
 
         log.info("[dashboard-debug] receitaConfirmada={}", receitaConfirmada);
         log.info("[dashboard-debug] totalPagamentosConfirmados={}", receitaPorDia.stream().map(DashboardReceitaDiaItem::valor).reduce(BigDecimal.ZERO, BigDecimal::add));
@@ -147,6 +159,49 @@ public class DashboardService {
                 empresa.getNomeFantasia(),
                 construirPrimeirosPassos(empresa)
         );
+    }
+
+    private void validarPeriodo(int mes, int ano) {
+        if (mes < 1 || mes > 12) {
+            throw new BusinessException("Mes invalido. Informe um valor entre 1 e 12.");
+        }
+        if (ano < 2000 || ano > 2100) {
+            throw new BusinessException("Ano invalido.");
+        }
+    }
+
+    private List<PagamentoDtos.PagamentoResponse> pagamentosConfirmadosNoPeriodo(Long empresaId, LocalDate inicio, LocalDate fim) {
+        return pagamentoRepository.findByEmpresaIdForFinanceiro(empresaId).stream()
+                .flatMap(p -> ReceitaCompetenciaHelper.expandirParcelasVirtuais(p).stream())
+                .filter(p -> p.status() != null && STATUS_RECEITA_CONFIRMADA.contains(p.status()))
+                .filter(p -> p.dataPagamento() != null)
+                .filter(p -> {
+                    LocalDate dataCompetencia = p.dataPagamento().toLocalDate();
+                    return !dataCompetencia.isBefore(inicio) && !dataCompetencia.isAfter(fim);
+                })
+                .toList();
+    }
+
+    private List<DashboardReceitaDiaItem> montarReceitaPorDia(LocalDate inicio, LocalDate fim, List<PagamentoDtos.PagamentoResponse> receitas) {
+        Map<LocalDate, BigDecimal> receitaPorDia = receitas.stream()
+                .filter(p -> p.dataPagamento() != null)
+                .collect(Collectors.toMap(
+                        p -> p.dataPagamento().toLocalDate(),
+                        p -> valorOuZero(p.valor()),
+                        BigDecimal::add
+                ));
+
+        List<DashboardReceitaDiaItem> resultado = new ArrayList<>();
+        LocalDate data = inicio;
+        while (!data.isAfter(fim)) {
+            resultado.add(new DashboardReceitaDiaItem(
+                    data.toString(),
+                    data.format(DATA_LABEL),
+                    receitaPorDia.getOrDefault(data, BigDecimal.ZERO)
+            ));
+            data = data.plusDays(1);
+        }
+        return resultado;
     }
 
     private PrimeirosPassosResponse construirPrimeirosPassos(EmpresaEntity empresa) {
@@ -202,40 +257,6 @@ public class DashboardService {
         );
     }
 
-
-    private List<DashboardReceitaDiaItem> pagamentosPorDia(Long empresaId, LocalDateTime inicio, LocalDateTime fim) {
-        Map<LocalDate, BigDecimal> receitaPorDia = pagamentoRepository.resumoReceitaPorDia(empresaId, STATUS_RECEITA_CONFIRMADA, inicio, fim)
-                .stream()
-                .filter(row -> row.length >= 2 && row[0] != null)
-                .collect(Collectors.toMap(
-                        row -> toLocalDate(row[0]),
-                        row -> valorNumerico(row[1]),
-                        BigDecimal::add
-                ));
-
-        List<DashboardReceitaDiaItem> resultado = new ArrayList<>();
-        LocalDate dataInicial = inicio.toLocalDate();
-        int diasDoMes = inicio.toLocalDate().lengthOfMonth();
-        for (int i = 0; i < diasDoMes; i++) {
-            LocalDate data = dataInicial.plusDays(i);
-            resultado.add(new DashboardReceitaDiaItem(
-                    data.toString(),
-                    data.format(DATA_LABEL),
-                    receitaPorDia.getOrDefault(data, BigDecimal.ZERO)
-            ));
-        }
-        return resultado;
-    }
-
-    private LocalDate toLocalDate(Object valor) {
-        if (valor instanceof LocalDate localDate) {
-            return localDate;
-        }
-        if (valor instanceof java.sql.Date sqlDate) {
-            return sqlDate.toLocalDate();
-        }
-        return LocalDate.parse(String.valueOf(valor));
-    }
 
     private BigDecimal valorOuZero(BigDecimal valor) {
         return valor == null ? BigDecimal.ZERO : valor;

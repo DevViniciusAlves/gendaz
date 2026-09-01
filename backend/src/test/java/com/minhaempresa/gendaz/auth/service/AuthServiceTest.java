@@ -20,6 +20,7 @@ import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.security.IpTrackingService;
 import com.minhaempresa.gendaz.security.RecaptchaService;
 import com.minhaempresa.gendaz.shared.security.SecurityMonitoringService;
+import com.minhaempresa.gendaz.shared.security.PersistentRateLimitService;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.enums.PerfilUsuario;
 import com.minhaempresa.gendaz.usuario.enums.StatusUsuario;
@@ -54,6 +55,8 @@ class AuthServiceTest {
     private RecaptchaService recaptchaService;
     @Mock
     private IpTrackingService ipTrackingService;
+    @Mock
+    private PersistentRateLimitService persistentRateLimitService;
 
     @InjectMocks
     private AuthService authService;

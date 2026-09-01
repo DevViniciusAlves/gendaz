@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
+import com.minhaempresa.gendaz.admin.dto.AdminAssinaturaDtos.AdminAssinaturaOperacaoRequest;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminLoginRequest;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminAcaoEmpresaRequest;
 import com.minhaempresa.gendaz.admin.dto.AdminDtos.AdminAtualizarEmpresaRequest;
@@ -47,6 +48,7 @@ class AdminServiceTest {
     private final PagamentoService pagamentoService = mock(PagamentoService.class);
     private final ProfissionalService profissionalService = mock(ProfissionalService.class);
     private final AdminSessionService adminSessionService = mock(AdminSessionService.class);
+    private final SubscriptionAdminService subscriptionAdminService = mock(SubscriptionAdminService.class);
     private final AdminService adminService = new AdminService(
             usuarioRepository,
             empresaRepository,
@@ -173,7 +175,7 @@ class AdminServiceTest {
         var response = adminService.atualizarEmpresa(
                 "token-admin", 10L,
                 new AdminAtualizarEmpresaRequest("Novo Nome", "(65) 99336-0300", "dono@empresa.com", null, null,
-                        "Correcao cadastral"),
+                        "Correcao cadastral", null),
                 "127.0.0.1", "test"
         );
 
@@ -214,7 +216,7 @@ class AdminServiceTest {
         var response = adminService.atualizarEmpresa(
                 "token-admin", 10L,
                 new AdminAtualizarEmpresaRequest("Empresa teste", "(65) 99336-0300", "novo@teste.com", null, null,
-                        "Dono informou novo email"),
+                        "Dono informou novo email", null),
                 "127.0.0.1", "test"
         );
 
@@ -256,12 +258,55 @@ class AdminServiceTest {
         BusinessException ex = assertThrows(BusinessException.class, () -> adminService.atualizarEmpresa(
                 "token-admin", 10L,
                 new AdminAtualizarEmpresaRequest("Empresa teste", "(65) 99336-0300", "novo@teste.com", null, null,
-                        "Tentativa com email em uso"),
+                        "Tentativa com email em uso", null),
                 "127.0.0.1", "test"
         ));
 
         assertEquals("O e-mail informado ja esta em uso por outra conta.", ex.getMessage());
         verify(usuarioRepository, never()).save(dono);
+    }
+
+    @Test
+    void adminEditaPlanoUsandoOperacoesDeAssinatura() {
+        UsuarioEntity admin = UsuarioEntity.builder().id(1L).nome("Admin").perfil(PerfilUsuario.SUPER_ADMIN).build();
+        EmpresaEntity empresa = EmpresaEntity.builder()
+                .id(10L)
+                .nomeFantasia("Empresa teste")
+                .telefone("5565993360300")
+                .email("dono@empresa.com")
+                .status(StatusEmpresa.ATIVA)
+                .build();
+        UsuarioEntity dono = UsuarioEntity.builder()
+                .id(20L)
+                .nome("Dono teste")
+                .email("dono@empresa.com")
+                .perfil(PerfilUsuario.DONO)
+                .empresa(empresa)
+                .build();
+
+        ReflectionTestUtils.setField(adminService, "phoneNumberService", new PhoneNumberService());
+        ReflectionTestUtils.setField(adminService, "subscriptionAdminService", subscriptionAdminService);
+        when(adminSessionService.validarSessao("token-admin")).thenReturn(admin);
+        when(empresaRepository.findById(10L)).thenReturn(Optional.of(empresa));
+        when(empresaRepository.save(empresa)).thenReturn(empresa);
+        when(usuarioRepository.findByEmpresaIdAndPerfil(10L, PerfilUsuario.DONO)).thenReturn(java.util.List.of(dono));
+        when(assinaturaService.buscarAtualPorEmpresa(10L)).thenReturn(Optional.empty());
+        when(pagamentoPlanoRepository.findByEmpresaIdOrderByDataCriacaoDesc(10L)).thenReturn(java.util.List.of());
+
+        var assinaturas = java.util.List.of(
+                new AdminAssinaturaOperacaoRequest("REMOVER", 11L, null, null, null, null, null),
+                new AdminAssinaturaOperacaoRequest("CRIAR", null, 3L, 30, null, null, null)
+        );
+
+        adminService.atualizarEmpresa(
+                "token-admin", 10L,
+                new AdminAtualizarEmpresaRequest("Novo Nome", "(65) 99336-0300", "dono@empresa.com", null, null,
+                        "Substituicao de plano", assinaturas),
+                "127.0.0.1", "test"
+        );
+
+        verify(subscriptionAdminService).removerAssinatura(10L, 11L);
+        verify(subscriptionAdminService).criarAssinatura(eq(10L), any());
     }
 }
 
