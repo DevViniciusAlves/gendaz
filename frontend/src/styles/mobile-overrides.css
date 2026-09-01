@@ -517,9 +517,12 @@
     font-weight: 600 !important;
   }
 
-  .app-shell .financeiro-page .financeiro-payment-toggle input {
-    width: 22px !important;
-    height: 22px !important;
+  .app-shell .financeiro-page .financeiro-payment-toggle input[type='checkbox'] {
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    flex: 0 0 16px !important;
     margin: 0 !important;
   }
 
@@ -543,13 +546,44 @@
     margin-top: 0 !important;
   }
 
-  .app-shell input[type='checkbox'],
+  .app-shell input[type='checkbox'] {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    width: 16px !important;
+    min-width: 16px !important;
+    max-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    flex: 0 0 16px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 3px !important;
+    border: 1px solid var(--line, rgba(255, 255, 255, 0.6)) !important;
+    background: var(--mobile-surface, #1a1a1a) !important;
+    box-shadow: none !important;
+    transform: none !important;
+    outline: none !important;
+    cursor: pointer;
+  }
+
+  .app-shell .content input[type='checkbox']:checked {
+    background:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><path fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round' d='M3.4 8.6l3 3L12.6 5'/></svg>") center / 11px 11px no-repeat,
+      var(--success, #10B981) !important;
+    border-color: var(--success, #10B981) !important;
+  }
+
+  .app-shell .content input[type='checkbox']:disabled {
+    opacity: 0.45 !important;
+    cursor: not-allowed !important;
+  }
+
   .app-shell input[type='radio'] {
-    width: 20px !important;
-    min-width: 20px !important;
-    height: 20px !important;
-    min-height: 20px !important;
-    flex: 0 0 20px !important;
+    width: 16px !important;
+    min-width: 16px !important;
+    height: 16px !important;
+    min-height: 16px !important;
+    flex: 0 0 16px !important;
   }
 
   .app-shell .schedule-settings-grid {
