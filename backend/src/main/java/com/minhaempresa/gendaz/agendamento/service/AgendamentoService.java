@@ -25,6 +25,7 @@ import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
+import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
@@ -47,6 +48,8 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -71,6 +74,9 @@ public class AgendamentoService {
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final LogAtividadeService logAtividadeService;
     private final TransactionTemplate transactionTemplate;
+    @Autowired
+    @Lazy
+    private PagamentoService pagamentoService;
     private final AgendamentoMapper mapper = new AgendamentoMapper();
 
 
@@ -219,6 +225,16 @@ public class AgendamentoService {
     }
 
     @Transactional(readOnly = true)
+    public List<AgendamentoResponse> listarPorEmpresa(Long empresaId, boolean operacional) {
+        validarEmpresaAtual(empresaId);
+        if (operacional) {
+            return agendamentoRepository.findByEmpresaIdOperacional(empresaId, com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO)
+                    .stream().map(mapper::toResponse).toList();
+        }
+        return agendamentoRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
     public List<AgendamentoResponse> listarPorData(Long empresaId, LocalDate data) {
         validarEmpresaAtual(empresaId);
         return agendamentoRepository.findByEmpresaIdAndData(empresaId, data).stream().map(mapper::toResponse).toList();
@@ -340,6 +356,7 @@ public class AgendamentoService {
         }
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
         } catch (Exception e) {
@@ -354,6 +371,7 @@ public class AgendamentoService {
         validarEmpresa(agendamento, empresaId);
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
         } catch (Exception e) {
@@ -509,7 +527,11 @@ public class AgendamentoService {
         agendamento.setObservacoes(sanitizacaoService.texto(request.observacoes()));
 
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Editou agendamento de " + cliente.getNome());
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        if (request.status() == StatusAgendamento.CANCELADO) {
+            pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, empresa.getId());
+        }
+        return response;
     }
 
     @Transactional(readOnly = true)

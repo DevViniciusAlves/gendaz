@@ -5,7 +5,7 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
-const CACHE_VERSION = 6
+const CACHE_VERSION = 7
 
 function ttlDoEscopo(scope) {
   if (scope === 'insights') return 60 * 1000

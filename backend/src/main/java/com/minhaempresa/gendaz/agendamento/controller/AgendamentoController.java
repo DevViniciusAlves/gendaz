@@ -60,9 +60,9 @@ public class AgendamentoController {
     }
 
     @GetMapping("/empresa/{empresaId}")
-    public ResponseEntity<List<AgendamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId) {
+    public ResponseEntity<List<AgendamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId, @RequestParam(defaultValue = "false") boolean operacional) {
         validarEmpresaAtual(empresaId);
-        return ResponseEntity.ok(agendamentoService.listarPorEmpresa(empresaId));
+        return ResponseEntity.ok(agendamentoService.listarPorEmpresa(empresaId, operacional));
     }
 
     @GetMapping("/data")

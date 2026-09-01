@@ -259,7 +259,7 @@ public class PromocaoService {
     private List<ClienteEntity> selecionarClientes(Long empresaId, String tipo, Set<Long> clienteIds) {
         String modo = tipo == null ? "" : tipo.trim().toUpperCase();
         return switch (modo) {
-            case "TODOS" -> clienteRepository.findByEmpresaId(empresaId);
+            case "TODOS" -> clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
             case "EM_RISCO" -> crmService.listarClientes(empresaId, "at_risk", null, null, 30).stream()
                     .map(CrmClienteResponse::id)
                     .map(id -> clienteRepository.findById(id).orElse(null))

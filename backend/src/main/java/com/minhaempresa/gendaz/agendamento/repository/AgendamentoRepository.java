@@ -4,6 +4,7 @@ import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoSimplesProjection;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ItemResumoResponse;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
@@ -24,6 +25,26 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     List<AgendamentoEntity> findByEmpresaId(Long empresaId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndData(Long empresaId, LocalDate data);
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdOperacional(
+            @Param("empresaId") Long empresaId,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.data = :data
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdAndDataOperacional(
+            @Param("empresaId") Long empresaId,
+            @Param("data") LocalDate data,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByClienteId(Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
@@ -41,12 +62,13 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("empresaId") Long empresaId,
             @Param("data") LocalDate data);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    List<AgendamentoEntity> findTop10ByEmpresaIdOrderByDataDescHoraInicioDesc(Long empresaId);
+    List<AgendamentoEntity> findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(Long empresaId, StatusCadastro statusExcluido);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    List<AgendamentoEntity> findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
+    List<AgendamentoEntity> findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
             Long empresaId,
             List<StatusAgendamento> status,
-            LocalDate data
+            LocalDate data,
+            StatusCadastro statusExcluido
     );
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
@@ -82,6 +104,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("data") LocalDate data
     );
     long countByEmpresaIdAndData(Long empresaId, LocalDate data);
+    long countByEmpresaIdAndDataAndStatusNot(Long empresaId, LocalDate data, StatusAgendamento status);
+    long countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(Long empresaId, LocalDate data, StatusAgendamento status, StatusCadastro statusCliente);
     boolean existsByClienteId(Long clienteId);
     boolean existsByServicoId(Long servicoId);
     boolean existsByProfissionalIdAndDataAndHoraInicioAndStatus(Long profissionalId, LocalDate data, LocalTime horaInicio, StatusAgendamento status);
@@ -111,12 +135,14 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             from AgendamentoEntity a
             where a.empresa.id = :empresaId
               and a.status <> :statusCancelado
+              and a.cliente.status <> :statusExcluido
             group by a.servico.id, a.servico.nome
             order by count(a.id) desc
             """)
     List<Object[]> resumoServicosMaisAgendados(
             @Param("empresaId") Long empresaId,
             @Param("statusCancelado") StatusAgendamento statusCancelado,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
             Pageable pageable
     );
 

@@ -221,4 +221,66 @@ class PagamentoServiceTest {
         assertNotNull(response.metodoPagamento(),
                 "Cancelado deve ter metodoPagamento");
     }
+
+    @Test
+    void cancelarPagamentoPendenteDoAgendamentoCancelaQuandoPendente() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
+        ClienteEntity cliente = ClienteEntity.builder().id(2L).nome("Ana").build();
+        PagamentoEntity pagamento = PagamentoEntity.builder()
+                .id(1L).empresa(empresa).cliente(cliente).agendamento(AgendamentoEntity.builder().id(10L).build())
+                .valor(new BigDecimal("100.00")).status(StatusPagamento.PENDENTE).build();
+
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+
+        assertEquals(StatusPagamento.CANCELADO, pagamento.getStatus());
+        verify(pagamentoRepository).save(pagamento);
+    }
+
+    @Test
+    void cancelarPagamentoPendenteDoAgendamentoPreservaPagamentoPago() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
+        ClienteEntity cliente = ClienteEntity.builder().id(2L).nome("Ana").build();
+        LocalDateTime dataPagamento = LocalDateTime.of(2026, 8, 10, 10, 0);
+        PagamentoEntity pagamento = PagamentoEntity.builder()
+                .id(1L).empresa(empresa).cliente(cliente).agendamento(AgendamentoEntity.builder().id(10L).build())
+                .valor(new BigDecimal("100.00")).metodoPagamento(MetodoPagamento.PIX)
+                .status(StatusPagamento.PAGO).dataPagamento(dataPagamento).build();
+
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+
+        service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+
+        assertEquals(StatusPagamento.PAGO, pagamento.getStatus());
+        assertEquals(dataPagamento, pagamento.getDataPagamento(), "dataPagamento nao pode ser alterado");
+        assertEquals(MetodoPagamento.PIX, pagamento.getMetodoPagamento(), "metodoPagamento nao pode ser alterado");
+        verify(pagamentoRepository, never()).save(pagamento);
+    }
+
+    @Test
+    void cancelarPagamentoPendenteDoAgendamentoJaCanceladoEhIdempotente() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
+        ClienteEntity cliente = ClienteEntity.builder().id(2L).nome("Ana").build();
+        PagamentoEntity pagamento = PagamentoEntity.builder()
+                .id(1L).empresa(empresa).cliente(cliente).agendamento(AgendamentoEntity.builder().id(10L).build())
+                .valor(new BigDecimal("100.00")).status(StatusPagamento.CANCELADO).build();
+
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+
+        service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+
+        assertEquals(StatusPagamento.CANCELADO, pagamento.getStatus());
+        verify(pagamentoRepository, never()).save(pagamento);
+    }
+
+    @Test
+    void cancelarPagamentoPendenteDoAgendamentoSemPagamentoNaoFazNada() {
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.empty());
+
+        service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+
+        verify(pagamentoRepository, never()).save(any());
+    }
 }

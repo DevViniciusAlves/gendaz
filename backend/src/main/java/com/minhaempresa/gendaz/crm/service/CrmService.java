@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -39,7 +40,7 @@ public class CrmService {
     @Transactional(readOnly = true)
     public List<CrmClienteResponse> listarClientes(Long empresaId, String segment, String search,
                                                     String orderBy, Integer period) {
-        List<ClienteEntity> todosClientes = clienteRepository.findByEmpresaId(empresaId);
+        List<ClienteEntity> todosClientes = clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
         LocalDate hoje = LocalDate.now();
         LocalDate dataLimite = (period != null && period > 0) ? hoje.minusDays(period) : null;
 

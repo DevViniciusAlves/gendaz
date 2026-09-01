@@ -635,6 +635,26 @@ public class PagamentoService {
         return pagamentoRepository.countByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE);
     }
 
+    /**
+     * Cancela o pagamento operacional PENDENTE vinculado a um agendamento quando o
+     * proprio agendamento e cancelado. Isola por empresa. Idempotente.
+     *
+     * Regras:
+     *  - PENDENTE -> CANCELADO (sai da pendencia/cobranca do dashboard).
+     *  - PAGO    -> inalterado (nao estorna, nao mexe em caixa/receita).
+     *  - CANCELADO -> idempotente (continua CANCELADO).
+     */
+    @Transactional
+    public void cancelarPagamentoPendenteDoAgendamento(Long agendamentoId, Long empresaId) {
+        pagamentoRepository.findByAgendamentoIdAndEmpresaId(agendamentoId, empresaId)
+                .ifPresent(pagamento -> {
+                    if (pagamento.getStatus() == StatusPagamento.PENDENTE) {
+                        pagamento.setStatus(StatusPagamento.CANCELADO);
+                        pagamentoRepository.save(pagamento);
+                    }
+                });
+    }
+
     private String nomeClientePagamento(PagamentoEntity pagamento) {
         return pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "Cliente";
     }

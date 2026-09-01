@@ -233,7 +233,7 @@ export const appApi = {
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
           api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get('/planos').then((response) => response.data),
@@ -262,7 +262,7 @@ export const appApi = {
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
           api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/dashboard/resumo?empresaId=${empresaId}`).then((response) => response.data),
@@ -336,7 +336,7 @@ export const appApi = {
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
         ])
         return { empresa, clientesBase, servicosBase, profissionais, agendamentosBase }
       },

@@ -20,7 +20,8 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     Optional<PagamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
 
     // Métodos originais que retornam entidades para compatibilidade
-    // Sem @EntityGraph para evitar carregar a coluna inexistente clientes.status e quebrar o boot/queries
+    // Sem @EntityGraph: a carga da associação cliente é lazy e as queries com projeção
+    // (ForFinanceiro) usam p.cliente.status diretamente — a entidade ClienteEntity possui a coluna status.
     List<PagamentoEntity> findByEmpresaId(Long empresaId);
     List<PagamentoEntity> findByEmpresaIdAndDataPagamentoBetween(Long empresaId, LocalDateTime inicio, LocalDateTime fim);
     List<PagamentoEntity> findByEmpresaIdAndStatus(Long empresaId, StatusPagamento status);
@@ -42,7 +43,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.empresa.id = :empresaId
@@ -63,7 +64,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.empresa.id = :empresaId
@@ -86,7 +87,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.empresa.id = :empresaId
@@ -109,7 +110,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.empresa.id = :empresaId
@@ -132,7 +133,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.empresa.id = :empresaId
@@ -155,7 +156,7 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             p.parcelas,
             p.status,
             p.dataPagamento,
-            com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO
+            p.cliente.status
         )
         FROM PagamentoEntity p
         WHERE p.agendamento.id = :agendamentoId

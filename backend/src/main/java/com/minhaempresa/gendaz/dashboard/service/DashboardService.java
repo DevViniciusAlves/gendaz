@@ -21,6 +21,7 @@ import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
@@ -89,30 +90,31 @@ public class DashboardService {
         log.info("[dashboard-debug] empresaId={}", empresaId);
         log.info("[dashboard-debug] periodo mensal inicio={} fim={}", inicioPeriodo, fimPeriodo);
 
-        long agendamentosHoje = agendamentoRepository.countByEmpresaIdAndData(empresaId, hoje);
+        long agendamentosHoje = agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(empresaId, hoje, StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO);
         long conversasAbertas = conversaRepository.countAbertasByEmpresaId(empresaId);
-        long clientesCadastrados = clienteRepository.countByEmpresaId(empresaId);
+        long clientesCadastrados = clienteRepository.countByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
         long servicosAtivos = servicoRepository.countAtivosByEmpresaId(empresaId);
 
         BigDecimal receitaConfirmada = valorOuZero(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaId, STATUS_RECEITA_CONFIRMADA));
         BigDecimal pendenteCobranca = valorOuZero(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaId, STATUS_PENDENTE));
 
         List<DashboardAgendamentoItem> proximosAgendamentos = agendamentoRepository
-                .findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
+                .findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
                         empresaId,
                         List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
-                        hoje
+                        hoje,
+                        StatusCadastro.EXCLUIDO
                 ).stream()
                 .map(this::toAgendamentoItem)
                 .toList();
 
         List<DashboardAgendamentoItem> ultimosAgendamentos = agendamentoRepository
-                .findTop10ByEmpresaIdOrderByDataDescHoraInicioDesc(empresaId)
+                .findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(empresaId, StatusCadastro.EXCLUIDO)
                 .stream()
                 .map(this::toAgendamentoItem)
                 .toList();
 
-        var rowsServicos = agendamentoRepository.resumoServicosMaisAgendados(empresaId, StatusAgendamento.CANCELADO, PageRequest.of(0, 5));
+        var rowsServicos = agendamentoRepository.resumoServicosMaisAgendados(empresaId, StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO, PageRequest.of(0, 5));
         List<DashboardItemResumo> servicosMaisAgendados = (rowsServicos == null ? List.<Object[]>of() : rowsServicos)
                 .stream()
                 .map(this::toItemResumo)

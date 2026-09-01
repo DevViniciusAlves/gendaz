@@ -347,6 +347,17 @@ export default function AdminDashboard() {
     }
   }, [adminUsuario, filtroPagamento])
 
+  async function selecionarAba(label) {
+    setAba(label)
+    if (label === 'Chamados') {
+      try {
+        setChamados(await adminApi.chamados())
+      } catch (error) {
+        setErro(mensagemErroApi(error, 'Nao foi possivel carregar os chamados agora.'))
+      }
+    }
+  }
+
   async function recarregarAbaAtual() {
     if (recarregando) return
     setErro('')
@@ -746,7 +757,7 @@ export default function AdminDashboard() {
               key={label}
               type="button"
               className={`gendaz-sidebar__link ${aba === label ? 'is-active' : ''}`}
-              onClick={() => setAba(label)}
+              onClick={() => selecionarAba(label)}
             >
               <Icon size={18} />
               <span>{label}</span>

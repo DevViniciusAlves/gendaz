@@ -11,7 +11,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.CriarAgendamentoRequest;
+import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AtualizarAgendamentoRequest;
+import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AgendamentoResponse;
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
+import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.agendamento.service.AgendaBlockedDayService;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
@@ -28,12 +31,14 @@ import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
+import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -66,6 +71,7 @@ class AgendamentoServiceTest {
     @Mock HorarioAtendimentoService horarioAtendimentoService;
     @Mock AgendaBlockedDayService agendaBlockedDayService;
     @Mock PagamentoRepository pagamentoRepository;
+    @Mock PagamentoService pagamentoService;
     @Mock SanitizacaoService sanitizacaoService;
     @Mock ResendEmailService resendEmailService;
     @Mock MeuGendazPromocaoService meuGendazPromocaoService;
@@ -84,6 +90,7 @@ class AgendamentoServiceTest {
     @BeforeEach
     void setup() {
         ReflectionTestUtils.setField(agendamentoService, "appTimezone", "America/Cuiaba");
+        ReflectionTestUtils.setField(agendamentoService, "pagamentoService", pagamentoService);
         org.mockito.Mockito.doAnswer(invocation -> {
             java.util.function.Consumer<org.springframework.transaction.TransactionStatus> callback = invocation.getArgument(0);
             callback.accept(null);
@@ -257,6 +264,130 @@ class AgendamentoServiceTest {
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
 
         assertThrows(BusinessException.class, () -> agendamentoService.criar(requestBase(null)));
+    }
+
+    private AgendamentoEntity agendamentoCancelavel(Long id, Boolean empresaId2) {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
+        return AgendamentoEntity.builder()
+                .id(id)
+                .empresa(empresa)
+                .cliente(cliente)
+                .servico(servico)
+                .profissional(profissional)
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE)
+                .build();
+    }
+
+    @Test
+    void cancelarAgendamentoComPagamentoPendenteChamaCancelamentoDoPagamento() {
+        AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = agendamentoService.cancelar(10L);
+
+        assertEquals(StatusAgendamento.CANCELADO, response.status());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+    }
+
+    @Test
+    void cancelarAgendamentoComEmpresaIdChamaCancelamentoDoPagamento() {
+        AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        var response = agendamentoService.cancelar(10L, 1L);
+
+        assertEquals(StatusAgendamento.CANCELADO, response.status());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+    }
+
+    @Test
+    void cancelarAgendamentoJaCanceladoEhIdempotente() {
+        AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AgendamentoResponse response = agendamentoService.cancelar(10L);
+
+        assertEquals(StatusAgendamento.CANCELADO, response.status());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+    }
+
+    @Test
+    void cancelarAgendamentoDeOutraEmpresaEhBloqueado() {
+        AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
+        agendamento.setEmpresa(EmpresaEntity.builder().id(99L).timezone("America/Cuiaba").build());
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+
+        assertThrows(ResourceNotFoundException.class, () -> agendamentoService.cancelar(10L));
+        verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
+    }
+
+    @Test
+    void atualizarParaCanceladoChamaCancelamentoDoPagamento() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(new BigDecimal("100.00")).build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
+        AgendamentoEntity agendamento = AgendamentoEntity.builder()
+                .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
+                .status(StatusAgendamento.PENDENTE).build();
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(clienteService.buscarEntidade(1L)).thenReturn(cliente);
+        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
+        when(sanitizacaoService.texto(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        AtualizarAgendamentoRequest request = new AtualizarAgendamentoRequest(
+                1L, 1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0),
+                StatusAgendamento.CANCELADO, null);
+
+        AgendamentoResponse response = agendamentoService.atualizar(10L, request);
+
+        assertEquals(StatusAgendamento.CANCELADO, response.status());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+    }
+
+    @Test
+    void atualizarParaNaoCanceladoNaoCancelaPagamento() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(new BigDecimal("100.00")).build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
+        AgendamentoEntity agendamento = AgendamentoEntity.builder()
+                .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
+                .status(StatusAgendamento.CONFIRMADO).build();
+        CompanyContext.setCompanyId(1L);
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(clienteService.buscarEntidade(1L)).thenReturn(cliente);
+        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
+        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
+        when(sanitizacaoService.texto(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
+
+        AtualizarAgendamentoRequest request = new AtualizarAgendamentoRequest(
+                1L, 1L, 1L, 1L, LocalDate.now().plusDays(1), LocalTime.of(10, 0),
+                StatusAgendamento.CONFIRMADO, null);
+
+        agendamentoService.atualizar(10L, request);
+
+        verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
     }
 }
 

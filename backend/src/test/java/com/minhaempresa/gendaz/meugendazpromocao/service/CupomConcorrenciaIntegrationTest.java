@@ -206,7 +206,7 @@ class CupomConcorrenciaIntegrationTest {
         servico.setValor(new BigDecimal("150.00")); // preco mudou depois, snapshot deve valer 40
 
         List<Object[]> resumo = agendamentoRepository.resumoServicosMaisAgendados(
-                empresa.getId(), StatusAgendamento.CANCELADO, PageRequest.of(0, 5));
+                empresa.getId(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO, PageRequest.of(0, 5));
 
         assertEquals(1, resumo.size());
         Number valor = (Number) resumo.get(0)[3];

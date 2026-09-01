@@ -55,8 +55,8 @@ public class InsightsAnalyzer {
 
         List<ServicoEntity> servicos = servicoRepository.findByEmpresaId(empresaId);
         List<ProfissionalEntity> profissionais = profissionalRepository.findByEmpresaId(empresaId);
-        List<ClienteEntity> clientes = clienteRepository.findByEmpresaId(empresaId);
-        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaId(empresaId);
+        List<ClienteEntity> clientes = clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
+        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaIdOperacional(empresaId, StatusCadastro.EXCLUIDO);
         List<PagamentoEntity> pagamentos = pagamentoRepository.findByEmpresaId(empresaId);
 
         List<Map<String, Object>> servicosAnalise = servicos.stream()
@@ -141,7 +141,7 @@ public class InsightsAnalyzer {
         dados.put("clientes", clientesResumo);
         dados.put("financeiro", financeiroResumo);
         dados.put("resumo", resumo);
-        dados.put("topClientes", topClientes(clienteRepository.findByEmpresaId(empresaId), ultimaDataPorCliente, hoje));
+        dados.put("topClientes", topClientes(clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO), ultimaDataPorCliente, hoje));
         dados.put("pagamentosRecentes", pagamentos.stream()
                 .sorted(Comparator.comparing(PagamentoEntity::getId, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .limit(5)
