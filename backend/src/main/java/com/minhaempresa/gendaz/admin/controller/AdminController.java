@@ -46,8 +46,11 @@ public class AdminController {
     }
 
     @GetMapping("/dashboard")
-    public ResponseEntity<AdminDashboardResponse> dashboard(HttpServletRequest http) {
-        return ResponseEntity.ok(adminService.dashboard(tokenAdmin(http)));
+    public ResponseEntity<AdminDashboardResponse> dashboard(
+            HttpServletRequest http,
+            @RequestParam(required = false) String mes
+    ) {
+        return ResponseEntity.ok(adminService.dashboard(tokenAdmin(http), mes));
     }
 
     @GetMapping("/usuarios")

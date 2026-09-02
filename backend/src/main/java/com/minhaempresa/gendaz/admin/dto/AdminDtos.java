@@ -21,20 +21,18 @@ public final class AdminDtos {
     public record AdminUsuarioResponse(Long id, String nome, String email, String perfil) {}
 
     public record AdminDashboardResponse(
-            BigDecimal faturamentoTotal,
+            long contasAtivas,
+            long contasCanceladas,
+            long contasTeste,
+            BigDecimal totalGanho,
             BigDecimal faturamentoMes,
-            long pagamentosConfirmados,
             long pagamentosPendentes,
-            long assinaturasAtivas,
-            long empresasTesteGratis,
             long empresasVencidas,
-            long usuariosAtivos,
-            long novosCadastros,
-            List<ReceitaPontoResponse> receita,
+            List<ReceitaDiaResponse> receitaDia,
             List<PlanoDistribuicaoResponse> distribuicaoPlanos
     ) {}
 
-    public record ReceitaPontoResponse(String periodo, BigDecimal valor) {}
+    public record ReceitaDiaResponse(String data, String label, BigDecimal valor) {}
 
     public record PlanoDistribuicaoResponse(String plano, long total) {}
 

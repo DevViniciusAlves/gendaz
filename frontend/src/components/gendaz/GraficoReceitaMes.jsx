@@ -57,7 +57,6 @@ function GraficoReceitaMes({ dados, formatarEixoY }) {
   const chartW = width - pLeft - pRight
   const chartH = height - pTop - pBottom
   const baseY = pTop + chartH
-  const total = dadosNormalizados.reduce((soma, item) => soma + item.valor, 0)
   const maxValor = arredondarTopoEscala(Math.max(...dadosNormalizados.map((item) => item.valor), 0))
   const labelStep = obterPassoLabel(dadosNormalizados.length)
   const gridTicks = [0, 0.25, 0.5, 0.75, 1]
@@ -83,7 +82,7 @@ function GraficoReceitaMes({ dados, formatarEixoY }) {
 
   return (
     <div className="gendaz-receita-mes-shell">
-      {total === 0 && (
+      {dadosNormalizados.length === 0 && (
         <div className="gendaz-receita-mes-empty" aria-live="polite">
           <p>Nenhuma receita registrada neste mês.</p>
           <small>Os valores aparecerão conforme os pagamentos forem confirmados.</small>
@@ -132,6 +131,22 @@ function GraficoReceitaMes({ dados, formatarEixoY }) {
                 <text className="gendaz-receita-x-label" x={ponto.x} y={height - 9} textAnchor="middle">
                   {dia}
                 </text>
+              )}
+              {ponto.valor > 0 && (
+                <circle
+                  className="gendaz-receita-dot"
+                  cx={ponto.x}
+                  cy={ponto.y}
+                  r="3.4"
+                />
+              )}
+              {pontos.length === 1 && (
+                <circle
+                  className="gendaz-receita-active-dot"
+                  cx={ponto.x}
+                  cy={ponto.y}
+                  r="5"
+                />
               )}
               <circle
                 className="gendaz-receita-hit-area"

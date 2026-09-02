@@ -27,18 +27,6 @@ const abas = [
   { label: 'Configuracoes', icon: Settings2 },
   { label: 'CRM', icon: UserSearch },
 ]
-const STATUS_PAGAMENTO_CONFIRMADO = new Set([
-  'PAGO',
-  'PAGA',
-  'CONFIRMADO',
-  'CONFIRMADA',
-  'APROVADO',
-  'APPROVED',
-  'PAID',
-  'PAYMENT_APPROVED',
-  'PURCHASE_APPROVED',
-])
-
 const CATEGORIAS_LOG = [
   { valor: 'USER_LOGIN_SUCCESS', rotulo: 'Login realizado' },
   { valor: 'USER_LOGIN_FAILED', rotulo: 'Login falhado' },
@@ -83,54 +71,9 @@ function mesAtualIso() {
   return todayIso().slice(0, 7)
 }
 
-function statusNormalizado(valor) {
-  return String(valor || '').toUpperCase()
-}
-
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
-
-function pagamentoConfirmado(status) {
-  return STATUS_PAGAMENTO_CONFIRMADO.has(statusNormalizado(status))
-}
-
-function extrairDataPagamento(pagamento) {
-  return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
-}
-
-function diasDoMesAtual() {
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
-}
-
-function buildReceitaMes(pagamentos) {
-  const listaPagamentos = Array.isArray(pagamentos) ? pagamentos : []
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  const mapaReceita = {}
-
-  listaPagamentos.forEach((p) => {
-    if (!pagamentoConfirmado(p.status)) return
-    const dia = extrairDataPagamento(p)
-    if (!dia || !dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
-    
-    // Extrai o dia para usar como chave e label
-    const diaDoMes = parseInt(dia.split('-')[2], 10)
-    mapaReceita[diaDoMes] = (mapaReceita[diaDoMes] || 0) + Number(p.valor || 0)
-  })
-
-  // Ordena os dias que tiveram movimento
-  return Object.keys(mapaReceita)
-    .map(Number)
-    .sort((a, b) => a - b)
-    .map((dia) => ({
-      iso: dia.toString(),
-      label: dia.toString(),
-      valor: mapaReceita[dia]
-    }))
-}
-
-
 
 function acaoModalTitulo(modal) {
   if (modal?.tipo === 'pagamento-aprovar') return `Aprovar pagamento de ${modal?.empresa || ''}`
@@ -257,6 +200,7 @@ export default function AdminDashboard() {
   const [pesquisaChamado, setPesquisaChamado] = useState('')
   const [pesquisaLog, setPesquisaLog] = useState('')
   const [mesLog, setMesLog] = useState(mesAtualIso())
+  const [mesDashboard, setMesDashboard] = useState(mesAtualIso())
   const [paginaLog, setPaginaLog] = useState(1)
   const [limpandoLogs, setLimpandoLogs] = useState(false)
   const motivoValido = motivo.trim().length >= 8
@@ -288,7 +232,7 @@ export default function AdminDashboard() {
     setCarregando(true)
     try {
       const results = await Promise.allSettled([
-        adminApi.dashboard(),
+        adminApi.dashboard(mesDashboard),
         adminApi.usuarios(),
         adminApi.pagamentos(),
         adminApi.chamados(),
@@ -329,7 +273,7 @@ export default function AdminDashboard() {
     carregarAdmin().catch(() => {
       setErro('Nao foi possivel carregar os dados do painel admin agora. Tente recarregar.')
     })
-  }, [adminUsuario, navigate])
+  }, [adminUsuario, navigate, mesDashboard])
 
   useEffect(() => {
     if (!adminUsuario) return
@@ -338,7 +282,7 @@ export default function AdminDashboard() {
     async function atualizarFinanceiro() {
       try {
         const [dashboardData, pagamentosData] = await Promise.all([
-          adminApi.dashboard(),
+          adminApi.dashboard(mesDashboard),
           adminApi.pagamentos(filtroPagamento),
         ])
         const listaPagamentos = Array.isArray(pagamentosData) ? pagamentosData : []
@@ -368,7 +312,7 @@ export default function AdminDashboard() {
       clearInterval(timer)
       window.removeEventListener('focus', onFocus)
     }
-  }, [adminUsuario, filtroPagamento])
+  }, [adminUsuario, filtroPagamento, mesDashboard])
 
   async function selecionarAba(label) {
     setAba(label)
@@ -429,35 +373,22 @@ export default function AdminDashboard() {
   }
 
   const metricas = useMemo(() => dashboard ? [
-    ['Faturamento total', moeda(dashboard.faturamentoTotal)],
     ['Faturamento do mes', moeda(dashboard.faturamentoMes)],
-    ['Pagamentos confirmados', dashboard.pagamentosConfirmados],
     ['Pagamentos pendentes', dashboard.pagamentosPendentes],
-    ['Assinaturas ativas', dashboard.assinaturasAtivas],
-    ['Empresas em teste', dashboard.empresasTesteGratis],
+    ['Empresas em teste', dashboard.contasTeste],
     ['Empresas vencidas', dashboard.empresasVencidas],
-    ['Usuarios ativos', dashboard.usuariosAtivos],
-    ['Novos cadastros', dashboard.novosCadastros],
   ] : [], [dashboard])
 
-  const contasAtivas = dashboard?.assinaturasAtivas || 0
-  const contasCanceladas = dashboard?.empresasVencidas || 0
-  const contasTeste = dashboard?.empresasTesteGratis || 0
-  const contasAtivasPct = Math.round((contasAtivas / Math.max(contasAtivas + contasCanceladas + contasTeste, 1)) * 100)
-  const receitaMensalGrafico = buildReceitaMes(Array.isArray(pagamentos) ? pagamentos : [])
-  const pagamentosConfirmadosLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => pagamentoConfirmado(item.status))
-  const pagamentosPendentesLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => statusNormalizado(item.status) === 'PENDENTE')
-  const pagamentoMaisRecente = (Array.isArray(pagamentos) ? [...pagamentos] : [])
-    .sort((a, b) => String(b.dataPagamento || b.dataCriacao || b.data || '').localeCompare(String(a.dataPagamento || a.dataCriacao || a.data || '')))
-    .slice(0, 5)
-  const planoResumo = useMemo(() => {
-    const mapa = {}
-    ;(usuarios || []).forEach((item) => {
-      const plano = rotuloPlano(item.plano)
-      mapa[plano] = (mapa[plano] || 0) + 1
-    })
-    return Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  }, [usuarios])
+  const contaAtiva = dashboard?.contasAtivas || 0
+  const contaCancelada = dashboard?.contasCanceladas || 0
+  const contaTeste = dashboard?.contasTeste || 0
+  const contasBaseAtual = Math.max(contaAtiva + contaCancelada + contaTeste, 1)
+  const contasAtivasPct = Math.round((contaAtiva / contasBaseAtual) * 100)
+  const receitaDiasDashboard = useMemo(() => (Array.isArray(dashboard?.receitaDia) ? dashboard.receitaDia : []).map((item) => ({
+    iso: item.data || '',
+    label: item.label || String(item.data || '').slice(8, 10) || '',
+    valor: Number(item.valor || 0),
+  })), [dashboard])
 
   const assinaturasAtivas = useMemo(() => (assinaturas || []).filter((item) => {
     const status = String(item.status || '').toUpperCase()
@@ -889,22 +820,22 @@ export default function AdminDashboard() {
             <div className="admin-strategy-grid">
               <article className="admin-strategy-card">
                 <span>Contas ativas</span>
-                <strong>{contasAtivas}</strong>
+                <strong>{contaAtiva}</strong>
                 <small>{contasAtivasPct}% da base atual</small>
               </article>
               <article className="admin-strategy-card">
                 <span>Contas canceladas</span>
-                <strong>{contasCanceladas}</strong>
-                <small>vencidas ou bloqueadas</small>
+                <strong>{contaCancelada}</strong>
+                <small>assinaturas canceladas ou LGPD encerradas</small>
               </article>
               <article className="admin-strategy-card">
                 <span>Contas em teste</span>
-                <strong>{contasTeste}</strong>
-                <small>periodo gratuito ativo</small>
+                <strong>{contaTeste}</strong>
+                <small>periodo gratuito ativo hoje</small>
               </article>
               <article className="admin-strategy-card admin-strategy-card--highlight">
                 <span>Total ganho</span>
-                <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
+                <strong>{moeda(dashboard?.totalGanho)}</strong>
                 <small>{moeda(dashboard?.faturamentoMes)} neste mes</small>
               </article>
             </div>
@@ -921,107 +852,45 @@ export default function AdminDashboard() {
                  <div className="panel-head">
                    <div>
                      <span className="section-kicker">Financeiro</span>
-                     <h2>Receita dos pagamentos</h2>
-                     <p>Base confirmada por data de pagamento no mês corrente.</p>
+                     <h2>Receita por dia</h2>
+                     <p>Base confirmada por data de pagamento no mes selecionado.</p>
+                   </div>
+                   <div className="receita-chart-periodo">
+                     <input
+                       type="month"
+                       value={mesDashboard}
+                       max={mesAtualIso()}
+                       onChange={(event) => {
+                         const valor = event.target.value
+                         if (!valor) return
+                         setMesDashboard(`${valor.slice(0, 4)}-${valor.slice(5, 7)}`)
+                       }}
+                       className="receita-chart-period-input"
+                     />
                    </div>
                  </div>
-                 <GraficoReceitaMes dados={receitaMensalGrafico} />
+                 <GraficoReceitaMes dados={receitaDiasDashboard} formatarEixoY={formatoCompactoReceita} />
                </section>
               <section className="admin-tactical-panel">
                 <div className="panel-head">
                   <div>
                     <span className="section-kicker">Operacao</span>
-                    <h2>Status geral das contas</h2>
-                    <p>Leitura rapida da saude da base Gendaz.</p>
-                  </div>
-                </div>
-                <div className="admin-status-stack">
-                  <div className="admin-status-row">
-                    <span>Ativas</span>
-                    <strong>{contasAtivas}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Canceladas</span>
-                    <strong>{contasCanceladas}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Teste</span>
-                    <strong>{contasTeste}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Usuarios ativos</span>
-                    <strong>{dashboard?.usuariosAtivos || 0}</strong>
+                    <h2>Empresas por plano</h2>
+                    <p>Distribuicao atual das contas ativas e em teste.</p>
                   </div>
                 </div>
                 <div className="admin-mini-bars">
-                  {planoResumo.map(([plano, total]) => (
-                    <div key={plano} className="admin-mini-bar">
+                  {(dashboard?.distribuicaoPlanos || []).map((item) => (
+                    <div key={item.plano} className="admin-mini-bar">
                       <div>
-                        <span>{plano}</span>
-                        <strong>{total}</strong>
+                        <span>{rotuloPlano(item.plano)}</span>
+                        <strong>{item.total}</strong>
                       </div>
                       <div className="admin-mini-bar-track">
-                        <i style={{ width: `${Math.max(12, (total / Math.max(planoResumo[0]?.[1] || 1, 1)) * 100)}%` }} />
+                        <i style={{ width: `${Math.max(12, (item.total / Math.max((dashboard?.distribuicaoPlanos || []).reduce((soma, plano) => soma + Number(plano.total || 0), 0), 1)) * 100)}%` }} />
                       </div>
                     </div>
                   ))}
-                </div>
-              </section>
-            </div>
-            <div className="admin-panels">
-              <section>
-                <h2>Receita</h2>
-                {(dashboard?.receita || []).map((item) => (
-                  <div className="admin-bar" key={item.periodo}>
-                    <span>{item.periodo}</span>
-                    <strong>{moeda(item.valor)}</strong>
-                  </div>
-                ))}
-              </section>
-              <section>
-                <h2>Planos</h2>
-                {(dashboard?.distribuicaoPlanos || []).map((item) => (
-                  <div className="admin-bar" key={item.plano}>
-                    <span>{rotuloPlano(item.plano)}</span>
-                    <strong>{item.total}</strong>
-                  </div>
-                ))}
-              </section>
-              <section>
-                <h2>Pagamentos recentes</h2>
-                {pagamentoMaisRecente.length === 0 ? (
-                  <div className="admin-empty-tactical">Sem pagamentos recentes.</div>
-                ) : (
-                  pagamentoMaisRecente.map((item) => (
-                    <div className="admin-bar" key={`${item.id}-${item.dataPagamento || item.dataCriacao || item.data || ''}`}>
-                      <span>{item.empresa || 'Empresa'}</span>
-                      <strong>{moeda(item.valor)}</strong>
-                    </div>
-                  ))
-                )}
-              </section>
-            </div>
-            <div className="admin-panels">
-              <section>
-                <h2>Pagamentos confirmados</h2>
-                <div className="admin-bar-row">
-                  <span>Confirmados no periodo</span>
-                  <strong>{pagamentosConfirmadosLista.length}</strong>
-                </div>
-                <div className="admin-bar-row">
-                  <span>Pendentes</span>
-                  <strong>{pagamentosPendentesLista.length}</strong>
-                </div>
-              </section>
-              <section>
-                <h2>Resumo pratico</h2>
-                <div className="admin-bar-row">
-                  <span>Total ganho</span>
-                  <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
-                </div>
-                <div className="admin-bar-row">
-                  <span>Faturamento do mes</span>
-                  <strong>{moeda(dashboard?.faturamentoMes)}</strong>
                 </div>
               </section>
             </div>

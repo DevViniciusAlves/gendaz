@@ -34,8 +34,8 @@ export const adminApi = {
     return api.post('/admin/auth/logout').then((response) => response.data)
   },
 
-  dashboard() {
-    return api.get('/admin/dashboard').then((response) => response.data)
+  dashboard(mes) {
+    return api.get('/admin/dashboard', { params: mes ? { mes } : {} }).then((response) => response.data)
   },
 
   usuarios() {

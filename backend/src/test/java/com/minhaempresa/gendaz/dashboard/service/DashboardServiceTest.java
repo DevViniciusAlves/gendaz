@@ -16,6 +16,7 @@ import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
 import com.minhaempresa.gendaz.conversa.repository.ConversaRepository;
 import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardReceitaDiaItem;
 import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardResumoResponse;
+import com.minhaempresa.gendaz.dashboard.dto.DashboardDtos.DashboardItemResumo;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.data.domain.PageRequest;
 
 class DashboardServiceTest {
     private static final ZoneId ZONE_SP = ZoneId.of("America/Sao_Paulo");
@@ -85,6 +87,7 @@ class DashboardServiceTest {
                 anyLong(), any(), any(), any())).thenReturn(List.of());
         when(agendamentoRepository.findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(anyLong(), any())).thenReturn(List.of());
         when(agendamentoRepository.resumoServicosMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoProfissionaisMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L)).thenReturn(List.of());
         when(pagamentoRepository.findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(anyLong(), any(), any(), any()))
                 .thenReturn(List.of());
@@ -147,6 +150,7 @@ class DashboardServiceTest {
                 anyLong(), any(), any(), any())).thenReturn(List.of());
         when(agendamentoRepository.findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(anyLong(), any())).thenReturn(List.of());
         when(agendamentoRepository.resumoServicosMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoProfissionaisMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L)).thenReturn(List.of());
         when(pagamentoRepository.findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(anyLong(), any(), any(), any()))
                 .thenReturn(List.of());
@@ -189,6 +193,26 @@ class DashboardServiceTest {
 
         verify(pagamentoRepository).findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(
                 eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
+    }
+
+    @Test
+    void profissionaisMaisAgendadosUsaSomenteProfissionaisReais() {
+        preparaResumoBasico();
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+                .thenReturn(0L);
+        // Linha com profissional inexistente (valor nulo) nao pode virar ranking
+        when(agendamentoRepository.resumoProfissionaisMaisAgendados(1L, StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO, PageRequest.of(0, 5)))
+                .thenReturn(List.of(
+                        new Object[]{10L, "Maria", 4L},
+                        new Object[]{11L, "Joao", 2L},
+                        new Object[]{null, "Sem preferencia", 3L}
+                ));
+
+        DashboardResumoResponse response = service.resumo(7L, null, null, null);
+
+        var nomes = response.profissionaisMaisAgendados().stream().map(DashboardItemResumo::nome).toList();
+        assertEquals(java.util.List.of("Maria", "Joao"), nomes);
+        assertEquals(4L, response.profissionaisMaisAgendados().get(0).quantidade());
     }
 
     @Test

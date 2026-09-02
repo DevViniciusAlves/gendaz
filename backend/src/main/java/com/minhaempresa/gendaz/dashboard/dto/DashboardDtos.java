@@ -31,6 +31,7 @@ public final class DashboardDtos {
             List<DashboardAgendamentoItem> proximosAgendamentos,
             List<DashboardAgendamentoItem> ultimosAgendamentos,
             List<DashboardItemResumo> servicosMaisAgendados,
+            List<DashboardItemResumo> profissionaisMaisAgendados,
             List<DashboardReceitaDiaItem> receitaPorDia,
             List<DashboardPagamentoItem> pagamentosPendentes,
             String empresaNome,

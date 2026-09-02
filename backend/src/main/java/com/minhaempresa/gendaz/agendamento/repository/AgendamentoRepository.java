@@ -146,6 +146,23 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             Pageable pageable
     );
 
+    @Query("""
+            select a.profissional.id, a.profissional.nome, count(a.id)
+            from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.profissional is not null
+              and a.status <> :statusCancelado
+              and a.cliente.status <> :statusExcluido
+            group by a.profissional.id, a.profissional.nome
+            order by count(a.id) desc
+            """)
+    List<Object[]> resumoProfissionaisMaisAgendados(
+            @Param("empresaId") Long empresaId,
+            @Param("statusCancelado") StatusAgendamento statusCancelado,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
+            Pageable pageable
+    );
+
     @Query("SELECT COUNT(a) FROM AgendamentoEntity a WHERE a.empresa.id = :empresaId AND a.status = 'FINALIZADO'")
     long countConsultasFinalizadas(@Param("empresaId") Long empresaId);
 

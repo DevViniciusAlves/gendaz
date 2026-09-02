@@ -46,7 +46,10 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -56,6 +59,18 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @Slf4j
 public class AdminService {
+    private static final List<StatusPagamento> STATUS_PAGAMENTO_CONFIRMADO = List.of(
+            StatusPagamento.PAGO,
+            StatusPagamento.PAYMENT_APPROVED
+    );
+    private static final List<StatusPagamento> STATUS_PAGAMENTO_PENDENTE = List.of(
+            StatusPagamento.PENDENTE,
+            StatusPagamento.PAYMENT_PENDING
+    );
+    private static final List<String> PLANOS_OFICIAIS = List.of("BASICO", "PRO", "PLUS", "ENTERPRISE");
+    private static final DateTimeFormatter FORMATO_MES_DASHBOARD = DateTimeFormatter.ofPattern("uuuu-MM");
+    private static final DateTimeFormatter DATA_LABEL = DateTimeFormatter.ofPattern("dd/MM", Locale.forLanguageTag("pt-BR"));
+
     private final UsuarioRepository usuarioRepository;
     private final EmpresaRepository empresaRepository;
     private final PagamentoPlanoRepository pagamentoPlanoRepository;
@@ -274,50 +289,145 @@ public class AdminService {
     }
 
     @Transactional(readOnly = true)
-    public AdminDashboardResponse dashboard(String token) {
+    public AdminDashboardResponse dashboard(String token, String mes) {
         exigirAdmin(token);
+        YearMonth mesReferencia = resolverMesDashboard(mes);
+        LocalDate inicio = mesReferencia.atDay(1);
+        LocalDate fim = mesReferencia.atEndOfMonth();
+        LocalDate hoje = LocalDate.now();
+
+        List<EmpresaEntity> empresas = empresaRepository.findAll();
+        List<AssinaturaEntity> assinaturas = assinaturaRepository.findAllComPlano();
+        Map<Long, List<AssinaturaEntity>> assinaturasPorEmpresa = assinaturas.stream()
+                .collect(Collectors.groupingBy(a -> a.getEmpresa().getId()));
+
+        long contasAtivas = 0;
+        long contasCanceladas = 0;
+        long contasTeste = 0;
+        long empresasVencidas = 0;
+        Map<String, Long> contagemPorPlano = new HashMap<>();
+        PLANOS_OFICIAIS.forEach(nome -> contagemPorPlano.put(nome, 0L));
+
+        for (EmpresaEntity empresa : empresas) {
+            if (empresa.getStatus() == StatusEmpresa.BLOQUEADA) {
+                continue;
+            }
+            if (empresa.getStatus() == StatusEmpresa.ENCERRADA) {
+                contasCanceladas++;
+                continue;
+            }
+            List<AssinaturaEntity> lista = assinaturasPorEmpresa.getOrDefault(empresa.getId(), List.of());
+            AssinaturaEntity vigente = assinaturaVigente(lista, hoje);
+            if (vigente != null) {
+                if (vigente.getStatus() == StatusAssinatura.TESTE) {
+                    contasTeste++;
+                } else {
+                    contasAtivas++;
+                }
+                String plano = vigente.getPlano() == null ? null : vigente.getPlano().getNome();
+                if (plano != null && contagemPorPlano.containsKey(plano)) {
+                    contagemPorPlano.put(plano, contagemPorPlano.get(plano) + 1);
+                }
+                continue;
+            }
+            StatusAssinatura ultimo = ultimaAssinaturaIniciada(lista, hoje);
+            if (ultimo == StatusAssinatura.CANCELADA) {
+                contasCanceladas++;
+            } else if (ultimo == StatusAssinatura.EXPIRADA) {
+                empresasVencidas++;
+            }
+        }
+
         List<PagamentoPlanoEntity> pagamentos = pagamentoPlanoRepository.findAll();
-        List<AssinaturaEntity> assinaturas = empresaRepository.findAll().stream()
-                .map(empresa -> assinaturaService.buscarAtualPorEmpresa(empresa.getId()).orElse(null))
-                .filter(Objects::nonNull)
-                .collect(java.util.stream.Collectors.toList());
-        YearMonth mesAtual = YearMonth.now();
-        BigDecimal faturamentoTotal = pagamentos.stream()
-                .filter(this::pagamentoConfirmado)
-                .map(PagamentoPlanoEntity::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal faturamentoMes = pagamentos.stream()
-                .filter(this::pagamentoConfirmado)
-                .filter(p -> p.getDataPagamento() != null && YearMonth.from(p.getDataPagamento()).equals(mesAtual))
-                .map(PagamentoPlanoEntity::getValor)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-        List<ReceitaPontoResponse> receita = pagamentos.stream()
+        List<PagamentoPlanoEntity> confirmados = pagamentos.stream()
                 .filter(this::pagamentoConfirmado)
                 .filter(p -> p.getDataPagamento() != null)
-                .collect(java.util.stream.Collectors.groupingBy(p -> YearMonth.from(p.getDataPagamento()).toString(),
-                        java.util.stream.Collectors.reducing(BigDecimal.ZERO, PagamentoPlanoEntity::getValor, BigDecimal::add)))
-                .entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(e -> new ReceitaPontoResponse(e.getKey(), e.getValue()))
                 .toList();
-        List<PlanoDistribuicaoResponse> planos = assinaturas.stream()
-                .collect(java.util.stream.Collectors.groupingBy(a -> a.getPlano().getNome(), java.util.stream.Collectors.counting()))
-                .entrySet().stream()
-                .map(e -> new PlanoDistribuicaoResponse(e.getKey(), e.getValue()))
+        BigDecimal totalGanho = confirmados.stream()
+                .map(PagamentoPlanoEntity::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal faturamentoMes = confirmados.stream()
+                .filter(p -> !p.getDataPagamento().toLocalDate().isBefore(inicio))
+                .filter(p -> !p.getDataPagamento().toLocalDate().isAfter(fim))
+                .map(PagamentoPlanoEntity::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        long pagamentosPendentes = pagamentos.stream().filter(this::pagamentoPendente).count();
+
+        List<ReceitaDiaResponse> receitaDia = construirReceitaDia(confirmados, inicio, fim);
+        List<PlanoDistribuicaoResponse> distribuicaoPlanos = PLANOS_OFICIAIS.stream()
+                .map(nome -> new PlanoDistribuicaoResponse(nome, contagemPorPlano.getOrDefault(nome, 0L)))
                 .toList();
+
         return new AdminDashboardResponse(
-                faturamentoTotal,
+                contasAtivas,
+                contasCanceladas,
+                contasTeste,
+                totalGanho,
                 faturamentoMes,
-                pagamentos.stream().filter(this::pagamentoConfirmado).count(),
-                pagamentos.stream().filter(this::pagamentoPendente).count(),
-                assinaturas.stream().filter(a -> a.getStatus() == StatusAssinatura.ATIVA).count(),
-                assinaturas.stream().filter(a -> a.getStatus() == StatusAssinatura.TESTE).count(),
-                assinaturas.stream().filter(a -> a.getStatus() == StatusAssinatura.EXPIRADA).count(),
-                usuarioRepository.findAll().stream().filter(u -> u.getStatus() == StatusUsuario.ATIVO && u.getPerfil() != PerfilUsuario.SUPER_ADMIN).count(),
-                empresaRepository.findAll().stream().filter(e -> e.getDataCriacao() != null && e.getDataCriacao().isAfter(LocalDateTime.now().minusDays(30))).count(),
-                receita,
-                planos
+                pagamentosPendentes,
+                empresasVencidas,
+                receitaDia,
+                distribuicaoPlanos
         );
+    }
+
+    private YearMonth resolverMesDashboard(String mes) {
+        if (mes == null || mes.isBlank()) {
+            return YearMonth.now();
+        }
+        YearMonth anoMes;
+        try {
+            anoMes = YearMonth.parse(mes.trim(), FORMATO_MES_DASHBOARD);
+        } catch (DateTimeParseException excecao) {
+            throw new BusinessException("Mes invalido. Use o formato yyyy-MM.");
+        }
+        if (anoMes.getYear() < 2000 || anoMes.getYear() > 2100) {
+            throw new BusinessException("Mes invalido. Informe um ano entre 2000 e 2100.");
+        }
+        return anoMes;
+    }
+
+    private AssinaturaEntity assinaturaVigente(List<AssinaturaEntity> assinaturas, LocalDate hoje) {
+        return assinaturas.stream()
+                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA || a.getStatus() == StatusAssinatura.TESTE)
+                .filter(a -> a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje))
+                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+                .sorted(Comparator.comparing(AssinaturaEntity::getDataInicio).thenComparing(AssinaturaEntity::getId))
+                .findFirst()
+                .orElse(null);
+    }
+
+    private StatusAssinatura ultimaAssinaturaIniciada(List<AssinaturaEntity> assinaturas, LocalDate hoje) {
+        return assinaturas.stream()
+                .filter(a -> a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje))
+                .max(Comparator.comparing(AssinaturaEntity::getDataInicio).thenComparing(AssinaturaEntity::getId))
+                .map(AssinaturaEntity::getStatus)
+                .flatMap(status -> status == StatusAssinatura.CANCELADA
+                        ? Optional.of(StatusAssinatura.CANCELADA)
+                        : status == StatusAssinatura.PENDENTE_PAGAMENTO
+                                ? Optional.<StatusAssinatura>empty()
+                                : Optional.of(StatusAssinatura.EXPIRADA))
+                .orElse(null);
+    }
+
+    private List<ReceitaDiaResponse> construirReceitaDia(List<PagamentoPlanoEntity> confirmados, LocalDate inicio, LocalDate fim) {
+        Map<LocalDate, BigDecimal> receitaPorDia = confirmados.stream()
+                .collect(Collectors.toMap(
+                        p -> p.getDataPagamento().toLocalDate(),
+                        p -> p.getValor() == null ? BigDecimal.ZERO : p.getValor(),
+                        BigDecimal::add
+                ));
+        List<ReceitaDiaResponse> resultado = new ArrayList<>();
+        LocalDate data = inicio;
+        while (!data.isAfter(fim)) {
+            resultado.add(new ReceitaDiaResponse(
+                    data.toString(),
+                    data.format(DATA_LABEL),
+                    receitaPorDia.getOrDefault(data, BigDecimal.ZERO)
+            ));
+            data = data.plusDays(1);
+        }
+        return resultado;
     }
 
     @Transactional(readOnly = true)

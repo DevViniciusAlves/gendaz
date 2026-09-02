@@ -130,6 +130,13 @@ function normalizarResumoDashboard(resumo) {
         valor: moedaNumero(item.valor),
       }))
     : []
+  const profissionaisMaisAgendados = Array.isArray(resumo.profissionaisMaisAgendados)
+    ? resumo.profissionaisMaisAgendados.map((item) => ({
+        ...item,
+        quantidade: Number(item.quantidade || 0),
+        valor: moedaNumero(item.valor),
+      }))
+    : []
   const proximosAgendamentos = Array.isArray(resumo.proximosAgendamentos)
     ? resumo.proximosAgendamentos.map((item) => ({ ...item }))
     : []
@@ -146,6 +153,7 @@ function normalizarResumoDashboard(resumo) {
   return {
     ...resumo,
     agendamentosHoje: Number(resumo.agendamentosHoje || 0),
+    pendentesPagamento: Number(resumo.pendentesPagamento || 0),
     conversasAbertas: Number(resumo.conversasAbertas || 0),
     clientesCadastrados: Number(resumo.clientesCadastrados || 0),
     servicosAtivos: Number(resumo.servicosAtivos || 0),
@@ -153,6 +161,7 @@ function normalizarResumoDashboard(resumo) {
     pendenteCobranca: moedaNumero(resumo.pendenteCobranca),
     receitaPorDia,
     servicosMaisAgendados,
+    profissionaisMaisAgendados,
     proximosAgendamentos,
     ultimosAgendamentos,
     pagamentosPendentes,

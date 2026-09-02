@@ -140,6 +140,12 @@ public class DashboardService {
                 .map(this::toItemResumo)
                 .toList();
 
+        var rowsProfissionais = agendamentoRepository.resumoProfissionaisMaisAgendados(empresaId, StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO, PageRequest.of(0, 5));
+        List<DashboardItemResumo> profissionaisMaisAgendados = (rowsProfissionais == null ? List.<Object[]>of() : rowsProfissionais)
+                .stream()
+                .map(this::toItemResumo)
+                .toList();
+
         List<DashboardReceitaDiaItem> receitaPorDia = montarReceitaPorDia(inicioPeriodoDia, fimReferencia, receitasDoMes);
 
         log.info("[dashboard-debug] receitaConfirmada={}", receitaConfirmada);
@@ -165,6 +171,7 @@ public class DashboardService {
                 proximosAgendamentos,
                 ultimosAgendamentos,
                 servicosMaisAgendados,
+                profissionaisMaisAgendados,
                 receitaPorDia,
                 pagamentosPendentes,
                 empresa.getNomeFantasia(),
