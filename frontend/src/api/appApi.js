@@ -534,6 +534,10 @@ export const appApi = {
       }).then((response) => response.data))
   },
 
+  buscarEmpresa(id) {
+    return api.get(`/empresas/${id}`).then((response) => response.data)
+  },
+
   atualizarEmpresa(id, payload) {
     return comNotificacao(() => api.put(`/empresas/${id}`, payload).then((response) => response.data), {
       loading: 'Editando empresa... aguarde',

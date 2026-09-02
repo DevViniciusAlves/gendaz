@@ -1,0 +1,104 @@
+/* =====================================================
+   Página "Minha conta" (Conta.jsx)
+   Classes exclusivas desta página — sem efeitos colaterais
+   no restante do sistema.
+   ===================================================== */
+
+.conta-page .conta-card {
+  max-width: 720px;
+  width: 100%;
+  padding: 24px;
+}
+
+.conta-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.conta-card-head svg {
+  color: var(--brand);
+  flex: 0 0 auto;
+}
+
+.conta-card-head h2 {
+  margin: 0;
+  font-size: 17px;
+  color: var(--panel-text-primary);
+}
+
+.conta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  align-items: start;
+}
+
+.conta-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.conta-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.conta-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--panel-text-primary);
+  word-break: break-word;
+}
+
+.conta-plans-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.conta-plan-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--success-rgb), 0.22);
+  background: rgba(var(--success-rgb), 0.10);
+  color: var(--success);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+/* Neutraliza o "levantar" do .panel global em um card
+   puramente informativo de leitura. */
+.app-shell .conta-page .conta-card:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+@media (max-width: 640px) {
+  .conta-page .conta-card {
+    padding: 18px;
+  }
+
+  .conta-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .conta-plans-list {
+    gap: 8px;
+  }
+}
