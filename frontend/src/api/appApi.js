@@ -436,7 +436,9 @@ export const appApi = {
 
     }
 
-    const loaded = await (loaders[scope] || loaders.full)()
+    const colonIndex = scope.indexOf(':')
+    const baseScope = colonIndex > -1 ? scope.slice(0, colonIndex) : scope
+    const loaded = await (loaders[baseScope] || loaders.full)(scope)
 
     const empresa = loaded.empresa
     if (!estaImpersonando && empresa?.status && empresa.status !== 'ATIVA') {

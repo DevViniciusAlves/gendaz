@@ -140,7 +140,7 @@ function GraficoReceitaMes({ dados, formatarEixoY }) {
                   r="3.4"
                 />
               )}
-              {pontos.length === 1 && (
+              {pontos.length === 1 && ponto.valor > 0 && (
                 <circle
                   className="gendaz-receita-active-dot"
                   cx={ponto.x}
