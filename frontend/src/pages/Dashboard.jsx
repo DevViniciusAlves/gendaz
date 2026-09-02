@@ -134,7 +134,7 @@ export default function Dashboard() {
   const pagamentosPendentesBase = pagamentosVisiveis.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
   const pendenteCobrancaBase = pagamentosPendentesBase.reduce((sum, p) => sum + Number(p.valor || 0), 0)
 
-  const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : pagamentosVisiveis.length
+  const agendamentosHoje = Number(resumoDashboard?.agendamentosHoje || 0)
   const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
   const totalClientes = resumoDashboard?.clientesCadastrados > 0 ? resumoDashboard.clientesCadastrados : totalClientesBase
   const servicosAtivos = resumoDashboard?.servicosAtivos > 0 ? resumoDashboard.servicosAtivos : servicosAtivosBase
@@ -180,8 +180,8 @@ export default function Dashboard() {
     profissionalCountFallback[nomeProfissional] = (profissionalCountFallback[nomeProfissional] || 0) + 1
   })
   const profissionaisTop = resumoDashboard?.profissionaisMaisAgendados?.length
-    ? resumoDashboard.profissionaisMaisAgendados.map((item) => [item.nome, item.quantidade])
-    : Object.entries(profissionalCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5)
+    ? resumoDashboard.profissionaisMaisAgendados.map((item) => [item.nome, item.quantidade]).filter(([nome]) => nome && nome !== 'Sem preferência' && nome !== 'Nenhum profissional')
+    : Object.entries(profissionalCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5).filter(([nome]) => nome && nome !== 'Sem preferência' && nome !== 'Nenhum profissional')
   const receitaServicoTop = resumoDashboard?.servicosMaisAgendados?.length
     ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, Number(item.valor || 0)]).filter(([, valor]) => valor > 0)
     : Object.entries(receitaServicoFallback).sort((a, b) => b[1] - a[1]).slice(0, 4)

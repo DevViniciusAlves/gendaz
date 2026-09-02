@@ -1,6 +1,7 @@
 import { UserRoundCog } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext.jsx'
 import { appApi } from '../api/appApi.js'
+import { useState, useEffect } from 'react'
 
 export default function Conta() {
   const { usuario } = useAuth()
