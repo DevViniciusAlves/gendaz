@@ -22,6 +22,7 @@ public final class DashboardDtos {
 
     public record DashboardResumoResponse(
             Long agendamentosHoje,
+            Long pendentesPagamento,
             Long conversasAbertas,
             Long clientesCadastrados,
             Long servicosAtivos,

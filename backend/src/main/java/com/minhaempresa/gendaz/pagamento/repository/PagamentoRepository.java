@@ -1,8 +1,10 @@
 package com.minhaempresa.gendaz.pagamento.repository;
 
+import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -197,5 +199,66 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
     boolean existsByClienteId(Long clienteId);
     boolean existsByAgendamentoId(Long agendamentoId);
     long countByEmpresaIdAndStatus(Long empresaId, StatusPagamento status);
+
+    @Query("""
+            select count(p)
+            from PagamentoEntity p
+            left join p.agendamento a
+            where p.empresa.id = :empresaId
+              and p.status in :statuses
+              and p.cliente.status <> :statusExcluido
+              and (a is null or a.status <> :statusCancelado)
+            """)
+    long countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+            @Param("empresaId") Long empresaId,
+            @Param("statuses") List<StatusPagamento> statuses,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
+            @Param("statusCancelado") StatusAgendamento statusCancelado);
+
+    @Query("""
+            select coalesce(sum(p.valor), 0)
+            from PagamentoEntity p
+            left join p.agendamento a
+            where p.empresa.id = :empresaId
+              and p.status in :statuses
+              and p.cliente.status <> :statusExcluido
+              and (a is null or a.status <> :statusCancelado)
+            """)
+    BigDecimal somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+            @Param("empresaId") Long empresaId,
+            @Param("statuses") List<StatusPagamento> statuses,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
+            @Param("statusCancelado") StatusAgendamento statusCancelado);
+
+    @Query("""
+        SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
+            p.id,
+            a.id,
+            a.protocolo,
+            a.servico.nome,
+            c.id,
+            c.nome,
+            p.empresa.id,
+            p.valor,
+            p.metodoPagamento,
+            p.parcelas,
+            p.status,
+            p.dataPagamento,
+            c.status
+        )
+        FROM PagamentoEntity p
+        LEFT JOIN p.agendamento a
+        JOIN p.cliente c
+        WHERE p.empresa.id = :empresaId
+          AND p.status IN :statuses
+          AND c.status <> :statusExcluido
+          AND (a IS NULL OR a.status <> :statusCancelado)
+        ORDER BY p.id DESC
+    """)
+    List<PagamentoDtos.PagamentoResponse> findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(
+            @Param("empresaId") Long empresaId,
+            @Param("statuses") List<StatusPagamento> statuses,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
+            @Param("statusCancelado") StatusAgendamento statusCancelado);
 }
 

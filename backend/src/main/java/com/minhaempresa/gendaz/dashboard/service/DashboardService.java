@@ -23,11 +23,13 @@ import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
+import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import com.minhaempresa.gendaz.usuario.entity.UsuarioEntity;
 import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,7 +88,8 @@ public class DashboardService {
         }
 
         Long empresaId = empresa.getId();
-        LocalDate hoje = LocalDate.now();
+        ZoneId zoneId = resolverZoneId(empresa.getTimezone());
+        LocalDate hoje = LocalDate.now(zoneId);
         int mes = mesParam != null ? mesParam : hoje.getMonthValue();
         int ano = anoParam != null ? anoParam : hoje.getYear();
         validarPeriodo(mes, ano);
@@ -108,7 +111,12 @@ public class DashboardService {
         BigDecimal receitaConfirmada = receitasDoMes.stream()
                 .map(PagamentoDtos.PagamentoResponse::valor)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal pendenteCobranca = valorOuZero(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(empresaId, STATUS_PENDENTE));
+        long pendentesPagamento = pagamentoRepository
+                .countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+                        empresaId, STATUS_PENDENTE, StatusCadastro.EXCLUIDO, StatusAgendamento.CANCELADO);
+        BigDecimal pendenteCobranca = valorOuZero(pagamentoRepository
+                .somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+                        empresaId, STATUS_PENDENTE, StatusCadastro.EXCLUIDO, StatusAgendamento.CANCELADO));
 
         List<DashboardAgendamentoItem> proximosAgendamentos = agendamentoRepository
                 .findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
@@ -139,13 +147,16 @@ public class DashboardService {
         log.info("[dashboard-debug] receitaPorDia={}", receitaPorDia);
 
         List<DashboardPagamentoItem> pagamentosPendentes = pagamentoRepository
-                .findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(empresaId, StatusPagamento.PENDENTE)
+                .findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(
+                        empresaId, STATUS_PENDENTE, StatusCadastro.EXCLUIDO, StatusAgendamento.CANCELADO)
                 .stream()
+                .limit(5)
                 .map(this::toPagamentoItem)
                 .toList();
 
         return new DashboardResumoResponse(
                 agendamentosHoje,
+                pendentesPagamento,
                 conversasAbertas,
                 clientesCadastrados,
                 servicosAtivos,
@@ -170,10 +181,18 @@ public class DashboardService {
         }
     }
 
+    private ZoneId resolverZoneId(String timezone) {
+        String valor = timezone == null || timezone.isBlank()
+                ? TimezoneEnum.AMERICA_SAO_PAULO.getValue()
+                : timezone;
+        return ZoneId.of(valor);
+    }
+
     private List<PagamentoDtos.PagamentoResponse> pagamentosConfirmadosNoPeriodo(Long empresaId, LocalDate inicio, LocalDate fim) {
         return pagamentoRepository.findByEmpresaIdForFinanceiro(empresaId).stream()
                 .flatMap(p -> ReceitaCompetenciaHelper.expandirParcelasVirtuais(p).stream())
                 .filter(p -> p.status() != null && STATUS_RECEITA_CONFIRMADA.contains(p.status()))
+                .filter(p -> p.statusCliente() != StatusCadastro.EXCLUIDO)
                 .filter(p -> p.dataPagamento() != null)
                 .filter(p -> {
                     LocalDate dataCompetencia = p.dataPagamento().toLocalDate();

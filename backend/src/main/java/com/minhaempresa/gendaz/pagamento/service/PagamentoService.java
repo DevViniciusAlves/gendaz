@@ -648,7 +648,7 @@ public class PagamentoService {
     public void cancelarPagamentoPendenteDoAgendamento(Long agendamentoId, Long empresaId) {
         pagamentoRepository.findByAgendamentoIdAndEmpresaId(agendamentoId, empresaId)
                 .ifPresent(pagamento -> {
-                    if (pagamento.getStatus() == StatusPagamento.PENDENTE) {
+                    if (pagamento.getStatus() == StatusPagamento.PENDENTE || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
                         pagamento.setStatus(StatusPagamento.CANCELADO);
                         pagamentoRepository.save(pagamento);
                     }

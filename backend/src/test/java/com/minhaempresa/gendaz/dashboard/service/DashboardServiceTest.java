@@ -30,6 +30,7 @@ import com.minhaempresa.gendaz.usuario.repository.UsuarioRepository;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -39,6 +40,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 class DashboardServiceTest {
+    private static final ZoneId ZONE_SP = ZoneId.of("America/Sao_Paulo");
     @Mock UsuarioRepository usuarioRepository;
     @Mock ClienteRepository clienteRepository;
     @Mock ServicoRepository servicoRepository;
@@ -58,8 +60,17 @@ class DashboardServiceTest {
                 assinaturaService, conversaRepository, agendamentoRepository, pagamentoRepository);
     }
 
+    private LocalDate hoje() {
+        return LocalDate.now(ZONE_SP);
+    }
+
     private UsuarioEntity usuarioComEmpresa() {
         EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa A").build();
+        return UsuarioEntity.builder().id(7L).empresa(empresa).build();
+    }
+
+    private UsuarioEntity usuarioComEmpresaTimezone(String timezone) {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa A").timezone(timezone).build();
         return UsuarioEntity.builder().id(7L).empresa(empresa).build();
     }
 
@@ -75,10 +86,13 @@ class DashboardServiceTest {
         when(agendamentoRepository.findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(anyLong(), any())).thenReturn(List.of());
         when(agendamentoRepository.resumoServicosMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L)).thenReturn(List.of());
-        when(pagamentoRepository.findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(anyLong(), any()))
+        when(pagamentoRepository.findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(anyLong(), any(), any(), any()))
                 .thenReturn(List.of());
         when(assinaturaService.buscarAtualPorEmpresa(1L)).thenReturn(Optional.empty());
-        when(pagamentoRepository.somarValorByEmpresaIdAndStatusIn(eq(1L), any())).thenReturn(BigDecimal.ZERO);
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(eq(1L), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(pagamentoRepository.countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(anyLong(), any(), any(), any()))
+                .thenReturn(0L);
     }
 
     private PagamentoDtos.PagamentoResponse pagamento(
@@ -98,28 +112,68 @@ class DashboardServiceTest {
     @Test
     void agendamentosHojeExcluiCancelado() {
         preparaResumoBasico();
-        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(2L);
 
         DashboardResumoResponse response = service.resumo(7L, null, null, null);
 
         assertEquals(2L, response.agendamentosHoje());
         verify(agendamentoRepository).countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(
-                eq(1L), eq(LocalDate.now()), eq(StatusAgendamento.CANCELADO), eq(StatusCadastro.EXCLUIDO));
+                eq(1L), eq(hoje()), eq(StatusAgendamento.CANCELADO), eq(StatusCadastro.EXCLUIDO));
         verify(agendamentoRepository, never()).countByEmpresaIdAndData(anyLong(), any());
+    }
+
+    @Test
+    void agendamentosHojeZeroQuandoSoExistemAgendamentosEmOutrosDias() {
+        preparaResumoBasico();
+        // Cenario A: hoje = 01/09, existem agendamentos em 02/09 e 15/09 -> "Agendamentos hoje" = 0
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+                .thenReturn(0L);
+
+        DashboardResumoResponse response = service.resumo(7L, null, null, null);
+
+        assertEquals(0L, response.agendamentosHoje());
+    }
+
+    @Test
+    void agendamentosHojeUsaFusoHorarioDaEmpresa() {
+        UsuarioEntity usuario = usuarioComEmpresaTimezone("America/Cuiaba");
+        when(usuarioRepository.findById(7L)).thenReturn(Optional.of(usuario));
+        when(conversaRepository.countAbertasByEmpresaId(1L)).thenReturn(0L);
+        when(clienteRepository.countByEmpresaIdAndStatusNot(1L, StatusCadastro.EXCLUIDO)).thenReturn(0L);
+        when(servicoRepository.countAtivosByEmpresaId(1L)).thenReturn(0L);
+        when(profissionalRepository.countAtivosByEmpresaId(1L)).thenReturn(0L);
+        when(agendamentoRepository.findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
+                anyLong(), any(), any(), any())).thenReturn(List.of());
+        when(agendamentoRepository.findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(anyLong(), any())).thenReturn(List.of());
+        when(agendamentoRepository.resumoServicosMaisAgendados(anyLong(), any(), any(), any())).thenReturn(List.of());
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L)).thenReturn(List.of());
+        when(pagamentoRepository.findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(anyLong(), any(), any(), any()))
+                .thenReturn(List.of());
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(anyLong(), any(), any(), any()))
+                .thenReturn(BigDecimal.ZERO);
+        when(pagamentoRepository.countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(anyLong(), any(), any(), any()))
+                .thenReturn(0L);
+        when(assinaturaService.buscarAtualPorEmpresa(1L)).thenReturn(Optional.empty());
+
+        service.resumo(7L, null, null, null);
+
+        LocalDate hojeCuiaba = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        verify(agendamentoRepository).countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(
+                eq(1L), eq(hojeCuiaba), eq(StatusAgendamento.CANCELADO), eq(StatusCadastro.EXCLUIDO));
     }
 
     @Test
     void pendenciaCobrancaUsaSomenteStatusPendente() {
         preparaResumoBasico();
-        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(0L);
 
         service.resumo(7L, null, null, null);
 
         ArgumentCaptor<List<StatusPagamento>> statusCaptor = ArgumentCaptor.forClass(List.class);
-        verify(pagamentoRepository, org.mockito.Mockito.times(1))
-                .somarValorByEmpresaIdAndStatusIn(eq(1L), statusCaptor.capture());
+        verify(pagamentoRepository)
+                .somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(eq(1L), statusCaptor.capture(), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
         // Receita confirmada nao usa mais o somatorio sem periodo; so a pendencia de cobranca (estado atual)
         List<StatusPagamento> statuses = statusCaptor.getValue();
         assertEquals(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING), statuses);
@@ -128,19 +182,33 @@ class DashboardServiceTest {
     @Test
     void pendenciaPagamentoNaListaUsoNaoIncluiCancelado() {
         preparaResumoBasico();
-        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, LocalDate.now(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
                 .thenReturn(0L);
 
         service.resumo(7L, null, null, null);
 
-        verify(pagamentoRepository).findTop5ByEmpresaIdAndStatusOrderByIdDescForFinanceiro(
-                eq(1L), eq(StatusPagamento.PENDENTE));
+        verify(pagamentoRepository).findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
+    }
+
+    @Test
+    void pendentesPagamentoCardExpoeContagemDoBackend() {
+        preparaResumoBasico();
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO))
+                .thenReturn(0L);
+        when(pagamentoRepository.countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO)))
+                .thenReturn(3L);
+
+        DashboardResumoResponse response = service.resumo(7L, null, null, null);
+
+        assertEquals(3L, response.pendentesPagamento());
     }
 
     @Test
     void receitaDoMesRespeitaMesSelecionado() {
         preparaResumoBasico();
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = hoje();
         LocalDate mesAnterior = hoje.minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
@@ -157,7 +225,7 @@ class DashboardServiceTest {
     @Test
     void credito3xSegueCompetenciaFinanceiraDoMesSelecionado() {
         preparaResumoBasico();
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = hoje();
         LocalDate mesPagamento = hoje.minusMonths(2).withDayOfMonth(1);
         LocalDate mesCompetencia1 = mesPagamento;
         LocalDate mesCompetencia2 = mesPagamento.plusMonths(1);
@@ -185,7 +253,7 @@ class DashboardServiceTest {
     @Test
     void canceladoNaoEntraNaReceita() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(pagamento(1L, new BigDecimal("50.00"), StatusPagamento.CANCELADO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
 
@@ -198,7 +266,7 @@ class DashboardServiceTest {
     @Test
     void pendenteNaoEntraNaReceita() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(pagamento(1L, new BigDecimal("30.00"), StatusPagamento.PENDENTE, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
 
@@ -211,7 +279,7 @@ class DashboardServiceTest {
     @Test
     void pagamentoAprovadoEntraNaReceita() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(pagamento(1L, new BigDecimal("70.00"), StatusPagamento.PAYMENT_APPROVED, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
 
@@ -223,9 +291,9 @@ class DashboardServiceTest {
     @Test
     void mesAtualReceitaPorDiaTerminaNoDiaDeHoje() {
         preparaResumoBasico();
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = hoje();
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
-                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.now())));
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, hoje.atTime(12, 0))));
 
         DashboardResumoResponse resposta = service.resumo(7L, null, null, null);
 
@@ -238,7 +306,7 @@ class DashboardServiceTest {
     @Test
     void mesPassadoGeraMesCompleto() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
 
         DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
 
@@ -248,7 +316,7 @@ class DashboardServiceTest {
     @Test
     void diaSemReceitaApareceComoZero() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(pagamento(1L, new BigDecimal("25.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
 
@@ -264,7 +332,7 @@ class DashboardServiceTest {
     @Test
     void cardReceitaIgualSomaDoGrafico() {
         preparaResumoBasico();
-        LocalDate mesAnterior = LocalDate.now().minusMonths(1);
+        LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(
                         pagamento(1L, new BigDecimal("40.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(2).atTime(10, 0)),
@@ -302,9 +370,9 @@ class DashboardServiceTest {
     @Test
     void mesAnoDefaultUsamMesAtual() {
         preparaResumoBasico();
-        LocalDate hoje = LocalDate.now();
+        LocalDate hoje = hoje();
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
-                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, LocalDateTime.now())));
+                .thenReturn(List.of(pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, hoje.atTime(12, 0))));
 
         DashboardResumoResponse resposta = service.resumo(7L, null, null, null);
 
