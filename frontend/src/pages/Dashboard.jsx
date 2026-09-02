@@ -23,6 +23,11 @@ const STATUS_PAGAMENTO_CONFIRMADO = new Set([
   'PURCHASE_APPROVED',
 ])
 
+const meses = [
+  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+]
+
 function diasDoMesAtual() {
   const hoje = new Date(`${todayIso()}T12:00:00`)
   return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
@@ -40,57 +45,12 @@ function extrairDataReceita(pagamento) {
   return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
 }
 
-function buildReceitaMes(pagamentos) {
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  const dias = diasDoMesAtual()
-  const mapaReceita = {}
-
-  pagamentos.forEach((p) => {
-    if (!pagamentoConfirmado(p.status)) return
-    const dia = extrairDataReceita(p)
-    if (!dia) return
-    if (!dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
-    mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
-  })
-
-  const resultado = []
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0, 0)
-  for (let i = 0; i < dias; i++) {
-    const data = new Date(inicioMes)
-    data.setDate(data.getDate() + i)
-    const iso = data.toISOString().slice(0, 10)
-    const label = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    resultado.push({ iso, label, valor: mapaReceita[iso] || 0 })
-  }
-  return resultado
-}
-
 function normalizarReceitaDias(dados) {
   return (dados || []).map((item) => ({
     iso: item.iso || item.data || '',
     label: item.label || String(item.data || '').slice(8, 10) || '',
     valor: Number(item.valor || 0),
   }))
-}
-
-function combinarReceitaMensal(base, alternativa) {
-  const mapa = new Map()
-  ;(alternativa || []).forEach((item) => {
-    if (!item?.iso) return
-    mapa.set(item.iso, { ...item, valor: Number(item.valor || 0) })
-  })
-  ;(base || []).forEach((item) => {
-    if (!item?.iso) return
-    const atual = mapa.get(item.iso)
-    const valorBase = Number(item.valor || 0)
-    const valorAtual = Number(atual?.valor || 0)
-    if (!atual || valorBase >= valorAtual) {
-      mapa.set(item.iso, { ...item, valor: valorBase })
-    }
-  })
-
-  const referencia = (base || []).length >= (alternativa || []).length ? base : alternativa
-  return (referencia || []).map((item) => mapa.get(item.iso) || { ...item, valor: Number(item.valor || 0) })
 }
 
 function resumirReceitaMensal(dados) {
@@ -132,10 +92,13 @@ export default function Dashboard() {
   const { usuario } = useAuth()
   const [passosAberto, setPassosAberto] = useState(true)
   const [recarregando, setRecarregando] = useState(false)
+  const [periodoSelecionado, setPeriodoSelecionado] = useState(
+    `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
+  )
 
   useEffect(() => {
     reload(true)
-  }, [refreshTrigger, reload])
+  }, [refreshTrigger, reload, periodoSelecionado])
 
   async function recarregarDashboard() {
     if (recarregando) return
@@ -160,24 +123,23 @@ export default function Dashboard() {
   const hojeDate = new Date(`${hoje}T12:00:00`)
   const dataExtenso = hojeDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
   const mesAtual = hojeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const dataMax = `${hojeDate.getFullYear()}-${String(hojeDate.getMonth() + 1).padStart(2, '0')}`
+  const [anoSelecionado, mesSelecionado] = periodoSelecionado.split('-').map(Number)
 
   const agendamentosHojeBase = agendamentosVisiveis.filter((a) => a.data === hoje).length
   const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
   const totalClientesBase = clientesAtivos.length
   const servicosAtivosBase = servicosVisiveis.filter((s) => s.status === 'ATIVO').length
   const pagamentosVisiveis = Array.isArray(data.pagamentos) ? data.pagamentos : []
-  const receitaConfirmadaBase = pagamentosVisiveis
-    .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
-    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
   const pagamentosPendentesBase = pagamentosVisiveis.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
   const pendenteCobrancaBase = pagamentosPendentesBase.reduce((sum, p) => sum + Number(p.valor || 0), 0)
 
-  const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
+  const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : pagamentosVisiveis.length
   const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
   const totalClientes = resumoDashboard?.clientesCadastrados > 0 ? resumoDashboard.clientesCadastrados : totalClientesBase
   const servicosAtivos = resumoDashboard?.servicosAtivos > 0 ? resumoDashboard.servicosAtivos : servicosAtivosBase
 
-  const receitaTotal = resumoDashboard?.receitaConfirmada > 0 ? resumoDashboard.receitaConfirmada : receitaConfirmadaBase
+  const receitaTotal = Number(resumoDashboard?.receitaConfirmada || 0)
   const totalPendente = resumoDashboard?.pendenteCobranca > 0 ? resumoDashboard.pendenteCobranca : pendenteCobrancaBase
   const servicosPorId = new Map((data.servicos || []).map((servico) => [servico.id, servico]))
   const servicoCountFallback = {}
@@ -196,8 +158,7 @@ export default function Dashboard() {
   const receitaDiasResumo = resumoDashboard?.receitaPorDia?.length
     ? normalizarReceitaDias(resumoDashboard.receitaPorDia)
     : []
-  const receitaDiasBase = buildReceitaMes(pagamentosVisiveis)
-  const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
+  const receitaDias = receitaDiasResumo
   const resumoReceitaMes = useMemo(
     () => resumirReceitaMensal(receitaDias),
     [receitaDias]
@@ -353,7 +314,16 @@ export default function Dashboard() {
                     <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
                   </div>
                   <div className="receita-chart-periodo">
-                    <small>{mesAtual}</small>
+                    <input
+                      type="month"
+                      value={periodoSelecionado}
+                      max={dataMax}
+                      onChange={(e) => {
+                        const [ano, mes] = e.target.value.split('-').map(Number)
+                        setPeriodoSelecionado(`${ano}-${String(mes).padStart(2, '0')}`)
+                      }}
+                      className="receita-chart-period-input"
+                    />
                   </div>
                 </div>
                 <GraficoReceitaMes dados={receitaDias} formatarEixoY={formatoCompactoReceita} />

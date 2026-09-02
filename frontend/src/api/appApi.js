@@ -256,7 +256,21 @@ export const appApi = {
           mensagens: mensagensPorConversa.flat(),
         }
       },
-      dashboard: async () => {
+      dashboard: async (scope) => {
+        const periodoScope = scope || 'dashboard'
+        const [periodoAno, periodoMes] = periodoScope.split(':')[1]?.split('-') || [periodoAtual().ano, periodoAtual().mes]
+        const empresaId = empresaIdAtual()
+        const estaImpersonando = Boolean(getSessionUser()?.impersonadoPorAdmin)
+        if (!empresaId) {
+          return criarBaseLocal(scope, null)
+        }
+
+        if (modoDemo) {
+          const usuario = getSessionUser()
+          const local = criarBaseLocal(scope, usuario)
+          return { ...local, __remote: true }
+        }
+
         const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, resumo] = await Promise.all([
           api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
@@ -265,7 +279,7 @@ export const appApi = {
           api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
           api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/dashboard/resumo?empresaId=${empresaId}`).then((response) => response.data),
+          api.get(`/dashboard/resumo?empresaId=${empresaId}&mes=${periodoMes}&ano=${periodoAno}`).then((response) => response.data),
         ])
         const dashboardResumo = normalizarResumoDashboard(resumo)
         return {

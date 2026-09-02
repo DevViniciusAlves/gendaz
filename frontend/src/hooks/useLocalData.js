@@ -64,19 +64,21 @@ export async function prefetchLocalData(scope = 'full') {
   return carregarComCache(scope)
 }
 
-export function useLocalData(scope = 'full') {
-  const cacheInicial = !modoDemo ? cacheDoEscopo(scope) : null
+export function useLocalData(scope = 'full', periodo = null) {
+  const cacheKeyExtra = periodo ? `:${periodo}` : ''
+  const cacheScope = scope + cacheKeyExtra
+  const cacheInicial = !modoDemo ? cacheDoEscopo(cacheScope) : null
   const [data, setStateData] = useState(() => {
     if (modoDemo) return getData()
     const usuario = getSessionUser()
-    if (cacheValido(cacheInicial, scope)) {
-      cacheLocal.set(chaveCache(scope), cacheInicial)
+    if (cacheValido(cacheInicial, cacheScope)) {
+      cacheLocal.set(chaveCache(cacheScope), cacheInicial)
       return cacheInicial.data
     }
     return emptyData(usuario)
   })
-  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial, scope)))
-  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, scope))
+  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial, cacheScope)))
+  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, cacheScope))
   const [error, setError] = useState(null)
 
   const reload = useCallback(async (force = false) => {
@@ -86,9 +88,9 @@ export function useLocalData(scope = 'full') {
       return
     }
 
-    const cacheKey = chaveCache(scope)
-    const cached = cacheDoEscopo(scope)
-    if (!force && cacheValido(cached, scope)) {
+    const cacheKey = chaveCache(cacheScope)
+    const cached = cacheDoEscopo(cacheScope)
+    if (!force && cacheValido(cached, cacheScope)) {
       cacheLocal.set(cacheKey, cached)
       setStateData(cached.data)
       setError(null)
@@ -101,7 +103,7 @@ export function useLocalData(scope = 'full') {
       if (!loadedOnceRef.current) {
         setLoading(true)
       }
-      const remote = await carregarComCache(scope, force)
+      const remote = await carregarComCache(cacheScope, force)
       setStateData(remote)
       setError(null)
       loadedOnceRef.current = true
@@ -114,7 +116,7 @@ export function useLocalData(scope = 'full') {
         setLoading(false)
       }
     }
-  }, [scope])
+  }, [cacheScope])
 
   useEffect(() => {
     const usuarioAtual = getSessionUser()
@@ -139,7 +141,7 @@ export function useLocalData(scope = 'full') {
       window.removeEventListener('gendaz:data-changed', reloadFromEvent)
       window.removeEventListener('gendaz:session-changed', reloadFromEvent)
     }
-  }, [scope, reload])
+  }, [cacheScope])
 
   function updateData(updater) {
     if (!modoDemo) return
