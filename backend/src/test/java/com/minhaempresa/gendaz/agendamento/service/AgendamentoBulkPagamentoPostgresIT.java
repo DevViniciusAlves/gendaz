@@ -65,6 +65,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * {@code AgendamentoBulkPagamentoConcorrenciaIntegrationTest}.
  */
 @Testcontainers
+@SpringBootTest
 @ActiveProfiles("test")
 @org.springframework.test.context.TestPropertySource(
         properties = {
