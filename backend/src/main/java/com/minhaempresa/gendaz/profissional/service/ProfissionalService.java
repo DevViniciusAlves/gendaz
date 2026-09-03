@@ -128,6 +128,19 @@ public class ProfissionalService {
         return profissional;
     }
 
+    /**
+     * Mutex transacional da agenda do profissional (ordem global:
+     * AGENDAMENTO -&gt; PROFISSIONAL -&gt; PAGAMENTO -&gt; EMPRESA). Usado por
+     * criar/remarcar/atualizar de agendamento ANTES de verificar conflito de
+     * intervalo, para que check + save sejam atomicos contra concorrentes do
+     * MESMO profissional. Escopado por tenant (id + empresaId).
+     */
+    @Transactional
+    public ProfissionalEntity buscarEntidadeParaReserva(Long id, Long empresaId) {
+        return profissionalRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Profissional nao encontrado."));
+    }
+
     @Transactional
     public void excluir(Long id, Long empresaId) {
         ProfissionalEntity profissional = buscarEntidade(id);

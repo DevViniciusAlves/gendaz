@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.agendamento.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -260,6 +261,7 @@ class AgendamentoStatusMachineServiceTest {
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(1L), eq(1L))).thenReturn(profissional);
         when(sanitizacaoService.texto(any())).thenAnswer(inv -> inv.getArgument(0));
 
         AgendamentoEntity pendente = agendamento(9L, StatusAgendamento.PENDENTE);
@@ -304,8 +306,7 @@ class AgendamentoStatusMachineServiceTest {
 
     @Test
     void bulkPendenteDescontinuadoECancelarRespeitaEstados() {
-        AgendamentoBulkService bulk = new AgendamentoBulkService(
-                pagamentoRepository, agendamentoService, logAtividadeService);
+        AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
 
         assertThrows(BusinessException.class, () -> bulk.executar(
                 new AcaoEmMassaAgendamentoRequest(List.of(11L), "PENDENTE", 1L)));
@@ -320,8 +321,7 @@ class AgendamentoStatusMachineServiceTest {
 
     @Test
     void bulkExcluirNaoConverteFinalizadoEmCancelado() {
-        AgendamentoBulkService bulk = new AgendamentoBulkService(
-                pagamentoRepository, agendamentoService, logAtividadeService);
+        AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
         AgendamentoEntity finalizado = agendamento(12L, StatusAgendamento.FINALIZADO);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.of(finalizado));
 

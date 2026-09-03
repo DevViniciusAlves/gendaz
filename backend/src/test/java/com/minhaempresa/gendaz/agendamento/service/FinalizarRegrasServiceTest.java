@@ -157,6 +157,33 @@ class FinalizarRegrasServiceTest {
     }
 
     @Test
+    void finalizarComPagamentoCanceladoNaoRessuscitaExigeRegularizacao() {
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
+                .thenReturn(Optional.of(pagamento(StatusPagamento.CANCELADO)));
+
+        assertThrows(BusinessException.class,
+                () -> agendamentoService.finalizar(10L, true, MetodoPagamento.PIX, null));
+        assertThrows(BusinessException.class,
+                () -> agendamentoService.finalizarPreservandoPagamento(10L, 1L));
+
+        assertEquals(StatusAgendamento.EM_ATENDIMENTO, agendamento.getStatus());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
+    void finalizarPreservandoPagamentoRepassaEstadoAtualSemCaixaDuplo() {
+        PagamentoEntity pago = pagamento(StatusPagamento.PAGO);
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
+                .thenReturn(Optional.of(pago));
+
+        agendamentoService.finalizarPreservandoPagamento(10L, 1L);
+
+        assertEquals(StatusAgendamento.FINALIZADO, agendamento.getStatus());
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
     void editarParaFinalizadoDiretoEBloqueado() {
         when(clienteService.buscarEntidadeOperacional(any())).thenReturn(agendamento.getCliente());
         when(servicoService.buscarEntidadeOperacional(any())).thenReturn(agendamento.getServico());

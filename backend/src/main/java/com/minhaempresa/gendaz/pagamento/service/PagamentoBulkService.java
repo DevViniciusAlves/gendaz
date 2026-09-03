@@ -1,95 +1,84 @@
 package com.minhaempresa.gendaz.pagamento.service;
 
-import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AcaoEmMassaResponse;
-import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.AtualizarStatusPagamentoRequest;
 import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.FalhaAcaoItem;
-import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.MarcarPagamentoPagoRequest;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
-import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
-import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Orquestrador de operacoes em massa sobre pagamentos.
+ *
+ * <p>Semantica real do produto: SUCESSO PARCIAL (resposta com
+ * {@code processados} + {@code falhas} por item). Por isso este metodo NAO
+ * possui {@code @Transactional}: cada item delega a um metodo publico
+ * transacional do {@link PagamentoService} (bean diferente, via proxy
+ * Spring), de modo que cada item tenha sua propria transacao fisica. Uma
+ * {@code BusinessException} no item 2 rollbacka SOMENTE o item 2 — nunca
+ * marca os demais como rollback-only (sem {@code UnexpectedRollbackException}
+ * nem rollback total silencioso).
+ *
+ * <p>Este service NAO implementa regra financeira: nenhum
+ * {@code pagamento.setStatus(...)}, nenhum save/delete e nenhuma leitura de
+ * status para decidir write posterior aqui. Toda decisao acontece dentro do
+ * {@link PagamentoService}, depois do lock PESSIMISTIC_WRITE do pagamento
+ * (ordem: PAGAMENTO -&gt; EMPRESA quando ha Caixa).
+ */
 @Service
 @RequiredArgsConstructor
 public class PagamentoBulkService {
-    private final PagamentoRepository pagamentoRepository;
-    private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
-    private final CaixaDespesasService caixaDespesasService;
-    private final UsuarioAutenticadoProvider usuarioAutenticadoProvider;
+    private final PagamentoService pagamentoService;
 
-    @Transactional
     public AcaoEmMassaResponse executar(AcaoEmMassaPagamentoRequest request) {
         validarQuantidade(request.ids());
-        Long companyId = CompanyContext.getCompanyId();
-        if (companyId == null) {
-            throw new BusinessException("Empresa logada nao encontrada.");
-        }
+        Long companyId = CompanyContext.requireCompanyId();
         if (request.empresaId() != null && !request.empresaId().equals(companyId)) {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
-        Set<Long> idsUnicos = new HashSet<>(request.ids());
         List<FalhaAcaoItem> falhas = new ArrayList<>();
         int processados = 0;
-        for (Long id : idsUnicos) {
+        for (Long id : request.ids()) {
             try {
-                PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, companyId)
-                        .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
-                StatusPagamento statusAnterior = pagamento.getStatus();
-                // EXCLUIR nunca apaga historico financeiro: pagamento confirmado
-                // (PAGO) e bloqueado e vira falha do item, com orientacao para o
-                // fluxo explicito de cancelamento/estorno. Pendente vira CANCELADO
-                // (cancelamento logico, sem movimentar Caixa porque nada foi
-                // registrado). Todo caminho passa pelo save + regras de Caixa abaixo.
-                switch (acao) {
-                    case "MARCAR_COMO_PAGO" -> {
-                        formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());
-                        var metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
-                        pagamento.setStatus(StatusPagamento.PAGO);
-                        pagamento.setMetodoPagamento(metodo);
-                        pagamento.setParcelas(formaPagamentoEmpresaService.normalizarParcelas(metodo, request.parcelas()));
-                        pagamento.setDataPagamento(LocalDateTime.now());
-                    }
-                    case "MARCAR_COMO_PENDENTE" -> {
-                        pagamento.setStatus(StatusPagamento.PENDENTE);
-                        pagamento.setMetodoPagamento(null);
-                        pagamento.setParcelas(null);
-                        pagamento.setDataPagamento(null);
-                    }
-                    case "EXCLUIR" -> {
-                        if (statusAnterior == StatusPagamento.PAGO) {
-                            throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
-                        }
-                        if (statusAnterior == StatusPagamento.PENDENTE || statusAnterior == StatusPagamento.PAYMENT_PENDING) {
-                            pagamento.setStatus(StatusPagamento.CANCELADO);
-                        }
-                    }
-                    default -> throw new BusinessException("Acao de pagamento nao suportada.");
-                }
-                pagamentoRepository.save(pagamento);
-                if (acao.equals("MARCAR_COMO_PAGO") && statusAnterior != StatusPagamento.PAGO) {
-                    caixaDespesasService.registrarPagamentoAprovado(pagamento);
-                } else if (acao.equals("MARCAR_COMO_PENDENTE") && statusAnterior == StatusPagamento.PAGO) {
-                    caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
-                }
+                executarItem(id, acao, request);
                 processados++;
-            } catch (RuntimeException ex) {
+            } catch (BusinessException | ResourceNotFoundException | ConflictException ex) {
+                // Erro ESPERADO de negocio (item inexistente/de outra empresa,
+                // status incompativel, forma de pagamento invalida): vira falha
+                // do item e o bulk continua. Erro SISTEMICO inesperado
+                // (infra/conexao/banco) NAO e capturado: propaga para nao
+                // fingir que o bulk funcionou normalmente.
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));
             }
         }
         return new AcaoEmMassaResponse(request.ids().size(), processados, falhas);
+    }
+
+    /**
+     * Delega cada item a operacao central do {@link PagamentoService}
+     * (transacao propria por item, via proxy Spring). Bulk orquestra; o
+     * service aplica dominio, locks e Caixa.
+     */
+    private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest request) {
+        switch (acao) {
+            case "MARCAR_COMO_PAGO" -> pagamentoService.marcarPago(
+                    id, new MarcarPagamentoPagoRequest(request.metodoPagamento(), request.parcelas()));
+            case "MARCAR_COMO_PENDENTE" -> pagamentoService.atualizarStatus(
+                    id, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
+            case "EXCLUIR" -> pagamentoService.excluirPagamento(id);
+            default -> throw new BusinessException("Acao de pagamento nao suportada.");
+        }
     }
 
     private void validarQuantidade(List<Long> ids) {
@@ -101,4 +90,3 @@ public class PagamentoBulkService {
         }
     }
 }
-

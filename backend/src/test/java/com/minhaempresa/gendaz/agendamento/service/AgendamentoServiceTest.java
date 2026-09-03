@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -23,6 +22,7 @@ import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
+import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.horarioatendimento.service.HorarioAtendimentoService;
 import com.minhaempresa.gendaz.meugendazpromocao.dto.MeuGendazPromocaoDtos.CupomAplicadoResult;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoService;
@@ -32,7 +32,6 @@ import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
-import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
@@ -108,6 +107,7 @@ class AgendamentoServiceTest {
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(1L), eq(1L))).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
@@ -227,13 +227,8 @@ class AgendamentoServiceTest {
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").build();
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
         AgendamentoEntity agendamento = AgendamentoEntity.builder()
-                .id(10L)
-                .empresa(empresa)
-                .cliente(cliente)
-                .servico(servico)
-                .profissional(profissional)
-                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.EM_ATENDIMENTO)
-                .build();
+                .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.EM_ATENDIMENTO).build();
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento)
                 .valor(new BigDecimal("50.00"))
@@ -311,9 +306,10 @@ class AgendamentoServiceTest {
         ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").empresa(empresa).status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO).build();
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(new BigDecimal("100.00")).build();
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
-        when(clienteService.buscarEntidadeOperacional(1L)).thenThrow(new BusinessException("Não é possível agendar para um cliente excluído."));
+        when(clienteService.buscarEntidadeOperacional(1L)).thenThrow(new BusinessException("Nao e possivel agendar para um cliente excluido."));
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(1L), eq(1L))).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
 
         assertThrows(BusinessException.class, () -> agendamentoService.criar(requestBase(null)));
@@ -341,7 +337,7 @@ class AgendamentoServiceTest {
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        var response = agendamentoService.cancelar(10L);
+        var response = agendamentoService.cancelar(10L, 1L);
 
         assertEquals(StatusAgendamento.CANCELADO, response.status());
         verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
@@ -368,7 +364,7 @@ class AgendamentoServiceTest {
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AgendamentoResponse response = agendamentoService.cancelar(10L);
+        AgendamentoResponse response = agendamentoService.cancelar(10L, 1L);
 
         assertEquals(StatusAgendamento.CANCELADO, response.status());
         verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
@@ -379,11 +375,9 @@ class AgendamentoServiceTest {
         AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
         agendamento.setEmpresa(EmpresaEntity.builder().id(99L).timezone("America/Cuiaba").build());
         CompanyContext.setCompanyId(1L);
-        // O lock e escopado por tenant (id + empresa da sessao): a linha de
-        // outra empresa nao e visivel, como no banco real.
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> agendamentoService.cancelar(10L));
+        assertThrows(ResourceNotFoundException.class, () -> agendamentoService.cancelar(10L, 1L));
         verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
     }
 
@@ -401,6 +395,7 @@ class AgendamentoServiceTest {
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(1L), eq(1L))).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
@@ -430,6 +425,7 @@ class AgendamentoServiceTest {
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(1L), eq(1L))).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
@@ -445,4 +441,3 @@ class AgendamentoServiceTest {
         verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
     }
 }
-

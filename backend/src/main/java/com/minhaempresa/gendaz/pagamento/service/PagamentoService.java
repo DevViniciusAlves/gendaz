@@ -680,6 +680,32 @@ public class PagamentoService {
                 });
     }
 
+    /**
+     * Exclusao operacional de pagamento — fonte unica da regra usada pelo
+     * endpoint individual (se houver) e pelo bulk EXCLUIR. Nunca apaga
+     * historico financeiro:
+     * - PAGO: bloqueado com erro de negocio (o desfazimento exige a operacao
+     *   financeira explicita de cancelamento/estorno).
+     * - PENDENTE/PAYMENT_PENDING: cancelamento logico (vira CANCELADO, sem
+     *   movimentar Caixa porque nada foi registrado).
+     * - demais estados (ex.: CANCELADO): idempotente, sem efeito.
+     *
+     * Concorrencia: lock PESSIMISTIC_WRITE antes de ler o status (mesmo lock
+     * dos caminhos de confirmacao). Ordem: apenas PAGAMENTO.
+     */
+    @Transactional
+    public void excluirPagamento(Long id) {
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        if (pagamento.getStatus() == StatusPagamento.PAGO) {
+            throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
+        }
+        if (pagamento.getStatus() == StatusPagamento.PENDENTE
+                || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
+            pagamento.setStatus(StatusPagamento.CANCELADO);
+            pagamentoRepository.save(pagamento);
+        }
+    }
+
     private String nomeClientePagamento(PagamentoEntity pagamento) {
         return pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "Cliente";
     }

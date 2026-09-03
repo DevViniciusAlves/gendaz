@@ -1,23 +1,14 @@
 package com.minhaempresa.gendaz.agendamento.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
-import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
-import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
-import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
-import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
-import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,22 +19,20 @@ import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
 /**
- * Parte 3 — bulk FINALIZAR reutiliza a mesma regra do fluxo individual.
- * Sem parametros de pagamento, nunca inventa recebimento.
+ * Bulk FINALIZAR nunca decide regra financeira: sem parametros, delega a
+ * {@code finalizarPreservandoPagamento} (decisao sob lock dentro do service);
+ * com parametros explicitos, repassa ao {@code finalizar} individual.
+ * O bulk nao le PagamentoEntity em nenhum caminho.
  */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class BulkFinalizarConsistenciaTest {
-    @Mock PagamentoRepository pagamentoRepository;
-    @Mock PagamentoService pagamentoService;
     @Mock AgendamentoService agendamentoService;
-    @Mock LogAtividadeService logAtividadeService;
     AgendamentoBulkService bulk;
 
     @BeforeEach
     void setup() {
-        bulk = new AgendamentoBulkService(
-                pagamentoRepository, agendamentoService, logAtividadeService);
+        bulk = new AgendamentoBulkService(agendamentoService);
         CompanyContext.setCompanyId(1L);
     }
 
@@ -53,29 +42,15 @@ class BulkFinalizarConsistenciaTest {
     }
 
     @Test
-    void finalizarEmMassaSemParametrosNaoInventaRecebimento() {
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
-                PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
-                        .status(StatusPagamento.PENDENTE).build()));
-
+    void finalizarEmMassaSemParametrosPreservaPagamentoSobLock() {
         var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "FINALIZAR", 1L));
 
         assertEquals(1, response.totalProcessado());
-        // Pagamento pendente -> finaliza SEM pagamento (false), nunca PAGO implicito.
-        verify(agendamentoService).finalizar(eq(1L), eq(false), eq(null), eq(null));
-    }
-
-    @Test
-    void finalizarEmMassaPreservaPagoJaConfirmadoSemDuplicarCaixa() {
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
-                PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
-                        .metodoPagamento(MetodoPagamento.PIX)
-                        .status(StatusPagamento.PAGO).build()));
-
-        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "FINALIZAR", 1L));
-
-        assertEquals(1, response.totalProcessado());
-        verify(agendamentoService).finalizar(eq(1L), eq(true), eq(MetodoPagamento.PIX), eq(null));
+        // Sem parametros: preservacao decidida sob lock no service, nunca
+        // boolean stale calculado no bulk. O finalizar explicito nao e chamado.
+        verify(agendamentoService).finalizarPreservandoPagamento(eq(1L), eq(1L));
+        verify(agendamentoService, never()).finalizar(
+                eq(1L), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -85,6 +60,16 @@ class BulkFinalizarConsistenciaTest {
 
         assertEquals(1, response.totalProcessado());
         verify(agendamentoService).finalizar(eq(1L), eq(true), eq(MetodoPagamento.DINHEIRO), eq(null));
-        verify(pagamentoRepository, never()).findByAgendamentoIdAndEmpresaId(any(), any());
+        verify(agendamentoService, never()).finalizarPreservandoPagamento(
+                org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void finalizarEmMassaComMetodoParcialUsaFluxoExplicito() {
+        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(
+                List.of(1L), "FINALIZAR", 1L, null, MetodoPagamento.PIX, null));
+
+        assertEquals(1, response.totalProcessado());
+        verify(agendamentoService).finalizar(eq(1L), eq(null), eq(MetodoPagamento.PIX), eq(null));
     }
 }

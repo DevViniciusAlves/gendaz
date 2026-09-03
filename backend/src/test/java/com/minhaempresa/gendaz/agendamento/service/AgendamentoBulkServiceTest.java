@@ -8,8 +8,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
-import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
-import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -24,14 +22,12 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class AgendamentoBulkServiceTest {
-    @Mock PagamentoRepository pagamentoRepository;
     @Mock AgendamentoService agendamentoService;
-    @Mock LogAtividadeService logAtividadeService;
     AgendamentoBulkService service;
 
     @BeforeEach
     void setup() {
-        service = new AgendamentoBulkService(pagamentoRepository, agendamentoService, logAtividadeService);
+        service = new AgendamentoBulkService(agendamentoService);
         CompanyContext.setCompanyId(1L);
     }
 

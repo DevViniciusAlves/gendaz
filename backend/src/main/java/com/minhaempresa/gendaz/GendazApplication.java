@@ -31,6 +31,9 @@ public class GendazApplication {
         variaveisObrigatorias.forEach(variavel -> {
             String valor = System.getenv(variavel);
             if (valor == null || valor.isBlank()) {
+                valor = System.getProperty(variavel);
+            }
+            if (valor == null || valor.isBlank()) {
                 throw new IllegalStateException("Variável de ambiente " + variavel + " não está configurada.");
             }
             validarValorSeguro(variavel, valor, valoresProibidos);

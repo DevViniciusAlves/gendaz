@@ -3,14 +3,10 @@ package com.minhaempresa.gendaz.agendamento.service;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaResponse;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.FalhaAcaoItem;
-import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
-import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
-import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
-import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -44,17 +40,24 @@ import org.springframework.stereotype.Service;
  * {@code UnexpectedRollbackException} no commit global (que nao existe mais).
  *
  * <p>Este service NAO manipula estado diretamente: nenhum
- * {@code agendamento.setStatus(...)} nem
- * {@code agendamentoRepository.save/delete(...)} aqui. Todo dominio pertence
- * ao {@link AgendamentoService} (maquina de estados + locks
+ * {@code agendamento.setStatus(...)}, nenhum
+ * {@code agendamentoRepository.save/delete(...)} e nenhuma leitura de
+ * {@code PagamentoEntity} para decidir regra financeira aqui. Em especial, o
+ * bulk NUNCA calcula {@code jaPago} fora de transacao (TOCTOU): ele apenas
+ * ordena "finalize preservando o estado financeiro atual" e a decisao
+ * PAGO/PENDENTE acontece dentro do
+ * {@link AgendamentoService#finalizarPreservandoPagamento}, depois dos locks
+ * Agendamento -&gt; Pagamento. Todo dominio pertence ao
+ * {@link AgendamentoService} (maquina de estados + locks
  * Agendamento -&gt; Pagamento -&gt; Empresa).
+ *
+ * <p>Auditoria: o service de dominio ja registra a acao de cada item
+ * (uma acao de dominio = um log de dominio); o bulk nao registra novamente.
  */
 @Service
 @RequiredArgsConstructor
 public class AgendamentoBulkService {
-    private final PagamentoRepository pagamentoRepository;
     private final AgendamentoService agendamentoService;
-    private final LogAtividadeService logAtividadeService;
 
     public AcaoEmMassaResponse executar(AcaoEmMassaAgendamentoRequest request) {
         validarQuantidade(request.ids());
@@ -97,43 +100,29 @@ public class AgendamentoBulkService {
     private void executarItem(Long id, String acao, AcaoEmMassaAgendamentoRequest request, Long companyId) {
         switch (acao) {
             case "FINALIZAR" -> {
-                // Fonte unica de verdade: AgendamentoService.finalizar, com as
-                // mesmas regras financeiras do fluxo individual (Caixa uma vez,
-                // bloqueio de re-finalizacao, sem PAGO->PENDENTE). Sem
-                // parametros de pagamento explicitos, o bulk nunca inventa
-                // recebimento: preserva PAGO ja confirmado, caso contrario
-                // finaliza sem pagamento (PENDENTE). Para receber dinheiro em
-                // massa, informe pagamentoRealizado/metodoPagamento ou use o
-                // bulk de pagamentos (MARCAR_COMO_PAGO).
-                // Leitura read-only apenas para montar os argumentos; a decisao
-                // de dominio (com lock Pagamento) acontece dentro do finalizar.
-                Boolean pago = request.pagamentoRealizado();
-                var metodo = request.metodoPagamento();
-                var parcelas = request.parcelas();
-                if (pago == null) {
-                    PagamentoEntity existente = pagamentoRepository
-                            .findByAgendamentoIdAndEmpresaId(id, companyId).orElse(null);
-                    boolean jaPago = existente != null && existente.getStatus() == StatusPagamento.PAGO;
-                    pago = jaPago;
-                    if (jaPago) {
-                        metodo = existente.getMetodoPagamento();
-                        parcelas = existente.getParcelas();
-                    }
+                // Sem informacao financeira explicita, preserva o estado
+                // financeiro ATUAL (decidido sob lock dentro do service).
+                // Para receber dinheiro em massa, informe
+                // pagamentoRealizado/metodoPagamento ou use o bulk de
+                // pagamentos (MARCAR_COMO_PAGO).
+                if (request.pagamentoRealizado() == null
+                        && request.metodoPagamento() == null
+                        && request.parcelas() == null) {
+                    agendamentoService.finalizarPreservandoPagamento(id, companyId);
+                } else {
+                    agendamentoService.finalizar(
+                            id, request.pagamentoRealizado(), request.metodoPagamento(), request.parcelas());
                 }
-                agendamentoService.finalizar(id, pago, metodo, parcelas);
-                logAtividadeService.registrar("AGENDAMENTO", id, verboAcao(acao) + " agendamento " + id);
             }
             case "CANCELAR" -> {
                 // Regra central de cancelamento (estados + pagamento
                 // pendente preservando PAGO). Estados terminais viram
                 // falha do item, sem ressuscitar nem destruir nada.
                 agendamentoService.cancelar(id, companyId);
-                logAtividadeService.registrar("AGENDAMENTO", id, verboAcao(acao) + " agendamento " + id);
             }
             case "EXCLUIR" -> {
                 // Mesma regra da exclusao individual: nunca destroi historico.
                 agendamentoService.excluir(id, companyId);
-                logAtividadeService.registrar("AGENDAMENTO", id, "Removeu agendamento " + id);
             }
             case "DESATIVAR" -> throw new BusinessException("Desativar nao e uma acao suportada para agendamentos.");
             default -> throw new BusinessException("Acao de agendamento nao suportada.");
@@ -147,13 +136,5 @@ public class AgendamentoBulkService {
         if (ids.size() > 10) {
             throw new BusinessException("Você pode selecionar no máximo 10 itens por vez.");
         }
-    }
-
-    private String verboAcao(String acao) {
-        return switch (acao) {
-            case "FINALIZAR" -> "Finalizou";
-            case "CANCELAR" -> "Cancelou";
-            default -> "Alterou";
-        };
     }
 }

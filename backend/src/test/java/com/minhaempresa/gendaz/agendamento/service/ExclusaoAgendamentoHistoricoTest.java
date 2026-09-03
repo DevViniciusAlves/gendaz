@@ -227,8 +227,7 @@ class ExclusaoAgendamentoHistoricoTest {
 
     @Test
     void bulkExcluirBloqueiaEmAndamentoPausadoEFinalizado() {
-        AgendamentoBulkService bulk = new AgendamentoBulkService(
-                pagamentoRepository, agendamentoService, logAtividadeService);
+        AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
         AgendamentoEntity emAt = agendamento(21L, StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoEntity pausado = agendamento(22L, StatusAgendamento.PAUSADO);
         AgendamentoEntity finalizado = agendamento(23L, StatusAgendamento.FINALIZADO);
@@ -249,8 +248,7 @@ class ExclusaoAgendamentoHistoricoTest {
 
     @Test
     void bulkExcluirDelegaParaExclusaoIndividual() {
-        AgendamentoBulkService bulk = new AgendamentoBulkService(
-                pagamentoRepository, agendamentoService, logAtividadeService);
+        AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
         AgendamentoEntity ag = agendamento(20L, StatusAgendamento.PENDENTE);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(20L, 1L)).thenReturn(Optional.of(ag));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(20L, 1L)).thenReturn(Optional.empty());

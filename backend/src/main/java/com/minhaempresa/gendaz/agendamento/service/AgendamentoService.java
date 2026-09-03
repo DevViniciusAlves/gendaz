@@ -99,9 +99,14 @@ public class AgendamentoService {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
             ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
             ServicoEntity servico = servicoService.buscarEntidadeOperacional(request.servicoId());
-            ProfissionalEntity profissional = request.profissionalId() == null
+            ProfissionalEntity profissionalResolvido = request.profissionalId() == null
                     ? profissionalParaSemPreferencia(empresa, request.data())
                     : profissionalService.buscarEntidade(request.profissionalId());
+            // Mutex da agenda: a partir daqui a verificacao de conflito de
+            // intervalo + save sao atomicos contra criar/remarcar/atualizar
+            // concorrentes do MESMO profissional. O lock vem ANTES do check.
+            ProfissionalEntity profissional = profissionalService.buscarEntidadeParaReserva(
+                    profissionalResolvido.getId(), empresa.getId());
             validarProfissionalAgendamento(empresa, profissional, request.data());
             int duracao = servico.getDuracaoMinutos() != null ? servico.getDuracaoMinutos() : 30;
             LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
@@ -326,6 +331,9 @@ public class AgendamentoService {
     public AgendamentoResponse confirmar(Long id) {
         AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirConfirmacao(agendamento.getStatus());
+        ProfissionalEntity profissional = profissionalService.buscarEntidadeParaReserva(
+                agendamento.getProfissional().getId(), agendamento.getEmpresa().getId());
+        agendamento.setProfissional(profissional);
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
@@ -336,25 +344,6 @@ public class AgendamentoService {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Confirmou agendamento de " + agendamento.getCliente().getNome());
         } catch (Exception e) {
             log.warn("[agendamento-debug] falha ao registrar log de confirmacao. erroTipo={}", e.getClass().getSimpleName());
-        }
-        return response;
-    }
-
-    @Transactional
-    public AgendamentoResponse cancelar(Long id) {
-        AgendamentoEntity agendamento = carregarParaAtualizacao(id, null);
-        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
-        if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
-                agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
-            throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
-        }
-        agendamento.setStatus(StatusAgendamento.CANCELADO);
-        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
-        pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
-        try {
-            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
-        } catch (Exception e) {
-            log.warn("[agendamento-debug] falha ao registrar log de cancelamento. erroTipo={}", e.getClass().getSimpleName());
         }
         return response;
     }
@@ -448,8 +437,52 @@ public class AgendamentoService {
         AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirFinalizacao(agendamento.getStatus());
         boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
-        pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
+        PagamentoEntity pagamento = pagamentoRepository
+                .findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId())
+                .orElse(null);
+        return aplicarFinalizacao(agendamento, pagamento, pago, metodoPagamento, parcelas);
+    }
+
+    /**
+     * Finalizacao em massa preservando o estado financeiro ATUAL — a decisao
+     * PAGO/PENDENTE acontece AQUI, depois dos locks, nunca a partir de uma
+     * leitura stale feita pelo orquestrador do bulk (TOCTOU). Fluxo:
+     * LOCK Agendamento -&gt; validar estado -&gt; LOCK Pagamento -&gt; ler
+     * status atual -&gt; decidir -&gt; alterar (-&gt; LOCK Empresa so se o
+     * Caixa precisar mudar) -&gt; commit.
+     *
+     * <p>Regras: PAGO permanece PAGO sem novo lancamento no Caixa; PENDENTE
+     * permanece PENDENTE sem inventar recebimento; CANCELADO falha com
+     * {@code BusinessException} (sem ressuscitar silenciosamente para PAGO ou
+     * PENDENTE — a regularizacao pertence a operacao financeira explicita);
+     * sem pagamento vinculado, apenas conclui o agendamento (regra atual).
+     */
+    @Transactional
+    public AgendamentoResponse finalizarPreservandoPagamento(Long id, Long empresaId) {
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, empresaId);
+        TransicaoStatusAgendamento.exigirFinalizacao(agendamento.getStatus());
+        PagamentoEntity pagamento = pagamentoRepository
+                .findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId())
+                .orElse(null);
+        boolean pago = pagamento != null && pagamento.getStatus() == StatusPagamento.PAGO;
+        MetodoPagamento metodo = pago ? pagamento.getMetodoPagamento() : null;
+        Integer parcelas = pago ? pagamento.getParcelas() : null;
+        return aplicarFinalizacao(agendamento, pagamento, pago, metodo, parcelas);
+    }
+
+    /**
+     * FONTE UNICA da transicao financeira de finalizacao. Chamadores
+     * (finalizar explicito e finalizarPreservandoPagamento) ja adquiriram os
+     * locks nesta ordem: 1.AGENDAMENTO, 2.PAGAMENTO. O Caixa (3.EMPRESA) so e
+     * tocado quando ha transicao real para PAGO.
+     */
+    private AgendamentoResponse aplicarFinalizacao(AgendamentoEntity agendamento, PagamentoEntity pagamento,
+            boolean pago, MetodoPagamento metodoPagamento, Integer parcelas) {
+        if (pagamento != null) {
             StatusPagamento statusAnterior = pagamento.getStatus();
+            if (statusAnterior == StatusPagamento.CANCELADO) {
+                throw new BusinessException("Pagamento cancelado. Regularize o pagamento pela operacao financeira explicita antes de finalizar.");
+            }
             if (!pago && statusAnterior == StatusPagamento.PAGO) {
                 throw new BusinessException("Pagamento ja confirmado. Utilize a operacao de estorno/correcao do pagamento em vez de finalizar como nao pago.");
             }
@@ -470,7 +503,9 @@ public class AgendamentoService {
             if (pago && statusAnterior != StatusPagamento.PAGO) {
                 caixaDespesasService.registrarPagamentoAprovado(pagamento);
             }
-        }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
+        } else {
+            log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", agendamento.getId());
+        }
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {
@@ -574,6 +609,12 @@ public class AgendamentoService {
 
     private AgendamentoResponse aplicarRemarcacao(AgendamentoEntity agendamento, RemarcarAgendamentoRequest request) {
         StatusAgendamento destino = TransicaoStatusAgendamento.destinoReagendamento(agendamento.getStatus());
+        // O agendamento ja esta travado pelo chamador (ordem: AGENDAMENTO ->
+        // PROFISSIONAL). Trava a agenda do profissional DESTINO antes de
+        // qualquer verificacao de disponibilidade/conflito.
+        ProfissionalEntity profissionalTravado = profissionalService.buscarEntidadeParaReserva(
+                agendamento.getProfissional().getId(), agendamento.getEmpresa().getId());
+        agendamento.setProfissional(profissionalTravado);
         int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
         LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
@@ -594,11 +635,15 @@ public class AgendamentoService {
     }
 
     /**
-     * ORDEM GLOBAL DE LOCKS (oficial): 1.AGENDAMENTO -> 2.PAGAMENTO ->
-     * 3.EMPRESA/Caixa. Todo writer deste service carrega o Agendamento COM
-     * PESSIMISTIC_WRITE ANTES de ler getStatus(); a maquina de estados so
-     * valida o estado protegido. Nunca inverter (ex.: Pagamento antes de
-     * Agendamento) para nao causar deadlock nem decisao sobre estado stale.
+     * ORDEM GLOBAL DE LOCKS (oficial): 1.AGENDAMENTO -> 2.PROFISSIONAL ->
+     * 3.PAGAMENTO -> 4.EMPRESA/Caixa. Nem todo fluxo precisa de todos, mas
+     * nenhum fluxo pode inverter os locks que compartilha. Todo writer deste
+     * service carrega o Agendamento COM PESSIMISTIC_WRITE ANTES de ler
+     * getStatus(); fluxos de reserva (criar/remarcar/atualizar) travam ainda
+     * a agenda do profissional DESTINO ANTES de verificar conflito de
+     * intervalo. Nunca inverter (ex.: Profissional antes de Agendamento num
+     * fluxo que precisa dos dois) para nao causar deadlock nem decisao sobre
+     * estado stale.
      */
     private AgendamentoEntity carregarParaAtualizacao(Long id, Long empresaId) {
         AgendamentoEntity agendamento = agendamentoRepository
@@ -650,6 +695,10 @@ public class AgendamentoService {
         ServicoEntity servico = servicoService.buscarEntidadeOperacional(request.servicoId());
         ProfissionalEntity profissional = profissionalService.buscarEntidade(request.profissionalId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
+        // A edicao pode mover a reserva (profissional/data/hora/duracao):
+        // trava a agenda do profissional DESTINO (ordem: AGENDAMENTO ->
+        // PROFISSIONAL) antes de validar disponibilidade/conflito.
+        profissional = profissionalService.buscarEntidadeParaReserva(profissional.getId(), empresa.getId());
 
         validarProfissionalAgendamento(empresa, profissional, request.data());
         int duracao = servico.getDuracaoMinutos() != null ? servico.getDuracaoMinutos() : 30;
