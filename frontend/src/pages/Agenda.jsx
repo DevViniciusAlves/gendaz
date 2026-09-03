@@ -1,4 +1,4 @@
-﻿import { CalendarPlus, RefreshCw } from 'lucide-react'
+import { CalendarPlus, RefreshCw } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi, empresaIdAtual } from '../api/appApi.js'
@@ -849,6 +849,12 @@ export default function Agenda() {
             onToggleSelection={alternarSelecionado}
             selectionDisabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
             acaoCarregando={acaoEmAndamento}
+            onConfirmar={(ag) => setConfirmacao({
+              titulo: 'Confirmar agendamento',
+              descrição: 'Tem certeza que deseja confirmar este agendamento?',
+              ação: () => confirmarAgendamento(ag.id),
+              acaoLabel: 'Confirmar',
+            })}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
               descrição: 'Tem certeza que deseja iniciar este atendimento?',
@@ -982,44 +988,66 @@ export default function Agenda() {
       </Modal>
       <Modal title="Finalizar atendimento" open={Boolean(finalizacaoPagamento)} onClose={() => { setFinalizacaoPagamento(null); setParcelasCredito(null) }}>
         <div className="form-grid single">
-          <p className="panel-description">Como o cliente realizou o pagamento?</p>
-          {!parcelasCredito ? (
-            <div className="payment-methods">
-              {metodosFinalizacao.map((metodo) => (
-                <button
-                  key={metodo.metodoPagamento}
+          {finalizacaoPagamento?.statusPagamento === 'PAGO' ? (
+            <>
+              <p className="panel-description">
+                O pagamento deste atendimento já está confirmado. Finalizar o atendimento não alterará o pagamento nem os lançamentos no Caixa.
+              </p>
+              <div className="table-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <Button variant="secondary" type="button" onClick={() => setFinalizacaoPagamento(null)}>Voltar</Button>
+                <Button
                   type="button"
-                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                  onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
+                  loading={acaoEmAndamento?.id === finalizacaoPagamento?.id && acaoEmAndamento?.tipo === 'finalizar'}
+                  onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true)}
                 >
-                  {metodo.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
-              >
-                Não foi pago
-              </button>
-            </div>
+                  Finalizar atendimento
+                </Button>
+              </div>
+            </>
           ) : (
-            <div className="payment-methods">
-              {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
-                <button
-                  key={parcela}
-                  type="button"
-                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                  onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
-                >
-                  {parcela}x
-                </button>
-              ))}
-            </div>
+            <>
+              <p className="panel-description">
+                {parcelasCredito ? 'Selecione a quantidade de parcelas' : 'Como o cliente realizou o pagamento?'}
+              </p>
+              {!parcelasCredito ? (
+                <div className="payment-methods">
+                  {metodosFinalizacao.map((metodo) => (
+                    <button
+                      key={metodo.metodoPagamento}
+                      type="button"
+                      disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                      onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
+                    >
+                      {metodo.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                    onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
+                  >
+                    Não foi pago
+                  </button>
+                </div>
+              ) : (
+                <div className="payment-methods">
+                  {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
+                    <button
+                      key={parcela}
+                      type="button"
+                      disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                      onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
+                    >
+                      {parcela}x
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                <Button variant="secondary" type="button" onClick={() => parcelasCredito ? setParcelasCredito(null) : setFinalizacaoPagamento(null)}>Voltar</Button>
+              </div>
+            </>
           )}
-          <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-            <Button variant="secondary" type="button" onClick={() => parcelasCredito ? setParcelasCredito(null) : setFinalizacaoPagamento(null)}>Voltar</Button>
-          </div>
         </div>
       </Modal>
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>

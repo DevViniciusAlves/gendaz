@@ -97,6 +97,7 @@ class MeuGendazPropriedadeServiceTest {
                 .thenReturn(Optional.of(agendamentoMaria));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa1);
+        when(profissionalService.buscarEntidadeParaReserva(any(), any())).thenReturn(profissional);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
     }

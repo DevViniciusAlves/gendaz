@@ -79,6 +79,7 @@ class AgendamentoServiceTest {
     @Mock LogAtividadeService logAtividadeService;
     @Mock CaixaDespesasService caixaDespesasService;
     @Mock TransactionTemplate transactionTemplate;
+    @Mock org.springframework.context.ApplicationEventPublisher eventPublisher;
     @Captor ArgumentCaptor<AgendamentoEntity> agendamentoCaptor;
     @Captor ArgumentCaptor<PagamentoEntity> pagamentoCaptor;
     @InjectMocks AgendamentoService agendamentoService;
@@ -137,8 +138,7 @@ class AgendamentoServiceTest {
         var response = agendamentoService.criar(requestBase(null));
 
         assertEquals(LocalTime.of(10, 0), response.horaFim());
-        verify(resendEmailService).enviarEmailNovoAgendamento(any(EmpresaEntity.class), agendamentoCaptor.capture());
-        assertEquals("10", agendamentoCaptor.getValue().getId().toString());
+        verify(eventPublisher).publishEvent(any(com.minhaempresa.gendaz.agendamento.event.AgendamentoCriadoEvent.class));
     }
 
     @Test

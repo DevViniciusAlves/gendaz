@@ -375,7 +375,9 @@
 
 .agenda-card-footer-finalizado {
   display: flex !important;
-  justify-content: center !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 10px !important;
   padding-top: 16px !important;
   border-top: 1px solid #404040 !important;
   margin-top: auto !important;

@@ -52,6 +52,7 @@ class AgendamentoServiceHorariosTest {
     @Mock SanitizacaoService sanitizacaoService;
     @Mock ResendEmailService resendEmailService;
     @Mock LogAtividadeService logAtividadeService;
+    @Mock org.springframework.context.ApplicationEventPublisher eventPublisher;
     @InjectMocks AgendamentoService agendamentoService;
 
     private EmpresaEntity criarEmpresa(Long id) {
@@ -178,6 +179,7 @@ class AgendamentoServiceHorariosTest {
         when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)).thenReturn(semPreferencia);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
+        when(profissionalService.buscarEntidadeParaReserva(any(), any())).thenReturn(semPreferencia);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> {
@@ -212,6 +214,7 @@ class AgendamentoServiceHorariosTest {
         when(clienteService.buscarEntidadeOperacional(clienteId)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(profissionalId), eq(empresaId))).thenReturn(profissional);
         when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);

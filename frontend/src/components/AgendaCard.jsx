@@ -39,6 +39,7 @@ function statusLabel(status) {
 
 export default function AgendaCard({
   agendamento,
+  onConfirmar,
   onIniciar,
   onPausar,
   onRetomar,
@@ -111,6 +112,12 @@ export default function AgendaCard({
       <div className="agenda-card-horario">
         <span className="agenda-card-horario-texto">{formatarData(agendamento.data)} · {agendamento.horaInicio} – {horaFim}</span>
       </div>
+
+      {status === 'PENDENTE' && onConfirmar && (
+        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onConfirmar(agendamento)} type="button" disabled={carregandoTipo('confirmar')}>
+          {carregandoTipo('confirmar') ? <><Loader className="spin" size={17} /> Confirmando...</> : 'Confirmar agendamento'}
+        </button>
+      )}
 
       {status === 'CONFIRMADO' && onIniciar && (
         <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={carregandoTipo('iniciar')}>

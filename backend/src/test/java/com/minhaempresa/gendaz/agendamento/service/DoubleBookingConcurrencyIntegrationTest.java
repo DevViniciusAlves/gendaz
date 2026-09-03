@@ -99,6 +99,7 @@ class DoubleBookingConcurrencyIntegrationTest {
 
         horarioAtendimentoRepository.save(HorarioAtendimentoEntity.builder()
                 .empresa(empresa)
+                .diaSemana(com.minhaempresa.gendaz.horarioatendimento.enums.DiaSemanaAtendimento.SEGUNDA)
                 .horaInicio(LocalTime.of(8, 0))
                 .horaFim(LocalTime.of(20, 0))
                 .ativo(true)

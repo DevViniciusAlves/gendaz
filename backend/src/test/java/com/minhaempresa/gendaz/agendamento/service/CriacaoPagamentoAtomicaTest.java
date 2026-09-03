@@ -69,6 +69,7 @@ class CriacaoPagamentoAtomicaTest {
     @Mock LogAtividadeService logAtividadeService;
     @Mock CaixaDespesasService caixaDespesasService;
     @Mock TransactionTemplate transactionTemplate;
+    @Mock org.springframework.context.ApplicationEventPublisher eventPublisher;
     @InjectMocks AgendamentoService agendamentoService;
 
     @BeforeEach
@@ -87,6 +88,7 @@ class CriacaoPagamentoAtomicaTest {
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(any(), any())).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
