@@ -174,7 +174,7 @@ class AgendamentoServiceHorariosTest {
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         ProfissionalEntity semPreferencia = criarProfissional(10L, empresaId, true);
 
-        when(clienteService.buscarEntidade(clienteId)).thenReturn(cliente);
+        when(clienteService.buscarEntidadeOperacional(clienteId)).thenReturn(cliente);
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
         when(profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)).thenReturn(semPreferencia);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
@@ -209,7 +209,7 @@ class AgendamentoServiceHorariosTest {
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         ProfissionalEntity profissional = criarProfissional(profissionalId, empresaId, false);
 
-        when(clienteService.buscarEntidade(clienteId)).thenReturn(cliente);
+        when(clienteService.buscarEntidadeOperacional(clienteId)).thenReturn(cliente);
         when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
         when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);

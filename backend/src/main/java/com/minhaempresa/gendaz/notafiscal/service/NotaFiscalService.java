@@ -31,7 +31,7 @@ public class NotaFiscalService {
 
     @Transactional
     public NotaFiscalResponse emitir(EmitirNotaFiscalRequest request) {
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
         NotaFiscalEntity nota = NotaFiscalEntity.builder()
                 .cliente(cliente)

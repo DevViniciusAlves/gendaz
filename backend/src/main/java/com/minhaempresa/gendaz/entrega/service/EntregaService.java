@@ -32,7 +32,7 @@ public class EntregaService {
 
     @Transactional
     public EntregaResponse criar(CriarEntregaRequest request) {
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
         EntregaEntity entrega = EntregaEntity.builder()
                 .cliente(cliente)

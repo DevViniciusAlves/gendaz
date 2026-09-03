@@ -563,7 +563,7 @@ html .admin-gendaz .admin-tactical-panel p {
 html .admin-gendaz .admin-metrics {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 html .admin-gendaz .admin-metrics article {

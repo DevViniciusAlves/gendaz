@@ -95,10 +95,7 @@ public class AgendamentoService {
         log.debug("[agendamento-debug] inicio criacao agendamento {}", contextoInicio);
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
-            ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
-            if (cliente.getStatus() == com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO) {
-                throw new BusinessException("Não é possível agendar para um cliente excluído.");
-            }
+            ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
             ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
             ProfissionalEntity profissional = request.profissionalId() == null
                     ? profissionalParaSemPreferencia(empresa, request.data())
@@ -237,13 +234,14 @@ public class AgendamentoService {
     @Transactional(readOnly = true)
     public List<AgendamentoResponse> listarPorData(Long empresaId, LocalDate data) {
         validarEmpresaAtual(empresaId);
-        return agendamentoRepository.findByEmpresaIdAndData(empresaId, data).stream().map(mapper::toResponse).toList();
+        return agendamentoRepository.findByEmpresaIdAndDataOperacional(empresaId, data, com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO)
+                .stream().map(mapper::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public List<AgendamentoResponse> listarPorCliente(Long clienteId) {
         Long companyId = CompanyContext.requireCompanyId();
-        clienteService.buscarEntidade(clienteId);
+        clienteService.buscarEntidadeOperacional(clienteId);
         return agendamentoRepository.findByEmpresaIdAndClienteId(companyId, clienteId).stream().map(mapper::toResponse).toList();
     }
 
@@ -251,6 +249,7 @@ public class AgendamentoService {
     public List<AgendamentoResponse> listarPorCliente(Long empresaId, Long clienteId) {
 
         validarEmpresaAtual(empresaId);
+        clienteService.buscarEntidadeOperacional(clienteId);
         return agendamentoRepository.findByEmpresaIdAndClienteId(empresaId, clienteId).stream().map(mapper::toResponse).toList();
     }
 
@@ -332,7 +331,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse confirmar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
@@ -392,7 +391,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
         pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
@@ -422,7 +421,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse iniciar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         if (agendamento.getStatus() != StatusAgendamento.PENDENTE
                 && agendamento.getStatus() != StatusAgendamento.CONFIRMADO
                 && agendamento.getStatus() != StatusAgendamento.PAUSADO) {
@@ -440,7 +439,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse pausar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         if (agendamento.getStatus() != StatusAgendamento.EM_ATENDIMENTO) {
             throw new BusinessException("Apenas agendamentos em atendimento podem ser pausados.");
         }
@@ -456,7 +455,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
         LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
@@ -479,7 +478,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request, Long empresaId) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         validarEmpresa(agendamento, empresaId);
         int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
         LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
@@ -501,8 +500,8 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse atualizar(Long id, AtualizarAgendamentoRequest request) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
         ProfissionalEntity profissional = profissionalService.buscarEntidade(request.profissionalId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
@@ -539,6 +538,17 @@ public class AgendamentoService {
         AgendamentoEntity agendamento = agendamentoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
         validarEmpresaAtual(agendamento.getEmpresa().getId());
+        return agendamento;
+    }
+
+    @Transactional(readOnly = true)
+    public AgendamentoEntity buscarEntidadeOperacional(Long id) {
+        AgendamentoEntity agendamento = buscarEntidade(id);
+        if (agendamento.getCliente() != null
+                && agendamento.getCliente().getStatus()
+                        == com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO) {
+            throw new BusinessException("Agendamento de cliente excluido não pode ser acessado operacionalmente.");
+        }
         return agendamento;
     }
 

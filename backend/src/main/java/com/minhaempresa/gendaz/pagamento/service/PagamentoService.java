@@ -81,7 +81,7 @@ public class PagamentoService {
     public PagamentoResponse criar(CriarPagamentoRequest request) {
         validarValor(request.valor());
         AgendamentoEntity agendamento = request.agendamentoId() == null ? null : agendamentoService.buscarEntidade(request.agendamentoId());
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento)
