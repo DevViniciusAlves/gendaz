@@ -335,19 +335,19 @@ export default function Agenda() {
     })
   }
 
-  function abrirBulk(ação) {
-    if (!selectedCount) {
-      setErroAcao('Selecione pelo menos um item.')
-      return
+    function abrirBulk(ação) {
+      if (!selectedCount) {
+        setErroAcao('Selecione pelo menos um item.')
+        return
+      }
+      const configs = {
+        FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
+        CANCELAR: ['Cancelar agendamentos', 'Ao cancelar, os agendamentos selecionados não poderão voltar para pendente, ser iniciados, finalizados ou reabertos. Os horários serão liberados e pagamentos pendentes vinculados serão cancelados. Para atender esses clientes depois, crie novos agendamentos.', 'Cancelar mesmo', true],
+        EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
+      }
+      const cfg = configs[ação]
+      setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
     }
-    const configs = {
-      FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
-      CANCELAR: ['Cancelar agendamentos', 'Tem certeza que deseja cancelar os agendamentos selecionados?', 'Cancelar', false],
-      EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
-    }
-    const cfg = configs[ação]
-    setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
-  }
 
   async function executarBulk() {
     if (!bulkModal || bulkExecutando) return
@@ -571,23 +571,6 @@ export default function Agenda() {
     } catch (error) {
       setAcaoEmAndamento(null)
       setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
-    }
-  }
-
-  async function confirmarAgendamento(id) {
-    if (acaoEmAndamento) return
-    setAcaoEmAndamento({ id, tipo: 'confirmar' })
-    setErroAcao('')
-    try {
-      await appApi.confirmarAgendamento(id)
-      setAcaoEmAndamento(null)
-      reload(true).catch((error) => {
-        console.error('[agenda-debug] erro ao recarregar agenda')
-        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
-      })
-    } catch (error) {
-      setAcaoEmAndamento(null)
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
     }
   }
 
@@ -849,12 +832,6 @@ export default function Agenda() {
             onToggleSelection={alternarSelecionado}
             selectionDisabled={!selecionados.includes(agendamento.id) && selectedCount >= 10}
             acaoCarregando={acaoEmAndamento}
-            onConfirmar={(ag) => setConfirmacao({
-              titulo: 'Confirmar agendamento',
-              descrição: 'Tem certeza que deseja confirmar este agendamento?',
-              ação: () => confirmarAgendamento(ag.id),
-              acaoLabel: 'Confirmar',
-            })}
             onIniciar={(ag) => setConfirmacao({
               titulo: 'Iniciar atendimento',
               descrição: 'Tem certeza que deseja iniciar este atendimento?',
@@ -883,9 +860,10 @@ export default function Agenda() {
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
-              descrição: 'Tem certeza que deseja cancelar este agendamento?',
+              descrição: 'Ao cancelar, este agendamento não poderá voltar para pendente, ser iniciado, finalizado ou reaberto. O horário será liberado e o pagamento pendente vinculado será cancelado. Para atender este cliente depois, crie um novo agendamento.',
               ação: () => cancelarAgendamento(ag.id),
-              acaoLabel: 'Cancelar',
+              acaoLabel: 'Cancelar mesmo',
+              danger: true,
             })}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',

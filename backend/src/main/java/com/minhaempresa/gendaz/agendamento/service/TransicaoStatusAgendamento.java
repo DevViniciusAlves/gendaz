@@ -110,7 +110,7 @@ public final class TransicaoStatusAgendamento {
         if (atual == StatusAgendamento.CANCELADO) {
             throw new BusinessException("Agendamento cancelado nao pode ser retomado.");
         }
-        throw new BusinessException("Apenas atendimentos pausados podem ser retomados. Para iniciar, confirme o agendamento primeiro.");
+        throw new BusinessException("Apenas atendimentos pausados podem ser retomados. Para iniciar, use a ação Iniciar Atendimento.");
     }
 
     /** EM_ATENDIMENTO ou PAUSADO -> FINALIZADO (acao finalizar). */
@@ -127,7 +127,7 @@ public final class TransicaoStatusAgendamento {
         if (atual == StatusAgendamento.PENDENTE) {
             throw new BusinessException("Inicie o atendimento antes de finalizar.");
         }
-        throw new BusinessException("Confirme e inicie o atendimento antes de finalizar.");
+        throw new BusinessException("Inicie o atendimento antes de finalizar.");
     }
 
     /** PENDENTE ou CONFIRMADO -> CANCELADO (acao cancelar). */

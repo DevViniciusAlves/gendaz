@@ -39,7 +39,6 @@ function statusLabel(status) {
 
 export default function AgendaCard({
   agendamento,
-  onConfirmar,
   onIniciar,
   onPausar,
   onRetomar,
