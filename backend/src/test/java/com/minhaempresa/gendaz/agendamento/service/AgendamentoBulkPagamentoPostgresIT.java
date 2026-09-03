@@ -65,8 +65,13 @@ import org.testcontainers.junit.jupiter.Testcontainers;
  * {@code AgendamentoBulkPagamentoConcorrenciaIntegrationTest}.
  */
 @Testcontainers
-@SpringBootTest
 @ActiveProfiles("test")
+@org.springframework.test.context.TestPropertySource(
+        properties = {
+                "spring.datasource.hikari.maximum-pool-size=10",
+                "JWT_SECRET=super_secret_key_for_jwt_tokens_testing_123456789",
+                "SUPER_ADMIN_PASSWORD=super_secret_admin_pass_123456789"
+        })
 class AgendamentoBulkPagamentoPostgresIT {
 
     @Container

@@ -21,6 +21,9 @@ public class GendazApplication {
         SpringApplication.run(GendazApplication.class, args);
     }
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private org.springframework.core.env.Environment environment;
+
     @PostConstruct
     public void validarVariaveisAmbiente() {
         // Corrigido: bloqueia inicializacao com variaveis criticas ausentes ou valores padrao inseguros.
@@ -29,7 +32,10 @@ public class GendazApplication {
         List<String> valoresProibidos = List.of("replace-with-", "example_", "troque-este-", "local-dev-");
 
         variaveisObrigatorias.forEach(variavel -> {
-            String valor = System.getenv(variavel);
+            String valor = environment != null ? environment.getProperty(variavel) : null;
+            if (valor == null || valor.isBlank()) {
+                valor = System.getenv(variavel);
+            }
             if (valor == null || valor.isBlank()) {
                 valor = System.getProperty(variavel);
             }
@@ -40,7 +46,10 @@ public class GendazApplication {
         });
 
         variaveisOpcionais.forEach(variavel -> {
-            String valor = System.getenv(variavel);
+            String valor = environment != null ? environment.getProperty(variavel) : null;
+            if (valor == null || valor.isBlank()) {
+                valor = System.getenv(variavel);
+            }
             if (valor != null && !valor.isBlank()) {
                 validarValorSeguro(variavel, valor, valoresProibidos);
             }

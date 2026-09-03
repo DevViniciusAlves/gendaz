@@ -13,6 +13,8 @@ import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository.Agen
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
+import com.minhaempresa.gendaz.agendamento.event.AgendamentoCriadoEvent;
+import org.springframework.context.ApplicationEventPublisher;
 import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
@@ -76,6 +78,7 @@ public class AgendamentoService {
     private final LogAtividadeService logAtividadeService;
     private final CaixaDespesasService caixaDespesasService;
     private final TransactionTemplate transactionTemplate;
+    private final ApplicationEventPublisher eventPublisher;
     @Autowired
     @Lazy
     private PagamentoService pagamentoService;
@@ -170,37 +173,22 @@ public class AgendamentoService {
             // o agendamento sofre rollback e nao persiste estado parcial
             // (agendamento sem o pagamento obrigatorio). Nao engolir excecao.
             criarPagamentoPendente(agendamentoFinal, clienteFinal, empresaFinal);
-            try {
-                transactionTemplate.executeWithoutResult(status -> {
-                    resendEmailService.enviarEmailNovoAgendamento(empresaFinal, agendamentoFinal);
-                });
-            } catch (Exception e) {
-                Map<String, Object> contextoEmailErro = new LinkedHashMap<>();
-                contextoEmailErro.put("agendamentoId", agendamentoFinal.getId());
-                contextoEmailErro.put("empresaId", empresaFinal.getId());
-                contextoEmailErro.put("clienteId", clienteFinal.getId());
-                contextoEmailErro.put("servicoId", servicoFinal.getId());
-                contextoEmailErro.put("profissionalId", profissionalFinal.getId());
-                log.error("[agendamento-debug] falha ao enviar email. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailErro);
-            }
-            try {
-                transactionTemplate.executeWithoutResult(status -> {
-                    resendEmailService.enviarConfirmacaoAgendamento(
-                            clienteFinal.getEmail(),
-                            clienteFinal.getNome(),
-                            servicoFinal.getNome(),
-                            profissionalFinal.getNome(),
-                            agendamentoFinal.getData(),
-                            agendamentoFinal.getHoraInicio(),
-                            empresaFinal.getNomeFantasia(),
-                            empresaFinal.getAgendamentoSlug()
-                    );
-                });
-            } catch (Exception e) {
-                Map<String, Object> contextoEmailConfirmacaoErro = new LinkedHashMap<>();
-                contextoEmailConfirmacaoErro.put("agendamentoId", agendamentoFinal.getId());
-                log.error("[agendamento-debug] falha ao enviar email de confirmacao. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoEmailConfirmacaoErro);
-            }
+            eventPublisher.publishEvent(new AgendamentoCriadoEvent(
+                    agendamentoFinal.getId(),
+                    empresaFinal.getId(),
+                    empresaFinal.getNomeFantasia(),
+                    empresaFinal.getAgendamentoSlug(),
+                    empresaFinal.getEmail(),
+                    clienteFinal.getId(),
+                    clienteFinal.getNome(),
+                    clienteFinal.getEmail(),
+                    servicoFinal.getId(),
+                    servicoFinal.getNome(),
+                    profissionalFinal.getId(),
+                    profissionalFinal.getNome(),
+                    agendamentoFinal.getData(),
+                    agendamentoFinal.getHoraInicio()
+            ));
             return mapper.toResponse(agendamentoFinal);
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
