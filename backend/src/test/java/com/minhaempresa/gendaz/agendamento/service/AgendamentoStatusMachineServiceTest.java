@@ -115,7 +115,7 @@ class AgendamentoStatusMachineServiceTest {
     }
 
     private void carregar(AgendamentoEntity ag) {
-        when(agendamentoRepository.findById(ag.getId())).thenReturn(Optional.of(ag));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(ag.getId(), 1L)).thenReturn(Optional.of(ag));
     }
 
     // ---- confirmar / iniciar / pausar / retomar ----
@@ -305,13 +305,13 @@ class AgendamentoStatusMachineServiceTest {
     @Test
     void bulkPendenteDescontinuadoECancelarRespeitaEstados() {
         AgendamentoBulkService bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
+                pagamentoRepository, agendamentoService, logAtividadeService);
 
         assertThrows(BusinessException.class, () -> bulk.executar(
                 new AcaoEmMassaAgendamentoRequest(List.of(11L), "PENDENTE", 1L)));
 
         AgendamentoEntity finalizado = agendamento(11L, StatusAgendamento.FINALIZADO);
-        when(agendamentoRepository.findById(11L)).thenReturn(Optional.of(finalizado));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(11L, 1L)).thenReturn(Optional.of(finalizado));
         var resp = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(11L), "CANCELAR", 1L));
         assertEquals(0, resp.totalProcessado());
         assertEquals(1, resp.falhas().size());
@@ -321,9 +321,9 @@ class AgendamentoStatusMachineServiceTest {
     @Test
     void bulkExcluirNaoConverteFinalizadoEmCancelado() {
         AgendamentoBulkService bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
+                pagamentoRepository, agendamentoService, logAtividadeService);
         AgendamentoEntity finalizado = agendamento(12L, StatusAgendamento.FINALIZADO);
-        when(agendamentoRepository.findById(12L)).thenReturn(Optional.of(finalizado));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.of(finalizado));
 
         var resp = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(12L), "EXCLUIR", 1L));
 
@@ -337,7 +337,7 @@ class AgendamentoStatusMachineServiceTest {
     @Test
     void meuGendazNaoReagendaNemCancelaFinalizadoProprio() {
         AgendamentoEntity finalizado = agendamento(13L, StatusAgendamento.FINALIZADO);
-        when(agendamentoRepository.findByIdAndEmpresaIdAndClienteId(13L, 1L, 1L))
+        when(agendamentoRepository.findByIdAndEmpresaIdAndClienteIdForUpdate(13L, 1L, 1L))
                 .thenReturn(Optional.of(finalizado));
 
         assertThrows(BusinessException.class,

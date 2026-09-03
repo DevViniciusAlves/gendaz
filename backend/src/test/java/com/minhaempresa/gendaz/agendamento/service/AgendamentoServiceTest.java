@@ -240,7 +240,7 @@ class AgendamentoServiceTest {
                 .status(StatusPagamento.PENDENTE)
                 .metodoPagamento(MetodoPagamento.OUTRO)
                 .build();
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
@@ -268,7 +268,7 @@ class AgendamentoServiceTest {
                 .agendamento(agendamento).valor(new BigDecimal("50.00"))
                 .status(StatusPagamento.PAGO).metodoPagamento(MetodoPagamento.PIX)
                 .build();
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
@@ -294,7 +294,7 @@ class AgendamentoServiceTest {
                 .agendamento(agendamento).valor(new BigDecimal("50.00"))
                 .status(StatusPagamento.PENDENTE).metodoPagamento(MetodoPagamento.OUTRO)
                 .build();
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         CompanyContext.setCompanyId(1L);
@@ -338,7 +338,7 @@ class AgendamentoServiceTest {
     void cancelarAgendamentoComPagamentoPendenteChamaCancelamentoDoPagamento() {
         AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var response = agendamentoService.cancelar(10L);
@@ -351,7 +351,7 @@ class AgendamentoServiceTest {
     void cancelarAgendamentoComEmpresaIdChamaCancelamentoDoPagamento() {
         AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         var response = agendamentoService.cancelar(10L, 1L);
@@ -365,7 +365,7 @@ class AgendamentoServiceTest {
         AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         AgendamentoResponse response = agendamentoService.cancelar(10L);
@@ -379,7 +379,9 @@ class AgendamentoServiceTest {
         AgendamentoEntity agendamento = agendamentoCancelavel(10L, false);
         agendamento.setEmpresa(EmpresaEntity.builder().id(99L).timezone("America/Cuiaba").build());
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        // O lock e escopado por tenant (id + empresa da sessao): a linha de
+        // outra empresa nao e visivel, como no banco real.
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> agendamentoService.cancelar(10L));
         verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
@@ -395,7 +397,7 @@ class AgendamentoServiceTest {
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
                 .status(StatusAgendamento.PENDENTE).build();
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
@@ -424,7 +426,7 @@ class AgendamentoServiceTest {
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
                 .status(StatusAgendamento.CONFIRMADO).build();
         CompanyContext.setCompanyId(1L);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
         when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);

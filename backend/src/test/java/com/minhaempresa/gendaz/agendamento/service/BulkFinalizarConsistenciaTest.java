@@ -8,12 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.AcaoEmMassaAgendamentoRequest;
-import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
-import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
-import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
-import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
-import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
@@ -39,7 +34,6 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class BulkFinalizarConsistenciaTest {
-    @Mock AgendamentoRepository agendamentoRepository;
     @Mock PagamentoRepository pagamentoRepository;
     @Mock PagamentoService pagamentoService;
     @Mock AgendamentoService agendamentoService;
@@ -49,7 +43,7 @@ class BulkFinalizarConsistenciaTest {
     @BeforeEach
     void setup() {
         bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
+                pagamentoRepository, agendamentoService, logAtividadeService);
         CompanyContext.setCompanyId(1L);
     }
 
@@ -58,17 +52,8 @@ class BulkFinalizarConsistenciaTest {
         CompanyContext.clear();
     }
 
-    private AgendamentoEntity agendamento(Long id) {
-        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).build();
-        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").build();
-        return AgendamentoEntity.builder()
-                .id(id).empresa(empresa).cliente(cliente)
-                .status(StatusAgendamento.PENDENTE).build();
-    }
-
     @Test
     void finalizarEmMassaSemParametrosNaoInventaRecebimento() {
-        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
                 PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
                         .status(StatusPagamento.PENDENTE).build()));
@@ -82,7 +67,6 @@ class BulkFinalizarConsistenciaTest {
 
     @Test
     void finalizarEmMassaPreservaPagoJaConfirmadoSemDuplicarCaixa() {
-        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
                 PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
                         .metodoPagamento(MetodoPagamento.PIX)
@@ -96,8 +80,6 @@ class BulkFinalizarConsistenciaTest {
 
     @Test
     void finalizarEmMassaComParametrosExplicitosRepassaTudo() {
-        when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
-
         var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(
                 List.of(1L), "FINALIZAR", 1L, true, MetodoPagamento.DINHEIRO, null));
 

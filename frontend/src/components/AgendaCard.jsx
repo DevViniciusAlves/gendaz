@@ -92,7 +92,10 @@ export default function AgendaCard({
           {menuAberto && (
             <div className="agenda-card-dropdown">
               {onEditar && <button type="button" onClick={() => { onEditar(agendamento); setMenuAberto(false) }}>Editar</button>}
-              {onCancelar && status !== 'CANCELADO' && status !== 'FINALIZADO' && (
+              {/* Cancelar somente nos estados cancelaveis (PENDENTE/CONFIRMADO),
+                  espelhando TransicaoStatusAgendamento.exigirCancelamento.
+                  EM_ATENDIMENTO/PAUSADO/FINALIZADO/CANCELADO nunca oferecem. */}
+              {onCancelar && (status === 'PENDENTE' || status === 'CONFIRMADO') && (
                 <button type="button" onClick={() => { onCancelar(agendamento); setMenuAberto(false) }}>Cancelar</button>
               )}
               {onExcluir && status !== 'EM_ATENDIMENTO' && status !== 'PAUSADO' && status !== 'FINALIZADO' && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
@@ -130,10 +133,21 @@ export default function AgendaCard({
         </div>
       )}
 
-      {status === 'PAUSADO' && onRetomar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onRetomar(agendamento)} type="button" disabled={carregandoTipo('retomar')}>
-          {carregandoTipo('retomar') ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
-        </button>
+      {/* PAUSADO permite Retomar e Finalizar (PAUSADO -> FINALIZADO e valido
+          no backend). Reutiliza o mesmo handler onFinalizar de EM_ATENDIMENTO. */}
+      {status === 'PAUSADO' && (
+        <div className="agenda-card-botoes-duplos">
+          {onRetomar && (
+            <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onRetomar(agendamento)} type="button" disabled={carregandoTipo('retomar')}>
+              {carregandoTipo('retomar') ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
+            </button>
+          )}
+          {onFinalizar && (
+            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={carregandoTipo('finalizar')}>
+              {carregandoTipo('finalizar') ? <><Loader className="spin" size={17} /> Finalizando</> : 'Finalizar'}
+            </button>
+          )}
+        </div>
       )}
 
       {status === 'FINALIZADO' && (

@@ -324,7 +324,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse confirmar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirConfirmacao(agendamento.getStatus());
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
@@ -342,7 +342,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse cancelar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
+        AgendamentoEntity agendamento = carregarParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
@@ -361,8 +361,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse cancelar(Long id, Long empresaId) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
-        validarEmpresa(agendamento, empresaId);
+        AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
         TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -382,7 +381,7 @@ public class AgendamentoService {
      */
     @Transactional
     public AgendamentoResponse cancelarParaCliente(Long id, Long empresaId, Long clienteId) {
-        AgendamentoEntity agendamento = buscarParaCliente(id, empresaId, clienteId);
+        AgendamentoEntity agendamento = carregarDoClienteParaAtualizacao(id, empresaId, clienteId);
         TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -409,10 +408,12 @@ public class AgendamentoService {
      */
     @Transactional
     public void excluir(Long id, Long empresaId) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
-        validarEmpresa(agendamento, empresaId);
+        // Lock 1 (AGENDAMENTO) antes de qualquer leitura: a exclusao valida o
+        // estado protegido e so depois toca no pagamento (lock 2, via ForUpdate
+        // abaixo e via cancelarPagamentoPendenteDoAgendamento). Nunca o inverso.
+        AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
         TransicaoStatusAgendamento.exigirExclusao(agendamento.getStatus());
-        boolean temPagamento = pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).isPresent();
+        boolean temPagamento = pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).isPresent();
         if (!temPagamento) {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
             agendamentoRepository.delete(agendamento);
@@ -440,10 +441,13 @@ public class AgendamentoService {
      */
     @Transactional
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        // Ordem oficial de locks: 1.AGENDAMENTO -> 2.PAGAMENTO -> 3.EMPRESA/Caixa
+        // (via CaixaDespesasService.registrarPagamentoAprovado). O status do
+        // agendamento e lido SOMENTE depois do lock (linha abaixo); a decisao
+        // da maquina nunca usa estado pre-lock.
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirFinalizacao(agendamento.getStatus());
         boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
-        agendamento.setStatus(StatusAgendamento.FINALIZADO);
         pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             StatusPagamento statusAnterior = pagamento.getStatus();
             if (!pago && statusAnterior == StatusPagamento.PAGO) {
@@ -467,6 +471,7 @@ public class AgendamentoService {
                 caixaDespesasService.registrarPagamentoAprovado(pagamento);
             }
         }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
+        agendamento.setStatus(StatusAgendamento.FINALIZADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Concluiu agendamento de " + agendamento.getCliente().getNome());
@@ -478,7 +483,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse iniciar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirInicio(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -492,7 +497,7 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse pausar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirPausa(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.PAUSADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -510,7 +515,7 @@ public class AgendamentoService {
      */
     @Transactional
     public AgendamentoResponse retomar(Long id) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirRetomada(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -531,7 +536,7 @@ public class AgendamentoService {
      */
     @Transactional
     public AgendamentoResponse reabrir(Long id) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         TransicaoStatusAgendamento.exigirReabertura(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
@@ -545,14 +550,13 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         return aplicarRemarcacao(agendamento, request);
     }
 
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request, Long empresaId) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        validarEmpresa(agendamento, empresaId);
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, empresaId);
         return aplicarRemarcacao(agendamento, request);
     }
 
@@ -564,7 +568,7 @@ public class AgendamentoService {
      */
     @Transactional
     public AgendamentoResponse remarcarParaCliente(Long id, RemarcarAgendamentoRequest request, Long empresaId, Long clienteId) {
-        AgendamentoEntity agendamento = buscarParaCliente(id, empresaId, clienteId);
+        AgendamentoEntity agendamento = carregarDoClienteParaAtualizacao(id, empresaId, clienteId);
         return aplicarRemarcacao(agendamento, request);
     }
 
@@ -590,13 +594,39 @@ public class AgendamentoService {
     }
 
     /**
-     * Carga com prova de propriedade para fluxos self-service (Meu Gendaz).
-     * Exige simultaneamente: agendamento existe AND pertence a empresa AND
-     * pertence ao cliente autenticado. Qualquer divergencia retorna
-     * "nao encontrado", sem revelar se o ID existe ou quem e o dono.
+     * ORDEM GLOBAL DE LOCKS (oficial): 1.AGENDAMENTO -> 2.PAGAMENTO ->
+     * 3.EMPRESA/Caixa. Todo writer deste service carrega o Agendamento COM
+     * PESSIMISTIC_WRITE ANTES de ler getStatus(); a maquina de estados so
+     * valida o estado protegido. Nunca inverter (ex.: Pagamento antes de
+     * Agendamento) para nao causar deadlock nem decisao sobre estado stale.
      */
-    private AgendamentoEntity buscarParaCliente(Long id, Long empresaId, Long clienteId) {
-        AgendamentoEntity agendamento = agendamentoRepository.findByIdAndEmpresaIdAndClienteId(id, empresaId, clienteId)
+    private AgendamentoEntity carregarParaAtualizacao(Long id, Long empresaId) {
+        AgendamentoEntity agendamento = agendamentoRepository
+                .findByIdAndEmpresaIdForUpdate(id, CompanyContext.requireCompanyId())
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
+        validarEmpresa(agendamento, empresaId);
+        return agendamento;
+    }
+
+    private AgendamentoEntity carregarOperacionalParaAtualizacao(Long id, Long empresaId) {
+        AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
+        if (agendamento.getCliente() != null
+                && agendamento.getCliente().getStatus()
+                        == com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO) {
+            throw new BusinessException("Agendamento de cliente excluido não pode ser acessado operacionalmente.");
+        }
+        return agendamento;
+    }
+
+    /**
+     * Variante com lock para fluxos self-service (Meu Gendaz): mesma prova
+     * de propriedade do buscarParaCliente, porem com PESSIMISTIC_WRITE, para
+     * que o cliente tambem decida sobre o estado protegido. O clienteId vem
+     * sempre da sessao autenticada, nunca do body.
+     */
+    private AgendamentoEntity carregarDoClienteParaAtualizacao(Long id, Long empresaId, Long clienteId) {
+        AgendamentoEntity agendamento = agendamentoRepository
+                .findByIdAndEmpresaIdAndClienteIdForUpdate(id, empresaId, clienteId)
                 .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
         if (agendamento.getCliente() != null
                 && agendamento.getCliente().getStatus()
@@ -608,7 +638,10 @@ public class AgendamentoService {
 
     @Transactional
     public AgendamentoResponse atualizar(Long id, AtualizarAgendamentoRequest request) {
-        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        // Lock do Agendamento ANTES de qualquer leitura: sem ele, um update
+        // poderia persistir uma versao stale e desfazer uma finalizacao
+        // concorrente (lost update de estado + dinheiro).
+        AgendamentoEntity agendamento = carregarOperacionalParaAtualizacao(id, null);
         // Edicao generica nao e porta de escape: apenas transicoes simples
         // autorizadas pela maquina de estados. Acoes especiais usam metodos
         // proprios (iniciar, pausar, retomar, finalizar, reabrir, cancelar).

@@ -343,7 +343,6 @@ export default function Agenda() {
     const configs = {
       FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
       CANCELAR: ['Cancelar agendamentos', 'Tem certeza que deseja cancelar os agendamentos selecionados?', 'Cancelar', false],
-      PENDENTE: ['Marcar como pendentes', 'Tem certeza que deseja marcar os agendamentos selecionados como pendentes?', 'Marcar como pendente', false],
       EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
     }
     const cfg = configs[ação]
@@ -801,6 +800,7 @@ export default function Agenda() {
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
           <option value="PENDENTE">Pendente</option>
+          <option value="CONFIRMADO">Confirmado</option>
           <option value="EM_ATENDIMENTO">Em atendimento</option>
           <option value="PAUSADO">Pausado</option>
           <option value="CANCELADO">Cancelado</option>

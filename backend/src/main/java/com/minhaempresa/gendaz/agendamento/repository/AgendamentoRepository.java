@@ -8,8 +8,10 @@ import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
@@ -57,6 +59,42 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
      */
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdAndClienteId(Long id, Long empresaId, Long clienteId);
+    /**
+     * Carga com lock pessimista de escrita para TODA transicao de estado do
+     * agendamento (confirmar/iniciar/pausar/retomar/finalizar/cancelar/
+     * remarcar/reabrir/atualizar/excluir). Serializa writers concorrentes do
+     * MESMO agendamento: a segunda transacao so le o status DEPOIS que a
+     * primeira commita, entao a maquina de estados nunca decide sobre um
+     * estado stale (ex.: finalizar x pausar gerando PAUSADO + PAGO + Caixa).
+     * Tenant sempre escopado (id + empresaId); nunca lock apenas por id.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select a
+            from AgendamentoEntity a
+            where a.id = :id
+              and a.empresa.id = :empresaId
+            """)
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdForUpdate(
+            @Param("id") Long id,
+            @Param("empresaId") Long empresaId);
+    /**
+     * Mesmo lock acima, para os fluxos self-service (Meu Gendaz): valida
+     * atomicamente agendamento + empresa + cliente autenticado, sem vazar o
+     * proprietario real (vazio quando nao pertence ao cliente).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select a
+            from AgendamentoEntity a
+            where a.id = :id
+              and a.empresa.id = :empresaId
+              and a.cliente.id = :clienteId
+            """)
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdAndClienteIdForUpdate(
+            @Param("id") Long id,
+            @Param("empresaId") Long empresaId,
+            @Param("clienteId") Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByServicoId(Long servicoId);
     List<AgendamentoHorarioProjection> findByProfissionalIdAndData(Long profissionalId, LocalDate data);

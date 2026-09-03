@@ -93,7 +93,7 @@ class MeuGendazPropriedadeServiceTest {
                 .data(LocalDate.now().plusDays(2)).horaInicio(LocalTime.of(9, 0)).horaFim(LocalTime.of(9, 30))
                 .status(StatusAgendamento.PENDENTE).build();
         // Dona (Maria, id 20, empresa 1) encontra; qualquer outro par nao encontra.
-        when(agendamentoRepository.findByIdAndEmpresaIdAndClienteId(123L, 1L, 20L))
+        when(agendamentoRepository.findByIdAndEmpresaIdAndClienteIdForUpdate(123L, 1L, 20L))
                 .thenReturn(Optional.of(agendamentoMaria));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa1);

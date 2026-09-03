@@ -106,8 +106,8 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirAgendamentoPagoCancelaSemApagarHistorico() {
         AgendamentoEntity ag = agendamento(10L, StatusAgendamento.PENDENTE);
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L))
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
                 .thenReturn(Optional.of(pagamentoPago(ag)));
 
         agendamentoService.excluir(10L, 1L);
@@ -121,8 +121,8 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirAgendamentoFinalizadoBloqueadoMantemHistorico() {
         AgendamentoEntity ag = agendamento(11L, StatusAgendamento.FINALIZADO);
-        when(agendamentoRepository.findById(11L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(11L, 1L)).thenReturn(Optional.empty());
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(11L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(11L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(BusinessException.class,
                 () -> agendamentoService.excluir(11L, 1L));
@@ -135,8 +135,8 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirAgendamentoNovoSemPagamentoRemoveFisicamente() {
         AgendamentoEntity ag = agendamento(12L, StatusAgendamento.PENDENTE);
-        when(agendamentoRepository.findById(12L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(12L, 1L)).thenReturn(Optional.empty());
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.empty());
 
         agendamentoService.excluir(12L, 1L);
 
@@ -147,8 +147,8 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirConfirmadoComPagamentoGeraCanceladoLogico() {
         AgendamentoEntity ag = agendamento(13L, StatusAgendamento.CONFIRMADO);
-        when(agendamentoRepository.findById(13L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(13L, 1L))
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(13L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(13L, 1L))
                 .thenReturn(Optional.of(pagamentoPago(ag)));
 
         agendamentoService.excluir(13L, 1L);
@@ -161,8 +161,8 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirCanceladoEIdempotenteESeguro() {
         AgendamentoEntity comPagamento = agendamento(14L, StatusAgendamento.CANCELADO);
-        when(agendamentoRepository.findById(14L)).thenReturn(Optional.of(comPagamento));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(14L, 1L))
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(14L, 1L)).thenReturn(Optional.of(comPagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(14L, 1L))
                 .thenReturn(Optional.of(pagamentoPago(comPagamento)));
 
         agendamentoService.excluir(14L, 1L);
@@ -177,8 +177,8 @@ class ExclusaoAgendamentoHistoricoTest {
         for (StatusAgendamento bloqueado : List.of(StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO)) {
             AgendamentoEntity ag = agendamento(15L, bloqueado);
             PagamentoEntity pago = pagamentoPago(ag);
-            when(agendamentoRepository.findById(15L)).thenReturn(Optional.of(ag));
-            when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(15L, 1L))
+            when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(15L, 1L)).thenReturn(Optional.of(ag));
+            when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(15L, 1L))
                     .thenReturn(Optional.of(pago));
 
             assertThrows(BusinessException.class, () -> agendamentoService.excluir(15L, 1L),
@@ -198,8 +198,8 @@ class ExclusaoAgendamentoHistoricoTest {
     void excluirFinalizadoComPagamentoBloqueadoSemTocarEmNada() {
         AgendamentoEntity ag = agendamento(16L, StatusAgendamento.FINALIZADO);
         PagamentoEntity pago = pagamentoPago(ag);
-        when(agendamentoRepository.findById(16L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(16L, 1L))
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(16L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(16L, 1L))
                 .thenReturn(Optional.of(pago));
 
         assertThrows(BusinessException.class, () -> agendamentoService.excluir(16L, 1L));
@@ -215,7 +215,7 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirCrossTenantBloqueadoAntesDeQualquerAlteracao() {
         AgendamentoEntity ag = agendamento(17L, StatusAgendamento.PENDENTE);
-        when(agendamentoRepository.findById(17L)).thenReturn(Optional.of(ag));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(17L, 1L)).thenReturn(Optional.of(ag));
 
         assertThrows(BusinessException.class, () -> agendamentoService.excluir(17L, 99L));
 
@@ -228,13 +228,13 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void bulkExcluirBloqueiaEmAndamentoPausadoEFinalizado() {
         AgendamentoBulkService bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
+                pagamentoRepository, agendamentoService, logAtividadeService);
         AgendamentoEntity emAt = agendamento(21L, StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoEntity pausado = agendamento(22L, StatusAgendamento.PAUSADO);
         AgendamentoEntity finalizado = agendamento(23L, StatusAgendamento.FINALIZADO);
-        when(agendamentoRepository.findById(21L)).thenReturn(Optional.of(emAt));
-        when(agendamentoRepository.findById(22L)).thenReturn(Optional.of(pausado));
-        when(agendamentoRepository.findById(23L)).thenReturn(Optional.of(finalizado));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(21L, 1L)).thenReturn(Optional.of(emAt));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(22L, 1L)).thenReturn(Optional.of(pausado));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(23L, 1L)).thenReturn(Optional.of(finalizado));
 
         var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(21L, 22L, 23L), "EXCLUIR", 1L));
 
@@ -250,10 +250,10 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void bulkExcluirDelegaParaExclusaoIndividual() {
         AgendamentoBulkService bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
+                pagamentoRepository, agendamentoService, logAtividadeService);
         AgendamentoEntity ag = agendamento(20L, StatusAgendamento.PENDENTE);
-        when(agendamentoRepository.findById(20L)).thenReturn(Optional.of(ag));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(20L, 1L)).thenReturn(Optional.empty());
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(20L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(20L, 1L)).thenReturn(Optional.empty());
 
         var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(20L), "EXCLUIR", 1L));
 

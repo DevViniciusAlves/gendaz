@@ -86,7 +86,7 @@ class FinalizarRegrasServiceTest {
         agendamento = AgendamentoEntity.builder()
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
                 .status(StatusAgendamento.EM_ATENDIMENTO).build();
-        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
