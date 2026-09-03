@@ -32,6 +32,7 @@ import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.pagamento.service.FormaPagamentoEmpresaService;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
+import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
@@ -77,6 +78,7 @@ class AgendamentoServiceTest {
     @Mock MeuGendazPromocaoService meuGendazPromocaoService;
     @Mock FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     @Mock LogAtividadeService logAtividadeService;
+    @Mock CaixaDespesasService caixaDespesasService;
     @Mock TransactionTemplate transactionTemplate;
     @Captor ArgumentCaptor<AgendamentoEntity> agendamentoCaptor;
     @Captor ArgumentCaptor<PagamentoEntity> pagamentoCaptor;
@@ -250,6 +252,57 @@ class AgendamentoServiceTest {
         assertEquals(StatusPagamento.PAGO, pagamento.getStatus());
         assertEquals(0, new BigDecimal("50.00").compareTo(pagamento.getValor()));
         verify(formaPagamentoEmpresaService).validarPagamentoManual(eq(1L), eq(MetodoPagamento.PIX), eq(2));
+        verify(caixaDespesasService).registrarPagamentoAprovado(pagamento);
+    }
+
+    @Test
+    void finalizarJaPagoNaoDuplicaCaixa() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
+        AgendamentoEntity agendamento = AgendamentoEntity.builder()
+                .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE).build();
+        PagamentoEntity pagamento = PagamentoEntity.builder()
+                .agendamento(agendamento).valor(new BigDecimal("50.00"))
+                .status(StatusPagamento.PAGO).metodoPagamento(MetodoPagamento.PIX)
+                .build();
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
+        when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, 2)).thenReturn(null);
+        CompanyContext.setCompanyId(1L);
+
+        agendamentoService.finalizar(10L, true, MetodoPagamento.PIX, 2);
+
+        assertEquals(StatusPagamento.PAGO, pagamento.getStatus());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
+    void finalizarSemPagamentoRealizadoNaoRegistraCaixa() {
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).timezone("America/Cuiaba").build();
+        ClienteEntity cliente = ClienteEntity.builder().id(1L).nome("Ana").build();
+        ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").build();
+        ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
+        AgendamentoEntity agendamento = AgendamentoEntity.builder()
+                .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE).build();
+        PagamentoEntity pagamento = PagamentoEntity.builder()
+                .agendamento(agendamento).valor(new BigDecimal("50.00"))
+                .status(StatusPagamento.PENDENTE).metodoPagamento(MetodoPagamento.OUTRO)
+                .build();
+        when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
+        when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        CompanyContext.setCompanyId(1L);
+
+        agendamentoService.finalizar(10L, false, null, null);
+
+        assertEquals(StatusPagamento.PENDENTE, pagamento.getStatus());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
     }
 
     @Test

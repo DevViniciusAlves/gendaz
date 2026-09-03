@@ -16,6 +16,7 @@ import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.empresa.service.EmpresaService;
+import com.minhaempresa.gendaz.financeiro.caixadespesas.service.CaixaDespesasService;
 import com.minhaempresa.gendaz.horarioatendimento.entity.HorarioAtendimentoEntity;
 import com.minhaempresa.gendaz.horarioatendimento.service.HorarioAtendimentoService;
 import com.minhaempresa.gendaz.meugendazpromocao.dto.MeuGendazPromocaoDtos.CupomAplicadoResult;
@@ -73,6 +74,7 @@ public class AgendamentoService {
     private final MeuGendazPromocaoService meuGendazPromocaoService;
     private final FormaPagamentoEmpresaService formaPagamentoEmpresaService;
     private final LogAtividadeService logAtividadeService;
+    private final CaixaDespesasService caixaDespesasService;
     private final TransactionTemplate transactionTemplate;
     @Autowired
     @Lazy
@@ -395,6 +397,7 @@ public class AgendamentoService {
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
         pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
+            StatusPagamento statusAnterior = pagamento.getStatus();
             if (pago) {
                 formaPagamentoEmpresaService.validarPagamentoManual(agendamento.getEmpresa().getId(), metodoPagamento, parcelas);
                 MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(metodoPagamento);
@@ -409,6 +412,9 @@ public class AgendamentoService {
                 pagamento.setDataPagamento(null);
             }
             pagamentoRepository.save(pagamento);
+            if (pago && statusAnterior != StatusPagamento.PAGO) {
+                caixaDespesasService.registrarPagamentoAprovado(pagamento);
+            }
         }, () -> log.warn("[agendamento-debug] finalizar agendamento sem pagamento vinculado. agendamentoId={}", id));
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {

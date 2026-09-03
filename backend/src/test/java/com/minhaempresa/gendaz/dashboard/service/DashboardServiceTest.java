@@ -106,6 +106,14 @@ class DashboardServiceTest {
                 1L, valor, metodo, parcelas, status, dataPagamento, StatusCadastro.ATIVO);
     }
 
+    private PagamentoDtos.PagamentoResponse pagamentoComStatusCliente(
+            Long id, BigDecimal valor, StatusPagamento status, MetodoPagamento metodo,
+            Integer parcelas, LocalDateTime dataPagamento, StatusCadastro statusCliente) {
+        return new PagamentoDtos.PagamentoResponse(
+                id, null, "PROTO-" + id, "Servico", 2L, "Cliente",
+                1L, valor, metodo, parcelas, status, dataPagamento, statusCliente);
+    }
+
     private BigDecimal somaReceitaPorDia(DashboardResumoResponse response) {
         return response.receitaPorDia().stream()
                 .map(DashboardReceitaDiaItem::valor)
@@ -175,10 +183,10 @@ class DashboardServiceTest {
 
         service.resumo(7L, null, null, null);
 
+        // Valor monetario agregado usa a query HISTORICA (sem filtro de EXCLUIDO), apenas com os status pendentes.
         ArgumentCaptor<List<StatusPagamento>> statusCaptor = ArgumentCaptor.forClass(List.class);
         verify(pagamentoRepository)
-                .somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(eq(1L), statusCaptor.capture(), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
-        // Receita confirmada nao usa mais o somatorio sem periodo; so a pendencia de cobranca (estado atual)
+                .somarValorByEmpresaIdAndStatusInAgendamentoNaoCancelado(eq(1L), statusCaptor.capture(), eq(StatusAgendamento.CANCELADO));
         List<StatusPagamento> statuses = statusCaptor.getValue();
         assertEquals(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING), statuses);
     }
@@ -402,5 +410,57 @@ class DashboardServiceTest {
 
         assertEquals(hoje.getDayOfMonth(), resposta.receitaPorDia().size());
         assertEquals(0, resposta.receitaConfirmada().setScale(2).compareTo(somaReceitaPorDia(resposta).setScale(2)));
+    }
+
+    @Test
+    void receitaHistoricaEhPreservadaAposClienteExcluido() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = hoje().minusMonths(1);
+        // Pagamento PAGO R$ 500 de cliente ATIVO
+        // Depois simulamos o cliente EXCLUIDO -- a receita historica deve permanecer 500.
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(pagamentoComStatusCliente(
+                        1L, new BigDecimal("500.00"), StatusPagamento.PAGO, MetodoPagamento.PIX,
+                        null, mesAnterior.withDayOfMonth(15).atTime(10, 0), StatusCadastro.EXCLUIDO)));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, new BigDecimal("500.00").compareTo(resposta.receitaConfirmada()),
+                "Excluir cliente NAO pode remover receita historica");
+        assertEquals(0, new BigDecimal("500.00").compareTo(somaReceitaPorDia(resposta)));
+    }
+
+    @Test
+    void pendenteMonetarioEPreservadoQuandoClienteExcluido() {
+        preparaResumoBasico();
+        // Pendente R$ 300 de cliente ATIVO
+        // Depois cliente EXCLUIDO: valor monetario agregado continua 300 (usando query historica).
+        when(pagamentoRepository.somarValorByEmpresaIdAndStatusInAgendamentoNaoCancelado(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusAgendamento.CANCELADO)))
+                .thenReturn(new BigDecimal("300.00"));
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(
+                1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO)).thenReturn(0L);
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, null, null);
+
+        assertEquals(0, new BigDecimal("300.00").compareTo(resposta.pendenteCobranca()),
+                "Excluir cliente NAO pode zerar o valor monetario pendente historico");
+        verify(pagamentoRepository).somarValorByEmpresaIdAndStatusInAgendamentoNaoCancelado(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusAgendamento.CANCELADO));
+    }
+
+    @Test
+    void listaOperacionalPendentesContinuaOcultandoClienteExcluido() {
+        preparaResumoBasico();
+        when(agendamentoRepository.countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(
+                1L, hoje(), StatusAgendamento.CANCELADO, StatusCadastro.EXCLUIDO)).thenReturn(0L);
+
+        service.resumo(7L, null, null, null);
+
+        // A LISTA operacional de pendentes continua filtrando EXCLUIDO (StatusCadastro.EXCLUIDO passado a query).
+        verify(pagamentoRepository).findByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCanceladoOrderByIdDesc(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
+        verify(pagamentoRepository).countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
+                eq(1L), eq(List.of(StatusPagamento.PENDENTE, StatusPagamento.PAYMENT_PENDING)), eq(StatusCadastro.EXCLUIDO), eq(StatusAgendamento.CANCELADO));
     }
 }

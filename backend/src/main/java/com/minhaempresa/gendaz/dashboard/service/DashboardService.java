@@ -114,9 +114,10 @@ public class DashboardService {
         long pendentesPagamento = pagamentoRepository
                 .countByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
                         empresaId, STATUS_PENDENTE, StatusCadastro.EXCLUIDO, StatusAgendamento.CANCELADO);
+        // Valor monetario agregado: historico. Nao pode depender do status ATUAL do cliente.
         BigDecimal pendenteCobranca = valorOuZero(pagamentoRepository
-                .somarValorByEmpresaIdAndStatusInClienteAtivoAgendamentoNaoCancelado(
-                        empresaId, STATUS_PENDENTE, StatusCadastro.EXCLUIDO, StatusAgendamento.CANCELADO));
+                .somarValorByEmpresaIdAndStatusInAgendamentoNaoCancelado(
+                        empresaId, STATUS_PENDENTE, StatusAgendamento.CANCELADO));
 
         List<DashboardAgendamentoItem> proximosAgendamentos = agendamentoRepository
                 .findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
@@ -199,7 +200,8 @@ public class DashboardService {
         return pagamentoRepository.findByEmpresaIdForFinanceiro(empresaId).stream()
                 .flatMap(p -> ReceitaCompetenciaHelper.expandirParcelasVirtuais(p).stream())
                 .filter(p -> p.status() != null && STATUS_RECEITA_CONFIRMADA.contains(p.status()))
-                .filter(p -> p.statusCliente() != StatusCadastro.EXCLUIDO)
+                // Receita historica NAO depende do status ATUAL do cliente (ATIVO/INATIVO/EXCLUIDO).
+                // Dinheiro recebido no passado continua existindo mesmo apos a exclusao do cliente.
                 .filter(p -> p.dataPagamento() != null)
                 .filter(p -> {
                     LocalDate dataCompetencia = p.dataPagamento().toLocalDate();

@@ -109,6 +109,7 @@ public class PagamentoService {
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
         PagamentoEntity pagamento = buscarEntidade(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
+        boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
         MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
@@ -119,7 +120,7 @@ public class PagamentoService {
         logAtividadeService.registrar("PAGAMENTO", pagamento.getId(),
                 "Confirmou pagamento de " + nomeClientePagamento(pagamento)
                         + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0"));
-        if (statusAnterior != StatusPagamento.PAGO) {
+        if (!eraConfirmado) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
         }
         return response;
@@ -129,6 +130,8 @@ public class PagamentoService {
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
         PagamentoEntity pagamento = buscarEntidade(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
+        boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
+        boolean ficouConfirmado = isPagamentoConfirmado(request.status());
         pagamento.setStatus(request.status());
         if (request.status() == StatusPagamento.PAGO) {
             if (pagamento.getMetodoPagamento() == null) {
@@ -144,10 +147,10 @@ public class PagamentoService {
         }
         PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
         String descricaoAuditoria;
-        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+        if (!eraConfirmado && ficouConfirmado) {
             descricaoAuditoria = "Confirmou pagamento de " + nomeClientePagamento(pagamento)
                     + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
-        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+        } else if (eraConfirmado && !ficouConfirmado && request.status() == StatusPagamento.PENDENTE) {
             descricaoAuditoria = "Desfez pagamento de " + nomeClientePagamento(pagamento)
                     + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
         } else if (request.status() == StatusPagamento.CANCELADO) {
@@ -156,9 +159,9 @@ public class PagamentoService {
             descricaoAuditoria = "Alterou status do pagamento de " + nomeClientePagamento(pagamento) + " para " + request.status();
         }
         logAtividadeService.registrar("PAGAMENTO", pagamento.getId(), descricaoAuditoria);
-        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+        if (!eraConfirmado && ficouConfirmado) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
-        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+        } else if (eraConfirmado && !ficouConfirmado && request.status() == StatusPagamento.PENDENTE) {
             caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
         } else if (request.status() == StatusPagamento.CANCELADO) {
             caixaDespesasService.registrarPagamentoCancelado(pagamento, usuarioAutenticadoProvider.exigirUsuarioId(), statusAnterior);
@@ -657,6 +660,19 @@ public class PagamentoService {
 
     private String nomeClientePagamento(PagamentoEntity pagamento) {
         return pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "Cliente";
+    }
+
+    /**
+     * Define de forma unica o que representa "dinheiro confirmado/recebido"
+     * para o pagamento operacional do cliente (PagamentoEntity).
+     *
+     * PAYMENT_APPROVED NAO e incluido: esse status pertence exclusivamente ao
+     * fluxo de pagamento do plano/assinatura (PagamentoPlanoEntity), e nao a
+     * PagamentoEntity. No fluxo operacional o unico estado de dinheiro
+     * confirmado e PAGO.
+     */
+    private boolean isPagamentoConfirmado(StatusPagamento status) {
+        return status == StatusPagamento.PAGO;
     }
 
     private Optional<PagamentoPlanoEntity> localizarPagamentoStripe(String stripeSessionId, Long pagamentoPlanoId, String paymentReference) {

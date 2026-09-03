@@ -231,6 +231,19 @@ public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long
             @Param("statusCancelado") StatusAgendamento statusCancelado);
 
     @Query("""
+            select coalesce(sum(p.valor), 0)
+            from PagamentoEntity p
+            left join p.agendamento a
+            where p.empresa.id = :empresaId
+              and p.status in :statuses
+              and (a is null or a.status <> :statusCancelado)
+            """)
+    BigDecimal somarValorByEmpresaIdAndStatusInAgendamentoNaoCancelado(
+            @Param("empresaId") Long empresaId,
+            @Param("statuses") List<StatusPagamento> statuses,
+            @Param("statusCancelado") StatusAgendamento statusCancelado);
+
+    @Query("""
         SELECT new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos$PagamentoResponse(
             p.id,
             a.id,

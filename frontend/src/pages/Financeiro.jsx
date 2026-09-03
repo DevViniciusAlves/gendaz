@@ -534,6 +534,9 @@ export default function Financeiro() {
       setPagamentoManual(null)
       atualizarContagem()
       await reload(true)
+      if (isPlanoComRecursosAvancados) {
+        await carregarTotaisCaixaDespesas()
+      }
     } finally {
       setProcessandoPagamento(false)
     }
@@ -549,6 +552,9 @@ export default function Financeiro() {
     try {
       await appApi.atualizarStatusPagamento(id, novoStatus)
       await reload(true)
+      if (isPlanoComRecursosAvancados) {
+        await carregarTotaisCaixaDespesas()
+      }
     } finally {
       setProcessandoStatus(false)
     }
