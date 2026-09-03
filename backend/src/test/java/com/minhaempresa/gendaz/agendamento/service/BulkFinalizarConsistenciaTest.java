@@ -49,7 +49,7 @@ class BulkFinalizarConsistenciaTest {
     @BeforeEach
     void setup() {
         bulk = new AgendamentoBulkService(
-                agendamentoRepository, pagamentoRepository, pagamentoService, agendamentoService, logAtividadeService);
+                agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
         CompanyContext.setCompanyId(1L);
     }
 

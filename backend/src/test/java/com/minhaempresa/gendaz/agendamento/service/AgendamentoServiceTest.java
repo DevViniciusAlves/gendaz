@@ -232,7 +232,7 @@ class AgendamentoServiceTest {
                 .cliente(cliente)
                 .servico(servico)
                 .profissional(profissional)
-                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE)
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.EM_ATENDIMENTO)
                 .build();
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento)
@@ -263,7 +263,7 @@ class AgendamentoServiceTest {
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
         AgendamentoEntity agendamento = AgendamentoEntity.builder()
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
-                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE).build();
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.EM_ATENDIMENTO).build();
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento).valor(new BigDecimal("50.00"))
                 .status(StatusPagamento.PAGO).metodoPagamento(MetodoPagamento.PIX)
@@ -289,7 +289,7 @@ class AgendamentoServiceTest {
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").build();
         AgendamentoEntity agendamento = AgendamentoEntity.builder()
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
-                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.PENDENTE).build();
+                .status(com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento.EM_ATENDIMENTO).build();
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento).valor(new BigDecimal("50.00"))
                 .status(StatusPagamento.PENDENTE).metodoPagamento(MetodoPagamento.OUTRO)

@@ -800,6 +800,22 @@ export const appApi = {
     })
   },
 
+  retomarAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/retomar`).then((response) => response.data), {
+      loading: 'Retomando atendimento... aguarde',
+      success: 'Atendimento retomado com sucesso.',
+      error: 'Não foi possível retomar o atendimento.',
+    })
+  },
+
+  reabrirAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/reabrir`).then((response) => response.data), {
+      loading: 'Reabrindo atendimento... aguarde',
+      success: 'Atendimento reaberto com sucesso.',
+      error: 'Não foi possível reabrir o atendimento.',
+    })
+  },
+
   cancelarAgendamento(id) {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/cancelar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Cancelando agendamento... aguarde',

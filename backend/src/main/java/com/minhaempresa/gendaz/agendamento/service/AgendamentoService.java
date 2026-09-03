@@ -325,6 +325,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse confirmar(Long id) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        TransicaoStatusAgendamento.exigirConfirmacao(agendamento.getStatus());
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
@@ -342,6 +343,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse cancelar(Long id) {
         AgendamentoEntity agendamento = buscarEntidade(id);
+        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         if (agendamentoRepository.existsByProfissionalIdAndDataAndHoraInicioAndStatus(
                 agendamento.getProfissional().getId(), agendamento.getData(), agendamento.getHoraInicio(), StatusAgendamento.CONFIRMADO)) {
             throw new ConflictException("Ja existe agendamento confirmado para este profissional neste horario.");
@@ -361,6 +363,7 @@ public class AgendamentoService {
     public AgendamentoResponse cancelar(Long id, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
+        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
@@ -380,6 +383,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse cancelarParaCliente(Long id, Long empresaId, Long clienteId) {
         AgendamentoEntity agendamento = buscarParaCliente(id, empresaId, clienteId);
+        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
@@ -392,23 +396,24 @@ public class AgendamentoService {
     }
 
     /**
-     * Exclusao operacional de agendamento — nunca destroi historico financeiro.
-     * Regra:
-     * - Sem pagamento vinculado e nao FINALIZADO: remocao fisica segura
-     *   (nada financeiro/orcamentario depende do registro).
-     * - Qualquer outro caso (pagamento PENDENTE/PAGO/CANCELADO vinculado,
-     *   ou agendamento FINALIZADO): cancelamento logico (status CANCELADO).
-     *   O pagamento PAGO permanece intacto (receita/caixa preservados) e o
-     *   PENDENTE e cancelado (sai da cobranca). Consultas operacionais ja
-     *   excluem CANCELADO; historico financeiro permanece auditavel.
+     * Exclusao operacional de agendamento — obedece integralmente a maquina
+     * de estados ({@code TransicaoStatusAgendamento.exigirExclusao}), ANTES
+     * de qualquer leitura de pagamento ou modificacao:
+     * - PENDENTE / CONFIRMADO: permitido. Sem pagamento vinculado, remocao
+     *   fisica segura; com pagamento, CANCELADO logico (transicao autorizada:
+     *   PAGO intacto, PENDENTE cancelado).
+     * - CANCELADO: idempotente/seguro (sem ressuscitar, sem mexer em dinheiro).
+     * - EM_ATENDIMENTO / PAUSADO / FINALIZADO: bloqueado com erro de negocio,
+     *   sem tocar em pagamento, Caixa, movimentacao ou no proprio registro.
+     * Excluir nunca e porta alternativa para transicao proibida.
      */
     @Transactional
     public void excluir(Long id, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
+        TransicaoStatusAgendamento.exigirExclusao(agendamento.getStatus());
         boolean temPagamento = pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).isPresent();
-        boolean finalizado = agendamento.getStatus() == StatusAgendamento.FINALIZADO;
-        if (!temPagamento && !finalizado) {
+        if (!temPagamento) {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
             agendamentoRepository.delete(agendamento);
             return;
@@ -426,6 +431,7 @@ public class AgendamentoService {
      *
      * - Agendamento ja FINALIZADO nao pode ser finalizado novamente
      *   (bloqueio server-side; nao depende da UI).
+     * - Origem permitida: EM_ATENDIMENTO ou PAUSADO (maquina de estados).
      * - PENDENTE -> PAGO registra entrada no Caixa UMA unica vez.
      * - PAGO -> PAGO nao registra novamente (idempotente).
      * - PAGO -> PENDENTE via finalizacao e BLOQUEADO: dinheiro ja registrado
@@ -435,9 +441,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        if (agendamento.getStatus() == StatusAgendamento.FINALIZADO) {
-            throw new BusinessException("Agendamento ja finalizado.");
-        }
+        TransicaoStatusAgendamento.exigirFinalizacao(agendamento.getStatus());
         boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
         pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
@@ -475,11 +479,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse iniciar(Long id) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        if (agendamento.getStatus() != StatusAgendamento.PENDENTE
-                && agendamento.getStatus() != StatusAgendamento.CONFIRMADO
-                && agendamento.getStatus() != StatusAgendamento.PAUSADO) {
-            throw new BusinessException("Apenas agendamentos pendentes, confirmados ou pausados podem ser iniciados.");
-        }
+        TransicaoStatusAgendamento.exigirInicio(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {
@@ -493,15 +493,52 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse pausar(Long id) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        if (agendamento.getStatus() != StatusAgendamento.EM_ATENDIMENTO) {
-            throw new BusinessException("Apenas agendamentos em atendimento podem ser pausados.");
-        }
+        TransicaoStatusAgendamento.exigirPausa(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.PAUSADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Pausou atendimento de " + agendamento.getCliente().getNome());
         } catch (Exception e) {
             log.warn("[agendamento-debug] falha ao registrar log de pausa. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
+    }
+
+    /**
+     * Retomada de atendimento pausado: PAUSADO -> EM_ATENDIMENTO.
+     * Acao explicita; o endpoint generico de edicao nao altera esse status.
+     */
+    @Transactional
+    public AgendamentoResponse retomar(Long id) {
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        TransicaoStatusAgendamento.exigirRetomada(agendamento.getStatus());
+        agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Retomou atendimento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de retomada. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
+    }
+
+    /**
+     * Reabertura de atendimento finalizado por engano: FINALIZADO -> EM_ATENDIMENTO.
+     * UNICA saida normal de FINALIZADO. Operacao puramente operacional:
+     * NAO altera pagamento, Caixa, dataPagamento, metodoPagamento, parcelas
+     * nem movimentacao financeira. Correcao de pagamento pertence ao fluxo
+     * explicito de estorno/correcao.
+     */
+    @Transactional
+    public AgendamentoResponse reabrir(Long id) {
+        AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        TransicaoStatusAgendamento.exigirReabertura(agendamento.getStatus());
+        agendamento.setStatus(StatusAgendamento.EM_ATENDIMENTO);
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reabriu atendimento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de reabertura. erroTipo={}", e.getClass().getSimpleName());
         }
         return response;
     }
@@ -532,6 +569,7 @@ public class AgendamentoService {
     }
 
     private AgendamentoResponse aplicarRemarcacao(AgendamentoEntity agendamento, RemarcarAgendamentoRequest request) {
+        StatusAgendamento destino = TransicaoStatusAgendamento.destinoReagendamento(agendamento.getStatus());
         int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
         LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
         validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
@@ -541,7 +579,7 @@ public class AgendamentoService {
         agendamento.setHoraInicio(request.horaInicio());
         agendamento.setHoraFim(horaFim);
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
-        agendamento.setStatus(StatusAgendamento.PENDENTE);
+        agendamento.setStatus(destino);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
@@ -571,13 +609,10 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse atualizar(Long id, AtualizarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        // FINALIZADO so pode ser alcancado pelo endpoint de finalizacao, que
-        // aplica pagamento/Caixa/idempotencia. A edicao nao possui os dados
-        // de recebimento e nao pode inventa-los nem pular as regras.
-        if (request.status() == StatusAgendamento.FINALIZADO
-                && agendamento.getStatus() != StatusAgendamento.FINALIZADO) {
-            throw new BusinessException("Para finalizar um atendimento, utilize a acao Finalizar informando o pagamento.");
-        }
+        // Edicao generica nao e porta de escape: apenas transicoes simples
+        // autorizadas pela maquina de estados. Acoes especiais usam metodos
+        // proprios (iniciar, pausar, retomar, finalizar, reabrir, cancelar).
+        TransicaoStatusAgendamento.exigirEdicaoStatus(agendamento.getStatus(), request.status());
         ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         ServicoEntity servico = servicoService.buscarEntidadeOperacional(request.servicoId());
         ProfissionalEntity profissional = profissionalService.buscarEntidade(request.profissionalId());
@@ -627,12 +662,6 @@ public class AgendamentoService {
             throw new BusinessException("Agendamento de cliente excluido não pode ser acessado operacionalmente.");
         }
         return agendamento;
-    }
-
-    private AgendamentoResponse alterarStatus(Long id, StatusAgendamento status) {
-        AgendamentoEntity agendamento = buscarEntidade(id);
-        agendamento.setStatus(status);
-        return mapper.toResponse(agendamentoRepository.save(agendamento));
     }
 
     private void validarEmpresa(AgendamentoEntity agendamento, Long empresaId) {

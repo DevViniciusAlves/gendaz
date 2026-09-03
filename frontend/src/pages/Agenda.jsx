@@ -495,6 +495,36 @@ export default function Agenda() {
     setModalEditar(true)
   }
 
+  // Opções de status permitidas no modal de edição, espelhando a máquina
+  // de estados do backend. Estados operacionais avançados/terminais usam
+  // ações específicas (iniciar, pausar, retomar, finalizar, reabrir,
+  // cancelar) e aparecem aqui somente como leitura.
+  function opcoesStatusEdicao(statusAtual) {
+    switch (statusAtual) {
+      case 'PENDENTE':
+        return [
+          { value: 'PENDENTE', label: 'Pendente' },
+          { value: 'CONFIRMADO', label: 'Confirmado' },
+          { value: 'CANCELADO', label: 'Cancelado' },
+        ]
+      case 'CONFIRMADO':
+        return [
+          { value: 'CONFIRMADO', label: 'Confirmado' },
+          { value: 'CANCELADO', label: 'Cancelado' },
+        ]
+      case 'EM_ATENDIMENTO':
+        return [{ value: 'EM_ATENDIMENTO', label: 'Em atendimento' }]
+      case 'PAUSADO':
+        return [{ value: 'PAUSADO', label: 'Pausado' }]
+      case 'FINALIZADO':
+        return [{ value: 'FINALIZADO', label: 'Finalizado' }]
+      case 'CANCELADO':
+        return [{ value: 'CANCELADO', label: 'Cancelado' }]
+      default:
+        return [{ value: statusAtual, label: statusAtual }]
+    }
+  }
+
   async function salvarEdicao(event) {
     event.preventDefault()
     if (salvandoEditar) return
@@ -625,6 +655,42 @@ export default function Agenda() {
     } catch (error) {
       setAcaoEmAndamento(null)
       setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
+    }
+  }
+
+  async function retomarAtendimento(agendamento) {
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'retomar' })
+    setErroAcao('')
+    try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
+      await appApi.retomarAgendamento(agendamento.id)
+      setAcaoEmAndamento(null)
+      reload(true).catch((error) => {
+        console.error('[agenda-debug] erro ao recarregar agenda')
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoEmAndamento(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível retomar o atendimento.')
+    }
+  }
+
+  async function reabrirAtendimento(agendamento) {
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'reabrir' })
+    setErroAcao('')
+    try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
+      await appApi.reabrirAgendamento(agendamento.id)
+      setAcaoEmAndamento(null)
+      reload(true).catch((error) => {
+        console.error('[agenda-debug] erro ao recarregar agenda')
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoEmAndamento(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível reabrir o atendimento.')
     }
   }
 
@@ -761,7 +827,6 @@ export default function Agenda() {
           actions={[
             { label: 'Finalizar', onClick: () => abrirBulk('FINALIZAR') },
             { label: 'Cancelar', onClick: () => abrirBulk('CANCELAR') },
-            { label: 'Pendente', onClick: () => abrirBulk('PENDENTE') },
             { label: 'Excluir', danger: true, onClick: () => abrirBulk('EXCLUIR') },
           ]}
         />
@@ -795,6 +860,18 @@ export default function Agenda() {
               descrição: 'Tem certeza que deseja pausar este atendimento?',
               ação: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
+            })}
+            onRetomar={(ag) => setConfirmacao({
+              titulo: 'Retomar atendimento',
+              descrição: 'Tem certeza que deseja retomar este atendimento?',
+              ação: () => retomarAtendimento(ag),
+              acaoLabel: 'Retomar',
+            })}
+            onReabrir={(ag) => setConfirmacao({
+              titulo: 'Reabrir atendimento',
+              descrição: 'O atendimento voltará para em atendimento. O pagamento não será alterado.',
+              ação: () => reabrirAtendimento(ag),
+              acaoLabel: 'Reabrir',
             })}
             onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
             onEditar={(ag) => abrirEdicao(ag)}
@@ -878,7 +955,7 @@ export default function Agenda() {
             {temProfissionais && (
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisEdicaoDisponiveis.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
-            <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option></select></label>
+            <label className="field"><span>Status</span><select value={edicao.status} disabled={opcoesStatusEdicao(edicao.status).length <= 1} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}>{opcoesStatusEdicao(edicao.status).map((opcao) => <option key={opcao.value} value={opcao.value}>{opcao.label}</option>)}</select></label>
             <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
             {horariosEditar.length > 0 ? (

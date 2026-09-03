@@ -85,7 +85,7 @@ class FinalizarRegrasServiceTest {
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Jo").empresa(empresa).build();
         agendamento = AgendamentoEntity.builder()
                 .id(10L).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
-                .status(StatusAgendamento.PENDENTE).build();
+                .status(StatusAgendamento.EM_ATENDIMENTO).build();
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -106,7 +106,7 @@ class FinalizarRegrasServiceTest {
     }
 
     @Test
-    void pendenteParaPagoRegistraCaixaUmaVezERefinalizarBloqueia() {
+    void emAtendimentoParaPagoRegistraCaixaUmaVezERefinalizarBloqueia() {
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
                 .thenReturn(Optional.of(pagamento(StatusPagamento.PENDENTE)));
 
@@ -142,6 +142,17 @@ class FinalizarRegrasServiceTest {
         agendamentoService.finalizar(10L, false, null, null);
 
         assertEquals(StatusPagamento.PENDENTE, pendente.getStatus());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
+    void finalizarDePendenteOuCanceladoBloqueado() {
+        agendamento.setStatus(StatusAgendamento.PENDENTE);
+        assertThrows(BusinessException.class,
+                () -> agendamentoService.finalizar(10L, true, MetodoPagamento.PIX, null));
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        assertThrows(BusinessException.class,
+                () -> agendamentoService.finalizar(10L, true, MetodoPagamento.PIX, null));
         verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
     }
 

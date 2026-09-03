@@ -653,6 +653,17 @@ public class PagamentoService {
      * Cancela o pagamento operacional PENDENTE vinculado a um agendamento quando o
      * proprio agendamento e cancelado. Isola por empresa. Idempotente.
      *
+     * Concorrencia: usa o mesmo lock pessimista dos caminhos de confirmacao
+     * (marcarPago/atualizarStatus/finalizar/bulk). O lock e adquirido ANTES de
+     * ler o status, de modo que uma confirmacao concorrente seja serializada:
+     * quem obtem o lock primeiro vence e o outro observa o estado ja
+     * atualizado (nunca decide sobre status desatualizado, nunca gera o
+     * hibrido CANCELADO + caixa do pagamento).
+     *
+     * Ordem de locks: apenas PAGAMENTO (nao toca Empresa/Caixa aqui, pois
+     * PENDENTE nunca gerou entrada). Logo nao ha inversao com a ordem
+     * oficial PAGAMENTO -> EMPRESA.
+     *
      * Regras:
      *  - PENDENTE -> CANCELADO (sai da pendencia/cobranca do dashboard).
      *  - PAGO    -> inalterado (nao estorna, nao mexe em caixa/receita).
@@ -660,7 +671,7 @@ public class PagamentoService {
      */
     @Transactional
     public void cancelarPagamentoPendenteDoAgendamento(Long agendamentoId, Long empresaId) {
-        pagamentoRepository.findByAgendamentoIdAndEmpresaId(agendamentoId, empresaId)
+        pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(agendamentoId, empresaId)
                 .ifPresent(pagamento -> {
                     if (pagamento.getStatus() == StatusPagamento.PENDENTE || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
                         pagamento.setStatus(StatusPagamento.CANCELADO);

@@ -35,14 +35,13 @@ import org.mockito.quality.Strictness;
 class AgendamentoBulkServiceTest {
     @Mock AgendamentoRepository agendamentoRepository;
     @Mock PagamentoRepository pagamentoRepository;
-    @Mock PagamentoService pagamentoService;
     @Mock AgendamentoService agendamentoService;
     @Mock LogAtividadeService logAtividadeService;
     AgendamentoBulkService service;
 
     @BeforeEach
     void setup() {
-        service = new AgendamentoBulkService(agendamentoRepository, pagamentoRepository, pagamentoService, agendamentoService, logAtividadeService);
+        service = new AgendamentoBulkService(agendamentoRepository, pagamentoRepository, agendamentoService, logAtividadeService);
         CompanyContext.setCompanyId(1L);
     }
 
@@ -70,7 +69,7 @@ class AgendamentoBulkServiceTest {
 
         assertEquals(3, response.totalProcessado());
         assertEquals(0, response.falhas().size());
-        verify(pagamentoService, times(3)).cancelarPagamentoPendenteDoAgendamento(anyLong(), anyLong());
+        verify(agendamentoService, times(3)).cancelar(anyLong(), anyLong());
     }
 
     @Test
@@ -84,8 +83,8 @@ class AgendamentoBulkServiceTest {
 
         assertEquals(3, response.totalProcessado());
         // A regra de "pagamento PAGO permanece PAGO" e garantida dentro do PagamentoService.
-        // Aqui garantimos que o bulk chama a regularizacao para cada agendamento cancelado.
-        verify(pagamentoService, times(3)).cancelarPagamentoPendenteDoAgendamento(anyLong(), eq(1L));
+        // Aqui garantimos que o bulk delega ao cancelamento central para cada item.
+        verify(agendamentoService, times(3)).cancelar(anyLong(), eq(1L));
     }
 
     @Test
@@ -96,6 +95,6 @@ class AgendamentoBulkServiceTest {
                 com.minhaempresa.gendaz.shared.BusinessException.class,
                 () -> service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "CANCELAR", 99L)));
 
-        verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(anyLong(), anyLong());
+        verify(agendamentoService, never()).cancelar(anyLong(), anyLong());
     }
 }

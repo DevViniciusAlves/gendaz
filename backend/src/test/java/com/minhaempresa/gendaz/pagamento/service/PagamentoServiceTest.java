@@ -230,7 +230,7 @@ class PagamentoServiceTest {
                 .id(1L).empresa(empresa).cliente(cliente).agendamento(AgendamentoEntity.builder().id(10L).build())
                 .valor(new BigDecimal("100.00")).status(StatusPagamento.PENDENTE).build();
 
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
@@ -249,7 +249,7 @@ class PagamentoServiceTest {
                 .valor(new BigDecimal("100.00")).metodoPagamento(MetodoPagamento.PIX)
                 .status(StatusPagamento.PAGO).dataPagamento(dataPagamento).build();
 
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
 
         service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
 
@@ -267,7 +267,7 @@ class PagamentoServiceTest {
                 .id(1L).empresa(empresa).cliente(cliente).agendamento(AgendamentoEntity.builder().id(10L).build())
                 .valor(new BigDecimal("100.00")).status(StatusPagamento.CANCELADO).build();
 
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
 
         service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
 
@@ -277,7 +277,7 @@ class PagamentoServiceTest {
 
     @Test
     void cancelarPagamentoPendenteDoAgendamentoSemPagamentoNaoFazNada() {
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.empty());
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.empty());
 
         service.cancelarPagamentoPendenteDoAgendamento(10L, 1L);
 
