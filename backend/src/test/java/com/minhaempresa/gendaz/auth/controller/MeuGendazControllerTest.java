@@ -18,6 +18,7 @@ import com.minhaempresa.gendaz.insights.service.InsightsService;
 import com.minhaempresa.gendaz.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoService;
+import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.auth.service.UsuarioSessionService;
@@ -50,6 +51,7 @@ class MeuGendazControllerTest {
     @Mock private MeuGendazAuthService meuGendazAuthService;
     @Mock private MeuGendazOnboardingService onboardingService;
     @Mock private SanitizacaoService sanitizacaoService;
+    @Mock private PagamentoRepository pagamentoRepository;
     private CookieService cookieService;
 
     private MockMvc mockMvc;
@@ -74,6 +76,7 @@ class MeuGendazControllerTest {
                 usuarioSessionService,
                 meuGendazAuthService,
                 onboardingService,
+                pagamentoRepository,
                 sanitizacaoService,
                 cookieService
         )).build();

@@ -106,7 +106,7 @@ class AgendamentoServiceTest {
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(valorServico).build();
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
-        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
@@ -242,7 +242,7 @@ class AgendamentoServiceTest {
                 .build();
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, 2)).thenReturn(null);
         CompanyContext.setCompanyId(1L);
@@ -270,7 +270,7 @@ class AgendamentoServiceTest {
                 .build();
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, 2)).thenReturn(null);
         CompanyContext.setCompanyId(1L);
@@ -296,7 +296,7 @@ class AgendamentoServiceTest {
                 .build();
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(agendamentoRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(10L, 1L)).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(pagamento));
         CompanyContext.setCompanyId(1L);
 
         agendamentoService.finalizar(10L, false, null, null);
@@ -312,7 +312,7 @@ class AgendamentoServiceTest {
         ServicoEntity servico = ServicoEntity.builder().id(1L).nome("Consulta").duracaoMinutos(60).empresa(empresa).valor(new BigDecimal("100.00")).build();
         ProfissionalEntity profissional = ProfissionalEntity.builder().id(1L).nome("Dra. Marina").status(com.minhaempresa.gendaz.shared.enums.StatusCadastro.ATIVO).diasTrabalho(java.util.EnumSet.allOf(com.minhaempresa.gendaz.profissional.enums.DiaSemana.class)).empresa(empresa).build();
         when(clienteService.buscarEntidadeOperacional(1L)).thenThrow(new BusinessException("Não é possível agendar para um cliente excluído."));
-        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
 
@@ -397,7 +397,7 @@ class AgendamentoServiceTest {
         CompanyContext.setCompanyId(1L);
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
-        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
@@ -426,7 +426,7 @@ class AgendamentoServiceTest {
         CompanyContext.setCompanyId(1L);
         when(agendamentoRepository.findById(10L)).thenReturn(Optional.of(agendamento));
         when(clienteService.buscarEntidadeOperacional(1L)).thenReturn(cliente);
-        when(servicoService.buscarEntidade(1L)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(1L)).thenReturn(servico);
         when(profissionalService.buscarEntidade(1L)).thenReturn(profissional);
         when(empresaService.buscarEntidade(1L)).thenReturn(empresa);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));

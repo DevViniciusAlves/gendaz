@@ -69,8 +69,15 @@ public record AgendamentoResponse(
     public record AcaoEmMassaAgendamentoRequest(
             @NotNull @Size(max = 10) List<Long> ids,
             @NotNull String acao,
-            Long empresaId
-    ) {}
+            Long empresaId,
+            Boolean pagamentoRealizado,
+            MetodoPagamento metodoPagamento,
+            Integer parcelas
+    ) {
+        public AcaoEmMassaAgendamentoRequest(List<Long> ids, String acao, Long empresaId) {
+            this(ids, acao, empresaId, null, null, null);
+        }
+    }
 
     public record AcaoEmMassaResponse(
             int totalSolicitado,

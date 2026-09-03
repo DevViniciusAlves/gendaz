@@ -49,6 +49,14 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     List<AgendamentoEntity> findByClienteId(Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndClienteId(Long empresaId, Long clienteId);
+    /**
+     * Busca de propriedade para fluxos self-service (Meu Gendaz): valida
+     * atomicamente agendamento + empresa + cliente. Usada para impedir
+     * IDOR/BOLA entre clientes da mesma empresa. Retorna vazio quando o
+     * recurso nao pertence ao cliente, sem vazar o proprietario real.
+     */
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdAndClienteId(Long id, Long empresaId, Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByServicoId(Long servicoId);
     List<AgendamentoHorarioProjection> findByProfissionalIdAndData(Long profissionalId, LocalDate data);

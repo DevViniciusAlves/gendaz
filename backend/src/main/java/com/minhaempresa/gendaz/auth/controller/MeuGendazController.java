@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.auth.controller;
 
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoDtos.*;
 import com.minhaempresa.gendaz.agendamento.service.AgendamentoService;
+import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.auth.dto.MeuGendazDtos.CriarSuporteRequest;
 import com.minhaempresa.gendaz.auth.entity.MeuGendazOtpChallengeEntity;
 import com.minhaempresa.gendaz.auth.service.MeuGendazAuthService;
@@ -22,6 +23,8 @@ import com.minhaempresa.gendaz.insights.service.InsightsService;
 import com.minhaempresa.gendaz.meugendazacesso.entity.MeuGendazAcessoEntity;
 import com.minhaempresa.gendaz.meugendazacesso.repository.MeuGendazAcessoRepository;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoService;
+import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
+import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.profissional.service.ProfissionalService;
 import com.minhaempresa.gendaz.servico.service.ServicoService;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -74,6 +77,7 @@ public class MeuGendazController {
     private final UsuarioSessionService usuarioSessionService;
     private final MeuGendazAuthService meuGendazAuthService;
     private final MeuGendazOnboardingService onboardingService;
+    private final PagamentoRepository pagamentoRepository;
     private final SanitizacaoService sanitizacaoService;
     private final CookieService cookieService;
 
@@ -277,7 +281,7 @@ public class MeuGendazController {
             Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
-                    .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
+                    .filter(MeuGendazController::isProximo)
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
                     .toList();
             return ResponseEntity.ok(futuros);
@@ -297,7 +301,7 @@ public class MeuGendazController {
             Long empresaId = getEmpresaId(cliente);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
-                    .filter(a -> a.status() != null && isStatusHistorico(a.status().name()))
+                    .filter(MeuGendazController::isHistorico)
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .toList();
             int total = passados.size();
@@ -351,8 +355,10 @@ public class MeuGendazController {
                     java.time.LocalDate.parse(body.get("novaData")),
                     java.time.LocalTime.parse(body.get("novaHora"))
             );
-            AgendamentoResponse response = agendamentoService.remarcar(id, req, empresaId);
+            AgendamentoResponse response = agendamentoService.remarcarParaCliente(id, req, empresaId, cliente.getId());
             return ResponseEntity.ok(response);
+        } catch (com.minhaempresa.gendaz.shared.ResourceNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("mensagem", "Agendamento nao encontrado."));
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
@@ -365,8 +371,10 @@ public class MeuGendazController {
     public ResponseEntity<?> cancelar(@PathVariable Long id, @RequestBody(required = false) Map<String, String> body, HttpServletRequest request) {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
-            agendamentoService.cancelar(id, getEmpresaId(cliente));
+            agendamentoService.cancelarParaCliente(id, getEmpresaId(cliente), cliente.getId());
             return ResponseEntity.ok(Map.of("mensagem", "Agendamento cancelado com sucesso."));
+        } catch (com.minhaempresa.gendaz.shared.ResourceNotFoundException e) {
+            return ResponseEntity.status(404).body(Map.of("mensagem", "Agendamento nao encontrado."));
         } catch (BusinessException e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
@@ -400,22 +408,24 @@ public class MeuGendazController {
             ClienteEntity cliente = findClienteFromSession(request);
             List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(cliente), cliente.getId());
             List<AgendamentoResponse> futuros = todos.stream()
-                    .filter(a -> a.data() != null && !a.data().isBefore(java.time.LocalDate.now()))
+                    .filter(MeuGendazController::isProximo)
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
                     .toList();
             List<AgendamentoResponse> passados = todos.stream()
                     .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
+                    .filter(a -> a.status() != StatusAgendamento.CANCELADO)
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .limit(5)
                     .toList();
-            List<AgendamentoResponse> concluidos = todos.stream()
+            // Total gasto = dinheiro efetivamente confirmado (pagamento PAGO),
+            // nunca status do agendamento. Pendente/cancelado nao soma.
+            BigDecimal totalGasto = pagamentoRepository.somarValorByEmpresaIdAndClienteIdAndStatusIn(
+                    getEmpresaId(cliente), cliente.getId(), List.of(StatusPagamento.PAGO));
+            if (totalGasto == null) {
+                totalGasto = BigDecimal.ZERO;
+            }
+            String servicoMaisEscolhido = todos.stream()
                     .filter(a -> a.status() != null && isStatusConcluido(a.status().name()))
-                    .toList();
-            BigDecimal totalGasto = concluidos.stream()
-                    .map(AgendamentoResponse::valor)
-                    .filter(valor -> valor != null)
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            String servicoMaisEscolhido = concluidos.stream()
                     .map(AgendamentoResponse::servicoNome)
                     .filter(nome -> nome != null && !nome.isBlank())
                     .collect(java.util.stream.Collectors.groupingBy(nome -> nome, java.util.stream.Collectors.counting()))
@@ -509,14 +519,39 @@ public class MeuGendazController {
                 || "CONCLUÍDA".equals(normalizado);
     }
 
-    private boolean isStatusHistorico(String status) {
-        if (status == null) {
+    /**
+     * "Proximos": compromissos futuros operacionalmente validos.
+     * Exige data >= hoje E status ativo (nunca CANCELADO/FINALIZADO).
+     * Um item nunca esta simultaneamente em proximos e historico.
+     */
+    private static boolean isProximo(AgendamentoResponse a) {
+        if (a.data() == null || a.data().isBefore(java.time.LocalDate.now())) {
             return false;
         }
-        String normalizado = status.trim().toUpperCase();
-        return isStatusConcluido(normalizado)
-                || "PENDENTE".equals(normalizado)
-                || "CANCELADO".equals(normalizado);
+        if (a.status() == null) {
+            return false;
+        }
+        return a.status() == StatusAgendamento.PENDENTE
+                || a.status() == StatusAgendamento.CONFIRMADO
+                || a.status() == StatusAgendamento.EM_ATENDIMENTO
+                || a.status() == StatusAgendamento.PAUSADO;
+    }
+
+    /**
+     * "Historico": eventos passados ou estados terminalmente encerrados.
+     * Inclui tudo com data passada e, independente da data, FINALIZADO e
+     * CANCELADO (ex.: cancelado futuro e historico, nao proximo).
+     * PENDENTE/CONFIRMADO futuro nunca cai aqui.
+     */
+    private static boolean isHistorico(AgendamentoResponse a) {
+        if (a.data() != null && a.data().isBefore(java.time.LocalDate.now())) {
+            return true;
+        }
+        if (a.status() == null) {
+            return false;
+        }
+        return a.status() == StatusAgendamento.FINALIZADO
+                || a.status() == StatusAgendamento.CANCELADO;
     }
 
     private boolean isSafariMobile(HttpServletRequest request) {

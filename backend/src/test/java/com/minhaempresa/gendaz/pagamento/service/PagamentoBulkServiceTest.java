@@ -35,14 +35,14 @@ class PagamentoBulkServiceTest {
     @Test
     void deveConsultarCadaPagamentoComEmpresaDaSessao() {
         CompanyContext.setCompanyId(1L);
-        when(pagamentoRepository.findByIdAndEmpresaId(100L, 1L)).thenReturn(Optional.empty());
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(100L, 1L)).thenReturn(Optional.empty());
 
         var resultado = pagamentoBulkService.executar(new AcaoEmMassaPagamentoRequest(
                 List.of(100L), "MARCAR_COMO_PAGO", 1L, MetodoPagamento.PIX, null));
 
         assertEquals(0, resultado.totalProcessado());
         assertEquals(1, resultado.falhas().size());
-        verify(pagamentoRepository).findByIdAndEmpresaId(100L, 1L);
+        verify(pagamentoRepository).findByIdAndEmpresaIdForUpdate(100L, 1L);
         verify(pagamentoRepository, never()).findById(anyLong());
     }
 
@@ -52,6 +52,6 @@ class PagamentoBulkServiceTest {
                 new AcaoEmMassaPagamentoRequest(
                         List.of(100L), "MARCAR_COMO_PAGO", 1L, MetodoPagamento.PIX, null)));
 
-        verify(pagamentoRepository, never()).findByIdAndEmpresaId(anyLong(), anyLong());
+        verify(pagamentoRepository, never()).findByIdAndEmpresaIdForUpdate(anyLong(), anyLong());
     }
 }

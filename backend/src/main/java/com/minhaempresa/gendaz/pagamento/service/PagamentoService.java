@@ -107,7 +107,7 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
-        PagamentoEntity pagamento = buscarEntidade(id);
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
@@ -128,7 +128,7 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
-        PagamentoEntity pagamento = buscarEntidade(id);
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         boolean ficouConfirmado = isPagamentoConfirmado(request.status());
@@ -629,6 +629,17 @@ public class PagamentoService {
     public PagamentoEntity buscarEntidade(Long id) {
         Long empresaId = CompanyContext.requireCompanyId();
         return pagamentoRepository.findByIdAndEmpresaId(id, empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
+    }
+
+    /**
+     * Carga com lock pessimista para transicoes que movimentam Caixa.
+     * Deve ser usada por todo caminho que confirma/estorna pagamento,
+     * para que duas confirmacoes concorrentes nao gerem dois lancamentos.
+     */
+    private PagamentoEntity buscarEntidadeParaAtualizacao(Long id) {
+        Long empresaId = CompanyContext.requireCompanyId();
+        return pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
     }
 

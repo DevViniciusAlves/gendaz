@@ -58,6 +58,8 @@ class CaixaDespesasServiceTest {
         empresa.setCaixaTotal(BigDecimal.ZERO);
         empresa.setDespesasTotal(BigDecimal.ZERO);
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
+        // Movimentacoes financeiras carregam a empresa com lock pessimista.
+        when(empresaRepository.findByIdWithLock(1L)).thenReturn(Optional.of(empresa));
 
         UsuarioEntity usuario = new UsuarioEntity();
         usuario.setId(5L);

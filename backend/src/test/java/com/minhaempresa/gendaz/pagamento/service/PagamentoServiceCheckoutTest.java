@@ -223,13 +223,13 @@ class PagamentoServiceCheckoutTest {
     @Test
     void marcarPagoDeOutraEmpresaDeveFalharSemAlterarPagamento() {
         CompanyContext.setCompanyId(1L);
-        when(pagamentoRepository.findByIdAndEmpresaId(100L, 1L)).thenReturn(Optional.empty());
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(100L, 1L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
                 () -> pagamentoService.marcarPago(100L,
                         new MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null)));
 
-        verify(pagamentoRepository).findByIdAndEmpresaId(100L, 1L);
+        verify(pagamentoRepository).findByIdAndEmpresaIdForUpdate(100L, 1L);
         verify(pagamentoRepository, never()).save(any(PagamentoEntity.class));
         verify(formaPagamentoEmpresaService, never()).validarPagamentoManual(anyLong(), any(), any());
     }

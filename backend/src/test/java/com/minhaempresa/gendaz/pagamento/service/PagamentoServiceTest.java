@@ -98,7 +98,7 @@ class PagamentoServiceTest {
                 .dataPagamento(LocalDateTime.of(2026, 8, 10, 10, 0))
                 .build();
 
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L)))
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L)))
                 .thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -127,7 +127,7 @@ class PagamentoServiceTest {
                 .dataPagamento(dataPagamentoOriginal)
                 .build();
 
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L)))
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L)))
                 .thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -154,7 +154,7 @@ class PagamentoServiceTest {
                 .dataPagamento(LocalDateTime.of(2026, 8, 10, 10, 0))
                 .build();
 
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L)))
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L)))
                 .thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -182,7 +182,7 @@ class PagamentoServiceTest {
                 .dataPagamento(LocalDateTime.of(2026, 8, 10, 10, 0))
                 .build();
 
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L)))
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L)))
                 .thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(usuarioAutenticadoProvider.exigirUsuarioId()).thenReturn(1L);
@@ -209,7 +209,7 @@ class PagamentoServiceTest {
                 .dataPagamento(LocalDateTime.of(2026, 8, 10, 10, 0))
                 .build();
 
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L)))
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L)))
                 .thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
@@ -295,7 +295,7 @@ class PagamentoServiceTest {
     @Test
     void marcarPagoPendenteParaPagoRegistraEntradaNoCaixaUmaVez() {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, null)).thenReturn(null);
@@ -312,7 +312,7 @@ class PagamentoServiceTest {
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setMetodoPagamento(MetodoPagamento.PIX);
         pagamento.setDataPagamento(LocalDateTime.now());
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, null)).thenReturn(null);
@@ -329,7 +329,7 @@ class PagamentoServiceTest {
         pagamento.setStatus(StatusPagamento.PAGO);
         pagamento.setMetodoPagamento(MetodoPagamento.PIX);
         pagamento.setDataPagamento(LocalDateTime.now());
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO));
@@ -343,7 +343,7 @@ class PagamentoServiceTest {
         pagamento.setStatus(StatusPagamento.CANCELADO);
         pagamento.setMetodoPagamento(MetodoPagamento.PIX);
         pagamento.setDataPagamento(LocalDateTime.now());
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO));
@@ -354,7 +354,7 @@ class PagamentoServiceTest {
     @Test
     void pendenteParaPendenteNaoMexeNoCaixa() {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
@@ -368,7 +368,7 @@ class PagamentoServiceTest {
     void pagamentoDeOutraEmpresaNaoPodeSerConfirmadoNemAlterarCaixa() {
         // CompanyContext = 9L (empresa A). Pagamento 1 pertence a outra empresa:
         // o repositorio isolado por empresa nao o retorna, logo nada pode ser alterado.
-        when(pagamentoRepository.findByIdAndEmpresaId(eq(1L), eq(9L))).thenReturn(Optional.empty());
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.empty());
 
         org.junit.jupiter.api.Assertions.assertThrows(
                 com.minhaempresa.gendaz.shared.ResourceNotFoundException.class,

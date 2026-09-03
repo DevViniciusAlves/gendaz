@@ -59,6 +59,16 @@ public class CaixaDespesasService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
     }
 
+    /**
+     * Carga com lock pessimista para movimentacoes financeiras. Serializa
+     * atualizacoes concorrentes de caixaTotal/despesasTotal da mesma empresa,
+     * evitando perda de update quando duas confirmacoes disputam o saldo.
+     */
+    private EmpresaEntity carregarEmpresaComLock(Long empresaId) {
+        return empresaRepository.findByIdWithLock(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+    }
+
     private UsuarioEntity carregarUsuario(Long usuarioId) {
         return usuarioId == null ? null : usuarioRepository.findById(usuarioId).orElse(null);
     }
@@ -180,7 +190,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoAprovado(PagamentoEntity pagamento) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
@@ -194,7 +204,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoRemovido(PagamentoEntity pagamento, Long usuarioId) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
@@ -209,7 +219,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoCancelado(PagamentoEntity pagamento, Long usuarioId, StatusPagamento statusAnterior) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }

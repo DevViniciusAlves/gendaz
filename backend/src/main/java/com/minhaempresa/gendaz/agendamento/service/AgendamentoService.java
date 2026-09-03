@@ -98,7 +98,7 @@ public class AgendamentoService {
         try {
             EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
             ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
-            ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
+            ServicoEntity servico = servicoService.buscarEntidadeOperacional(request.servicoId());
             ProfissionalEntity profissional = request.profissionalId() == null
                     ? profissionalParaSemPreferencia(empresa, request.data())
                     : profissionalService.buscarEntidade(request.profissionalId());
@@ -161,19 +161,10 @@ public class AgendamentoService {
             final EmpresaEntity empresaFinal = empresa;
             final ServicoEntity servicoFinal = servico;
             final ProfissionalEntity profissionalFinal = profissional;
-            try {
-                transactionTemplate.executeWithoutResult(status -> {
-                    criarPagamentoPendente(agendamentoFinal, clienteFinal, empresaFinal);
-                });
-            } catch (Exception e) {
-                Map<String, Object> contextoPagamentoErro = new LinkedHashMap<>();
-                contextoPagamentoErro.put("agendamentoId", agendamentoFinal.getId());
-                contextoPagamentoErro.put("empresaId", empresaFinal.getId());
-                contextoPagamentoErro.put("clienteId", clienteFinal.getId());
-                contextoPagamentoErro.put("servicoId", servicoFinal.getId());
-                contextoPagamentoErro.put("profissionalId", profissionalFinal.getId());
-                log.warn("[agendamento-debug] falha ao criar pagamento pendente. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoPagamentoErro);
-            }
+            // Pagamento criado na MESMA transacao do agendamento: se falhar,
+            // o agendamento sofre rollback e nao persiste estado parcial
+            // (agendamento sem o pagamento obrigatorio). Nao engolir excecao.
+            criarPagamentoPendente(agendamentoFinal, clienteFinal, empresaFinal);
             try {
                 transactionTemplate.executeWithoutResult(status -> {
                     resendEmailService.enviarEmailNovoAgendamento(empresaFinal, agendamentoFinal);
@@ -257,7 +248,7 @@ public class AgendamentoService {
 
     @Transactional(readOnly = true)
     public List<String> horariosDisponiveis(Long empresaId, Long profissionalId, Long servicoId, LocalDate data) {
-        ServicoEntity servico = servicoService.buscarEntidade(servicoId);
+        ServicoEntity servico = servicoService.buscarEntidadeOperacional(servicoId);
         ProfissionalEntity profissional = null;
         boolean empresaSemProfissionaisReais = false;
 
@@ -381,23 +372,79 @@ public class AgendamentoService {
         return response;
     }
 
+    /**
+     * Cancelamento self-service (Meu Gendaz). O clienteId deve sempre vir da
+     * sessao autenticada, nunca do body. Mesma prova de propriedade do
+     * remarcarParaCliente: empresa + cliente validados atomicamente.
+     */
+    @Transactional
+    public AgendamentoResponse cancelarParaCliente(Long id, Long empresaId, Long clienteId) {
+        AgendamentoEntity agendamento = buscarParaCliente(id, empresaId, clienteId);
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
+        try {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
+        } catch (Exception e) {
+            log.warn("[agendamento-debug] falha ao registrar log de cancelamento. erroTipo={}", e.getClass().getSimpleName());
+        }
+        return response;
+    }
+
+    /**
+     * Exclusao operacional de agendamento — nunca destroi historico financeiro.
+     * Regra:
+     * - Sem pagamento vinculado e nao FINALIZADO: remocao fisica segura
+     *   (nada financeiro/orcamentario depende do registro).
+     * - Qualquer outro caso (pagamento PENDENTE/PAGO/CANCELADO vinculado,
+     *   ou agendamento FINALIZADO): cancelamento logico (status CANCELADO).
+     *   O pagamento PAGO permanece intacto (receita/caixa preservados) e o
+     *   PENDENTE e cancelado (sai da cobranca). Consultas operacionais ja
+     *   excluem CANCELADO; historico financeiro permanece auditavel.
+     */
     @Transactional
     public void excluir(Long id, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidade(id);
         validarEmpresa(agendamento, empresaId);
-        // lembretePagamentoRepository.deleteByAgendamento_Id(id);
-        pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId());
+        boolean temPagamento = pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).isPresent();
+        boolean finalizado = agendamento.getStatus() == StatusAgendamento.FINALIZADO;
+        if (!temPagamento && !finalizado) {
+            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
+            agendamentoRepository.delete(agendamento);
+            return;
+        }
+        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        agendamentoRepository.save(agendamento);
+        pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
-        agendamentoRepository.delete(agendamento);
     }
 
+    /**
+     * Finalizacao de agendamento — unica fonte de verdade do dominio.
+     * Usada pelo endpoint individual, pelo Meu Gendaz (via fluxos internos)
+     * e pelas operacoes em massa. Regras formais de transicao financeira:
+     *
+     * - Agendamento ja FINALIZADO nao pode ser finalizado novamente
+     *   (bloqueio server-side; nao depende da UI).
+     * - PENDENTE -> PAGO registra entrada no Caixa UMA unica vez.
+     * - PAGO -> PAGO nao registra novamente (idempotente).
+     * - PAGO -> PENDENTE via finalizacao e BLOQUEADO: dinheiro ja registrado
+     *   nao pode sumir implicitamente. O desfazimento exige a operacao
+     *   financeira explicita (atualizacao de status do pagamento com estorno).
+     */
     @Transactional
     public AgendamentoResponse finalizar(Long id, Boolean pagamentoRealizado, MetodoPagamento metodoPagamento, Integer parcelas) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        if (agendamento.getStatus() == StatusAgendamento.FINALIZADO) {
+            throw new BusinessException("Agendamento ja finalizado.");
+        }
+        boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
         agendamento.setStatus(StatusAgendamento.FINALIZADO);
-        pagamentoRepository.findByAgendamentoIdAndEmpresaId(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
-            boolean pago = pagamentoRealizado == null || Boolean.TRUE.equals(pagamentoRealizado);
+        pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).ifPresentOrElse(pagamento -> {
             StatusPagamento statusAnterior = pagamento.getStatus();
+            if (!pago && statusAnterior == StatusPagamento.PAGO) {
+                throw new BusinessException("Pagamento ja confirmado. Utilize a operacao de estorno/correcao do pagamento em vez de finalizar como nao pago.");
+            }
             if (pago) {
                 formaPagamentoEmpresaService.validarPagamentoManual(agendamento.getEmpresa().getId(), metodoPagamento, parcelas);
                 MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(metodoPagamento);
@@ -462,32 +509,32 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
-        int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
-        LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
-        validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
-        validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
-        validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
-
-        agendamento.setData(request.data());
-        agendamento.setHoraInicio(request.horaInicio());
-        agendamento.setHoraFim(horaFim);
-        validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
-        agendamento.setStatus(StatusAgendamento.PENDENTE);
-        AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
-        try {
-            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
-        } catch (Exception e) {
-            log.warn("[agendamento-debug] falha ao registrar log de reagendamento. erroTipo={}", e.getClass().getSimpleName());
-        }
-        return response;
+        return aplicarRemarcacao(agendamento, request);
     }
 
     @Transactional
     public AgendamentoResponse remarcar(Long id, RemarcarAgendamentoRequest request, Long empresaId) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
         validarEmpresa(agendamento, empresaId);
+        return aplicarRemarcacao(agendamento, request);
+    }
+
+    /**
+     * Remarcacao self-service (Meu Gendaz). O clienteId deve sempre vir da
+     * sessao autenticada, nunca do body. Valida empresa E propriedade do
+     * agendamento de forma atomica para impedir IDOR/BOLA entre clientes
+     * da mesma empresa. Nao vaza o proprietario real em caso de falha.
+     */
+    @Transactional
+    public AgendamentoResponse remarcarParaCliente(Long id, RemarcarAgendamentoRequest request, Long empresaId, Long clienteId) {
+        AgendamentoEntity agendamento = buscarParaCliente(id, empresaId, clienteId);
+        return aplicarRemarcacao(agendamento, request);
+    }
+
+    private AgendamentoResponse aplicarRemarcacao(AgendamentoEntity agendamento, RemarcarAgendamentoRequest request) {
         int duracao = agendamento.getServico().getDuracaoMinutos() != null ? agendamento.getServico().getDuracaoMinutos() : 30;
         LocalTime horaFim = request.horaInicio().plusMinutes(duracao);
+        validarProfissionalAgendamento(agendamento.getEmpresa(), agendamento.getProfissional(), request.data());
         validarDataHorario(agendamento.getEmpresa().getId(), request.data(), request.horaInicio(), horaFim);
         validarDiaBloqueado(agendamento.getEmpresa().getId(), agendamento.getProfissional().getId(), request.data());
         agendamento.setData(request.data());
@@ -504,11 +551,35 @@ public class AgendamentoService {
         return response;
     }
 
+    /**
+     * Carga com prova de propriedade para fluxos self-service (Meu Gendaz).
+     * Exige simultaneamente: agendamento existe AND pertence a empresa AND
+     * pertence ao cliente autenticado. Qualquer divergencia retorna
+     * "nao encontrado", sem revelar se o ID existe ou quem e o dono.
+     */
+    private AgendamentoEntity buscarParaCliente(Long id, Long empresaId, Long clienteId) {
+        AgendamentoEntity agendamento = agendamentoRepository.findByIdAndEmpresaIdAndClienteId(id, empresaId, clienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("Agendamento nao encontrado."));
+        if (agendamento.getCliente() != null
+                && agendamento.getCliente().getStatus()
+                        == com.minhaempresa.gendaz.shared.enums.StatusCadastro.EXCLUIDO) {
+            throw new BusinessException("Agendamento de cliente excluido não pode ser acessado operacionalmente.");
+        }
+        return agendamento;
+    }
+
     @Transactional
     public AgendamentoResponse atualizar(Long id, AtualizarAgendamentoRequest request) {
         AgendamentoEntity agendamento = buscarEntidadeOperacional(id);
+        // FINALIZADO so pode ser alcancado pelo endpoint de finalizacao, que
+        // aplica pagamento/Caixa/idempotencia. A edicao nao possui os dados
+        // de recebimento e nao pode inventa-los nem pular as regras.
+        if (request.status() == StatusAgendamento.FINALIZADO
+                && agendamento.getStatus() != StatusAgendamento.FINALIZADO) {
+            throw new BusinessException("Para finalizar um atendimento, utilize a acao Finalizar informando o pagamento.");
+        }
         ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
-        ServicoEntity servico = servicoService.buscarEntidade(request.servicoId());
+        ServicoEntity servico = servicoService.buscarEntidadeOperacional(request.servicoId());
         ProfissionalEntity profissional = profissionalService.buscarEntidade(request.profissionalId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
 

@@ -816,8 +816,8 @@ export const appApi = {
     })
   },
 
-  acaoEmMassaAgendamentos(ids, acao) {
-    return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
+  acaoEmMassaAgendamentos(ids, acao, extra = {}) {
+    return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
       loading: 'Processando agendamentos... aguarde',
       success: 'Agendamentos processados com sucesso.',
       error: 'Não foi possível processar os agendamentos.',

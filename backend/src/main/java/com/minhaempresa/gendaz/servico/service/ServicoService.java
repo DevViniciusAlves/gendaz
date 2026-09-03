@@ -116,16 +116,26 @@ public class ServicoService {
         return response;
     }
 
+    /**
+     * Exclusao de servico sem destruir historico financeiro.
+     * - Sem nenhum agendamento vinculado: remocao fisica segura.
+     * - Com agendamento/historico: INATIVACAO. Os agendamentos e pagamentos
+     *   permanecem intactos (receita, caixa e relatorios preservados); o
+     *   servico apenas deixa de estar disponivel para novos agendamentos
+     *   (a busca operacional exige ATIVO).
+     */
     @Transactional
     public ServicoResponse excluirOuInativar(Long id, Long empresaId) {
         ServicoEntity servico = buscarEntidade(id);
         validarEmpresa(servico, empresaId);
         Long empresaIdResolvido = servico.getEmpresa().getId();
-        agendamentoRepository.findByServicoId(id).forEach(agendamento -> {
-            pagamentoRepository.deleteByAgendamentoIdAndEmpresaId(agendamento.getId(), empresaIdResolvido);
-            agendamentoRepository.delete(agendamento);
-        });
-        servicoRepository.flush();
+        if (agendamentoRepository.existsByServicoId(id)) {
+            servico.setStatus(StatusCadastro.INATIVO);
+            ServicoResponse response = mapper.toResponse(servicoRepository.save(servico));
+            ramoDeteccaoService.sincronizarRamoDaEmpresa(empresaIdResolvido);
+            logAtividadeService.registrar("SERVICO", id, "Inativou serviço " + servico.getNome() + " (possui historico de agendamentos)");
+            return response;
+        }
         servicoRepository.delete(servico);
         servicoRepository.flush();
         ramoDeteccaoService.sincronizarRamoDaEmpresa(empresaIdResolvido);
@@ -138,6 +148,22 @@ public class ServicoService {
         ServicoEntity servico = servicoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Servico nao encontrado."));
         validarEmpresaAtual(servico.getEmpresa().getId());
+        return servico;
+    }
+
+    /**
+     * Busca operacional para NOVOS agendamentos/alteracoes de servico.
+     * Exige servico ATIVO alem de existencia + tenant. Frontend esconder
+     * inativo nao e protecao: a regra e server-side.
+     * A busca historica (buscarEntidade) continua aceitando INATIVO para
+     * nao quebrar a leitura de atendimentos antigos.
+     */
+    @Transactional(readOnly = true)
+    public ServicoEntity buscarEntidadeOperacional(Long id) {
+        ServicoEntity servico = buscarEntidade(id);
+        if (servico.getStatus() != StatusCadastro.ATIVO) {
+            throw new com.minhaempresa.gendaz.shared.BusinessException("Servico indisponivel para novos agendamentos.");
+        }
         return servico;
     }
 

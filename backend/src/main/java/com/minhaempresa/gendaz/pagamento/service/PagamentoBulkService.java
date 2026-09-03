@@ -45,9 +45,14 @@ public class PagamentoBulkService {
         int processados = 0;
         for (Long id : idsUnicos) {
             try {
-                PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaId(id, companyId)
+                PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, companyId)
                         .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
                 StatusPagamento statusAnterior = pagamento.getStatus();
+                // EXCLUIR nunca apaga historico financeiro: pagamento confirmado
+                // (PAGO) e bloqueado e vira falha do item, com orientacao para o
+                // fluxo explicito de cancelamento/estorno. Pendente vira CANCELADO
+                // (cancelamento logico, sem movimentar Caixa porque nada foi
+                // registrado). Todo caminho passa pelo save + regras de Caixa abaixo.
                 switch (acao) {
                     case "MARCAR_COMO_PAGO" -> {
                         formaPagamentoEmpresaService.validarPagamentoManual(companyId, request.metodoPagamento(), request.parcelas());
@@ -64,9 +69,12 @@ public class PagamentoBulkService {
                         pagamento.setDataPagamento(null);
                     }
                     case "EXCLUIR" -> {
-                        pagamentoRepository.delete(pagamento);
-                        processados++;
-                        continue;
+                        if (statusAnterior == StatusPagamento.PAGO) {
+                            throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
+                        }
+                        if (statusAnterior == StatusPagamento.PENDENTE || statusAnterior == StatusPagamento.PAYMENT_PENDING) {
+                            pagamento.setStatus(StatusPagamento.CANCELADO);
+                        }
                     }
                     default -> throw new BusinessException("Acao de pagamento nao suportada.");
                 }

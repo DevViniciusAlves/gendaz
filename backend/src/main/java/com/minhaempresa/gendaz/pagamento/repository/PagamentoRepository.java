@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -19,6 +20,25 @@ import org.springframework.transaction.annotation.Transactional;
 public interface PagamentoRepository extends JpaRepository<PagamentoEntity, Long> {
     @EntityGraph(attributePaths = {"cliente", "empresa", "agendamento"})
     Optional<PagamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
+
+    /**
+     * Carga com lock pessimista de escrita para transicoes financeiras
+     * (confirmar/estornar). Serializa confirmacoes concorrentes do mesmo
+     * pagamento: a segunda transacao enxerga o status ja atualizado pela
+     * primeira e o guard de idempotencia impede o segundo lancamento.
+     */
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PagamentoEntity p where p.id = :id and p.empresa.id = :empresaId")
+    Optional<PagamentoEntity> findByIdAndEmpresaIdForUpdate(@Param("id") Long id, @Param("empresaId") Long empresaId);
+
+    /**
+     * Mesmo lock acima, para o caminho AgendamentoService.finalizar que
+     * localiza o pagamento pelo agendamento.
+     */
+    @Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("select p from PagamentoEntity p where p.agendamento.id = :agendamentoId and p.empresa.id = :empresaId")
+    Optional<PagamentoEntity> findByAgendamentoIdAndEmpresaIdForUpdate(
+            @Param("agendamentoId") Long agendamentoId, @Param("empresaId") Long empresaId);
 
     // Métodos originais que retornam entidades para compatibilidade
     // Sem @EntityGraph: a carga da associação cliente é lazy e as queries com projeção

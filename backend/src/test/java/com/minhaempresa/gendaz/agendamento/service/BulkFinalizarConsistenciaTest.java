@@ -2,10 +2,8 @@ package com.minhaempresa.gendaz.agendamento.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -16,9 +14,13 @@ import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
+import com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento;
+import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.pagamento.service.PagamentoService;
 import com.minhaempresa.gendaz.shared.CompanyContext;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -30,19 +32,24 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
+/**
+ * Parte 3 — bulk FINALIZAR reutiliza a mesma regra do fluxo individual.
+ * Sem parametros de pagamento, nunca inventa recebimento.
+ */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class AgendamentoBulkServiceTest {
+class BulkFinalizarConsistenciaTest {
     @Mock AgendamentoRepository agendamentoRepository;
     @Mock PagamentoRepository pagamentoRepository;
     @Mock PagamentoService pagamentoService;
     @Mock AgendamentoService agendamentoService;
     @Mock LogAtividadeService logAtividadeService;
-    AgendamentoBulkService service;
+    AgendamentoBulkService bulk;
 
     @BeforeEach
     void setup() {
-        service = new AgendamentoBulkService(agendamentoRepository, pagamentoRepository, pagamentoService, agendamentoService, logAtividadeService);
+        bulk = new AgendamentoBulkService(
+                agendamentoRepository, pagamentoRepository, pagamentoService, agendamentoService, logAtividadeService);
         CompanyContext.setCompanyId(1L);
     }
 
@@ -60,42 +67,42 @@ class AgendamentoBulkServiceTest {
     }
 
     @Test
-    void cancelarEmMassaCancelaAgendamentosEPagamentosPendentes() {
+    void finalizarEmMassaSemParametrosNaoInventaRecebimento() {
         when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
-        when(agendamentoRepository.findById(2L)).thenReturn(Optional.of(agendamento(2L)));
-        when(agendamentoRepository.findById(3L)).thenReturn(Optional.of(agendamento(3L)));
-        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
+                PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
+                        .status(StatusPagamento.PENDENTE).build()));
 
-        var response = service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L, 2L, 3L), "CANCELAR", 1L));
+        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "FINALIZAR", 1L));
 
-        assertEquals(3, response.totalProcessado());
-        assertEquals(0, response.falhas().size());
-        verify(pagamentoService, times(3)).cancelarPagamentoPendenteDoAgendamento(anyLong(), anyLong());
+        assertEquals(1, response.totalProcessado());
+        // Pagamento pendente -> finaliza SEM pagamento (false), nunca PAGO implicito.
+        verify(agendamentoService).finalizar(eq(1L), eq(false), eq(null), eq(null));
     }
 
     @Test
-    void cancelarEmMassaComPagamentoPagoChamaRegularizacaoUmaVezPorItem() {
+    void finalizarEmMassaPreservaPagoJaConfirmadoSemDuplicarCaixa() {
         when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
-        when(agendamentoRepository.findById(2L)).thenReturn(Optional.of(agendamento(2L)));
-        when(agendamentoRepository.findById(3L)).thenReturn(Optional.of(agendamento(3L)));
-        when(agendamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaId(1L, 1L)).thenReturn(Optional.of(
+                PagamentoEntity.builder().id(9L).valor(new BigDecimal("100.00"))
+                        .metodoPagamento(MetodoPagamento.PIX)
+                        .status(StatusPagamento.PAGO).build()));
 
-        var response = service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L, 2L, 3L), "CANCELAR", 1L));
+        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "FINALIZAR", 1L));
 
-        assertEquals(3, response.totalProcessado());
-        // A regra de "pagamento PAGO permanece PAGO" e garantida dentro do PagamentoService.
-        // Aqui garantimos que o bulk chama a regularizacao para cada agendamento cancelado.
-        verify(pagamentoService, times(3)).cancelarPagamentoPendenteDoAgendamento(anyLong(), eq(1L));
+        assertEquals(1, response.totalProcessado());
+        verify(agendamentoService).finalizar(eq(1L), eq(true), eq(MetodoPagamento.PIX), eq(null));
     }
 
     @Test
-    void cancelarEmMassaNaoCancelaPagamentoDeOutraEmpresa() {
+    void finalizarEmMassaComParametrosExplicitosRepassaTudo() {
         when(agendamentoRepository.findById(1L)).thenReturn(Optional.of(agendamento(1L)));
 
-        org.junit.jupiter.api.Assertions.assertThrows(
-                com.minhaempresa.gendaz.shared.BusinessException.class,
-                () -> service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "CANCELAR", 99L)));
+        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(
+                List.of(1L), "FINALIZAR", 1L, true, MetodoPagamento.DINHEIRO, null));
 
-        verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(anyLong(), anyLong());
+        assertEquals(1, response.totalProcessado());
+        verify(agendamentoService).finalizar(eq(1L), eq(true), eq(MetodoPagamento.DINHEIRO), eq(null));
+        verify(pagamentoRepository, never()).findByAgendamentoIdAndEmpresaId(any(), any());
     }
 }
