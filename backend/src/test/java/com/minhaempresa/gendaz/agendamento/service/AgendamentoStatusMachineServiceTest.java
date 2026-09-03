@@ -139,13 +139,15 @@ class AgendamentoStatusMachineServiceTest {
     }
 
     @Test
-    void iniciarSomenteConfirmado() {
-        AgendamentoEntity confirmado = agendamento(2L, StatusAgendamento.CONFIRMADO);
-        carregar(confirmado);
-        agendamentoService.iniciar(2L);
-        assertEquals(StatusAgendamento.EM_ATENDIMENTO, confirmado.getStatus());
+    void iniciarSomentePendenteOuConfirmado() {
+        for (StatusAgendamento permitido : List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO)) {
+            AgendamentoEntity ag = agendamento(2L, permitido);
+            carregar(ag);
+            agendamentoService.iniciar(2L);
+            assertEquals(StatusAgendamento.EM_ATENDIMENTO, ag.getStatus());
+        }
 
-        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.PENDENTE, StatusAgendamento.PAUSADO,
+        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO,
                 StatusAgendamento.FINALIZADO, StatusAgendamento.CANCELADO)) {
             AgendamentoEntity ag = agendamento(2L, bloqueado);
             carregar(ag);

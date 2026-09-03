@@ -62,9 +62,9 @@ public final class TransicaoStatusAgendamento {
         throw new BusinessException("Somente agendamentos pendentes podem ser confirmados.");
     }
 
-    /** CONFIRMADO -> EM_ATENDIMENTO (acao iniciar). */
+    /** CONFIRMADO ou PENDENTE -> EM_ATENDIMENTO (acao iniciar). */
     public static void exigirInicio(StatusAgendamento atual) {
-        if (atual == StatusAgendamento.CONFIRMADO) {
+        if (atual == StatusAgendamento.CONFIRMADO || atual == StatusAgendamento.PENDENTE) {
             return;
         }
         if (atual == StatusAgendamento.EM_ATENDIMENTO) {
@@ -72,9 +72,6 @@ public final class TransicaoStatusAgendamento {
         }
         if (atual == StatusAgendamento.PAUSADO) {
             throw new BusinessException("Atendimento pausado deve ser retomado pela acao Retomar.");
-        }
-        if (atual == StatusAgendamento.PENDENTE) {
-            throw new BusinessException("Confirme o agendamento antes de iniciar o atendimento.");
         }
         if (atual == StatusAgendamento.FINALIZADO) {
             throw new BusinessException("Agendamento finalizado nao pode ser iniciado. Para corrigir uma finalizacao, utilize Reabrir atendimento.");

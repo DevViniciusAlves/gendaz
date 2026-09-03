@@ -113,13 +113,7 @@ export default function AgendaCard({
         <span className="agenda-card-horario-texto">{formatarData(agendamento.data)} · {agendamento.horaInicio} – {horaFim}</span>
       </div>
 
-      {status === 'PENDENTE' && onConfirmar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onConfirmar(agendamento)} type="button" disabled={carregandoTipo('confirmar')}>
-          {carregandoTipo('confirmar') ? <><Loader className="spin" size={17} /> Confirmando...</> : 'Confirmar agendamento'}
-        </button>
-      )}
-
-      {status === 'CONFIRMADO' && onIniciar && (
+      {(status === 'PENDENTE' || status === 'CONFIRMADO') && onIniciar && (
         <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={carregandoTipo('iniciar')}>
           {carregandoTipo('iniciar') ? <><Loader className="spin" size={17} /> Iniciando atendimento</> : 'Iniciar Atendimento'}
         </button>

@@ -31,14 +31,14 @@ class TransicaoStatusAgendamentoTest {
     }
 
     @Test
-    void pendenteNaoFinalizaNemPausaNemIniciaPeloEditar() {
+    void pendenteNaoFinalizaNemPausaPeloEditar() {
         assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
                 StatusAgendamento.PENDENTE, StatusAgendamento.FINALIZADO));
         assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
                 StatusAgendamento.PENDENTE, StatusAgendamento.EM_ATENDIMENTO));
         assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
                 StatusAgendamento.PENDENTE, StatusAgendamento.PAUSADO));
-        assertThrows(BusinessException.class,
+        assertDoesNotThrow(
                 () -> TransicaoStatusAgendamento.exigirInicio(StatusAgendamento.PENDENTE));
         assertThrows(BusinessException.class,
                 () -> TransicaoStatusAgendamento.exigirFinalizacao(StatusAgendamento.PENDENTE));
