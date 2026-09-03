@@ -29,7 +29,7 @@ public class AssinaturaService {
     private final AssinaturaRepository assinaturaRepository;
     private final AssinaturaMapper mapper = new AssinaturaMapper();
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AssinaturaResponse> listarPorEmpresa(Long empresaId) {
         validarEmpresaAtual(empresaId);
         LocalDate hoje = LocalDate.now();
@@ -73,7 +73,21 @@ public class AssinaturaService {
      */
     public List<AssinaturaEntity> buscarFilaAtiva(Long empresaId) {
         LocalDate hoje = LocalDate.now();
-        return assinaturaRepository.findByEmpresaId(empresaId).stream()
+        return calcularFilaAtiva(
+                assinaturaRepository.findByEmpresaId(empresaId),
+                hoje
+        );
+    }
+
+    /**
+     * Fila em memória a partir de uma lista já carregada. Nao exige
+     * dataInicio <= hoje (plano futuro permanece) e exclui TESTE sem dataFim.
+     */
+    private List<AssinaturaEntity> calcularFilaAtiva(
+            List<AssinaturaEntity> todas,
+            LocalDate hoje
+    ) {
+        return todas.stream()
                 .filter(a -> pertenceFilaValida(a, hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
@@ -286,19 +300,29 @@ public class AssinaturaService {
 
     private void processarExpiracaoEFila(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> todas = assinaturaRepository.findByEmpresaId(empresaId);
+        processarExpiracaoEFila(empresaId, hoje, todas);
+    }
 
+    private void processarExpiracaoEFila(
+            Long empresaId,
+            LocalDate hoje,
+            List<AssinaturaEntity> todas
+    ) {
         for (AssinaturaEntity a : todas) {
-            boolean expirou = false;
-            if (a.getStatus() == StatusAssinatura.ATIVA
-                    || a.getStatus() == StatusAssinatura.TESTE) {
-                if (a.getDataFim() == null) {
-                    // TESTE sem dataFim nunca deve ser eterno -> EXPIRADA.
-                    expirou = a.getStatus() == StatusAssinatura.TESTE;
-                } else {
-                    expirou = !a.getDataFim().isAfter(hoje);
-                }
-            }
-            if (expirou) {
+            boolean statusProcessavel =
+                    a.getStatus() == StatusAssinatura.ATIVA
+                    || a.getStatus() == StatusAssinatura.TESTE;
+
+            boolean testeSemDataFim =
+                    a.getStatus() == StatusAssinatura.TESTE
+                    && a.getDataFim() == null;
+
+            boolean venceu =
+                    statusProcessavel
+                    && a.getDataFim() != null
+                    && !a.getDataFim().isAfter(hoje);
+
+            if (testeSemDataFim || venceu) {
                 a.setStatus(StatusAssinatura.EXPIRADA);
                 assinaturaRepository.save(a);
             }
@@ -307,7 +331,7 @@ public class AssinaturaService {
         // Removido: transição PENDENTE_PAGAMENTO → ATIVA baseada apenas na data é incorreta.
         // Assinatura paga só pode ser ativada por pagamento aprovado ou acao administrativa explícita.
 
-        List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
+        List<AssinaturaEntity> fila = calcularFilaAtiva(todas, hoje);
         if (fila.isEmpty()) {
             todas.stream()
                     .map(AssinaturaEntity::getEmpresa)
