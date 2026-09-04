@@ -16,8 +16,9 @@ export function useInsights() {
   const dashboard = dashboardAtual || dashboardBase
   const semSnapshot = !loading && !dashboard
   const historico = useMemo(() => {
-    if (Array.isArray(data?.historico)) return data.historico
-    return data?.mensagens || []
+    const bruto = Array.isArray(data?.historico) ? data.historico : (data?.mensagens || [])
+    // Defesa: o chat exibe somente conversa real (tipo "pergunta").
+    return bruto.filter((item) => !item?.tipo || item.tipo === 'pergunta')
   }, [data])
 
   const analisar = useCallback(async (pergunta, historicoChat = []) => {

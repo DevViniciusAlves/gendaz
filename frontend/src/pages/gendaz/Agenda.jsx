@@ -14,6 +14,29 @@ function diaSemanaIso(data) {
 }
 
 
+function dataLocalIso(agora = new Date()) {
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`
+}
+
+function hojeNoFuso(fuso) {
+  if (!fuso) return dataLocalIso()
+  try {
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: fuso,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date()).reduce((acc, part) => {
+      if (part.type !== 'literal') acc[part.type] = part.value
+      return acc
+    }, {})
+    if (!partes.year || !partes.month || !partes.day) return dataLocalIso()
+    return `${partes.year}-${partes.month}-${partes.day}`
+  } catch {
+    return dataLocalIso()
+  }
+}
+
 function trabalhaNaData(profissional, data) {
   const dia = diaSemanaIso(data)
   return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
@@ -21,13 +44,15 @@ function trabalhaNaData(profissional, data) {
 
 function NovoAgendamentoModal({ onFechar, onCriar }) {
 
-  const { servicos, profissionais } = useContext(ClienteGendazContext)
+  const { servicos, profissionais, empresaTimezone } = useContext(ClienteGendazContext)
   const location = useLocation()
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [horarios, setHorarios] = useState([])
-  const hoje = new Date()
-  const dataHoje = hoje.toISOString().slice(0, 10)
-  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observações: '', cupomCodigo: '' })
+  // "Hoje" no timezone da clinica (via /meu-gendaz/perfil, fallback dispositivo).
+  // Ex.: clinica em America/Sao_Paulo dia 04/09 22:30 com cliente em Lisbon
+  // (05/09 02:30) abre o formulario em 04/09, igual ao backend.
+  const dataHoje = hojeNoFuso(empresaTimezone)
+  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
   const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
@@ -161,14 +186,14 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           )}
           <label>
             <span>Observações (opcional)</span>
-            <textarea value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} placeholder="Alguma observação..." />
+            <textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Alguma observação..." />
           </label>
           <label>
             <span>Adicionar cupom</span>
             <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
               <option value="">Sem cupom</option>
               {cuponsAplicaveis.map((cupom) => (
-                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descrição}</option>
+                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao ?? cupom.descrição}</option>
               ))}
             </select>
           </label>
@@ -260,8 +285,11 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
   )
 }
 
+function podeAlterarAgendamento(status) {
+  return ['PENDENTE', 'CONFIRMADO'].includes(status)
+}
+
 function CancelarModal({ agendamento, onFechar, onCancelar }) {
-  const [motivo, setMotivo] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -270,7 +298,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
     setErro('')
     try {
       setSalvando(true)
-      await onCancelar(agendamento.id, motivo || 'Cancelamento pelo cliente')
+      await onCancelar(agendamento.id)
       onFechar()
     } catch (err) {
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao cancelar.')
@@ -289,10 +317,6 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
         {erro && <p className="gendaz-auth__error">{erro}</p>}
         <form className="gendaz-modal__form" onSubmit={handleSubmit}>
           <p>Tem certeza que deseja cancelar o agendamento de <strong>{agendamento.servicoNome || agendamento.servico || 'Serviço'}</strong>?</p>
-          <label>
-            <span>Motivo (opcional)</span>
-            <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Informe o motivo do cancelamento..." />
-          </label>
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Voltar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--danger" disabled={salvando}>
@@ -372,6 +396,7 @@ export default function Agenda() {
                 </div>
               </div>
 
+              {podeAlterarAgendamento(item.status) && (
               <div className="gendaz-card__actions gendaz-agenda-actions">
                 <button className="gendaz-btn" type="button" onClick={() => setModalReagendar(item)}>
                   <RotateCw size={16} /> Reagendar
@@ -380,6 +405,7 @@ export default function Agenda() {
                   <X size={16} /> Cancelar
                 </button>
               </div>
+              )}
             </article>
           ))
         ) : (

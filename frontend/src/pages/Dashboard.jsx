@@ -11,105 +11,12 @@ import { useAuth } from '../contexts/AuthContext.jsx'
 import { useLocalData } from '../hooks/useLocalData.js'
 import { currency, PLANOS, todayIso } from '../services/localStore.js'
 
-const STATUS_PAGAMENTO_CONFIRMADO = new Set([
-  'PAGO',
-  'PAGA',
-  'CONFIRMADO',
-  'CONFIRMADA',
-  'APROVADO',
-  'APPROVED',
-  'PAID',
-  'PAYMENT_APPROVED',
-  'PURCHASE_APPROVED',
-])
-
-function diasDoMesAtual() {
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
-}
-
-function normalizarStatusPagamento(status) {
-  return String(status || '').toUpperCase()
-}
-
-function pagamentoConfirmado(status) {
-  return STATUS_PAGAMENTO_CONFIRMADO.has(normalizarStatusPagamento(status))
-}
-
-function extrairDataReceita(pagamento) {
-  return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
-}
-
-function buildReceitaMes(pagamentos) {
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  const dias = diasDoMesAtual()
-  const mapaReceita = {}
-
-  pagamentos.forEach((p) => {
-    if (!pagamentoConfirmado(p.status)) return
-    const dia = extrairDataReceita(p)
-    if (!dia) return
-    if (!dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
-    mapaReceita[dia] = (mapaReceita[dia] || 0) + Number(p.valor || 0)
-  })
-
-  const resultado = []
-  const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1, 12, 0, 0, 0)
-  for (let i = 0; i < dias; i++) {
-    const data = new Date(inicioMes)
-    data.setDate(data.getDate() + i)
-    const iso = data.toISOString().slice(0, 10)
-    const label = data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    resultado.push({ iso, label, valor: mapaReceita[iso] || 0 })
-  }
-  return resultado
-}
-
 function normalizarReceitaDias(dados) {
   return (dados || []).map((item) => ({
     iso: item.iso || item.data || '',
     label: item.label || String(item.data || '').slice(8, 10) || '',
     valor: Number(item.valor || 0),
   }))
-}
-
-function combinarReceitaMensal(base, alternativa) {
-  const mapa = new Map()
-  ;(alternativa || []).forEach((item) => {
-    if (!item?.iso) return
-    mapa.set(item.iso, { ...item, valor: Number(item.valor || 0) })
-  })
-  ;(base || []).forEach((item) => {
-    if (!item?.iso) return
-    const atual = mapa.get(item.iso)
-    const valorBase = Number(item.valor || 0)
-    const valorAtual = Number(atual?.valor || 0)
-    if (!atual || valorBase >= valorAtual) {
-      mapa.set(item.iso, { ...item, valor: valorBase })
-    }
-  })
-
-  const referencia = (base || []).length >= (alternativa || []).length ? base : alternativa
-  return (referencia || []).map((item) => mapa.get(item.iso) || { ...item, valor: Number(item.valor || 0) })
-}
-
-function resumirReceitaMensal(dados) {
-  const positivos = (dados || []).filter((item) => Number(item.valor || 0) > 0)
-  const total = (dados || []).reduce((soma, item) => soma + Number(item.valor || 0), 0)
-  const melhorDia = positivos.reduce((melhor, item) => {
-    if (!melhor || Number(item.valor || 0) > Number(melhor.valor || 0)) return item
-    return melhor
-  }, null)
-  const diasComReceita = positivos.length
-  const mediaDiariaComReceita = diasComReceita > 0 ? total / diasComReceita : 0
-  const mediaPorDiaDoMes = (dados || []).length > 0 ? total / (dados || []).length : 0
-  return {
-    total,
-    diasComReceita,
-    mediaDiariaComReceita,
-    mediaPorDiaDoMes,
-    melhorDia,
-  }
 }
 
 function formatoCompactoReceita(valor) {
@@ -124,18 +31,19 @@ function formatoCompactoReceita(valor) {
   return `R$ ${Math.round(valor)}`
 }
 
-
-
 export default function Dashboard() {
-  const [data, , { loading, reload }] = useLocalData('dashboard')
   const { refreshTrigger } = useContext(RefreshContext)
   const { usuario } = useAuth()
   const [passosAberto, setPassosAberto] = useState(true)
   const [recarregando, setRecarregando] = useState(false)
+  const [periodoSelecionado, setPeriodoSelecionado] = useState(
+    () => todayIso().slice(0, 7)
+  )
+  const [data, , { loading, reload }] = useLocalData('dashboard', periodoSelecionado)
 
   useEffect(() => {
     reload(true)
-  }, [refreshTrigger, reload])
+  }, [refreshTrigger, reload, periodoSelecionado])
 
   async function recarregarDashboard() {
     if (recarregando) return
@@ -151,80 +59,46 @@ export default function Dashboard() {
   const primeirosPassos = resumoDashboard?.primeirosPassos || null
   const clientesAtivos = Array.isArray(data.clientes) ? data.clientes.filter((cliente) => !cliente.excluido) : []
   const agendamentosVisiveis = Array.isArray(data.agendamentos) ? data.agendamentos : []
-  const conversasVisiveis = Array.isArray(data.conversas) ? data.conversas : []
-  const servicosVisiveis = Array.isArray(data.servicos) ? data.servicos : []
   const isPlanoBasico = String(usuario?.plano || '').toUpperCase() === 'BASICO'
   const allowed = PLANOS[usuario?.plano]?.rotas || []
   const canFinanceiro = allowed.includes('financeiro')
   const hoje = todayIso()
   const hojeDate = new Date(`${hoje}T12:00:00`)
   const dataExtenso = hojeDate.toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })
-  const mesAtual = hojeDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+  const dataMax = hojeDate.getFullYear() + '-' + String(hojeDate.getMonth() + 1).padStart(2, '0')
 
-  const agendamentosHojeBase = agendamentosVisiveis.filter((a) => a.data === hoje).length
-  const conversasAbertasBase = conversasVisiveis.filter((c) => c.status === 'ABERTA').length
-  const totalClientesBase = clientesAtivos.length
-  const servicosAtivosBase = servicosVisiveis.filter((s) => s.status === 'ATIVO').length
-  const pagamentosVisiveis = Array.isArray(data.pagamentos) ? data.pagamentos : []
-  const receitaConfirmadaBase = pagamentosVisiveis
-    .filter((p) => ['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'].includes(String(p.status || '').toUpperCase()))
-    .reduce((sum, p) => sum + Number(p.valor || 0), 0)
-  const pagamentosPendentesBase = pagamentosVisiveis.filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
-  const pendenteCobrancaBase = pagamentosPendentesBase.reduce((sum, p) => sum + Number(p.valor || 0), 0)
+  const agendamentosHoje = Number(resumoDashboard?.agendamentosHoje ?? 0)
+  const conversasAbertas = Number(resumoDashboard?.conversasAbertas ?? 0)
+  const totalClientes = Number(resumoDashboard?.clientesCadastrados ?? 0)
+  const servicosAtivos = Number(resumoDashboard?.servicosAtivos ?? 0)
+  const receitaTotal = Number(resumoDashboard?.receitaConfirmada ?? 0)
+  const pendenteCobranca = Number(resumoDashboard?.pendenteCobranca ?? 0)
+  const pendentesPagamento = Number(resumoDashboard?.pendentesPagamento ?? 0)
 
-  const agendamentosHoje = resumoDashboard?.agendamentosHoje > 0 ? resumoDashboard.agendamentosHoje : agendamentosHojeBase
-  const conversasAbertas = resumoDashboard?.conversasAbertas > 0 ? resumoDashboard.conversasAbertas : conversasAbertasBase
-  const totalClientes = resumoDashboard?.clientesCadastrados > 0 ? resumoDashboard.clientesCadastrados : totalClientesBase
-  const servicosAtivos = resumoDashboard?.servicosAtivos > 0 ? resumoDashboard.servicosAtivos : servicosAtivosBase
-
-  const receitaTotal = resumoDashboard?.receitaConfirmada > 0 ? resumoDashboard.receitaConfirmada : receitaConfirmadaBase
-  const totalPendente = resumoDashboard?.pendenteCobranca > 0 ? resumoDashboard.pendenteCobranca : pendenteCobrancaBase
-  const servicosPorId = new Map((data.servicos || []).map((servico) => [servico.id, servico]))
-  const servicoCountFallback = {}
-  ;(data.agendamentos || []).forEach((a) => {
-    if (a.status === 'CANCELADO') return
-    servicoCountFallback[a.servicoNome] = (servicoCountFallback[a.servicoNome] || 0) + 1
-  })
-  const receitaServicoFallback = {}
-  ;(data.agendamentos || []).forEach((a) => {
-    if (a.status === 'CANCELADO') return
-    const servico = servicosPorId.get(a.servicoId)
-    if (!servico) return
-    receitaServicoFallback[a.servicoNome] = (receitaServicoFallback[a.servicoNome] || 0) + Number(servico.valor || 0)
-  })
-
-  const receitaDiasResumo = resumoDashboard?.receitaPorDia?.length
+  const receitaDias = resumoDashboard?.receitaPorDia?.length
     ? normalizarReceitaDias(resumoDashboard.receitaPorDia)
     : []
-  const receitaDiasBase = buildReceitaMes(pagamentosVisiveis)
-  const receitaDias = combinarReceitaMensal(receitaDiasResumo, receitaDiasBase)
-  const resumoReceitaMes = useMemo(
-    () => resumirReceitaMensal(receitaDias),
-    [receitaDias]
-  )
-  const proximosAtendimentos = resumoDashboard?.proximosAgendamentos?.length
+  const proximosAtendimentos = Array.isArray(resumoDashboard?.proximosAgendamentos)
     ? resumoDashboard.proximosAgendamentos
-    : agendamentosVisiveis
-        .filter((a) => a.data >= hoje && (a.status === 'CONFIRMADO' || a.status === 'PENDENTE'))
-        .sort((a, b) => (a.data + a.horaInicio).localeCompare(b.data + b.horaInicio))
-        .slice(0, 3)
+    : []
 
-  const servicosTop = resumoDashboard?.servicosMaisAgendados?.length
-    ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, item.quantidade])
-    : Object.entries(servicoCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const profissionalCountFallback = {}
+  const profissionalCountReal = {}
   ;(data.agendamentos || []).forEach((a) => {
     if (a.status === 'CANCELADO') return
-    const nomeProfissional = a.profissionalNome || 'Profissional'
-    profissionalCountFallback[nomeProfissional] = (profissionalCountFallback[nomeProfissional] || 0) + 1
+    const nome = String(a.profissionalNome || '').trim()
+    if (!nome || nome === 'Sem preferência' || nome === 'Nenhum profissional') return
+    profissionalCountReal[nome] = (profissionalCountReal[nome] || 0) + 1
   })
   const profissionaisTop = resumoDashboard?.profissionaisMaisAgendados?.length
-    ? resumoDashboard.profissionaisMaisAgendados.map((item) => [item.nome, item.quantidade])
-    : Object.entries(profissionalCountFallback).sort((a, b) => b[1] - a[1]).slice(0, 5)
-  const receitaServicoTop = resumoDashboard?.servicosMaisAgendados?.length
-    ? resumoDashboard.servicosMaisAgendados.map((item) => [item.nome, Number(item.valor || 0)]).filter(([, valor]) => valor > 0)
-    : Object.entries(receitaServicoFallback).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  const receitaServicoMax = receitaServicoTop[0]?.[1] || 1
+    ? resumoDashboard.profissionaisMaisAgendados
+        .map((item) => {
+          const nome = String(item.nome || '').trim()
+          if (!nome || nome === 'Sem preferência' || nome === 'Nenhum profissional') return null
+          return [nome, Number(item.quantidade || 0)]
+        })
+        .filter(Boolean)
+    : Object.entries(profissionalCountReal).sort((a, b) => b[1] - a[1]).slice(0, 5)
+
   const clientesEmRiscoFallback = (data.clientes || [])
     .filter((cliente) => {
       const score = Number(cliente.scoreRisco)
@@ -236,7 +110,7 @@ export default function Dashboard() {
   const clientesEmRiscoTop = resumoDashboard?.clientesEmRisco?.length
     ? resumoDashboard.clientesEmRisco.slice(0, 2)
     : clientesEmRiscoFallback
-  const pagamentosPendentesTop = [...(resumoDashboard?.pagamentosPendentes || pagamentosPendentesBase)]
+  const pagamentosPendentesTop = [...(resumoDashboard?.pagamentosPendentes || [])]
     .filter((p) => String(p.status || '').toUpperCase() === 'PENDENTE')
     .sort((a, b) => {
       const dataA = String(a.dataPagamento || a.data || '')
@@ -258,8 +132,8 @@ export default function Dashboard() {
       key: 'pendencias',
       icon: CreditCard,
       label: 'Pendente de pagamento',
-      value: pagamentosPendentesBase.length,
-      detail: pendenteCobrancaBase === 0 ? 'nenhum pendente' : currency(pendenteCobrancaBase),
+      value: pendentesPagamento,
+      detail: pendenteCobranca === 0 ? 'nenhum pendente' : currency(pendenteCobranca),
     },
   ]
 
@@ -268,7 +142,7 @@ export default function Dashboard() {
   if (canFinanceiro) {
     metrics.push(
       { key: 'financeiro', icon: CreditCard, label: 'Receita total do mes', value: receitaTotal === 0 ? 'R$ 0,00' : currency(receitaTotal), detail: receitaTotal === 0 ? 'nenhum valor no mes' : 'valor total do mes' },
-      { key: 'pendentes', icon: CreditCard, label: 'Pendente de cobranca', value: totalPendente === 0 ? 'R$ 0,00' : currency(totalPendente), detail: totalPendente === 0 ? 'nenhum pendente' : 'valor total pendente' },
+      { key: 'pendentes', icon: CreditCard, label: 'Pendente de cobranca', value: pendenteCobranca === 0 ? 'R$ 0,00' : currency(pendenteCobranca), detail: pendenteCobranca === 0 ? 'nenhum pendente' : 'valor total pendente' },
     )
   }
 
@@ -349,11 +223,20 @@ export default function Dashboard() {
                   <div className="receita-chart-copy">
                     <span className="section-kicker">Financeiro</span>
                     <h2>Receita do mês</h2>
-                    <strong className="receita-chart-total">{currency(resumoReceitaMes.total)}</strong>
+                    <strong className="receita-chart-total">{currency(receitaTotal)}</strong>
                     <p className="receita-chart-subtitle">Base confirmada com os pagamentos da sua empresa vinculada.</p>
                   </div>
                   <div className="receita-chart-periodo">
-                    <small>{mesAtual}</small>
+                    <input
+                      type="month"
+                      value={periodoSelecionado}
+                      max={dataMax}
+                      onChange={(e) => {
+                        const [ano, mes] = e.target.value.split('-').map(Number)
+                        setPeriodoSelecionado(`${ano}-${String(mes).padStart(2, '0')}`)
+                      }}
+                      className="receita-chart-period-input"
+                    />
                   </div>
                 </div>
                 <GraficoReceitaMes dados={receitaDias} formatarEixoY={formatoCompactoReceita} />
@@ -521,8 +404,3 @@ export default function Dashboard() {
     </section>
   )
 }
-
-
-
-
-

@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.auth.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -275,28 +276,28 @@ class AuthServiceIdempotenciaTest {
     }
 
     @Test
-    void proComMesmaChaveNaoCriaSegundoCheckoutNemSegundoEmail() {
+    void proComMesmaChaveNaoDuplicaCriacaoNemEmail() {
         when(cadastroIdempotenciaService.reservarChave(KEY_HASH, FINGERPRINT, "req-1"))
                 .thenReturn(ReservaResultado.reservado(registro(CadastroIdempotenciaStatus.PROCESSING)));
         when(cadastroIdempotenciaService.reservarChave(KEY_HASH, FINGERPRINT, "req-2"))
                 .thenReturn(ReservaResultado.completado(registro(CadastroIdempotenciaStatus.COMPLETED)));
         when(cadastroIdempotenciaService.recuperarResultado(any()))
-                .thenReturn(new LoginResponse("Cadastro criado. A conta Pro aguarda confirmacao de pagamento.",
-                        usuarioResponse(), assinaturaResponse(), pagamentoResponse(),
-                        "ACCOUNT_PENDING_PAYMENT", null, "PAGAMENTO_PENDENTE"));
+                .thenReturn(new LoginResponse("Conta criada com sucesso. Seu teste gratis de 7 dias comecou.",
+                        usuarioResponse(), assinaturaResponse(), null,
+                        "ACTIVE", "sessao-nova", null));
 
         LoginResponse primeira = authService.criarConta(request("pro"), "key-a", "req-1");
         LoginResponse replay = authService.criarConta(request("pro"), "key-a", "req-2");
 
-        assertEquals("ACCOUNT_PENDING_PAYMENT", primeira.statusConta());
-        assertEquals("PAGAMENTO_PENDENTE", primeira.motivoInatividade());
-        assertNull(primeira.sessionToken());
-        assertEquals("ACCOUNT_PENDING_PAYMENT", replay.statusConta());
+        assertEquals("ACTIVE", primeira.statusConta());
+        assertNotNull(primeira.sessionToken());
+        assertEquals("ACTIVE", replay.statusConta());
 
-        verify(pagamentoService, times(1)).iniciarPagamentoPlanoOnboarding(any(), any(), any(), any(), any(), any(), any());
-        verify(assinaturaService, times(1)).criarPendentePagamento(any(), any());
+        verify(pagamentoService, never()).iniciarPagamentoPlanoOnboarding(any(), any(), any(), any(), any(), any(), any());
+        verify(assinaturaService, never()).criarPendentePagamento(any(), any());
+        verify(assinaturaService, times(1)).criarTesteGratis(any(), any());
         verify(resendEmailService, times(1)).enviarBoasVindas(anyString(), anyString(), anyString());
-        verify(cadastroIdempotenciaService, times(1)).marcarCompletado(KEY_HASH, 1L, 3L, 5L, 6L, "ACCOUNT_PENDING_PAYMENT");
+        verify(cadastroIdempotenciaService, times(1)).marcarCompletado(KEY_HASH, 1L, 3L, 5L, null, "ACTIVE");
     }
 
     @Test

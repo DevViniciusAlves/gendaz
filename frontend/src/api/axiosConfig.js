@@ -48,7 +48,10 @@ api.interceptors.request.use((config) => {
 })
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    notificarDadoAlterado(response?.config)
+    return response
+  },
   async (error) => {
     const original = error.config
     const codigoStatus = error.response?.status
@@ -112,4 +115,23 @@ api.interceptors.response.use(
 )
 
 export const modoDemo = import.meta.env.VITE_MODO_DEMO === 'true'
+
+/**
+ * Produtor central do evento de sincronizacao global.
+ * Toda mutation de negocio bem-sucedida (POST/PUT/PATCH/DELETE) avisa os
+ * hooks (useLocalData), que invalidam o cache do escopo e recarregam do
+ * backend. Leitura (GET) nunca dispara — logo nao ha loop de reload.
+ */
+function notificarDadoAlterado(config) {
+  if (typeof window === 'undefined') return
+  const metodo = String(config?.method || 'get').toLowerCase()
+  if (!['post', 'put', 'patch', 'delete'].includes(metodo)) return
+  if (config?.skipDataChanged) return
+  const url = String(config?.url || '')
+  // Auth/conta possuem fluxo proprio de sessao (session-changed).
+  if (url.includes('/auth/') || url.includes('/usuarios/convites/') || url.includes('/meu-gendaz/auth/')) return
+  // Consulta de status do checkout via POST (polling) nao e mutation de negocio.
+  if (url.includes('/public/pagamentos/stripe/checkout/status')) return
+  window.dispatchEvent(new Event('gendaz:data-changed'))
+}
 export default api

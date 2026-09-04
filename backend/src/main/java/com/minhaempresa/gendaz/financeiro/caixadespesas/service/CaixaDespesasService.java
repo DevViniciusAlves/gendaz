@@ -59,6 +59,16 @@ public class CaixaDespesasService {
                 .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
     }
 
+    /**
+     * Carga com lock pessimista para movimentacoes financeiras. Serializa
+     * atualizacoes concorrentes de caixaTotal/despesasTotal da mesma empresa,
+     * evitando perda de update quando duas confirmacoes disputam o saldo.
+     */
+    private EmpresaEntity carregarEmpresaComLock(Long empresaId) {
+        return empresaRepository.findByIdWithLock(empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa nao encontrada."));
+    }
+
     private UsuarioEntity carregarUsuario(Long usuarioId) {
         return usuarioId == null ? null : usuarioRepository.findById(usuarioId).orElse(null);
     }
@@ -67,7 +77,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse adicionarCaixaManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
         exigirPlanoPro(empresaId);
         validarValor(valor);
-        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         empresa.setCaixaTotal(empresa.getCaixaTotal().add(valor));
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
@@ -81,7 +91,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse adicionarDespesasManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
         exigirPlanoPro(empresaId);
         validarValor(valor);
-        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         empresa.setDespesasTotal(empresa.getDespesasTotal().add(valor));
         empresaRepository.save(empresa);
         UsuarioEntity usuario = carregarUsuario(usuarioId);
@@ -99,7 +109,7 @@ public class CaixaDespesasService {
         if (log.getTipo() != TipoCaixaDespesasLog.ADICAO_MANUAL_CAIXA) {
             throw new BusinessException("Apenas adicoes manuais de caixa podem ser removidas.");
         }
-        EmpresaEntity empresa = log.getBusiness();
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         BigDecimal subtrair = log.getValor();
         empresa.setCaixaTotal(empresa.getCaixaTotal().subtract(subtrair));
         empresaRepository.save(empresa);
@@ -118,7 +128,7 @@ public class CaixaDespesasService {
         if (log.getTipo() != TipoCaixaDespesasLog.ADICAO_MANUAL_DESPESAS) {
             throw new BusinessException("Apenas adicoes manuais de despesas podem ser removidas.");
         }
-        EmpresaEntity empresa = log.getBusiness();
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         BigDecimal subtrair = log.getValor();
         empresa.setDespesasTotal(empresa.getDespesasTotal().subtract(subtrair));
         empresaRepository.save(empresa);
@@ -133,7 +143,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse removerValorCaixaManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
         exigirPlanoPro(empresaId);
         validarValor(valor);
-        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         if (valor.compareTo(empresa.getCaixaTotal()) > 0) {
             throw new BusinessException("O valor não pode ser maior que o total do caixa.");
         }
@@ -150,7 +160,7 @@ public class CaixaDespesasService {
     public CaixaDespesasTotaisResponse removerValorDespesasManual(Long empresaId, BigDecimal valor, String obs, Long usuarioId) {
         exigirPlanoPro(empresaId);
         validarValor(valor);
-        EmpresaEntity empresa = carregarEmpresa(empresaId);
+        EmpresaEntity empresa = carregarEmpresaComLock(empresaId);
         if (valor.compareTo(empresa.getDespesasTotal()) > 0) {
             throw new BusinessException("O valor não pode ser maior que o total de despesas.");
         }
@@ -180,7 +190,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoAprovado(PagamentoEntity pagamento) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
@@ -194,7 +204,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoRemovido(PagamentoEntity pagamento, Long usuarioId) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }
@@ -209,7 +219,7 @@ public class CaixaDespesasService {
 
     @Transactional
     public void registrarPagamentoCancelado(PagamentoEntity pagamento, Long usuarioId, StatusPagamento statusAnterior) {
-        EmpresaEntity empresa = pagamento.getEmpresa();
+        EmpresaEntity empresa = carregarEmpresaComLock(pagamento.getEmpresa().getId());
         if (!assinaturaService.isPlanoComRecursosAvancados(empresa.getId())) {
             return;
         }

@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AlertTriangle, CheckCircle2, Copy, Eye, Loader, Megaphone, Pencil, Plus, Search, Trash2, X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 import { promocoesApi } from '../api/promocoesApi.js'
@@ -69,7 +69,7 @@ export default function Promocoes() {
   const [termoServico, setTermoServico] = useState('')
   const [termoCliente, setTermoCliente] = useState('')
 
-  const empresaId = usuario?.empresaId || 1
+  const empresaId = usuario?.empresaId
 
   const filtered = useMemo(() => {
     return cupons.filter((cupom) => {
@@ -83,6 +83,10 @@ export default function Promocoes() {
   const totalInativos = cupons.filter((cupom) => cupom.status === 'INATIVO').length
 
   async function carregar() {
+    if (!empresaId) {
+      setCarregando(false)
+      return
+    }
     setCarregando(true)
     try {
       const [lista, clientesRes, servicosRes] = await Promise.all([

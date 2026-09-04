@@ -81,7 +81,7 @@ public class PagamentoService {
     public PagamentoResponse criar(CriarPagamentoRequest request) {
         validarValor(request.valor());
         AgendamentoEntity agendamento = request.agendamentoId() == null ? null : agendamentoService.buscarEntidade(request.agendamentoId());
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
         PagamentoEntity pagamento = PagamentoEntity.builder()
                 .agendamento(agendamento)
@@ -107,8 +107,21 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
-        PagamentoEntity pagamento = buscarEntidade(id);
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        return aplicarMarcarPago(pagamento, request);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #marcarPago}, sem demarcacao transacional
+     * propria: executa na transacao do chamador. Permite ao
+     * {@link PagamentoBulkService} processar o lote inteiro numa transacao
+     * UNICA (locks mantidos do inicio ao fim), mantendo fonte unica de regra.
+     * A trava de CANCELADO fica ANTES de qualquer setStatus/save/Caixa.
+     */
+    PagamentoResponse aplicarMarcarPago(PagamentoEntity pagamento, MarcarPagamentoPagoRequest request) {
         StatusPagamento statusAnterior = pagamento.getStatus();
+        validarPagamentoNaoCancelado(pagamento);
+        boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
         MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
         pagamento.setStatus(StatusPagamento.PAGO);
@@ -119,7 +132,7 @@ public class PagamentoService {
         logAtividadeService.registrar("PAGAMENTO", pagamento.getId(),
                 "Confirmou pagamento de " + nomeClientePagamento(pagamento)
                         + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0"));
-        if (statusAnterior != StatusPagamento.PAGO) {
+        if (!eraConfirmado) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
         }
         return response;
@@ -127,8 +140,21 @@ public class PagamentoService {
 
     @Transactional
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
-        PagamentoEntity pagamento = buscarEntidade(id);
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        return aplicarAtualizarStatus(pagamento, request);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #atualizarStatus}, sem demarcacao
+     * transacional propria (ver {@link #aplicarMarcarPago}).
+     * Bloqueia pelo estado ATUAL: CANCELADO nao sai de CANCELADO para nenhum
+     * destino (PAGO, PENDENTE ou qualquer outro).
+     */
+    PagamentoResponse aplicarAtualizarStatus(PagamentoEntity pagamento, AtualizarStatusPagamentoRequest request) {
         StatusPagamento statusAnterior = pagamento.getStatus();
+        validarPagamentoNaoCancelado(pagamento);
+        boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
+        boolean ficouConfirmado = isPagamentoConfirmado(request.status());
         pagamento.setStatus(request.status());
         if (request.status() == StatusPagamento.PAGO) {
             if (pagamento.getMetodoPagamento() == null) {
@@ -144,10 +170,10 @@ public class PagamentoService {
         }
         PagamentoResponse response = mapper.toResponse(pagamentoRepository.save(pagamento));
         String descricaoAuditoria;
-        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+        if (!eraConfirmado && ficouConfirmado) {
             descricaoAuditoria = "Confirmou pagamento de " + nomeClientePagamento(pagamento)
                     + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
-        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+        } else if (eraConfirmado && !ficouConfirmado && request.status() == StatusPagamento.PENDENTE) {
             descricaoAuditoria = "Desfez pagamento de " + nomeClientePagamento(pagamento)
                     + " de R$ " + (pagamento.getValor() != null ? pagamento.getValor().toPlainString() : "0");
         } else if (request.status() == StatusPagamento.CANCELADO) {
@@ -156,9 +182,9 @@ public class PagamentoService {
             descricaoAuditoria = "Alterou status do pagamento de " + nomeClientePagamento(pagamento) + " para " + request.status();
         }
         logAtividadeService.registrar("PAGAMENTO", pagamento.getId(), descricaoAuditoria);
-        if (statusAnterior != StatusPagamento.PAGO && request.status() == StatusPagamento.PAGO) {
+        if (!eraConfirmado && ficouConfirmado) {
             caixaDespesasService.registrarPagamentoAprovado(pagamento);
-        } else if (statusAnterior == StatusPagamento.PAGO && request.status() == StatusPagamento.PENDENTE) {
+        } else if (eraConfirmado && !ficouConfirmado && request.status() == StatusPagamento.PENDENTE) {
             caixaDespesasService.registrarPagamentoRemovido(pagamento, usuarioAutenticadoProvider.exigirUsuarioId());
         } else if (request.status() == StatusPagamento.CANCELADO) {
             caixaDespesasService.registrarPagamentoCancelado(pagamento, usuarioAutenticadoProvider.exigirUsuarioId(), statusAnterior);
@@ -629,14 +655,108 @@ public class PagamentoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
     }
 
+    /**
+     * Carga com lock pessimista para transicoes que movimentam Caixa.
+     * Deve ser usada por todo caminho que confirma/estorna pagamento,
+     * para que duas confirmacoes concorrentes nao gerem dois lancamentos.
+     */
+    private PagamentoEntity buscarEntidadeParaAtualizacao(Long id) {
+        Long empresaId = CompanyContext.requireCompanyId();
+        PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
+        return pagamento;
+    }
+
     @Transactional(readOnly = true)
     public long contarPendentes(Long empresaId) {
         validarEmpresaAtual(empresaId);
         return pagamentoRepository.countByEmpresaIdAndStatus(empresaId, StatusPagamento.PENDENTE);
     }
 
+    /**
+     * Cancela o pagamento operacional PENDENTE vinculado a um agendamento quando o
+     * proprio agendamento e cancelado. Isola por empresa. Idempotente.
+     *
+     * Concorrencia: usa o mesmo lock pessimista dos caminhos de confirmacao
+     * (marcarPago/atualizarStatus/finalizar/bulk). O lock e adquirido ANTES de
+     * ler o status, de modo que uma confirmacao concorrente seja serializada:
+     * quem obtem o lock primeiro vence e o outro observa o estado ja
+     * atualizado (nunca decide sobre status desatualizado, nunca gera o
+     * hibrido CANCELADO + caixa do pagamento).
+     *
+     * Ordem de locks: apenas PAGAMENTO (nao toca Empresa/Caixa aqui, pois
+     * PENDENTE nunca gerou entrada). Logo nao ha inversao com a ordem
+     * oficial PAGAMENTO -> EMPRESA.
+     *
+     * Regras:
+     *  - PENDENTE -> CANCELADO (sai da pendencia/cobranca do dashboard).
+     *  - PAGO    -> inalterado (nao estorna, nao mexe em caixa/receita).
+     *  - CANCELADO -> idempotente (continua CANCELADO).
+     */
+    @Transactional
+    public void cancelarPagamentoPendenteDoAgendamento(Long agendamentoId, Long empresaId) {
+        pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(agendamentoId, empresaId)
+                .ifPresent(pagamento -> {
+                    if (pagamento.getStatus() == StatusPagamento.PENDENTE || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
+                        pagamento.setStatus(StatusPagamento.CANCELADO);
+                        pagamentoRepository.save(pagamento);
+                    }
+                });
+    }
+
+    /**
+     * Exclusao operacional de pagamento — fonte unica da regra usada pelo
+     * endpoint individual (se houver) e pelo bulk EXCLUIR. Nunca apaga
+     * historico financeiro:
+     * - PAGO: bloqueado com erro de negocio (o desfazimento exige a operacao
+     *   financeira explicita de cancelamento/estorno).
+     * - PENDENTE/PAYMENT_PENDING: cancelamento logico (vira CANCELADO, sem
+     *   movimentar Caixa porque nada foi registrado).
+     * - demais estados (ex.: CANCELADO): idempotente, sem efeito.
+     *
+     * Concorrencia: lock PESSIMISTIC_WRITE antes de ler o status (mesmo lock
+     * dos caminhos de confirmacao). Ordem: apenas PAGAMENTO.
+     */
+    @Transactional
+    public void excluirPagamento(Long id) {
+        PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        aplicarExclusao(pagamento);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #excluirPagamento}, sem demarcacao
+     * transacional propria (ver {@link #aplicarMarcarPago}).
+     * Idempotente para CANCELADO (sem efeito, sem erro, sem save).
+     */
+    void aplicarExclusao(PagamentoEntity pagamento) {
+        if (pagamento.getStatus() == StatusPagamento.PAGO) {
+            throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
+        }
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            return;
+        }
+        if (pagamento.getStatus() == StatusPagamento.PENDENTE
+                || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
+            pagamento.setStatus(StatusPagamento.CANCELADO);
+            pagamentoRepository.save(pagamento);
+        }
+    }
+
     private String nomeClientePagamento(PagamentoEntity pagamento) {
         return pagamento.getCliente() != null ? pagamento.getCliente().getNome() : "Cliente";
+    }
+
+    /**
+     * Define de forma unica o que representa "dinheiro confirmado/recebido"
+     * para o pagamento operacional do cliente (PagamentoEntity).
+     *
+     * PAYMENT_APPROVED NAO e incluido: esse status pertence exclusivamente ao
+     * fluxo de pagamento do plano/assinatura (PagamentoPlanoEntity), e nao a
+     * PagamentoEntity. No fluxo operacional o unico estado de dinheiro
+     * confirmado e PAGO.
+     */
+    private boolean isPagamentoConfirmado(StatusPagamento status) {
+        return status == StatusPagamento.PAGO;
     }
 
     private Optional<PagamentoPlanoEntity> localizarPagamentoStripe(String stripeSessionId, Long pagamentoPlanoId, String paymentReference) {
@@ -820,5 +940,11 @@ public class PagamentoService {
 
     private String normalizarTextoOpcional(String valor) {
         return valor == null ? null : valor.trim();
+    }
+
+    private void validarPagamentoNaoCancelado(PagamentoEntity pagamento) {
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            throw new BusinessException("Pagamento cancelado não pode ser alterado.");
+        }
     }
 }

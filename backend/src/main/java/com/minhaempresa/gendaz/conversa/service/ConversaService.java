@@ -30,7 +30,7 @@ public class ConversaService {
 
     @Transactional
     public ConversaResponse criar(CriarConversaRequest request) {
-        ClienteEntity cliente = clienteService.buscarEntidade(request.clienteId());
+        ClienteEntity cliente = clienteService.buscarEntidadeOperacional(request.clienteId());
         EmpresaEntity empresa = empresaService.buscarEntidade(request.empresaId());
         ConversaEntity conversa = ConversaEntity.builder()
                 .cliente(cliente)

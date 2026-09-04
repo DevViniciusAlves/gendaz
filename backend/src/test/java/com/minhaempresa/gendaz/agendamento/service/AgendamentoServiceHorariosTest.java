@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository.AgendamentoHorarioProjection;
+import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.email.ResendEmailService;
@@ -50,6 +51,8 @@ class AgendamentoServiceHorariosTest {
     @Mock PagamentoRepository pagamentoRepository;
     @Mock SanitizacaoService sanitizacaoService;
     @Mock ResendEmailService resendEmailService;
+    @Mock LogAtividadeService logAtividadeService;
+    @Mock org.springframework.context.ApplicationEventPublisher eventPublisher;
     @InjectMocks AgendamentoService agendamentoService;
 
     private EmpresaEntity criarEmpresa(Long id) {
@@ -87,7 +90,7 @@ class AgendamentoServiceHorariosTest {
         HorarioAtendimentoEntity horario = criarHorario(empresaId, LocalTime.of(8, 0), LocalTime.of(12, 0));
         ProfissionalEntity sistema = criarProfissional(10L, empresaId, true);
 
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
                 criarProfissionalResponse(10L, true)
         ));
@@ -117,7 +120,7 @@ class AgendamentoServiceHorariosTest {
         HorarioAtendimentoEntity horario = criarHorario(empresaId, LocalTime.of(8, 0), LocalTime.of(12, 0));
         ProfissionalEntity profissional = criarProfissional(profissionalId, empresaId, false);
 
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
         when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);
         when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
@@ -145,7 +148,7 @@ class AgendamentoServiceHorariosTest {
         when(agendado.getHoraFim()).thenReturn(LocalTime.of(10, 0));
         when(agendado.getStatus()).thenReturn(StatusAgendamento.CONFIRMADO);
 
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(
                 criarProfissionalResponse(10L, true)
         ));
@@ -172,10 +175,11 @@ class AgendamentoServiceHorariosTest {
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         ProfissionalEntity semPreferencia = criarProfissional(10L, empresaId, true);
 
-        when(clienteService.buscarEntidade(clienteId)).thenReturn(cliente);
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        when(clienteService.buscarEntidadeOperacional(clienteId)).thenReturn(cliente);
+        when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.buscarOuCriarAtendimentoPrincipal(empresa)).thenReturn(semPreferencia);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
+        when(profissionalService.buscarEntidadeParaReserva(any(), any())).thenReturn(semPreferencia);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.existeConflitoDeHorario(any(), any(), any(), any(), any(), any())).thenReturn(false);
         when(agendamentoRepository.save(any())).thenAnswer(inv -> {
@@ -207,9 +211,10 @@ class AgendamentoServiceHorariosTest {
         ServicoEntity servico = criarServico(servicoId, empresaId, 60);
         ProfissionalEntity profissional = criarProfissional(profissionalId, empresaId, false);
 
-        when(clienteService.buscarEntidade(clienteId)).thenReturn(cliente);
-        when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        when(clienteService.buscarEntidadeOperacional(clienteId)).thenReturn(cliente);
+        when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         when(profissionalService.buscarEntidade(profissionalId)).thenReturn(profissional);
+        when(profissionalService.buscarEntidadeParaReserva(eq(profissionalId), eq(empresaId))).thenReturn(profissional);
         when(profissionalService.trabalhaNoDia(eq(profissional), any())).thenReturn(true);
         when(empresaService.buscarEntidade(empresaId)).thenReturn(empresa);
         when(agendaBlockedDayService.diaBloqueado(any(), any(), any())).thenReturn(false);
@@ -247,7 +252,7 @@ class AgendamentoServiceHorariosTest {
         when(cancelado.getHoraFim()).thenReturn(LocalTime.of(10, 0));
         when(cancelado.getStatus()).thenReturn(StatusAgendamento.CANCELADO);
 
-        lenient().when(servicoService.buscarEntidade(servicoId)).thenReturn(servico);
+        lenient().when(servicoService.buscarEntidadeOperacional(servicoId)).thenReturn(servico);
         lenient().when(horarioAtendimentoService.obterHorarioEfetivo(empresaId, data)).thenReturn(horario);
         lenient().when(agendamentoRepository.findByEmpresaIdAndDataHorarios(empresaId, data)).thenReturn(List.of(cancelado));
         lenient().when(profissionalService.listarPorEmpresa(empresaId)).thenReturn(List.of(criarProfissionalResponse(10L, true)));

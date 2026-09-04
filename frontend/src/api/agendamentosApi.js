@@ -1,6 +1,14 @@
 import { requestOrLocal } from './request.js'
 import { getData } from '../services/localStore.js'
+import { getSessionUser } from './axiosConfig.js'
 
 export const agendamentosApi = {
-  listar: () => requestOrLocal((api) => api.get('/agendamentos/empresa/1'), () => getData().agendamentos),
+  listar: () => {
+    const usuario = getSessionUser()
+    const empresaId = usuario?.empresaId
+    return requestOrLocal(
+      (api) => api.get(empresaId ? `/agendamentos/empresa/${empresaId}` : '/agendamentos'),
+      () => getData().agendamentos
+    )
+  },
 }

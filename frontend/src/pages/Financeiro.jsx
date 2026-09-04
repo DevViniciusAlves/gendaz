@@ -18,7 +18,10 @@ import { usePendentes } from '../contexts/PendentesContext.jsx'
 import { currency, todayIso } from '../services/localStore.js'
 import { dataHojeDdMmAAAA, exportarCsv, formatarData, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
 
-const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])
+// Operacional confirmado = PAGO e sinonimos genericos. Status de plano/assinatura
+// (PAYMENT_APPROVED, PURCHASE_APPROVED) pertencem ao fluxo de plano/Stripe e
+// nunca contam como recebido operacional — espelha PagamentoService.isPagamentoConfirmado().
+const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID'])
 const STATUS_PENDENTE = new Set(['PENDENTE', 'PAYMENT_PENDING'])
 const STATUS_CANCELADO = new Set(['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'])
 
@@ -49,6 +52,13 @@ function dataReferenciaFinanceira(item, agendamentoMap) {
     return dataReferenciaAgendamento(item, agendamentoMap) || ''
   }
   if (item?.dataPagamento) return String(item.dataPagamento)
+  // CANCELADO sem dataPagamento: usa a data do agendamento como referencia
+  // historica para nao sumir do filtro mensal. Nao conta como recebido/pendente.
+  const statusPag = status
+  const pagamentoCancelado = statusPag === "CANCELADO"
+  if (pagamentoCancelado || STATUS_CANCELADO.has(status)) {
+    return dataReferenciaAgendamento(item, agendamentoMap) || ''
+  }
   return ''
 }
 
@@ -96,7 +106,7 @@ function ordenarMaisRecente(a, b) {
 
 function statusSimples(statusAtual) {
   if (['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'].includes(statusAtual)) return 'CANCELADO'
-  return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
+  return ['PAGO'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
 function statusClienteValor(row) {
@@ -439,7 +449,11 @@ export default function Financeiro() {
         item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
         item.dataPagamento ? formatarData(item.dataPagamento) : '',
         '',
-        item.observações || item.agendamento?.observações || '',
+        item.observacoes
+          ?? item.agendamento?.observacoes
+          ?? item.observações
+          ?? item.agendamento?.observações
+          ?? '',
       ]),
     })
   }
@@ -473,6 +487,17 @@ export default function Financeiro() {
 
   async function executarBulkPagamentos() {
     if (!bulkModal || bulkExecutando) return
+    // Protecao adicional de UX: nunca envia CANCELADO no bulk (backend bloqueia de qualquer forma).
+    const possuiCanceladoSelecionado = pagamentosSelecionados.some((id) => {
+      const pagamento = pagamentosExpandidos.find((p) => p.pagamentoId === id || p.id === id)
+      const statusPag = String(pagamento?.status || '').toUpperCase()
+      const pagamentoCancelado = statusPag === "CANCELADO"
+      return pagamentoCancelado || STATUS_CANCELADO.has(pagamento?.status)
+    })
+    if (possuiCanceladoSelecionado && (bulkModal.acao === 'MARCAR_COMO_PAGO' || bulkModal.acao === 'MARCAR_COMO_PENDENTE')) {
+      setErroPagamentos('Pagamentos cancelados não podem ser alterados e foram removidos do envio.')
+      return
+    }
     setBulkExecutando(true)
     setErroPagamentos('')
     try {
@@ -526,14 +551,32 @@ export default function Financeiro() {
     try {
       const payload = { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? (parcelas || 1) : null }
       if (pagamentoManual.tipo === 'bulk') {
-        await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, 'MARCAR_COMO_PAGO', payload)
+        const pagamentosNaoCancelados = pagamentosSelecionados.filter(id => {
+          const pagamento = pagamentosExpandidos.find(p => p.pagamentoId === id || p.id === id);
+          return pagamento && !STATUS_CANCELADO.has(pagamento.status);
+        });
+        if (pagamentosNaoCancelados.length === 0) {
+          setErroPagamentos('Nenhum pagamento válido selecionado.');
+          setPagamentoManual(null);
+          return;
+        }
+        await appApi.acaoEmMassaPagamentos(pagamentosNaoCancelados, 'MARCAR_COMO_PAGO', payload)
         limparSelecaoPagamentos()
       } else {
+        const pagamento = pagamentosExpandidos.find(p => p.pagamentoId === pagamentoManual.id || p.id === pagamentoManual.id);
+        if (pagamento && STATUS_CANCELADO.has(pagamento.status)) {
+          setErroPagamentos('Não é possível marcar como pago um pagamento cancelado.');
+          setPagamentoManual(null);
+          return;
+        }
         await appApi.marcarPagamentoPago(pagamentoManual.id, payload)
       }
       setPagamentoManual(null)
       atualizarContagem()
       await reload(true)
+      if (isPlanoComRecursosAvancados) {
+        await carregarTotaisCaixaDespesas()
+      }
     } finally {
       setProcessandoPagamento(false)
     }
@@ -549,6 +592,9 @@ export default function Financeiro() {
     try {
       await appApi.atualizarStatusPagamento(id, novoStatus)
       await reload(true)
+      if (isPlanoComRecursosAvancados) {
+        await carregarTotaisCaixaDespesas()
+      }
     } finally {
       setProcessandoStatus(false)
     }
@@ -725,15 +771,19 @@ export default function Financeiro() {
             ...(selecionandoPagamentos ? [{
               key: '__selecionar',
               label: '',
-              render: (row) => (
+              render: (row) => {
+                const statusPag = String(row.status || '').toUpperCase()
+                const pagamentoCancelado = statusPag === "CANCELADO"
+                return (
                 <input
                   type="checkbox"
                   checked={pagamentosSelecionados.includes(row.pagamentoId || row.id)}
                   onChange={() => alternarPagamentoSelecionado(row.pagamentoId || row.id)}
-                  disabled={!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10}
+                  disabled={pagamentoCancelado || STATUS_CANCELADO.has(row.status) || (!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10)}
                   aria-label={`Selecionar pagamento ${row.pagamentoId || row.id}`}
                 />
-              ),
+                )
+              },
             }] : []),
             {
               key: 'clienteNome',
@@ -782,12 +832,16 @@ export default function Financeiro() {
               label: 'AÇÕES',
               render: (row) => {
                 const statusPag = String(row.status || '').toUpperCase()
+                const pagamentoCancelado = statusPag === "CANCELADO"
                 const acoesPagamento = []
-                if (STATUS_CONFIRMADO.has(statusPag)) {
+                if (pagamentoCancelado || STATUS_CANCELADO.has(statusPag)) {
+                  // CANCELADO nao mostra nenhuma acao que altere status
+                } else if (STATUS_CONFIRMADO.has(statusPag)) {
                   acoesPagamento.push({ label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') })
-                } else {
+                } else if (STATUS_PENDENTE.has(statusPag)) {
                   acoesPagamento.push({ label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') })
                 }
+                // CANCELADO não mostra nenhuma ação que altere status
                 return (
                   <span className="financeiro-center-cell financeiro-center-actions">
                     <ActionMenu actions={acoesPagamento} />

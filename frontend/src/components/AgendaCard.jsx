@@ -41,6 +41,8 @@ export default function AgendaCard({
   agendamento,
   onIniciar,
   onPausar,
+  onRetomar,
+  onReabrir,
   onFinalizar,
   onEditar,
   onCancelar,
@@ -90,10 +92,17 @@ export default function AgendaCard({
           {menuAberto && (
             <div className="agenda-card-dropdown">
               {onEditar && <button type="button" onClick={() => { onEditar(agendamento); setMenuAberto(false) }}>Editar</button>}
-              {onCancelar && status !== 'CANCELADO' && status !== 'FINALIZADO' && (
+              {/* Cancelar nos estados cancelaveis operacionais
+                  (PENDENTE/CONFIRMADO/EM_ATENDIMENTO/PAUSADO), acao explicita
+                  "Cancelar" que chama o endpoint de cancelamento.
+                  FINALIZADO/CANCELADO nunca oferecem. */}
+              {onCancelar && (status === 'PENDENTE' || status === 'CONFIRMADO' || status === 'EM_ATENDIMENTO' || status === 'PAUSADO') && (
                 <button type="button" onClick={() => { onCancelar(agendamento); setMenuAberto(false) }}>Cancelar</button>
               )}
-              {onExcluir && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
+              {/* Excluir (soft delete): disponivel em todos os estados, exceto
+                  PAUSADO (travado no backend). FINALIZADO mantem o status e
+                  apenas sai da Agenda operacional. */}
+              {onExcluir && status !== 'PAUSADO' && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
             </div>
           )}
         </div>
@@ -128,10 +137,21 @@ export default function AgendaCard({
         </div>
       )}
 
-      {status === 'PAUSADO' && onIniciar && (
-        <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onIniciar(agendamento)} type="button" disabled={carregandoTipo('iniciar')}>
-          {carregandoTipo('iniciar') ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
-        </button>
+      {/* PAUSADO permite Retomar e Finalizar (PAUSADO -> FINALIZADO e valido
+          no backend). Reutiliza o mesmo handler onFinalizar de EM_ATENDIMENTO. */}
+      {status === 'PAUSADO' && (
+        <div className="agenda-card-botoes-duplos">
+          {onRetomar && (
+            <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onRetomar(agendamento)} type="button" disabled={carregandoTipo('retomar')}>
+              {carregandoTipo('retomar') ? <><Loader className="spin" size={17} /> Retomando atendimento</> : 'Retomar Atendimento'}
+            </button>
+          )}
+          {onFinalizar && (
+            <button className="agenda-card-botao agenda-card-botao-finalizar" onClick={() => onFinalizar(agendamento)} type="button" disabled={carregandoTipo('finalizar')}>
+              {carregandoTipo('finalizar') ? <><Loader className="spin" size={17} /> Finalizando</> : 'Finalizar'}
+            </button>
+          )}
+        </div>
       )}
 
       {status === 'FINALIZADO' && (
@@ -139,6 +159,11 @@ export default function AgendaCard({
           <span className="agenda-card-badge-finalizado">
             &#10003; FINALIZADO
           </span>
+          {onReabrir && (
+            <button className="agenda-card-botao agenda-card-botao-iniciar" onClick={() => onReabrir(agendamento)} type="button" disabled={carregandoTipo('reabrir')}>
+              {carregandoTipo('reabrir') ? <><Loader className="spin" size={17} /> Reabrindo</> : 'Reabrir Atendimento'}
+            </button>
+          )}
         </div>
       )}
     </div>

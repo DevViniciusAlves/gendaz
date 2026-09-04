@@ -340,7 +340,7 @@ export default function AssistenteIA() {
             profissionalId: dadosFluxo.profissionalId,
             data: dadosFluxo.data,
             hora: dadosFluxo.hora,
-            observações: dadosFluxo.observações || '',
+            observacoes: dadosFluxo.observacoes ?? dadosFluxo.observações ?? '',
             cupomCodigo: dadosFluxo.cupomCodigo || '',
           })
           adicionarMensagem('ia', 'Agendamento confirmado com sucesso. Se quiser, posso ajudar com outro atendimento.')
@@ -445,7 +445,7 @@ export default function AssistenteIA() {
       if (/^s(im)?$|^confirmar$|^ok$|^pode$/.test(normalizarTexto(texto))) {
         try {
           setCarregando(true)
-          await cancelarAgendamento(dadosFluxo.agendamentoId, 'Cancelado pelo cliente no Gendaz')
+          await cancelarAgendamento(dadosFluxo.agendamentoId)
           adicionarMensagem('ia', 'Agendamento cancelado com sucesso.')
           limparFluxo()
         } catch (err) {

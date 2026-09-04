@@ -122,7 +122,7 @@ class TenantIsolationServiceTest {
                 .status(StatusAgendamento.PENDENTE)
                 .build();
         CompanyContext.setCompanyId(1L);
-        when(clienteService.buscarEntidade(10L)).thenReturn(clienteA);
+        when(clienteService.buscarEntidadeOperacional(10L)).thenReturn(clienteA);
         when(agendamentoRepository.findByEmpresaIdAndClienteId(1L, 10L)).thenReturn(List.of(agendamentoA));
 
         var response = agendamentoService.listarPorCliente(10L);
@@ -136,7 +136,7 @@ class TenantIsolationServiceTest {
     @Test
     void agendamentosPorClienteCrossTenantDevemFalharSemConsultarAgendamentos() {
         CompanyContext.setCompanyId(1L);
-        when(clienteService.buscarEntidade(20L)).thenThrow(new ResourceNotFoundException("Cliente nao encontrado."));
+        when(clienteService.buscarEntidadeOperacional(20L)).thenThrow(new ResourceNotFoundException("Cliente nao encontrado."));
 
         assertThrows(ResourceNotFoundException.class, () -> agendamentoService.listarPorCliente(20L));
 

@@ -1,6 +1,6 @@
 package com.minhaempresa.gendaz.insights.scheduler;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,6 +27,8 @@ class InsightsCleanupSchedulerTest {
 
         ArgumentCaptor<LocalDateTime> limite = ArgumentCaptor.forClass(LocalDateTime.class);
         verify(insightRepository).deleteExpiredBefore(limite.capture());
-        assertTrue(limite.getValue().isBefore(LocalDateTime.now()));
+        // O limite é gerado antes desta asserção; em relógios de baixa granularidade
+        // pode ser igual a "agora" — por isso nega-se "depois" em vez de exigir "antes".
+        assertFalse(limite.getValue().isAfter(LocalDateTime.now()));
     }
 }

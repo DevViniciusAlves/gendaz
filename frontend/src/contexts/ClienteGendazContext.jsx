@@ -283,10 +283,8 @@ export function ClienteGendazProvider({ children, slug }) {
     return data
   }, [])
 
-  const cancelarAgendamento = useCallback(async (agendamentoId, motivo) => {
-    await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`, {
-      data: { motivo },
-    })
+  const cancelarAgendamento = useCallback(async (agendamentoId) => {
+    await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`)
     const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
     setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
   }, [])
@@ -387,6 +385,9 @@ export function ClienteGendazProvider({ children, slug }) {
     cadastroPendente: perfilPendente,
     perfilPendente,
     perfilAcesso,
+    // Timezone da clinica (vem do /meu-gendaz/perfil): o "hoje" dos formularios
+    // deve seguir a empresa, nao o dispositivo do cliente.
+    empresaTimezone: perfilAcesso?.timezone || cliente?.timezone || null,
     dashboard,
     agendamentos,
     beneficios,

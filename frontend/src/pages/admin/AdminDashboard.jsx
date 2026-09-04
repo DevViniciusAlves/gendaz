@@ -1,8 +1,9 @@
-import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, Loader, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, UserSearch, XCircle } from 'lucide-react'
+import { BadgeCheck, Ban, BarChart2, CheckCircle2, CreditCard, Eye, LayoutDashboard, LogOut, Pencil, Power, RefreshCw, ScrollText, Search, Settings2, Ticket, Trash2, Users, UserSearch, XCircle } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { adminApi } from '../../api/adminApi.js'
 import AdminCrm from './AdminCrm.jsx'
+import ConfirmacaoModal from '../../components/ConfirmacaoModal.jsx'
 import { formatoCompactoReceita } from '../../utils/formatters.js'
 import { normalizarParaApi, exibirTelefone } from '../../utils/phoneUtils.js'
 import InternationalPhoneInput from '../../components/InternationalPhoneInput.jsx'
@@ -26,18 +27,6 @@ const abas = [
   { label: 'Configuracoes', icon: Settings2 },
   { label: 'CRM', icon: UserSearch },
 ]
-const STATUS_PAGAMENTO_CONFIRMADO = new Set([
-  'PAGO',
-  'PAGA',
-  'CONFIRMADO',
-  'CONFIRMADA',
-  'APROVADO',
-  'APPROVED',
-  'PAID',
-  'PAYMENT_APPROVED',
-  'PURCHASE_APPROVED',
-])
-
 const CATEGORIAS_LOG = [
   { valor: 'USER_LOGIN_SUCCESS', rotulo: 'Login realizado' },
   { valor: 'USER_LOGIN_FAILED', rotulo: 'Login falhado' },
@@ -82,54 +71,9 @@ function mesAtualIso() {
   return todayIso().slice(0, 7)
 }
 
-function statusNormalizado(valor) {
-  return String(valor || '').toUpperCase()
-}
-
 function moeda(valor) {
   return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 }
-
-function pagamentoConfirmado(status) {
-  return STATUS_PAGAMENTO_CONFIRMADO.has(statusNormalizado(status))
-}
-
-function extrairDataPagamento(pagamento) {
-  return String(pagamento?.dataPagamento || pagamento?.dataCriacao || pagamento?.data || pagamento?.createdAt || '').slice(0, 10)
-}
-
-function diasDoMesAtual() {
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  return new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
-}
-
-function buildReceitaMes(pagamentos) {
-  const listaPagamentos = Array.isArray(pagamentos) ? pagamentos : []
-  const hoje = new Date(`${todayIso()}T12:00:00`)
-  const mapaReceita = {}
-
-  listaPagamentos.forEach((p) => {
-    if (!pagamentoConfirmado(p.status)) return
-    const dia = extrairDataPagamento(p)
-    if (!dia || !dia.startsWith(`${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`)) return
-    
-    // Extrai o dia para usar como chave e label
-    const diaDoMes = parseInt(dia.split('-')[2], 10)
-    mapaReceita[diaDoMes] = (mapaReceita[diaDoMes] || 0) + Number(p.valor || 0)
-  })
-
-  // Ordena os dias que tiveram movimento
-  return Object.keys(mapaReceita)
-    .map(Number)
-    .sort((a, b) => a - b)
-    .map((dia) => ({
-      iso: dia.toString(),
-      label: dia.toString(),
-      valor: mapaReceita[dia]
-    }))
-}
-
-
 
 function acaoModalTitulo(modal) {
   if (modal?.tipo === 'pagamento-aprovar') return `Aprovar pagamento de ${modal?.empresa || ''}`
@@ -179,6 +123,27 @@ function formatarDataSimples(valor) {
   return data.toLocaleDateString('pt-BR')
 }
 
+function somarDiasIso(base, dias) {
+  const data = new Date(`${String(base).slice(0, 10)}T12:00:00`)
+  if (Number.isNaN(data.getTime())) return todayIso()
+  data.setDate(data.getDate() + Number(dias))
+  const mes = String(data.getMonth() + 1).padStart(2, '0')
+  const dia = String(data.getDate()).padStart(2, '0')
+  return `${data.getFullYear()}-${mes}-${dia}`
+}
+
+function proximaDataInicioDraft(listaAtual) {
+  const hoje = todayIso()
+  let ultimoFim = ''
+  ;(Array.isArray(listaAtual) ? listaAtual : []).forEach((assinatura) => {
+    const status = String(assinatura.status || '').toUpperCase()
+    if (status !== 'ATIVA' && status !== 'TESTE') return
+    const fim = assinatura.dataFim ? String(assinatura.dataFim).slice(0, 10) : ''
+    if (fim && fim > ultimoFim) ultimoFim = fim
+  })
+  return ultimoFim && ultimoFim >= hoje ? ultimoFim : hoje
+}
+
 function rotuloPlano(valor) {
   const plano = String(valor || '').trim().toUpperCase()
   if (plano === 'BASICO') return 'Básico'
@@ -216,11 +181,12 @@ export default function AdminDashboard() {
   const [transacaoId, setTransacaoId] = useState('')
   const [empresaEdicao, setEmpresaEdicao] = useState({ nomeFantasia: '', telefone: '', email: '' })
   const [assinaturas, setAssinaturas] = useState([])
+  const [assinaturasOriginais, setAssinaturasOriginais] = useState([])
+  const [assinaturaParaRemover, setAssinaturaParaRemover] = useState(null)
   const [adicionandoPlano, setAdicionandoPlano] = useState(false)
   const [novaAssinatura, setNovaAssinatura] = useState({ planoId: '', dias: 30 })
   const [editandoAssinaturaId, setEditandoAssinaturaId] = useState(null)
   const [assinaturaEditForm, setAssinaturaEditForm] = useState({ planoId: '', dias: 30 })
-  const [salvandoAssinatura, setSalvandoAssinatura] = useState(false)
   const [chamadoEdicao, setChamadoEdicao] = useState({ status: 'EM_ANALISE', resposta: '' })
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
@@ -234,6 +200,7 @@ export default function AdminDashboard() {
   const [pesquisaChamado, setPesquisaChamado] = useState('')
   const [pesquisaLog, setPesquisaLog] = useState('')
   const [mesLog, setMesLog] = useState(mesAtualIso())
+  const [mesDashboard, setMesDashboard] = useState(mesAtualIso())
   const [paginaLog, setPaginaLog] = useState(1)
   const [limpandoLogs, setLimpandoLogs] = useState(false)
   const motivoValido = motivo.trim().length >= 8
@@ -265,7 +232,7 @@ export default function AdminDashboard() {
     setCarregando(true)
     try {
       const results = await Promise.allSettled([
-        adminApi.dashboard(),
+        adminApi.dashboard(mesDashboard),
         adminApi.usuarios(),
         adminApi.pagamentos(),
         adminApi.chamados(),
@@ -306,7 +273,7 @@ export default function AdminDashboard() {
     carregarAdmin().catch(() => {
       setErro('Nao foi possivel carregar os dados do painel admin agora. Tente recarregar.')
     })
-  }, [adminUsuario, navigate])
+  }, [adminUsuario, navigate, mesDashboard])
 
   useEffect(() => {
     if (!adminUsuario) return
@@ -315,7 +282,7 @@ export default function AdminDashboard() {
     async function atualizarFinanceiro() {
       try {
         const [dashboardData, pagamentosData] = await Promise.all([
-          adminApi.dashboard(),
+          adminApi.dashboard(mesDashboard),
           adminApi.pagamentos(filtroPagamento),
         ])
         const listaPagamentos = Array.isArray(pagamentosData) ? pagamentosData : []
@@ -345,7 +312,18 @@ export default function AdminDashboard() {
       clearInterval(timer)
       window.removeEventListener('focus', onFocus)
     }
-  }, [adminUsuario, filtroPagamento])
+  }, [adminUsuario, filtroPagamento, mesDashboard])
+
+  async function selecionarAba(label) {
+    setAba(label)
+    if (label === 'Chamados') {
+      try {
+        setChamados(await adminApi.chamados())
+      } catch (error) {
+        setErro(mensagemErroApi(error, 'Nao foi possivel carregar os chamados agora.'))
+      }
+    }
+  }
 
   async function recarregarAbaAtual() {
     if (recarregando) return
@@ -395,35 +373,22 @@ export default function AdminDashboard() {
   }
 
   const metricas = useMemo(() => dashboard ? [
-    ['Faturamento total', moeda(dashboard.faturamentoTotal)],
     ['Faturamento do mes', moeda(dashboard.faturamentoMes)],
-    ['Pagamentos confirmados', dashboard.pagamentosConfirmados],
     ['Pagamentos pendentes', dashboard.pagamentosPendentes],
-    ['Assinaturas ativas', dashboard.assinaturasAtivas],
-    ['Empresas em teste', dashboard.empresasTesteGratis],
+    ['Empresas em teste', dashboard.contasTeste],
     ['Empresas vencidas', dashboard.empresasVencidas],
-    ['Usuarios ativos', dashboard.usuariosAtivos],
-    ['Novos cadastros', dashboard.novosCadastros],
   ] : [], [dashboard])
 
-  const contasAtivas = dashboard?.assinaturasAtivas || 0
-  const contasCanceladas = dashboard?.empresasVencidas || 0
-  const contasTeste = dashboard?.empresasTesteGratis || 0
-  const contasAtivasPct = Math.round((contasAtivas / Math.max(contasAtivas + contasCanceladas + contasTeste, 1)) * 100)
-  const receitaMensalGrafico = buildReceitaMes(Array.isArray(pagamentos) ? pagamentos : [])
-  const pagamentosConfirmadosLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => pagamentoConfirmado(item.status))
-  const pagamentosPendentesLista = (Array.isArray(pagamentos) ? pagamentos : []).filter((item) => statusNormalizado(item.status) === 'PENDENTE')
-  const pagamentoMaisRecente = (Array.isArray(pagamentos) ? [...pagamentos] : [])
-    .sort((a, b) => String(b.dataPagamento || b.dataCriacao || b.data || '').localeCompare(String(a.dataPagamento || a.dataCriacao || a.data || '')))
-    .slice(0, 5)
-  const planoResumo = useMemo(() => {
-    const mapa = {}
-    ;(usuarios || []).forEach((item) => {
-      const plano = rotuloPlano(item.plano)
-      mapa[plano] = (mapa[plano] || 0) + 1
-    })
-    return Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 4)
-  }, [usuarios])
+  const contaAtiva = dashboard?.contasAtivas || 0
+  const contaCancelada = dashboard?.contasCanceladas || 0
+  const contaTeste = dashboard?.contasTeste || 0
+  const contasBaseAtual = Math.max(contaAtiva + contaCancelada + contaTeste, 1)
+  const contasAtivasPct = Math.round((contaAtiva / contasBaseAtual) * 100)
+  const receitaDiasDashboard = useMemo(() => (Array.isArray(dashboard?.receitaDia) ? dashboard.receitaDia : []).map((item) => ({
+    iso: item.data || '',
+    label: item.label || String(item.data || '').slice(8, 10) || '',
+    valor: Number(item.valor || 0),
+  })), [dashboard])
 
   const assinaturasAtivas = useMemo(() => (assinaturas || []).filter((item) => {
     const status = String(item.status || '').toUpperCase()
@@ -481,11 +446,18 @@ export default function AdminDashboard() {
 
     if (tipo === 'empresa-editar') {
       setAssinaturas([])
+      setAssinaturasOriginais([])
+      setAssinaturaParaRemover(null)
       setAdicionandoPlano(false)
       setEditandoAssinaturaId(null)
       setNovaAssinatura({ planoId: '', dias: 30 })
       setAssinaturaEditForm({ planoId: '', dias: 30 })
-      adminApi.listarAssinaturas(item.empresaId).then(setAssinaturas).catch(() => setAssinaturas([]))
+      adminApi.listarAssinaturas(item.empresaId)
+        .then((lista) => {
+          setAssinaturasOriginais(lista)
+          setAssinaturas(lista)
+        })
+        .catch(() => setAssinaturas([]))
     }
   }
 
@@ -601,6 +573,7 @@ export default function AdminDashboard() {
         planoId: null,
         diasPlano: null,
         motivo: motivo.trim(),
+        assinaturas: montarOperacoesAssinaturas(),
       }
       const empresaAtualizada = await adminApi.atualizarEmpresa(modal.empresaId, {
         ...payload,
@@ -644,73 +617,116 @@ export default function AdminDashboard() {
     })
   }
 
-  async function criarNovaAssinatura() {
-    if (!modal || !novaAssinatura.planoId) {
+  function criarNovaAssinatura() {
+    if (!novaAssinatura.planoId) {
       setErro('Selecione um plano para adicionar a conta.')
       return
     }
     const dias = novaAssinatura.dias === '' || novaAssinatura.dias == null ? 30 : Math.max(0, Number(novaAssinatura.dias))
-    setSalvandoAssinatura(true)
-    setErro('')
-    try {
-      const lista = await adminApi.criarAssinatura(modal.empresaId, {
-        planoId: Number(novaAssinatura.planoId),
-        dias,
-      })
-      setAssinaturas(lista)
-      setNovaAssinatura({ planoId: '', dias: 30 })
-      setAdicionandoPlano(false)
-      setAviso('Plano adicionado a conta com sucesso.')
-    } catch (error) {
-      setErro(mensagemErroApi(error, 'Nao foi possivel adicionar o plano.'))
-    } finally {
-      setSalvandoAssinatura(false)
+    if (dias < 1) {
+      setErro('Informe ao menos 1 dia.')
+      return
     }
+    const planoSelecionado = planos.find((plano) => String(plano.id) === String(novaAssinatura.planoId))
+    const dataInicio = proximaDataInicioDraft(assinaturas)
+    const assinaturaTemporaria = {
+      id: `temp-${Date.now()}`,
+      planoId: Number(novaAssinatura.planoId),
+      planoNome: planoSelecionado?.nome || 'Plano',
+      status: 'ATIVA',
+      dataInicio,
+      dataFim: somarDiasIso(dataInicio, dias),
+      dias,
+      isAtual: false,
+      diasRestantes: dias,
+    }
+    setAssinaturas((atuais) => [...atuais, assinaturaTemporaria])
+    setNovaAssinatura({ planoId: '', dias: 30 })
+    setAdicionandoPlano(false)
+    setAviso('Plano adicionado ao rascunho. Salve as alteracoes para persistir.')
   }
 
-  async function salvarEdicaoAssinatura() {
-    if (!modal || !editandoAssinaturaId || !assinaturaEditForm.planoId) {
+  function salvarEdicaoAssinatura() {
+    if (!editandoAssinaturaId || !assinaturaEditForm.planoId) {
       setErro('Selecione um plano para atualizar.')
       return
     }
     const dias = assinaturaEditForm.dias === '' || assinaturaEditForm.dias == null ? 30 : Math.max(0, Number(assinaturaEditForm.dias))
-    setSalvandoAssinatura(true)
-    setErro('')
-    try {
-      const lista = await adminApi.editarAssinatura(modal.empresaId, editandoAssinaturaId, {
-        planoId: Number(assinaturaEditForm.planoId),
-        dias,
-        status: 'ATIVA',
-      })
-      setAssinaturas(lista)
-      setEditandoAssinaturaId(null)
-      setAviso('Plano atualizado com sucesso.')
-    } catch (error) {
-      setErro(mensagemErroApi(error, 'Nao foi possivel atualizar o plano.'))
-    } finally {
-      setSalvandoAssinatura(false)
+    if (dias < 1) {
+      setErro('Informe ao menos 1 dia.')
+      return
     }
+    const planoSelecionado = planos.find((plano) => String(plano.id) === String(assinaturaEditForm.planoId))
+    setAssinaturas((atuais) => atuais.map((assinatura) => {
+      if (assinatura.id !== editandoAssinaturaId) return assinatura
+      const dataInicio = assinatura.dataInicio || todayIso()
+      return {
+        ...assinatura,
+        planoId: Number(assinaturaEditForm.planoId),
+        planoNome: planoSelecionado?.nome || 'Plano',
+        status: 'ATIVA',
+        dataInicio,
+        dataFim: somarDiasIso(dataInicio, dias),
+        dias,
+        diasRestantes: dias,
+      }
+    }))
+    setEditandoAssinaturaId(null)
+    setAviso('Plano atualizado no rascunho. Salve as alteracoes para persistir.')
   }
 
-  async function removerPlanoDaConta(assinatura) {
+  function removerPlanoDaConta(assinatura) {
     if (!modal) return
-    const semPlano = window.confirm(`Remover o plano "${assinatura.planoNome || 'Plano'}" da conta?\n\nSe não restar nenhum plano, a conta ficara inativa.`)
-    if (!semPlano) return
-    setSalvandoAssinatura(true)
-    setErro('')
-    try {
-      const lista = await adminApi.removerAssinatura(modal.empresaId, assinatura.id)
-      setAssinaturas(lista)
-      setEditandoAssinaturaId(null)
-      setAviso('Plano removido da conta com sucesso.')
-      carregarAdmin().catch(() => {
-        setErro('O plano foi removido, mas não foi possivel recarregar a tabela agora.')
-      })
-    } catch (error) {
-      setErro(mensagemErroApi(error, 'Nao foi possivel remover o plano.'))
-    } finally {
-      setSalvandoAssinatura(false)
-    }
+    setAssinaturaParaRemover(assinatura)
+  }
+
+  function confirmarRemocaoPlano() {
+    if (!assinaturaParaRemover) return
+    const id = assinaturaParaRemover.id
+    setAssinaturas((atuais) => atuais.filter((assinatura) => assinatura.id !== id))
+    setEditandoAssinaturaId((atual) => (atual === id ? null : atual))
+    setAssinaturaParaRemover(null)
+    setAviso('Plano removido do rascunho. Salve as alteracoes para persistir.')
+  }
+
+  function montarOperacoesAssinaturas() {
+    const listaOriginal = Array.isArray(assinaturasOriginais) ? assinaturasOriginais : []
+    const listaDraft = Array.isArray(assinaturas) ? assinaturas : []
+    const ehTemporaria = (item) => typeof item.id === 'string' && String(item.id).startsWith('temp-')
+    const operacoes = []
+
+    listaOriginal.forEach((original) => {
+      const aindaExiste = listaDraft.some((draft) => draft.id === original.id)
+      if (!aindaExiste) {
+        operacoes.push({ operacao: 'REMOVER', subscriptionId: original.id })
+      }
+    })
+
+    listaDraft.forEach((draft) => {
+      const original = listaOriginal.find((item) => item.id === draft.id)
+      if (original) {
+        const planoAlterado = Number(draft.planoId) !== Number(original.planoId)
+        const diasAlterado = Number(draft.dias) !== Number(original.dias)
+        const statusAlterado = String(draft.status || '').toUpperCase() !== String(original.status || '').toUpperCase()
+        if (planoAlterado || diasAlterado || statusAlterado) {
+          operacoes.push({
+            operacao: 'EDITAR',
+            subscriptionId: draft.id,
+            planoId: Number(draft.planoId),
+            dias: Number(draft.dias),
+            status: 'ATIVA',
+          })
+        }
+      } else if (ehTemporaria(draft)) {
+        operacoes.push({
+          operacao: 'CRIAR',
+          planoId: Number(draft.planoId),
+          dias: Number(draft.dias),
+        })
+      }
+    })
+
+    return operacoes
   }
 
   function renderAcoesPagamento(item) {
@@ -746,7 +762,7 @@ export default function AdminDashboard() {
               key={label}
               type="button"
               className={`gendaz-sidebar__link ${aba === label ? 'is-active' : ''}`}
-              onClick={() => setAba(label)}
+              onClick={() => selecionarAba(label)}
             >
               <Icon size={18} />
               <span>{label}</span>
@@ -804,22 +820,22 @@ export default function AdminDashboard() {
             <div className="admin-strategy-grid">
               <article className="admin-strategy-card">
                 <span>Contas ativas</span>
-                <strong>{contasAtivas}</strong>
+                <strong>{contaAtiva}</strong>
                 <small>{contasAtivasPct}% da base atual</small>
               </article>
               <article className="admin-strategy-card">
                 <span>Contas canceladas</span>
-                <strong>{contasCanceladas}</strong>
-                <small>vencidas ou bloqueadas</small>
+                <strong>{contaCancelada}</strong>
+                <small>assinaturas canceladas ou LGPD encerradas</small>
               </article>
               <article className="admin-strategy-card">
                 <span>Contas em teste</span>
-                <strong>{contasTeste}</strong>
-                <small>periodo gratuito ativo</small>
+                <strong>{contaTeste}</strong>
+                <small>periodo gratuito ativo hoje</small>
               </article>
               <article className="admin-strategy-card admin-strategy-card--highlight">
                 <span>Total ganho</span>
-                <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
+                <strong>{moeda(dashboard?.totalGanho)}</strong>
                 <small>{moeda(dashboard?.faturamentoMes)} neste mes</small>
               </article>
             </div>
@@ -836,107 +852,45 @@ export default function AdminDashboard() {
                  <div className="panel-head">
                    <div>
                      <span className="section-kicker">Financeiro</span>
-                     <h2>Receita dos pagamentos</h2>
-                     <p>Base confirmada por data de pagamento no mês corrente.</p>
+                     <h2>Receita por dia</h2>
+                     <p>Base confirmada por data de pagamento no mes selecionado.</p>
+                   </div>
+                   <div className="receita-chart-periodo">
+                     <input
+                       type="month"
+                       value={mesDashboard}
+                       max={mesAtualIso()}
+                       onChange={(event) => {
+                         const valor = event.target.value
+                         if (!valor) return
+                         setMesDashboard(`${valor.slice(0, 4)}-${valor.slice(5, 7)}`)
+                       }}
+                       className="receita-chart-period-input"
+                     />
                    </div>
                  </div>
-                 <GraficoReceitaMes dados={receitaMensalGrafico} />
+                 <GraficoReceitaMes dados={receitaDiasDashboard} formatarEixoY={formatoCompactoReceita} />
                </section>
               <section className="admin-tactical-panel">
                 <div className="panel-head">
                   <div>
                     <span className="section-kicker">Operacao</span>
-                    <h2>Status geral das contas</h2>
-                    <p>Leitura rapida da saude da base Gendaz.</p>
-                  </div>
-                </div>
-                <div className="admin-status-stack">
-                  <div className="admin-status-row">
-                    <span>Ativas</span>
-                    <strong>{contasAtivas}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Canceladas</span>
-                    <strong>{contasCanceladas}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Teste</span>
-                    <strong>{contasTeste}</strong>
-                  </div>
-                  <div className="admin-status-row">
-                    <span>Usuarios ativos</span>
-                    <strong>{dashboard?.usuariosAtivos || 0}</strong>
+                    <h2>Empresas por plano</h2>
+                    <p>Distribuicao atual das contas ativas e em teste.</p>
                   </div>
                 </div>
                 <div className="admin-mini-bars">
-                  {planoResumo.map(([plano, total]) => (
-                    <div key={plano} className="admin-mini-bar">
+                  {(dashboard?.distribuicaoPlanos || []).map((item) => (
+                    <div key={item.plano} className="admin-mini-bar">
                       <div>
-                        <span>{plano}</span>
-                        <strong>{total}</strong>
+                        <span>{rotuloPlano(item.plano)}</span>
+                        <strong>{item.total}</strong>
                       </div>
                       <div className="admin-mini-bar-track">
-                        <i style={{ width: `${Math.max(12, (total / Math.max(planoResumo[0]?.[1] || 1, 1)) * 100)}%` }} />
+                        <i style={{ width: `${Math.max(12, (item.total / Math.max((dashboard?.distribuicaoPlanos || []).reduce((soma, plano) => soma + Number(plano.total || 0), 0), 1)) * 100)}%` }} />
                       </div>
                     </div>
                   ))}
-                </div>
-              </section>
-            </div>
-            <div className="admin-panels">
-              <section>
-                <h2>Receita</h2>
-                {(dashboard?.receita || []).map((item) => (
-                  <div className="admin-bar" key={item.periodo}>
-                    <span>{item.periodo}</span>
-                    <strong>{moeda(item.valor)}</strong>
-                  </div>
-                ))}
-              </section>
-              <section>
-                <h2>Planos</h2>
-                {(dashboard?.distribuicaoPlanos || []).map((item) => (
-                  <div className="admin-bar" key={item.plano}>
-                    <span>{rotuloPlano(item.plano)}</span>
-                    <strong>{item.total}</strong>
-                  </div>
-                ))}
-              </section>
-              <section>
-                <h2>Pagamentos recentes</h2>
-                {pagamentoMaisRecente.length === 0 ? (
-                  <div className="admin-empty-tactical">Sem pagamentos recentes.</div>
-                ) : (
-                  pagamentoMaisRecente.map((item) => (
-                    <div className="admin-bar" key={`${item.id}-${item.dataPagamento || item.dataCriacao || item.data || ''}`}>
-                      <span>{item.empresa || 'Empresa'}</span>
-                      <strong>{moeda(item.valor)}</strong>
-                    </div>
-                  ))
-                )}
-              </section>
-            </div>
-            <div className="admin-panels">
-              <section>
-                <h2>Pagamentos confirmados</h2>
-                <div className="admin-bar-row">
-                  <span>Confirmados no periodo</span>
-                  <strong>{pagamentosConfirmadosLista.length}</strong>
-                </div>
-                <div className="admin-bar-row">
-                  <span>Pendentes</span>
-                  <strong>{pagamentosPendentesLista.length}</strong>
-                </div>
-              </section>
-              <section>
-                <h2>Resumo pratico</h2>
-                <div className="admin-bar-row">
-                  <span>Total ganho</span>
-                  <strong>{moeda(dashboard?.faturamentoTotal)}</strong>
-                </div>
-                <div className="admin-bar-row">
-                  <span>Faturamento do mes</span>
-                  <strong>{moeda(dashboard?.faturamentoMes)}</strong>
                 </div>
               </section>
             </div>
@@ -1248,7 +1202,7 @@ export default function AdminDashboard() {
         )}
       </section>
 
-      <Modal title={acaoModalTitulo(modal)} open={Boolean(modal)} onClose={() => setModal(null)}>
+      <Modal title={acaoModalTitulo(modal)} open={Boolean(modal)} onClose={() => setModal(null)} portalClassName="admin-gendaz-modal">
         <div className="confirm-box">
           {modal?.tipo === 'pagamento-detalhes' ? (
             <div className="admin-detail-list">
@@ -1327,10 +1281,10 @@ export default function AdminDashboard() {
                               onChange={(event) => setAssinaturaEditForm((atual) => ({ ...atual, dias: event.target.value }))}
                               placeholder="Dias"
                             />
-                            <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={salvarEdicaoAssinatura}>
-                              {salvandoAssinatura ? <><Loader className="spin" size={16} /> Salvando...</> : 'Salvar'}
+                            <button type="button" className="btn btn-secondary" onClick={salvarEdicaoAssinatura}>
+                              Salvar
                             </button>
-                            <button type="button" className="btn btn-ghost" disabled={salvandoAssinatura} onClick={() => setEditandoAssinaturaId(null)}>
+                            <button type="button" className="btn btn-ghost" onClick={() => setEditandoAssinaturaId(null)}>
                               Cancelar
                             </button>
                           </div>
@@ -1342,10 +1296,9 @@ export default function AdminDashboard() {
                         <button
                           type="button"
                           className="btn btn-ghost admin-assinatura__remover"
-                          disabled={salvandoAssinatura}
                           onClick={() => removerPlanoDaConta(assinatura)}
                         >
-                          {salvandoAssinatura ? <><Loader className="spin" size={16} /> Removendo...</> : <><Trash2 size={14} /> Remover</>}
+                          <Trash2 size={14} /> Remover
                         </button>
                       </div>
                     ))}
@@ -1379,13 +1332,12 @@ export default function AdminDashboard() {
                       </label>
                     </div>
                     <div className="admin-assinatura__add-actions">
-                      <button type="button" className="btn btn-secondary" disabled={salvandoAssinatura} onClick={criarNovaAssinatura}>
-                        {salvandoAssinatura ? <><Loader className="spin" size={16} /> Adicionando...</> : 'Adicionar'}
+                      <button type="button" className="btn btn-secondary" onClick={criarNovaAssinatura}>
+                        Adicionar
                       </button>
                       <button
                         type="button"
                         className="btn btn-ghost"
-                        disabled={salvandoAssinatura}
                         onClick={() => { setAdicionandoPlano(false); setNovaAssinatura({ planoId: '', dias: 30 }) }}
                       >
                         Cancelar
@@ -1530,6 +1482,17 @@ export default function AdminDashboard() {
           </div>
         </div>
       </Modal>
+
+      <ConfirmacaoModal
+        open={Boolean(assinaturaParaRemover)}
+        titulo="Remover plano"
+        mensagem={assinaturaParaRemover
+          ? `Remover o plano "${assinaturaParaRemover.planoNome || 'Plano'}" da conta? Se não restar nenhum plano, a conta ficara inativa.`
+          : ''}
+        acaoLabel="Remover plano"
+        onConfirmar={confirmarRemocaoPlano}
+        onCancelar={() => setAssinaturaParaRemover(null)}
+      />
     </main>
   )
 }

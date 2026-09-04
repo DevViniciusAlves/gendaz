@@ -1,5 +1,6 @@
 package com.minhaempresa.gendaz.admin.dto;
 
+import com.minhaempresa.gendaz.admin.dto.AdminAssinaturaDtos.AdminAssinaturaOperacaoRequest;
 import com.minhaempresa.gendaz.shared.TelefoneInternacional;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -20,20 +21,18 @@ public final class AdminDtos {
     public record AdminUsuarioResponse(Long id, String nome, String email, String perfil) {}
 
     public record AdminDashboardResponse(
-            BigDecimal faturamentoTotal,
+            long contasAtivas,
+            long contasCanceladas,
+            long contasTeste,
+            BigDecimal totalGanho,
             BigDecimal faturamentoMes,
-            long pagamentosConfirmados,
             long pagamentosPendentes,
-            long assinaturasAtivas,
-            long empresasTesteGratis,
             long empresasVencidas,
-            long usuariosAtivos,
-            long novosCadastros,
-            List<ReceitaPontoResponse> receita,
+            List<ReceitaDiaResponse> receitaDia,
             List<PlanoDistribuicaoResponse> distribuicaoPlanos
     ) {}
 
-    public record ReceitaPontoResponse(String periodo, BigDecimal valor) {}
+    public record ReceitaDiaResponse(String data, String label, BigDecimal valor) {}
 
     public record PlanoDistribuicaoResponse(String plano, long total) {}
 
@@ -88,12 +87,13 @@ public final class AdminDtos {
     ) {}
 
 public record AdminAtualizarEmpresaRequest(
-            @NotBlank @Size(min = 2, max = 100, message = "Informe um nome fantasia valido.") String nomeFantasia,
-            @Size(max = 20) @TelefoneInternacional String telefone,
-            @NotBlank @Email @Size(max = 120, message = "Informe um e-mail valido.") String email,
+            @NotBlank @Size(min = 2, max = 100, message = "Nome fantasia deve ter entre 2 e 100 caracteres.") String nomeFantasia,
+            @Size(max = 20, message = "Telefone deve ter no maximo 20 caracteres.") @TelefoneInternacional String telefone,
+            @NotBlank @Email @Size(max = 120, message = "E-mail deve ter no maximo 120 caracteres.") String email,
             Long planoId,
             Integer diasPlano,
-            @NotBlank @Size(min = 8, max = 500, message = "Informe um motivo com pelo menos 8 caracteres.") String motivo
+            @NotBlank @Size(min = 8, max = 500, message = "O motivo deve ter entre 8 e 500 caracteres.") String motivo,
+            List<AdminAssinaturaOperacaoRequest> assinaturas
     ) {}
 
     public record AdminAuditLogResponse(

@@ -29,10 +29,13 @@ public class AssinaturaService {
     private final AssinaturaRepository assinaturaRepository;
     private final AssinaturaMapper mapper = new AssinaturaMapper();
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<AssinaturaResponse> listarPorEmpresa(Long empresaId) {
         validarEmpresaAtual(empresaId);
-        return assinaturaRepository.findByEmpresaId(empresaId).stream().map(mapper::toResponse).toList();
+        LocalDate hoje = LocalDate.now();
+        List<AssinaturaEntity> todas = assinaturaRepository.findByEmpresaId(empresaId);
+        processarExpiracaoEFila(empresaId, hoje, todas);
+        return todas.stream().map(mapper::toResponse).toList();
     }
 
     @Transactional
@@ -63,20 +66,49 @@ public class AssinaturaService {
     }
 
     /**
-     * Fila de planos com vigencia futura (nao vencidos): assinaturas ATIVA ou
-     * TESTE cujo dataFim ainda nao passou de hoje. E a base do limite de 2
-     * planos ativos e do encadeamento em sequencia.
+     * Fila de planos com vigencia futura (nao vencidos): inclui o plano atual e
+     * os planos futuros contratados. Usa pertenceFilaValida, que nao exige
+     * dataInicio <= hoje (plano futuro pertence a fila) e exclui TESTE sem
+     * dataFim. E a base do limite de 2 planos ativos e do encadeamento.
      */
     public List<AssinaturaEntity> buscarFilaAtiva(Long empresaId) {
         LocalDate hoje = LocalDate.now();
-        return assinaturaRepository.findByEmpresaId(empresaId).stream()
-                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
-                        || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+        return calcularFilaAtiva(
+                assinaturaRepository.findByEmpresaId(empresaId),
+                hoje
+        );
+    }
+
+    /**
+     * Fila em memória a partir de uma lista já carregada. Nao exige
+     * dataInicio <= hoje (plano futuro permanece) e exclui TESTE sem dataFim.
+     */
+    private List<AssinaturaEntity> calcularFilaAtiva(
+            List<AssinaturaEntity> todas,
+            LocalDate hoje
+    ) {
+        return todas.stream()
+                .filter(a -> pertenceFilaValida(a, hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
                 .toList();
+    }
+
+    /**
+     * Pertence a fila se e um plano ATIVA/TESTE que ainda nao venceu. Nao exige
+     * dataInicio <= hoje, pois a fila guarda tambem os planos futuros.
+     */
+    private boolean pertenceFilaValida(AssinaturaEntity assinatura, LocalDate hoje) {
+        if (assinatura.getStatus() == StatusAssinatura.ATIVA) {
+            return assinatura.getDataFim() == null
+                    || assinatura.getDataFim().isAfter(hoje);
+        }
+        if (assinatura.getStatus() == StatusAssinatura.TESTE) {
+            return assinatura.getDataFim() != null
+                    && assinatura.getDataFim().isAfter(hoje);
+        }
+        return false;
     }
 
     /**
@@ -89,18 +121,31 @@ public class AssinaturaService {
         LocalDate hoje = LocalDate.now();
         processarExpiracaoDaEmpresa(empresaId, hoje);
 
-        List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
-        Optional<AssinaturaEntity> vigente = fila.stream()
-                .filter(a -> a.getDataInicio() != null && !a.getDataInicio().isAfter(hoje)
-                        && a.getDataFim() != null && a.getDataFim().isAfter(hoje))
+        return buscarFilaAtiva(empresaId)
+                .stream()
+                .filter(a -> estaVigenteHoje(a, hoje))
                 .findFirst();
-        if (vigente.isPresent()) {
-            return vigente;
+    }
+
+    private boolean estaVigenteHoje(AssinaturaEntity assinatura, LocalDate hoje) {
+        boolean iniciou = assinatura.getDataInicio() != null
+                && !assinatura.getDataInicio().isAfter(hoje);
+
+        if (!iniciou) {
+            return false;
         }
-        // Fallback para dados legados sem dataFim
-        return fila.stream()
-                .filter(a -> a.getDataFim() == null)
-                .findFirst();
+
+        if (assinatura.getStatus() == StatusAssinatura.ATIVA) {
+            return assinatura.getDataFim() == null
+                    || assinatura.getDataFim().isAfter(hoje);
+        }
+
+        if (assinatura.getStatus() == StatusAssinatura.TESTE) {
+            return assinatura.getDataFim() != null
+                    && assinatura.getDataFim().isAfter(hoje);
+        }
+
+        return false;
     }
 
     @Transactional
@@ -114,9 +159,7 @@ public class AssinaturaService {
     public int obterLimiteUsuarios(Long empresaId) {
         LocalDate hoje = LocalDate.now();
         Optional<AssinaturaEntity> assinatura = assinaturaRepository.findByEmpresaId(empresaId).stream()
-                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
-                        || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+                .filter(a -> estaVigenteHoje(a, hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
@@ -197,9 +240,7 @@ public class AssinaturaService {
     public boolean isPlanoComRecursosAvancados(Long empresaId) {
         LocalDate hoje = LocalDate.now();
         Optional<AssinaturaEntity> assinatura = assinaturaRepository.findByEmpresaId(empresaId).stream()
-                .filter(a -> a.getStatus() == StatusAssinatura.ATIVA
-                        || a.getStatus() == StatusAssinatura.TESTE)
-                .filter(a -> a.getDataFim() == null || a.getDataFim().isAfter(hoje))
+                .filter(a -> estaVigenteHoje(a, hoje))
                 .sorted(Comparator
                         .comparing(AssinaturaEntity::getDataInicio, Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(AssinaturaEntity::getId))
@@ -259,13 +300,29 @@ public class AssinaturaService {
 
     private void processarExpiracaoEFila(Long empresaId, LocalDate hoje) {
         List<AssinaturaEntity> todas = assinaturaRepository.findByEmpresaId(empresaId);
+        processarExpiracaoEFila(empresaId, hoje, todas);
+    }
 
+    private void processarExpiracaoEFila(
+            Long empresaId,
+            LocalDate hoje,
+            List<AssinaturaEntity> todas
+    ) {
         for (AssinaturaEntity a : todas) {
-            boolean venceu = (a.getStatus() == StatusAssinatura.ATIVA
-                    || a.getStatus() == StatusAssinatura.TESTE)
+            boolean statusProcessavel =
+                    a.getStatus() == StatusAssinatura.ATIVA
+                    || a.getStatus() == StatusAssinatura.TESTE;
+
+            boolean testeSemDataFim =
+                    a.getStatus() == StatusAssinatura.TESTE
+                    && a.getDataFim() == null;
+
+            boolean venceu =
+                    statusProcessavel
                     && a.getDataFim() != null
                     && !a.getDataFim().isAfter(hoje);
-            if (venceu) {
+
+            if (testeSemDataFim || venceu) {
                 a.setStatus(StatusAssinatura.EXPIRADA);
                 assinaturaRepository.save(a);
             }
@@ -274,7 +331,7 @@ public class AssinaturaService {
         // Removido: transição PENDENTE_PAGAMENTO → ATIVA baseada apenas na data é incorreta.
         // Assinatura paga só pode ser ativada por pagamento aprovado ou acao administrativa explícita.
 
-        List<AssinaturaEntity> fila = buscarFilaAtiva(empresaId);
+        List<AssinaturaEntity> fila = calcularFilaAtiva(todas, hoje);
         if (fila.isEmpty()) {
             todas.stream()
                     .map(AssinaturaEntity::getEmpresa)

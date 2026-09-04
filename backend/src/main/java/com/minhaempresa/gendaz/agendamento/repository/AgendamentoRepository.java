@@ -4,11 +4,14 @@ import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
 import com.minhaempresa.gendaz.agendamento.dto.AgendamentoSimplesProjection;
 import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.financeiro.dto.FinanceiroDtos.ItemResumoResponse;
+import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
@@ -24,10 +27,93 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     List<AgendamentoEntity> findByEmpresaId(Long empresaId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndData(Long empresaId, LocalDate data);
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.excluidoAgenda = false
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdOperacional(
+            @Param("empresaId") Long empresaId,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
+    /**
+     * Visao HISTORICA para metricas (Insights/relatorios): inclui registros
+     * removidos da Agenda operacional (excluidoAgenda = true).
+     * Excluir da Agenda nao apaga a realidade: um FINALIZADO excluido
+     * continua sendo um atendimento realizado e deve contar em historico,
+     * ultima utilizacao, ranking de servicos/profissionais e recuperacao.
+     * NUNCA usar para renderizar a Agenda operacional.
+     */
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdHistorico(
+            @Param("empresaId") Long empresaId,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.data = :data
+              and a.excluidoAgenda = false
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdAndDataOperacional(
+            @Param("empresaId") Long empresaId,
+            @Param("data") LocalDate data,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByClienteId(Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndClienteId(Long empresaId, Long clienteId);
+    /**
+     * Busca de propriedade para fluxos self-service (Meu Gendaz): valida
+     * atomicamente agendamento + empresa + cliente. Usada para impedir
+     * IDOR/BOLA entre clientes da mesma empresa. Retorna vazio quando o
+     * recurso nao pertence ao cliente, sem vazar o proprietario real.
+     */
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdAndClienteId(Long id, Long empresaId, Long clienteId);
+    /**
+     * Carga com lock pessimista de escrita para TODA transicao de estado do
+     * agendamento (confirmar/iniciar/pausar/retomar/finalizar/cancelar/
+     * remarcar/reabrir/atualizar/excluir). Serializa writers concorrentes do
+     * MESMO agendamento: a segunda transacao so le o status DEPOIS que a
+     * primeira commita, entao a maquina de estados nunca decide sobre um
+     * estado stale (ex.: finalizar x pausar gerando PAUSADO + PAGO + Caixa).
+     * Tenant sempre escopado (id + empresaId); nunca lock apenas por id.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select a
+            from AgendamentoEntity a
+            where a.id = :id
+              and a.empresa.id = :empresaId
+            """)
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdForUpdate(
+            @Param("id") Long id,
+            @Param("empresaId") Long empresaId);
+    /**
+     * Mesmo lock acima, para os fluxos self-service (Meu Gendaz): valida
+     * atomicamente agendamento + empresa + cliente autenticado, sem vazar o
+     * proprietario real (vazio quando nao pertence ao cliente).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select a
+            from AgendamentoEntity a
+            where a.id = :id
+              and a.empresa.id = :empresaId
+              and a.cliente.id = :clienteId
+            """)
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaIdAndClienteIdForUpdate(
+            @Param("id") Long id,
+            @Param("empresaId") Long empresaId,
+            @Param("clienteId") Long clienteId);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByServicoId(Long servicoId);
     List<AgendamentoHorarioProjection> findByProfissionalIdAndData(Long profissionalId, LocalDate data);
@@ -41,12 +127,13 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("empresaId") Long empresaId,
             @Param("data") LocalDate data);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    List<AgendamentoEntity> findTop10ByEmpresaIdOrderByDataDescHoraInicioDesc(Long empresaId);
+    List<AgendamentoEntity> findTop10ByEmpresaIdAndClienteStatusNotOrderByDataDescHoraInicioDesc(Long empresaId, StatusCadastro statusExcluido);
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
-    List<AgendamentoEntity> findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
+    List<AgendamentoEntity> findTop5ByEmpresaIdAndStatusInAndDataGreaterThanEqualAndClienteStatusNotOrderByDataAscHoraInicioAsc(
             Long empresaId,
             List<StatusAgendamento> status,
-            LocalDate data
+            LocalDate data,
+            StatusCadastro statusExcluido
     );
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
     List<AgendamentoEntity> findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
@@ -82,6 +169,8 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             @Param("data") LocalDate data
     );
     long countByEmpresaIdAndData(Long empresaId, LocalDate data);
+    long countByEmpresaIdAndDataAndStatusNot(Long empresaId, LocalDate data, StatusAgendamento status);
+    long countByEmpresaIdAndDataAndStatusNotAndClienteStatusNot(Long empresaId, LocalDate data, StatusAgendamento status, StatusCadastro statusCliente);
     boolean existsByClienteId(Long clienteId);
     boolean existsByServicoId(Long servicoId);
     boolean existsByProfissionalIdAndDataAndHoraInicioAndStatus(Long profissionalId, LocalDate data, LocalTime horaInicio, StatusAgendamento status);
@@ -111,12 +200,31 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             from AgendamentoEntity a
             where a.empresa.id = :empresaId
               and a.status <> :statusCancelado
+              and a.cliente.status <> :statusExcluido
             group by a.servico.id, a.servico.nome
             order by count(a.id) desc
             """)
     List<Object[]> resumoServicosMaisAgendados(
             @Param("empresaId") Long empresaId,
             @Param("statusCancelado") StatusAgendamento statusCancelado,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
+            Pageable pageable
+    );
+
+    @Query("""
+            select a.profissional.id, a.profissional.nome, count(a.id)
+            from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.profissional is not null
+              and a.status <> :statusCancelado
+              and a.cliente.status <> :statusExcluido
+            group by a.profissional.id, a.profissional.nome
+            order by count(a.id) desc
+            """)
+    List<Object[]> resumoProfissionaisMaisAgendados(
+            @Param("empresaId") Long empresaId,
+            @Param("statusCancelado") StatusAgendamento statusCancelado,
+            @Param("statusExcluido") StatusCadastro statusExcluido,
             Pageable pageable
     );
 

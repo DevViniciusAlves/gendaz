@@ -244,13 +244,13 @@ export default function Configuracoes() {
     setEnviandoChamado(true)
     try {
       await appApi.criarChamado({
-        assunto: 'Solicitação de alteração de dados da empresa',
+        assunto: 'Alteração em conta',
         prioridade: 'MEDIA',
         mensagem,
       })
       setMensagemAlteracao('')
       setSolicitacaoAberta(false)
-      setStatusChamado('Solicitação enviada para o Super Admin.')
+      setStatusChamado('Solicitação enviada. A equipe gendaz realizará a alteração em breve. Você pode acompanhar o andamento na aba Suporte.')
     } catch (error) {
       setErroChamado(error.response?.data?.mensagem || Object.values(error.response?.data?.campos || {})[0] || 'Não foi possível abrir o chamado.')
     } finally {
@@ -498,7 +498,7 @@ export default function Configuracoes() {
                 placeholder="Informe quais dados precisam ser alterados e o motivo."
               />
               <small className={mensagemAlteracao.length >= 500 ? 'field-hint limit-reached' : 'field-hint'}>
-                {mensagemAlteracao.length >= 500 ? 'Limite de caracteres atingido.' : 'Este pedido será enviado ao Super Admin.'}
+                {mensagemAlteracao.length >= 500 ? 'Limite de caracteres atingido.' : 'A equipe gendaz analisará sua solicitação.'}
                 <strong>{mensagemAlteracao.length}/500</strong>
               </small>
             </label>

@@ -1904,16 +1904,48 @@
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
-    height: auto !important;
-    min-height: 420px !important;
-    max-height: none !important;
+
+
+    height: min(600px, 70dvh) !important;
+    min-height: 400px !important;
+    max-height: 600px !important;
+
+
+    display: grid !important;
+    grid-template-rows: auto minmax(0, 1fr) !important;
+
+
+    overflow: hidden !important;
+    box-sizing: border-box !important;
   }
+
 
   .app-shell .insights-page .insights-ai-chat__body {
     width: 100% !important;
     min-width: 0 !important;
-    max-height: none !important;
-    overflow: visible !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+
+
+    display: grid !important;
+    grid-template-rows: minmax(0, 1fr) auto auto !important;
+
+
+    overflow: hidden !important;
+  }
+
+
+  .app-shell .insights-page .insights-ai-chat__messages {
+    min-height: 0 !important;
+    max-height: 100% !important;
+
+
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+
+
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
   }
 
   .app-shell .insights-page :is(

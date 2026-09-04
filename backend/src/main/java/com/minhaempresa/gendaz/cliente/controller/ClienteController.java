@@ -118,7 +118,7 @@ public class ClienteController {
 
     @PostMapping("/acoes-em-massa")
     public ResponseEntity<AcaoEmMassaResponse> acoesEmMassa(@Valid @RequestBody AcaoEmMassaClienteRequest request) {
-        return ResponseEntity.ok(clienteBulkService.excluir(request));
+        return ResponseEntity.ok(clienteBulkService.processar(request));
     }
 }
 

@@ -563,7 +563,7 @@ html .admin-gendaz .admin-tactical-panel p {
 html .admin-gendaz .admin-metrics {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 html .admin-gendaz .admin-metrics article {
@@ -955,7 +955,7 @@ html .admin-gendaz input:-webkit-autofill:active {
 }
 
 /* Campos de formulário dentro de modais */
-html .admin-gendaz .admin-form-grid {
+html .admin-gendaz-modal .admin-form-grid {
   display: grid;
   gap: 14px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -963,9 +963,16 @@ html .admin-gendaz .admin-form-grid {
 }
 
 @media (max-width: 900px) {
-  html .admin-gendaz .admin-form-grid {
+  html .admin-gendaz-modal .admin-form-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Modais do Admin seguem o tema claro padrao (.system-modal) */
+html .admin-gendaz-modal input::placeholder,
+html .admin-gendaz-modal textarea::placeholder {
+  color: rgba(11, 11, 11, 0.5) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.5) !important;
 }
 
 html .admin-gendaz .field {
@@ -1009,22 +1016,22 @@ html .admin-gendaz .form-error {
 }
 
 /* ---------- Detalhes / configurações ---------- */
-html .admin-gendaz .admin-detail-list {
+html .admin-gendaz-modal .admin-detail-list {
   display: grid;
   gap: 8px;
 }
 
-html .admin-gendaz .admin-detail-list p {
+html .admin-gendaz-modal .admin-detail-list p {
   margin: 0;
-  color: var(--gd-muted) !important;
+  color: #4b5563 !important;
   font-size: 13px;
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
 }
 
-html .admin-gendaz .admin-detail-list p strong {
-  color: var(--gd-text) !important;
+html .admin-gendaz-modal .admin-detail-list p strong {
+  color: #0b0b0b !important;
   min-width: 120px;
 }
 
@@ -1217,30 +1224,30 @@ html .admin-gendaz .confirm-box {
   align-content: start;
 }
 
-html .admin-gendaz .admin-form-grid > .field-wide,
-html .admin-gendaz .admin-assinaturas-block.field-wide,
-html .admin-gendaz .field.field-wide {
+html .admin-gendaz-modal .admin-form-grid > .field-wide,
+html .admin-gendaz-modal .admin-assinaturas-block.field-wide,
+html .admin-gendaz-modal .field.field-wide {
   grid-column: 1 / -1;
 }
 
-html .admin-gendaz .admin-form-grid .international-phone.field-wide,
-html .admin-gendaz .admin-form-grid .international-phone.field-wide .field {
+html .admin-gendaz-modal .admin-form-grid .international-phone.field-wide,
+html .admin-gendaz-modal .admin-form-grid .international-phone.field-wide .field {
   width: 100%;
 }
 
-html .admin-gendaz .admin-form-grid .international-phone.field-wide .PhoneInput {
+html .admin-gendaz-modal .admin-form-grid .international-phone.field-wide .PhoneInput {
   min-height: 44px;
 }
 
-html .admin-gendaz .admin-assinaturas-block.field-wide {
+html .admin-gendaz-modal .admin-assinaturas-block.field-wide {
   margin-top: 4px;
 }
 
-html .admin-gendaz .admin-assinaturas-block.field-wide > .field {
+html .admin-gendaz-modal .admin-assinaturas-block.field-wide > .field {
   margin-bottom: 0;
 }
 
-html .admin-gendaz .modal .confirm-actions {
+html .admin-gendaz-modal .modal .confirm-actions {
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -1248,38 +1255,46 @@ html .admin-gendaz .modal .confirm-actions {
 }
 
 /* ---------- Planos da conta (ate 2) ---------- */
-html .admin-gendaz .admin-assinaturas-block {
+html .admin-gendaz-modal .admin-assinaturas-block {
   display: grid;
   gap: 10px;
   margin-top: 2px;
 }
 
-html .admin-gendaz .admin-assinaturas {
+html .admin-gendaz-modal .admin-assinaturas {
   display: grid;
   gap: 10px;
 }
 
-html .admin-gendaz .admin-assinatura {
+html .admin-gendaz-modal .admin-assinatura {
   display: grid;
   gap: 10px;
   padding: 14px 16px;
-  border: 1px solid var(--gd-border);
+  border: 1px solid rgba(11, 11, 11, 0.16);
   border-radius: 12px;
   background: #ffffff;
   color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura *,
-html .admin-gendaz .admin-assinaturas-block *,
-html .admin-gendaz .admin-assinatura .field span,
-html .admin-gendaz .admin-assinaturas-block .field span,
-html .admin-gendaz .admin-assinatura .field-hint,
-html .admin-gendaz .admin-assinaturas-block .field-hint {
+html .admin-gendaz-modal .admin-assinatura .field > span,
+html .admin-gendaz-modal .admin-assinatura__add .field > span {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura__head {
+html .admin-gendaz-modal .admin-assinatura .field-hint,
+html .admin-gendaz-modal .admin-assinatura__add .field-hint {
+  color: rgba(11, 11, 11, 0.62) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.62) !important;
+}
+
+html .admin-gendaz-modal .admin-assinatura input::placeholder,
+html .admin-gendaz-modal .admin-assinatura__add input::placeholder {
+  color: rgba(11, 11, 11, 0.42) !important;
+  -webkit-text-fill-color: rgba(11, 11, 11, 0.42) !important;
+}
+
+html .admin-gendaz-modal .admin-assinatura__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -1287,12 +1302,12 @@ html .admin-gendaz .admin-assinatura__head {
   flex-wrap: wrap;
 }
 
-html .admin-gendaz .admin-assinatura__head strong {
+html .admin-gendaz-modal .admin-assinatura__head strong {
   color: #0b0b0b !important;
   font-size: 14px;
 }
 
-html .admin-gendaz .admin-assinatura__meta {
+html .admin-gendaz-modal .admin-assinatura__meta {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -1303,177 +1318,181 @@ html .admin-gendaz .admin-assinatura__meta {
   line-height: 1.35;
 }
 
-html .admin-gendaz .admin-assinatura__meta span,
-html .admin-gendaz .admin-assinatura__meta small {
+html .admin-gendaz-modal .admin-assinatura__meta span,
+html .admin-gendaz-modal .admin-assinatura__meta small {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura .status,
-html .admin-gendaz .admin-assinaturas-block .status {
+html .admin-gendaz-modal .admin-assinatura .status,
+html .admin-gendaz-modal .admin-assinaturas-block .status {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
   background: rgba(11, 11, 11, 0.08) !important;
   border-color: rgba(11, 11, 11, 0.15) !important;
 }
 
-html .admin-gendaz .admin-assinatura .status .status-dot,
-html .admin-gendaz .admin-assinaturas-block .status .status-dot {
+html .admin-gendaz-modal .admin-assinatura .status .status-dot,
+html .admin-gendaz-modal .admin-assinaturas-block .status .status-dot {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura select,
-html .admin-gendaz .admin-assinatura input,
-html .admin-gendaz .admin-assinatura button,
-html .admin-gendaz .admin-assinaturas-block select,
-html .admin-gendaz .admin-assinaturas-block input,
-html .admin-gendaz .admin-assinaturas-block button {
+html .admin-gendaz-modal .admin-assinatura select,
+html .admin-gendaz-modal .admin-assinatura input,
+html .admin-gendaz-modal .admin-assinatura__add select,
+html .admin-gendaz-modal .admin-assinatura__add input {
   color: #0b0b0b !important;
   -webkit-text-fill-color: #0b0b0b !important;
+  caret-color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura select,
-html .admin-gendaz .admin-assinatura input {
+html .admin-gendaz-modal .admin-assinatura select,
+html .admin-gendaz-modal .admin-assinatura input {
   background: #ffffff !important;
   border: 1px solid rgba(11, 11, 11, 0.22) !important;
 }
 
-html .admin-gendaz .admin-assinatura .btn-secondary {
+html .admin-gendaz-modal .admin-assinatura .btn-secondary {
   background: #111111 !important;
   color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }
 
-html .admin-gendaz .admin-assinatura .btn-secondary span,
-html .admin-gendaz .admin-assinatura .btn-secondary svg {
+html .admin-gendaz-modal .admin-assinatura .btn-secondary span,
+html .admin-gendaz-modal .admin-assinatura .btn-secondary svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
 
-html .admin-gendaz .admin-assinatura .btn-ghost {
+html .admin-gendaz-modal .admin-assinatura .btn-ghost {
   background: #ffffff !important;
   color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
   border-color: rgba(11, 11, 11, 0.18) !important;
 }
 
-html .admin-gendaz .admin-assinatura .btn-ghost span,
-html .admin-gendaz .admin-assinatura .btn-ghost svg {
+html .admin-gendaz-modal .admin-assinatura .btn-ghost span,
+html .admin-gendaz-modal .admin-assinatura .btn-ghost svg {
   color: #111111 !important;
   stroke: #111111 !important;
 }
 
-html .admin-gendaz .admin-assinatura__add {
+html .admin-gendaz-modal .admin-assinatura__add {
   display: grid;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid var(--gd-border);
+  border: 1px dashed rgba(11, 11, 11, 0.25) !important;
   border-radius: 12px;
   background: #ffffff !important;
   color: #0b0b0b !important;
 }
 
-html .admin-gendaz .admin-assinatura__add-grid {
+html .admin-gendaz-modal .admin-assinatura__add-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.6fr) minmax(120px, 0.65fr);
   gap: 12px;
   align-items: end;
 }
 
-html .admin-gendaz .admin-assinatura__add-actions {
+html .admin-gendaz-modal .admin-assinatura__add-actions {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
-html .admin-gendaz .admin-assinatura__add .field {
+html .admin-gendaz-modal .admin-assinatura__add .field {
   gap: 7px;
   margin: 0;
 }
 
-html .admin-gendaz .admin-assinatura__add .field > span {
+html .admin-gendaz-modal .admin-assinatura__add .field > span {
   line-height: 1.2;
 }
 
-html .admin-gendaz .admin-assinatura__add select,
-html .admin-gendaz .admin-assinatura__add input {
+html .admin-gendaz-modal .admin-assinatura__add select,
+html .admin-gendaz-modal .admin-assinatura__add input {
   min-height: 42px;
+  background: #ffffff !important;
+  border: 1px solid rgba(11, 11, 11, 0.22) !important;
 }
 
-html .admin-gendaz .admin-assinatura__add .btn-secondary {
+html .admin-gendaz-modal .admin-assinatura__add .btn-secondary {
   background: #111111 !important;
   color: #ffffff !important;
   -webkit-text-fill-color: #ffffff !important;
 }
 
-html .admin-gendaz .admin-assinatura__add .btn-secondary span,
-html .admin-gendaz .admin-assinatura__add .btn-secondary svg {
+html .admin-gendaz-modal .admin-assinatura__add .btn-secondary span,
+html .admin-gendaz-modal .admin-assinatura__add .btn-secondary svg {
   color: #ffffff !important;
   stroke: #ffffff !important;
 }
 
-html .admin-gendaz .admin-assinatura__add .btn-ghost {
+html .admin-gendaz-modal .admin-assinatura__add .btn-ghost {
   background: #ffffff !important;
   color: #111111 !important;
+  -webkit-text-fill-color: #111111 !important;
   border-color: rgba(11, 11, 11, 0.18) !important;
 }
 
-html .admin-gendaz .admin-assinatura__add .btn-ghost span,
-html .admin-gendaz .admin-assinatura__add .btn-ghost svg {
+html .admin-gendaz-modal .admin-assinatura__add .btn-ghost span,
+html .admin-gendaz-modal .admin-assinatura__add .btn-ghost svg {
   color: #111111 !important;
   stroke: #111111 !important;
 }
 
 @media (max-width: 640px) {
-  html .admin-gendaz .admin-assinatura__meta {
+  html .admin-gendaz-modal .admin-assinatura__meta {
     grid-template-columns: 1fr;
   }
 
-  html .admin-gendaz .admin-assinatura__add-grid {
+  html .admin-gendaz-modal .admin-assinatura__add-grid {
     grid-template-columns: 1fr;
   }
 
-  html .admin-gendaz .admin-assinatura__add-actions {
+  html .admin-gendaz-modal .admin-assinatura__add-actions {
     justify-content: stretch;
   }
 
-  html .admin-gendaz .admin-assinatura__add-actions .btn {
+  html .admin-gendaz-modal .admin-assinatura__add-actions .btn {
     width: 100%;
   }
 
-  html .admin-gendaz .admin-assinatura,
-  html .admin-gendaz .admin-assinatura__add {
+  html .admin-gendaz-modal .admin-assinatura,
+  html .admin-gendaz-modal .admin-assinatura__add {
     padding: 12px 14px;
   }
 }
 
-html .admin-gendaz .admin-assinatura__edit {
+html .admin-gendaz-modal .admin-assinatura__edit {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 110px auto auto;
   gap: 8px;
   align-items: center;
 }
 
-html .admin-gendaz .admin-assinatura__edit select,
-html .admin-gendaz .admin-assinatura__edit input {
+html .admin-gendaz-modal .admin-assinatura__edit select,
+html .admin-gendaz-modal .admin-assinatura__edit input {
   min-height: 38px;
 }
 
-html .admin-gendaz .admin-assinatura__edit .btn,
-html .admin-gendaz .admin-assinatura__add-btn .btn {
+html .admin-gendaz-modal .admin-assinatura__edit .btn,
+html .admin-gendaz-modal .admin-assinatura__add-btn {
   min-height: 38px;
   padding: 0 12px;
   font-size: 13px;
 }
 
-html .admin-gendaz .admin-assinatura__editar {
+html .admin-gendaz-modal .admin-assinatura__editar {
   justify-self: start;
   min-height: 36px !important;
   padding: 0 12px !important;
   font-size: 13px !important;
 }
 
-html .admin-gendaz .admin-assinatura__remover {
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover {
   justify-self: start;
   display: inline-flex;
   align-items: center;
@@ -1482,42 +1501,46 @@ html .admin-gendaz .admin-assinatura__remover {
   padding: 0 12px !important;
   font-size: 13px !important;
   color: #f87171 !important;
+  -webkit-text-fill-color: #f87171 !important;
   border-color: rgba(248, 113, 113, 0.35) !important;
   background: rgba(248, 113, 113, 0.08) !important;
 }
 
-html .admin-gendaz .admin-assinatura__remover:hover:not(:disabled) {
-  color: #fca5a5 !important;
-  border-color: rgba(248, 113, 113, 0.55) !important;
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover:hover:not(:disabled),
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover:hover:not(:disabled) span,
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover:hover:not(:disabled) svg {
+  color: #dc2626 !important;
+  -webkit-text-fill-color: #dc2626 !important;
+  stroke: #dc2626 !important;
+  border-color: rgba(220, 38, 38, 0.55) !important;
   background: rgba(248, 113, 113, 0.14) !important;
 }
 
-html .admin-gendaz .admin-assinatura__add {
-  border: 1px dashed var(--gd-border-strong);
-  border-radius: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.02);
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover span,
+html .admin-gendaz-modal .admin-assinatura .btn-ghost.admin-assinatura__remover svg {
+  color: #f87171 !important;
+  stroke: #f87171 !important;
 }
 
-html .admin-gendaz .admin-assinatura__add-btn {
+html .admin-gendaz-modal .admin-assinatura__add-btn {
   justify-self: start;
 }
 
-html .admin-gendaz .admin-assinaturas-empty {
+html .admin-gendaz-modal .admin-assinaturas-empty {
   padding: 18px 14px;
-  border: 1px dashed var(--gd-border);
+  border: 1px dashed rgba(11, 11, 11, 0.16);
   border-radius: 12px;
-  color: var(--gd-muted) !important;
+  color: #4b5563 !important;
   font-size: 13px;
   text-align: center;
 }
 
 @media (max-width: 640px) {
-  html .admin-gendaz .admin-assinatura__edit {
+  html .admin-gendaz-modal .admin-assinatura__edit {
     grid-template-columns: 1fr;
   }
 
-  html .admin-gendaz .modal {
+  html .admin-gendaz-modal .modal {
     width: min(100%, 100%);
     padding: 16px;
   }

@@ -22,6 +22,7 @@ public final class DashboardDtos {
 
     public record DashboardResumoResponse(
             Long agendamentosHoje,
+            Long pendentesPagamento,
             Long conversasAbertas,
             Long clientesCadastrados,
             Long servicosAtivos,
@@ -30,6 +31,7 @@ public final class DashboardDtos {
             List<DashboardAgendamentoItem> proximosAgendamentos,
             List<DashboardAgendamentoItem> ultimosAgendamentos,
             List<DashboardItemResumo> servicosMaisAgendados,
+            List<DashboardItemResumo> profissionaisMaisAgendados,
             List<DashboardReceitaDiaItem> receitaPorDia,
             List<DashboardPagamentoItem> pagamentosPendentes,
             String empresaNome,

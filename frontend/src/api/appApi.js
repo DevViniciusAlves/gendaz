@@ -130,6 +130,13 @@ function normalizarResumoDashboard(resumo) {
         valor: moedaNumero(item.valor),
       }))
     : []
+  const profissionaisMaisAgendados = Array.isArray(resumo.profissionaisMaisAgendados)
+    ? resumo.profissionaisMaisAgendados.map((item) => ({
+        ...item,
+        quantidade: Number(item.quantidade || 0),
+        valor: moedaNumero(item.valor),
+      }))
+    : []
   const proximosAgendamentos = Array.isArray(resumo.proximosAgendamentos)
     ? resumo.proximosAgendamentos.map((item) => ({ ...item }))
     : []
@@ -146,6 +153,7 @@ function normalizarResumoDashboard(resumo) {
   return {
     ...resumo,
     agendamentosHoje: Number(resumo.agendamentosHoje || 0),
+    pendentesPagamento: Number(resumo.pendentesPagamento || 0),
     conversasAbertas: Number(resumo.conversasAbertas || 0),
     clientesCadastrados: Number(resumo.clientesCadastrados || 0),
     servicosAtivos: Number(resumo.servicosAtivos || 0),
@@ -153,6 +161,7 @@ function normalizarResumoDashboard(resumo) {
     pendenteCobranca: moedaNumero(resumo.pendenteCobranca),
     receitaPorDia,
     servicosMaisAgendados,
+    profissionaisMaisAgendados,
     proximosAgendamentos,
     ultimosAgendamentos,
     pagamentosPendentes,
@@ -233,7 +242,7 @@ export const appApi = {
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
           api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
           api.get('/planos').then((response) => response.data),
@@ -256,16 +265,30 @@ export const appApi = {
           mensagens: mensagensPorConversa.flat(),
         }
       },
-      dashboard: async () => {
+      dashboard: async (scope) => {
+        const periodoScope = scope || 'dashboard'
+        const [periodoAno, periodoMes] = periodoScope.split(':')[1]?.split('-') || [periodoAtual().ano, periodoAtual().mes]
+        const empresaId = empresaIdAtual()
+        const estaImpersonando = Boolean(getSessionUser()?.impersonadoPorAdmin)
+        if (!empresaId) {
+          return criarBaseLocal(scope, null)
+        }
+
+        if (modoDemo) {
+          const usuario = getSessionUser()
+          const local = criarBaseLocal(scope, usuario)
+          return { ...local, __remote: true }
+        }
+
         const [empresa, clientesBase, servicosBase, profissionais, agendamentosBase, conversas, pagamentosBase, resumo] = await Promise.all([
           api.get(`/empresas/${empresaId}`).then((response) => response.data),
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
           api.get(`/conversas/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/pagamentos/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/dashboard/resumo?empresaId=${empresaId}`).then((response) => response.data),
+          api.get(`/dashboard/resumo?empresaId=${empresaId}&mes=${periodoMes}&ano=${periodoAno}`).then((response) => response.data),
         ])
         const dashboardResumo = normalizarResumoDashboard(resumo)
         return {
@@ -336,7 +359,7 @@ export const appApi = {
           api.get(`/clientes/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/servicos/empresa/${empresaId}`).then((response) => response.data),
           api.get(`/profissionais/empresa/${empresaId}`).then((response) => response.data),
-          api.get(`/agendamentos/empresa/${empresaId}`).then((response) => response.data),
+          api.get(`/agendamentos/empresa/${empresaId}?operacional=true`).then((response) => response.data),
         ])
         return { empresa, clientesBase, servicosBase, profissionais, agendamentosBase }
       },
@@ -413,7 +436,9 @@ export const appApi = {
 
     }
 
-    const loaded = await (loaders[scope] || loaders.full)()
+    const colonIndex = scope.indexOf(':')
+    const baseScope = colonIndex > -1 ? scope.slice(0, colonIndex) : scope
+    const loaded = await (loaders[baseScope] || loaders.full)(scope)
 
     const empresa = loaded.empresa
     if (!estaImpersonando && empresa?.status && empresa.status !== 'ATIVA') {
@@ -518,6 +543,10 @@ export const appApi = {
       .then(() => api.post('/auth/logout', null, {
         skipUsuarioHeader: true,
       }).then((response) => response.data))
+  },
+
+  buscarEmpresa(id) {
+    return api.get(`/empresas/${id}`).then((response) => response.data)
   },
 
   atualizarEmpresa(id, payload) {
@@ -771,6 +800,22 @@ export const appApi = {
     })
   },
 
+  retomarAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/retomar`).then((response) => response.data), {
+      loading: 'Retomando atendimento... aguarde',
+      success: 'Atendimento retomado com sucesso.',
+      error: 'Não foi possível retomar o atendimento.',
+    })
+  },
+
+  reabrirAgendamento(id) {
+    return comNotificacao(() => api.patch(`/agendamentos/${id}/reabrir`).then((response) => response.data), {
+      loading: 'Reabrindo atendimento... aguarde',
+      success: 'Atendimento reaberto com sucesso.',
+      error: 'Não foi possível reabrir o atendimento.',
+    })
+  },
+
   cancelarAgendamento(id) {
     return comNotificacao(() => api.patch(`/agendamentos/${id}/cancelar`, null, { params: { empresaId: empresaIdAtual() } }).then((response) => response.data), {
       loading: 'Cancelando agendamento... aguarde',
@@ -787,8 +832,8 @@ export const appApi = {
     })
   },
 
-  acaoEmMassaAgendamentos(ids, acao) {
-    return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual() }).then((response) => response.data), {
+  acaoEmMassaAgendamentos(ids, acao, extra = {}) {
+    return comNotificacao(() => api.post('/agendamentos/acoes-em-massa', { ids, acao, empresaId: empresaIdAtual(), ...extra }).then((response) => response.data), {
       loading: 'Processando agendamentos... aguarde',
       success: 'Agendamentos processados com sucesso.',
       error: 'Não foi possível processar os agendamentos.',

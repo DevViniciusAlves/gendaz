@@ -54,7 +54,8 @@ public final class InsightsDtos {
             List<InsightItem> oportunidades,
             List<InsightAction> acoes,
             String impactoTotal,
-            LocalDateTime geradoEm
+            LocalDateTime geradoEm,
+            Boolean dadosInsuficientes
     ) {}
 
     public record InsightAnalysisResponse(

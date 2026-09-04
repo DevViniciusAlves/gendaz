@@ -1147,17 +1147,24 @@
   .insights-ai-chat__body {
     width: 100%;
     min-width: 0;
-    max-height: none;
-    overflow: visible;
+    min-height: 0;
+    max-height: 100%;
+    overflow: hidden;
   }
 
   .insights-ai-chat {
     width: 100%;
     max-width: 100%;
     min-width: 0;
-    height: auto;
+    height: min(600px, 70dvh);
     min-height: 400px;
-    max-height: none;
+    max-height: 600px;
+    overflow: hidden;
+  }
+
+  .insights-ai-chat__messages {
+    overflow-y: auto;
+    overflow-x: hidden;
   }
 
   .insights-ai-chat__header,

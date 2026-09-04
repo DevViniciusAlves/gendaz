@@ -1,10 +1,10 @@
 import { X } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
-export default function Modal({ title, open, onClose, children }) {
+export default function Modal({ title, open, onClose, portalClassName, children }) {
   if (!open) return null
 
-  return createPortal(
+  const conteudo = (
     <div className="modal-backdrop system-modal-backdrop" role="presentation" onClick={onClose}>
       <section
         className="modal system-modal"
@@ -19,7 +19,11 @@ export default function Modal({ title, open, onClose, children }) {
         </div>
         {children}
       </section>
-    </div>,
+    </div>
+  )
+
+  return createPortal(
+    portalClassName ? <div className={portalClassName}>{conteudo}</div> : conteudo,
     document.body,
   )
 }

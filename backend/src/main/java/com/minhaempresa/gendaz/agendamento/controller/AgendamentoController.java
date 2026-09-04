@@ -60,9 +60,9 @@ public class AgendamentoController {
     }
 
     @GetMapping("/empresa/{empresaId}")
-    public ResponseEntity<List<AgendamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId) {
+    public ResponseEntity<List<AgendamentoResponse>> listarPorEmpresa(@PathVariable Long empresaId, @RequestParam(defaultValue = "false") boolean operacional) {
         validarEmpresaAtual(empresaId);
-        return ResponseEntity.ok(agendamentoService.listarPorEmpresa(empresaId));
+        return ResponseEntity.ok(agendamentoService.listarPorEmpresa(empresaId, operacional));
     }
 
     @GetMapping("/data")
@@ -120,6 +120,8 @@ public class AgendamentoController {
         }
         try {
             return ResponseEntity.ok(agendamentoService.cancelar(id, empresaId));
+        } catch (com.minhaempresa.gendaz.shared.BusinessException e) {
+            return ResponseEntity.badRequest().body(Map.of("mensagem", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of("mensagem", "Erro ao cancelar agendamento."));
         }
@@ -147,6 +149,18 @@ public class AgendamentoController {
     public ResponseEntity<AgendamentoResponse> pausar(@PathVariable Long id) {
         AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
         return ResponseEntity.ok(agendamentoService.pausar(id));
+    }
+
+    @PatchMapping("/{id}/retomar")
+    public ResponseEntity<AgendamentoResponse> retomar(@PathVariable Long id) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
+        return ResponseEntity.ok(agendamentoService.retomar(id));
+    }
+
+    @PatchMapping("/{id}/reabrir")
+    public ResponseEntity<AgendamentoResponse> reabrir(@PathVariable Long id) {
+        AgendamentoEntity agendamento = agendamentoService.buscarEntidade(id);
+        return ResponseEntity.ok(agendamentoService.reabrir(id));
     }
 
     @PutMapping("/{id}/remarcar")

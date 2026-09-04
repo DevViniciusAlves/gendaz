@@ -109,7 +109,7 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public ClienteResponse buscarPorId(Long id) {
-        ClienteEntity cliente = buscarEntidade(id);
+        ClienteEntity cliente = buscarEntidadeOperacional(id);
         validarEmpresaAtual(cliente.getEmpresa().getId());
         return mapper.toResponse(cliente);
     }
@@ -119,13 +119,14 @@ public class ClienteService {
         String telefoneNormalizado = phoneNumberService.normalizarObrigatorio(telefone);
         Long companyId = CompanyContext.requireCompanyId();
         return clienteRepository.findFirstByEmpresaIdAndTelefone(companyId, telefoneNormalizado)
+                .filter(cliente -> cliente.getStatus() != StatusCadastro.EXCLUIDO)
                 .map(mapper::toResponse)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
     }
 
     @Transactional
     public ClienteResponse atualizar(Long id, SalvarClienteRequest request) {
-        ClienteEntity cliente = buscarEntidade(id);
+        ClienteEntity cliente = buscarEntidadeOperacional(id);
         validarEmpresa(cliente, request.empresaId());
         String nome = sanitizacaoService.textoObrigatorio(request.nome());
         String telefone = phoneNumberService.normalizarObrigatorio(request.telefone());
@@ -181,7 +182,7 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponse alterarStatus(Long id, Long empresaId, StatusCadastro status) {
-        ClienteEntity cliente = buscarEntidade(id);
+        ClienteEntity cliente = buscarEntidadeOperacional(id);
         validarEmpresa(cliente, empresaId);
         cliente.setStatus(status == null ? StatusCadastro.ATIVO : status);
         ClienteEntity salvo = clienteRepository.save(cliente);
@@ -200,6 +201,15 @@ public class ClienteService {
         ClienteEntity cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado."));
         validarEmpresaAtual(cliente.getEmpresa().getId());
+        return cliente;
+    }
+
+    @Transactional(readOnly = true)
+    public ClienteEntity buscarEntidadeOperacional(Long id) {
+        ClienteEntity cliente = buscarEntidade(id);
+        if (cliente.getStatus() == StatusCadastro.EXCLUIDO) {
+            throw new ResourceNotFoundException("Cliente não encontrado.");
+        }
         return cliente;
     }
 

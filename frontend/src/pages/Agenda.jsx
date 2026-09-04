@@ -1,4 +1,4 @@
-﻿import { CalendarPlus, RefreshCw } from 'lucide-react'
+import { CalendarPlus, RefreshCw } from 'lucide-react'
 import { useContext, useEffect, useMemo, useState } from 'react'
 import { RefreshContext } from '../context/RefreshContext.jsx'
 import { appApi, empresaIdAtual } from '../api/appApi.js'
@@ -29,7 +29,7 @@ const novoFormulario = {
   data: todayIso(),
   horaInicio: '11:00',
   status: 'PENDENTE',
-  observações: 'Criado pelo painel.',
+  observacoes: 'Criado pelo painel.',
 }
 
 function limiteDataMaxima() {
@@ -51,6 +51,11 @@ function agoraNoFuso(fuso) {
     if (part.type !== 'literal') acc[part.type] = part.value
     return acc
   }, {})
+}
+
+function hojeNoFuso(fuso) {
+  const partes = agoraNoFuso(fuso)
+  return `${partes.year}-${partes.month}-${partes.day}`
 }
 
 function criarDataLocal(iso) {
@@ -86,19 +91,25 @@ function profissionaisAtivos(lista) {
 }
 
 function montarFormularioInicial(dados) {
-    const ativos = profissionaisAtivos(dados.profissionais).filter((item) => trabalhaNaData(item, todayIso()))
+    // "Hoje" sempre no timezone da empresa (mesmo conceito do backend).
+    const fuso = dados?.empresa?.timezone || AGENDA_TIMEZONE
+    const hoje = hojeNoFuso(fuso)
+    const ativos = profissionaisAtivos(dados.profissionais).filter((item) => trabalhaNaData(item, hoje))
 
   return {
     ...novoFormulario,
     clienteId: primeiroId(dados.clientes),
     servicoId: primeiroId(dados.servicos),
     profissionalId: primeiroId(ativos) || PROFISSIONAL_AUTOMATICO_VALUE,
-    data: todayIso(),
+    data: hoje,
   }
 }
 
 export default function Agenda() {
   const [data, , { loading, reload }] = useLocalData('agenda')
+  // Fuso unico da validacao: timezone da empresa (backend usa o mesmo).
+  // Cai para o padrao anterior quando a empresa ainda nao carregou.
+  const fusoEmpresa = data.empresa?.timezone || AGENDA_TIMEZONE
   const { refreshTrigger } = useContext(RefreshContext)
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
@@ -335,20 +346,19 @@ export default function Agenda() {
     })
   }
 
-  function abrirBulk(ação) {
-    if (!selectedCount) {
-      setErroAcao('Selecione pelo menos um item.')
-      return
+    function abrirBulk(ação) {
+      if (!selectedCount) {
+        setErroAcao('Selecione pelo menos um item.')
+        return
+      }
+      const configs = {
+        FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
+        CANCELAR: ['Cancelar agendamentos', 'Ao cancelar, os agendamentos selecionados ficarão CANCELADOS e não poderão voltar para estados operacionais. Os horários serão liberados, os pagamentos pendentes vinculados serão cancelados e os pagamentos já pagos serão preservados.', 'Cancelar mesmo', true],
+        EXCLUIR: ['Excluir agendamentos', 'Os agendamentos selecionados serão removidos da Agenda, mas continuarão disponíveis no histórico financeiro e nos relatórios. Pagamentos pendentes serão cancelados e pagamentos já confirmados serão preservados.', 'Excluir', true],
+      }
+      const cfg = configs[ação]
+      setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
     }
-    const configs = {
-      FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
-      CANCELAR: ['Cancelar agendamentos', 'Tem certeza que deseja cancelar os agendamentos selecionados?', 'Cancelar', false],
-      PENDENTE: ['Marcar como pendentes', 'Tem certeza que deseja marcar os agendamentos selecionados como pendentes?', 'Marcar como pendente', false],
-      EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
-    }
-    const cfg = configs[ação]
-    setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
-  }
 
   async function executarBulk() {
     if (!bulkModal || bulkExecutando) return
@@ -377,7 +387,7 @@ export default function Agenda() {
       horaInicio: payload.horaInicio,
       cupomCodigo: payload.cupomCodigo || '',
       status: payload.status,
-      observações: payload.observações,
+      observacoes: payload.observacoes,
     }
   }
 
@@ -394,15 +404,15 @@ export default function Agenda() {
       const profissional = profissionaisAtivosLista.find((item) => Number(item.id) === Number(profissionalId))
       if (!profissional || !trabalhaNaData(profissional, data)) return 'Este profissional não atende no dia selecionado.'
     }
-    const hoje = todayIso()
+    const hoje = hojeNoFuso(fusoEmpresa)
     if (!data || data < hoje || data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
     if (!horaInicio || horaInicio < '00:00' || horaInicio > '23:59') return 'Horário inválido.'
     if (data === hoje) {
-      const partesAgora = agoraNoFuso(AGENDA_TIMEZONE)
+      const partesAgora = agoraNoFuso(fusoEmpresa)
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
       if (horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
     }
-    if ((payload.observações || '').length > 300) return 'Observações deve ter até 300 caracteres.'
+    if ((payload.observacoes || '').length > 300) return 'Observações deve ter até 300 caracteres.'
     return ''
   }
 
@@ -421,7 +431,7 @@ export default function Agenda() {
     setForm({
       ...montarFormularioInicial(data),
       servicoId: primeiroId(servicosAtivos),
-      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista.filter((item) => trabalhaNaData(item, todayIso()))) || PROFISSIONAL_AUTOMATICO_VALUE : null,
+      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista.filter((item) => trabalhaNaData(item, hojeNoFuso(fusoEmpresa)))) || PROFISSIONAL_AUTOMATICO_VALUE : null,
 
     })
     setPromocoes([])
@@ -465,7 +475,7 @@ export default function Agenda() {
       }
       await appApi.criarAgendamento(agendamento)
       setModalCriar(false)
-      setForm(novoFormulario)
+      setForm({ ...novoFormulario, data: hojeNoFuso(fusoEmpresa) })
       reload(true).catch((error) => {
         console.warn('[agenda-debug] falha ao recarregar agenda após criar')
       })
@@ -489,10 +499,40 @@ export default function Agenda() {
       data: agendamento.data,
       horaInicio: agendamento.horaInicio,
       status: agendamento.status,
-      observações: agendamento.observações || '',
+      observacoes: agendamento.observacoes ?? agendamento.observações ?? '',
     })
     setErroEditar('')
     setModalEditar(true)
+  }
+
+  // Opções de status permitidas no modal de edição, espelhando a máquina
+  // de estados do backend. Estados operacionais avançados/terminais usam
+  // ações específicas (iniciar, pausar, retomar, finalizar, reabrir,
+  // cancelar) e aparecem aqui somente como leitura.
+  function opcoesStatusEdicao(statusAtual) {
+    switch (statusAtual) {
+      case 'PENDENTE':
+        return [
+          { value: 'PENDENTE', label: 'Pendente' },
+          { value: 'CONFIRMADO', label: 'Confirmado' },
+          { value: 'CANCELADO', label: 'Cancelado' },
+        ]
+      case 'CONFIRMADO':
+        return [
+          { value: 'CONFIRMADO', label: 'Confirmado' },
+          { value: 'CANCELADO', label: 'Cancelado' },
+        ]
+      case 'EM_ATENDIMENTO':
+        return [{ value: 'EM_ATENDIMENTO', label: 'Em atendimento' }]
+      case 'PAUSADO':
+        return [{ value: 'PAUSADO', label: 'Pausado' }]
+      case 'FINALIZADO':
+        return [{ value: 'FINALIZADO', label: 'Finalizado' }]
+      case 'CANCELADO':
+        return [{ value: 'CANCELADO', label: 'Cancelado' }]
+      default:
+        return [{ value: statusAtual, label: statusAtual }]
+    }
   }
 
   async function salvarEdicao(event) {
@@ -542,23 +582,6 @@ export default function Agenda() {
     } catch (error) {
       setAcaoEmAndamento(null)
       setErroAcao(error.response?.data?.mensagem || 'Não foi possível cancelar o agendamento.')
-    }
-  }
-
-  async function confirmarAgendamento(id) {
-    if (acaoEmAndamento) return
-    setAcaoEmAndamento({ id, tipo: 'confirmar' })
-    setErroAcao('')
-    try {
-      await appApi.confirmarAgendamento(id)
-      setAcaoEmAndamento(null)
-      reload(true).catch((error) => {
-        console.error('[agenda-debug] erro ao recarregar agenda')
-        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
-      })
-    } catch (error) {
-      setAcaoEmAndamento(null)
-      setErroAcao(error.response?.data?.mensagem || 'Não foi possível confirmar o agendamento.')
     }
   }
 
@@ -625,6 +648,42 @@ export default function Agenda() {
     } catch (error) {
       setAcaoEmAndamento(null)
       setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível pausar o atendimento.')
+    }
+  }
+
+  async function retomarAtendimento(agendamento) {
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'retomar' })
+    setErroAcao('')
+    try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
+      await appApi.retomarAgendamento(agendamento.id)
+      setAcaoEmAndamento(null)
+      reload(true).catch((error) => {
+        console.error('[agenda-debug] erro ao recarregar agenda')
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoEmAndamento(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível retomar o atendimento.')
+    }
+  }
+
+  async function reabrirAtendimento(agendamento) {
+    if (acaoEmAndamento) return
+    setAcaoEmAndamento({ id: agendamento.id, tipo: 'reabrir' })
+    setErroAcao('')
+    try {
+      await renovarAoRetomarAba({ ignorarThrottle: true })
+      await appApi.reabrirAgendamento(agendamento.id)
+      setAcaoEmAndamento(null)
+      reload(true).catch((error) => {
+        console.error('[agenda-debug] erro ao recarregar agenda')
+        setErroAcao(error?.response?.data?.mensagem || 'Erro ao recarregar a agenda.')
+      })
+    } catch (error) {
+      setAcaoEmAndamento(null)
+      setErroAcao(error?.message || error.response?.data?.mensagem || error.response?.data?.message || 'Não foi possível reabrir o atendimento.')
     }
   }
 
@@ -735,6 +794,7 @@ export default function Agenda() {
         <select value={status} onChange={(e) => setStatus(e.target.value)}>
           <option value="todos">Todos os status</option>
           <option value="PENDENTE">Pendente</option>
+          <option value="CONFIRMADO">Confirmado</option>
           <option value="EM_ATENDIMENTO">Em atendimento</option>
           <option value="PAUSADO">Pausado</option>
           <option value="CANCELADO">Cancelado</option>
@@ -761,7 +821,6 @@ export default function Agenda() {
           actions={[
             { label: 'Finalizar', onClick: () => abrirBulk('FINALIZAR') },
             { label: 'Cancelar', onClick: () => abrirBulk('CANCELAR') },
-            { label: 'Pendente', onClick: () => abrirBulk('PENDENTE') },
             { label: 'Excluir', danger: true, onClick: () => abrirBulk('EXCLUIR') },
           ]}
         />
@@ -796,17 +855,30 @@ export default function Agenda() {
               ação: () => pausarAtendimento(ag),
               acaoLabel: 'Pausar',
             })}
+            onRetomar={(ag) => setConfirmacao({
+              titulo: 'Retomar atendimento',
+              descrição: 'Tem certeza que deseja retomar este atendimento?',
+              ação: () => retomarAtendimento(ag),
+              acaoLabel: 'Retomar',
+            })}
+            onReabrir={(ag) => setConfirmacao({
+              titulo: 'Reabrir atendimento',
+              descrição: 'O atendimento voltará para em atendimento. O pagamento não será alterado.',
+              ação: () => reabrirAtendimento(ag),
+              acaoLabel: 'Reabrir',
+            })}
             onFinalizar={(ag) => setFinalizacaoPagamento(ag)}
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
-              descrição: 'Tem certeza que deseja cancelar este agendamento?',
+              descrição: 'Ao cancelar, este agendamento ficará CANCELADO e não poderá voltar para estados operacionais. O horário será liberado, o pagamento pendente vinculado será cancelado e o pagamento já pago será preservado.',
               ação: () => cancelarAgendamento(ag.id),
-              acaoLabel: 'Cancelar',
+              acaoLabel: 'Cancelar mesmo',
+              danger: true,
             })}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
-              descrição: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
+              descrição: 'Este agendamento será removido da Agenda, mas continuará disponível no histórico financeiro e nos relatórios. Pagamentos pendentes serão cancelados e pagamentos já confirmados serão preservados.',
               ação: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}
@@ -834,7 +906,7 @@ export default function Agenda() {
               </select>
             </label>
           )}
-          <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+          <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={hojeNoFuso(fusoEmpresa)} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           {temProfissionais && profissionaisCriacaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
 
           {horariosCriar.length > 0 ? (
@@ -864,7 +936,7 @@ export default function Agenda() {
               ))}
             </select>
           </label>
-          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} /><small className={form.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observações.length}/300</strong></small></label>
+          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" loading={salvandoCriar} loadingText="Salvando...">Salvar</Button>
         </form>
@@ -878,8 +950,8 @@ export default function Agenda() {
             {temProfissionais && (
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisEdicaoDisponiveis.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
-            <label className="field"><span>Status</span><select value={edicao.status} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}><option value="PENDENTE">Pendente</option><option value="CONFIRMADO">Confirmado</option><option value="EM_ATENDIMENTO">Em atendimento</option><option value="PAUSADO">Pausado</option><option value="CANCELADO">Cancelado</option><option value="FINALIZADO">Finalizado</option></select></label>
-            <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
+            <label className="field"><span>Status</span><select value={edicao.status} disabled={opcoesStatusEdicao(edicao.status).length <= 1} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}>{opcoesStatusEdicao(edicao.status).map((opcao) => <option key={opcao.value} value={opcao.value}>{opcao.label}</option>)}</select></label>
+            <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={hojeNoFuso(fusoEmpresa)} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
             {horariosEditar.length > 0 ? (
               <label className="field">
@@ -897,7 +969,7 @@ export default function Agenda() {
               <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             )}
             {carregandoHorariosEditar && <small className="field-hint">Carregando horários disponíveis...</small>}
-            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observações} onChange={(e) => setEdicao({ ...edicao, observações: e.target.value })} /><small className={edicao.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observações.length}/300</strong></small></label>
+            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" loading={salvandoEditar} loadingText="Salvando...">Salvar correções</Button>
           </form>
@@ -905,44 +977,66 @@ export default function Agenda() {
       </Modal>
       <Modal title="Finalizar atendimento" open={Boolean(finalizacaoPagamento)} onClose={() => { setFinalizacaoPagamento(null); setParcelasCredito(null) }}>
         <div className="form-grid single">
-          <p className="panel-description">Como o cliente realizou o pagamento?</p>
-          {!parcelasCredito ? (
-            <div className="payment-methods">
-              {metodosFinalizacao.map((metodo) => (
-                <button
-                  key={metodo.metodoPagamento}
+          {finalizacaoPagamento?.statusPagamento === 'PAGO' ? (
+            <>
+              <p className="panel-description">
+                O pagamento deste atendimento já está confirmado. Finalizar o atendimento não alterará o pagamento nem os lançamentos no Caixa.
+              </p>
+              <div className="table-actions" style={{ justifyContent: 'flex-end', marginTop: '1rem' }}>
+                <Button variant="secondary" type="button" onClick={() => setFinalizacaoPagamento(null)}>Voltar</Button>
+                <Button
                   type="button"
-                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                  onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
+                  loading={acaoEmAndamento?.id === finalizacaoPagamento?.id && acaoEmAndamento?.tipo === 'finalizar'}
+                  onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true)}
                 >
-                  {metodo.label}
-                </button>
-              ))}
-              <button
-                type="button"
-                disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
-              >
-                Não foi pago
-              </button>
-            </div>
+                  Finalizar atendimento
+                </Button>
+              </div>
+            </>
           ) : (
-            <div className="payment-methods">
-              {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
-                <button
-                  key={parcela}
-                  type="button"
-                  disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
-                  onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
-                >
-                  {parcela}x
-                </button>
-              ))}
-            </div>
+            <>
+              <p className="panel-description">
+                {parcelasCredito ? 'Selecione a quantidade de parcelas' : 'Como o cliente realizou o pagamento?'}
+              </p>
+              {!parcelasCredito ? (
+                <div className="payment-methods">
+                  {metodosFinalizacao.map((metodo) => (
+                    <button
+                      key={metodo.metodoPagamento}
+                      type="button"
+                      disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                      onClick={() => selecionarPagamentoFinalizacao(metodo.metodoPagamento)}
+                    >
+                      {metodo.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                    onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, false)}
+                  >
+                    Não foi pago
+                  </button>
+                </div>
+              ) : (
+                <div className="payment-methods">
+                  {Array.from({ length: formasPagamento?.maxParcelas || 12 }, (_, index) => index + 1).map((parcela) => (
+                    <button
+                      key={parcela}
+                      type="button"
+                      disabled={confirmandoAcao || acaoEmAndamento?.id === finalizacaoPagamento?.id}
+                      onClick={() => finalizarAtendimentoDireto(finalizacaoPagamento, true, { metodoPagamento: 'CREDITO', parcelas: parcela })}
+                    >
+                      {parcela}x
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
+                <Button variant="secondary" type="button" onClick={() => parcelasCredito ? setParcelasCredito(null) : setFinalizacaoPagamento(null)}>Voltar</Button>
+              </div>
+            </>
           )}
-          <div className="table-actions" style={{ justifyContent: 'flex-end' }}>
-            <Button variant="secondary" type="button" onClick={() => parcelasCredito ? setParcelasCredito(null) : setFinalizacaoPagamento(null)}>Voltar</Button>
-          </div>
         </div>
       </Modal>
       <Modal title={confirmacao?.titulo || 'Confirmar ação'} open={Boolean(confirmacao)} onClose={() => { setConfirmacao(null); setConfirmandoAcao(false) }}>

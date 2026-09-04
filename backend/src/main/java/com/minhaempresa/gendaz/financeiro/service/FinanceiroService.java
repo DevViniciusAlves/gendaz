@@ -10,18 +10,13 @@ import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
+import com.minhaempresa.gendaz.pagamento.service.ReceitaCompetenciaHelper;
 import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,62 +28,6 @@ public class FinanceiroService {
     private final AgendamentoRepository agendamentoRepository;
     private final LogAtividadeService logAtividadeService;
 
-    private static final java.util.Set<com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento> METODOS_CREDITO = java.util.Set.of(
-            com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento.CREDITO,
-            com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento.CREDIT_CARD,
-            com.minhaempresa.gendaz.pagamento.enums.MetodoPagamento.CARTAO
-    );
-
-    private boolean ehCreditoParcelado(PagamentoDtos.PagamentoResponse p) {
-        return p.metodoPagamento() != null
-                && METODOS_CREDITO.contains(p.metodoPagamento())
-                && p.parcelas() != null
-                && p.parcelas() > 1;
-    }
-
-    private BigDecimal valorDaParcela(PagamentoDtos.PagamentoResponse p, int index) {
-        BigDecimal valorTotal = p.valor();
-        int totalParcelas = p.parcelas();
-        BigDecimal valorBase = valorTotal.divide(BigDecimal.valueOf(totalParcelas), 2, RoundingMode.HALF_UP);
-        if (index < totalParcelas - 1) {
-            return valorBase;
-        }
-        return valorTotal.subtract(valorBase.multiply(BigDecimal.valueOf(totalParcelas - 1)));
-    }
-
-    private List<PagamentoDtos.PagamentoResponse> expandirParcelasVirtuais(PagamentoDtos.PagamentoResponse p) {
-        if (!ehCreditoParcelado(p)) {
-            return List.of(p);
-        }
-        LocalDate dataBase = p.dataPagamento() != null ? p.dataPagamento().toLocalDate() : null;
-        if (dataBase == null) {
-            return List.of(p);
-        }
-        int totalParcelas = p.parcelas();
-        List<PagamentoDtos.PagamentoResponse> resultado = new ArrayList<>();
-        for (int i = 0; i < totalParcelas; i++) {
-            LocalDate dataParcela = dataBase.plusMonths(i);
-            LocalDateTime dataParcelaLdt = dataParcela.atStartOfDay();
-            BigDecimal valorParcela = valorDaParcela(p, i);
-            resultado.add(new PagamentoDtos.PagamentoResponse(
-                    p.id(),
-                    p.agendamentoId(),
-                    p.protocolo(),
-                    p.servicoNome(),
-                    p.clienteId(),
-                    p.clienteNome(),
-                    p.empresaId(),
-                    valorParcela,
-                    p.metodoPagamento(),
-                    p.parcelas(),
-                    p.status(),
-                    dataParcelaLdt,
-                    p.statusCliente()
-            ));
-        }
-        return resultado;
-    }
-
     @Transactional(readOnly = true)
     public ResumoFinanceiroResponse resumo(Long empresaId, int mes, int ano) {
         Long empresaResolvida = resolverEmpresaAtual(empresaId);
@@ -98,7 +37,7 @@ public class FinanceiroService {
         List<PagamentoDtos.PagamentoResponse> todosPagamentos = pagamentoRepository.findByEmpresaIdForFinanceiro(empresaResolvida);
 
         List<PagamentoDtos.PagamentoResponse> pagamentosExpandidos = todosPagamentos.stream()
-                .flatMap(p -> expandirParcelasVirtuais(p).stream())
+                .flatMap(p -> ReceitaCompetenciaHelper.expandirParcelasVirtuais(p).stream())
                 .toList();
 
         List<PagamentoDtos.PagamentoResponse> pagamentosMes = pagamentosExpandidos.stream()

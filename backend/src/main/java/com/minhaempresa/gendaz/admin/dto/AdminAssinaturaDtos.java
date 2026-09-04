@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.admin.dto;
 
 import com.minhaempresa.gendaz.assinatura.enums.StatusAssinatura;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.time.LocalDate;
 
@@ -31,6 +32,16 @@ public final class AdminAssinaturaDtos {
     public record CriarAssinaturaRequest(
             @NotNull(message = "Selecione um plano.") Long planoId,
             @Min(value = 1, message = "Dias minimos: 1.") Integer dias,
+            LocalDate dataInicio,
+            LocalDate dataFim,
+            StatusAssinatura status
+    ) {}
+
+    public record AdminAssinaturaOperacaoRequest(
+            @NotBlank(message = "Informe a operacao de assinatura.") String operacao,
+            Long subscriptionId,
+            Long planoId,
+            Integer dias,
             LocalDate dataInicio,
             LocalDate dataFim,
             StatusAssinatura status

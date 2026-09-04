@@ -5,7 +5,7 @@ import { emptyData, getData, setData } from '../services/localStore.js'
 
 const cacheLocal = new Map()
 const cacheEmAndamento = new Map()
-const CACHE_VERSION = 6
+const CACHE_VERSION = 7
 
 function ttlDoEscopo(scope) {
   if (scope === 'insights') return 60 * 1000
@@ -37,6 +37,12 @@ export function persistirCacheLocal(scope, payload) {
   return salvarCache(scope, payload)
 }
 
+export function invalidarCacheLocal(scope) {
+  const cacheKey = chaveCache(scope)
+  cacheLocal.delete(cacheKey)
+  cacheEmAndamento.delete(cacheKey)
+}
+
 async function carregarComCache(scope, force = false) {
   const cacheKey = chaveCache(scope)
   const cached = cacheDoEscopo(scope)
@@ -64,19 +70,21 @@ export async function prefetchLocalData(scope = 'full') {
   return carregarComCache(scope)
 }
 
-export function useLocalData(scope = 'full') {
-  const cacheInicial = !modoDemo ? cacheDoEscopo(scope) : null
+export function useLocalData(scope = 'full', periodo = null) {
+  const cacheKeyExtra = periodo ? `:${periodo}` : ''
+  const cacheScope = scope + cacheKeyExtra
+  const cacheInicial = !modoDemo ? cacheDoEscopo(cacheScope) : null
   const [data, setStateData] = useState(() => {
     if (modoDemo) return getData()
     const usuario = getSessionUser()
-    if (cacheValido(cacheInicial, scope)) {
-      cacheLocal.set(chaveCache(scope), cacheInicial)
+    if (cacheValido(cacheInicial, cacheScope)) {
+      cacheLocal.set(chaveCache(cacheScope), cacheInicial)
       return cacheInicial.data
     }
     return emptyData(usuario)
   })
-  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial, scope)))
-  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, scope))
+  const loadedOnceRef = useRef(Boolean(modoDemo || cacheValido(cacheInicial, cacheScope)))
+  const [loading, setLoading] = useState(!modoDemo && !cacheValido(cacheInicial, cacheScope))
   const [error, setError] = useState(null)
 
   const reload = useCallback(async (force = false) => {
@@ -86,9 +94,9 @@ export function useLocalData(scope = 'full') {
       return
     }
 
-    const cacheKey = chaveCache(scope)
-    const cached = cacheDoEscopo(scope)
-    if (!force && cacheValido(cached, scope)) {
+    const cacheKey = chaveCache(cacheScope)
+    const cached = cacheDoEscopo(cacheScope)
+    if (!force && cacheValido(cached, cacheScope)) {
       cacheLocal.set(cacheKey, cached)
       setStateData(cached.data)
       setError(null)
@@ -101,7 +109,7 @@ export function useLocalData(scope = 'full') {
       if (!loadedOnceRef.current) {
         setLoading(true)
       }
-      const remote = await carregarComCache(scope, force)
+      const remote = await carregarComCache(cacheScope, force)
       setStateData(remote)
       setError(null)
       loadedOnceRef.current = true
@@ -114,7 +122,7 @@ export function useLocalData(scope = 'full') {
         setLoading(false)
       }
     }
-  }, [scope])
+  }, [cacheScope])
 
   useEffect(() => {
     const usuarioAtual = getSessionUser()
@@ -128,18 +136,26 @@ export function useLocalData(scope = 'full') {
     // Sem polling: a tela carrega ao montar e só reage a ações reais
     // (gendaz:data-changed), troca de rota (remontagem) e recarga manual.
     // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
+    // data-changed representa MUTATION confirmada no backend: invalida o cache
+    // do escopo e força busca no backend (reload(true) ignora o TTL).
+    // Leitura (reload) nunca dispara data-changed, logo não há loop.
     function reloadFromEvent() {
+      invalidarCacheLocal(cacheScope)
+      void reload(true)
+    }
+
+    function reloadFromSession() {
       reload(false)
     }
 
     window.addEventListener('gendaz:data-changed', reloadFromEvent)
-    window.addEventListener('gendaz:session-changed', reloadFromEvent)
+    window.addEventListener('gendaz:session-changed', reloadFromSession)
 
     return () => {
       window.removeEventListener('gendaz:data-changed', reloadFromEvent)
-      window.removeEventListener('gendaz:session-changed', reloadFromEvent)
+      window.removeEventListener('gendaz:session-changed', reloadFromSession)
     }
-  }, [scope, reload])
+  }, [cacheScope])
 
   function updateData(updater) {
     if (!modoDemo) return
