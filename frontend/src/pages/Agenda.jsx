@@ -29,7 +29,7 @@ const novoFormulario = {
   data: todayIso(),
   horaInicio: '11:00',
   status: 'PENDENTE',
-  observações: 'Criado pelo painel.',
+  observacoes: 'Criado pelo painel.',
 }
 
 function limiteDataMaxima() {
@@ -51,6 +51,11 @@ function agoraNoFuso(fuso) {
     if (part.type !== 'literal') acc[part.type] = part.value
     return acc
   }, {})
+}
+
+function hojeNoFuso(fuso) {
+  const partes = agoraNoFuso(fuso)
+  return `${partes.year}-${partes.month}-${partes.day}`
 }
 
 function criarDataLocal(iso) {
@@ -86,19 +91,25 @@ function profissionaisAtivos(lista) {
 }
 
 function montarFormularioInicial(dados) {
-    const ativos = profissionaisAtivos(dados.profissionais).filter((item) => trabalhaNaData(item, todayIso()))
+    // "Hoje" sempre no timezone da empresa (mesmo conceito do backend).
+    const fuso = dados?.empresa?.timezone || AGENDA_TIMEZONE
+    const hoje = hojeNoFuso(fuso)
+    const ativos = profissionaisAtivos(dados.profissionais).filter((item) => trabalhaNaData(item, hoje))
 
   return {
     ...novoFormulario,
     clienteId: primeiroId(dados.clientes),
     servicoId: primeiroId(dados.servicos),
     profissionalId: primeiroId(ativos) || PROFISSIONAL_AUTOMATICO_VALUE,
-    data: todayIso(),
+    data: hoje,
   }
 }
 
 export default function Agenda() {
   const [data, , { loading, reload }] = useLocalData('agenda')
+  // Fuso unico da validacao: timezone da empresa (backend usa o mesmo).
+  // Cai para o padrao anterior quando a empresa ainda nao carregou.
+  const fusoEmpresa = data.empresa?.timezone || AGENDA_TIMEZONE
   const { refreshTrigger } = useContext(RefreshContext)
   const { usuario, renovarAoRetomarAba } = useAuth()
   const servicosAtivos = (Array.isArray(data.servicos) ? data.servicos : []).filter((item) => item.status !== 'INATIVO')
@@ -376,7 +387,7 @@ export default function Agenda() {
       horaInicio: payload.horaInicio,
       cupomCodigo: payload.cupomCodigo || '',
       status: payload.status,
-      observações: payload.observações,
+      observacoes: payload.observacoes,
     }
   }
 
@@ -393,15 +404,15 @@ export default function Agenda() {
       const profissional = profissionaisAtivosLista.find((item) => Number(item.id) === Number(profissionalId))
       if (!profissional || !trabalhaNaData(profissional, data)) return 'Este profissional não atende no dia selecionado.'
     }
-    const hoje = todayIso()
+    const hoje = hojeNoFuso(fusoEmpresa)
     if (!data || data < hoje || data > limiteDataMaxima()) return 'Data deve estar dentro dos próximos 2 anos e não pode ser no passado.'
     if (!horaInicio || horaInicio < '00:00' || horaInicio > '23:59') return 'Horário inválido.'
     if (data === hoje) {
-      const partesAgora = agoraNoFuso(AGENDA_TIMEZONE)
+      const partesAgora = agoraNoFuso(fusoEmpresa)
       const horaAtual = `${partesAgora.hour || '00'}:${partesAgora.minute || '00'}`
       if (horaInicio < horaAtual) return 'Não é possível criar agendamento em horário que já passou.'
     }
-    if ((payload.observações || '').length > 300) return 'Observações deve ter até 300 caracteres.'
+    if ((payload.observacoes || '').length > 300) return 'Observações deve ter até 300 caracteres.'
     return ''
   }
 
@@ -420,7 +431,7 @@ export default function Agenda() {
     setForm({
       ...montarFormularioInicial(data),
       servicoId: primeiroId(servicosAtivos),
-      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista.filter((item) => trabalhaNaData(item, todayIso()))) || PROFISSIONAL_AUTOMATICO_VALUE : null,
+      profissionalId: temProfissionais ? primeiroId(profissionaisAtivosLista.filter((item) => trabalhaNaData(item, hojeNoFuso(fusoEmpresa)))) || PROFISSIONAL_AUTOMATICO_VALUE : null,
 
     })
     setPromocoes([])
@@ -464,7 +475,7 @@ export default function Agenda() {
       }
       await appApi.criarAgendamento(agendamento)
       setModalCriar(false)
-      setForm(novoFormulario)
+      setForm({ ...novoFormulario, data: hojeNoFuso(fusoEmpresa) })
       reload(true).catch((error) => {
         console.warn('[agenda-debug] falha ao recarregar agenda após criar')
       })
@@ -488,7 +499,7 @@ export default function Agenda() {
       data: agendamento.data,
       horaInicio: agendamento.horaInicio,
       status: agendamento.status,
-      observações: agendamento.observações || '',
+      observacoes: agendamento.observacoes ?? agendamento.observações ?? '',
     })
     setErroEditar('')
     setModalEditar(true)
@@ -895,7 +906,7 @@ export default function Agenda() {
               </select>
             </label>
           )}
-          <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
+          <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={hojeNoFuso(fusoEmpresa)} max={limiteDataMaxima()} value={form.data} onChange={(e) => setForm({ ...form, data: e.target.value })} />
           {temProfissionais && profissionaisCriacaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
 
           {horariosCriar.length > 0 ? (
@@ -925,7 +936,7 @@ export default function Agenda() {
               ))}
             </select>
           </label>
-          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} /><small className={form.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observações.length}/300</strong></small></label>
+          <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} /><small className={form.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{form.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{form.observacoes.length}/300</strong></small></label>
           {erroCriar && <p className="form-error field-wide">{erroCriar}</p>}
           <Button type="submit" loading={salvandoCriar} loadingText="Salvando...">Salvar</Button>
         </form>
@@ -940,7 +951,7 @@ export default function Agenda() {
               <label className="field"><span>Profissional</span><select value={edicao.profissionalId} onChange={(e) => setEdicao({ ...edicao, profissionalId: Number(e.target.value) })}>{profissionaisEdicaoDisponiveis.map((item) => <option key={item.id} value={item.id}>{item.nome}</option>)}</select></label>
             )}
             <label className="field"><span>Status</span><select value={edicao.status} disabled={opcoesStatusEdicao(edicao.status).length <= 1} onChange={(e) => setEdicao({ ...edicao, status: e.target.value })}>{opcoesStatusEdicao(edicao.status).map((opcao) => <option key={opcao.value} value={opcao.value}>{opcao.label}</option>)}</select></label>
-            <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={todayIso()} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
+            <Input label="Data" helper="Escolha uma data dentro dos próximos 2 anos." type="date" min={hojeNoFuso(fusoEmpresa)} max={limiteDataMaxima()} value={edicao.data} onChange={(e) => setEdicao({ ...edicao, data: e.target.value })} />
             {temProfissionais && profissionaisEdicaoDisponiveis.length === 0 && <p className="form-error field-wide">Nenhum profissional disponível nesta data. Escolha outro dia.</p>}
             {horariosEditar.length > 0 ? (
               <label className="field">
@@ -958,7 +969,7 @@ export default function Agenda() {
               <Input label="Hora" helper="Escolha o horário do agendamento." type="time" min="00:00" max="23:59" value={edicao.horaInicio} onChange={(e) => setEdicao({ ...edicao, horaInicio: e.target.value })} />
             )}
             {carregandoHorariosEditar && <small className="field-hint">Carregando horários disponíveis...</small>}
-            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observações} onChange={(e) => setEdicao({ ...edicao, observações: e.target.value })} /><small className={edicao.observações.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observações.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observações.length}/300</strong></small></label>
+            <label className="field field-wide"><span>Observações</span><textarea maxLength={300} value={edicao.observacoes} onChange={(e) => setEdicao({ ...edicao, observacoes: e.target.value })} /><small className={edicao.observacoes.length >= 300 ? 'field-hint limit-reached' : 'field-hint'}>{edicao.observacoes.length >= 300 ? 'Limite de caracteres atingido.' : 'Use uma observação curta.'}<strong>{edicao.observacoes.length}/300</strong></small></label>
             {erroEditar && <p className="form-error field-wide">{erroEditar}</p>}
             <Button type="submit" loading={salvandoEditar} loadingText="Salvando...">Salvar correções</Button>
           </form>

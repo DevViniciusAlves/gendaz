@@ -16,6 +16,7 @@ import com.minhaempresa.gendaz.profissional.repository.ProfissionalRepository;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import com.minhaempresa.gendaz.servico.repository.ServicoRepository;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
+import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -28,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -41,12 +41,10 @@ public class InsightsAnalyzer {
     private final ProfissionalRepository profissionalRepository;
     private final PagamentoRepository pagamentoRepository;
 
-    @Value("${app.timezone:America/Cuiaba}")
-    private String appTimezone;
-
     public Map<String, Object> coletarDados(Long empresaId, Integer periodo) {
         EmpresaEntity empresa = empresaRepository.findById(empresaId).orElse(null);
-        ZoneId zoneId = ZoneId.of(appTimezone);
+        // "Hoje" no timezone da empresa (mesmo padrao do DashboardService).
+        ZoneId zoneId = resolverZoneId(empresa != null ? empresa.getTimezone() : null);
         LocalDate hoje = LocalDate.now(zoneId);
         int dias = periodo == null || periodo <= 0 ? 30 : periodo;
         LocalDate inicioPeriodo = hoje.minusDays(dias - 1L);
@@ -56,7 +54,11 @@ public class InsightsAnalyzer {
         List<ServicoEntity> servicos = servicoRepository.findByEmpresaId(empresaId);
         List<ProfissionalEntity> profissionais = profissionalRepository.findByEmpresaId(empresaId);
         List<ClienteEntity> clientes = clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO);
-        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaIdOperacional(empresaId, StatusCadastro.EXCLUIDO);
+        // Visao HISTORICA (inclui excluidoAgenda): excluir da Agenda nao apaga
+        // o atendimento realizado. A Agenda operacional continua filtrando;
+        // aqui o FINALIZADO excluido segue contando em historico, ultima
+        // utilizacao (at_risk/recuperar) e rankings.
+        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaIdHistorico(empresaId, StatusCadastro.EXCLUIDO);
         List<PagamentoEntity> pagamentos = pagamentoRepository.findByEmpresaId(empresaId);
 
         List<Map<String, Object>> servicosAnalise = servicos.stream()
@@ -364,8 +366,14 @@ public class InsightsAnalyzer {
         return total.doubleValue() / totalClientes;
     }
 
-    private boolean isPago(StatusPagamento status) {
-        if (status == null) return false;
+    private ZoneId resolverZoneId(String timezone) {
+        String valor = timezone == null || timezone.isBlank()
+                ? TimezoneEnum.AMERICA_SAO_PAULO.getValue()
+                : timezone;
+        return ZoneId.of(valor);
+    }
+
+    private boolean isPago(StatusPagamento status) {        if (status == null) return false;
         // Dinheiro confirmado no fluxo operacional: somente PAGO.
         // PAYMENT_APPROVED pertence ao fluxo de plano/assinatura (ver PagamentoService)
         // e nao pode inflar receita, ticket medio ou somas do Insights.

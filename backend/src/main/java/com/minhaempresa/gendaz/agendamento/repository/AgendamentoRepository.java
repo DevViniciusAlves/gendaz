@@ -37,6 +37,23 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     List<AgendamentoEntity> findByEmpresaIdOperacional(
             @Param("empresaId") Long empresaId,
             @Param("statusExcluido") StatusCadastro statusExcluido);
+    /**
+     * Visao HISTORICA para metricas (Insights/relatorios): inclui registros
+     * removidos da Agenda operacional (excluidoAgenda = true).
+     * Excluir da Agenda nao apaga a realidade: um FINALIZADO excluido
+     * continua sendo um atendimento realizado e deve contar em historico,
+     * ultima utilizacao, ranking de servicos/profissionais e recuperacao.
+     * NUNCA usar para renderizar a Agenda operacional.
+     */
+    @Query("""
+            select a from AgendamentoEntity a
+            where a.empresa.id = :empresaId
+              and a.cliente.status <> :statusExcluido
+            """)
+    @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
+    List<AgendamentoEntity> findByEmpresaIdHistorico(
+            @Param("empresaId") Long empresaId,
+            @Param("statusExcluido") StatusCadastro statusExcluido);
     @Query("""
             select a from AgendamentoEntity a
             where a.empresa.id = :empresaId

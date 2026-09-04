@@ -67,6 +67,10 @@ export default function Dashboard() {
     ? totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
     : 'R$ 0,00'
 
+  // Mesma regra da Agenda: Reagendar/Cancelar somente em PENDENTE/CONFIRMADO.
+  // Backend continua sendo a seguranca; aqui apenas nao oferecemos o que sera negado.
+  const permiteAlterarProximo = ['PENDENTE', 'CONFIRMADO'].includes(proximo?.status)
+
   const nomeLojaContato = nomeEmpresa
 
   return (
@@ -109,12 +113,20 @@ export default function Dashboard() {
           </div>
 
           <div className="gendaz-card__actions">
-            <button className="gendaz-btn gendaz-btn--secondary" onClick={irParaAgenda}>
-              Reagendar
-            </button>
-            <button className="gendaz-btn gendaz-btn--danger" onClick={irParaAgenda}>
-              Cancelar
-            </button>
+            {permiteAlterarProximo ? (
+              <>
+                <button className="gendaz-btn gendaz-btn--secondary" onClick={irParaAgenda}>
+                  Reagendar
+                </button>
+                <button className="gendaz-btn gendaz-btn--danger" onClick={irParaAgenda}>
+                  Cancelar
+                </button>
+              </>
+            ) : (
+              <button className="gendaz-btn gendaz-btn--secondary" onClick={irParaAgenda}>
+                Ver agendamento
+              </button>
+            )}
           </div>
         </article>
       ) : (

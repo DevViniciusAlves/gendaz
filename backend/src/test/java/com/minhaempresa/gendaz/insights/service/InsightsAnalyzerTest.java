@@ -33,7 +33,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.springframework.test.util.ReflectionTestUtils;
 
 class InsightsAnalyzerTest {
     @Mock
@@ -57,7 +56,6 @@ class InsightsAnalyzerTest {
         mocks = MockitoAnnotations.openMocks(this);
         analyzer = new InsightsAnalyzer(empresaRepository, servicoRepository, clienteRepository,
                 agendamentoRepository, profissionalRepository, pagamentoRepository);
-        ReflectionTestUtils.setField(analyzer, "appTimezone", "America/Cuiaba");
     }
 
     @AfterEach
@@ -101,6 +99,27 @@ class InsightsAnalyzerTest {
 
         List<Map<String, Object>> servicos = (List<Map<String, Object>>) dados.get("servicos");
         assertEquals(1L, ((Number) servicos.get(0).get("cancelamentos")).longValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void finalizadoExcluidoDaAgendaContinuaNoHistorico() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        // Excluir da Agenda (excluidoAgenda=true) mantem FINALIZADO: o atendimento
+        // aconteceu e o Insights historico nao pode perde-lo.
+        AgendamentoEntity excluido = AgendamentoEntity.builder().id(1L).servico(servico)
+                .data(hoje.minusDays(5)).horaInicio(LocalTime.of(9, 0)).horaFim(LocalTime.of(10, 0))
+                .status(StatusAgendamento.FINALIZADO).excluidoAgenda(true).build();
+        base(servico, List.of(), List.of(excluido));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> resumo = (Map<String, Object>) dados.get("resumo");
+        assertEquals(1, ((Number) resumo.get("agendamentos_total")).intValue());
+        List<Map<String, Object>> servicos = (List<Map<String, Object>>) dados.get("servicos");
+        assertEquals(1L, ((Number) servicos.get(0).get("vendas_30d")).longValue());
     }
 
     @Test
@@ -307,12 +326,12 @@ class InsightsAnalyzerTest {
 
     private void base(ServicoEntity servico, List<PagamentoEntity> pagamentos,
                       List<AgendamentoEntity> agendamentos, List<ClienteEntity> clientes) {
-        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa").build();
+        EmpresaEntity empresa = EmpresaEntity.builder().id(1L).nomeFantasia("Empresa").timezone("America/Cuiaba").build();
         when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresa));
         when(servicoRepository.findByEmpresaId(1L)).thenReturn(List.of(servico));
         when(profissionalRepository.findByEmpresaId(1L)).thenReturn(List.of());
         when(clienteRepository.findByEmpresaIdAndStatusNot(eq(1L), any())).thenReturn(clientes);
-        when(agendamentoRepository.findByEmpresaIdOperacional(eq(1L), any())).thenReturn(agendamentos);
+        when(agendamentoRepository.findByEmpresaIdHistorico(eq(1L), any())).thenReturn(agendamentos);
         when(pagamentoRepository.findByEmpresaId(1L)).thenReturn(pagamentos);
     }
 
