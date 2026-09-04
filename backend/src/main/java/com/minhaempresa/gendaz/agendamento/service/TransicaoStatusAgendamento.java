@@ -130,8 +130,44 @@ public final class TransicaoStatusAgendamento {
         throw new BusinessException("Inicie o atendimento antes de finalizar.");
     }
 
-    /** PENDENTE ou CONFIRMADO -> CANCELADO (acao cancelar). */
+    /**
+     * PENDENTE ou CONFIRMADO -> CANCELADO (acao cancelar).
+     * Regra self-service padrao (Meu Gendaz): mantem o comportamento
+     * historico restritivo. Delega para {@link #exigirCancelamentoCliente}.
+     */
     public static void exigirCancelamento(StatusAgendamento atual) {
+        exigirCancelamentoCliente(atual);
+    }
+
+    /**
+     * Cancelamento OPERACIONAL (empresa, na Agenda): PENDENTE, CONFIRMADO,
+     * EM_ATENDIMENTO ou PAUSADO -> CANCELADO. CANCELADO idempotente (recancelar
+     * nao muda estado nem dinheiro; seguro para duplo clique, retry e bulk).
+     * FINALIZADO -> CANCELADO proibido. CANCELADO continua terminal.
+     */
+    public static void exigirCancelamentoOperacional(StatusAgendamento atual) {
+        if (atual == StatusAgendamento.PENDENTE
+                || atual == StatusAgendamento.CONFIRMADO
+                || atual == StatusAgendamento.EM_ATENDIMENTO
+                || atual == StatusAgendamento.PAUSADO) {
+            return;
+        }
+        if (atual == StatusAgendamento.CANCELADO) {
+            // Repeticao idempotente: recancelar nao muda estado nem dinheiro
+            // (a regularizacao do pagamento pendente tambem e idempotente).
+            // Seguro para duplo clique, retry e bulk.
+            return;
+        }
+        throw new BusinessException("Agendamento finalizado nao pode ser cancelado.");
+    }
+
+    /**
+     * Cancelamento SELF-SERVICE (Meu Gendaz, cliente): preserva a politica
+     * atual — o cliente NAO pode cancelar atendimento ja iniciado ou pausado.
+     * PENDENTE ou CONFIRMADO -> CANCELADO; CANCELADO idempotente;
+     * FINALIZADO/EM_ATENDIMENTO/PAUSADO bloqueados.
+     */
+    public static void exigirCancelamentoCliente(StatusAgendamento atual) {
         if (atual == StatusAgendamento.PENDENTE || atual == StatusAgendamento.CONFIRMADO) {
             return;
         }

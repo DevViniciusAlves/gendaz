@@ -186,16 +186,30 @@ class ConcorrenciaFinanceiraIntegrationTest {
         Long empresaId = empresa.getId();
         BigDecimal caixaInicial = caixaDe(empresaId);
 
+        java.util.concurrent.atomic.AtomicBoolean confirmacaoRecusada = new java.util.concurrent.atomic.AtomicBoolean();
         executarConcorrente(List.of(
                 // Thread A: cancelamento do agendamento/pagamento (lock PAGAMENTO).
                 () -> pagamentoService.cancelarPagamentoPendenteDoAgendamento(agendamentoId, empresaId),
                 // Thread B: confirmacao do mesmo pagamento (lock PAGAMENTO -> EMPRESA).
-                comEmpresa(empresaId, () -> pagamentoService.marcarPago(pagamentoId,
-                        new MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null)))));
+                // Ordem serial valida nos dois sentidos: se o cancelamento vencer,
+                // o marcarPago e corretamente recusado pela trava de CANCELADO
+                // (sem gerar hibrido); o estado final abaixo prova a consistencia.
+                comEmpresa(empresaId, () -> {
+                    try {
+                        pagamentoService.marcarPago(pagamentoId,
+                                new MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null));
+                    } catch (com.minhaempresa.gendaz.shared.BusinessException ex) {
+                        confirmacaoRecusada.set(true);
+                    }
+                })));
 
         PagamentoEntity fim = pagamentoRepository.findById(pagamentoId).orElseThrow();
         BigDecimal caixaFim = caixaDe(empresaId);
         long aprovados = contarLogs(empresaId, TipoCaixaDespesasLog.PAGAMENTO_APROVADO);
+        if (confirmacaoRecusada.get()) {
+            assertEquals(StatusPagamento.CANCELADO, fim.getStatus(),
+                    "confirmacao recusada so e valida se o cancelamento venceu");
+        }
 
         if (fim.getStatus() == StatusPagamento.CANCELADO) {
             assertEquals(0, caixaInicial.compareTo(caixaFim),

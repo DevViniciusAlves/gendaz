@@ -30,6 +30,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
     @Query("""
             select a from AgendamentoEntity a
             where a.empresa.id = :empresaId
+              and a.excluidoAgenda = false
               and a.cliente.status <> :statusExcluido
             """)
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})
@@ -40,6 +41,7 @@ public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, 
             select a from AgendamentoEntity a
             where a.empresa.id = :empresaId
               and a.data = :data
+              and a.excluidoAgenda = false
               and a.cliente.status <> :statusExcluido
             """)
     @EntityGraph(attributePaths = {"cliente", "servico", "profissional", "empresa"})

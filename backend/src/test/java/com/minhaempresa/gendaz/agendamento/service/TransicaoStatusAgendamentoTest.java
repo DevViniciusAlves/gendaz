@@ -122,6 +122,46 @@ class TransicaoStatusAgendamentoTest {
     }
 
     @Test
+    void cancelamentoOperacionalPermiteEmAtendimentoEPausado() {
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.PENDENTE));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.CONFIRMADO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.EM_ATENDIMENTO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.PAUSADO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.CANCELADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.FINALIZADO));
+    }
+
+    @Test
+    void cancelamentoClienteMantemSelfServiceRestritivo() {
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.PENDENTE));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.CONFIRMADO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.CANCELADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.EM_ATENDIMENTO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.PAUSADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirCancelamentoCliente(StatusAgendamento.FINALIZADO));
+    }
+
+    @Test
+    void canceladoTerminalParaTodosDestinosOperacionais() {
+        assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
+                StatusAgendamento.CANCELADO, StatusAgendamento.CONFIRMADO));
+        assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
+                StatusAgendamento.CANCELADO, StatusAgendamento.EM_ATENDIMENTO));
+        assertThrows(BusinessException.class, () -> TransicaoStatusAgendamento.exigirEdicaoStatus(
+                StatusAgendamento.CANCELADO, StatusAgendamento.FINALIZADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirInicio(StatusAgendamento.CANCELADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirRetomada(StatusAgendamento.CANCELADO));
+        assertThrows(BusinessException.class,
+                () -> TransicaoStatusAgendamento.exigirCancelamentoOperacional(StatusAgendamento.FINALIZADO));
+    }
+
+    @Test
     void canceladoETerminalMasRecancelarEIdempotente() {
         assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirCancelamento(
                 StatusAgendamento.CANCELADO));

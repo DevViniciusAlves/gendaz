@@ -63,4 +63,33 @@ class AgendamentoBulkServiceTest {
 
         verify(agendamentoService, never()).cancelar(anyLong(), anyLong());
     }
+
+    @Test
+    void finalizarEmMassaDelegaParaFluxoCentralSemSetStatusDireto() {
+        var response = service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L, 2L), "FINALIZAR", 1L));
+
+        assertEquals(2, response.totalProcessado());
+        assertEquals(0, response.falhas().size());
+        verify(agendamentoService, times(2)).finalizarPreservandoPagamento(anyLong(), anyLong());
+        verify(agendamentoService, never()).cancelar(anyLong(), anyLong());
+    }
+
+    @Test
+    void excluirEmMassaDelegaParaExclusaoCentral() {
+        var response = service.executar(new AcaoEmMassaAgendamentoRequest(List.of(1L), "EXCLUIR", 1L));
+
+        assertEquals(1, response.totalProcessado());
+        assertEquals(0, response.falhas().size());
+        verify(agendamentoService, times(1)).excluir(anyLong(), anyLong());
+    }
+
+    @Test
+    void bulkRespeitaCompanyContextEMaximoDezIds() {
+        org.junit.jupiter.api.Assertions.assertThrows(
+                com.minhaempresa.gendaz.shared.BusinessException.class,
+                () -> service.executar(new AcaoEmMassaAgendamentoRequest(
+                        List.of(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L), "CANCELAR", 1L)));
+
+        verify(agendamentoService, never()).cancelar(anyLong(), anyLong());
+    }
 }

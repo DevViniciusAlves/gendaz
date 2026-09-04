@@ -52,6 +52,13 @@ function dataReferenciaFinanceira(item, agendamentoMap) {
     return dataReferenciaAgendamento(item, agendamentoMap) || ''
   }
   if (item?.dataPagamento) return String(item.dataPagamento)
+  // CANCELADO sem dataPagamento: usa a data do agendamento como referencia
+  // historica para nao sumir do filtro mensal. Nao conta como recebido/pendente.
+  const statusPag = status
+  const pagamentoCancelado = statusPag === "CANCELADO"
+  if (pagamentoCancelado || STATUS_CANCELADO.has(status)) {
+    return dataReferenciaAgendamento(item, agendamentoMap) || ''
+  }
   return ''
 }
 

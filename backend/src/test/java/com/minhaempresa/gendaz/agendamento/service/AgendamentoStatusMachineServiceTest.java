@@ -284,11 +284,16 @@ class AgendamentoStatusMachineServiceTest {
     // ---- cancelar ----
 
     @Test
-    void cancelarSomentePendenteOuConfirmadoERecancelarEIdempotente() {
-        AgendamentoEntity confirmado = agendamento(10L, StatusAgendamento.CONFIRMADO);
-        carregar(confirmado);
-        agendamentoService.cancelar(10L, 1L);
-        assertEquals(StatusAgendamento.CANCELADO, confirmado.getStatus());
+    void cancelarOperacionalPermiteAtePausadoERecancelarEIdempotente() {
+        for (StatusAgendamento permitido : List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO,
+                StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO)) {
+            AgendamentoEntity ag = agendamento(10L, permitido);
+            carregar(ag);
+            agendamentoService.cancelar(10L, 1L);
+            assertEquals(StatusAgendamento.CANCELADO, ag.getStatus(), "cancelar operacional de " + permitido);
+        }
+        // 4 cancelamentos operacionais (o recancelamento idempotente abaixo soma o 5o).
+        verify(pagamentoService, org.mockito.Mockito.times(4)).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
 
         // Recancelar e idempotente (duplo clique/retry/bulk): sem erro, sem efeito.
         AgendamentoEntity cancelado = agendamento(10L, StatusAgendamento.CANCELADO);
@@ -296,12 +301,70 @@ class AgendamentoStatusMachineServiceTest {
         agendamentoService.cancelar(10L, 1L);
         assertEquals(StatusAgendamento.CANCELADO, cancelado.getStatus());
 
-        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.FINALIZADO,
-                StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO)) {
+        AgendamentoEntity finalizado = agendamento(10L, StatusAgendamento.FINALIZADO);
+        carregar(finalizado);
+        assertThrows(BusinessException.class, () -> agendamentoService.cancelar(10L, 1L));
+        assertEquals(StatusAgendamento.FINALIZADO, finalizado.getStatus());
+    }
+
+    @Test
+    void cancelarComPagamentoPagoPreservaTudoSemCaixa() {
+        AgendamentoEntity emAt = agendamento(10L, StatusAgendamento.EM_ATENDIMENTO);
+        carregar(emAt);
+        PagamentoEntity pago = PagamentoEntity.builder()
+                .id(50L).agendamento(emAt).cliente(cliente).empresa(empresa)
+                .valor(new BigDecimal("200.00")).metodoPagamento(MetodoPagamento.PIX)
+                .parcelas(null).dataPagamento(java.time.LocalDateTime.of(2026, 8, 10, 10, 0))
+                .status(StatusPagamento.PAGO).build();
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(any(), any()))
+                .thenReturn(Optional.of(pago));
+
+        agendamentoService.cancelar(10L, 1L);
+
+        assertEquals(StatusAgendamento.CANCELADO, emAt.getStatus());
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
+        assertEquals(MetodoPagamento.PIX, pago.getMetodoPagamento());
+        assertEquals(java.time.LocalDateTime.of(2026, 8, 10, 10, 0), pago.getDataPagamento());
+        assertEquals(0, new BigDecimal("200.00").compareTo(pago.getValor()));
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+        verifyNoInteractions(caixaDespesasService);
+    }
+
+    @Test
+    void cancelarComPagamentoPendenteCancelaPagamento() {
+        AgendamentoEntity confirmado = agendamento(10L, StatusAgendamento.CONFIRMADO);
+        carregar(confirmado);
+
+        agendamentoService.cancelar(10L, 1L);
+
+        assertEquals(StatusAgendamento.CANCELADO, confirmado.getStatus());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+        verifyNoInteractions(caixaDespesasService);
+    }
+
+    @Test
+    void cancelarParaClienteBloqueiaEmAtendimentoEPausado() {
+        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO,
+                StatusAgendamento.FINALIZADO)) {
             AgendamentoEntity ag = agendamento(10L, bloqueado);
-            carregar(ag);
-            assertThrows(BusinessException.class, () -> agendamentoService.cancelar(10L, 1L),
-                    "cancelar de " + bloqueado);
+            when(agendamentoRepository.findByIdAndEmpresaIdAndClienteIdForUpdate(10L, 1L, 1L))
+                    .thenReturn(Optional.of(ag));
+            assertThrows(BusinessException.class,
+                    () -> agendamentoService.cancelarParaCliente(10L, 1L, 1L),
+                    "cancelarParaCliente de " + bloqueado);
+            assertEquals(bloqueado, ag.getStatus());
+        }
+        verify(agendamentoRepository, never()).save(any());
+    }
+
+    @Test
+    void cancelarParaClientePermitePendenteEConfirmado() {
+        for (StatusAgendamento permitido : List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO)) {
+            AgendamentoEntity ag = agendamento(10L, permitido);
+            when(agendamentoRepository.findByIdAndEmpresaIdAndClienteIdForUpdate(10L, 1L, 1L))
+                    .thenReturn(Optional.of(ag));
+            agendamentoService.cancelarParaCliente(10L, 1L, 1L);
+            assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
         }
     }
 

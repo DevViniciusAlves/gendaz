@@ -91,8 +91,14 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     private AgendamentoEntity agendamento(Long id, StatusAgendamento status) {
+        com.minhaempresa.gendaz.servico.entity.ServicoEntity servico =
+                com.minhaempresa.gendaz.servico.entity.ServicoEntity.builder()
+                        .id(1L).nome("Corte").empresa(empresa).build();
+        com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity profissional =
+                com.minhaempresa.gendaz.profissional.entity.ProfissionalEntity.builder()
+                        .id(1L).nome("Jo").empresa(empresa).build();
         return AgendamentoEntity.builder()
-                .id(id).empresa(empresa).cliente(cliente)
+                .id(id).empresa(empresa).cliente(cliente).servico(servico).profissional(profissional)
                 .status(status).build();
     }
 
@@ -103,19 +109,52 @@ class ExclusaoAgendamentoHistoricoTest {
                 .status(StatusPagamento.PAGO).build();
     }
 
+    private PagamentoEntity pagamentoPendente(AgendamentoEntity ag) {
+        return PagamentoEntity.builder()
+                .id(51L).agendamento(ag).cliente(cliente).empresa(empresa)
+                .valor(new BigDecimal("200.00"))
+                .status(StatusPagamento.PENDENTE).build();
+    }
+
     @Test
     void excluirAgendamentoPagoCancelaSemApagarHistorico() {
         AgendamentoEntity ag = agendamento(10L, StatusAgendamento.PENDENTE);
+        PagamentoEntity pago = pagamentoPago(ag);
+        pago.setDataPagamento(java.time.LocalDateTime.of(2026, 8, 10, 10, 0));
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(ag));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
-                .thenReturn(Optional.of(pagamentoPago(ag)));
+                .thenReturn(Optional.of(pago));
 
         agendamentoService.excluir(10L, 1L);
 
         assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        // Pagamento PAGO preservado integralmente pela regra central.
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
+        assertEquals(MetodoPagamento.PIX, pago.getMetodoPagamento());
+        assertEquals(java.time.LocalDateTime.of(2026, 8, 10, 10, 0), pago.getDataPagamento());
+        assertEquals(0, new BigDecimal("200.00").compareTo(pago.getValor()));
         verify(agendamentoRepository, never()).delete(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
         verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+        verifyNoInteractions(caixaDespesasService);
+    }
+
+    @Test
+    void excluirComPagamentoPendenteCancelaPagamentoViaRegraCentral() {
+        AgendamentoEntity ag = agendamento(10L, StatusAgendamento.CONFIRMADO);
+        PagamentoEntity pendente = pagamentoPendente(ag);
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(10L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(10L, 1L))
+                .thenReturn(Optional.of(pendente));
+
+        agendamentoService.excluir(10L, 1L);
+
+        assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        verify(agendamentoRepository, never()).delete(any());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(10L, 1L);
+        verifyNoInteractions(caixaDespesasService);
     }
 
     @Test
@@ -133,14 +172,18 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     @Test
-    void excluirAgendamentoNovoSemPagamentoRemoveFisicamente() {
+    void excluirAgendamentoNovoSemPagamentoFazSoftDelete() {
         AgendamentoEntity ag = agendamento(12L, StatusAgendamento.PENDENTE);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.of(ag));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(12L, 1L)).thenReturn(Optional.empty());
 
         agendamentoService.excluir(12L, 1L);
 
-        verify(agendamentoRepository).delete(ag);
+        // Soft delete operacional: nunca DELETE fisico, mesmo sem pagamento.
+        assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        verify(agendamentoRepository, never()).delete(any());
+        verify(agendamentoRepository).save(ag);
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
     }
 
@@ -154,6 +197,7 @@ class ExclusaoAgendamentoHistoricoTest {
         agendamentoService.excluir(13L, 1L);
 
         assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
         verify(agendamentoRepository, never()).delete(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
     }
@@ -161,15 +205,20 @@ class ExclusaoAgendamentoHistoricoTest {
     @Test
     void excluirCanceladoEIdempotenteESeguro() {
         AgendamentoEntity comPagamento = agendamento(14L, StatusAgendamento.CANCELADO);
+        PagamentoEntity pago = pagamentoPago(comPagamento);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(14L, 1L)).thenReturn(Optional.of(comPagamento));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(14L, 1L))
-                .thenReturn(Optional.of(pagamentoPago(comPagamento)));
+                .thenReturn(Optional.of(pago));
 
         agendamentoService.excluir(14L, 1L);
 
         assertEquals(StatusAgendamento.CANCELADO, comPagamento.getStatus());
+        assertEquals(true, comPagamento.isExcluidoAgenda());
+        // Pagamento nao ressuscitado, Caixa intocado.
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
         verify(agendamentoRepository, never()).delete(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
+        verifyNoInteractions(caixaDespesasService);
     }
 
     @Test
@@ -257,7 +306,23 @@ class ExclusaoAgendamentoHistoricoTest {
 
         assertEquals(1, response.totalProcessado());
         assertEquals(0, response.falhas().size());
-        verify(agendamentoRepository).delete(any());
+        // Soft delete via regra central: sem DELETE fisico, sem apagar pagamento.
+        assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        verify(agendamentoRepository, never()).delete(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
+    }
+
+    @Test
+    void bulkCancelarEmAtendimentoUsaRegraCentral() {
+        AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
+        AgendamentoEntity emAt = agendamento(21L, StatusAgendamento.EM_ATENDIMENTO);
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(21L, 1L)).thenReturn(Optional.of(emAt));
+
+        var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(21L), "CANCELAR", 1L));
+
+        assertEquals(1, response.totalProcessado());
+        assertEquals(0, response.falhas().size());
+        assertEquals(StatusAgendamento.CANCELADO, emAt.getStatus());
     }
 }

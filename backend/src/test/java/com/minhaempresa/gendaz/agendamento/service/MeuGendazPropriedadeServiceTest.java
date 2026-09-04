@@ -161,4 +161,18 @@ class MeuGendazPropriedadeServiceTest {
         assertThrows(ResourceNotFoundException.class,
                 () -> agendamentoService.cancelarParaCliente(999L, 1L, 20L));
     }
+
+    @Test
+    void donaNaoCancelaAtendimentoJaIniciadoOuPausado() {
+        for (StatusAgendamento bloqueado : java.util.List.of(
+                StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO, StatusAgendamento.FINALIZADO)) {
+            agendamentoMaria.setStatus(bloqueado);
+            assertThrows(com.minhaempresa.gendaz.shared.BusinessException.class,
+                    () -> agendamentoService.cancelarParaCliente(123L, 1L, 20L),
+                    "cancelarParaCliente de " + bloqueado);
+            assertEquals(bloqueado, agendamentoMaria.getStatus());
+        }
+        verify(agendamentoRepository, never()).save(any());
+        verify(pagamentoService, never()).cancelarPagamentoPendenteDoAgendamento(any(), any());
+    }
 }

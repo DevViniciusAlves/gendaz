@@ -342,8 +342,8 @@ export default function Agenda() {
       }
       const configs = {
         FINALIZAR: ['Finalizar agendamentos', 'Tem certeza que deseja finalizar os agendamentos selecionados?', 'Finalizar', false],
-        CANCELAR: ['Cancelar agendamentos', 'Ao cancelar, os agendamentos selecionados não poderão voltar para pendente, ser iniciados, finalizados ou reabertos. Os horários serão liberados e pagamentos pendentes vinculados serão cancelados. Para atender esses clientes depois, crie novos agendamentos.', 'Cancelar mesmo', true],
-        EXCLUIR: ['Excluir agendamentos', 'Tem certeza que deseja excluir os agendamentos selecionados? Essa ação não poderá ser desfeita.', 'Excluir', true],
+        CANCELAR: ['Cancelar agendamentos', 'Ao cancelar, os agendamentos selecionados ficarão CANCELADOS e não poderão voltar para estados operacionais. Os horários serão liberados, os pagamentos pendentes vinculados serão cancelados e os pagamentos já pagos serão preservados.', 'Cancelar mesmo', true],
+        EXCLUIR: ['Excluir agendamentos', 'Os agendamentos selecionados serão removidos da Agenda, mas continuarão disponíveis no histórico financeiro e nos relatórios. Pagamentos pendentes serão cancelados e pagamentos já confirmados serão preservados.', 'Excluir', true],
       }
       const cfg = configs[ação]
       setBulkModal({ acao: ação, titulo: cfg[0], descrição: cfg[1], confirmLabel: cfg[2], danger: cfg[3] })
@@ -860,14 +860,14 @@ export default function Agenda() {
             onEditar={(ag) => abrirEdicao(ag)}
             onCancelar={(ag) => setConfirmacao({
               titulo: 'Cancelar agendamento',
-              descrição: 'Ao cancelar, este agendamento não poderá voltar para pendente, ser iniciado, finalizado ou reaberto. O horário será liberado e o pagamento pendente vinculado será cancelado. Para atender este cliente depois, crie um novo agendamento.',
+              descrição: 'Ao cancelar, este agendamento ficará CANCELADO e não poderá voltar para estados operacionais. O horário será liberado, o pagamento pendente vinculado será cancelado e o pagamento já pago será preservado.',
               ação: () => cancelarAgendamento(ag.id),
               acaoLabel: 'Cancelar mesmo',
               danger: true,
             })}
             onExcluir={(ag) => setConfirmacao({
               titulo: 'Excluir agendamento',
-              descrição: 'Tem certeza que deseja excluir este agendamento? Essa ação é permanente.',
+              descrição: 'Este agendamento será removido da Agenda, mas continuará disponível no histórico financeiro e nos relatórios. Pagamentos pendentes serão cancelados e pagamentos já confirmados serão preservados.',
               ação: () => excluirAgendamento(ag.id),
               acaoLabel: 'Excluir',
             })}

@@ -247,16 +247,20 @@ class AgendamentoConcorrenciaIntegrationTest {
                 comEmpresa(empresaId, () -> agendamentoService.iniciar(agId)),
                 comEmpresa(empresaId, () -> agendamentoService.cancelar(agId, empresaId)));
 
-        // Exatamente um vence; o outro e rejeitado pela maquina sobre o estado protegido.
-        assertEquals(1, resultado.sucessosA() + resultado.sucessosB());
+        // Maquina operacional: cancelar vale de EM_ATENDIMENTO, entao ha duas
+        // ordens seriais validas — (iniciar sozinho) ou (iniciar;cancelar).
+        // Se cancelar venceu primeiro, o iniciar posterior e bloqueado.
+        int totalSucessos = resultado.sucessosA() + resultado.sucessosB();
+        assertTrue(totalSucessos >= 1 && totalSucessos <= 2,
+                "esperado 1 ou 2 sucessos em ordem serial valida, obtido: " + totalSucessos);
 
         StatusAgendamento fim = statusDe(agId);
         StatusPagamento pagFim = pagamentoDoAgendamento(agId, empresaId);
         if (fim == StatusAgendamento.EM_ATENDIMENTO) {
-            // iniciar venceu: o cancelar posterior leu EM_ATENDIMENTO e foi bloqueado.
+            // So iniciar executou: pagamento segue pendente.
             assertEquals(StatusPagamento.PENDENTE, pagFim);
         } else {
-            // cancelar venceu: o iniciar posterior leu CANCELADO e foi bloqueado.
+            // Cancelar executou (sozinho ou apos iniciar): terminal preservado.
             assertEquals(StatusAgendamento.CANCELADO, fim);
             assertEquals(StatusPagamento.CANCELADO, pagFim);
         }

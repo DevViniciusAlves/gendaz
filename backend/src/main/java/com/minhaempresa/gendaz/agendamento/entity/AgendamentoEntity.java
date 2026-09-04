@@ -55,6 +55,15 @@ public class AgendamentoEntity {
     @Column(name = "confirmacao_pagamento_dono_2_enviada", nullable = false)
     private boolean confirmacaoPagamentoDono2Enviada = false;
 
+    /**
+     * Soft delete operacional: true = removido da Agenda operacional.
+     * O registro permanece no banco para Financeiro, Relatorios e auditoria.
+     * Nunca reutilizar StatusCadastro do cliente para isto.
+     */
+    @Builder.Default
+    @Column(name = "excluido_agenda", nullable = false)
+    private boolean excluidoAgenda = false;
+
     @Column(length = 6, unique = true)
     private String protocolo;
 

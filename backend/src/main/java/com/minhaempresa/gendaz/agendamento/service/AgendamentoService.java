@@ -339,7 +339,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse cancelar(Long id, Long empresaId) {
         AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
-        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
+        TransicaoStatusAgendamento.exigirCancelamentoOperacional(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
@@ -359,7 +359,7 @@ public class AgendamentoService {
     @Transactional
     public AgendamentoResponse cancelarParaCliente(Long id, Long empresaId, Long clienteId) {
         AgendamentoEntity agendamento = carregarDoClienteParaAtualizacao(id, empresaId, clienteId);
-        TransicaoStatusAgendamento.exigirCancelamento(agendamento.getStatus());
+        TransicaoStatusAgendamento.exigirCancelamentoCliente(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
@@ -372,31 +372,29 @@ public class AgendamentoService {
     }
 
     /**
-     * Exclusao operacional de agendamento — obedece integralmente a maquina
-     * de estados ({@code TransicaoStatusAgendamento.exigirExclusao}), ANTES
-     * de qualquer leitura de pagamento ou modificacao:
-     * - PENDENTE / CONFIRMADO: permitido. Sem pagamento vinculado, remocao
-     *   fisica segura; com pagamento, CANCELADO logico (transicao autorizada:
-     *   PAGO intacto, PENDENTE cancelado).
-     * - CANCELADO: idempotente/seguro (sem ressuscitar, sem mexer em dinheiro).
+     * Exclusao OPERACIONAL de agendamento (soft delete): remove da Agenda,
+     * preserva o banco para Financeiro, Relatorios e auditoria. NUNCA faz
+     * DELETE fisico no fluxo normal. Obedece integralmente a maquina de
+     * estados ({@code TransicaoStatusAgendamento.exigirExclusao}), ANTES de
+     * qualquer leitura de pagamento ou modificacao:
+     * - PENDENTE / CONFIRMADO: status -> CANCELADO + excluidoAgenda = true;
+     *   pagamento PENDENTE -> CANCELADO (PAGO intacto, via regra central).
+     * - CANCELADO: idempotente — apenas garante excluidoAgenda = true, sem
+     *   ressuscitar pagamento e sem mexer no Caixa.
      * - EM_ATENDIMENTO / PAUSADO / FINALIZADO: bloqueado com erro de negocio,
      *   sem tocar em pagamento, Caixa, movimentacao ou no proprio registro.
+     *   Para remover esses da Agenda: primeiro CANCELAR, depois EXCLUIR.
      * Excluir nunca e porta alternativa para transicao proibida.
      */
     @Transactional
     public void excluir(Long id, Long empresaId) {
         // Lock 1 (AGENDAMENTO) antes de qualquer leitura: a exclusao valida o
-        // estado protegido e so depois toca no pagamento (lock 2, via ForUpdate
-        // abaixo e via cancelarPagamentoPendenteDoAgendamento). Nunca o inverso.
+        // estado protegido e so depois toca no pagamento (lock 2, via
+        // cancelarPagamentoPendenteDoAgendamento). Nunca o inverso.
         AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
         TransicaoStatusAgendamento.exigirExclusao(agendamento.getStatus());
-        boolean temPagamento = pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(id, agendamento.getEmpresa().getId()).isPresent();
-        if (!temPagamento) {
-            logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
-            agendamentoRepository.delete(agendamento);
-            return;
-        }
         agendamento.setStatus(StatusAgendamento.CANCELADO);
+        agendamento.setExcluidoAgenda(true);
         agendamentoRepository.save(agendamento);
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());

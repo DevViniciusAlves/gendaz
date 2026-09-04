@@ -92,10 +92,11 @@ export default function AgendaCard({
           {menuAberto && (
             <div className="agenda-card-dropdown">
               {onEditar && <button type="button" onClick={() => { onEditar(agendamento); setMenuAberto(false) }}>Editar</button>}
-              {/* Cancelar somente nos estados cancelaveis (PENDENTE/CONFIRMADO),
-                  espelhando TransicaoStatusAgendamento.exigirCancelamento.
-                  EM_ATENDIMENTO/PAUSADO/FINALIZADO/CANCELADO nunca oferecem. */}
-              {onCancelar && (status === 'PENDENTE' || status === 'CONFIRMADO') && (
+              {/* Cancelar nos estados cancelaveis operacionais
+                  (PENDENTE/CONFIRMADO/EM_ATENDIMENTO/PAUSADO), acao explicita
+                  "Cancelar" que chama o endpoint de cancelamento.
+                  FINALIZADO/CANCELADO nunca oferecem. */}
+              {onCancelar && (status === 'PENDENTE' || status === 'CONFIRMADO' || status === 'EM_ATENDIMENTO' || status === 'PAUSADO') && (
                 <button type="button" onClick={() => { onCancelar(agendamento); setMenuAberto(false) }}>Cancelar</button>
               )}
               {onExcluir && status !== 'EM_ATENDIMENTO' && status !== 'PAUSADO' && status !== 'FINALIZADO' && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
