@@ -1625,7 +1625,8 @@
   }
 
   .app-shell .reports-page .data-table td[data-column='servicoNome'],
-  .app-shell .reports-page .data-table td[data-column='observacoes'] {
+  .app-shell .reports-page .data-table td[data-column='observacoes'],
+  .app-shell .reports-page .data-table td[data-column='observações'] {
     grid-column: 1 / -1 !important;
   }
 

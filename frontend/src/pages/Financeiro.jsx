@@ -449,7 +449,11 @@ export default function Financeiro() {
         item.agendamento?.data ? formatarData(item.agendamento.data) : (item.data ? formatarData(item.data) : ''),
         item.dataPagamento ? formatarData(item.dataPagamento) : '',
         '',
-        item.observações || item.agendamento?.observações || '',
+        item.observacoes
+          ?? item.agendamento?.observacoes
+          ?? item.observações
+          ?? item.agendamento?.observações
+          ?? '',
       ]),
     })
   }
