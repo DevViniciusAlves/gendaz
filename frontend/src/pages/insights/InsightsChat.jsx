@@ -38,7 +38,7 @@ function carregarMensagensSalvas() {
   }
 }
 
-export default function InsightsChat({ aberto = true, onToggle, onEnviar, historico = [] }) {
+export default function InsightsChat({ aberto = true, onToggle, onEnviar, historico = [], bloqueado = false }) {
   const [mensagens, setMensagens] = useState(() => carregarMensagensSalvas())
   const [entrada, setEntrada] = useState('')
   const [carregando, setCarregando] = useState(false)
@@ -78,6 +78,9 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
       .slice()
       .reverse()
       .forEach((item, index) => {
+        // Defesa: o histórico do chat contém SOMENTE conversa real (tipo "pergunta").
+        // Registros de dashboard/sincronização nunca viram mensagem.
+        if (item?.tipo && item.tipo !== 'pergunta') return
         const chave = criarChaveHistorico(item)
         if (historicoProcessadoRef.current.has(chave)) return
 
@@ -141,17 +144,16 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
 
   async function enviar() {
     const pergunta = entrada.trim()
-    if (!pergunta || carregando) return
+    if (!pergunta || carregando || bloqueado) return
 
-    const historicoParaEnviar = [
-      ...mensagens
-        .filter((item) => item.origem === 'cliente' || item.origem === 'ia')
-        .map((item) => ({
-          role: item.origem === 'ia' ? 'assistant' : 'user',
-          content: item.texto,
-        })),
-      { role: 'user', content: pergunta },
-    ]
+    // O histórico enviado contém SOMENTE mensagens anteriores; a pergunta atual
+    // vai separada como `pergunta` para não chegar duplicada à IA.
+    const historicoParaEnviar = mensagens
+      .filter((item) => item.origem === 'cliente' || item.origem === 'ia')
+      .map((item) => ({
+        role: item.origem === 'ia' ? 'assistant' : 'user',
+        content: item.texto,
+      }))
 
     setEntrada('')
     setMensagens((current) => [
@@ -220,7 +222,11 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
                 <Bot size={16} />
                 <strong>gendazIA</strong>
                 <Sparkles size={16} />
-                <p>Pergunte sobre receita, clientes, serviços, profissionais ou oportunidades do negócio.</p>
+                {bloqueado ? (
+                  <p>Sincronize seus dados para conversar com a gendazIA.</p>
+                ) : (
+                  <p>Dados sincronizados. Pode me perguntar sobre sua agenda, clientes, serviços ou financeiro.</p>
+                )}
               </div>
             )}
 
@@ -249,7 +255,10 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
                 key={sugestao}
                 type="button"
                 className="insights-ai-chat__suggestion"
-                onClick={() => setEntrada(sugestao)}
+                disabled={bloqueado || carregando}
+                onClick={() => {
+                  if (!bloqueado) setEntrada(sugestao)
+                }}
               >
                 {sugestao}
               </button>
@@ -266,14 +275,14 @@ export default function InsightsChat({ aberto = true, onToggle, onEnviar, histor
             <input
               value={entrada}
               onChange={(e) => setEntrada(e.target.value)}
-              placeholder="Faça uma pergunta à gendazIA..."
+              placeholder={bloqueado ? 'Sincronize seus dados para conversar com a gendazIA.' : 'Faça uma pergunta à gendazIA...'}
               aria-label="Faça uma pergunta à gendazIA"
-              disabled={carregando}
+              disabled={carregando || bloqueado}
             />
             <button
               type="submit"
               className="insights-ai-chat__send"
-              disabled={!entrada.trim() || carregando}
+              disabled={!entrada.trim() || carregando || bloqueado}
               aria-label="Enviar pergunta"
             >
               {carregando ? <Loader className="spin" size={16} /> : <Send size={16} />}

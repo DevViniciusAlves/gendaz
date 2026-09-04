@@ -67,6 +67,7 @@ function rotuloDestino(destino) {
 
 function resumoTexto(dashboard) {
   if (!dashboard) return 'Carregando análise real da empresa...'
+  if (dashboard?.dadosInsuficientes) return 'Sua empresa ainda não possui dados suficientes para gerar uma análise. Registre clientes, agendamentos e pagamentos e sincronize novamente.'
 
   const score = Number(dashboard?.scoreGeral ?? 0)
   const alertas = safeArray(dashboard?.alertas).length
@@ -97,6 +98,7 @@ export default function Insights() {
   const [sincronizando, setSincronizando] = useState(false)
 
   const score = Number(dashboard?.scoreGeral ?? 0)
+  const dadosInsuficientes = Boolean(dashboard?.dadosInsuficientes) || dashboard?.scoreGeral == null
   const oportunidades = safeArray(dashboard?.oportunidades)
   const recomendacoes = safeArray(dashboard?.ações)
   const principais = safeArray(dashboard?.principais).slice(0, 3)
@@ -146,7 +148,7 @@ export default function Insights() {
           <h1>Insights</h1>
           <p>A IA analisa os dados da sua empresa e recomenda ações para crescer.</p>
         </div>
-        <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} loading={sincronizando} loadingText="Sincronizando..." disabled={loading}>
+        <Button variant="secondary" icon={Sparkles} onClick={handleSincronizarDados} loading={sincronizando} loadingText="Sincronizando..." disabled={loading || sincronizando}>
           Sincronizar dados
         </Button>
       </header>
@@ -178,6 +180,7 @@ export default function Insights() {
               onToggle={() => setChatAberto((value) => !value)}
               onEnviar={analisar}
               historico={historico}
+              bloqueado={semSnapshot}
             />
           </aside>
         </div>
@@ -205,16 +208,26 @@ export default function Insights() {
               <div className="insights-summary-metrics">
                 <article className="insights-summary-metric">
                   <span className="insights-label">Índice Gendaz</span>
-                  <div className="insights-summary-metric__value">{score}/100</div>
-                  <strong>{getStatusScore(score)}</strong>
-                  <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparação disponível'}</small>
+                  {dadosInsuficientes ? (
+                    <>
+                      <div className="insights-summary-metric__value">—</div>
+                      <strong>Dados insuficientes</strong>
+                      <small>Registre dados e sincronize para gerar seu índice</small>
+                    </>
+                  ) : (
+                    <>
+                      <div className="insights-summary-metric__value">{score}/100</div>
+                      <strong>{getStatusScore(score)}</strong>
+                      <small>{score ? 'Dados sincronizados da empresa' : 'Sem comparação disponível'}</small>
+                    </>
+                  )}
                 </article>
               </div>
             </section>
 
             <div className="insights-change-risk-row">
               <section className="panel insights-changes-card">
-                <div className="section-kicker">O que mudou desde a última análise</div>
+                <div className="section-kicker">Principais pontos da análise</div>
                 <div className="insights-change-grid">
                   {principais.slice(0, 4).map((item, index) => {
                     const Icon = iconPorTipo(item.tipo)
@@ -362,6 +375,7 @@ export default function Insights() {
               onToggle={() => setChatAberto((value) => !value)}
               onEnviar={analisar}
               historico={historico}
+              bloqueado={semSnapshot}
             />
           </aside>
         </div>
@@ -384,8 +398,17 @@ export default function Insights() {
             <div className="insights-detail-grid">
               <div>
                 <span>Saúde da empresa</span>
-                <strong>{score}/100</strong>
-                <p>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</p>
+                {dadosInsuficientes ? (
+                  <>
+                    <strong>—</strong>
+                    <p>Dados insuficientes</p>
+                  </>
+                ) : (
+                  <>
+                    <strong>{score}/100</strong>
+                    <p>{score >= 70 ? 'Empresa saudável' : score >= 45 ? 'Atenção necessária' : 'Empresa em risco'}</p>
+                  </>
+                )}
               </div>
               <div>
                 <span>Impacto total</span>

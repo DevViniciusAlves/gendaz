@@ -98,7 +98,7 @@ public class GroqClient {
         }
 
         try {
-            return enviarChat(montarMensagens(systemPrompt, historico, userPrompt), 0.85, 450, null, "conversar");
+            return enviarChat(montarMensagens(systemPrompt, historico, userPrompt), 0.4, 600, null, "conversar");
         } catch (IOException e) {
             log.warn("[insights-groq] falha ao serializar ou ler resposta. erroTipo={}", e.getClass().getSimpleName());
             return Optional.empty();

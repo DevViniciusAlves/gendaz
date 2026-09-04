@@ -153,6 +153,123 @@ class InsightsServiceTest {
         verify(groqClient, never()).analisar(any(), any());
     }
 
+    @Test
+    void analisarSemSnapshotRecusaSemChamarGroqNemColetar() {
+        when(insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "dashboard"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(BusinessException.class,
+                () -> service.analisarPergunta(1L, "Como está minha receita?", List.of()));
+
+        verify(analyzer, never()).coletarDados(any(), any());
+        verify(groqClient, never()).conversar(any(), any(), any());
+        verify(insightRepository, never()).save(any());
+    }
+
+    @Test
+    void analisarUsaUltimoSnapshotSemColetarDeNovo() throws Exception {
+        String payload = objectMapper.writeValueAsString(Map.of(
+                "empresaId", 1,
+                "empresaNome", "Empresa",
+                "financeiro", Map.of("receitaPeriodoAtual", 100, "receitaPeriodoAnterior", 50, "pendente", 0)
+        ));
+        InsightEntity snapshot = InsightEntity.builder()
+                .id(9L)
+                .empresaId(1L)
+                .tipo("dashboard")
+                .pergunta("MANUAL - Dashboard")
+                .resposta("{}")
+                .payloadJson(payload)
+                .origem("MANUAL")
+                .dataCriacao(LocalDateTime.of(2026, 8, 13, 18, 0))
+                .build();
+        when(insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "dashboard"))
+                .thenReturn(Optional.of(snapshot));
+        when(groqClient.disponivel()).thenReturn(true);
+        when(groqClient.conversar(any(), any(), any())).thenReturn(Optional.of("Receita estável no período."));
+
+        String resposta = service.analisarPergunta(1L, "Como está minha receita?", List.of());
+
+        assertEquals("Receita estável no período.", resposta);
+        verify(analyzer, never()).coletarDados(any(), any());
+        verify(groqClient).conversar(any(), any(), org.mockito.ArgumentMatchers.contains("Como está minha receita?"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void analisarNaoDuplicaPerguntaAtualNoHistorico() throws Exception {
+        String payload = objectMapper.writeValueAsString(Map.of("empresaId", 1, "empresaNome", "Empresa"));
+        InsightEntity snapshot = InsightEntity.builder()
+                .id(9L).empresaId(1L).tipo("dashboard").pergunta("MANUAL - Dashboard")
+                .resposta("{}").payloadJson(payload).origem("MANUAL")
+                .dataCriacao(LocalDateTime.of(2026, 8, 13, 18, 0)).build();
+        when(insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "dashboard"))
+                .thenReturn(Optional.of(snapshot));
+        when(groqClient.disponivel()).thenReturn(true);
+        when(groqClient.conversar(any(), any(), any())).thenReturn(Optional.of("ok"));
+
+        var historico = List.of(
+                new com.minhaempresa.gendaz.insights.dto.InsightsDtos.ChatMessageRequest("user", "Como está minha receita?")
+        );
+        service.analisarPergunta(1L, "Como está minha receita?", historico);
+
+        var captor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(groqClient).conversar(any(), captor.capture(), any());
+        assertTrue(captor.getValue().isEmpty(), "pergunta atual não pode ir duplicada no histórico");
+    }
+
+    @Test
+    void analisarComPayloadInvalidoRecusaSemChamarGroq() {
+        InsightEntity snapshot = InsightEntity.builder()
+                .id(9L).empresaId(1L).tipo("dashboard").pergunta("MANUAL - Dashboard")
+                .resposta("{}").payloadJson("### json quebrado").origem("MANUAL")
+                .dataCriacao(LocalDateTime.of(2026, 8, 13, 18, 0)).build();
+        when(insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "dashboard"))
+                .thenReturn(Optional.of(snapshot));
+
+        assertThrows(BusinessException.class,
+                () -> service.analisarPergunta(1L, "Como está minha receita?", List.of()));
+
+        verify(groqClient, never()).conversar(any(), any(), any());
+    }
+
+    @Test
+    void historicoRetornaSomenteConversaReal() {
+        InsightEntity pergunta = InsightEntity.builder()
+                .id(1L).empresaId(1L).tipo("pergunta").pergunta("Como está minha receita?")
+                .resposta("Estável.").dataCriacao(LocalDateTime.of(2026, 8, 13, 19, 0)).build();
+        when(insightRepository.findByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "pergunta"))
+                .thenReturn(List.of(pergunta));
+
+        var historico = service.obterHistorico(1L);
+
+        assertEquals(1, historico.size());
+        assertEquals("pergunta", historico.get(0).tipo());
+        verify(insightRepository, never()).findByEmpresaIdOrderByDataCriacaoDesc(any());
+    }
+
+    @Test
+    void empresaSemDadosNaoRecebeScoreFalso() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 0, "inativos_status", 0),
+                "financeiro", Map.of("receitaPeriodoAtual", 0, "receitaPeriodoAnterior", 0, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of()
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.dadosInsuficientes());
+        assertEquals(null, resposta.scoreGeral());
+    }
+
     private InsightEntity insight(Long empresaId, DashboardResponse dashboard, LocalDateTime dataCriacao) throws Exception {
         return InsightEntity.builder()
                 .id(1L)
@@ -167,7 +284,7 @@ class InsightsServiceTest {
     }
 
     private DashboardResponse dashboard(Long empresaId, int score, LocalDateTime geradoEm) {
-        return new DashboardResponse(empresaId, "Empresa", score, List.of(), List.of(), List.of(), List.of(), "N/A", geradoEm);
+        return new DashboardResponse(empresaId, "Empresa", score, List.of(), List.of(), List.of(), List.of(), "N/A", geradoEm, false);
     }
 
     private Map<String, Object> dadosComMovimento(Long empresaId) {

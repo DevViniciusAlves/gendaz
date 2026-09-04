@@ -108,6 +108,17 @@ public class PagamentoService {
     @Transactional
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
         PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        return aplicarMarcarPago(pagamento, request);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #marcarPago}, sem demarcacao transacional
+     * propria: executa na transacao do chamador. Permite ao
+     * {@link PagamentoBulkService} processar o lote inteiro numa transacao
+     * UNICA (locks mantidos do inicio ao fim), mantendo fonte unica de regra.
+     * A trava de CANCELADO fica ANTES de qualquer setStatus/save/Caixa.
+     */
+    PagamentoResponse aplicarMarcarPago(PagamentoEntity pagamento, MarcarPagamentoPagoRequest request) {
         StatusPagamento statusAnterior = pagamento.getStatus();
         validarPagamentoNaoCancelado(pagamento);
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
@@ -130,6 +141,16 @@ public class PagamentoService {
     @Transactional
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
         PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        return aplicarAtualizarStatus(pagamento, request);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #atualizarStatus}, sem demarcacao
+     * transacional propria (ver {@link #aplicarMarcarPago}).
+     * Bloqueia pelo estado ATUAL: CANCELADO nao sai de CANCELADO para nenhum
+     * destino (PAGO, PENDENTE ou qualquer outro).
+     */
+    PagamentoResponse aplicarAtualizarStatus(PagamentoEntity pagamento, AtualizarStatusPagamentoRequest request) {
         StatusPagamento statusAnterior = pagamento.getStatus();
         validarPagamentoNaoCancelado(pagamento);
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
@@ -699,6 +720,15 @@ public class PagamentoService {
     @Transactional
     public void excluirPagamento(Long id) {
         PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
+        aplicarExclusao(pagamento);
+    }
+
+    /**
+     * Nucleo de dominio de {@link #excluirPagamento}, sem demarcacao
+     * transacional propria (ver {@link #aplicarMarcarPago}).
+     * Idempotente para CANCELADO (sem efeito, sem erro, sem save).
+     */
+    void aplicarExclusao(PagamentoEntity pagamento) {
         if (pagamento.getStatus() == StatusPagamento.PAGO) {
             throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
         }

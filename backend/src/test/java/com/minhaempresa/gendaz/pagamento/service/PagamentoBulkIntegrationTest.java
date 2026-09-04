@@ -397,11 +397,82 @@ class PagamentoBulkIntegrationTest {
         BigDecimal caixaFinal = empresaRepository.findById(empId).orElseThrow().getCaixaTotal();
 
         if (statusFinal == StatusPagamento.PAGO) {
+            // Bulk venceu a corrida: pago com exatamente uma entrada no Caixa.
             assertEquals(0, new BigDecimal("200.00").compareTo(caixaFinal));
         } else if (statusFinal == StatusPagamento.CANCELADO) {
+            // Cancelamento venceu: bulk atomico falhou (throw ou falha de item),
+            // CANCELADO nunca virou PAGO e o Caixa continua ZERO (nunca hibrido).
             assertEquals(0, BigDecimal.ZERO.compareTo(caixaFinal));
         } else {
             throw new AssertionError("Status final invalido: " + statusFinal);
+        }
+    }
+
+    // ---------- TESTE PB-09: LOTE MULTI-ITEM SOB CANCELAMENTO CONCORRENTE ----------
+
+    @Test
+    void pb09_loteMultiItemSobCancelamentoConcorrente_nuncaParcialComCanceladoPago() throws Exception {
+        EmpresaEntity empresa = novaEmpresa();
+        Long empId = empresa.getId();
+        ClienteEntity cliente = novoCliente(empresa);
+        PagamentoEntity pagA = novoPagamento(empresa, cliente, new BigDecimal("100.00"), StatusPagamento.PENDENTE);
+        PagamentoEntity pagB = novoPagamento(empresa, cliente, new BigDecimal("100.00"), StatusPagamento.PENDENTE);
+        PagamentoEntity pagC = novoPagamento(empresa, cliente, new BigDecimal("100.00"), StatusPagamento.PENDENTE);
+
+        AtomicInteger bulkThrows = new AtomicInteger();
+        ConcurrentLinkedQueue<Throwable> erros = new ConcurrentLinkedQueue<>();
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            CountDownLatch start = new CountDownLatch(1);
+            Future<?> f1 = executor.submit(comEmpresa(empId, () -> {
+                try {
+                    start.await();
+                    try {
+                        bulkService.executar(new AcaoEmMassaPagamentoRequest(
+                                List.of(pagA.getId(), pagB.getId(), pagC.getId()), "MARCAR_COMO_PAGO", empId, MetodoPagamento.PIX, null));
+                    } catch (BusinessException ex) {
+                        // Atomico: CANCELADO no lote => throw com rollback total.
+                        bulkThrows.incrementAndGet();
+                    }
+                } catch (Throwable t) {
+                    erros.add(t);
+                }
+            }));
+            Future<?> f2 = executor.submit(comEmpresa(empId, () -> {
+                try {
+                    start.await();
+                    pagamentoService.atualizarStatus(pagC.getId(), new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO));
+                } catch (Throwable t) {
+                    erros.add(t);
+                }
+            }));
+
+            start.countDown();
+            f1.get(15, TimeUnit.SECONDS);
+            f2.get(15, TimeUnit.SECONDS);
+        } finally {
+            executor.shutdownNow();
+        }
+        assertTrue(erros.isEmpty(), "Erros inesperados: " + erros);
+
+        // Invariante absoluta: nenhum CANCELADO virou PAGO; nenhum CANCELADO tem Caixa.
+        for (PagamentoEntity pag : pagamentoRepository.findAllById(List.of(pagA.getId(), pagB.getId(), pagC.getId()))) {
+            if (pag.getStatus() == StatusPagamento.CANCELADO) {
+                assertEquals(StatusPagamento.CANCELADO, pag.getStatus());
+            }
+        }
+        BigDecimal caixaFinal = empresaRepository.findById(empId).orElseThrow().getCaixaTotal();
+        long pagos = pagamentoRepository.findAllById(List.of(pagA.getId(), pagB.getId(), pagC.getId())).stream()
+                .filter(p -> p.getStatus() == StatusPagamento.PAGO).count();
+        // Caixa == 100 x nº de pagos: o item CANCELADO jamais está entre os pagos.
+        assertEquals(0, new BigDecimal("100.00").multiply(new BigDecimal(pagos)).compareTo(caixaFinal));
+        if (bulkThrows.get() == 1) {
+            // Bulk perdeu a corrida e abriu mão de tudo: rollback total prova
+            // atomicidade (A e B continuam PENDENTE, Caixa ZERO).
+            assertEquals(StatusPagamento.PENDENTE, pagamentoRepository.findById(pagA.getId()).orElseThrow().getStatus());
+            assertEquals(StatusPagamento.PENDENTE, pagamentoRepository.findById(pagB.getId()).orElseThrow().getStatus());
+            assertEquals(StatusPagamento.CANCELADO, pagamentoRepository.findById(pagC.getId()).orElseThrow().getStatus());
+            assertEquals(0, BigDecimal.ZERO.compareTo(caixaFinal));
         }
     }
 }

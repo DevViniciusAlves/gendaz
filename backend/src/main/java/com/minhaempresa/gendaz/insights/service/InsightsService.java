@@ -61,7 +61,7 @@ public class InsightsService {
         LocalDateTime agora = LocalDateTime.now(ZoneId.of(appTimezone));
 
         DashboardResponse gerado;
-        if (contaNova(dados)) {
+        if (dadosInsuficientes(dados)) {
             gerado = montarDashboardContaNova(empresaId, dados);
         } else {
             gerado = gerarDashboardNovo(empresaId, periodo, dados, fallback, "MANUAL");
@@ -75,39 +75,46 @@ public class InsightsService {
     @Transactional(readOnly = true)
     public String analisarPergunta(Long empresaId, String pergunta, List<ChatMessageRequest> historico) {
         validarAcessoEmpresa(empresaId);
-        Map<String, Object> dados = analyzer.coletarDados(empresaId, 30);
-        String promptSistema = """
-                Voce e a GendazIA, uma consultora de negocios que acompanha de perto pequenas empresas de servicos.
-                Voce conhece o dia a dia do negocio de quem esta conversando com voce e fala como uma pessoa experiente e proxima, nunca como um sistema ou relatorio.
-
-                Regras de ouro:
-                - Os dados que voce recebe servem apenas para voce pensar. Nunca mostre ao usuario JSON, objetos, IDs, nomes de campos, estruturas de banco, scores, numeros soltos sem contexto ou qualquer dado bruto. Use tudo isso de forma invisivel para montar a resposta.
-                - Nunca responda como relatorio ou como maquina. Evite frases prontas e corporativas como "com base nos dados fornecidos", "foi identificado que", "score geral", "impacto total" ou listas excessivamente estruturadas.
-                - Escreva em portugues do Brasil, de forma natural, direta e conversada. Varie o jeito de construir as frases, tenha personalidade e soe como alguem falando com o dono da empresa, não como um texto gerado por IA.
-                - Use os dados da empresa para dar contexto real. Se vir que um servico esta indo bem ou que ha clientes parados, fale disso naturalmente, sem revelar como os dados estao organizados.
-                - Seja objetiva: respostas curtas e uteis por padrao. So se aprofunde quando a pergunta pedir ou quando houver uma chance clara de ajudar.
-                - Nao invente informacao. Se faltar dado, diga com naturalidade que não tem essa informacao e, se fizer sentido, sugira o que o usuario pode olhar.
-                - Aja como consultora: interprete os numeros, aponte oportunidades, explique problemas e sugira acoes praticas, em vez de so repetir o que recebeu.
-                - Faca o usuario sentir que esta conversando com quem conhece o negocio dele. Use o nome da empresa ou detalhes relevantes quando ajudar a conversa, mas sem exagerar.
-                - Evite cara de IA: nada de emojis, titulos em toda resposta, frases genericas, repeticoes, linguagem corporativa artificial ou estruturas sempre iguais.
-                - Pergunta simples recebe resposta simples. Nao despeje tudo que sabe sobre a empresa se a pergunta for especifica.
-                - Quando um dado for importante, explique o que ele significa para o negocio. Em vez de "o servico X teve 35 agendamentos", diga algo como "o servico X esta sendo o mais procurado, entao pode valer destacar ele mais na divulgacao".
-                - Nunca reproduza o contexto interno que voce recebeu. O contexto e apenas fonte de conhecimento para voce montar a resposta final.
-
-                Antes de responder, confira: estou falando como pessoa? estou respondendo exatamente o que foi perguntado? estou usando os dados da empresa de forma natural? escondi completamente JSON e informacoes internas? minha resposta parece uma conversa real e não um relatorio?
-                """;
-        String promptUsuario = """
-                Dados da empresa:
-                %s
-
-                Pergunta:
-                %s
-                """.formatted(serializar(dados), pergunta);
+        // A gendazIA responde sempre sobre o ÚLTIMO SNAPSHOT sincronizado: dashboard e chat
+        // precisam falar sobre a mesma fotografia dos dados. Sem snapshot, sem análise.
+        Map<String, Object> dados = carregarSnapshotParaPergunta(empresaId);
         if (!groqClient.disponivel()) {
             throw new BusinessException("GendazIA indisponivel: configure a chave da Groq para usar a IA nos insights.");
         }
+        String promptSistema = """
+                Você é a gendazIA, assistente de análise do negócio dentro do gendaz.
 
-        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico), promptUsuario);
+                Responda usando exclusivamente os dados disponibilizados no contexto da empresa (a fotografia sincronizada abaixo).
+
+                Se a informação necessária não estiver presente nos dados, diga de forma curta que não há dados suficientes para responder.
+
+                Nunca invente números, clientes, serviços, profissionais, receitas, datas ou conclusões.
+
+                Responda primeiro a pergunta feita.
+
+                Seja curta e natural: normalmente use entre 2 e 4 frases. Só se alongue quando a pergunta realmente exigir.
+
+                Não comece respostas com "Claro", "Com certeza", "Certamente", "Analisando os dados", "Com base nos dados" ou expressões semelhantes.
+
+                Não mencione que você é uma IA. Não explique seu processo interno. Não diga que recebeu dados.
+
+                Não repita a pergunta do usuário.
+
+                Evite títulos, markdown, listas, negrito, emojis e travessões quando uma frase simples for suficiente. Listas só quando realmente fizerem sentido.
+
+                Nunca exponha JSON, nomes de campos, IDs, scores ou estruturas internas: use os dados de forma invisível para montar a resposta.
+
+                Responda em português do Brasil. Fale como alguém que conhece o negócio e está ajudando o responsável a tomar uma decisão.
+                """;
+        String promptUsuario = """
+                Fotografia sincronizada da empresa (última sincronização):
+                %s
+
+                Pergunta atual:
+                %s
+                """.formatted(serializar(dados), pergunta);
+
+        Optional<String> resposta = groqClient.conversar(promptSistema, historicoParaGroq(historico, pergunta), promptUsuario);
         if (resposta.isEmpty() || resposta.get().isBlank()) {
             throw new BusinessException("GendazIA indisponivel no momento. Tente novamente em instantes.");
         }
@@ -230,7 +237,9 @@ public class InsightsService {
 
     @Transactional(readOnly = true)
     public List<InsightHistoryResponse> obterHistorico(Long empresaId) {
-        return insightRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
+        // Histórico do chat contém SOMENTE conversa real (tipo "pergunta").
+        // Snapshots de dashboard/sincronização nunca aparecem como mensagens.
+        return insightRepository.findByEmpresaIdAndTipoOrderByDataCriacaoDesc(empresaId, "pergunta").stream()
                 .map(item -> new InsightHistoryResponse(item.getId(), item.getEmpresaId(), item.getTipo(), item.getPergunta(), item.getResposta(), item.getDataCriacao()))
                 .toList();
     }
@@ -318,6 +327,9 @@ public class InsightsService {
     }
 
     private DashboardResponse construirDashboardLocal(Long empresaId, Map<String, Object> dados, String origem, Map<String, Object> groq, DashboardResponse fallback) {
+        if (dadosInsuficientes(dados)) {
+            return montarDashboardContaNova(empresaId, dados);
+        }
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
         Map<String, Object> clientes = mapa(dados.get("clientes"));
         List<Map<String, Object>> servicos = listaMapa(dados.get("servicos"));
@@ -329,10 +341,10 @@ public class InsightsService {
         long atRisk = 0;
         long servicosInativos = longo(resumo.get("servicos_inativos"));
         long profissionaisInativos = longo(resumo.get("profissionais_inativos"));
-        double receita30 = numero(financeiro.get("receita_30d"));
-        double receita60 = numero(financeiro.get("receita_60d"));
+        double receitaAtual = receitaPeriodoAtual(financeiro);
+        double receitaAnterior = receitaPeriodoAnterior(financeiro);
 
-        List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receita30, receita60, servicos, profissionais);
+        List<InsightItem> alertas = montarAlertasReais(pendente, atRisk, receitaAtual, receitaAnterior, servicos, profissionais);
         List<InsightItem> principais = montarInsightsPrincipais(dados);
         List<InsightItem> oportunidades = new ArrayList<>();
         List<InsightAction> acoes = new ArrayList<>();
@@ -347,8 +359,8 @@ public class InsightsService {
         if (profissionais.stream().anyMatch(p -> longo(p.get("agendamentos_30d")) == 0)) {
             oportunidades.add(new InsightItem("Redistribuir agenda", "Profissional com baixa ocupação pode absorver demanda.", "Baseado no movimento real.", "Impacto n\u00e3o estimado", "Média"));
         }
-        if (receita60 > 0 && receita30 < receita60) {
-            oportunidades.add(new InsightItem("Queda de receita", "A receita recente caiu em relação ao período anterior.", "Comparação 30d vs 60d.", "Impacto n\u00e3o estimado", "Alta"));
+        if (receitaAnterior > 0 && receitaAtual < receitaAnterior) {
+            oportunidades.add(new InsightItem("Queda de receita", "A receita recente caiu em relação ao período anterior.", "Últimos 30 dias vs. 30 dias anteriores.", "Impacto não estimado", "Alta"));
         }
 
         if (groq.containsKey("principais")) {
@@ -382,7 +394,7 @@ public class InsightsService {
             oportunidades = List.of(new InsightItem("Sem recomendacao no momento", "Os dados reais sincronizados não mostram uma acao prioritaria clara.", "Sem sinal forte no periodo analisado.", "Baixa", "Media"));
         }
 
-        int score = calcularScore((int) atRisk, pendente, receita30, receita60);
+        int score = calcularScore((int) atRisk, pendente, receitaAtual, receitaAnterior);
         String impactoTotal = pendente > 0 ? formatarMoeda(pendente) : "Impacto não estimado";
         return new DashboardResponse(
                 empresaId,
@@ -393,27 +405,43 @@ public class InsightsService {
                 oportunidades.size() > 3 ? oportunidades.subList(0, 3) : oportunidades,
                 acoes.size() > 4 ? acoes.subList(0, 4) : acoes,
                 impactoTotal,
-                LocalDateTime.now(ZoneId.of(appTimezone))
+                LocalDateTime.now(ZoneId.of(appTimezone)),
+                false
         );
     }
 
-    private boolean contaNova(Map<String, Object> dados) {
+    private boolean dadosInsuficientes(Map<String, Object> dados) {
         Map<String, Object> clientes = mapa(dados.get("clientes"));
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
-        List<Map<String, Object>> agendamentosRecentes = listaMapa(dados.get("agendamentosRecentes"));
-        long totalClientes = longo(clientes.get("total"));
-        double receita30 = numero(financeiro.get("receita_30d"));
-        return totalClientes == 0 && receita30 <= 0 && (agendamentosRecentes == null || agendamentosRecentes.isEmpty());
+        // Empresa sem base mínima (sem clientes e sem receita no período) não recebe nota:
+        // o frontend apresenta estado de "dados insuficientes" em vez de um score artificial.
+        return longo(clientes.get("total")) == 0 && receitaPeriodoAtual(financeiro) <= 0;
+    }
+
+    private double receitaPeriodoAtual(Map<String, Object> financeiro) {
+        Object atual = financeiro.get("receitaPeriodoAtual");
+        if (atual == null) {
+            atual = financeiro.get("receita_30d");
+        }
+        return numero(atual);
+    }
+
+    private double receitaPeriodoAnterior(Map<String, Object> financeiro) {
+        Object anterior = financeiro.get("receitaPeriodoAnterior");
+        if (anterior == null) {
+            anterior = financeiro.get("receita_60d");
+        }
+        return numero(anterior);
     }
 
     private DashboardResponse montarDashboardContaNova(Long empresaId, Map<String, Object> dados) {
         return new DashboardResponse(
                 empresaId,
                 stringValor(dados.get("empresaNome")),
-                100,
+                null,
                 List.of(new InsightItem(
                         "Bem-vindo ao Insights!",
-                        "Sua conta esta pronta para receber analises quando voce registrar dados reais.",
+                        "Sua conta ainda não possui dados suficientes para gerar uma análise. Registre clientes, agendamentos e pagamentos e sincronize novamente.",
                         "N/A",
                         "Baixa",
                         "info"
@@ -426,7 +454,8 @@ public class InsightsService {
                         "Comece criando clientes para que o Gendaz possa analisar tendencias."
                 )),
                 "N/A",
-                LocalDateTime.now(ZoneId.of(appTimezone))
+                LocalDateTime.now(ZoneId.of(appTimezone)),
+                true
         );
     }
 
@@ -476,12 +505,45 @@ public class InsightsService {
         return insightRepository.saveAndFlush(insight);
     }
 
+    private Map<String, Object> carregarSnapshotParaPergunta(Long empresaId) {
+        InsightEntity snapshot = ultimoDashboard(empresaId)
+                .orElseThrow(() -> new BusinessException("Sincronize seus dados para conversar com a gendazIA."));
+        if (snapshot.getPayloadJson() == null || snapshot.getPayloadJson().isBlank()) {
+            throw new BusinessException("Dados sincronizados inválidos. Sincronize novamente para conversar com a gendazIA.");
+        }
+        try {
+            Map<String, Object> dados = objectMapper.readValue(snapshot.getPayloadJson(), new TypeReference<>() {});
+            dados.put("_snapshotGeradoEm", String.valueOf(snapshot.getDataCriacao()));
+            return dados;
+        } catch (Exception e) {
+            log.warn("[INSIGHTS] empresa={} acao=READ_SNAPSHOT_PAYLOAD_ERROR snapshotId={} erroTipo={}", empresaId, snapshot.getId(), e.getClass().getSimpleName());
+            throw new BusinessException("Dados sincronizados inválidos. Sincronize novamente para conversar com a gendazIA.");
+        }
+    }
+
     private List<Map<String, String>> historicoParaGroq(List<ChatMessageRequest> historico) {
+        return historicoParaGroq(historico, null);
+    }
+
+    private List<Map<String, String>> historicoParaGroq(List<ChatMessageRequest> historico, String perguntaAtual) {
         if (historico == null) return List.of();
         List<Map<String, String>> msgs = new ArrayList<>();
         for (ChatMessageRequest item : historico) {
             if (item == null || item.content() == null || item.content().isBlank()) continue;
-            msgs.add(Map.of("role", item.role() == null ? "user" : item.role(), "content", item.content()));
+            msgs.add(Map.of("role", item.role() == null ? "user" : item.role(), "content", item.content().trim()));
+        }
+        // Defesa: a pergunta atual não pode ir duplicada dentro do histórico.
+        String atual = perguntaAtual == null ? "" : perguntaAtual.trim();
+        if (!atual.isEmpty() && !msgs.isEmpty()) {
+            Map<String, String> ultima = msgs.get(msgs.size() - 1);
+            if ("user".equalsIgnoreCase(ultima.get("role")) && ultima.get("content").trim().equalsIgnoreCase(atual)) {
+                msgs.remove(msgs.size() - 1);
+            }
+        }
+        // O snapshot carrega o contexto da empresa; o histórico serve só para continuidade.
+        int maximo = 10;
+        if (msgs.size() > maximo) {
+            msgs = new ArrayList<>(msgs.subList(msgs.size() - maximo, msgs.size()));
         }
         return msgs;
     }
@@ -562,8 +624,8 @@ public class InsightsService {
         List<Map<String, Object>> profissionais = listaMapa(dados.get("profissionais"));
 
         double pendente = numero(financeiro.get("pendente"));
-        double receita30 = numero(financeiro.get("receita_30d"));
-        double receita60 = numero(financeiro.get("receita_60d"));
+        double receitaAtual = receitaPeriodoAtual(financeiro);
+        double receitaAnterior = receitaPeriodoAnterior(financeiro);
         long atRisk = 0;
 
         long servicosSemMovimento = servicos.stream()
@@ -573,7 +635,7 @@ public class InsightsService {
                 .filter(profissional -> longo(profissional.get("agendamentos_30d")) <= 0)
                 .count();
 
-        boolean quedaReceita = receita60 > 0 && receita30 < receita60;
+        boolean quedaReceita = receitaAnterior > 0 && receitaAtual < receitaAnterior;
         boolean riscoOciosidade = servicosSemMovimento > 0 || profissionaisSemMovimento > 0;
         boolean clienteEmRisco = false;
         boolean perdaFinanceira = pendente > 0 || quedaReceita;
@@ -581,12 +643,12 @@ public class InsightsService {
         List<InsightItem> itens = new ArrayList<>();
         itens.add(montarPrincipalAcao(pendente, atRisk, servicosSemMovimento, profissionaisSemMovimento, quedaReceita));
         itens.add(montarPrincipalOciosidade(servicosSemMovimento, profissionaisSemMovimento, riscoOciosidade));
-        itens.add(montarPrincipalFinanceiro(pendente, receita30, receita60, perdaFinanceira));
+        itens.add(montarPrincipalFinanceiro(pendente, receitaAtual, receitaAnterior, perdaFinanceira));
         itens.add(montarPrincipalClienteRisco(atRisk, clienteEmRisco));
         return itens;
     }
 
-    private List<InsightItem> montarAlertasReais(double pendente, long atRisk, double receita30, double receita60, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais) {
+    private List<InsightItem> montarAlertasReais(double pendente, long atRisk, double receitaAtual, double receitaAnterior, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais) {
         List<InsightItem> alertas = new ArrayList<>();
 
         if (pendente > 0) {
@@ -611,11 +673,11 @@ public class InsightsService {
             ));
         }
 
-        if (receita60 > 0 && receita30 < receita60) {
+        if (receitaAnterior > 0 && receitaAtual < receitaAnterior) {
             alertas.add(new InsightItem(
                     "Receita em queda",
                     "O faturamento recente ficou abaixo do período comparado.",
-                    "Comparação 30d vs 60d",
+                    "Últimos 30 dias vs. 30 dias anteriores",
                     "Média",
                     "alerta"
             ));
@@ -690,7 +752,7 @@ public class InsightsService {
         );
     }
 
-    private InsightItem montarPrincipalFinanceiro(double pendente, double receita30, double receita60, boolean perdaFinanceira) {
+    private InsightItem montarPrincipalFinanceiro(double pendente, double receitaAtual, double receitaAnterior, boolean perdaFinanceira) {
         if (pendente > 0) {
             return new InsightItem(
                     "Perda Financeira Evitável",
@@ -704,7 +766,7 @@ public class InsightsService {
             return new InsightItem(
                     "Perda Financeira Evitável",
                     "A receita recente caiu em relação ao período anterior e merece atenção.",
-                    "Comparação entre 30 dias e 60 dias",
+                    "Últimos 30 dias vs. 30 dias anteriores",
                     "Média",
                     "financeiro"
             );
@@ -712,7 +774,7 @@ public class InsightsService {
         return new InsightItem(
                 "Perda Financeira Evitável",
                 "Não há perda financeira evidente no momento.",
-                receita30 > 0 ? formatarMoeda(receita30) : "Sem receita recente relevante",
+                receitaAtual > 0 ? formatarMoeda(receitaAtual) : "Sem receita recente relevante",
                 "Baixa",
                 "financeiro"
         );
@@ -804,7 +866,7 @@ public class InsightsService {
         return String.join(" ", acao.descricao(), acao.urgencia(), acao.impactoEstimado());
     }
 
-    private List<InsightAction> montarAcoesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
+    private List<InsightAction> montarAcoesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receitaAtual, double receitaAnterior) {
         List<InsightAction> acoes = new ArrayList<>();
         if (pendente > 0) {
             acoes.add(new InsightAction(
@@ -829,7 +891,7 @@ public class InsightsService {
                     "Aproveitar profissionais com baixa ocupação"
             ));
         }
-        if (acoes.isEmpty() && receita60 > 0 && receita30 < receita60) {
+        if (acoes.isEmpty() && receitaAnterior > 0 && receitaAtual < receitaAnterior) {
             acoes.add(new InsightAction(
                     "Recuperar receita perdida",
                     "Média",
@@ -846,7 +908,7 @@ public class InsightsService {
         return acoes.size() > 4 ? acoes.subList(0, 4) : acoes;
     }
 
-    private List<InsightItem> montarOportunidadesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receita30, double receita60) {
+    private List<InsightItem> montarOportunidadesReais(double pendente, long atRisk, List<Map<String, Object>> servicos, List<Map<String, Object>> profissionais, double receitaAtual, double receitaAnterior) {
         List<InsightItem> oportunidades = new ArrayList<>();
         if (pendente > 0) {
             oportunidades.add(new InsightItem(
@@ -877,11 +939,11 @@ public class InsightsService {
                     "Média"
             ));
         }
-        if (receita60 > 0 && receita30 < receita60) {
+        if (receitaAnterior > 0 && receitaAtual < receitaAnterior) {
             oportunidades.add(new InsightItem(
                     "Compensar queda de receita",
                     "A receita recente caiu em relação ao período anterior.",
-                    "Comparação real de 30d vs 60d.",
+                    "Últimos 30 dias vs. 30 dias anteriores.",
                     "Impacto não estimado",
                     "Alta"
             ));
@@ -908,11 +970,11 @@ public class InsightsService {
         return "";
     }
 
-    private int calcularScore(int atRisk, double pendente, double receita30, double receita60) {
+    private int calcularScore(int atRisk, double pendente, double receitaAtual, double receitaAnterior) {
         int score = 100;
         score -= Math.min(30, atRisk * 5);
         if (pendente > 0) score -= 10;
-        if (receita60 > 0 && receita30 < receita60) score -= 15;
+        if (receitaAnterior > 0 && receitaAtual < receitaAnterior) score -= 15;
         return Math.max(0, score);
     }
 
@@ -942,16 +1004,15 @@ public class InsightsService {
         if (texto == null) {
             return "";
         }
+        // Proteção leve: o comportamento vem do prompt. Aqui só removemos restos de
+        // formatação que escaparem, preservando parágrafos, números e pontuação.
         return texto
-                .replace("**", "")
-                .replace("*", "")
                 .replace("```", "")
-                .replaceAll("(?m)^#.*$", "")
-                .replaceAll("(?m)^\\s*[-•]\\s*", "")
-                .replaceAll("(?m)^\\s*\\d+\\.\\s*", "")
-                .replaceAll("[\\p{So}\\p{Cf}]", "")
-                .replaceAll("(?i)\\b(com base nos dados fornecidos|com base nos dados|foi identificado que|score geral|impacto total)\\b[\\s:,-]*", "")
-                .replaceAll("\\s+", " ")
+                .replace("**", "")
+                .replaceAll("[\\p{So}]", "")
+                .replaceAll("[ \\t]+", " ")
+                .replaceAll("(?m)[ \\t]+$", "")
+                .replaceAll("\\n{3,}", "\n\n")
                 .trim();
     }
 

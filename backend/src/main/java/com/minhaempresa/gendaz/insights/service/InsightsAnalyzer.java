@@ -108,8 +108,8 @@ public class InsightsAnalyzer {
         clientesResumo.put("lifetime_value_medio", calcularTicketMedio(pagamentos, clientes.size()));
 
         Map<String, Object> financeiroResumo = new LinkedHashMap<>();
-        financeiroResumo.put("receita_30d", receitaPeriodo.doubleValue());
-        financeiroResumo.put("receita_60d", receitaPeriodoAnterior.doubleValue());
+        financeiroResumo.put("receitaPeriodoAtual", receitaPeriodo.doubleValue());
+        financeiroResumo.put("receitaPeriodoAnterior", receitaPeriodoAnterior.doubleValue());
         financeiroResumo.put("pendente", pendente.doubleValue());
         financeiroResumo.put("cancelamentos", cancelamentos);
         financeiroResumo.put("tendencia", receitaPeriodo.compareTo(receitaPeriodoAnterior) >= 0 ? "crescimento" : "queda");
@@ -141,7 +141,7 @@ public class InsightsAnalyzer {
         dados.put("clientes", clientesResumo);
         dados.put("financeiro", financeiroResumo);
         dados.put("resumo", resumo);
-        dados.put("topClientes", topClientes(clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO), ultimaDataPorCliente, hoje));
+        dados.put("topClientes", topClientes(clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO), agendamentos, ultimaDataPorCliente, hoje));
         dados.put("pagamentosRecentes", pagamentos.stream()
                 .sorted(Comparator.comparing(PagamentoEntity::getId, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .limit(5)
@@ -165,12 +165,14 @@ public class InsightsAnalyzer {
                 .count();
         long cancelados = agendamentos.stream()
                 .filter(agendamento -> agendamento.getServico() != null && Objects.equals(agendamento.getServico().getId(), servico.getId()))
+                .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicio) && !agendamento.getData().isAfter(fim))
                 .filter(agendamento -> agendamento.getStatus() == StatusAgendamento.CANCELADO)
                 .count();
         BigDecimal receita = pagamentos.stream()
                 .filter(pagamento -> pagamento.getAgendamento() != null && pagamento.getAgendamento().getServico() != null)
                 .filter(pagamento -> Objects.equals(pagamento.getAgendamento().getServico().getId(), servico.getId()))
                 .filter(pagamento -> isPago(pagamento.getStatus()))
+                .filter(pagamento -> dentroDaJanela(pagamento.getDataPagamento(), inicio, fim))
                 .map(PagamentoEntity::getValor)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -194,12 +196,14 @@ public class InsightsAnalyzer {
                 .count();
         long cancelados = agendamentos.stream()
                 .filter(agendamento -> agendamento.getProfissional() != null && Objects.equals(agendamento.getProfissional().getId(), profissional.getId()))
+                .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicio) && !agendamento.getData().isAfter(fim))
                 .filter(agendamento -> agendamento.getStatus() == StatusAgendamento.CANCELADO)
                 .count();
         BigDecimal receita = pagamentos.stream()
                 .filter(pagamento -> pagamento.getAgendamento() != null && pagamento.getAgendamento().getProfissional() != null)
                 .filter(pagamento -> Objects.equals(pagamento.getAgendamento().getProfissional().getId(), profissional.getId()))
                 .filter(pagamento -> isPago(pagamento.getStatus()))
+                .filter(pagamento -> dentroDaJanela(pagamento.getDataPagamento(), inicio, fim))
                 .map(PagamentoEntity::getValor)
                 .filter(Objects::nonNull)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -223,20 +227,36 @@ public class InsightsAnalyzer {
         return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(ultimaData, hoje));
     }
 
-    private Map<String, Object> topClientes(List<ClienteEntity> clientes, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
+    private Map<String, Object> topClientes(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
+        Map<Long, Long> atendimentosPorCliente = new HashMap<>();
+        for (AgendamentoEntity agendamento : agendamentos) {
+            if (agendamento.getCliente() == null || agendamento.getCliente().getId() == null) continue;
+            if (agendamento.getStatus() == StatusAgendamento.CANCELADO) continue;
+            atendimentosPorCliente.merge(agendamento.getCliente().getId(), 1L, Long::sum);
+        }
         List<Map<String, Object>> resultado = new ArrayList<>();
         for (ClienteEntity cliente : clientes) {
             Map<String, Object> item = new LinkedHashMap<>();
             item.put("id", cliente.getId());
             item.put("nome", cliente.getNome());
+            item.put("status", cliente.getStatus() == null ? null : cliente.getStatus().name());
             LocalDate ultimaData = ultimaDataPorCliente.get(cliente.getId());
             item.put("dias_sem_agendar", ultimaData == null ? null : diasDesdeUltimoAgendamento(cliente, ultimaDataPorCliente, hoje));
+            item.put("total_atendimentos", atendimentosPorCliente.getOrDefault(cliente.getId(), 0L));
             resultado.add(item);
         }
-        resultado.sort(Comparator.comparingLong(item -> {
-            Object dias = item.get("dias_sem_agendar");
-            return dias == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(dias));
-        }));
+        // Recuperação: primeiro quem está há mais tempo sem agendar (ou nunca agendou).
+        resultado.sort((a, b) -> {
+            Object diasA = a.get("dias_sem_agendar");
+            Object diasB = b.get("dias_sem_agendar");
+            long valorA = diasA == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(diasA));
+            long valorB = diasB == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(diasB));
+            int comparacao = Long.compare(valorB, valorA);
+            if (comparacao != 0) return comparacao;
+            return Long.compare(
+                    Long.parseLong(String.valueOf(b.getOrDefault("total_atendimentos", 0L))),
+                    Long.parseLong(String.valueOf(a.getOrDefault("total_atendimentos", 0L))));
+        });
         return Map.of("itens", resultado.stream().limit(5).toList());
     }
 
@@ -261,6 +281,12 @@ public class InsightsAnalyzer {
         item.put("horaInicio", agendamento.getHoraInicio());
         item.put("status", agendamento.getStatus() != null ? agendamento.getStatus().name() : null);
         return item;
+    }
+
+    private boolean dentroDaJanela(LocalDateTime dataPagamento, LocalDate inicio, LocalDate fim) {
+        if (dataPagamento == null) return false;
+        LocalDate data = dataPagamento.toLocalDate();
+        return !data.isBefore(inicio) && !data.isAfter(fim);
     }
 
     private BigDecimal somarPagamentos(List<PagamentoEntity> pagamentos, LocalDate inicio, LocalDate fim, boolean apenasConfirmados) {

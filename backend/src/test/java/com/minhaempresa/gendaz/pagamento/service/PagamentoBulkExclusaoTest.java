@@ -29,11 +29,12 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class PagamentoBulkExclusaoTest {
     @Mock PagamentoService pagamentoService;
+    @Mock com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository pagamentoRepository;
     PagamentoBulkService bulk;
 
     @BeforeEach
     void setup() {
-        bulk = new PagamentoBulkService(pagamentoService);
+        bulk = new PagamentoBulkService(pagamentoService, pagamentoRepository);
         CompanyContext.setCompanyId(1L);
     }
 
@@ -42,10 +43,18 @@ class PagamentoBulkExclusaoTest {
         CompanyContext.clear();
     }
 
+    private void stubLote(Long id, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento status) {
+        var pagamento = com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity.builder()
+                .id(id).valor(new java.math.BigDecimal("100.00")).status(status).build();
+        org.mockito.Mockito.when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(id), eq(1L)))
+                .thenReturn(java.util.Optional.of(pagamento));
+    }
+
     @Test
     void excluirPagamentoPagoViraFalhaViaRegraCentral() {
+        stubLote(1L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PENDENTE);
         doThrow(new BusinessException("Pagamento confirmado nao pode ser excluido."))
-                .when(pagamentoService).excluirPagamento(eq(1L));
+                .when(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.any());
 
         var response = bulk.executar(new AcaoEmMassaPagamentoRequest(List.of(1L), "EXCLUIR", 1L, null, null));
 
@@ -55,24 +64,38 @@ class PagamentoBulkExclusaoTest {
 
     @Test
     void excluirPagamentoPendenteDelegaExclusaoLogica() {
-        doNothing().when(pagamentoService).excluirPagamento(eq(2L));
+        stubLote(2L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PENDENTE);
+        doNothing().when(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.any());
 
         var response = bulk.executar(new AcaoEmMassaPagamentoRequest(List.of(2L), "EXCLUIR", 1L, null, null));
 
         assertEquals(1, response.totalProcessado());
         assertEquals(0, response.falhas().size());
-        verify(pagamentoService).excluirPagamento(eq(2L));
+        verify(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.any());
     }
 
     @Test
     void excluirEmMassaContinuaAposFalhaDeItem() {
+        stubLote(1L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PENDENTE);
+        stubLote(2L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.PENDENTE);
         doThrow(new BusinessException("Pagamento confirmado nao pode ser excluido."))
-                .when(pagamentoService).excluirPagamento(eq(1L));
-        doNothing().when(pagamentoService).excluirPagamento(eq(2L));
+                .when(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.argThat(p -> p != null && p.getId() != null && p.getId().equals(1L)));
+        doNothing().when(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.argThat(p -> p != null && p.getId() != null && p.getId().equals(2L)));
 
         var response = bulk.executar(new AcaoEmMassaPagamentoRequest(List.of(1L, 2L), "EXCLUIR", 1L, null, null));
 
         assertEquals(1, response.totalProcessado());
         assertEquals(1, response.falhas().size());
+    }
+
+    @Test
+    void excluirPagamentoCanceladoEhIdempotente() {
+        stubLote(3L, com.minhaempresa.gendaz.pagamento.enums.StatusPagamento.CANCELADO);
+        doNothing().when(pagamentoService).aplicarExclusao(org.mockito.ArgumentMatchers.any());
+
+        var response = bulk.executar(new AcaoEmMassaPagamentoRequest(List.of(3L), "EXCLUIR", 1L, null, null));
+
+        assertEquals(1, response.totalProcessado());
+        assertEquals(0, response.falhas().size());
     }
 }

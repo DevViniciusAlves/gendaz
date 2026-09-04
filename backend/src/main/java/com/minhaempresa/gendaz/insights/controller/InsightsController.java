@@ -86,12 +86,13 @@ public class InsightsController {
                     "acoes", List.of()
             ));
         }
-        return ResponseEntity.ok(Map.of(
-                "scoreGeral", dashboard.scoreGeral(),
-                "alertas", dashboard.alertas(),
-                "oportunidades", dashboard.oportunidades(),
-                "acoes", dashboard.acoes()
-        ));
+        java.util.Map<String, Object> corpo = new java.util.LinkedHashMap<>();
+        corpo.put("scoreGeral", dashboard.scoreGeral());
+        corpo.put("dadosInsuficientes", dashboard.dadosInsuficientes());
+        corpo.put("alertas", dashboard.alertas());
+        corpo.put("oportunidades", dashboard.oportunidades());
+        corpo.put("acoes", dashboard.acoes());
+        return ResponseEntity.ok(corpo);
     }
 
     @GetMapping("/oportunidades")

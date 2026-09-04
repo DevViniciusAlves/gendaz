@@ -18,7 +18,10 @@ import { usePendentes } from '../contexts/PendentesContext.jsx'
 import { currency, todayIso } from '../services/localStore.js'
 import { dataHojeDdMmAAAA, exportarCsv, formatarData, periodoParaArquivo, statusPagamentoLegivel } from '../utils/csvExport.js'
 
-const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID', 'PAYMENT_APPROVED', 'PURCHASE_APPROVED'])
+// Operacional confirmado = PAGO e sinonimos genericos. Status de plano/assinatura
+// (PAYMENT_APPROVED, PURCHASE_APPROVED) pertencem ao fluxo de plano/Stripe e
+// nunca contam como recebido operacional — espelha PagamentoService.isPagamentoConfirmado().
+const STATUS_CONFIRMADO = new Set(['PAGO', 'PAGA', 'CONFIRMADO', 'CONFIRMADA', 'APROVADO', 'APPROVED', 'PAID'])
 const STATUS_PENDENTE = new Set(['PENDENTE', 'PAYMENT_PENDING'])
 const STATUS_CANCELADO = new Set(['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'])
 
@@ -96,7 +99,7 @@ function ordenarMaisRecente(a, b) {
 
 function statusSimples(statusAtual) {
   if (['CANCELADO', 'PAYMENT_CANCELED', 'PAYMENT_REJECTED', 'PAYMENT_EXPIRED'].includes(statusAtual)) return 'CANCELADO'
-  return ['PAGO', 'PAYMENT_APPROVED'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
+  return ['PAGO'].includes(statusAtual) ? 'APROVADO' : 'PENDENTE'
 }
 
 function statusClienteValor(row) {
@@ -542,7 +545,8 @@ export default function Financeiro() {
           return pagamento && !STATUS_CANCELADO.has(pagamento.status);
         });
         if (pagamentosNaoCancelados.length === 0) {
-          toast.error('Nenhum pagamento válido selecionado.');
+          setErroPagamentos('Nenhum pagamento válido selecionado.');
+          setPagamentoManual(null);
           return;
         }
         await appApi.acaoEmMassaPagamentos(pagamentosNaoCancelados, 'MARCAR_COMO_PAGO', payload)
@@ -550,7 +554,8 @@ export default function Financeiro() {
       } else {
         const pagamento = pagamentosExpandidos.find(p => p.pagamentoId === pagamentoManual.id || p.id === pagamentoManual.id);
         if (pagamento && STATUS_CANCELADO.has(pagamento.status)) {
-          toast.error('Não é possível marcar como pago um pagamento cancelado.');
+          setErroPagamentos('Não é possível marcar como pago um pagamento cancelado.');
+          setPagamentoManual(null);
           return;
         }
         await appApi.marcarPagamentoPago(pagamentoManual.id, payload)

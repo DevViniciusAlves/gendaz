@@ -11,6 +11,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface InsightRepository extends JpaRepository<InsightEntity, Long> {
     List<InsightEntity> findByEmpresaIdOrderByDataCriacaoDesc(Long empresaId);
+    List<InsightEntity> findByEmpresaIdAndTipoOrderByDataCriacaoDesc(Long empresaId, String tipo);
     List<InsightEntity> findTop20ByEmpresaIdAndTipoOrderByDataCriacaoDesc(Long empresaId, String tipo);
     Optional<InsightEntity> findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(Long empresaId, String tipo);
     long countByEmpresaIdAndTipo(Long empresaId, String tipo);
