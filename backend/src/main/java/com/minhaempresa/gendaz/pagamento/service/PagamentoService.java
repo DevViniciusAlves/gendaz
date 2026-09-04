@@ -109,6 +109,7 @@ public class PagamentoService {
     public PagamentoResponse marcarPago(Long id, MarcarPagamentoPagoRequest request) {
         PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
+        validarPagamentoNaoCancelado(pagamento);
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         formaPagamentoEmpresaService.validarPagamentoManual(pagamento.getEmpresa().getId(), request.metodoPagamento(), request.parcelas());
         MetodoPagamento metodo = formaPagamentoEmpresaService.normalizarMetodoManual(request.metodoPagamento());
@@ -130,6 +131,7 @@ public class PagamentoService {
     public PagamentoResponse atualizarStatus(Long id, AtualizarStatusPagamentoRequest request) {
         PagamentoEntity pagamento = buscarEntidadeParaAtualizacao(id);
         StatusPagamento statusAnterior = pagamento.getStatus();
+        validarPagamentoNaoCancelado(pagamento);
         boolean eraConfirmado = isPagamentoConfirmado(statusAnterior);
         boolean ficouConfirmado = isPagamentoConfirmado(request.status());
         pagamento.setStatus(request.status());
@@ -639,8 +641,10 @@ public class PagamentoService {
      */
     private PagamentoEntity buscarEntidadeParaAtualizacao(Long id) {
         Long empresaId = CompanyContext.requireCompanyId();
-        return pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
+        PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
+        validarPagamentoNaoCancelado(pagamento);
+        return pagamento;
     }
 
     @Transactional(readOnly = true)
@@ -720,7 +724,7 @@ public class PagamentoService {
      * confirmado e PAGO.
      */
     private boolean isPagamentoConfirmado(StatusPagamento status) {
-        return status == StatusPagamento.PAGO;
+        return status == StatusPagamento.PAGO || status == StatusPagamento.PAYMENT_APPROVED;
     }
 
     private Optional<PagamentoPlanoEntity> localizarPagamentoStripe(String stripeSessionId, Long pagamentoPlanoId, String paymentReference) {
@@ -904,5 +908,11 @@ public class PagamentoService {
 
     private String normalizarTextoOpcional(String valor) {
         return valor == null ? null : valor.trim();
+    }
+
+    private void validarPagamentoNaoCancelado(PagamentoEntity pagamento) {
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            throw new BusinessException("Pagamento cancelado não pode ser alterado.");
+        }
     }
 }

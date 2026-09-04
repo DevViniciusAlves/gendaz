@@ -70,13 +70,22 @@ public class PagamentoBulkService {
      * (transacao propria por item, via proxy Spring). Bulk orquestra; o
      * service aplica dominio, locks e Caixa.
      */
-    private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest request) {
+private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest request) {
         switch (acao) {
-            case "MARCAR_COMO_PAGO" -> pagamentoService.marcarPago(
-                    id, new MarcarPagamentoPagoRequest(request.metodoPagamento(), request.parcelas()));
-            case "MARCAR_COMO_PENDENTE" -> pagamentoService.atualizarStatus(
-                    id, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
-            case "EXCLUIR" -> pagamentoService.excluirPagamento(id);
+            case "MARCAR_COMO_PAGO" -> {
+                validarPagamentoNaoCancelado(id);
+                pagamentoService.marcarPago(
+                        id, new MarcarPagamentoPagoRequest(request.metodoPagamento(), request.parcelas()));
+            }
+            case "MARCAR_COMO_PENDENTE" -> {
+                validarPagamentoNaoCancelado(id);
+                pagamentoService.atualizarStatus(
+                        id, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
+            }
+            case "EXCLUIR" -> {
+                validarPagamentoNaoCancelado(id);
+                pagamentoService.excluirPagamento(id);
+            }
             default -> throw new BusinessException("Acao de pagamento nao suportada.");
         }
     }
@@ -89,4 +98,10 @@ public class PagamentoBulkService {
             throw new BusinessException("Você pode selecionar no máximo 10 itens por vez.");
         }
     }
-}
+
+    private void validarPagamentoNaoCancelado(Long id) {
+        PagamentoEntity pagamento = pagamentoService.buscarEntidade(id);
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            throw new BusinessException("Pagamento cancelado não pode ser alterado.");
+        }
+    }

@@ -63,12 +63,25 @@ class PagamentoBulkServiceTest {
     void deveTransformarBusinessExceptionEmFalhaDoItemEContinuar() {
         org.mockito.Mockito.doThrow(new BusinessException("Pagamento nao encontrado."))
                 .when(pagamentoService).excluirPagamento(eq(100L));
-
+        
         var resultado = bulk.executar(new AcaoEmMassaPagamentoRequest(
                 List.of(100L, 101L), "EXCLUIR", 1L, null, null));
-
+        
         assertEquals(1, resultado.totalProcessado());
         assertEquals(1, resultado.falhas().size());
         verify(pagamentoService).excluirPagamento(eq(101L));
+    }
+
+    @Test
+    void deveFalharQuandoPagamentoCanceladoEmMassa() {
+        org.mockito.Mockito.doThrow(new BusinessException("Pagamento cancelado não pode ser alterado."))
+                .when(pagamentoService).marcarPago(eq(100L), org.mockito.ArgumentMatchers.any());
+        
+        var resultado = bulk.executar(new AcaoEmMassaPagamentoRequest(
+                List.of(100L, 101L), "MARCAR_COMO_PAGO", 1L, MetodoPagamento.PIX, null));
+        
+        assertEquals(1, resultado.totalProcessado());
+        assertEquals(1, resultado.falhas().size());
+        verify(pagamentoService).marcarPago(eq(101L), org.mockito.ArgumentMatchers.any());
     }
 }

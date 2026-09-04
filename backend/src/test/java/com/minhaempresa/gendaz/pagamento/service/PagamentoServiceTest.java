@@ -307,6 +307,19 @@ class PagamentoServiceTest {
     }
 
     @Test
+    void excluirPagamentoCanceladoNaoDeveAlterarStatus() {
+        PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
+        pagamento.setStatus(StatusPagamento.CANCELADO);
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        
+        service.excluirPagamento(1L);
+        
+        verify(pagamentoRepository).save(pagamento);
+        assertEquals(StatusPagamento.CANCELADO, pagamento.getStatus());
+    }
+
+    @Test
     void marcarPagoRepetidoPagoParaPagoNaoDuplicaCaixa() {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
         pagamento.setStatus(StatusPagamento.PAGO);
@@ -331,24 +344,38 @@ class PagamentoServiceTest {
         pagamento.setDataPagamento(LocalDateTime.now());
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
+        
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO));
-
+        
         verify(caixaDespesasService).registrarPagamentoCancelado(eq(pagamento), any(), eq(StatusPagamento.PAGO));
     }
 
     @Test
-    void reativarPagamentoCanceladoParaPagoRegistraEntradaApenasUmaVez() {
+    void cancelarPagamentoCanceladoNaoDeveRegistrarNoCaixa() {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
         pagamento.setStatus(StatusPagamento.CANCELADO);
         pagamento.setMetodoPagamento(MetodoPagamento.PIX);
         pagamento.setDataPagamento(LocalDateTime.now());
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        
+        service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO));
+        
+        verify(caixaDespesasService, never()).registrarPagamentoCancelado(eq(pagamento), any(), eq(StatusPagamento.CANCELADO));
+    }
 
+    @Test
+    void reativarPagamentoCanceladoParaPagoNaoDeveRegistrarEntradaNoCaixa() {
+        PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
+        pagamento.setStatus(StatusPagamento.CANCELADO);
+        pagamento.setMetodoPagamento(MetodoPagamento.PIX);
+        pagamento.setDataPagamento(LocalDateTime.now());
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO));
-
-        verify(caixaDespesasService).registrarPagamentoAprovado(pagamento);
+        
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(pagamento);
     }
 
     @Test
@@ -356,12 +383,53 @@ class PagamentoServiceTest {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-
+        
         service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
-
+        
         verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
         verify(caixaDespesasService, never()).registrarPagamentoCancelado(any(), any(), any());
         verify(caixaDespesasService, never()).registrarPagamentoRemovido(any(), any());
+    }
+
+    @Test
+    void canceladoParaPagoDeveLancarErro() {
+        PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
+        pagamento.setStatus(StatusPagamento.CANCELADO);
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        
+        org.junit.jupiter.api.Assertions.assertThrows(
+                BusinessException.class,
+                () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO))
+        );
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
+    void canceladoParaPendenteDeveLancarErro() {
+        PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
+        pagamento.setStatus(StatusPagamento.CANCELADO);
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        
+        org.junit.jupiter.api.Assertions.assertThrows(
+                BusinessException.class,
+                () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE))
+        );
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+    }
+
+    @Test
+    void marcarPagoComPagamentoCanceladoDeveLancarErro() {
+        PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
+        pagamento.setStatus(StatusPagamento.CANCELADO);
+        when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
+        when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
+        when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, null)).thenReturn(null);
+        
+        org.junit.jupiter.api.Assertions.assertThrows(
+                BusinessException.class,
+                () -> service.marcarPago(1L, new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null))
+        );
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
     }
 
     @Test
