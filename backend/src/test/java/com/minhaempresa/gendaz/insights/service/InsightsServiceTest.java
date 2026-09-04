@@ -270,6 +270,28 @@ class InsightsServiceTest {
         assertEquals(null, resposta.scoreGeral());
     }
 
+    @Test
+    void empresaQuaseVaziaTambemNaoRecebeScore() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 1, "inativos_status", 0),
+                "financeiro", Map.of("receitaPeriodoAtual", 0, "receitaPeriodoAnterior", 0, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0, "agendamentos_total", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of()
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.dadosInsuficientes());
+        assertEquals(null, resposta.scoreGeral());
+    }
+
     private InsightEntity insight(Long empresaId, DashboardResponse dashboard, LocalDateTime dataCriacao) throws Exception {
         return InsightEntity.builder()
                 .id(1L)

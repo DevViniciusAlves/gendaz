@@ -141,6 +141,46 @@ class InsightsAnalyzerTest {
         assertEquals("Antigo", String.valueOf(itens.get(0).get("nome")));
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void topClientesExcluiQuemNuncaFoiAtendido() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ClienteEntity antigo = cliente(2L, "Antigo");
+        ClienteEntity nuncaVeio = cliente(3L, "NuncaVeio");
+        AgendamentoEntity agAntigo = agendamento(2L, antigo, null, hoje.minusDays(50));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        base(servico, List.of(), List.of(agAntigo), List.of(antigo, nuncaVeio));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> top = (Map<String, Object>) dados.get("topClientes");
+        List<Map<String, Object>> itens = (List<Map<String, Object>>) top.get("itens");
+        assertEquals(1, itens.size());
+        assertEquals("Antigo", String.valueOf(itens.get(0).get("nome")));
+
+        Map<String, Object> ativar = (Map<String, Object>) dados.get("clientesParaAtivar");
+        assertEquals(1, ((Number) ativar.get("total")).intValue());
+        List<Map<String, Object>> pendentes = (List<Map<String, Object>>) ativar.get("itens");
+        assertEquals("NuncaVeio", String.valueOf(pendentes.get(0).get("nome")));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void cancelamentosIgnoramAgendamentosFuturos() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        AgendamentoEntity passado = agendamentoCancelado(1L, servico, hoje.minusDays(3));
+        AgendamentoEntity futuro = agendamentoCancelado(2L, servico, hoje.plusDays(11));
+        base(servico, List.of(), List.of(passado, futuro));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> financeiro = (Map<String, Object>) dados.get("financeiro");
+        assertEquals(1L, ((Number) financeiro.get("cancelamentos")).longValue());
+    }
+
     private void base(ServicoEntity servico, List<PagamentoEntity> pagamentos, List<AgendamentoEntity> agendamentos) {
         base(servico, pagamentos, agendamentos, List.of());
     }

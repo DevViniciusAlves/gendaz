@@ -11,6 +11,7 @@ import {
   Zap,
 } from 'lucide-react'
 import Button from '../components/Button.jsx'
+import Modal from '../components/Modal.jsx'
 import { useInsights } from '../hooks/useInsights.js'
 import InsightsChat from './insights/InsightsChat.jsx'
 import './insights/styles.css'
@@ -382,20 +383,10 @@ export default function Insights() {
       )}
 
       {analiseAberta && (
-        <div className="insights-modal-backdrop system-modal-backdrop" role="presentation" onClick={() => setAnaliseAberta(false)}>
-          <div className="panel insights-modal system-modal" role="dialog" aria-modal="true" aria-label="Análise completa" onClick={(event) => event.stopPropagation()}>
-            <div className="insights-modal__head">
-              <div>
-                <div className="section-kicker">Análise completa</div>
-                <h2>{dashboard?.empresaNome || 'Empresa vinculada'}</h2>
-                <p>{resumoTexto(dashboard)}</p>
-              </div>
-              <Button variant="secondary" onClick={() => setAnaliseAberta(false)}>
-                Fechar
-              </Button>
-            </div>
+        <Modal title="Análise completa" open={analiseAberta} onClose={() => setAnaliseAberta(false)}>
+          <p style={{ margin: '0 0 16px', color: 'var(--muted)' }}>{resumoTexto(dashboard)}</p>
 
-            <div className="insights-detail-grid">
+          <div className="insights-detail-grid">
               <div>
                 <span>Saúde da empresa</span>
                 {dadosInsuficientes ? (
@@ -462,8 +453,7 @@ export default function Insights() {
                 })}
               </div>
             )}
-          </div>
-        </div>
+        </Modal>
       )}
     </section>
   )

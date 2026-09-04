@@ -94,7 +94,7 @@ public class InsightsAnalyzer {
         BigDecimal receitaPeriodoAnterior = somarPagamentos(pagamentos, inicioPeriodoAnterior, fimPeriodoAnterior, true);
         BigDecimal pendente = somarPagamentos(pagamentos, inicioPeriodo, hoje, false);
         long cancelamentos = agendamentos.stream()
-                .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicioPeriodo))
+                .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicioPeriodo) && !agendamento.getData().isAfter(hoje))
                 .filter(agendamento -> agendamento.getStatus() == StatusAgendamento.CANCELADO)
                 .count();
 
@@ -141,7 +141,8 @@ public class InsightsAnalyzer {
         dados.put("clientes", clientesResumo);
         dados.put("financeiro", financeiroResumo);
         dados.put("resumo", resumo);
-        dados.put("topClientes", topClientes(clienteRepository.findByEmpresaIdAndStatusNot(empresaId, StatusCadastro.EXCLUIDO), agendamentos, ultimaDataPorCliente, hoje));
+        dados.put("topClientes", topClientesParaRecuperar(clientes, agendamentos, ultimaDataPorCliente, hoje));
+        dados.put("clientesParaAtivar", clientesParaAtivar(clientes, agendamentos, ultimaDataPorCliente, hoje));
         dados.put("pagamentosRecentes", pagamentos.stream()
                 .sorted(Comparator.comparing(PagamentoEntity::getId, Comparator.nullsLast(Comparator.naturalOrder())).reversed())
                 .limit(5)
@@ -227,7 +228,36 @@ public class InsightsAnalyzer {
         return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(ultimaData, hoje));
     }
 
-    private Map<String, Object> topClientes(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
+    private Map<String, Object> topClientesParaRecuperar(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
+        List<Map<String, Object>> comHistorico = infoClientes(clientes, agendamentos, ultimaDataPorCliente, hoje).stream()
+                .filter(item -> item.get("dias_sem_agendar") != null)
+                .sorted((a, b) -> {
+                    long diasA = Long.parseLong(String.valueOf(a.get("dias_sem_agendar")));
+                    long diasB = Long.parseLong(String.valueOf(b.get("dias_sem_agendar")));
+                    int comparacao = Long.compare(diasB, diasA);
+                    if (comparacao != 0) return comparacao;
+                    return Long.compare(
+                            Long.parseLong(String.valueOf(b.getOrDefault("total_atendimentos", 0L))),
+                            Long.parseLong(String.valueOf(a.getOrDefault("total_atendimentos", 0L))));
+                })
+                .limit(5)
+                .toList();
+        // Recuperação: SOMENTE quem já foi atendido e está há mais tempo sem voltar.
+        // Quem nunca foi atendido é ativação/conversão e vai em "clientesParaAtivar".
+        return Map.of("itens", comHistorico);
+    }
+
+    private Map<String, Object> clientesParaAtivar(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
+        List<Map<String, Object>> semHistorico = infoClientes(clientes, agendamentos, ultimaDataPorCliente, hoje).stream()
+                .filter(item -> item.get("dias_sem_agendar") == null)
+                .toList();
+        Map<String, Object> resultado = new LinkedHashMap<>();
+        resultado.put("total", semHistorico.size());
+        resultado.put("itens", semHistorico.stream().limit(5).toList());
+        return resultado;
+    }
+
+    private List<Map<String, Object>> infoClientes(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
         Map<Long, Long> atendimentosPorCliente = new HashMap<>();
         for (AgendamentoEntity agendamento : agendamentos) {
             if (agendamento.getCliente() == null || agendamento.getCliente().getId() == null) continue;
@@ -245,19 +275,7 @@ public class InsightsAnalyzer {
             item.put("total_atendimentos", atendimentosPorCliente.getOrDefault(cliente.getId(), 0L));
             resultado.add(item);
         }
-        // Recuperação: primeiro quem está há mais tempo sem agendar (ou nunca agendou).
-        resultado.sort((a, b) -> {
-            Object diasA = a.get("dias_sem_agendar");
-            Object diasB = b.get("dias_sem_agendar");
-            long valorA = diasA == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(diasA));
-            long valorB = diasB == null ? Long.MAX_VALUE : Long.parseLong(String.valueOf(diasB));
-            int comparacao = Long.compare(valorB, valorA);
-            if (comparacao != 0) return comparacao;
-            return Long.compare(
-                    Long.parseLong(String.valueOf(b.getOrDefault("total_atendimentos", 0L))),
-                    Long.parseLong(String.valueOf(a.getOrDefault("total_atendimentos", 0L))));
-        });
-        return Map.of("itens", resultado.stream().limit(5).toList());
+        return resultado;
     }
 
     private Map<String, Object> mapPagamentoResumo(PagamentoEntity pagamento) {

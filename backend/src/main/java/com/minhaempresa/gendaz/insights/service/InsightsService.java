@@ -413,9 +413,20 @@ public class InsightsService {
     private boolean dadosInsuficientes(Map<String, Object> dados) {
         Map<String, Object> clientes = mapa(dados.get("clientes"));
         Map<String, Object> financeiro = mapa(dados.get("financeiro"));
+        Map<String, Object> resumo = mapa(dados.get("resumo"));
+        double receitaAtual = receitaPeriodoAtual(financeiro);
+        double receitaAnterior = receitaPeriodoAnterior(financeiro);
+        double pendente = numero(financeiro.get("pendente"));
+        long agendamentosTotal = longo(resumo.get("agendamentos_total"));
         // Empresa sem base mínima (sem clientes e sem receita no período) não recebe nota:
         // o frontend apresenta estado de "dados insuficientes" em vez de um score artificial.
-        return longo(clientes.get("total")) == 0 && receitaPeriodoAtual(financeiro) <= 0;
+        if (longo(clientes.get("total")) == 0 && receitaAtual <= 0) {
+            return true;
+        }
+        // Empresa quase vazia: pode ter 1+ cadastros, mas sem nenhum sinal operacional
+        // (nenhum agendamento) nem financeiro (sem receita atual/anterior e sem pendências).
+        // Também não recebe score — um cadastro isolado não sustenta uma avaliação de saúde.
+        return receitaAtual <= 0 && receitaAnterior <= 0 && pendente <= 0 && agendamentosTotal == 0;
     }
 
     private double receitaPeriodoAtual(Map<String, Object> financeiro) {
