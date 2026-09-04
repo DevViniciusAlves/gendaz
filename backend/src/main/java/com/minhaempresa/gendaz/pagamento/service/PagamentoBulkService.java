@@ -21,13 +21,19 @@ import org.springframework.stereotype.Service;
 /**
  * Orquestrador de operacoes em massa sobre pagamentos.
  *
- * <p>Regra obrigatoria CANCELADO (atomica): para {@code MARCAR_COMO_PAGO} e
+ * <p>Regra obrigatoria CANCELADO: para {@code MARCAR_COMO_PAGO} e
  * {@code MARCAR_COMO_PENDENTE}, TODOS os IDs sao carregados/validados ANTES
- * do primeiro update ({@link #validarLoteSemCancelado}). Se existir PELO
- * MENOS UM pagamento CANCELADO, a operacao inteira falha com
- * {@code BusinessException} e ZERO pagamentos sao modificados — nunca
- * {@code [PAGO, PAGO, falha]}. O {@link PagamentoService} continua sendo a
- * fonte principal da regra (segunda barreira por item, com lock).
+ * do primeiro update ({@link #validarLoteSemCancelado}), em ordem crescente
+ * de ID. Se existir PELO MENOS UM pagamento CANCELADO ja presente, a operacao
+ * inteira falha com {@code BusinessException} e ZERO pagamentos sao
+ * modificados — nunca {@code [PAGO, PAGO, falha]}. O {@link PagamentoService}
+ * continua sendo a fonte principal da regra (segunda barreira por item, com
+ * lock PESSIMISTIC_WRITE no momento do write). Limite honesto sob
+ * concorrencia: transacoes sao por item (exigencia de PB-01..03 para IDs
+ * inexistentes); se um item virar CANCELADO exatamente na janela entre a
+ * pre-validacao e o seu processamento, aquele item falha sem virar PAGO e sem
+ * tocar o Caixa (consistencia provada em PB-08: final sempre PAGO+caixa ou
+ * CANCELADO+zero, nunca hibrido).
  *
  * <p>Para os demais casos (ex.: ID inexistente/de outra empresa), a semantica
  * e SUCESSO PARCIAL por item (resposta com {@code processados} +
@@ -49,23 +55,30 @@ public class PagamentoBulkService {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
+        // Ordem deterministica: evita deadlock nos locks por item (PAGAMENTO -> EMPRESA).
+        List<Long> idsOrdenados = request.ids().stream().sorted().toList();
         // Pre-validacao atomica: carrega/valida TODOS os IDs ANTES do primeiro update.
         // Para MARCAR_COMO_PAGO / MARCAR_COMO_PENDENTE, se existir PELO MENOS UM
-        // pagamento CANCELADO, falha a operacao inteira com ZERO alteracoes.
-        // O PagamentoService continua sendo a fonte principal da regra de negocio.
-        validarLoteSemCancelado(request.ids(), acao);
+        // pagamento CANCELADO ja presente, falha a operacao inteira com ZERO alteracoes.
+        // O PagamentoService continua sendo a fonte principal da regra de negocio
+        // (segunda barreira por item, com lock PESSIMISTIC_WRITE no momento do write:
+        // mesmo que um item vire CANCELADO na janela entre a pre-validacao e o seu
+        // processamento, aquele item falha e nunca vira PAGO nem toca o Caixa).
+        validarLoteSemCancelado(idsOrdenados, acao);
         List<FalhaAcaoItem> falhas = new ArrayList<>();
         int processados = 0;
-        for (Long id : request.ids()) {
+        for (Long id : idsOrdenados) {
             try {
                 executarItem(id, acao, request);
                 processados++;
             } catch (BusinessException | ResourceNotFoundException | ConflictException ex) {
                 // Erro ESPERADO de negocio (item inexistente/de outra empresa,
-                // status incompativel, forma de pagamento invalida): vira falha
-                // do item e o bulk continua. Erro SISTEMICO inesperado
-                // (infra/conexao/banco) NAO e capturado: propaga para nao
-                // fingir que o bulk funcionou normalmente.
+                // forma de pagamento invalida, ou item que virou CANCELADO na
+                // janela entre a pre-validacao e o seu processamento): vira
+                // falha do item e o bulk continua. O item cancelado em si nunca
+                // e convertido (barreira por item no PagamentoService, com lock).
+                // Erro SISTEMICO inesperado (infra/conexao/banco) NAO e capturado:
+                // propaga para nao fingir que o bulk funcionou normalmente.
                 falhas.add(new FalhaAcaoItem(id, ex.getMessage()));
             }
         }

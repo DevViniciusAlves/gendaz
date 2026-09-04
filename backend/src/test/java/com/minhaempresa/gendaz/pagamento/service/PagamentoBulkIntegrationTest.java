@@ -230,6 +230,32 @@ class PagamentoBulkIntegrationTest {
         assertEquals(0, BigDecimal.ZERO.compareTo(empresaRepository.findById(empId).orElseThrow().getCaixaTotal()));
     }
 
+    // ---------- TESTE PB-04b: MARCAR PENDENTE COM CANCELADO (Caixa real) ----------
+
+    @Test
+    void pb04b_marcarPendenteComCancelado_falhaAtomicaSemTocarCaixa() {
+        EmpresaEntity empresa = novaEmpresa();
+        Long empId = empresa.getId();
+        ClienteEntity cliente = novoCliente(empresa);
+
+        PagamentoEntity pag1 = novoPagamento(empresa, cliente, new BigDecimal("100.00"), StatusPagamento.PENDENTE);
+        PagamentoEntity pag2Cancelado = novoPagamento(empresa, cliente, new BigDecimal("500.00"), StatusPagamento.CANCELADO);
+
+        CompanyContext.setCompanyId(empId);
+        try {
+            // BULK TEST 2/3: [PENDENTE, CANCELADO] + MARCAR_COMO_PENDENTE => falha, nenhum alterado,
+            // registrarPagamentoAprovado nunca chamado (Caixa real continua ZERO).
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException.class, () -> bulkService.executar(new AcaoEmMassaPagamentoRequest(
+                    List.of(pag1.getId(), pag2Cancelado.getId()), "MARCAR_COMO_PENDENTE", empId, null, null)));
+        } finally {
+            CompanyContext.clear();
+        }
+
+        assertEquals(StatusPagamento.PENDENTE, pagamentoRepository.findById(pag1.getId()).orElseThrow().getStatus());
+        assertEquals(StatusPagamento.CANCELADO, pagamentoRepository.findById(pag2Cancelado.getId()).orElseThrow().getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(empresaRepository.findById(empId).orElseThrow().getCaixaTotal()));
+    }
+
     // ---------- TESTE PB-05: DUPLICATE ID ----------
 
     @Test
