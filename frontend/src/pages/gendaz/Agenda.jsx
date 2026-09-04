@@ -26,7 +26,10 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [horarios, setHorarios] = useState([])
   const hoje = new Date()
-  const dataHoje = hoje.toISOString().slice(0, 10)
+  // Data local do navegador (nunca UTC): toISOString() desloca o dia perto da
+  // virada para America/Sao_Paulo. O backend classifica proximos/historico no
+  // timezone da empresa; o default do formulario deve seguir o mesmo "hoje".
+  const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
   const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
   const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])

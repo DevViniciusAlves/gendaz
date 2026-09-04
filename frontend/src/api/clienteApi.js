@@ -78,8 +78,22 @@ clienteApi.interceptors.request.use(async (config) => {
   return config
 })
 
+function emitirDadoAlterado(config) {
+  if (typeof window === 'undefined') return
+  const metodo = String(config?.method || 'get').toLowerCase()
+  if (!['post', 'put', 'patch', 'delete'].includes(metodo)) return
+  if (config?.skipDataChanged) return
+  const url = String(config?.url || '')
+  // OTP/logout possuem fluxo proprio (meu-gendaz:logout); IA e conversa sem escrita.
+  if (url.includes('/meu-gendaz/auth/') || url.includes('/meu-gendaz/ia')) return
+  window.dispatchEvent(new Event('gendaz:data-changed'))
+}
+
 clienteApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    emitirDadoAlterado(response?.config)
+    return response
+  },
   async (error) => {
     if (error.response) {
       const isHtml = typeof error.response.data === 'string' &&
