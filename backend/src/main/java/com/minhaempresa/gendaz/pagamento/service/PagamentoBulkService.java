@@ -105,3 +105,7 @@ private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest requ
             throw new BusinessException("Pagamento cancelado não pode ser alterado.");
         }
     }
+
+    private PagamentoEntity buscarEntidade(Long id) {
+        return pagamentoService.buscarEntidade(id);
+    }

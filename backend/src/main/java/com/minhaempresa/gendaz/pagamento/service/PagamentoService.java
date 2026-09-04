@@ -724,7 +724,7 @@ public class PagamentoService {
      * confirmado e PAGO.
      */
     private boolean isPagamentoConfirmado(StatusPagamento status) {
-        return status == StatusPagamento.PAGO || status == StatusPagamento.PAYMENT_APPROVED;
+        return status == StatusPagamento.PAGO;
     }
 
     private Optional<PagamentoPlanoEntity> localizarPagamentoStripe(String stripeSessionId, Long pagamentoPlanoId, String paymentReference) {
