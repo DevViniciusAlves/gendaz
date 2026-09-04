@@ -97,6 +97,9 @@ public class InsightsAnalyzer {
                 .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicioPeriodo) && !agendamento.getData().isAfter(hoje))
                 .filter(agendamento -> agendamento.getStatus() == StatusAgendamento.CANCELADO)
                 .count();
+        long agendamentosPeriodo = agendamentos.stream()
+                .filter(agendamento -> agendamento.getData() != null && !agendamento.getData().isBefore(inicioPeriodo) && !agendamento.getData().isAfter(hoje))
+                .count();
 
         Map<String, Object> clientesResumo = new LinkedHashMap<>();
         clientesResumo.put("total", clientes.size());
@@ -127,6 +130,7 @@ public class InsightsAnalyzer {
         resumo.put("receita_confirmada", receitaPeriodo.doubleValue());
         resumo.put("pendente_cobranca", pendente.doubleValue());
         resumo.put("agendamentos_total", agendamentos.size());
+        resumo.put("agendamentos_periodo", agendamentosPeriodo);
         resumo.put("agendamentos_cancelados", cancelamentos);
 
         Map<String, Object> dados = new LinkedHashMap<>();

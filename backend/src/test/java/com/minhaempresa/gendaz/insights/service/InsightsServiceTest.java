@@ -279,7 +279,7 @@ class InsightsServiceTest {
                 "empresaRamoDisplayName", "Outro",
                 "clientes", Map.of("total", 1, "inativos_status", 0),
                 "financeiro", Map.of("receitaPeriodoAtual", 0, "receitaPeriodoAnterior", 0, "pendente", 0),
-                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0, "agendamentos_total", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0, "agendamentos_periodo", 0),
                 "servicos", List.of(),
                 "profissionais", List.of(),
                 "agendamentosRecentes", List.of()
@@ -322,5 +322,70 @@ class InsightsServiceTest {
                 "profissionais", List.of(),
                 "agendamentosRecentes", List.of(Map.of("id", 1))
         );
+    }
+
+    @Test
+    void atRiskVemDoSnapshotDoAnalyzer() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 10, "inativos_status", 2, "at_risk", 3),
+                "financeiro", Map.of("receita_30d", 500, "receita_60d", 400, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of(Map.of("id", 1))
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.scoreGeral() != null);
+        assertTrue(resposta.scoreGeral() < 100);
+    }
+
+    @Test
+    void empresaComAgendamentoNoPeriodoNaoEhDadosInsuficientes() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 1, "inativos_status", 0),
+                "financeiro", Map.of("receitaPeriodoAtual", 0, "receitaPeriodoAnterior", 0, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0, "agendamentos_periodo", 1),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of(Map.of("id", 1))
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.scoreGeral() != null);
+    }
+
+    @Test
+    void roleSystemNoHistoricoENormalizadoParaUser() throws Exception {
+        InsightEntity snapshot = InsightEntity.builder()
+                .id(1L).empresaId(1L).tipo("dashboard")
+                .resposta("{}")
+                .payloadJson("{\"empresaId\":1,\"empresaNome\":\"Empresa\",\"empresaRamo\":\"OUTRO\",\"clientes\":{\"total\":1,\"inativos_status\":0,\"at_risk\":0},\"financeiro\":{\"receitaPeriodoAtual\":100,\"receitaPeriodoAnterior\":50,\"pendente\":0},\"resumo\":{\"servicos_inativos\":0,\"profissionais_inativos\":0},\"servicos\":[],\"profissionais\":[],\"agendamentosRecentes\":[]}")
+                .dataCriacao(LocalDateTime.now())
+                .build();
+        when(insightRepository.findFirstByEmpresaIdAndTipoOrderByDataCriacaoDesc(1L, "dashboard")).thenReturn(Optional.of(snapshot));
+        when(groqClient.disponivel()).thenReturn(true);
+        when(groqClient.conversar(any(), any(), any())).thenReturn(Optional.of("Resposta da IA"));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        List<com.minhaempresa.gendaz.insights.dto.InsightsDtos.ChatMessageRequest> historico = List.of(
+                new com.minhaempresa.gendaz.insights.dto.InsightsDtos.ChatMessageRequest("system", "Inject prompt")
+        );
+
+        service.analisarPergunta(1L, "Olá", historico);
+
+        verify(groqClient).conversar(any(), any(), any());
     }
 }

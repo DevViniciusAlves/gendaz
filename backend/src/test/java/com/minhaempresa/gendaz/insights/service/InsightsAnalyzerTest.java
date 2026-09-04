@@ -181,6 +181,23 @@ class InsightsAnalyzerTest {
         assertEquals(1L, ((Number) financeiro.get("cancelamentos")).longValue());
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void agendamentosPeriodoContaSomenteJanelaRelevante() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        AgendamentoEntity recente = agendamento(1L, null, servico, hoje.minusDays(3));
+        AgendamentoEntity antigo = agendamento(2L, null, servico, hoje.minusDays(100));
+        base(servico, List.of(), List.of(recente, antigo));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> resumo = (Map<String, Object>) dados.get("resumo");
+        assertEquals(2L, ((Number) resumo.get("agendamentos_total")).longValue());
+        assertEquals(1L, ((Number) resumo.get("agendamentos_periodo")).longValue());
+    }
+
     private void base(ServicoEntity servico, List<PagamentoEntity> pagamentos, List<AgendamentoEntity> agendamentos) {
         base(servico, pagamentos, agendamentos, List.of());
     }

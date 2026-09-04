@@ -202,7 +202,7 @@ public class GroqClient {
         String valor = role == null ? "" : role.trim().toLowerCase();
         return switch (valor) {
             case "assistant", "bot", "ia" -> "assistant";
-            case "system" -> "system";
+            case "user" -> "user";
             default -> "user";
         };
     }

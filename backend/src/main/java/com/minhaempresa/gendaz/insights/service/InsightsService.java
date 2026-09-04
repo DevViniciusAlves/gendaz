@@ -338,7 +338,7 @@ public class InsightsService {
         Map<String, Object> resumo = mapa(dados.get("resumo"));
         double pendente = numero(financeiro.get("pendente"));
         long clientesInativos = longo(clientes.get("inativos_status"));
-        long atRisk = 0;
+        long atRisk = longo(clientes.get("at_risk"));
         long servicosInativos = longo(resumo.get("servicos_inativos"));
         long profissionaisInativos = longo(resumo.get("profissionais_inativos"));
         double receitaAtual = receitaPeriodoAtual(financeiro);
@@ -417,16 +417,16 @@ public class InsightsService {
         double receitaAtual = receitaPeriodoAtual(financeiro);
         double receitaAnterior = receitaPeriodoAnterior(financeiro);
         double pendente = numero(financeiro.get("pendente"));
-        long agendamentosTotal = longo(resumo.get("agendamentos_total"));
+        long agendamentosPeriodo = longo(resumo.get("agendamentos_periodo"));
         // Empresa sem base mínima (sem clientes e sem receita no período) não recebe nota:
         // o frontend apresenta estado de "dados insuficientes" em vez de um score artificial.
         if (longo(clientes.get("total")) == 0 && receitaAtual <= 0) {
             return true;
         }
         // Empresa quase vazia: pode ter 1+ cadastros, mas sem nenhum sinal operacional
-        // (nenhum agendamento) nem financeiro (sem receita atual/anterior e sem pendências).
-        // Também não recebe score — um cadastro isolado não sustenta uma avaliação de saúde.
-        return receitaAtual <= 0 && receitaAnterior <= 0 && pendente <= 0 && agendamentosTotal == 0;
+        // recente (nenhum agendamento no período) nem financeiro (sem receita atual/anterior e sem pendências).
+        // Um cadastro isolado com agendamento de anos atrás não sustenta avaliação de saúde.
+        return receitaAtual <= 0 && receitaAnterior <= 0 && pendente <= 0 && agendamentosPeriodo == 0;
     }
 
     private double receitaPeriodoAtual(Map<String, Object> financeiro) {
@@ -541,7 +541,8 @@ public class InsightsService {
         List<Map<String, String>> msgs = new ArrayList<>();
         for (ChatMessageRequest item : historico) {
             if (item == null || item.content() == null || item.content().isBlank()) continue;
-            msgs.add(Map.of("role", item.role() == null ? "user" : item.role(), "content", item.content().trim()));
+            String role = normalizarRoleExterno(item.role());
+            msgs.add(Map.of("role", role, "content", item.content().trim()));
         }
         // Defesa: a pergunta atual não pode ir duplicada dentro do histórico.
         String atual = perguntaAtual == null ? "" : perguntaAtual.trim();
@@ -637,7 +638,7 @@ public class InsightsService {
         double pendente = numero(financeiro.get("pendente"));
         double receitaAtual = receitaPeriodoAtual(financeiro);
         double receitaAnterior = receitaPeriodoAnterior(financeiro);
-        long atRisk = 0;
+        long atRisk = longo(clientes.get("at_risk"));
 
         long servicosSemMovimento = servicos.stream()
                 .filter(servico -> longo(servico.get("vendas_30d")) <= 0)
@@ -648,7 +649,7 @@ public class InsightsService {
 
         boolean quedaReceita = receitaAnterior > 0 && receitaAtual < receitaAnterior;
         boolean riscoOciosidade = servicosSemMovimento > 0 || profissionaisSemMovimento > 0;
-        boolean clienteEmRisco = false;
+        boolean clienteEmRisco = atRisk > 0;
         boolean perdaFinanceira = pendente > 0 || quedaReceita;
 
         List<InsightItem> itens = new ArrayList<>();
@@ -1067,6 +1068,15 @@ public class InsightsService {
 
     private String stringValor(Object valor) {
         return valor == null ? "" : String.valueOf(valor);
+    }
+
+    private String normalizarRoleExterno(String role) {
+        String valor = role == null ? "" : role.trim().toLowerCase();
+        return switch (valor) {
+            case "assistant", "bot", "ia" -> "assistant";
+            case "user" -> "user";
+            default -> "user";
+        };
     }
 
     private String formatarMoeda(double valor) {
