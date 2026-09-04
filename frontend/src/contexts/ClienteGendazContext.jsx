@@ -283,10 +283,8 @@ export function ClienteGendazProvider({ children, slug }) {
     return data
   }, [])
 
-  const cancelarAgendamento = useCallback(async (agendamentoId, motivo) => {
-    await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`, {
-      data: { motivo },
-    })
+  const cancelarAgendamento = useCallback(async (agendamentoId) => {
+    await clienteApi.delete(`/meu-gendaz/agendamentos/${agendamentoId}/cancelar`)
     const { data: ags } = await clienteApi.get('/meu-gendaz/agendamentos/proximos')
     setAgendamentos(Array.isArray(ags) ? ags : ags?.agendamentos || [])
   }, [])

@@ -77,7 +77,7 @@ export default function Historico() {
               const desconto = item.valorDesconto
               const cupomCodigo = item.cupomCodigo
               const temDesconto = cupomCodigo && desconto != null && Number(desconto) > 0
-              const observação = [item.observações, item.observação]
+              const observação = [item.observacoes, item.observações, item.observação]
                 .find((texto) => texto && String(texto).trim().toLowerCase() !== 'criado pelo painel.')
 
               return (

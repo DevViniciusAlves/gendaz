@@ -171,7 +171,7 @@ export default function Dashboard() {
                         {promo.tipo === 'PERCENTUAL' ? `${promo.valor}% OFF` : `R$ ${Number(promo.valor).toFixed(2)}`}
                       </span>
                     </div>
-                    <span>{promo.descrição}</span>
+                    <span>{promo.descricao ?? promo.descrição}</span>
                     <small>
                       {promo.aplicarTodosServicos
                         ? 'Aplicável a todos os serviços'

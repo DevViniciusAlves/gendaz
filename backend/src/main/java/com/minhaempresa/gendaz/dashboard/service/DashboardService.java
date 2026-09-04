@@ -47,9 +47,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class DashboardService {
     private static final DateTimeFormatter DATA_LABEL = DateTimeFormatter.ofPattern("dd/MM", Locale.forLanguageTag("pt-BR"));
+    // Receita operacional confirmada: SOMENTE PAGO (dinheiro efetivamente recebido).
+    // PAYMENT_APPROVED pertence ao fluxo de plano/assinatura/Stripe/Admin e
+    // nao pode inflar o Dashboard operacional (ver PagamentoService).
     private static final List<StatusPagamento> STATUS_RECEITA_CONFIRMADA = List.of(
-            StatusPagamento.PAGO,
-            StatusPagamento.PAYMENT_APPROVED
+            StatusPagamento.PAGO
     );
     private static final List<StatusPagamento> STATUS_PENDENTE = List.of(
             StatusPagamento.PENDENTE,

@@ -32,6 +32,9 @@ import com.minhaempresa.gendaz.shared.CookieHelper;
 import com.minhaempresa.gendaz.shared.CookieService;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.SessaoExpiradaException;
+import com.minhaempresa.gendaz.shared.enums.TimezoneEnum;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import jakarta.servlet.http.HttpServletRequest;
 
 import jakarta.servlet.http.HttpServletResponse;
@@ -279,9 +282,10 @@ public class MeuGendazController {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
             Long empresaId = getEmpresaId(cliente);
+            LocalDate hoje = hojeDaEmpresa(empresaId);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> futuros = agendamentos.stream()
-                    .filter(MeuGendazController::isProximo)
+                    .filter(a -> isProximo(a, hoje))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
                     .toList();
             return ResponseEntity.ok(futuros);
@@ -299,9 +303,10 @@ public class MeuGendazController {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
             Long empresaId = getEmpresaId(cliente);
+            LocalDate hoje = hojeDaEmpresa(empresaId);
             List<AgendamentoResponse> agendamentos = agendamentoService.listarPorCliente(empresaId, cliente.getId());
             List<AgendamentoResponse> passados = agendamentos.stream()
-                    .filter(MeuGendazController::isHistorico)
+                    .filter(a -> isHistorico(a, hoje))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .toList();
             int total = passados.size();
@@ -406,13 +411,14 @@ public class MeuGendazController {
     public ResponseEntity<?> dashboard(HttpServletRequest request) {
         try {
             ClienteEntity cliente = findClienteFromSession(request);
+            LocalDate hoje = hojeDaEmpresa(getEmpresaId(cliente));
             List<AgendamentoResponse> todos = agendamentoService.listarPorCliente(getEmpresaId(cliente), cliente.getId());
             List<AgendamentoResponse> futuros = todos.stream()
-                    .filter(MeuGendazController::isProximo)
+                    .filter(a -> isProximo(a, hoje))
                     .sorted(Comparator.comparing(AgendamentoResponse::data).thenComparing(AgendamentoResponse::horaInicio))
                     .toList();
             List<AgendamentoResponse> passados = todos.stream()
-                    .filter(a -> a.data() != null && a.data().isBefore(java.time.LocalDate.now()))
+                    .filter(a -> a.data() != null && a.data().isBefore(hoje))
                     .filter(a -> a.status() != StatusAgendamento.CANCELADO)
                     .sorted(Comparator.comparing(AgendamentoResponse::data).reversed())
                     .limit(5)
@@ -521,11 +527,11 @@ public class MeuGendazController {
 
     /**
      * "Proximos": compromissos futuros operacionalmente validos.
-     * Exige data >= hoje E status ativo (nunca CANCELADO/FINALIZADO).
+     * Exige data >= hoje (no timezone da empresa) E status ativo (nunca CANCELADO/FINALIZADO).
      * Um item nunca esta simultaneamente em proximos e historico.
      */
-    private static boolean isProximo(AgendamentoResponse a) {
-        if (a.data() == null || a.data().isBefore(java.time.LocalDate.now())) {
+    private static boolean isProximo(AgendamentoResponse a, LocalDate hoje) {
+        if (a.data() == null || a.data().isBefore(hoje)) {
             return false;
         }
         if (a.status() == null) {
@@ -539,12 +545,12 @@ public class MeuGendazController {
 
     /**
      * "Historico": eventos passados ou estados terminalmente encerrados.
-     * Inclui tudo com data passada e, independente da data, FINALIZADO e
+     * Inclui tudo com data passada (no timezone da empresa) e, independente da data, FINALIZADO e
      * CANCELADO (ex.: cancelado futuro e historico, nao proximo).
      * PENDENTE/CONFIRMADO futuro nunca cai aqui.
      */
-    private static boolean isHistorico(AgendamentoResponse a) {
-        if (a.data() != null && a.data().isBefore(java.time.LocalDate.now())) {
+    private static boolean isHistorico(AgendamentoResponse a, LocalDate hoje) {
+        if (a.data() != null && a.data().isBefore(hoje)) {
             return true;
         }
         if (a.status() == null) {
@@ -552,6 +558,21 @@ public class MeuGendazController {
         }
         return a.status() == StatusAgendamento.FINALIZADO
                 || a.status() == StatusAgendamento.CANCELADO;
+    }
+
+    /**
+     * Hoje no timezone da empresa (mesmo padrao do DashboardService).
+     * Evita classificar como passado um compromisso ainda futuro em
+     * America/Sao_Paulo apenas porque o servidor esta em UTC.
+     */
+    private LocalDate hojeDaEmpresa(Long empresaId) {
+        String timezone = empresaRepository.findById(empresaId)
+                .map(EmpresaEntity::getTimezone)
+                .orElse(null);
+        String valor = timezone == null || timezone.isBlank()
+                ? TimezoneEnum.AMERICA_SAO_PAULO.getValue()
+                : timezone;
+        return LocalDate.now(ZoneId.of(valor));
     }
 
     private boolean isSafariMobile(HttpServletRequest request) {

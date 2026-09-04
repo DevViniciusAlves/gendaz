@@ -37,6 +37,12 @@ export function persistirCacheLocal(scope, payload) {
   return salvarCache(scope, payload)
 }
 
+export function invalidarCacheLocal(scope) {
+  const cacheKey = chaveCache(scope)
+  cacheLocal.delete(cacheKey)
+  cacheEmAndamento.delete(cacheKey)
+}
+
 async function carregarComCache(scope, force = false) {
   const cacheKey = chaveCache(scope)
   const cached = cacheDoEscopo(scope)
@@ -130,16 +136,24 @@ export function useLocalData(scope = 'full', periodo = null) {
     // Sem polling: a tela carrega ao montar e só reage a ações reais
     // (gendaz:data-changed), troca de rota (remontagem) e recarga manual.
     // Evita o recarregamento contínuo do pacote do escopo com o usuário parado.
+    // data-changed representa MUTATION confirmada no backend: invalida o cache
+    // do escopo e força busca no backend (reload(true) ignora o TTL).
+    // Leitura (reload) nunca dispara data-changed, logo não há loop.
     function reloadFromEvent() {
+      invalidarCacheLocal(cacheScope)
+      void reload(true)
+    }
+
+    function reloadFromSession() {
       reload(false)
     }
 
     window.addEventListener('gendaz:data-changed', reloadFromEvent)
-    window.addEventListener('gendaz:session-changed', reloadFromEvent)
+    window.addEventListener('gendaz:session-changed', reloadFromSession)
 
     return () => {
       window.removeEventListener('gendaz:data-changed', reloadFromEvent)
-      window.removeEventListener('gendaz:session-changed', reloadFromEvent)
+      window.removeEventListener('gendaz:session-changed', reloadFromSession)
     }
   }, [cacheScope])
 

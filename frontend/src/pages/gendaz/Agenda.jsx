@@ -27,7 +27,7 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
   const [horarios, setHorarios] = useState([])
   const hoje = new Date()
   const dataHoje = hoje.toISOString().slice(0, 10)
-  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observações: '', cupomCodigo: '' })
+  const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
   const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])
   const [carregandoHorarios, setCarregandoHorarios] = useState(false)
@@ -161,14 +161,14 @@ function NovoAgendamentoModal({ onFechar, onCriar }) {
           )}
           <label>
             <span>Observações (opcional)</span>
-            <textarea value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} placeholder="Alguma observação..." />
+            <textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} placeholder="Alguma observação..." />
           </label>
           <label>
             <span>Adicionar cupom</span>
             <select value={form.cupomCodigo} onChange={(e) => setForm({ ...form, cupomCodigo: e.target.value })}>
               <option value="">Sem cupom</option>
               {cuponsAplicaveis.map((cupom) => (
-                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descrição}</option>
+                <option key={cupom.id} value={cupom.codigo}>{cupom.codigo} - {cupom.descricao ?? cupom.descrição}</option>
               ))}
             </select>
           </label>
@@ -260,8 +260,11 @@ function ReagendarModal({ agendamento, onFechar, onReagendar }) {
   )
 }
 
+function podeAlterarAgendamento(status) {
+  return ['PENDENTE', 'CONFIRMADO'].includes(status)
+}
+
 function CancelarModal({ agendamento, onFechar, onCancelar }) {
-  const [motivo, setMotivo] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
 
@@ -270,7 +273,7 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
     setErro('')
     try {
       setSalvando(true)
-      await onCancelar(agendamento.id, motivo || 'Cancelamento pelo cliente')
+      await onCancelar(agendamento.id)
       onFechar()
     } catch (err) {
       setErro(err.response?.data?.mensagem || err.message || 'Erro ao cancelar.')
@@ -289,10 +292,6 @@ function CancelarModal({ agendamento, onFechar, onCancelar }) {
         {erro && <p className="gendaz-auth__error">{erro}</p>}
         <form className="gendaz-modal__form" onSubmit={handleSubmit}>
           <p>Tem certeza que deseja cancelar o agendamento de <strong>{agendamento.servicoNome || agendamento.servico || 'Serviço'}</strong>?</p>
-          <label>
-            <span>Motivo (opcional)</span>
-            <textarea value={motivo} onChange={(e) => setMotivo(e.target.value)} placeholder="Informe o motivo do cancelamento..." />
-          </label>
           <div className="gendaz-modal__actions">
             <button type="button" className="gendaz-btn" onClick={onFechar}>Voltar</button>
             <button type="submit" className="gendaz-btn gendaz-btn--danger" disabled={salvando}>
@@ -372,6 +371,7 @@ export default function Agenda() {
                 </div>
               </div>
 
+              {podeAlterarAgendamento(item.status) && (
               <div className="gendaz-card__actions gendaz-agenda-actions">
                 <button className="gendaz-btn" type="button" onClick={() => setModalReagendar(item)}>
                   <RotateCw size={16} /> Reagendar
@@ -380,6 +380,7 @@ export default function Agenda() {
                   <X size={16} /> Cancelar
                 </button>
               </div>
+              )}
             </article>
           ))
         ) : (

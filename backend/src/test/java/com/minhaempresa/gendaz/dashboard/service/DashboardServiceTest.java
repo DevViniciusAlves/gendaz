@@ -309,7 +309,7 @@ class DashboardServiceTest {
     }
 
     @Test
-    void pagamentoAprovadoEntraNaReceita() {
+    void pagamentoAprovadoNaoEntraNaReceitaOperacional() {
         preparaResumoBasico();
         LocalDate mesAnterior = hoje().minusMonths(1);
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
@@ -317,7 +317,23 @@ class DashboardServiceTest {
 
         DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
 
-        assertEquals(0, new BigDecimal("70.00").compareTo(resposta.receitaConfirmada()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(resposta.receitaConfirmada()));
+        assertEquals(0, BigDecimal.ZERO.compareTo(somaReceitaPorDia(resposta)));
+    }
+
+    @Test
+    void receitaOperacionalConsideraSomentePago() {
+        preparaResumoBasico();
+        LocalDate mesAnterior = hoje().minusMonths(1);
+        when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
+                .thenReturn(List.of(
+                        pagamento(1L, new BigDecimal("100.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(5).atTime(10, 0)),
+                        pagamento(2L, new BigDecimal("200.00"), StatusPagamento.PAYMENT_APPROVED, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(15).atTime(10, 0))));
+
+        DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
+
+        assertEquals(0, new BigDecimal("100.00").compareTo(resposta.receitaConfirmada()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(somaReceitaPorDia(resposta)));
     }
 
     @Test
@@ -368,7 +384,7 @@ class DashboardServiceTest {
         when(pagamentoRepository.findByEmpresaIdForFinanceiro(1L))
                 .thenReturn(List.of(
                         pagamento(1L, new BigDecimal("40.00"), StatusPagamento.PAGO, MetodoPagamento.PIX, null, mesAnterior.withDayOfMonth(2).atTime(10, 0)),
-                        pagamento(2L, new BigDecimal("60.00"), StatusPagamento.PAYMENT_APPROVED, MetodoPagamento.DEBITO, null, mesAnterior.withDayOfMonth(20).atTime(10, 0))));
+                        pagamento(2L, new BigDecimal("60.00"), StatusPagamento.PAGO, MetodoPagamento.DEBITO, null, mesAnterior.withDayOfMonth(20).atTime(10, 0))));
 
         DashboardResumoResponse resposta = service.resumo(7L, null, mesAnterior.getMonthValue(), mesAnterior.getYear());
 
