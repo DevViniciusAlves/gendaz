@@ -215,16 +215,19 @@ class PagamentoBulkIntegrationTest {
         PagamentoEntity pag3 = novoPagamento(empresa, cliente, new BigDecimal("100.00"), StatusPagamento.PENDENTE);
 
         CompanyContext.setCompanyId(empId);
-        var response = bulkService.executar(new AcaoEmMassaPagamentoRequest(
-                List.of(pag1.getId(), pag2Cancelado.getId(), pag3.getId()), "MARCAR_COMO_PAGO", empId, MetodoPagamento.PIX, null));
-        CompanyContext.clear();
+        // Regra obrigatoria: CANCELADO no lote impede toda a operacao (ZERO alteracoes).
+        try {
+            org.junit.jupiter.api.Assertions.assertThrows(BusinessException.class, () -> bulkService.executar(new AcaoEmMassaPagamentoRequest(
+                    List.of(pag1.getId(), pag2Cancelado.getId(), pag3.getId()), "MARCAR_COMO_PAGO", empId, MetodoPagamento.PIX, null)));
+        } finally {
+            CompanyContext.clear();
+        }
 
-        assertEquals(2, response.totalProcessado());
-        assertEquals(1, response.falhas().size());
-        assertEquals(StatusPagamento.PAGO, pagamentoRepository.findById(pag1.getId()).orElseThrow().getStatus());
+        // Prova ausencia de atualizacao parcial: nenhum dos tres foi alterado.
+        assertEquals(StatusPagamento.PENDENTE, pagamentoRepository.findById(pag1.getId()).orElseThrow().getStatus());
         assertEquals(StatusPagamento.CANCELADO, pagamentoRepository.findById(pag2Cancelado.getId()).orElseThrow().getStatus());
-        assertEquals(StatusPagamento.PAGO, pagamentoRepository.findById(pag3.getId()).orElseThrow().getStatus());
-        assertEquals(0, new BigDecimal("200.00").compareTo(empresaRepository.findById(empId).orElseThrow().getCaixaTotal()));
+        assertEquals(StatusPagamento.PENDENTE, pagamentoRepository.findById(pag3.getId()).orElseThrow().getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(empresaRepository.findById(empId).orElseThrow().getCaixaTotal()));
     }
 
     // ---------- TESTE PB-05: DUPLICATE ID ----------

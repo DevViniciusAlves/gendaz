@@ -48,6 +48,11 @@ public class PagamentoBulkService {
             throw new BusinessException("Empresa da sessao nao corresponde ao recurso solicitado.");
         }
         String acao = request.acao() == null ? "" : request.acao().trim().toUpperCase();
+        // Pre-validacao atomica: carrega/valida TODOS os IDs ANTES do primeiro update.
+        // Para MARCAR_COMO_PAGO / MARCAR_COMO_PENDENTE, se existir PELO MENOS UM
+        // pagamento CANCELADO, falha a operacao inteira com ZERO alteracoes.
+        // O PagamentoService continua sendo a fonte principal da regra de negocio.
+        validarLoteSemCancelado(request.ids(), acao);
         List<FalhaAcaoItem> falhas = new ArrayList<>();
         int processados = 0;
         for (Long id : request.ids()) {
@@ -74,20 +79,39 @@ public class PagamentoBulkService {
 private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest request) {
         switch (acao) {
             case "MARCAR_COMO_PAGO" -> {
-                validarPagamentoNaoCancelado(id);
                 pagamentoService.marcarPago(
                         id, new MarcarPagamentoPagoRequest(request.metodoPagamento(), request.parcelas()));
             }
             case "MARCAR_COMO_PENDENTE" -> {
-                validarPagamentoNaoCancelado(id);
                 pagamentoService.atualizarStatus(
                         id, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE));
             }
             case "EXCLUIR" -> {
-                validarPagamentoNaoCancelado(id);
+                // EXCLUIR preserva idempotencia de CANCELADO: delega direto a regra
+                // central (PagamentoService.excluirPagamento), sem trava previa aqui.
                 pagamentoService.excluirPagamento(id);
             }
             default -> throw new BusinessException("Acao de pagamento nao suportada.");
+        }
+    }
+
+    private void validarLoteSemCancelado(List<Long> ids, String acao) {
+        if (!"MARCAR_COMO_PAGO".equals(acao) && !"MARCAR_COMO_PENDENTE".equals(acao)) {
+            return;
+        }
+        for (Long id : ids) {
+            PagamentoEntity pagamento;
+            try {
+                pagamento = pagamentoService.buscarEntidade(id);
+            } catch (BusinessException | ResourceNotFoundException ex) {
+                // Item inexistente/de outra empresa: deixa o loop por item
+                // transformar em falha individual; nao falha o lote inteiro.
+                continue;
+            }
+            if (pagamento == null) {
+                continue;
+            }
+            validarPagamentoNaoCancelado(pagamento);
         }
     }
 
@@ -100,15 +124,8 @@ private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest requ
         }
     }
 
-    private void validarPagamentoNaoCancelado(Long id) {
-        PagamentoEntity pagamento = pagamentoService.buscarEntidade(id);
-        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
-            throw new BusinessException("Pagamento cancelado não pode ser alterado.");
-        }
-    }
-
     private void validarPagamentoNaoCancelado(PagamentoEntity pagamento) {
-        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+        if (pagamento != null && pagamento.getStatus() == StatusPagamento.CANCELADO) {
             throw new BusinessException("Pagamento cancelado não pode ser alterado.");
         }
     }

@@ -473,6 +473,17 @@ export default function Financeiro() {
 
   async function executarBulkPagamentos() {
     if (!bulkModal || bulkExecutando) return
+    // Protecao adicional de UX: nunca envia CANCELADO no bulk (backend bloqueia de qualquer forma).
+    const possuiCanceladoSelecionado = pagamentosSelecionados.some((id) => {
+      const pagamento = pagamentosExpandidos.find((p) => p.pagamentoId === id || p.id === id)
+      const statusPag = String(pagamento?.status || '').toUpperCase()
+      const pagamentoCancelado = statusPag === "CANCELADO"
+      return pagamentoCancelado || STATUS_CANCELADO.has(pagamento?.status)
+    })
+    if (possuiCanceladoSelecionado && (bulkModal.acao === 'MARCAR_COMO_PAGO' || bulkModal.acao === 'MARCAR_COMO_PENDENTE')) {
+      setErroPagamentos('Pagamentos cancelados não podem ser alterados e foram removidos do envio.')
+      return
+    }
     setBulkExecutando(true)
     setErroPagamentos('')
     try {
@@ -744,15 +755,19 @@ export default function Financeiro() {
             ...(selecionandoPagamentos ? [{
               key: '__selecionar',
               label: '',
-              render: (row) => (
+              render: (row) => {
+                const statusPag = String(row.status || '').toUpperCase()
+                const pagamentoCancelado = statusPag === "CANCELADO"
+                return (
                 <input
                   type="checkbox"
                   checked={pagamentosSelecionados.includes(row.pagamentoId || row.id)}
                   onChange={() => alternarPagamentoSelecionado(row.pagamentoId || row.id)}
-                  disabled={!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10 || STATUS_CANCELADO.has(row.status)}
+                  disabled={pagamentoCancelado || STATUS_CANCELADO.has(row.status) || (!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10)}
                   aria-label={`Selecionar pagamento ${row.pagamentoId || row.id}`}
                 />
-              ),
+                )
+              },
             }] : []),
             {
               key: 'clienteNome',
@@ -801,12 +816,16 @@ export default function Financeiro() {
               label: 'AÇÕES',
               render: (row) => {
                 const statusPag = String(row.status || '').toUpperCase()
+                const pagamentoCancelado = statusPag === "CANCELADO"
                 const acoesPagamento = []
-                if (STATUS_CONFIRMADO.has(statusPag)) {
+                if (pagamentoCancelado || STATUS_CANCELADO.has(statusPag)) {
+                  // CANCELADO nao mostra nenhuma acao que altere status
+                } else if (STATUS_CONFIRMADO.has(statusPag)) {
                   acoesPagamento.push({ label: 'Cancelar Pagamento', icon: X, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'CANCELADO') })
-                } else {
+                } else if (STATUS_PENDENTE.has(statusPag)) {
                   acoesPagamento.push({ label: 'Marcar como Pago', icon: Check, onClick: () => alterarStatusPagamento(row.pagamentoId || row.id, 'PAGO') })
                 }
+                // CANCELADO não mostra nenhuma ação que altere status
                 return (
                   <span className="financeiro-center-cell financeiro-center-actions">
                     <ActionMenu actions={acoesPagamento} />

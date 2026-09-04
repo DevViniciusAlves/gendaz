@@ -643,7 +643,6 @@ public class PagamentoService {
         Long empresaId = CompanyContext.requireCompanyId();
         PagamentoEntity pagamento = pagamentoRepository.findByIdAndEmpresaIdForUpdate(id, empresaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pagamento nao encontrado."));
-        validarPagamentoNaoCancelado(pagamento);
         return pagamento;
     }
 

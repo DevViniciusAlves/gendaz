@@ -313,10 +313,11 @@ class PagamentoServiceTest {
         pagamento.setStatus(StatusPagamento.CANCELADO);
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        
+
+        // Idempotente: CANCELADO continua CANCELADO, sem erro e sem save.
         service.excluirPagamento(1L);
-        
-        verify(pagamentoRepository).save(pagamento);
+
+        verify(pagamentoRepository, never()).save(any());
         assertEquals(StatusPagamento.CANCELADO, pagamento.getStatus());
     }
 
@@ -359,10 +360,17 @@ class PagamentoServiceTest {
         pagamento.setDataPagamento(LocalDateTime.now());
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        
-        service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO));
-        
-        verify(caixaDespesasService, never()).registrarPagamentoCancelado(eq(pagamento), any(), eq(StatusPagamento.CANCELADO));
+
+        // CANCELADO atual nao pode sair de CANCELADO, nem mesmo para CANCELADO.
+        org.junit.jupiter.api.Assertions.assertThrows(
+                BusinessException.class,
+                () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.CANCELADO))
+        );
+
+        verify(pagamentoRepository, never()).save(any());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+        verify(caixaDespesasService, never()).registrarPagamentoCancelado(any(), any(), any());
+        verify(caixaDespesasService, never()).registrarPagamentoRemovido(any(), any());
     }
 
     @Test
@@ -373,10 +381,14 @@ class PagamentoServiceTest {
         pagamento.setDataPagamento(LocalDateTime.now());
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(pagamentoRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
-        
-        service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO));
-        
-        verify(caixaDespesasService, never()).registrarPagamentoAprovado(pagamento);
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                BusinessException.class,
+                () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO))
+        );
+
+        verify(pagamentoRepository, never()).save(any());
+        verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
     }
 
     @Test
@@ -397,12 +409,15 @@ class PagamentoServiceTest {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
         pagamento.setStatus(StatusPagamento.CANCELADO);
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
-        
+
         org.junit.jupiter.api.Assertions.assertThrows(
                 BusinessException.class,
                 () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PAGO))
         );
+        verify(pagamentoRepository, never()).save(any());
         verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+        verify(caixaDespesasService, never()).registrarPagamentoCancelado(any(), any(), any());
+        verify(caixaDespesasService, never()).registrarPagamentoRemovido(any(), any());
     }
 
     @Test
@@ -410,12 +425,15 @@ class PagamentoServiceTest {
         PagamentoEntity pagamento = pagamentoPendente(1L, new BigDecimal("200.00"));
         pagamento.setStatus(StatusPagamento.CANCELADO);
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
-        
+
         org.junit.jupiter.api.Assertions.assertThrows(
                 BusinessException.class,
                 () -> service.atualizarStatus(1L, new AtualizarStatusPagamentoRequest(StatusPagamento.PENDENTE))
         );
+        verify(pagamentoRepository, never()).save(any());
         verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
+        verify(caixaDespesasService, never()).registrarPagamentoCancelado(any(), any(), any());
+        verify(caixaDespesasService, never()).registrarPagamentoRemovido(any(), any());
     }
 
     @Test
@@ -425,11 +443,12 @@ class PagamentoServiceTest {
         when(pagamentoRepository.findByIdAndEmpresaIdForUpdate(eq(1L), eq(9L))).thenReturn(Optional.of(pagamento));
         when(formaPagamentoEmpresaService.normalizarMetodoManual(MetodoPagamento.PIX)).thenReturn(MetodoPagamento.PIX);
         when(formaPagamentoEmpresaService.normalizarParcelas(MetodoPagamento.PIX, null)).thenReturn(null);
-        
+
         org.junit.jupiter.api.Assertions.assertThrows(
                 BusinessException.class,
                 () -> service.marcarPago(1L, new com.minhaempresa.gendaz.pagamento.dto.PagamentoDtos.MarcarPagamentoPagoRequest(MetodoPagamento.PIX, null))
         );
+        verify(pagamentoRepository, never()).save(any());
         verify(caixaDespesasService, never()).registrarPagamentoAprovado(any());
     }
 
