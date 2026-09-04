@@ -239,27 +239,100 @@ class AgendamentoExclusaoOperacionalIntegrationTest {
     }
 
     @Test
-    void excluirEmAtendimentoPausadoEFinalizadoBloqueado() {
+    void excluirEmAtendimentoViraCanceladoESomeDaAgenda() {
         EmpresaEntity empresa = novaEmpresa();
         Long empresaId = empresa.getId();
         ClienteEntity cliente = novoCliente(empresa);
         ServicoEntity servico = novoServico(empresa);
         ProfissionalEntity profissional = novoProfissional(empresa);
-        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.EM_ATENDIMENTO,
-                StatusAgendamento.PAUSADO, StatusAgendamento.FINALIZADO)) {
-            AgendamentoEntity ag = novoAgendamento(empresa, cliente, servico, profissional,
-                    bloqueado, LocalTime.of(12, 0));
-            Long agId = ag.getId();
-            CompanyContext.setCompanyId(empresaId);
-            try {
-                assertThrows(BusinessException.class,
-                        () -> agendamentoService.excluir(agId, empresaId), "excluir de " + bloqueado);
-            } finally {
-                CompanyContext.clear();
-            }
-            assertEquals(bloqueado, agendamentoRepository.findById(agId).orElseThrow().getStatus());
-            assertFalse(agendamentoRepository.findById(agId).orElseThrow().isExcluidoAgenda());
+        AgendamentoEntity ag = novoAgendamento(empresa, cliente, servico, profissional,
+                StatusAgendamento.EM_ATENDIMENTO, LocalTime.of(12, 0));
+        novoPagamento(empresa, cliente, ag, StatusPagamento.PENDENTE);
+        Long agId = ag.getId();
+
+        CompanyContext.setCompanyId(empresaId);
+        try {
+            agendamentoService.excluir(agId, empresaId);
+        } finally {
+            CompanyContext.clear();
         }
+
+        AgendamentoEntity apos = agendamentoRepository.findById(agId).orElseThrow();
+        assertEquals(StatusAgendamento.CANCELADO, apos.getStatus());
+        assertTrue(apos.isExcluidoAgenda());
+        CompanyContext.setCompanyId(empresaId);
+        try {
+            assertTrue(agendamentoService.listarPorEmpresa(empresaId, true).stream()
+                    .noneMatch(item -> item.id().equals(agId)));
+            assertTrue(agendamentoService.listarPorEmpresa(empresaId, false).stream()
+                    .anyMatch(item -> item.id().equals(agId)));
+        } finally {
+            CompanyContext.clear();
+        }
+        assertEquals(StatusPagamento.CANCELADO,
+                pagamentoRepository.findByAgendamentoIdAndEmpresaId(agId, empresaId).orElseThrow().getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(
+                empresaRepository.findById(empresaId).orElseThrow().getCaixaTotal()));
+    }
+
+    @Test
+    void excluirFinalizadoMantemStatusSomeDaAgendaEContaNoHistorico() {
+        EmpresaEntity empresa = novaEmpresa();
+        Long empresaId = empresa.getId();
+        ClienteEntity cliente = novoCliente(empresa);
+        ServicoEntity servico = novoServico(empresa);
+        ProfissionalEntity profissional = novoProfissional(empresa);
+        AgendamentoEntity ag = novoAgendamento(empresa, cliente, servico, profissional,
+                StatusAgendamento.FINALIZADO, LocalTime.of(13, 0));
+        novoPagamento(empresa, cliente, ag, StatusPagamento.PAGO);
+        Long agId = ag.getId();
+
+        CompanyContext.setCompanyId(empresaId);
+        try {
+            agendamentoService.excluir(agId, empresaId);
+        } finally {
+            CompanyContext.clear();
+        }
+
+        AgendamentoEntity apos = agendamentoRepository.findById(agId).orElseThrow();
+        // FINALIZADO nao vira CANCELADO: some da Agenda, conta no historico.
+        assertEquals(StatusAgendamento.FINALIZADO, apos.getStatus());
+        assertTrue(apos.isExcluidoAgenda());
+        CompanyContext.setCompanyId(empresaId);
+        try {
+            assertTrue(agendamentoService.listarPorEmpresa(empresaId, true).stream()
+                    .noneMatch(item -> item.id().equals(agId)));
+            assertTrue(agendamentoService.listarPorEmpresa(empresaId, false).stream()
+                    .anyMatch(item -> item.id().equals(agId)));
+        } finally {
+            CompanyContext.clear();
+        }
+        assertEquals(1L, agendamentoRepository.countConsultasFinalizadas(empresaId));
+        assertEquals(StatusPagamento.PAGO,
+                pagamentoRepository.findByAgendamentoIdAndEmpresaId(agId, empresaId).orElseThrow().getStatus());
+        assertEquals(0, BigDecimal.ZERO.compareTo(
+                empresaRepository.findById(empresaId).orElseThrow().getCaixaTotal()));
+    }
+
+    @Test
+    void excluirPausadoContinuaBloqueado() {
+        EmpresaEntity empresa = novaEmpresa();
+        Long empresaId = empresa.getId();
+        ClienteEntity cliente = novoCliente(empresa);
+        ServicoEntity servico = novoServico(empresa);
+        ProfissionalEntity profissional = novoProfissional(empresa);
+        AgendamentoEntity ag = novoAgendamento(empresa, cliente, servico, profissional,
+                StatusAgendamento.PAUSADO, LocalTime.of(12, 0));
+        Long agId = ag.getId();
+        CompanyContext.setCompanyId(empresaId);
+        try {
+            assertThrows(BusinessException.class,
+                    () -> agendamentoService.excluir(agId, empresaId), "excluir de PAUSADO");
+        } finally {
+            CompanyContext.clear();
+        }
+        assertEquals(StatusAgendamento.PAUSADO, agendamentoRepository.findById(agId).orElseThrow().getStatus());
+        assertFalse(agendamentoRepository.findById(agId).orElseThrow().isExcluidoAgenda());
     }
 
     @Test

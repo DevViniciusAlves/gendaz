@@ -210,24 +210,26 @@ public final class TransicaoStatusAgendamento {
     }
 
     /**
-     * Exclusao operacional: permitida para PENDENTE, CONFIRMADO e CANCELADO
-     * (este ultimo idempotente). Bloqueada para EM_ATENDIMENTO, PAUSADO e
-     * FINALIZADO — excluir nao pode ser porta alternativa para uma
-     * transicao que a maquina proibiu (ex.: EM_ATENDIMENTO -> CANCELADO).
+     * Exclusao operacional: permitida para PENDENTE, CONFIRMADO, CANCELADO
+     * (este ultimo idempotente), EM_ATENDIMENTO e FINALIZADO. Bloqueada para
+     * PAUSADO — excluir nao pode ser porta alternativa para uma transicao
+     * que a maquina proibiu.
+     * O destino do status e decidido por AgendamentoService.excluir:
+     * FINALIZADO mantem o status (apenas excluidoAgenda = true, sem
+     * falsificar o historico); os demais viram CANCELADO.
      */
     public static void exigirExclusao(StatusAgendamento atual) {
         if (atual == StatusAgendamento.PENDENTE
                 || atual == StatusAgendamento.CONFIRMADO
-                || atual == StatusAgendamento.CANCELADO) {
+                || atual == StatusAgendamento.CANCELADO
+                || atual == StatusAgendamento.EM_ATENDIMENTO
+                || atual == StatusAgendamento.FINALIZADO) {
             return;
-        }
-        if (atual == StatusAgendamento.EM_ATENDIMENTO) {
-            throw new BusinessException("Um atendimento em andamento nao pode ser excluido.");
         }
         if (atual == StatusAgendamento.PAUSADO) {
             throw new BusinessException("Um atendimento pausado nao pode ser excluido.");
         }
-        throw new BusinessException("Agendamentos finalizados fazem parte do historico e nao podem ser excluidos.");
+        throw new BusinessException("Status invalido para exclusao.");
     }
 
     /**

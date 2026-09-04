@@ -173,7 +173,7 @@ class AgendamentoBulkParcialIntegrationTest {
                 StatusAgendamento.PENDENTE, LocalTime.of(9, 0));
         PagamentoEntity pagA = novoPagamento(empresa, cliente, a, StatusPagamento.PENDENTE);
         AgendamentoEntity b = novoAgendamento(empresa, cliente, servico, profissional,
-                StatusAgendamento.FINALIZADO, LocalTime.of(10, 0));
+                StatusAgendamento.PAUSADO, LocalTime.of(10, 0));
         PagamentoEntity pagB = novoPagamento(empresa, cliente, b, StatusPagamento.PAGO);
         AgendamentoEntity c = novoAgendamento(empresa, cliente, servico, profissional,
                 StatusAgendamento.CONFIRMADO, LocalTime.of(11, 0));
@@ -189,7 +189,7 @@ class AgendamentoBulkParcialIntegrationTest {
 
         // Estado REAL persistido no banco (releitura, nao memoria):
         assertEquals(StatusAgendamento.CANCELADO, statusDe(a.getId()));
-        assertEquals(StatusAgendamento.FINALIZADO, statusDe(b.getId()));
+        assertEquals(StatusAgendamento.PAUSADO, statusDe(b.getId()));
         assertEquals(StatusAgendamento.CANCELADO, statusDe(c.getId()));
         // Pagamento PAGO do item invalido permanece intacto (sem estorno implicito).
         assertEquals(StatusPagamento.PAGO, pagamentoDe(pagB.getId()));
@@ -211,7 +211,7 @@ class AgendamentoBulkParcialIntegrationTest {
                 StatusAgendamento.PENDENTE, LocalTime.of(9, 0));
         novoPagamento(empresa, cliente, primeiro, StatusPagamento.PENDENTE);
         AgendamentoEntity invalido = novoAgendamento(empresa, cliente, servico, profissional,
-                StatusAgendamento.FINALIZADO, LocalTime.of(10, 0));
+                StatusAgendamento.PAUSADO, LocalTime.of(10, 0));
         novoPagamento(empresa, cliente, invalido, StatusPagamento.PAGO);
 
         CompanyContext.setCompanyId(empresaId);
@@ -222,7 +222,7 @@ class AgendamentoBulkParcialIntegrationTest {
         assertEquals(1, resposta.totalProcessado());
         assertEquals(1, resposta.falhas().size());
         assertEquals(StatusAgendamento.CANCELADO, statusDe(primeiro.getId()));
-        assertEquals(StatusAgendamento.FINALIZADO, statusDe(invalido.getId()));
+        assertEquals(StatusAgendamento.PAUSADO, statusDe(invalido.getId()));
     }
 
     // ---------- TESTE 3: falha no primeiro nao impede o segundo ----------
@@ -236,7 +236,7 @@ class AgendamentoBulkParcialIntegrationTest {
         ProfissionalEntity profissional = novoProfissional(empresa);
 
         AgendamentoEntity invalido = novoAgendamento(empresa, cliente, servico, profissional,
-                StatusAgendamento.FINALIZADO, LocalTime.of(9, 0));
+                StatusAgendamento.PAUSADO, LocalTime.of(9, 0));
         novoPagamento(empresa, cliente, invalido, StatusPagamento.PAGO);
         AgendamentoEntity valido = novoAgendamento(empresa, cliente, servico, profissional,
                 StatusAgendamento.CONFIRMADO, LocalTime.of(10, 0));
@@ -249,7 +249,7 @@ class AgendamentoBulkParcialIntegrationTest {
 
         assertEquals(1, resposta.totalProcessado());
         assertEquals(1, resposta.falhas().size());
-        assertEquals(StatusAgendamento.FINALIZADO, statusDe(invalido.getId()));
+        assertEquals(StatusAgendamento.PAUSADO, statusDe(invalido.getId()));
         assertEquals(StatusAgendamento.CANCELADO, statusDe(valido.getId()));
     }
 

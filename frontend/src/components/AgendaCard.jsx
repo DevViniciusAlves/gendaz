@@ -99,7 +99,10 @@ export default function AgendaCard({
               {onCancelar && (status === 'PENDENTE' || status === 'CONFIRMADO' || status === 'EM_ATENDIMENTO' || status === 'PAUSADO') && (
                 <button type="button" onClick={() => { onCancelar(agendamento); setMenuAberto(false) }}>Cancelar</button>
               )}
-              {onExcluir && status !== 'EM_ATENDIMENTO' && status !== 'PAUSADO' && status !== 'FINALIZADO' && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
+              {/* Excluir (soft delete): disponivel em todos os estados, exceto
+                  PAUSADO (travado no backend). FINALIZADO mantem o status e
+                  apenas sai da Agenda operacional. */}
+              {onExcluir && status !== 'PAUSADO' && <button type="button" className="agenda-card-dropdown-danger" onClick={() => { onExcluir(agendamento); setMenuAberto(false) }}>Excluir</button>}
             </div>
           )}
         </div>

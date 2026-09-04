@@ -377,13 +377,15 @@ public class AgendamentoService {
      * DELETE fisico no fluxo normal. Obedece integralmente a maquina de
      * estados ({@code TransicaoStatusAgendamento.exigirExclusao}), ANTES de
      * qualquer leitura de pagamento ou modificacao:
-     * - PENDENTE / CONFIRMADO: status -> CANCELADO + excluidoAgenda = true;
-     *   pagamento PENDENTE -> CANCELADO (PAGO intacto, via regra central).
+     * - PENDENTE / CONFIRMADO / EM_ATENDIMENTO: status -> CANCELADO +
+     *   excluidoAgenda = true; pagamento PENDENTE -> CANCELADO (PAGO intacto,
+     *   via regra central).
      * - CANCELADO: idempotente — apenas garante excluidoAgenda = true, sem
      *   ressuscitar pagamento e sem mexer no Caixa.
-     * - EM_ATENDIMENTO / PAUSADO / FINALIZADO: bloqueado com erro de negocio,
-     *   sem tocar em pagamento, Caixa, movimentacao ou no proprio registro.
-     *   Para remover esses da Agenda: primeiro CANCELAR, depois EXCLUIR.
+     * - FINALIZADO: mantem o status (historico nao e falsificado), apenas
+     *   excluidoAgenda = true; pagamento PAGO continua PAGO, Caixa intacto.
+     * - PAUSADO: bloqueado com erro de negocio, sem tocar em pagamento,
+     *   Caixa, movimentacao ou no proprio registro.
      * Excluir nunca e porta alternativa para transicao proibida.
      */
     @Transactional
@@ -393,7 +395,11 @@ public class AgendamentoService {
         // cancelarPagamentoPendenteDoAgendamento). Nunca o inverso.
         AgendamentoEntity agendamento = carregarParaAtualizacao(id, empresaId);
         TransicaoStatusAgendamento.exigirExclusao(agendamento.getStatus());
-        agendamento.setStatus(StatusAgendamento.CANCELADO);
+        // FINALIZADO aconteceu de verdade: nao vira CANCELADO (nao falsifica
+        // o historico); apenas sai da Agenda operacional via excluidoAgenda.
+        if (agendamento.getStatus() != StatusAgendamento.FINALIZADO) {
+            agendamento.setStatus(StatusAgendamento.CANCELADO);
+        }
         agendamento.setExcluidoAgenda(true);
         agendamentoRepository.save(agendamento);
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());

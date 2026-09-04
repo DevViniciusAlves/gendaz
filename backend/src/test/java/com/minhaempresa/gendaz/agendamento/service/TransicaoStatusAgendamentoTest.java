@@ -82,16 +82,14 @@ class TransicaoStatusAgendamentoTest {
     }
 
     @Test
-    void exclusaoPermitePendenteConfirmadoCanceladoEBloqueiaEmAndamentoPausadoFinalizado() {
+    void exclusaoPermitePendenteConfirmadoCanceladoEmAndamentoEFinalizadoEBloqueiaPausado() {
         assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.PENDENTE));
         assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.CONFIRMADO));
         assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.CANCELADO));
-        assertThrows(BusinessException.class,
-                () -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.EM_ATENDIMENTO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.EM_ATENDIMENTO));
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.FINALIZADO));
         assertThrows(BusinessException.class,
                 () -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.PAUSADO));
-        assertThrows(BusinessException.class,
-                () -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.FINALIZADO));
     }
 
     @Test
@@ -115,8 +113,9 @@ class TransicaoStatusAgendamentoTest {
                 () -> TransicaoStatusAgendamento.exigirRetomada(StatusAgendamento.FINALIZADO));
         assertThrows(BusinessException.class,
                 () -> TransicaoStatusAgendamento.destinoReagendamento(StatusAgendamento.FINALIZADO));
-        assertThrows(BusinessException.class,
-                () -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.FINALIZADO));
+        // Exclusao de FINALIZADO e soft delete (mantem o status, apenas
+        // excluidoAgenda = true): nao e saida de estado via reabrir.
+        assertDoesNotThrow(() -> TransicaoStatusAgendamento.exigirExclusao(StatusAgendamento.FINALIZADO));
         assertThrows(BusinessException.class,
                 () -> TransicaoStatusAgendamento.exigirReabertura(StatusAgendamento.PENDENTE));
     }

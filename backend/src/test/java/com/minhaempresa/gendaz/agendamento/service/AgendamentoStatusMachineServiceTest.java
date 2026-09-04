@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.agendamento.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -393,9 +394,11 @@ class AgendamentoStatusMachineServiceTest {
 
         var resp = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(12L), "EXCLUIR", 1L));
 
-        assertEquals(0, resp.totalProcessado());
-        assertEquals(1, resp.falhas().size());
+        // EXCLUIR de FINALIZADO e permitido, mas mantem o status (soft delete).
+        assertEquals(1, resp.totalProcessado());
+        assertEquals(0, resp.falhas().size());
         assertEquals(StatusAgendamento.FINALIZADO, finalizado.getStatus());
+        assertTrue(finalizado.isExcluidoAgenda());
     }
 
     // ---- Meu Gendaz ----

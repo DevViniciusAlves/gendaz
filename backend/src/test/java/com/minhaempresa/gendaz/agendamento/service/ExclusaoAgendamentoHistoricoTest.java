@@ -158,17 +158,20 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     @Test
-    void excluirAgendamentoFinalizadoBloqueadoMantemHistorico() {
+    void excluirAgendamentoFinalizadoMantemStatusESomeDaAgenda() {
         AgendamentoEntity ag = agendamento(11L, StatusAgendamento.FINALIZADO);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(11L, 1L)).thenReturn(Optional.of(ag));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(11L, 1L)).thenReturn(Optional.empty());
 
-        assertThrows(BusinessException.class,
-                () -> agendamentoService.excluir(11L, 1L));
+        agendamentoService.excluir(11L, 1L);
 
+        // FINALIZADO nao vira CANCELADO: historico preservado, apenas sai da Agenda.
         assertEquals(StatusAgendamento.FINALIZADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
         verify(agendamentoRepository, never()).delete(any());
-        verify(agendamentoRepository, never()).save(any());
+        verify(agendamentoRepository).save(ag);
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(11L, 1L);
+        verifyNoInteractions(caixaDespesasService);
     }
 
     @Test
@@ -222,20 +225,53 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     @Test
-    void excluirEmAndamentoOuPausadoBloqueadoSemTocarEmNada() {
-        for (StatusAgendamento bloqueado : List.of(StatusAgendamento.EM_ATENDIMENTO, StatusAgendamento.PAUSADO)) {
-            AgendamentoEntity ag = agendamento(15L, bloqueado);
-            PagamentoEntity pago = pagamentoPago(ag);
-            when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(15L, 1L)).thenReturn(Optional.of(ag));
-            when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(15L, 1L))
-                    .thenReturn(Optional.of(pago));
+    void excluirEmAndamentoViraCanceladoComSoftDelete() {
+        AgendamentoEntity ag = agendamento(15L, StatusAgendamento.EM_ATENDIMENTO);
+        PagamentoEntity pendente = pagamentoPendente(ag);
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(15L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(15L, 1L))
+                .thenReturn(Optional.of(pendente));
 
-            assertThrows(BusinessException.class, () -> agendamentoService.excluir(15L, 1L),
-                    "excluir de " + bloqueado);
+        agendamentoService.excluir(15L, 1L);
 
-            assertEquals(bloqueado, ag.getStatus());
-            assertEquals(StatusPagamento.PAGO, pago.getStatus());
-        }
+        assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        verify(agendamentoRepository, never()).delete(any());
+        verify(agendamentoRepository).save(ag);
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(15L, 1L);
+        verifyNoInteractions(caixaDespesasService);
+    }
+
+    @Test
+    void excluirEmAndamentoComPagamentoPagoPreservaPagamentoECaixa() {
+        AgendamentoEntity ag = agendamento(18L, StatusAgendamento.EM_ATENDIMENTO);
+        PagamentoEntity pago = pagamentoPago(ag);
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(18L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(18L, 1L))
+                .thenReturn(Optional.of(pago));
+
+        agendamentoService.excluir(18L, 1L);
+
+        assertEquals(StatusAgendamento.CANCELADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
+        verify(agendamentoRepository, never()).delete(any());
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(18L, 1L);
+        verifyNoInteractions(caixaDespesasService);
+    }
+
+    @Test
+    void excluirPausadoContinuaBloqueadoSemTocarEmNada() {
+        AgendamentoEntity ag = agendamento(15L, StatusAgendamento.PAUSADO);
+        PagamentoEntity pago = pagamentoPago(ag);
+        when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(15L, 1L)).thenReturn(Optional.of(ag));
+        when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(15L, 1L))
+                .thenReturn(Optional.of(pago));
+
+        assertThrows(BusinessException.class, () -> agendamentoService.excluir(15L, 1L));
+
+        assertEquals(StatusAgendamento.PAUSADO, ag.getStatus());
+        assertEquals(StatusPagamento.PAGO, pago.getStatus());
         verify(agendamentoRepository, never()).delete(any());
         verify(agendamentoRepository, never()).save(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
@@ -244,20 +280,21 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     @Test
-    void excluirFinalizadoComPagamentoBloqueadoSemTocarEmNada() {
+    void excluirFinalizadoComPagamentoPagoPreservaPagamentoECaixa() {
         AgendamentoEntity ag = agendamento(16L, StatusAgendamento.FINALIZADO);
         PagamentoEntity pago = pagamentoPago(ag);
         when(agendamentoRepository.findByIdAndEmpresaIdForUpdate(16L, 1L)).thenReturn(Optional.of(ag));
         when(pagamentoRepository.findByAgendamentoIdAndEmpresaIdForUpdate(16L, 1L))
                 .thenReturn(Optional.of(pago));
 
-        assertThrows(BusinessException.class, () -> agendamentoService.excluir(16L, 1L));
+        agendamentoService.excluir(16L, 1L);
 
+        // FINALIZADO continua FINALIZADO; pagamento PAGO e Caixa intactos.
         assertEquals(StatusAgendamento.FINALIZADO, ag.getStatus());
+        assertEquals(true, ag.isExcluidoAgenda());
         assertEquals(StatusPagamento.PAGO, pago.getStatus());
         verify(agendamentoRepository, never()).delete(any());
-        verify(agendamentoRepository, never()).save(any());
-        verifyNoInteractions(pagamentoService);
+        verify(pagamentoService).cancelarPagamentoPendenteDoAgendamento(16L, 1L);
         verifyNoInteractions(caixaDespesasService);
     }
 
@@ -275,7 +312,7 @@ class ExclusaoAgendamentoHistoricoTest {
     }
 
     @Test
-    void bulkExcluirBloqueiaEmAndamentoPausadoEFinalizado() {
+    void bulkExcluirProcessaEmAndamentoEFinalizadoEBloqueiaPausado() {
         AgendamentoBulkService bulk = new AgendamentoBulkService(agendamentoService);
         AgendamentoEntity emAt = agendamento(21L, StatusAgendamento.EM_ATENDIMENTO);
         AgendamentoEntity pausado = agendamento(22L, StatusAgendamento.PAUSADO);
@@ -286,11 +323,13 @@ class ExclusaoAgendamentoHistoricoTest {
 
         var response = bulk.executar(new AcaoEmMassaAgendamentoRequest(List.of(21L, 22L, 23L), "EXCLUIR", 1L));
 
-        assertEquals(0, response.totalProcessado());
-        assertEquals(3, response.falhas().size());
-        assertEquals(StatusAgendamento.EM_ATENDIMENTO, emAt.getStatus());
+        assertEquals(2, response.totalProcessado());
+        assertEquals(1, response.falhas().size());
+        assertEquals(StatusAgendamento.CANCELADO, emAt.getStatus());
+        assertEquals(true, emAt.isExcluidoAgenda());
         assertEquals(StatusAgendamento.PAUSADO, pausado.getStatus());
         assertEquals(StatusAgendamento.FINALIZADO, finalizado.getStatus());
+        assertEquals(true, finalizado.isExcluidoAgenda());
         verify(agendamentoRepository, never()).delete(any());
         verify(pagamentoRepository, never()).deleteByAgendamentoIdAndEmpresaId(anyLong(), anyLong());
     }
