@@ -21,20 +21,21 @@ import org.springframework.stereotype.Service;
 /**
  * Orquestrador de operacoes em massa sobre pagamentos.
  *
- * <p>Semantica real do produto: SUCESSO PARCIAL (resposta com
- * {@code processados} + {@code falhas} por item). Por isso este metodo NAO
- * possui {@code @Transactional}: cada item delega a um metodo publico
- * transacional do {@link PagamentoService} (bean diferente, via proxy
- * Spring), de modo que cada item tenha sua propria transacao fisica. Uma
- * {@code BusinessException} no item 2 rollbacka SOMENTE o item 2 — nunca
- * marca os demais como rollback-only (sem {@code UnexpectedRollbackException}
- * nem rollback total silencioso).
+ * <p>Regra obrigatoria CANCELADO (atomica): para {@code MARCAR_COMO_PAGO} e
+ * {@code MARCAR_COMO_PENDENTE}, TODOS os IDs sao carregados/validados ANTES
+ * do primeiro update ({@link #validarLoteSemCancelado}). Se existir PELO
+ * MENOS UM pagamento CANCELADO, a operacao inteira falha com
+ * {@code BusinessException} e ZERO pagamentos sao modificados — nunca
+ * {@code [PAGO, PAGO, falha]}. O {@link PagamentoService} continua sendo a
+ * fonte principal da regra (segunda barreira por item, com lock).
  *
- * <p>Este service NAO implementa regra financeira: nenhum
- * {@code pagamento.setStatus(...)}, nenhum save/delete e nenhuma leitura de
- * status para decidir write posterior aqui. Toda decisao acontece dentro do
- * {@link PagamentoService}, depois do lock PESSIMISTIC_WRITE do pagamento
- * (ordem: PAGAMENTO -&gt; EMPRESA quando ha Caixa).
+ * <p>Para os demais casos (ex.: ID inexistente/de outra empresa), a semantica
+ * e SUCESSO PARCIAL por item (resposta com {@code processados} +
+ * {@code falhas}). Por isso este metodo NAO possui {@code @Transactional}:
+ * cada item delega a um metodo publico transacional do {@link PagamentoService}.
+ *
+ * <p>EXCLUIR nunca tem trava previa aqui: delega direto a regra central para
+ * preservar a idempotencia de {@code excluirPagamento(CANCELADO)}.
  */
 @Service
 @RequiredArgsConstructor
