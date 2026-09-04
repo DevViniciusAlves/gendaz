@@ -673,6 +673,18 @@ public class InsightsService {
             ));
         }
 
+        if (atRisk > 0) {
+            alertas.add(new InsightItem(
+                    "Clientes em risco",
+                    atRisk == 1
+                            ? "1 cliente está há mais de 30 dias sem voltar."
+                            : atRisk + " clientes estão há mais de 30 dias sem voltar.",
+                    atRisk == 1 ? "1 cliente para recuperar" : atRisk + " clientes para recuperar",
+                    "Alta",
+                    "alerta"
+            ));
+        }
+
         long servicosSemMovimento = servicos.stream().filter(servico -> longo(servico.get("vendas_30d")) <= 0).count();
         long profissionaisSemMovimento = profissionais.stream().filter(profissional -> longo(profissional.get("agendamentos_30d")) <= 0).count();
         if (servicosSemMovimento > 0 || profissionaisSemMovimento > 0) {
@@ -714,6 +726,17 @@ public class InsightsService {
                     "Próxima Melhor Ação",
                     "Priorize a cobrança dos pagamentos em aberto para recuperar caixa imediato.",
                     formatarMoeda(pendente),
+                    "Alta",
+                    "acao"
+            );
+        }
+        if (atRisk > 0) {
+            return new InsightItem(
+                    "Próxima Melhor Ação",
+                    atRisk == 1
+                            ? "Recupere o cliente afastado com uma mensagem de retorno antes que ele deixe a base."
+                            : "Recupere os clientes afastados com uma campanha de retorno antes que deixem a base.",
+                    atRisk == 1 ? "1 cliente para recuperar" : atRisk + " clientes para recuperar",
                     "Alta",
                     "acao"
             );
@@ -793,6 +816,18 @@ public class InsightsService {
     }
 
     private InsightItem montarPrincipalClienteRisco(long atRisk, boolean clienteEmRisco) {
+        if (clienteEmRisco || atRisk > 0) {
+            String descricao = atRisk == 1
+                    ? "1 cliente está há mais de 30 dias sem voltar e pode deixar a base."
+                    : atRisk + " clientes estão há mais de 30 dias sem voltar e podem deixar a base.";
+            return new InsightItem(
+                    "Base de Clientes",
+                    descricao,
+                    atRisk == 1 ? "1 cliente para recuperar" : atRisk + " clientes para recuperar",
+                    "Alta",
+                    "cliente"
+            );
+        }
         return new InsightItem(
                 "Base de Clientes",
                 "A base cadastrada não mostra alerta de clientes no momento.",

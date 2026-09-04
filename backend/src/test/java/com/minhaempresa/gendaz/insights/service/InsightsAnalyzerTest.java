@@ -125,13 +125,13 @@ class InsightsAnalyzerTest {
     @SuppressWarnings("unchecked")
     void topClientesPriorizaQuemEstaHaMaisTempoSemAgendar() {
         LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
-        ClienteEntity recente = cliente(1L, "Recente");
+        ClienteEntity afastado = cliente(1L, "Afastado");
         ClienteEntity antigo = cliente(2L, "Antigo");
-        AgendamentoEntity agRecente = agendamento(1L, recente, null, hoje.minusDays(2));
+        AgendamentoEntity agAfastado = agendamento(1L, afastado, null, hoje.minusDays(35));
         AgendamentoEntity agAntigo = agendamento(2L, antigo, null, hoje.minusDays(50));
         ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
                 .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
-        base(servico, List.of(), List.of(agRecente, agAntigo), List.of(recente, antigo));
+        base(servico, List.of(), List.of(agAfastado, agAntigo), List.of(afastado, antigo));
 
         Map<String, Object> dados = analyzer.coletarDados(1L, 30);
 
@@ -163,6 +163,48 @@ class InsightsAnalyzerTest {
         assertEquals(1, ((Number) ativar.get("total")).intValue());
         List<Map<String, Object>> pendentes = (List<Map<String, Object>>) ativar.get("itens");
         assertEquals("NuncaVeio", String.valueOf(pendentes.get(0).get("nome")));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void paymentApprovedNaoContaComoReceitaOperacional() {
+        ZoneId zone = ZoneId.of("America/Cuiaba");
+        LocalDate hoje = LocalDate.now(zone);
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        AgendamentoEntity agendamento = agendamento(1L, null, servico, hoje.minusDays(5));
+        PagamentoEntity plano = pagamento(1L, agendamento, new BigDecimal("200"),
+                StatusPagamento.PAYMENT_APPROVED, LocalDateTime.now(zone).minusDays(5));
+        base(servico, List.of(plano), List.of());
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> financeiro = (Map<String, Object>) dados.get("financeiro");
+        assertEquals(0.0, ((Number) financeiro.get("receitaPeriodoAtual")).doubleValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void topClientesExcluiQuemVoltouRecentemente() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ClienteEntity joao = cliente(1L, "Joao");
+        ClienteEntity maria = cliente(2L, "Maria");
+        ClienteEntity carlos = cliente(3L, "Carlos");
+        AgendamentoEntity agJoao = agendamento(1L, joao, null, hoje.minusDays(3));
+        AgendamentoEntity agMaria = agendamento(2L, maria, null, hoje.minusDays(8));
+        AgendamentoEntity agCarlos = agendamento(3L, carlos, null, hoje.minusDays(12));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        base(servico, List.of(), List.of(agJoao, agMaria, agCarlos), List.of(joao, maria, carlos));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> top = (Map<String, Object>) dados.get("topClientes");
+        List<Map<String, Object>> itens = (List<Map<String, Object>>) top.get("itens");
+        assertTrue(itens.isEmpty());
+
+        Map<String, Object> ativar = (Map<String, Object>) dados.get("clientesParaAtivar");
+        assertEquals(0, ((Number) ativar.get("total")).intValue());
     }
 
     @Test

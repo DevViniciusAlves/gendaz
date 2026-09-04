@@ -232,9 +232,21 @@ public class InsightsAnalyzer {
         return Math.max(0, java.time.temporal.ChronoUnit.DAYS.between(ultimaData, hoje));
     }
 
+    private Long diasSemAgendar(Map<String, Object> item) {
+        Object valor = item.get("dias_sem_agendar");
+        if (valor == null) {
+            return null;
+        }
+        try {
+            return Long.parseLong(String.valueOf(valor));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     private Map<String, Object> topClientesParaRecuperar(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
         List<Map<String, Object>> comHistorico = infoClientes(clientes, agendamentos, ultimaDataPorCliente, hoje).stream()
-                .filter(item -> item.get("dias_sem_agendar") != null)
+                .filter(item -> diasSemAgendar(item) != null && diasSemAgendar(item) > 30)
                 .sorted((a, b) -> {
                     long diasA = Long.parseLong(String.valueOf(a.get("dias_sem_agendar")));
                     long diasB = Long.parseLong(String.valueOf(b.get("dias_sem_agendar")));
@@ -246,8 +258,9 @@ public class InsightsAnalyzer {
                 })
                 .limit(5)
                 .toList();
-        // Recuperação: SOMENTE quem já foi atendido e está há mais tempo sem voltar.
+        // Recuperação: SOMENTE quem já foi atendido e está afastado há mais de 30 dias.
         // Quem nunca foi atendido é ativação/conversão e vai em "clientesParaAtivar".
+        // Quem voltou nos últimos 30 dias não entra em nenhuma das duas listas.
         return Map.of("itens", comHistorico);
     }
 
@@ -336,10 +349,10 @@ public class InsightsAnalyzer {
 
     private boolean isPago(StatusPagamento status) {
         if (status == null) return false;
-        return switch (status) {
-            case PAGO, PAYMENT_APPROVED -> true;
-            default -> false;
-        };
+        // Dinheiro confirmado no fluxo operacional: somente PAGO.
+        // PAYMENT_APPROVED pertence ao fluxo de plano/assinatura (ver PagamentoService)
+        // e nao pode inflar receita, ticket medio ou somas do Insights.
+        return status == StatusPagamento.PAGO;
     }
 }
 

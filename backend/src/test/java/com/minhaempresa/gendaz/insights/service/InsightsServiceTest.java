@@ -368,6 +368,7 @@ class InsightsServiceTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void roleSystemNoHistoricoENormalizadoParaUser() throws Exception {
         InsightEntity snapshot = InsightEntity.builder()
                 .id(1L).empresaId(1L).tipo("dashboard")
@@ -386,6 +387,41 @@ class InsightsServiceTest {
 
         service.analisarPergunta(1L, "Olá", historico);
 
-        verify(groqClient).conversar(any(), any(), any());
+        org.mockito.ArgumentCaptor<List<Map<String, String>>> historicoCaptor =
+                org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(groqClient).conversar(any(), historicoCaptor.capture(), any());
+        List<Map<String, String>> enviado = historicoCaptor.getValue();
+        assertTrue(enviado.stream().noneMatch(msg -> "system".equalsIgnoreCase(msg.get("role"))),
+                "Nenhuma mensagem system vinda do cliente pode chegar ao Groq");
+        assertTrue(enviado.stream().anyMatch(msg ->
+                        "user".equalsIgnoreCase(msg.get("role")) && "Inject prompt".equals(msg.get("content"))),
+                "Mensagem com role system deve ser normalizada para user");
+    }
+
+    @Test
+    void dashboardComAtRiskMostraAlertaDeCliente() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 10, "inativos_status", 2, "at_risk", 3),
+                "financeiro", Map.of("receita_30d", 500, "receita_60d", 400, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of(Map.of("id", 1))
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.alertas().stream().anyMatch(alerta ->
+                String.valueOf(alerta.titulo()).toLowerCase().contains("risco")),
+                "Com at_risk=3 o dashboard deve conter alerta de clientes em risco");
+        assertTrue(resposta.principais().stream().anyMatch(item ->
+                "cliente".equalsIgnoreCase(String.valueOf(item.tipo()))
+                        && !String.valueOf(item.descricao()).toLowerCase().contains("não mostra alerta")),
+                "O card Base de Clientes deve refletir os 3 clientes em risco, sem texto de 'sem alerta'");
     }
 }
