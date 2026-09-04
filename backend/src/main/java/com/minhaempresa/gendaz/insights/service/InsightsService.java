@@ -382,10 +382,10 @@ public class InsightsService {
             acoes = limitarAcoes(groq.get("recomendacoes"), acoes);
         }
 
-        principais = filtrarItensSemBaseReal(principais, clientesInativos, servicosInativos, profissionaisInativos);
-        alertas = filtrarItensSemBaseReal(alertas, clientesInativos, servicosInativos, profissionaisInativos);
-        oportunidades = filtrarItensSemBaseReal(oportunidades, clientesInativos, servicosInativos, profissionaisInativos);
-        acoes = filtrarAcoesSemBaseReal(acoes, clientesInativos, servicosInativos, profissionaisInativos);
+        principais = filtrarItensSemBaseReal(principais, atRisk, clientesInativos, servicosInativos, profissionaisInativos);
+        alertas = filtrarItensSemBaseReal(alertas, atRisk, clientesInativos, servicosInativos, profissionaisInativos);
+        oportunidades = filtrarItensSemBaseReal(oportunidades, atRisk, clientesInativos, servicosInativos, profissionaisInativos);
+        acoes = filtrarAcoesSemBaseReal(acoes, atRisk, clientesInativos, servicosInativos, profissionaisInativos);
 
         if (acoes.isEmpty()) {
             acoes = List.of(new InsightAction("Nenhuma acao recomendada no momento", "Baixa", "Os dados reais não indicam uma acao prioritaria agora"));
@@ -867,31 +867,39 @@ public class InsightsService {
         return itens.isEmpty() ? fallback : itens.size() > 4 ? itens.subList(0, 4) : itens;
     }
 
-    private List<InsightItem> filtrarItensSemBaseReal(List<InsightItem> itens, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+    private List<InsightItem> filtrarItensSemBaseReal(List<InsightItem> itens, long atRisk, long clientesInativos, long servicosInativos, long profissionaisInativos) {
         if (itens == null || itens.isEmpty()) return List.of();
         return itens.stream()
-                .filter(item -> temBaseReal(textoDoItem(item), clientesInativos, servicosInativos, profissionaisInativos))
+                .filter(item -> temBaseReal(textoDoItem(item), atRisk, clientesInativos, servicosInativos, profissionaisInativos))
                 .toList();
     }
 
-    private List<InsightAction> filtrarAcoesSemBaseReal(List<InsightAction> acoes, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+    private List<InsightAction> filtrarAcoesSemBaseReal(List<InsightAction> acoes, long atRisk, long clientesInativos, long servicosInativos, long profissionaisInativos) {
         if (acoes == null || acoes.isEmpty()) return List.of();
         return acoes.stream()
-                .filter(acao -> temBaseReal(textoDaAcao(acao), clientesInativos, servicosInativos, profissionaisInativos))
+                .filter(acao -> temBaseReal(textoDaAcao(acao), atRisk, clientesInativos, servicosInativos, profissionaisInativos))
                 .toList();
     }
 
-    private boolean temBaseReal(String texto, long clientesInativos, long servicosInativos, long profissionaisInativos) {
+    private boolean temBaseReal(String texto, long atRisk, long clientesInativos, long servicosInativos, long profissionaisInativos) {
         String normalizado = texto == null ? "" : texto.toLowerCase();
         boolean mencionaCliente = normalizado.contains("client");
-        boolean clienteSemBase =
-                normalizado.contains("reativ")
-                        || normalizado.contains("inativ")
-                        || normalizado.contains("risco")
+        // Risco (at_risk) e inatividade (clientesInativos) sao metricas DISTINTAS:
+        // cada mencao e validada contra a propria base, nunca cruzada. Um cliente
+        // pode estar ATIVO e ha 45 dias sem voltar (at_risk=1, inativos=0) com
+        // alerta de risco legitimo.
+        boolean mencionaRisco =
+                normalizado.contains("risco")
                         || normalizado.contains("churn")
                         || normalizado.contains("sem retorno")
                         || normalizado.contains("sem agendamento");
-        if (mencionaCliente && clienteSemBase && clientesInativos <= 0) {
+        boolean mencionaInativo =
+                normalizado.contains("reativ")
+                        || normalizado.contains("inativ");
+        if (mencionaCliente && mencionaRisco && atRisk <= 0) {
+            return false;
+        }
+        if (mencionaCliente && mencionaInativo && clientesInativos <= 0) {
             return false;
         }
         if (normalizado.contains("servi") && normalizado.contains("inativ") && servicosInativos <= 0) {

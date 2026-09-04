@@ -69,6 +69,10 @@ public class InsightsAnalyzer {
         Map<Long, LocalDate> ultimaDataPorCliente = new HashMap<>();
         for (AgendamentoEntity agendamento : agendamentos) {
             if (agendamento.getCliente() == null || agendamento.getData() == null) continue;
+            // A ultima data de referencia historica considera SOMENTE atendimentos
+            // validos: um CANCELADO nunca pode virar "ultima utilizacao" do cliente
+            // (senao quem so teve cancelamento cairia em "recuperar"/at_risk).
+            if (agendamento.getStatus() == StatusAgendamento.CANCELADO) continue;
             ultimaDataPorCliente.merge(
                     agendamento.getCliente().getId(),
                     agendamento.getData(),
@@ -244,9 +248,22 @@ public class InsightsAnalyzer {
         }
     }
 
+    private long totalAtendimentos(Map<String, Object> item) {
+        Object valor = item.get("total_atendimentos");
+        if (valor instanceof Number numero) {
+            return numero.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(valor));
+        } catch (NumberFormatException | NullPointerException e) {
+            return 0L;
+        }
+    }
+
     private Map<String, Object> topClientesParaRecuperar(List<ClienteEntity> clientes, List<AgendamentoEntity> agendamentos, Map<Long, LocalDate> ultimaDataPorCliente, LocalDate hoje) {
         List<Map<String, Object>> comHistorico = infoClientes(clientes, agendamentos, ultimaDataPorCliente, hoje).stream()
-                .filter(item -> diasSemAgendar(item) != null && diasSemAgendar(item) > 30)
+                .filter(item -> totalAtendimentos(item) > 0
+                        && diasSemAgendar(item) != null && diasSemAgendar(item) > 30)
                 .sorted((a, b) -> {
                     long diasA = Long.parseLong(String.valueOf(a.get("dias_sem_agendar")));
                     long diasB = Long.parseLong(String.valueOf(b.get("dias_sem_agendar")));

@@ -167,6 +167,67 @@ class InsightsAnalyzerTest {
 
     @Test
     @SuppressWarnings("unchecked")
+    void somenteCanceladoNaoEntraEmRecuperarNemAtRisk() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ClienteEntity soCancelado = cliente(4L, "SoCancelado");
+        AgendamentoEntity cancelado = AgendamentoEntity.builder().id(4L).cliente(soCancelado)
+                .data(hoje.minusDays(60)).horaInicio(LocalTime.of(9, 0)).horaFim(LocalTime.of(10, 0))
+                .status(StatusAgendamento.CANCELADO).build();
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        base(servico, List.of(), List.of(cancelado), List.of(soCancelado));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> top = (Map<String, Object>) dados.get("topClientes");
+        List<Map<String, Object>> itens = (List<Map<String, Object>>) top.get("itens");
+        assertTrue(itens.isEmpty(), "Quem so teve CANCELADO nao e recuperacao");
+        Map<String, Object> clientes = (Map<String, Object>) dados.get("clientes");
+        assertEquals(0L, ((Number) clientes.get("at_risk")).longValue());
+        Map<String, Object> ativar = (Map<String, Object>) dados.get("clientesParaAtivar");
+        assertEquals(1, ((Number) ativar.get("total")).intValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void atendimentoValidoAntigoEntraEmRecuperar() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ClienteEntity valido = cliente(5L, "Valido");
+        AgendamentoEntity finalizado = agendamento(5L, valido, null, hoje.minusDays(60));
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        base(servico, List.of(), List.of(finalizado), List.of(valido));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> top = (Map<String, Object>) dados.get("topClientes");
+        List<Map<String, Object>> itens = (List<Map<String, Object>>) top.get("itens");
+        assertEquals(1, itens.size());
+        assertEquals("Valido", String.valueOf(itens.get(0).get("nome")));
+        Map<String, Object> clientes = (Map<String, Object>) dados.get("clientes");
+        assertEquals(1L, ((Number) clientes.get("at_risk")).longValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void nuncaAtendidoNaoEntraEmRecuperarNemAtRisk() {
+        LocalDate hoje = LocalDate.now(ZoneId.of("America/Cuiaba"));
+        ClienteEntity nuncaVeio = cliente(6L, "NuncaVeio");
+        ServicoEntity servico = ServicoEntity.builder().id(10L).nome("Corte")
+                .valor(new BigDecimal("100")).status(StatusCadastro.ATIVO).build();
+        base(servico, List.of(), List.of(), List.of(nuncaVeio));
+
+        Map<String, Object> dados = analyzer.coletarDados(1L, 30);
+
+        Map<String, Object> top = (Map<String, Object>) dados.get("topClientes");
+        List<Map<String, Object>> itens = (List<Map<String, Object>>) top.get("itens");
+        assertTrue(itens.isEmpty());
+        Map<String, Object> clientes = (Map<String, Object>) dados.get("clientes");
+        assertEquals(0L, ((Number) clientes.get("at_risk")).longValue());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
     void paymentApprovedNaoContaComoReceitaOperacional() {
         ZoneId zone = ZoneId.of("America/Cuiaba");
         LocalDate hoje = LocalDate.now(zone);

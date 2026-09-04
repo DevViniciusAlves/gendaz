@@ -399,6 +399,52 @@ class InsightsServiceTest {
     }
 
     @Test
+    void alertaRiscoSobreviveComAtRiskSemInativos() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 10, "inativos_status", 0, "at_risk", 3),
+                "financeiro", Map.of("receita_30d", 500, "receita_60d", 400, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of(Map.of("id", 1))
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.alertas().stream().anyMatch(alerta ->
+                String.valueOf(alerta.titulo()).toLowerCase().contains("risco")),
+                "Com at_risk=3 e inativos=0 o alerta de risco e legitimo e deve existir");
+    }
+
+    @Test
+    void alertaRiscoAusenteComAtRiskZero() {
+        when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
+                "empresaId", 1L,
+                "empresaNome", "Empresa",
+                "empresaRamo", "OUTRO",
+                "empresaRamoDisplayName", "Outro",
+                "clientes", Map.of("total", 10, "inativos_status", 0, "at_risk", 0),
+                "financeiro", Map.of("receita_30d", 500, "receita_60d", 400, "pendente", 0),
+                "resumo", Map.of("servicos_inativos", 0, "profissionais_inativos", 0),
+                "servicos", List.of(),
+                "profissionais", List.of(),
+                "agendamentosRecentes", List.of(Map.of("id", 1))
+        ));
+        when(insightRepository.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        DashboardResponse resposta = service.recalcularDashboard(1L, 30);
+
+        assertTrue(resposta.alertas().stream().noneMatch(alerta ->
+                String.valueOf(alerta.titulo()).toLowerCase().contains("risco")),
+                "Com at_risk=0 nenhum alerta de risco pode existir");
+    }
+
+    @Test
     void dashboardComAtRiskMostraAlertaDeCliente() {
         when(analyzer.coletarDados(1L, 30)).thenReturn(Map.of(
                 "empresaId", 1L,
