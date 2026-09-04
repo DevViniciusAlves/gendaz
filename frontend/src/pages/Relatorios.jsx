@@ -14,6 +14,7 @@ export default function Relatorios() {
   const [mes, setMes] = useState(todayIso().slice(0, 7))
   const [cliente, setCliente] = useState('')
   const [servico, setServico] = useState('')
+  const [protocolo, setProtocolo] = useState('')
   const [recarregando, setRecarregando] = useState(false)
   const [exportModal, setExportModal] = useState(null)
   const [paginaConsultas, setPaginaConsultas] = useState(1)
@@ -28,15 +29,19 @@ export default function Relatorios() {
     const matchesMes = !mes || item.data.startsWith(mes)
     const matchesCliente = !cliente.trim() || item.clienteNome.toLowerCase().includes(cliente.trim().toLowerCase())
     const matchesServico = !servico.trim() || item.servicoNome.toLowerCase().includes(servico.trim().toLowerCase())
-    return item.status !== 'CANCELADO' && matchesMes && matchesCliente && matchesServico
-  }), [cliente, data.agendamentos, mes, servico])
+    const textoProtocolo = String(item.protocolo || '').toLowerCase()
+    const matchesProtocolo = !protocolo.trim() || textoProtocolo.includes(protocolo.trim().toLowerCase())
+    return item.status !== 'CANCELADO' && matchesMes && matchesCliente && matchesServico && matchesProtocolo
+  }), [cliente, data.agendamentos, mes, servico, protocolo])
 
   const cancelados = useMemo(() => (Array.isArray(data.agendamentos) ? data.agendamentos : []).filter((item) => {
     const matchesMes = !mes || item.data.startsWith(mes)
     const matchesCliente = !cliente.trim() || item.clienteNome.toLowerCase().includes(cliente.trim().toLowerCase())
     const matchesServico = !servico.trim() || item.servicoNome.toLowerCase().includes(servico.trim().toLowerCase())
-    return item.status === 'CANCELADO' && matchesMes && matchesCliente && matchesServico
-  }), [cliente, data.agendamentos, mes, servico])
+    const textoProtocolo = String(item.protocolo || '').toLowerCase()
+    const matchesProtocolo = !protocolo.trim() || textoProtocolo.includes(protocolo.trim().toLowerCase())
+    return item.status === 'CANCELADO' && matchesMes && matchesCliente && matchesServico && matchesProtocolo
+  }), [cliente, data.agendamentos, mes, servico, protocolo])
   const totalPaginasConsultas = Math.max(1, Math.ceil(consultas.length / itensPorPagina))
   const totalPaginasCancelados = Math.max(1, Math.ceil(cancelados.length / itensPorPagina))
   const paginaConsultasAtual = Math.min(paginaConsultas, totalPaginasConsultas)
@@ -168,6 +173,14 @@ function montarLinhaConsultas(item) {
             <strong>{servico.length}/80</strong>
           </small>
         </label>
+        <label className="field report-filter-field">
+          <span>Protocolo</span>
+          <input maxLength={20} placeholder="Buscar por protocolo" value={protocolo} onChange={(e) => { setProtocolo(e.target.value); setPaginaConsultas(1); setPaginaCancelados(1) }} aria-label="Filtrar por protocolo" />
+          <small className={protocolo.length >= 20 ? 'field-hint limit-reached' : 'field-hint'}>
+            {protocolo.length >= 20 ? 'Limite de caracteres atingido.' : 'Digite o protocolo completo ou parcial.'}
+            <strong>{protocolo.length}/20</strong>
+          </small>
+        </label>
         <div className="table-actions report-actions">
           <Button variant="secondary" icon={RefreshCw} onClick={recarregar} loading={recarregando} loadingText="Recarregando...">
             Recarregar
@@ -194,6 +207,7 @@ function montarLinhaConsultas(item) {
             </div>
           ) },
           { key: 'servicoNome', label: 'SERVIÇO', render: (row) => <span className="report-center-cell">{row.servicoNome}</span> },
+          { key: 'protocolo', label: 'PROTOCOLO', render: (row) => <span className="report-center-cell">{row.protocolo || '-'}</span> },
           { key: 'data', label: 'DATA', render: (row) => <span className="report-center-cell">{row.data}</span> },
           { key: 'horaInicio', label: 'HORA', render: (row) => <span className="report-center-cell">{row.horaInicio}</span> },
           { key: 'statusCliente', label: 'CADASTRO', render: (row) => <span className="report-center-cell"><StatusBadge status={row.statusCliente || row.cliente?.status || 'ATIVO'} /></span> },
@@ -211,16 +225,19 @@ function montarLinhaConsultas(item) {
         </div>
         <Table wrapperClassName="table-panel" columns={[
           { key: 'clienteNome', label: 'CLIENTE', render: (row) => (
-            <div className="name-cell">
-              <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
-              <div className="name-cell-info">
-                <strong>{row.clienteNome}</strong>
+            <div className="report-center-cell">
+              <div className="name-cell report-center-name">
+                <div className="avatar">{(row.clienteNome || 'CL').substring(0, 2).toUpperCase()}</div>
+                <div className="name-cell-info">
+                  <strong>{row.clienteNome}</strong>
+                </div>
               </div>
             </div>
           ) },
-          { key: 'servicoNome', label: 'SERVIÇO' },
-          { key: 'data', label: 'DATA' },
-          { key: 'observações', label: 'OBSERVAÇÃO' },
+          { key: 'servicoNome', label: 'SERVIÇO', render: (row) => <span className="report-center-cell">{row.servicoNome}</span> },
+          { key: 'protocolo', label: 'PROTOCOLO', render: (row) => <span className="report-center-cell">{row.protocolo || '-'}</span> },
+          { key: 'data', label: 'DATA', render: (row) => <span className="report-center-cell">{row.data}</span> },
+          { key: 'observações', label: 'OBSERVAÇÃO', render: (row) => <span className="report-center-cell">{row['observações'] || '-'}</span> },
         ]} rows={canceladosPaginados} empty="Nenhum cancelamento no período." />
         <Pagination page={paginaCanceladosAtual} totalPages={totalPaginasCancelados} totalItems={cancelados.length} pageSize={itensPorPagina} onPageChange={setPaginaCancelados} />
       </section>

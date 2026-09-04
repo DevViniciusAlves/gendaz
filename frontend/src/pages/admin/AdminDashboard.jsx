@@ -148,6 +148,8 @@ function rotuloPlano(valor) {
   const plano = String(valor || '').trim().toUpperCase()
   if (plano === 'BASICO') return 'Básico'
   if (plano === 'PRO') return 'Pro'
+  if (plano === 'PLUS') return 'Plus'
+  if (plano === 'ENTERPRISE') return 'Enterprise'
   return 'Plano não identificado'
 }
 
