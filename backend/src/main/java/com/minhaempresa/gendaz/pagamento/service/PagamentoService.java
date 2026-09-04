@@ -703,6 +703,9 @@ public class PagamentoService {
         if (pagamento.getStatus() == StatusPagamento.PAGO) {
             throw new BusinessException("Pagamento confirmado nao pode ser excluido. Utilize o cancelamento/estorno explicito do pagamento.");
         }
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            return;
+        }
         if (pagamento.getStatus() == StatusPagamento.PENDENTE
                 || pagamento.getStatus() == StatusPagamento.PAYMENT_PENDING) {
             pagamento.setStatus(StatusPagamento.CANCELADO);

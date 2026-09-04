@@ -10,6 +10,7 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
+import com.minhaempresa.gendaz.pagamento.entity.PagamentoEntity;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -106,6 +107,13 @@ private void executarItem(Long id, String acao, AcaoEmMassaPagamentoRequest requ
         }
     }
 
+    private void validarPagamentoNaoCancelado(PagamentoEntity pagamento) {
+        if (pagamento.getStatus() == StatusPagamento.CANCELADO) {
+            throw new BusinessException("Pagamento cancelado não pode ser alterado.");
+        }
+    }
+
     private PagamentoEntity buscarEntidade(Long id) {
         return pagamentoService.buscarEntidade(id);
     }
+}

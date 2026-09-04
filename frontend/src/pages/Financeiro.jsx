@@ -526,9 +526,22 @@ export default function Financeiro() {
     try {
       const payload = { metodoPagamento, parcelas: metodoPagamento === 'CREDITO' ? (parcelas || 1) : null }
       if (pagamentoManual.tipo === 'bulk') {
-        await appApi.acaoEmMassaPagamentos(pagamentosSelecionados, 'MARCAR_COMO_PAGO', payload)
+        const pagamentosNaoCancelados = pagamentosSelecionados.filter(id => {
+          const pagamento = pagamentosExpandidos.find(p => p.pagamentoId === id || p.id === id);
+          return pagamento && !STATUS_CANCELADO.has(pagamento.status);
+        });
+        if (pagamentosNaoCancelados.length === 0) {
+          toast.error('Nenhum pagamento válido selecionado.');
+          return;
+        }
+        await appApi.acaoEmMassaPagamentos(pagamentosNaoCancelados, 'MARCAR_COMO_PAGO', payload)
         limparSelecaoPagamentos()
       } else {
+        const pagamento = pagamentosExpandidos.find(p => p.pagamentoId === pagamentoManual.id || p.id === pagamentoManual.id);
+        if (pagamento && STATUS_CANCELADO.has(pagamento.status)) {
+          toast.error('Não é possível marcar como pago um pagamento cancelado.');
+          return;
+        }
         await appApi.marcarPagamentoPago(pagamentoManual.id, payload)
       }
       setPagamentoManual(null)
@@ -736,7 +749,7 @@ export default function Financeiro() {
                   type="checkbox"
                   checked={pagamentosSelecionados.includes(row.pagamentoId || row.id)}
                   onChange={() => alternarPagamentoSelecionado(row.pagamentoId || row.id)}
-                  disabled={!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10}
+                  disabled={!pagamentosSelecionados.includes(row.pagamentoId || row.id) && totalSelecionadosPagamentos >= 10 || STATUS_CANCELADO.has(row.status)}
                   aria-label={`Selecionar pagamento ${row.pagamentoId || row.id}`}
                 />
               ),
