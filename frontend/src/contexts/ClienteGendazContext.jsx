@@ -385,6 +385,9 @@ export function ClienteGendazProvider({ children, slug }) {
     cadastroPendente: perfilPendente,
     perfilPendente,
     perfilAcesso,
+    // Timezone da clinica (vem do /meu-gendaz/perfil): o "hoje" dos formularios
+    // deve seguir a empresa, nao o dispositivo do cliente.
+    empresaTimezone: perfilAcesso?.timezone || cliente?.timezone || null,
     dashboard,
     agendamentos,
     beneficios,

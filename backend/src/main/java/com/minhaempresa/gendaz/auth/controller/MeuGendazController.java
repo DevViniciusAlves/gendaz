@@ -195,6 +195,7 @@ public class MeuGendazController {
                 result.put("email", acesso.getEmail());
                 result.put("telefone", cliente != null ? cliente.getTelefone() : null);
                 result.put("empresaNome", empresa.getNomeFantasia());
+                result.put("timezone", empresa.getTimezone());
                 if (cadastroPendente) {
                     result.put("mensagem", "Complete seu cadastro para continuar.");
                     return ResponseEntity.ok(result);
@@ -211,6 +212,7 @@ public class MeuGendazController {
                 result.put("email", onboarding.getEmail());
                 result.put("telefone", null);
                 result.put("empresaNome", empresa.getNomeFantasia());
+                result.put("timezone", empresa.getTimezone());
                 result.put("mensagem", "Complete seu cadastro para continuar.");
                 return ResponseEntity.ok(result);
             }

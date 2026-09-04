@@ -14,6 +14,29 @@ function diaSemanaIso(data) {
 }
 
 
+function dataLocalIso(agora = new Date()) {
+  return `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`
+}
+
+function hojeNoFuso(fuso) {
+  if (!fuso) return dataLocalIso()
+  try {
+    const partes = new Intl.DateTimeFormat('en-CA', {
+      timeZone: fuso,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date()).reduce((acc, part) => {
+      if (part.type !== 'literal') acc[part.type] = part.value
+      return acc
+    }, {})
+    if (!partes.year || !partes.month || !partes.day) return dataLocalIso()
+    return `${partes.year}-${partes.month}-${partes.day}`
+  } catch {
+    return dataLocalIso()
+  }
+}
+
 function trabalhaNaData(profissional, data) {
   const dia = diaSemanaIso(data)
   return !dia || (Array.isArray(profissional?.diasTrabalho) && profissional.diasTrabalho.includes(dia))
@@ -21,15 +44,14 @@ function trabalhaNaData(profissional, data) {
 
 function NovoAgendamentoModal({ onFechar, onCriar }) {
 
-  const { servicos, profissionais } = useContext(ClienteGendazContext)
+  const { servicos, profissionais, empresaTimezone } = useContext(ClienteGendazContext)
   const location = useLocation()
   const profissionaisAtivos = profissionais.filter((profissional) => profissional.status === 'ATIVO')
   const [horarios, setHorarios] = useState([])
-  const hoje = new Date()
-  // Data local do navegador (nunca UTC): toISOString() desloca o dia perto da
-  // virada para America/Sao_Paulo. O backend classifica proximos/historico no
-  // timezone da empresa; o default do formulario deve seguir o mesmo "hoje".
-  const dataHoje = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}-${String(hoje.getDate()).padStart(2, '0')}`
+  // "Hoje" no timezone da clinica (via /meu-gendaz/perfil, fallback dispositivo).
+  // Ex.: clinica em America/Sao_Paulo dia 04/09 22:30 com cliente em Lisbon
+  // (05/09 02:30) abre o formulario em 04/09, igual ao backend.
+  const dataHoje = hojeNoFuso(empresaTimezone)
   const [form, setForm] = useState({ servicoId: '', profissionalId: '', data: dataHoje, hora: '', observacoes: '', cupomCodigo: '' })
   const profissionaisDisponiveis = profissionaisAtivos.filter((profissional) => trabalhaNaData(profissional, form.data))
   const [cupons, setCupons] = useState([])
