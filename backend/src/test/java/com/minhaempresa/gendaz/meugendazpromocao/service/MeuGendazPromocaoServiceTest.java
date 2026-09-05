@@ -3,7 +3,6 @@ package com.minhaempresa.gendaz.meugendazpromocao.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -19,6 +18,8 @@ import com.minhaempresa.gendaz.meugendazpromocao.repository.MeuGendazPromocaoRep
 import com.minhaempresa.gendaz.meugendazpromocao.repository.MeuGendazPromocaoUsoRepository;
 import com.minhaempresa.gendaz.promocao.repository.PromocaoRepository;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
+import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.ConflictException;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -157,9 +158,10 @@ class MeuGendazPromocaoServiceTest {
         promocao.setDataFim(LocalDateTime.now().minusHours(1));
         mockarCupomValido(promocao);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "EXPIRADO", 11L));
-        assertTrue(ex.getMessage().toLowerCase().contains("expirado") || ex.getMessage().toLowerCase().contains("invalido"));
+        assertEquals("Este cupom está expirado.", ex.getMessage());
+        verify(usoRepository, never()).save(any());
     }
 
     @Test
@@ -167,8 +169,9 @@ class MeuGendazPromocaoServiceTest {
         MeuGendazPromocaoEntity promocao = promocao("INATIVO", "VALOR_FIXO", "50.00", null, null, StatusCadastro.INATIVO);
         mockarCupomValido(promocao);
 
-        assertThrows(IllegalArgumentException.class,
+        BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "INATIVO", 11L));
+        assertEquals("Este cupom não está mais ativo.", ex.getMessage());
         verify(usoRepository, never()).save(any());
     }
 
@@ -179,9 +182,10 @@ class MeuGendazPromocaoServiceTest {
         promocao.setServicos(new HashSet<>(Set.of(outroServico)));
         mockarCupomValido(promocao);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "OUTRO", 11L));
-        assertTrue(ex.getMessage().toLowerCase().contains("servico"));
+        assertEquals("Este cupom não é válido para este serviço.", ex.getMessage());
+        verify(usoRepository, never()).save(any());
     }
 
     @Test
@@ -206,9 +210,20 @@ class MeuGendazPromocaoServiceTest {
         when(promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(eq(1L), eq("FORA"))).thenReturn(Optional.empty());
         when(adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(1L)).thenReturn(java.util.List.of());
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        BusinessException ex = assertThrows(BusinessException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "FORA", 11L));
-        assertTrue(ex.getMessage().toLowerCase().contains("invalido"));
+        assertEquals("Cupom inválido.", ex.getMessage());
+        verify(usoRepository, never()).save(any());
+    }
+
+    @Test
+    void cupomInexistenteRejeitadoComoErroDeNegocio() {
+        when(promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(eq(1L), eq("NADA"))).thenReturn(Optional.empty());
+        when(adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(1L)).thenReturn(java.util.List.of());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "NADA", 11L));
+        assertEquals("Cupom inválido.", ex.getMessage());
         verify(usoRepository, never()).save(any());
     }
 
@@ -219,10 +234,11 @@ class MeuGendazPromocaoServiceTest {
         when(promocaoRepository.findByIdComLock(5L)).thenReturn(Optional.of(promocao));
         when(usoRepository.existsByPromocaoIdAndClienteId(eq(5L), eq(7L))).thenReturn(true);
 
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "USADO", 11L));
-        assertTrue(ex.getMessage().toLowerCase().contains("ja usou"));
+        assertEquals("Você já utilizou este cupom.", ex.getMessage());
         verify(usoRepository, never()).save(any());
+        assertEquals(0, promocao.getQuantidadeUsada());
     }
 
     @Test
@@ -230,8 +246,9 @@ class MeuGendazPromocaoServiceTest {
         MeuGendazPromocaoEntity promocao = promocao("FIM", "VALOR_FIXO", "50.00", new BigDecimal("1"), 1, null);
         mockarCupomValido(promocao);
 
-        assertThrows(IllegalArgumentException.class,
+        ConflictException ex = assertThrows(ConflictException.class,
                 () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "FIM", 11L));
+        assertEquals("Este cupom atingiu o limite de utilizações.", ex.getMessage());
         verify(usoRepository, never()).save(any());
         assertEquals(1, promocao.getQuantidadeUsada());
     }
@@ -245,9 +262,26 @@ class MeuGendazPromocaoServiceTest {
         assertEquals(new BigDecimal("50.00"), primeiro.desconto());
         assertEquals(1, promocao.getQuantidadeUsada());
 
-        assertThrows(IllegalArgumentException.class,
-                () -> service.aplicarCupomAoAgendamento(cliente, empresa, servico, "LAST", 7L));
+        ClienteEntity outroCliente = ClienteEntity.builder().id(8L).empresa(empresa).build();
+        ConflictException ex = assertThrows(ConflictException.class,
+                () -> service.aplicarCupomAoAgendamento(outroCliente, empresa, servico, "LAST", 7L));
+        assertEquals("Este cupom atingiu o limite de utilizações.", ex.getMessage());
+        assertEquals(1, promocao.getQuantidadeUsada());
         verify(usoRepository).save(any());
+    }
+
+    @Test
+    void promocaoIlimitadaPermiteVariosUsosDeClientesDiferentes() {
+        MeuGendazPromocaoEntity promocao = promocao("LIVRE", "VALOR_FIXO", "10.00", null, 500, null);
+        mockarCupomValido(promocao);
+
+        CupomAplicadoResult primeiro = service.aplicarCupomAoAgendamento(cliente, empresa, servico, "LIVRE", 11L);
+        assertEquals(new BigDecimal("10.00"), primeiro.desconto());
+
+        ClienteEntity outroCliente = ClienteEntity.builder().id(8L).empresa(empresa).build();
+        CupomAplicadoResult segundo = service.aplicarCupomAoAgendamento(outroCliente, empresa, servico, "LIVRE", 12L);
+        assertEquals(new BigDecimal("10.00"), segundo.desconto());
+        assertEquals(502, promocao.getQuantidadeUsada());
     }
 
     @Test
