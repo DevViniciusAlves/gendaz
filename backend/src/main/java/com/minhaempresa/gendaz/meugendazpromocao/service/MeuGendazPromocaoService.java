@@ -9,6 +9,8 @@ import com.minhaempresa.gendaz.promocao.entity.PromocaoEntity;
 import com.minhaempresa.gendaz.promocao.repository.PromocaoRepository;
 import com.minhaempresa.gendaz.servico.entity.ServicoEntity;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
+import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.ConflictException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -50,32 +52,54 @@ public class MeuGendazPromocaoService {
         return adminPromocaoRepository.findByEmpresaIdOrderByDataCriacaoDesc(empresaId).stream()
                 .filter(PromocaoEntity::estaAtiva)
                 .filter(p -> {
-                    boolean dentroPeriodo = p.getDataInicio() == null || p.getDataFim() == null
-                            || (!agora.isBefore(p.getDataInicio()) && !agora.isAfter(p.getDataFim()));
-                    boolean dentroLimite = p.getQuantidadeLimite() == null || p.getQuantidadeUsada() == null
-                            || p.getQuantidadeUsada() < p.getQuantidadeLimite();
+                    // Fonte de verdade para disponibilidade/limite e o mirror
+                    // (MeuGendazPromocaoEntity), que registra o consumo real.
+                    // O contador administrativo pode estar desatualizado.
+                    Optional<MeuGendazPromocaoEntity> mirror = buscarMirror(empresaId, p);
+                    LocalDateTime inicio = mirror.map(MeuGendazPromocaoEntity::getDataInicio).orElseGet(p::getDataInicio);
+                    LocalDateTime fim = mirror.map(MeuGendazPromocaoEntity::getDataFim).orElseGet(p::getDataFim);
+                    Integer limite = mirror.map(MeuGendazPromocaoEntity::getQuantidadeLimite).orElseGet(p::getQuantidadeLimite);
+                    Integer usada = mirror.map(MeuGendazPromocaoEntity::getQuantidadeUsada).orElseGet(p::getQuantidadeUsada);
+                    boolean dentroPeriodo = inicio == null || fim == null
+                            || (!agora.isBefore(inicio) && !agora.isAfter(fim));
+                    boolean dentroLimite = limite == null || usada == null
+                            || usada < limite;
                     return dentroPeriodo && dentroLimite;
                 })
                 .map(p -> toPromocaoClienteResponse(cliente, p))
                 .toList();
     }
 
+    private Optional<MeuGendazPromocaoEntity> buscarMirror(Long empresaId, PromocaoEntity admin) {
+        Optional<MeuGendazPromocaoEntity> mirror = promocaoRepository.findByEmpresaIdAndPromocaoOrigemId(empresaId, admin.getId());
+        if (mirror.isPresent()) {
+            return mirror;
+        }
+        if (admin.getCodigo() == null) {
+            return Optional.empty();
+        }
+        return promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresaId, admin.getCodigo().trim());
+    }
+
     private PromocaoClienteResponse toPromocaoClienteResponse(ClienteEntity cliente, PromocaoEntity p) {
-        Long mirrorId = promocaoRepository.findByEmpresaIdAndPromocaoOrigemId(cliente.getEmpresa().getId(), p.getId())
-                .map(MeuGendazPromocaoEntity::getId)
-                .orElseGet(() -> promocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(cliente.getEmpresa().getId(), p.getCodigo().trim())
-                        .map(MeuGendazPromocaoEntity::getId)
-                        .orElse(null));
+        MeuGendazPromocaoEntity mirror = buscarMirror(cliente.getEmpresa().getId(), p).orElse(null);
+        Long mirrorId = mirror != null ? mirror.getId() : null;
         
         boolean jaUsou = mirrorId != null && usoRepository.existsByPromocaoIdAndClienteId(mirrorId, cliente.getId());
         
-        // Calcula validade real baseada em fuso horário Brasil
+        // Calcula validade real baseada em fuso horário Brasil, usando o
+        // estado do mirror (fonte de verdade do consumo) quando existir.
         LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
-        boolean dentroPeriodo = p.getDataInicio() == null || p.getDataFim() == null
-                || (!agora.isBefore(p.getDataInicio()) && !agora.isAfter(p.getDataFim()));
-        boolean dentroLimite = p.getQuantidadeLimite() == null || p.getQuantidadeUsada() == null
-                || p.getQuantidadeUsada() < p.getQuantidadeLimite();
-        boolean valida = p.estaAtiva() && dentroPeriodo && dentroLimite;
+        LocalDateTime inicio = mirror != null ? mirror.getDataInicio() : p.getDataInicio();
+        LocalDateTime fim = mirror != null ? mirror.getDataFim() : p.getDataFim();
+        Integer limite = mirror != null ? mirror.getQuantidadeLimite() : p.getQuantidadeLimite();
+        Integer usada = mirror != null ? mirror.getQuantidadeUsada() : p.getQuantidadeUsada();
+        boolean ativo = mirror != null ? mirror.estaAtiva() : p.estaAtiva();
+        boolean dentroPeriodo = inicio == null || fim == null
+                || (!agora.isBefore(inicio) && !agora.isAfter(fim));
+        boolean dentroLimite = limite == null || usada == null
+                || usada < limite;
+        boolean valida = ativo && dentroPeriodo && dentroLimite;
 
         Set<ServicoEntity> servicos = p.getServicos() == null ? Set.of() : p.getServicos();
         return new PromocaoClienteResponse(
@@ -150,12 +174,12 @@ public class MeuGendazPromocaoService {
             opt = mirrorId != null ? promocaoRepository.findById(mirrorId) : Optional.empty();
         }
         MeuGendazPromocaoEntity promocao = opt
-                .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
+                .orElseThrow(() -> new BusinessException("Cupom inválido."));
         if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
-            throw new IllegalArgumentException("Cupom invalido.");
+            throw new BusinessException("Cupom inválido.");
         }
         MeuGendazPromocaoEntity bloqueada = promocaoRepository.findByIdComLock(promocao.getId())
-                .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
+                .orElseThrow(() -> new BusinessException("Cupom inválido."));
         validarCupomDentroLock(cliente, empresa, servico, bloqueada, codigoNormalizado);
         BigDecimal desconto = calcularDesconto(servico, bloqueada);
         if (agendamentoId != null) {
@@ -177,17 +201,28 @@ public class MeuGendazPromocaoService {
      */
     private void validarCupomDentroLock(ClienteEntity cliente, EmpresaEntity empresa, ServicoEntity servico, MeuGendazPromocaoEntity promocao, String codigoNormalizado) {
         if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
-            throw new IllegalArgumentException("Cupom invalido.");
+            throw new BusinessException("Cupom inválido.");
         }
         if (!Boolean.TRUE.equals(promocao.getAplicarTodosServicos())
                 && (promocao.getServicos() == null || promocao.getServicos().stream().noneMatch(s -> s.getId().equals(servico.getId())))) {
-            throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
+            throw new BusinessException("Este cupom não é válido para este serviço.");
         }
         if (usoRepository.existsByPromocaoIdAndClienteId(promocao.getId(), cliente.getId())) {
-            throw new IllegalArgumentException("Voce ja usou este cupom.");
+            throw new ConflictException("Você já utilizou este cupom.");
         }
-        if (!promocao.isValida()) {
-            throw new IllegalArgumentException("Cupom expirado ou invalido.");
+        if (!promocao.estaAtiva()) {
+            throw new BusinessException("Este cupom não está mais ativo.");
+        }
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        boolean dentroPeriodo = promocao.getDataInicio() == null || promocao.getDataFim() == null
+                || (!agora.isBefore(promocao.getDataInicio()) && !agora.isAfter(promocao.getDataFim()));
+        if (!dentroPeriodo) {
+            throw new BusinessException("Este cupom está expirado.");
+        }
+        Integer limite = promocao.getQuantidadeLimite();
+        Integer usada = promocao.getQuantidadeUsada() == null ? 0 : promocao.getQuantidadeUsada();
+        if (limite != null && usada >= limite) {
+            throw new ConflictException("Este cupom atingiu o limite de utilizações.");
         }
     }
 
@@ -207,16 +242,30 @@ public class MeuGendazPromocaoService {
             opt = mirrorId != null ? promocaoRepository.findById(mirrorId) : Optional.empty();
         }
         MeuGendazPromocaoEntity promocao = opt
-                .orElseThrow(() -> new IllegalArgumentException("Cupom invalido."));
-        if (!promocao.isValida()) {
-            throw new IllegalArgumentException("Cupom expirado ou invalido.");
+                .orElseThrow(() -> new BusinessException("Cupom inválido."));
+        if (promocao.getEmpresa() == null || !promocao.getEmpresa().getId().equals(empresa.getId())) {
+            throw new BusinessException("Cupom inválido.");
+        }
+        if (!promocao.estaAtiva()) {
+            throw new BusinessException("Este cupom não está mais ativo.");
+        }
+        LocalDateTime agora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+        boolean dentroPeriodo = promocao.getDataInicio() == null || promocao.getDataFim() == null
+                || (!agora.isBefore(promocao.getDataInicio()) && !agora.isAfter(promocao.getDataFim()));
+        if (!dentroPeriodo) {
+            throw new BusinessException("Este cupom está expirado.");
+        }
+        Integer limite = promocao.getQuantidadeLimite();
+        Integer usada = promocao.getQuantidadeUsada() == null ? 0 : promocao.getQuantidadeUsada();
+        if (limite != null && usada >= limite) {
+            throw new ConflictException("Este cupom atingiu o limite de utilizações.");
         }
         if (usoRepository.existsByPromocaoIdAndClienteId(promocao.getId(), cliente.getId())) {
-            throw new IllegalArgumentException("Voce ja usou este cupom.");
+            throw new ConflictException("Você já utilizou este cupom.");
         }
         if (!Boolean.TRUE.equals(promocao.getAplicarTodosServicos())
                 && promocao.getServicos().stream().noneMatch(s -> s.getId().equals(servico.getId()))) {
-            throw new IllegalArgumentException("Este cupom nao e valido para este servico.");
+            throw new BusinessException("Este cupom não é válido para este serviço.");
         }
         return promocao;
     }
@@ -263,6 +312,31 @@ public class MeuGendazPromocaoService {
                 .build());
         promocao.setQuantidadeUsada((promocao.getQuantidadeUsada() == null ? 0 : promocao.getQuantidadeUsada()) + 1);
         promocaoRepository.save(promocao);
+        projetarUsoNoAdmin(promocao);
+    }
+
+    /**
+     * Projecao administrativa do consumo real. A fonte de verdade e o mirror
+     * (MeuGendazPromocaoEntity + MeuGendazPromocaoUsoEntity); aqui apenas se
+     * espelha o contador por atribuicao (nunca {@code ++} independente), na
+     * mesma transacao do uso, para o painel admin refletir o valor real.
+     * Nenhum historico duplicado e criado: o historico autoritativo continua
+     * sendo o do mirror.
+     */
+    private void projetarUsoNoAdmin(MeuGendazPromocaoEntity mirror) {
+        try {
+            if (mirror.getPromocaoOrigemId() == null || mirror.getEmpresa() == null) {
+                return;
+            }
+            adminPromocaoRepository.findByIdAndEmpresaId(mirror.getPromocaoOrigemId(), mirror.getEmpresa().getId())
+                    .ifPresent(admin -> {
+                        admin.setQuantidadeUsada(mirror.getQuantidadeUsada());
+                        adminPromocaoRepository.save(admin);
+                    });
+        } catch (Exception e) {
+            log.warn("[meu-gendaz] falha ao projetar uso no admin para origem {}. erroTipo={}",
+                    mirror.getPromocaoOrigemId(), e.getClass().getSimpleName());
+        }
     }
 
     private Map<String, Object> servicoParaMapa(ServicoEntity servico) {

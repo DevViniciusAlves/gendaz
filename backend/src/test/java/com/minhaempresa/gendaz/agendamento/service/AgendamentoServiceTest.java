@@ -206,18 +206,17 @@ class AgendamentoServiceTest {
     }
 
     @Test
-    void falhaAoRegistrarCupomNaoImpedeCriacaoDeAgendamento() {
+    void falhaNoCupomInterrompeCriacaoEAcaoNaoGeraPagamento() {
         preparaCriacao(new BigDecimal("100.00"), null);
         when(meuGendazPromocaoService.aplicarCupomAoAgendamento(any(), any(), any(), any(), any()))
-                .thenThrow(new IllegalArgumentException("Voce ja usou este cupom."));
+                .thenThrow(new com.minhaempresa.gendaz.shared.ConflictException("Este cupom atingiu o limite de utilizações."));
 
-        var response = agendamentoService.criar(requestBase("USADO"));
+        var ex = assertThrows(com.minhaempresa.gendaz.shared.ConflictException.class,
+                () -> agendamentoService.criar(requestBase("ESGOTADO")));
 
-        assertEquals(0, new BigDecimal("100.00").compareTo(response.valorOriginal()));
-        assertEquals(0, new BigDecimal("0.00").compareTo(response.valorDesconto()));
-        assertEquals(0, new BigDecimal("100.00").compareTo(response.valorFinal()));
-        verify(pagamentoRepository).save(pagamentoCaptor.capture());
-        assertEquals(0, new BigDecimal("100.00").compareTo(pagamentoCaptor.getValue().getValor()));
+        assertEquals("Este cupom atingiu o limite de utilizações.", ex.getMessage());
+        verify(pagamentoRepository, never()).save(any());
+        verify(eventPublisher, never()).publishEvent(any());
     }
 
     @Test

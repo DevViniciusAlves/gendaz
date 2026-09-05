@@ -141,20 +141,18 @@ public class AgendamentoService {
             BigDecimal valorOriginal = servico.getValor() != null ? servico.getValor() : BigDecimal.ZERO;
             BigDecimal desconto = BigDecimal.ZERO;
             if (request.cupomCodigo() != null && !request.cupomCodigo().isBlank()) {
-                try {
-                    CupomAplicadoResult cupom = meuGendazPromocaoService.aplicarCupomAoAgendamento(
-                            cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
-                    if (cupom != null) {
-                        desconto = cupom.desconto() != null ? cupom.desconto() : BigDecimal.ZERO;
-                        salvo.setCupomCodigo(cupom.codigo());
-                        salvo.setTipoPromocaoAplicada(cupom.tipo());
-                        salvo.setValorPromocaoAplicada(cupom.valorPromocao());
-                        salvo.setPromocaoOrigemId(cupom.promocaoOrigemId());
-                    }
-                } catch (Exception e) {
-                    Map<String, Object> contextoCupomErro = new LinkedHashMap<>();
-                    contextoCupomErro.put("agendamentoId", salvo.getId());
-                    log.warn("[agendamento-debug] cupom nao aplicado. erroTipo={} contexto={}", e.getClass().getSimpleName(), contextoCupomErro);
+                // Cupom informado e obrigatorio: qualquer falha de validacao
+                // (invalido/esgotado/expirado/ja utilizado/servico) propaga a
+                // excecao de negocio e a transacao faz rollback — nunca cria o
+                // agendamento sem desconto nem consome o limite. Nao engolir.
+                CupomAplicadoResult cupom = meuGendazPromocaoService.aplicarCupomAoAgendamento(
+                        cliente, empresa, servico, request.cupomCodigo(), salvo.getId());
+                if (cupom != null) {
+                    desconto = cupom.desconto() != null ? cupom.desconto() : BigDecimal.ZERO;
+                    salvo.setCupomCodigo(cupom.codigo());
+                    salvo.setTipoPromocaoAplicada(cupom.tipo());
+                    salvo.setValorPromocaoAplicada(cupom.valorPromocao());
+                    salvo.setPromocaoOrigemId(cupom.promocaoOrigemId());
                 }
             }
             BigDecimal valorFinal = valorOriginal.subtract(desconto).max(BigDecimal.ZERO);

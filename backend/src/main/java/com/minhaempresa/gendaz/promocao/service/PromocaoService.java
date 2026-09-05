@@ -11,6 +11,9 @@ import com.minhaempresa.gendaz.promocao.dto.PromocaoDtos.*;
 import com.minhaempresa.gendaz.promocao.entity.*;
 import com.minhaempresa.gendaz.promocao.enums.TipoPromocao;
 import com.minhaempresa.gendaz.promocao.repository.*;
+import com.minhaempresa.gendaz.meugendazpromocao.entity.MeuGendazPromocaoEntity;
+import com.minhaempresa.gendaz.meugendazpromocao.repository.MeuGendazPromocaoRepository;
+import com.minhaempresa.gendaz.meugendazpromocao.repository.MeuGendazPromocaoUsoRepository;
 import com.minhaempresa.gendaz.meugendazpromocao.service.MeuGendazPromocaoSyncService;
 import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.shared.BusinessException;
@@ -41,6 +44,8 @@ public class PromocaoService {
     private final EmpresaRepository empresaRepository;
     private final ResendEmailService resendEmailService;
     private final MeuGendazPromocaoSyncService meuGendazPromocaoSyncService;
+    private final MeuGendazPromocaoRepository meuGendazPromocaoRepository;
+    private final MeuGendazPromocaoUsoRepository meuGendazPromocaoUsoRepository;
     private final LogAtividadeService logAtividadeService;
 
     @Transactional(readOnly = true)
@@ -134,26 +139,21 @@ public class PromocaoService {
     @Transactional(readOnly = true)
     public PromocaoResumoResponse resumo(Long empresaId, Long id) {
         PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
-        List<PromocaoUsoResponse> usos = promocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(id).stream()
-                .map(u -> new PromocaoUsoResponse(
-                        u.getId(),
-                        u.getPromocao().getId(),
-                        u.getCliente().getId(),
-                        u.getCliente().getNome(),
-                        u.getDataUso(),
-                        u.getValorDesconto()))
-                .toList();
+        List<PromocaoUsoResponse> usos = listarUsos(empresaId, id);
 
         List<PromocaoNotificacaoEntity> notificacoes = promocaoNotificacaoRepository.findByPromocaoIdOrderByIdDesc(id);
         long enviadas = notificacoes.stream().filter(n -> "ENVIADA".equalsIgnoreCase(n.getStatus())).count();
         long erros = notificacoes.stream().filter(n -> "ERRO".equalsIgnoreCase(n.getStatus())).count();
 
+        long totalUsos = usos.size();
+        long totalClientes = usos.stream().map(PromocaoUsoResponse::clienteId).filter(Objects::nonNull).distinct().count();
+
         return new PromocaoResumoResponse(
                 promocao.getId(),
                 promocao.getCodigo(),
                 promocao.getDescricao(),
-                promocaoUsoRepository.countDistinctClienteIdByPromocaoId(id),
-                promocaoUsoRepository.countByPromocaoId(id),
+                totalClientes,
+                totalUsos,
                 (long) notificacoes.size(),
                 enviadas,
                 erros,
@@ -208,7 +208,22 @@ public class PromocaoService {
 
     @Transactional(readOnly = true)
     public List<PromocaoUsoResponse> listarUsos(Long empresaId, Long id) {
-        buscarDaEmpresa(empresaId, id);
+        PromocaoEntity promocao = buscarDaEmpresa(empresaId, id);
+        // Fonte de verdade do historico de consumo: os usos do mirror
+        // (MeuGendazPromocaoUsoEntity). O historico administrativo legado
+        // (promocao_uso) nunca recebeu escritas do fluxo real de cupom.
+        Optional<MeuGendazPromocaoEntity> mirror = buscarMirror(empresaId, promocao);
+        if (mirror.isPresent()) {
+            return meuGendazPromocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(mirror.get().getId()).stream()
+                    .map(u -> new PromocaoUsoResponse(
+                            u.getId(),
+                            promocao.getId(),
+                            u.getCliente() != null ? u.getCliente().getId() : null,
+                            u.getCliente() != null ? u.getCliente().getNome() : null,
+                            u.getDataUso(),
+                            u.getValorDesconto()))
+                    .toList();
+        }
         return promocaoUsoRepository.findByPromocaoIdOrderByDataUsoDesc(id).stream()
                 .map(u -> new PromocaoUsoResponse(
                         u.getId(),
@@ -218,6 +233,22 @@ public class PromocaoService {
                         u.getDataUso(),
                         u.getValorDesconto()))
                 .toList();
+    }
+
+    /**
+     * Localiza o mirror (MeuGendazPromocaoEntity) correspondente a promocao
+     * administrativa: fonte autoritativa de {@code quantidadeUsada} e usos.
+     */
+    private Optional<MeuGendazPromocaoEntity> buscarMirror(Long empresaId, PromocaoEntity promocao) {
+        Optional<MeuGendazPromocaoEntity> mirror =
+                meuGendazPromocaoRepository.findByEmpresaIdAndPromocaoOrigemId(empresaId, promocao.getId());
+        if (mirror.isPresent()) {
+            return mirror;
+        }
+        if (promocao.getCodigo() == null) {
+            return Optional.empty();
+        }
+        return meuGendazPromocaoRepository.findByEmpresaIdAndCodigoIgnoreCase(empresaId, promocao.getCodigo().trim());
     }
 
     private void tentarEnviarNotificacao(PromocaoNotificacaoEntity notificacao) {
@@ -317,11 +348,23 @@ public class PromocaoService {
     }
 
     private PromocaoResponse toResponse(PromocaoEntity promocao) {
-        long totalUsos = promocaoUsoRepository.countByPromocaoId(promocao.getId());
-        long totalClientesUsaram = promocaoUsoRepository.countDistinctClienteIdByPromocaoId(promocao.getId());
+        Long empresaId = promocao.getEmpresa() != null ? promocao.getEmpresa().getId() : null;
+        Optional<MeuGendazPromocaoEntity> mirror = empresaId != null ? buscarMirror(empresaId, promocao) : Optional.empty();
+        long totalUsos;
+        long totalClientesUsaram;
+        if (mirror.isPresent()) {
+            totalUsos = meuGendazPromocaoUsoRepository.countByPromocaoId(mirror.get().getId());
+            totalClientesUsaram = meuGendazPromocaoUsoRepository.countDistinctClienteIdByPromocaoId(mirror.get().getId());
+        } else {
+            totalUsos = promocaoUsoRepository.countByPromocaoId(promocao.getId());
+            totalClientesUsaram = promocaoUsoRepository.countDistinctClienteIdByPromocaoId(promocao.getId());
+        }
         List<PromocaoNotificacaoEntity> notificacoes = promocaoNotificacaoRepository.findByPromocaoIdOrderByIdDesc(promocao.getId());
         long enviados = notificacoes.stream().filter(n -> "ENVIADA".equalsIgnoreCase(n.getStatus())).count();
         long erros = notificacoes.stream().filter(n -> "ERRO".equalsIgnoreCase(n.getStatus())).count();
+        int quantidadeUsada = mirror.isPresent() && mirror.get().getQuantidadeUsada() != null
+                ? mirror.get().getQuantidadeUsada()
+                : (promocao.getQuantidadeUsada() == null ? 0 : promocao.getQuantidadeUsada());
 
         return new PromocaoResponse(
                 promocao.getId(),
@@ -332,7 +375,7 @@ public class PromocaoService {
                 promocao.getDataInicio(),
                 promocao.getDataFim(),
                 promocao.getQuantidadeLimite(),
-                promocao.getQuantidadeUsada(),
+                quantidadeUsada,
                 promocao.getStatus(),
                 promocao.getAplicarTodosServicos(),
                 (promocao.getServicos() == null ? Set.<ServicoEntity>of() : promocao.getServicos()).stream()

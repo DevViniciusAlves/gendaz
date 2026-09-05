@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.meugendazpromocao.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.minhaempresa.gendaz.agendamento.entity.AgendamentoEntity;
@@ -104,6 +105,7 @@ class CupomConcorrenciaIntegrationTest {
         CountDownLatch inicio = new CountDownLatch(1);
         AtomicInteger sucessos = new AtomicInteger();
         AtomicInteger falhas = new AtomicInteger();
+        java.util.concurrent.ConcurrentLinkedQueue<Throwable> erros = new java.util.concurrent.ConcurrentLinkedQueue<>();
 
         Future<?> f1 = executor.submit(() -> {
             try {
@@ -111,6 +113,7 @@ class CupomConcorrenciaIntegrationTest {
                 promocaoService.aplicarCupomAoAgendamento(c1, empresa, servico, "TESTE50", 100001L);
                 sucessos.incrementAndGet();
             } catch (Throwable t) {
+                erros.add(t);
                 falhas.incrementAndGet();
             }
         });
@@ -120,6 +123,7 @@ class CupomConcorrenciaIntegrationTest {
                 promocaoService.aplicarCupomAoAgendamento(c2, empresa, servico, "TESTE50", 100002L);
                 sucessos.incrementAndGet();
             } catch (Throwable t) {
+                erros.add(t);
                 falhas.incrementAndGet();
             }
         });
@@ -130,6 +134,10 @@ class CupomConcorrenciaIntegrationTest {
 
         assertEquals(1, sucessos.get());
         assertEquals(1, falhas.get());
+        assertEquals(1, erros.size());
+        // Cupom esgotado e erro de negocio (HTTP 409), nunca erro interno (HTTP 500).
+        assertInstanceOf(com.minhaempresa.gendaz.shared.ConflictException.class, erros.peek());
+        assertEquals("Este cupom atingiu o limite de utilizações.", erros.peek().getMessage());
         MeuGendazPromocaoEntity atualizada = promocaoRepository.findById(promocao.getId()).orElseThrow();
         assertEquals(1, atualizada.getQuantidadeUsada());
         long usos = usoRepository.findAll().stream()
@@ -176,8 +184,10 @@ class CupomConcorrenciaIntegrationTest {
 
         promocaoService.aplicarCupomAoAgendamento(cliente, empresa, servico, "UMAVEZ", 200001L);
 
-        assertThrows(IllegalArgumentException.class,
+        com.minhaempresa.gendaz.shared.ConflictException ex = assertThrows(
+                com.minhaempresa.gendaz.shared.ConflictException.class,
                 () -> promocaoService.aplicarCupomAoAgendamento(cliente, empresa, servico, "UMAVEZ", 200002L));
+        assertEquals("Você já utilizou este cupom.", ex.getMessage());
     }
 
     @Test
