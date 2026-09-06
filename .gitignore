@@ -8,6 +8,8 @@ frontend/node_modules/
 frontend/.env
 frontend/.run-*.log
 frontend/.local-*.log
+whatsapp-service/node_modules/
+whatsapp-service/.env
 .env
 .DS_Store
 Thumbs.db
