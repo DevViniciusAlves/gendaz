@@ -14,7 +14,12 @@
 // - reconexao conservadora: 1 timer por empresa, backoff exponencial com
 //   teto, numero maximo de tentativas; socket anterior encerrado antes de
 //   criar o novo; eventos de geracao antiga ignorados.
-// - loggedOut (401) e outras quedas definitivas (403, 440) NAO reconectam.
+// - loggedOut (401): NAO reconecta, fecha o socket e descarta o auth
+//   revogado via AuthStateStore para permitir um QR novo no proximo connect.
+//   Outras quedas definitivas (403, 440) NAO reconectam, mas preservam o auth.
+// - falha na criacao do socket nao prende a sessao em CONNECTING: usa o
+//   retry controlado (ou DISCONNECTED ao esgotar), permitindo nova tentativa.
+// - shutdownAll() encerra sockets/timers sem logout e sem apagar auth.
 // - creds.update persiste imediatamente via authStore (inclui Signal Keys,
 //   que fazem parte do state carregado).
 
@@ -207,7 +212,21 @@ class SessionManager {
       return record;
     }
 
-    const sock = this.createSocket({ authState: auth.state });
+    let sock;
+    try {
+      sock = this.createSocket({ authState: auth.state });
+    } catch (err) {
+      if (gen !== record.generation) {
+        return record;
+      }
+      this.log.error(`[whatsapp-service] falha ao criar socket empresa=${record.companyId}: ${err.message}`);
+      record.sock = null;
+      // Reaproveita o retry controlado (backoff + limite, sem loop):
+      // a sessao nao fica presa em CONNECTING e pode se recuperar sozinha
+      // ou via novo connect() manual.
+      this.scheduleRetry(record, gen, null);
+      return record;
+    }
     record.sock = sock;
 
     // Toda atualizacao de credencial (inclui Signal Keys) persiste na hora.
@@ -271,12 +290,29 @@ class SessionManager {
       record.state = code === DisconnectReason.loggedOut ? STATES.LOGGED_OUT : STATES.DISCONNECTED;
       record.reconnectAttempts = 0;
       this.clearTimer(record);
+      if (code === DisconnectReason.loggedOut) {
+        // Sessao revogada no provider: o auth antigo nao serve mais e
+        // impediria um QR novo. Descarta via abstracao (somente neste caso,
+        // nunca em erros temporarios ou desconhecidos).
+        try {
+          await this.authStore.clear(record.companyId);
+        } catch (err) {
+          this.log.error(`[whatsapp-service] falha ao limpar auth revogado empresa=${record.companyId}: ${err.message}`);
+        }
+      }
       this.log.warn(`[whatsapp-service] empresa=${record.companyId} queda definitiva codigo=${code}; sem reconexao automatica`);
       return;
     }
 
     // Falha temporaria (ou codigo desconhecido): reconexao controlada.
     await this.closeSocketQuietly(oldSock);
+    this.scheduleRetry(record, gen, code);
+  }
+
+  // Retry controlado compartilhado: backoff exponencial com teto e numero
+  // maximo de tentativas. Um unico timer por empresa; ao esgotar, a sessao
+  // fica DISCONNECTED aguardando connect manual. Nunca gera loop.
+  scheduleRetry(record, gen, code) {
     if (record.reconnectAttempts >= this.maxAttempts) {
       record.state = STATES.DISCONNECTED;
       this.log.warn(
@@ -303,6 +339,25 @@ class SessionManager {
     if (record.reconnectTimer.unref) {
       record.reconnectTimer.unref();
     }
+  }
+
+  // Shutdown gracioso: cancela timers, invalida eventos antigos e encerra
+  // todos os sockets com end(). NAO faz logout() e NAO apaga auth state,
+  // para que as sessoes possam ser restauradas no proximo boot.
+  async shutdownAll() {
+    const records = [...this.sessions.values()];
+    this.sessions.clear();
+    await Promise.all(
+      records.map(async (record) => {
+        record.generation += 1;
+        this.clearTimer(record);
+        const sock = record.sock;
+        record.sock = null;
+        record.qr = null;
+        record.qrUpdatedAt = null;
+        await this.closeSocketQuietly(sock);
+      })
+    );
   }
 }
 

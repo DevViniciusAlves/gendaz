@@ -11,7 +11,12 @@ function makeHarness(options = {}) {
   const created = [];
   let saves = 0;
   let clears = [];
+  let failuresLeft = options.failCreateTimes || 0;
   const factory = () => {
+    if (failuresLeft > 0) {
+      failuresLeft -= 1;
+      throw new Error('falha-simulada-criacao-socket');
+    }
     const sock = {
       endCalls: 0,
       logoutCalls: 0,
@@ -105,6 +110,23 @@ describe('SessionManager', () => {
     assert.equal(h.manager.getQr('empresa-1'), null);
   });
 
+  it('loggedOut (401) descarta o auth revogado e nao agenda retry', async () => {
+    await h.manager.connect('empresa-1');
+    closeWith(h.created[0], 401);
+    await sleep(80);
+    assert.deepEqual(h.stats().clears, ['empresa-1']);
+    assert.equal(h.created.length, 1); // nenhum socket novo criado
+    assert.equal(h.manager.status('empresa-1').reconnectAttempts, 0);
+  });
+
+  it('erro temporario preserva o auth (limpeza so no loggedOut)', async () => {
+    await h.manager.connect('empresa-1');
+    closeWith(h.created[0], 408);
+    await sleep(80);
+    assert.deepEqual(h.stats().clears, []);
+    assert.ok(h.created.length >= 2); // retry aconteceu
+  });
+
   it('queda definitiva 440 nao reconecta e nao fica LOGGED_OUT', async () => {
     await h.manager.connect('empresa-1');
     closeWith(h.created[0], 440);
@@ -174,5 +196,60 @@ describe('SessionManager', () => {
   it('companyId invalido e rejeitado', async () => {
     await assert.rejects(h.manager.connect('../x'), /invalid_company_id/);
     assert.throws(() => h.manager.status('a/b'), /invalid_company_id/);
+  });
+
+  it('falha na criacao do socket nao prende a sessao em CONNECTING e se recupera', async () => {
+    h = makeHarness({ failCreateTimes: 1 });
+    await h.manager.connect('empresa-1');
+    const state = h.manager.status('empresa-1').state;
+    assert.ok(state === STATES.RECONNECTING || state === STATES.DISCONNECTED, `estado inesperado: ${state}`);
+    assert.equal(h.created.length, 0); // nenhum socket duplicado/parcial
+    await sleep(80); // retry controlado cria o socket com a fabrica ja saudavel
+    assert.equal(h.created.length, 1);
+    emit(h.created[0], 'connection.update', { connection: 'open' });
+    await sleep(10);
+    assert.equal(h.manager.status('empresa-1').state, STATES.CONNECTED);
+  });
+
+  it('falha persistente na criacao esgota retry, fica DISCONNECTED e permite nova tentativa', async () => {
+    h = makeHarness({ failCreateTimes: 99, maxAttempts: 1 });
+    await h.manager.connect('empresa-1');
+    await sleep(80);
+    assert.equal(h.manager.status('empresa-1').state, STATES.DISCONNECTED);
+    assert.equal(h.created.length, 0);
+    // Causa raiz resolvida: novo connect manual cria socket sem duplicar.
+    h.manager.createSocket = ({ authState }) => {
+      const sock = {
+        handlers: {},
+        ev: { on: (e, fn) => { ((sock.handlers[e] = sock.handlers[e] || [])).push(fn); } },
+        end: async () => {},
+        logout: async () => {},
+      };
+      h.created.push(sock);
+      return sock;
+    };
+    await h.manager.connect('empresa-1');
+    assert.equal(h.created.length, 1);
+    assert.equal(h.manager.status('empresa-1').state, STATES.CONNECTING);
+  });
+
+  it('shutdownAll cancela timers, encerra sockets, sem logout e sem apagar auth', async () => {
+    await h.manager.connect('empresa-1');
+    await h.manager.connect('empresa-2');
+    closeWith(h.created[0], 408); // agenda timer de retry p/ empresa-1
+    await sleep(5);
+    assert.equal(h.manager.status('empresa-1').state, STATES.RECONNECTING);
+    const endsBefore = h.created[0].endCalls + h.created[1].endCalls;
+    await h.manager.shutdownAll();
+    assert.ok(h.created[0].endCalls + h.created[1].endCalls > endsBefore);
+    assert.equal(h.created[0].logoutCalls, 0);
+    assert.equal(h.created[1].logoutCalls, 0);
+    assert.deepEqual(h.stats().clears, []);
+    const total = h.created.length;
+    await sleep(80); // nenhum timer sobreviveu para criar sockets
+    assert.equal(h.created.length, total);
+    // Sessao pode ser restaurada no proximo boot (mapa limpo, connect recria).
+    await h.manager.connect('empresa-1');
+    assert.equal(h.created.length, total + 1);
   });
 });
