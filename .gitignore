@@ -10,6 +10,7 @@ frontend/.run-*.log
 frontend/.local-*.log
 whatsapp-service/node_modules/
 whatsapp-service/.env
+whatsapp-service/.sessions/
 .env
 .DS_Store
 Thumbs.db
