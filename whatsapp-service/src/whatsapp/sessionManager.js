@@ -286,6 +286,9 @@ class SessionManager {
     record.sock = null;
 
     if (code !== null && NO_RETRY_CODES.has(code)) {
+      // Queda definitiva: invalida imediatamente eventos posteriores deste
+      // socket (o listener confere generation e passa a ignora-los).
+      record.generation += 1;
       await this.closeSocketQuietly(oldSock);
       record.state = code === DisconnectReason.loggedOut ? STATES.LOGGED_OUT : STATES.DISCONNECTED;
       record.reconnectAttempts = 0;

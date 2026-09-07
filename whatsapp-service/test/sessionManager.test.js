@@ -127,6 +127,24 @@ describe('SessionManager', () => {
     assert.ok(h.created.length >= 2); // retry aconteceu
   });
 
+  it('evento tardio do socket apos loggedOut e ignorado', async () => {
+    await h.manager.connect('empresa-1');
+    const sock = h.created[0];
+    closeWith(sock, 401);
+    await sleep(20);
+    assert.equal(h.manager.status('empresa-1').state, STATES.LOGGED_OUT);
+    // Segundo connection.update tardio do MESMO socket (ex.: close 408 ou connecting).
+    emit(sock, 'connection.update', {
+      connection: 'close',
+      lastDisconnect: { error: Boom.boomify(new Error('tardio'), { statusCode: 408 }), date: new Date() },
+    });
+    emit(sock, 'connection.update', { connection: 'connecting' });
+    await sleep(80);
+    assert.equal(h.manager.status('empresa-1').state, STATES.LOGGED_OUT);
+    assert.equal(h.created.length, 1); // nenhum socket novo, nenhum retry
+    assert.deepEqual(h.stats().clears, ['empresa-1']); // limpeza aconteceu so uma vez
+  });
+
   it('queda definitiva 440 nao reconecta e nao fica LOGGED_OUT', async () => {
     await h.manager.connect('empresa-1');
     closeWith(h.created[0], 440);

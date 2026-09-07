@@ -10,6 +10,7 @@ const { createApp } = require('./app');
 const { FileAuthStateStore } = require('./whatsapp/authStore');
 const { SessionManager } = require('./whatsapp/sessionManager');
 const { createSocket } = require('./whatsapp/socketFactory');
+const { createShutdown } = require('./shutdown');
 
 fs.mkdirSync(config.sessionsDir, { recursive: true, mode: 0o700 });
 
@@ -35,23 +36,7 @@ server.listen(config.port, () => {
   }
 });
 
-function shutdown(signal) {
-  console.log(`[whatsapp-service] recebendo ${signal}, encerrando...`);
-  // Encerra sessoes Baileys primeiro (sem logout, sem apagar auth) e so
-  // depois fecha o HTTP server. Nada aqui segura o processo alem do necessario.
-  sessions.shutdownAll().catch((err) => {
-    console.error('[whatsapp-service] erro ao encerrar sessoes:', err.message);
-  }).finally(() => {
-    server.close((err) => {
-      if (err) {
-        console.error('[whatsapp-service] erro ao encerrar:', err.message);
-        process.exitCode = 1;
-        return;
-      }
-      console.log('[whatsapp-service] encerrado');
-    });
-  });
-}
+const shutdown = createShutdown({ server, sessions });
 
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
