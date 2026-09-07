@@ -139,6 +139,7 @@ public class OutboundTrafficAuditService {
         resumirGrupo("Groq");
         resumirGrupo("Stripe");
         resumirGrupo("Resend");
+        resumirGrupo("WhatsApp");
         resumirGrupo("reCAPTCHA");
         resumirGrupo("PostgreSQL");
 

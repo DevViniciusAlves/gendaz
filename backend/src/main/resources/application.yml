@@ -48,6 +48,10 @@ stripe:
   price-plus-id: ${STRIPE_PRICE_PLUS_ID:}
   price-enterprise-id: ${STRIPE_PRICE_ENTERPRISE_ID:}
 
+whatsapp:
+  service-url: ${WHATSAPP_SERVICE_URL:}
+  internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
+
 
 
 recaptcha:
