@@ -23,7 +23,7 @@ public class ChamadoController {
             @Valid @RequestBody CriarChamadoRequest request
     ) {
         Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();
-        return ResponseEntity.ok(chamadoService.criar(request, usuarioAutenticado));
+        return ResponseEntity.status(HttpStatus.CREATED).body(chamadoService.criar(request, usuarioAutenticado));
     }
 
     @GetMapping("/empresa/{empresaId}")

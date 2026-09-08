@@ -213,14 +213,18 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             return WhatsAppOperationStatus.SUCCESS;
         }
         String erro = extrairCodigoErro(body);
-        if (httpStatus == 400 || "invalid_company_id".equals(erro)) {
-            return WhatsAppOperationStatus.INVALID_COMPANY_ID;
+        if (httpStatus == 400) {
+            return "invalid_company_id".equals(erro)
+                    ? WhatsAppOperationStatus.INVALID_COMPANY_ID
+                    : WhatsAppOperationStatus.INTERNAL_ERROR;
         }
         if (httpStatus == 401) {
             return WhatsAppOperationStatus.UNAUTHORIZED;
         }
-        if (httpStatus == 404 && eQr) {
-            return WhatsAppOperationStatus.QR_UNAVAILABLE;
+        if (httpStatus == 404) {
+            return eQr && "qr_unavailable".equals(erro)
+                    ? WhatsAppOperationStatus.QR_UNAVAILABLE
+                    : WhatsAppOperationStatus.INTERNAL_ERROR;
         }
         if (httpStatus == 503 || "service_unavailable".equals(erro)) {
             return WhatsAppOperationStatus.UNAVAILABLE;

@@ -149,6 +149,24 @@ class WhatsAppServiceProviderTest {
     }
 
     @Test
+    void qr_404_outroErro_retornaInternalError() {
+        stubStatus = 404;
+        stubBody = "{\"error\":\"not_found\"}";
+        WhatsAppResult<WhatsAppQr> resultado = provider().obterQr("empresa-teste");
+        assertEquals(WhatsAppOperationStatus.INTERNAL_ERROR, resultado.getStatus());
+        assertNull(resultado.getData());
+    }
+
+    @Test
+    void erro400_outroCodigo_retornaInternalError() {
+        stubStatus = 400;
+        stubBody = "{\"error\":\"bad_request\"}";
+        WhatsAppResult<WhatsAppSessionStatus> resultado = provider().consultarStatus("x");
+        assertEquals(WhatsAppOperationStatus.INTERNAL_ERROR, resultado.getStatus());
+        assertNull(resultado.getData());
+    }
+
+    @Test
     void logout_usaPost_eInterpreta200() {
         stubBody = STATUS_JSON;
         WhatsAppResult<WhatsAppSessionStatus> resultado = provider().logout("empresa-teste");
