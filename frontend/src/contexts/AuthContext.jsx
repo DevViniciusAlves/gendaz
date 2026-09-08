@@ -95,6 +95,7 @@ export function AuthProvider({ children }) {
   const [sessionExpired, setSessionExpired] = useState(false)
   const refreshEmAndamentoRef = useRef(null)
   const transicaoSessaoRef = useRef(false)
+  const adminLogoutExplicitoRef = useRef(false)
 
   useEffect(() => {
     clearSensitiveStorage()
@@ -214,6 +215,11 @@ export function AuthProvider({ children }) {
         return
       }
       if (isAdminPath() && !adminUsuario) {
+        if (adminLogoutExplicitoRef.current) {
+          if (mounted) setAuthLoading(false)
+          validacaoInicialEmAndamentoRef.current = false
+          return
+        }
         try {
           const adminRefresh = await adminApi.refresh()
           if (adminRefresh?.admin?.perfil === 'SUPER_ADMIN') {
@@ -572,6 +578,7 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
 
   async function adminLogin(email, senha) {
     transicaoSessaoRef.current = false
+    adminLogoutExplicitoRef.current = false
     setSessionExpired(false)
     clearSensitiveStorage()
     const response = await adminApi.login(email, senha)
@@ -581,8 +588,13 @@ if (response.statusConta === 'ACCOUNT_PENDING_PAYMENT' || response.statusConta =
     return response.admin
   }
 
-  function adminLogout() {
-    adminApi.logout()
+  async function adminLogout() {
+    adminLogoutExplicitoRef.current = true
+    try {
+      await adminApi.logout()
+    } catch {
+      // logout idempotente: mesmo se o backend falhar, encerra localmente
+    }
     limparSessaoAdmin()
     setAdminUsuario(null)
   }
