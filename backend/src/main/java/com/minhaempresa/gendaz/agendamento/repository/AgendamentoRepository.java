@@ -17,6 +17,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.data.domain.Pageable;
 
 public interface AgendamentoRepository extends JpaRepository<AgendamentoEntity, Long> {
+    java.util.Optional<AgendamentoEntity> findByIdAndEmpresaId(Long id, Long empresaId);
+
     interface AgendamentoHorarioProjection {
         LocalTime getHoraInicio();
         LocalTime getHoraFim();

@@ -1,8 +1,6 @@
 package com.minhaempresa.gendaz.whatsapp.service;
 
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
-import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
-import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppUsoCicloEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
@@ -36,7 +34,7 @@ public class WhatsAppQuotaService {
 
     private final WhatsAppUsoCicloRepository usoRepository;
     private final AssinaturaService assinaturaService;
-    private final EmpresaRepository empresaRepository;
+    private final WhatsAppUsoCicloInitializer initializer;
 
     private record CicloVigente(LocalDate inicio, LocalDate fim, String planoNome) {
     }
@@ -163,18 +161,18 @@ public class WhatsAppQuotaService {
         if (atual.isPresent()) {
             return atual.get();
         }
-        EmpresaEntity empresa = empresaRepository.getReferenceById(empresaId);
         try {
-            return usoRepository.saveAndFlush(WhatsAppUsoCicloEntity.builder()
-                    .empresa(empresa)
-                    .cicloInicio(cicloInicio)
-                    .build());
-        } catch (DataIntegrityViolationException concorrente) {
-            // Outra transacao criou o registro do ciclo primeiro: a constraint
-            // UK (empresa, ciclo) protegeu a duplicidade; rele com lock.
-            return usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, cicloInicio)
-                    .orElseThrow(() -> concorrente);
+            // Insercao em transacao propria: se outra transacao venceu a
+            // corrida, a UNIQUE (empresa, ciclo) protege a duplicidade e so a
+            // transacao interna sofre rollback. Sem retry: uma releitura basta.
+            initializer.inicializar(empresaId, cicloInicio);
+        } catch (DataIntegrityViolationException corrida) {
+            // Outra transacao criou o registro do ciclo primeiro; segue para
+            // a releitura com lock abaixo, na transacao corrente intacta.
         }
+        return usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, cicloInicio)
+                .orElseThrow(() -> new IllegalStateException(
+                        "Registro de uso do ciclo WhatsApp nao foi criado."));
     }
 
     private int disponibilidadePara(

@@ -12,7 +12,6 @@ import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.plano.entity.PlanoEntity;
 import com.minhaempresa.gendaz.plano.repository.PlanoRepository;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
-import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppUsoCicloRepository;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppReserva;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppUsoResponse;
@@ -24,17 +23,44 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+/**
+ * Versao PostgreSQL real (Testcontainers) da corrida na criacao inicial do
+ * registro de uso do ciclo.
+ *
+ * <p>Cobre a semantica critica que o H2 nao reproduz: no PostgreSQL, a
+ * transacao que viola a UNIQUE nao pode continuar, entao a criacao sob
+ * demanda roda em transacao propria (REQUIRES_NEW) e a chamadora apenas
+ * rele o registro vencedor com lock pessimista.
+ *
+ * <p>EXECUCAO: somente em CI/ambiente com Docker (classe {@code *IT} nao e
+ * executada pelo surefire no {@code mvn test} padrao; roda via failsafe no
+ * {@code mvn verify}). NAO foi executada localmente nesta tarefa porque o
+ * daemon Docker estava indisponivel; o mesmo cenario esta coberto em H2 por
+ * {@code WhatsAppQuotaConcorrenciaTest}.
+ */
+@Testcontainers
 @SpringBootTest
 @ActiveProfiles("test")
-class WhatsAppQuotaConcorrenciaTest {
+@org.springframework.test.context.TestPropertySource(
+        properties = {
+                "spring.datasource.hikari.maximum-pool-size=10",
+                "JWT_SECRET=super_secret_key_for_jwt_tokens_testing_123456789",
+                "SUPER_ADMIN_PASSWORD=super_secret_admin_pass_123456789"
+        })
+class WhatsAppQuotaPostgresIT {
 
-    private static final AtomicLong SEQUENCIA = new AtomicLong();
+    @Container
+    @ServiceConnection
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
     @Autowired
     private WhatsAppQuotaService quotaService;
@@ -44,14 +70,12 @@ class WhatsAppQuotaConcorrenciaTest {
     private PlanoRepository planoRepository;
     @Autowired
     private AssinaturaRepository assinaturaRepository;
-    @Autowired
-    private WhatsAppUsoCicloRepository usoRepository;
 
-    private EmpresaEntity empresaProNova(String prefixo) {
-        long seq = SEQUENCIA.incrementAndGet();
+    @Test
+    void duasReservasSimultaneasSemRegistroCriamUmUnicoRegistroComTotalDois() throws Exception {
         EmpresaEntity empresa = empresaRepository.save(EmpresaEntity.builder()
-                .nomeFantasia(prefixo + " " + seq)
-                .email(prefixo + "-" + seq + "-" + System.nanoTime() + "@teste.com")
+                .nomeFantasia("Wpp PG Init " + System.nanoTime())
+                .email("wpp-pg-" + System.nanoTime() + "@teste.com")
                 .status(StatusEmpresa.ATIVA)
                 .build());
         PlanoEntity plano = planoRepository.findByNome("PRO").orElseThrow();
@@ -63,10 +87,7 @@ class WhatsAppQuotaConcorrenciaTest {
                 .dataInicio(hoje.minusDays(5))
                 .dataFim(hoje.plusDays(25))
                 .build());
-        return empresa;
-    }
 
-    private List<WhatsAppReserva> reservarDuasVezesEmParalelo(Long empresaId) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {
             CountDownLatch largada = new CountDownLatch(1);
@@ -76,7 +97,7 @@ class WhatsAppQuotaConcorrenciaTest {
             Future<?> primeira = executor.submit(() -> {
                 try {
                     largada.await();
-                    resultados.add(quotaService.reservar(empresaId, WhatsAppCategoriaCota.CRM));
+                    resultados.add(quotaService.reservar(empresa.getId(), WhatsAppCategoriaCota.CRM));
                 } catch (Throwable t) {
                     erros.add(t);
                 }
@@ -84,65 +105,25 @@ class WhatsAppQuotaConcorrenciaTest {
             Future<?> segunda = executor.submit(() -> {
                 try {
                     largada.await();
-                    resultados.add(quotaService.reservar(empresaId, WhatsAppCategoriaCota.CRM));
+                    resultados.add(quotaService.reservar(empresa.getId(), WhatsAppCategoriaCota.CRM));
                 } catch (Throwable t) {
                     erros.add(t);
                 }
             });
             largada.countDown();
-            primeira.get(60, TimeUnit.SECONDS);
-            segunda.get(60, TimeUnit.SECONDS);
+            primeira.get(120, TimeUnit.SECONDS);
+            segunda.get(120, TimeUnit.SECONDS);
 
             assertTrue(erros.isEmpty(), "reservas concorrentes nao podem lancar excecao");
             assertEquals(2, resultados.size());
-            return resultados;
+            assertEquals(2, resultados.stream().filter(r -> r == WhatsAppReserva.RESERVADA).count());
+
+            WhatsAppUsoResponse uso = quotaService.consultarUso(empresa.getId());
+            assertEquals(2, uso.crmReservados());
+            assertEquals(0, uso.crmEnviados());
+            assertEquals(8, uso.crmDisponiveis());
         } finally {
             executor.shutdownNow();
         }
-    }
-
-    @Test
-    void duasReservasSimultaneasNaUltimaVagaNaoUltrapassamOLimite() throws Exception {
-        EmpresaEntity empresa = empresaProNova("wpp-conc-vaga");
-
-        // PRO CRM: limite 10. Preenche 9 para restar exatamente 1 vaga.
-        quotaService.consultarUso(empresa.getId());
-        for (int i = 0; i < 9; i++) {
-            assertEquals(
-                    WhatsAppReserva.RESERVADA,
-                    quotaService.reservar(empresa.getId(), WhatsAppCategoriaCota.CRM));
-        }
-
-        List<WhatsAppReserva> resultados = reservarDuasVezesEmParalelo(empresa.getId());
-
-        assertEquals(1, resultados.stream().filter(r -> r == WhatsAppReserva.RESERVADA).count());
-        assertEquals(
-                1,
-                resultados.stream().filter(r -> r == WhatsAppReserva.LIMITE_ATINGIDO).count());
-
-        WhatsAppUsoResponse uso = quotaService.consultarUso(empresa.getId());
-        assertEquals(10, uso.crmReservados() + uso.crmEnviados());
-        assertEquals(0, uso.crmDisponiveis());
-    }
-
-    @Test
-    void duasReservasSimultaneasSemRegistroCriamUmUnicoRegistroComTotalDois() throws Exception {
-        EmpresaEntity empresa = empresaProNova("wpp-conc-novo");
-        LocalDate ciclo = LocalDate.now().minusDays(5);
-
-        List<WhatsAppReserva> resultados = reservarDuasVezesEmParalelo(empresa.getId());
-
-        assertEquals(2, resultados.stream().filter(r -> r == WhatsAppReserva.RESERVADA).count());
-
-        long registrosDoCiclo = usoRepository.findAll().stream()
-                .filter(u -> empresa.getId().equals(u.getEmpresa().getId())
-                        && ciclo.equals(u.getCicloInicio()))
-                .count();
-        assertEquals(1, registrosDoCiclo);
-
-        WhatsAppUsoResponse uso = quotaService.consultarUso(empresa.getId());
-        assertEquals(2, uso.crmReservados());
-        assertEquals(0, uso.crmEnviados());
-        assertEquals(8, uso.crmDisponiveis());
     }
 }
