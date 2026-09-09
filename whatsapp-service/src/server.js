@@ -9,6 +9,7 @@ const config = require('./config');
 const { createApp } = require('./app');
 const { FileAuthStateStore } = require('./whatsapp/authStore');
 const { SessionManager } = require('./whatsapp/sessionManager');
+const { MessageSender } = require('./whatsapp/messageSender');
 const { createSocket } = require('./whatsapp/socketFactory');
 const { createShutdown } = require('./shutdown');
 
@@ -22,7 +23,12 @@ const sessions = new SessionManager({
   maxAttempts: config.reconnectMaxAttempts,
 });
 
-const server = http.createServer(createApp({ sessions }));
+const server = http.createServer(createApp({
+  sessions,
+  messageSender: new MessageSender({
+    sendFn: ({ companyId, recipient, text }) => sessions.sendText(companyId, recipient, text),
+  }),
+}));
 
 server.on('clientError', (err, socket) => {
   console.error('[whatsapp-service] erro de protocolo HTTP:', err.message);

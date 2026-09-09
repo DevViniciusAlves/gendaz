@@ -66,6 +66,47 @@ public class WhatsAppNotificacaoService {
             LocalDateTime scheduledAt,
             Long clienteId,
             Long agendamentoId) {
+        return criarInterno(empresaId, tipo, idempotencyKey, scheduledAt, clienteId, agendamentoId, null, null);
+    }
+
+    /**
+     * Variante com conteudo operacional (fila de envio). Se a notificacao ja
+     * existe para (empresa, chave), ela e reutilizada como esta: nunca
+     * sobrescreve o payload existente.
+     */
+    public WhatsAppNotificacaoEntity criarIdempotenteConteudo(
+            Long empresaId,
+            WhatsAppTipoNotificacao tipo,
+            String idempotencyKey,
+            LocalDateTime scheduledAt,
+            Long clienteId,
+            Long agendamentoId,
+            String recipient,
+            String messageBody) {
+        Optional<WhatsAppNotificacaoEntity> existente =
+                notificacaoRepository.findByEmpresaIdAndIdempotencyKey(empresaId, idempotencyKey);
+        if (existente.isPresent()) {
+            return existente.get();
+        }
+        try {
+            return criarInterno(empresaId, tipo, idempotencyKey, scheduledAt, clienteId, agendamentoId,
+                    recipient, messageBody);
+        } catch (WhatsAppNotificacaoDuplicadaException duplicada) {
+            return notificacaoRepository.findByEmpresaIdAndIdempotencyKey(empresaId, idempotencyKey)
+                    .orElseThrow(() -> duplicada);
+        }
+    }
+
+    @Transactional
+    public WhatsAppNotificacaoEntity criarInterno(
+            Long empresaId,
+            WhatsAppTipoNotificacao tipo,
+            String idempotencyKey,
+            LocalDateTime scheduledAt,
+            Long clienteId,
+            Long agendamentoId,
+            String recipient,
+            String messageBody) {
         // Isolamento multiempresa: cliente/agendamento sao validados pelo par
         // (recurso, empresa). Inexistente e de outro tenant falham igual, sem
         // revelar a quem o id pertence.
@@ -87,6 +128,9 @@ public class WhatsAppNotificacaoService {
                 .scheduledAt(scheduledAt)
                 .cliente(cliente)
                 .agendamento(agendamento)
+                .recipient(recipient)
+                .messageBody(messageBody)
+                .nextAttemptAt(scheduledAt)
                 .build();
         try {
             return notificacaoRepository.saveAndFlush(entidade);

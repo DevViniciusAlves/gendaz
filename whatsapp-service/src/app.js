@@ -3,12 +3,14 @@
 // Montagem das rotas sobre http puro (sem dependencias externas).
 // - GET /health: publico.
 // - /internal/whatsapp/sessions/*: protegidos por Bearer (middleware auth).
-// Nao existe endpoint de envio nesta fase; qualquer rota desconhecida => 404.
-// Erros inesperados de rota caem no tratamento global (500 generico,
-// sem vazar detalhes internos).
+// - POST /internal/whatsapp/sessions/{companyId}/messages/text: envio de
+//   texto (V1), tambem protegido por Bearer.
+// Qualquer rota desconhecida => 404. Erros inesperados de rota caem no
+// tratamento global (500 generico, sem vazar detalhes internos).
 
 const { healthHandler } = require('./routes/health');
 const { connectHandler, statusHandler, qrHandler, logoutHandler } = require('./routes/sessions');
+const { messagesTextHandler } = require('./routes/messages');
 const { requireInternalAuth } = require('./middleware/auth');
 
 function notFoundHandler(req, res) {
@@ -25,7 +27,9 @@ function methodNotAllowedHandler(res, allowed) {
 // GET  /internal/whatsapp/sessions/{companyId}/status
 // GET  /internal/whatsapp/sessions/{companyId}/qr
 // POST /internal/whatsapp/sessions/{companyId}/logout
+// POST /internal/whatsapp/sessions/{companyId}/messages/text
 const SESSION_ROUTE = /^\/internal\/whatsapp\/sessions\/([^/]+)\/(connect|status|qr|logout)$/;
+const MESSAGES_TEXT_ROUTE = /^\/internal\/whatsapp\/sessions\/([^/]+)\/messages\/text$/;
 
 function createApp(ctx) {
   return (req, res) => {
@@ -39,6 +43,24 @@ function createApp(ctx) {
       }
 
       const match = SESSION_ROUTE.exec(pathname);
+      const messagesMatch = !match && req.method === 'POST' ? MESSAGES_TEXT_ROUTE.exec(pathname) : null;
+      if (messagesMatch) {
+        const [, companyId] = messagesMatch;
+        // companyId bruto vem do path; o handler valida/normaliza antes de usar.
+        requireInternalAuth(req, res, () => {
+          messagesTextHandler(req, res, companyId, ctx).catch(() => {
+            if (!res.headersSent) {
+              res.writeHead(500, { 'Content-Type': 'application/json' });
+            }
+            try {
+              res.end(JSON.stringify({ error: 'internal_error' }));
+            } catch (_) {
+              // socket ja encerrado; nada a fazer
+            }
+          });
+        });
+        return;
+      }
       if (match) {
         const [, companyId, action] = match;
         const expectedMethod = action === 'connect' || action === 'logout' ? 'POST' : 'GET';

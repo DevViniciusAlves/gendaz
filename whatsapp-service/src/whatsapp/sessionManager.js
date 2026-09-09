@@ -128,6 +128,26 @@ class SessionManager {
     return { qr: record.qr, updatedAt: record.qrUpdatedAt };
   }
 
+  // Envio de texto: exige sessao CONNECTED com socket ativo. Nao conecta
+  // automaticamente e nao faz fila aqui (a serializacao por empresa vive no
+  // MessageSender). Nunca loga destinatario, texto ou JID.
+  async sendText(rawCompanyId, recipient, text) {
+    const companyId = normalizeCompanyId(rawCompanyId);
+    if (!companyId) {
+      throw Object.assign(new Error('invalid_company_id'), { code: 'invalid_company_id' });
+    }
+    const record = this.sessions.get(companyId);
+    if (!record || record.state !== STATES.CONNECTED || !record.sock) {
+      const err = new Error('session_not_connected');
+      err.code = 'session_not_connected';
+      err.state = record ? record.state : STATES.NOT_CONNECTED;
+      throw err;
+    }
+    const jid = `${recipient}@s.whatsapp.net`;
+    const message = await record.sock.sendMessage(jid, { text });
+    return (message && message.key && message.key.id) || null;
+  }
+
   async logout(rawCompanyId) {
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {

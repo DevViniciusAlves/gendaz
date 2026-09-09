@@ -6,6 +6,7 @@ import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppStatusNotificacao;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import jakarta.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.*;
 
@@ -21,7 +22,8 @@ import lombok.*;
                 columnNames = {"empresa_id", "idempotency_key"})
 }, indexes = {
         @Index(name = "idx_whatsapp_notif_empresa_status", columnList = "empresa_id,status"),
-        @Index(name = "idx_whatsapp_notif_empresa_scheduled", columnList = "empresa_id,scheduled_at")
+        @Index(name = "idx_whatsapp_notif_empresa_scheduled", columnList = "empresa_id,scheduled_at"),
+        @Index(name = "idx_whatsapp_notif_fila", columnList = "status,next_attempt_at,scheduled_at")
 })
 public class WhatsAppNotificacaoEntity {
     @Id
@@ -57,6 +59,42 @@ public class WhatsAppNotificacaoEntity {
 
     @Column(length = 1000)
     private String lastError;
+
+    /**
+     * Destinatario canonico (somente digitos) e corpo da mensagem outbound
+     * criada pelo gendaz. Nunca conversa recebida, QR ou credenciais.
+     */
+    @Column(length = 20)
+    private String recipient;
+
+    @Column(name = "message_body", length = 4096)
+    private String messageBody;
+
+    /** Proxima tentativa (retry) ou reagendamento; nulo = sem pendencia. */
+    private LocalDateTime nextAttemptAt;
+
+    /**
+     * Janela de crash: claim (processing) vs inicio real da chamada externa
+     * (send). Se o processo morre entre elas, o recovery decide sem duplicar.
+     */
+    private LocalDateTime processingStartedAt;
+
+    private LocalDateTime sendStartedAt;
+
+    /** message.key.id do Baileys, quando disponivel. */
+    @Column(name = "provider_message_id", length = 120)
+    private String providerMessageId;
+
+    /**
+     * Reserva de cota ligada a notificacao: feita uma vez antes da primeira
+     * tentativa e convertida/liberada no ciclo gravado em quotaCycleStart,
+     * mesmo que a assinatura vire o ciclo no meio dos retries.
+     */
+    @Column(name = "quota_reserved", nullable = false)
+    private boolean quotaReserved;
+
+    @Column(name = "quota_cycle_start")
+    private LocalDate quotaCycleStart;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cliente_id")

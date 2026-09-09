@@ -51,6 +51,11 @@ stripe:
 whatsapp:
   service-url: ${WHATSAPP_SERVICE_URL:}
   internal-token: ${WHATSAPP_INTERNAL_TOKEN:}
+  worker:
+    enabled: ${WHATSAPP_WORKER_ENABLED:false}
+    delay-ms: ${WHATSAPP_WORKER_DELAY_MS:10000}
+    batch-size: ${WHATSAPP_WORKER_BATCH_SIZE:10}
+    stale-seconds: ${WHATSAPP_WORKER_STALE_SECONDS:120}
 
 
 

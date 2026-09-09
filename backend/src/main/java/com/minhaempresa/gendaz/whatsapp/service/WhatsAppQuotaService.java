@@ -107,8 +107,49 @@ public class WhatsAppQuotaService {
         if (ciclo.isEmpty()) {
             return;
         }
+        confirmarEnvioNoCiclo(empresaId, categoria, ciclo.get().inicio());
+    }
+
+    /**
+     * Reserva no ciclo vigente retornando tambem em qual ciclo foi reservada.
+     * O worker grava esse ciclo na notificacao (quotaCycleStart) e confirma
+     * ou libera exatamente nele, mesmo que a assinatura vire o ciclo no meio
+     * dos retries.
+     */
+    @Transactional
+    public ReservaCota reservarNoCicloAtual(Long empresaId, WhatsAppCategoriaCota categoria) {
+        Optional<CicloVigente> ciclo = resolverCiclo(empresaId);
+        if (ciclo.isEmpty()) {
+            return new ReservaCota(WhatsAppReserva.PLANO_SEM_WHATSAPP, null);
+        }
+        CicloVigente vigente = ciclo.get();
+        if (!WhatsAppPlanoPolicy.possuiWhatsApp(vigente.planoNome())) {
+            return new ReservaCota(WhatsAppReserva.PLANO_SEM_WHATSAPP, null);
+        }
+        WhatsAppUsoCicloEntity uso = obterOuCriarComLock(empresaId, vigente.inicio());
+        if (disponibilidadePara(categoria, vigente.planoNome(), uso) <= 0) {
+            return new ReservaCota(WhatsAppReserva.LIMITE_ATINGIDO, null);
+        }
+        if (categoria == WhatsAppCategoriaCota.LEMBRETE) {
+            uso.setLembretesReservados(uso.getLembretesReservados() + 1);
+        } else {
+            uso.setCrmReservados(uso.getCrmReservados() + 1);
+        }
+        usoRepository.save(uso);
+        return new ReservaCota(WhatsAppReserva.RESERVADA, vigente.inicio());
+    }
+
+    /**
+     * Converte exatamente 1 reservado em 1 enviado no ciclo informado
+     * (o ciclo gravado na notificacao), sem resolver o ciclo atual.
+     */
+    @Transactional
+    public void confirmarEnvioNoCiclo(Long empresaId, WhatsAppCategoriaCota categoria, LocalDate cicloInicio) {
+        if (cicloInicio == null) {
+            return;
+        }
         Optional<WhatsAppUsoCicloEntity> atual =
-                usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, ciclo.get().inicio());
+                usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, cicloInicio);
         if (atual.isEmpty()) {
             return;
         }
@@ -135,8 +176,20 @@ public class WhatsAppQuotaService {
         if (ciclo.isEmpty()) {
             return;
         }
+        liberarReservaNoCiclo(empresaId, categoria, ciclo.get().inicio());
+    }
+
+    /**
+     * Libera exatamente 1 reservado no ciclo informado (o ciclo gravado na
+     * notificacao), sem tocar em enviados e sem resolver o ciclo atual.
+     */
+    @Transactional
+    public void liberarReservaNoCiclo(Long empresaId, WhatsAppCategoriaCota categoria, LocalDate cicloInicio) {
+        if (cicloInicio == null) {
+            return;
+        }
         Optional<WhatsAppUsoCicloEntity> atual =
-                usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, ciclo.get().inicio());
+                usoRepository.findByEmpresaIdAndCicloInicioForUpdate(empresaId, cicloInicio);
         if (atual.isEmpty()) {
             return;
         }
