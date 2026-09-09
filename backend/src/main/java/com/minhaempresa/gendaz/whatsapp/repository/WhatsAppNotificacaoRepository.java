@@ -18,6 +18,8 @@ public interface WhatsAppNotificacaoRepository extends JpaRepository<WhatsAppNot
 
     Optional<WhatsAppNotificacaoEntity> findByEmpresaIdAndIdempotencyKey(Long empresaId, String idempotencyKey);
 
+    List<WhatsAppNotificacaoEntity> findByEmpresaIdAndAgendamentoId(Long empresaId, Long agendamentoId);
+
     List<WhatsAppNotificacaoEntity> findByEmpresaIdAndStatus(Long empresaId, WhatsAppStatusNotificacao status);
 
     /**

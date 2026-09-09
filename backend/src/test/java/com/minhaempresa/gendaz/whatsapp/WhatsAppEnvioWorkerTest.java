@@ -31,6 +31,7 @@ import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEnvioWorker;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppReserva;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -94,7 +95,7 @@ class WhatsAppEnvioWorkerTest {
         long seq = SEQUENCIA.incrementAndGet();
         return filaService.enfileirar(
                 empresa.getId(), tipo, "w-" + seq + "-" + System.nanoTime(),
-                LocalDateTime.now().minusMinutes(1), null, null, "5511999999999", "Texto " + seq);
+                LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1), null, null, "5511999999999", "Texto " + seq);
     }
 
     private WhatsAppNotificacaoEntity recarregar(Long id) {
@@ -103,8 +104,8 @@ class WhatsAppEnvioWorkerTest {
 
     private void forcarVencida(Long id) {
         WhatsAppNotificacaoEntity entidade = recarregar(id);
-        entidade.setScheduledAt(LocalDateTime.now().minusMinutes(5));
-        entidade.setNextAttemptAt(LocalDateTime.now().minusMinutes(5));
+        entidade.setScheduledAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(5));
+        entidade.setNextAttemptAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(5));
         notificacaoRepository.save(entidade);
     }
 
@@ -139,7 +140,7 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity criada = filaService.enfileirar(
                 empresa.getId(), WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO,
                 "wf-" + SEQUENCIA.incrementAndGet() + "-" + System.nanoTime(),
-                LocalDateTime.now().plusHours(2), null, null, "5511999999999", "Futura");
+                LocalDateTime.now(ZoneOffset.UTC).plusHours(2), null, null, "5511999999999", "Futura");
 
         assertEquals(0, worker.processarLote(10));
         assertEquals(WhatsAppStatusNotificacao.PENDENTE, recarregar(criada.getId()).getStatus());
@@ -195,7 +196,7 @@ class WhatsAppEnvioWorkerTest {
                 .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.SESSION_NOT_CONNECTED));
 
         WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
-        LocalDateTime antes = LocalDateTime.now();
+        LocalDateTime antes = LocalDateTime.now(ZoneOffset.UTC);
 
         worker.processarLote(10);
         WhatsAppNotificacaoEntity tentativa1 = recarregar(criada.getId());
@@ -209,7 +210,7 @@ class WhatsAppEnvioWorkerTest {
         worker.processarLote(10);
         WhatsAppNotificacaoEntity tentativa2 = recarregar(criada.getId());
         assertEquals(WhatsAppStatusNotificacao.PENDENTE, tentativa2.getStatus());
-        assertTrue(!tentativa2.getNextAttemptAt().isBefore(LocalDateTime.now().plusMinutes(4)));
+        assertTrue(!tentativa2.getNextAttemptAt().isBefore(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(4)));
         assertTrue(tentativa2.isQuotaReserved());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
 
@@ -273,7 +274,7 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity criada = filaService.enfileirar(
                 empresa.getId(), WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO,
                 "wb-" + seq + "-" + System.nanoTime(),
-                LocalDateTime.now().minusMinutes(1), null, null, "5511999999999", "Texto");
+                LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1), null, null, "5511999999999", "Texto");
         worker.processarLote(10);
 
         WhatsAppNotificacaoEntity cancelada = recarregar(criada.getId());
@@ -343,7 +344,7 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity presa = recarregar(criada.getId());
         presa.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
         presa.setAttempts(1);
-        presa.setProcessingStartedAt(LocalDateTime.now().minusMinutes(10));
+        presa.setProcessingStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(10));
         presa.setSendStartedAt(null);
         presa.setQuotaReserved(true);
         presa.setQuotaCycleStart(LocalDate.now().minusDays(5));
@@ -355,6 +356,11 @@ class WhatsAppEnvioWorkerTest {
         assertEquals(WhatsAppStatusNotificacao.PENDENTE, recuperada.getStatus());
         assertTrue(recuperada.isQuotaReserved());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
+
+        // Limpeza: nao deixar PENDENTE vencida para outros testes que
+        // compartilham o banco (o mock sem stub finaliza como DELIVERY_UNKNOWN).
+        worker.processarLote(10);
+        assertEquals(WhatsAppStatusNotificacao.FALHOU, recarregar(criada.getId()).getStatus());
     }
 
     @Test
@@ -366,8 +372,8 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity presa = recarregar(criada.getId());
         presa.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
         presa.setAttempts(1);
-        presa.setProcessingStartedAt(LocalDateTime.now().minusMinutes(10));
-        presa.setSendStartedAt(LocalDateTime.now().minusMinutes(9));
+        presa.setProcessingStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(10));
+        presa.setSendStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusMinutes(9));
         presa.setQuotaReserved(true);
         presa.setQuotaCycleStart(LocalDate.now().minusDays(5));
         notificacaoRepository.save(presa);

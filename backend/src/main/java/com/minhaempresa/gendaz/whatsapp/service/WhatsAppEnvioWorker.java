@@ -39,6 +39,8 @@ public class WhatsAppEnvioWorker {
     private final WhatsAppNotificacaoRepository notificacaoRepository;
     private final WhatsAppQuotaService quotaService;
     private final WhatsAppProvider provider;
+    private final WhatsAppClock clock;
+    private final WhatsAppLembreteAgendamentoService lembreteService;
 
     private WhatsAppEnvioWorker self;
 
@@ -87,16 +89,21 @@ public class WhatsAppEnvioWorker {
      */
     @Transactional
     public Optional<Long> claimUm() {
+        LocalDateTime agora = clock.agoraUtc();
         List<WhatsAppNotificacaoEntity> pendentes =
-                notificacaoRepository.claimPendentes(LocalDateTime.now(), 1);
+                notificacaoRepository.claimPendentes(agora, 1);
         if (pendentes.isEmpty()) {
             return Optional.empty();
         }
         WhatsAppNotificacaoEntity entidade = pendentes.get(0);
         entidade.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
         entidade.setAttempts(entidade.getAttempts() + 1);
-        entidade.setProcessingStartedAt(LocalDateTime.now());
+        entidade.setProcessingStartedAt(agora);
         entidade.setSendStartedAt(null);
+        // Lembrete vencido nao reserva nem envia: cancela antes da cota.
+        if (lembreteService.expiradoSeNecessario(entidade, agora)) {
+            return Optional.empty();
+        }
         if (!entidade.isQuotaReserved()) {
             WhatsAppCategoriaCota categoria = entidade.getTipo().categoria();
             ReservaCota reserva = quotaService.reservarNoCicloAtual(
@@ -120,6 +127,10 @@ public class WhatsAppEnvioWorker {
     }
 
     public void processar(Long notificacaoId) {
+        // Protecao defensiva de lembrete antes da chamada externa (CRM passa).
+        if (!lembreteService.revalidarParaEnvio(notificacaoId)) {
+            return;
+        }
         if (!self.marcarInicioEnvio(notificacaoId)) {
             return;
         }
@@ -149,7 +160,7 @@ public class WhatsAppEnvioWorker {
         if (atual.isEmpty() || atual.get().getStatus() != WhatsAppStatusNotificacao.ENVIANDO) {
             return false;
         }
-        atual.get().setSendStartedAt(LocalDateTime.now());
+        atual.get().setSendStartedAt(clock.agoraUtc());
         notificacaoRepository.save(atual.get());
         return true;
     }
@@ -189,7 +200,7 @@ public class WhatsAppEnvioWorker {
                 return;
             }
             entidade.setStatus(WhatsAppStatusNotificacao.PENDENTE);
-            entidade.setNextAttemptAt(LocalDateTime.now().plusMinutes(entidade.getAttempts() == 1 ? 1 : 5));
+            entidade.setNextAttemptAt(clock.agoraUtc().plusMinutes(entidade.getAttempts() == 1 ? 1 : 5));
             entidade.setProcessingStartedAt(null);
             entidade.setSendStartedAt(null);
             notificacaoRepository.save(entidade);
@@ -202,7 +213,7 @@ public class WhatsAppEnvioWorker {
 
     private void concluirSucesso(WhatsAppNotificacaoEntity entidade, WhatsAppSendResult resultado) {
         entidade.setStatus(WhatsAppStatusNotificacao.ENVIADO);
-        entidade.setSentAt(LocalDateTime.now());
+        entidade.setSentAt(clock.agoraUtc());
         entidade.setProviderMessageId(resultado == null ? null : resultado.getMessageId());
         entidade.setLastError(null);
         entidade.setProcessingStartedAt(null);
@@ -241,7 +252,7 @@ public class WhatsAppEnvioWorker {
      */
     @Transactional
     public int recuperarPresos(long staleSeconds) {
-        LocalDateTime limite = LocalDateTime.now().minusSeconds(staleSeconds);
+        LocalDateTime limite = clock.agoraUtc().minusSeconds(staleSeconds);
         List<WhatsAppNotificacaoEntity> presos = notificacaoRepository.claimPresos(limite, LOTE_RECUPERACAO);
         for (WhatsAppNotificacaoEntity entidade : presos) {
             if (entidade.getSendStartedAt() == null) {

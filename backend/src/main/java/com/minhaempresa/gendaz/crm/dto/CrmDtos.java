@@ -30,7 +30,8 @@ public class CrmDtos {
     public record EnviarMensagemRequest(
             String template,
             String canal,
-            String customMessage
+            String customMessage,
+            String requestId
     ) {}
 
     public record HistoricoContatoResponse(

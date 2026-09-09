@@ -34,10 +34,24 @@ public class WhatsAppFilaService {
             Long agendamentoId,
             String recipient,
             String messageBody) {
+        return enfileirar(empresaId, tipo, idempotencyKey, scheduledAt, clienteId,
+                agendamentoId, recipient, messageBody, null);
+    }
+
+    public WhatsAppNotificacaoEntity enfileirar(
+            Long empresaId,
+            WhatsAppTipoNotificacao tipo,
+            String idempotencyKey,
+            LocalDateTime scheduledAt,
+            Long clienteId,
+            Long agendamentoId,
+            String recipient,
+            String messageBody,
+            LocalDateTime expiresAt) {
         validar(recipient, messageBody, scheduledAt);
         return notificacaoService.criarIdempotenteConteudo(
                 empresaId, tipo, idempotencyKey, scheduledAt, clienteId, agendamentoId,
-                recipient, messageBody);
+                recipient, messageBody, expiresAt);
     }
 
     static void validar(String recipient, String messageBody, LocalDateTime scheduledAt) {

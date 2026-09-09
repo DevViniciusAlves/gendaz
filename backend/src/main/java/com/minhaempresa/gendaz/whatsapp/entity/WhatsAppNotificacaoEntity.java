@@ -74,6 +74,12 @@ public class WhatsAppNotificacaoEntity {
     private LocalDateTime nextAttemptAt;
 
     /**
+     * Validade do lembrete (somente LEMBRETE_AGENDAMENTO): scheduledAt + 10
+     * minutos. Apos esse instante nao ha envio, mesmo com retry pendente.
+     */
+    private LocalDateTime expiresAt;
+
+    /**
      * Janela de crash: claim (processing) vs inicio real da chamada externa
      * (send). Se o processo morre entre elas, o recovery decide sem duplicar.
      */
