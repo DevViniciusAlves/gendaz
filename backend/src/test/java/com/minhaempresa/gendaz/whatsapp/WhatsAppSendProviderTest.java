@@ -124,6 +124,12 @@ class WhatsAppSendProviderTest {
 
         stubStatus = 500;
         stubBody = "{\"error\":\"provider_send_failed\"}";
+        WhatsAppSendResult ambiguo = provider().enviarTexto("42", "5511", "Ola", "r");
+        assertEquals(WhatsAppSendStatus.DELIVERY_UNKNOWN, ambiguo.getStatus());
+        assertFalse(ambiguo.getStatus().isRetryable());
+
+        stubStatus = 500;
+        stubBody = "{\"error\":\"outro_erro_qualquer\"}";
         WhatsAppSendResult provider = provider().enviarTexto("42", "5511", "Ola", "r");
         assertEquals(WhatsAppSendStatus.PROVIDER_ERROR, provider.getStatus());
         assertFalse(provider.getStatus().isRetryable());

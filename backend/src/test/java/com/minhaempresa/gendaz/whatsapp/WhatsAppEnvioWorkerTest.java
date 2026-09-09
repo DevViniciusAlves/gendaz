@@ -300,6 +300,27 @@ class WhatsAppEnvioWorkerTest {
     }
 
     @Test
+    void providerSendFailedMapeadoNaoGeraRetryNoWorker() {
+        // O provider mapeia "500 provider_send_failed" para DELIVERY_UNKNOWN
+        // (ver WhatsAppSendProviderTest): o worker deve falhar sem reagendar.
+        EmpresaEntity empresa = empresaProNova("wpp-wpsf");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.DELIVERY_UNKNOWN));
+
+        WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        worker.processarLote(10);
+
+        WhatsAppNotificacaoEntity falha = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.FALHOU, falha.getStatus());
+        assertEquals("DELIVERY_UNKNOWN", falha.getLastError());
+        assertEquals(1, falha.getAttempts());
+        assertEquals(0, worker.processarLote(10));
+        verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+    }
+
+    @Test
     void segundaFinalizacaoDeSucessoNaoDuplicaConsumo() {
         EmpresaEntity empresa = empresaProNova("wpp-widem");
         when(provider.enviarTexto(any(), any(), any(), any()))

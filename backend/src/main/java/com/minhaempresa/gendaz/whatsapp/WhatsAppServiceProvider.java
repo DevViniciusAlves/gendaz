@@ -299,8 +299,11 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         }
         if (httpStatus == 500) {
             // provider_send_failed ocorre apos tentativa do sock.sendMessage:
-            // ambiguo, sem retry automatico.
-            return WhatsAppSendStatus.PROVIDER_ERROR;
+            // resultado ambiguo (mensagem pode ter sido aceita), sem retry
+            // automatico. Outro 500 desconhecido continua PROVIDER_ERROR.
+            return "provider_send_failed".equals(erro)
+                    ? WhatsAppSendStatus.DELIVERY_UNKNOWN
+                    : WhatsAppSendStatus.PROVIDER_ERROR;
         }
         return WhatsAppSendStatus.PROVIDER_ERROR;
     }

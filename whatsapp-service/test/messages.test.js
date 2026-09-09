@@ -325,4 +325,34 @@ describe('MessageSender (unidade)', () => {
     assert.equal(again.deduplicated, false);
     assert.equal(n, 4);
   });
+
+  it('pares ("ab","c") e ("a","bc") geram envios independentes', async () => {
+    const seen = [];
+    const sender = new MessageSender({
+      sendFn: async ({ companyId, text }) => {
+        seen.push(`${companyId}:${text}`);
+        return `id-${companyId}-${text}`;
+      },
+      log: silentLog(),
+    });
+    const base = { recipient: RECIPIENT, text: TEXT };
+    // Concorrentes: sem cache/inflight cruzado, sao dois sends.
+    const [r1, r2] = await Promise.all([
+      sender.send({ ...base, companyId: 'ab', requestId: 'c' }),
+      sender.send({ ...base, companyId: 'a', requestId: 'bc' }),
+    ]);
+    assert.equal(r1.deduplicated, false);
+    assert.equal(r2.deduplicated, false);
+    assert.equal(seen.length, 2);
+    // Repeticao: cada par acerta o proprio cache, sem cruzar.
+    const [r3, r4] = await Promise.all([
+      sender.send({ ...base, companyId: 'ab', requestId: 'c' }),
+      sender.send({ ...base, companyId: 'a', requestId: 'bc' }),
+    ]);
+    assert.equal(r3.deduplicated, true);
+    assert.equal(r4.deduplicated, true);
+    assert.equal(r3.messageId, 'id-ab-Mensagem de teste');
+    assert.equal(r4.messageId, 'id-a-Mensagem de teste');
+    assert.equal(seen.length, 2);
+  });
 });
