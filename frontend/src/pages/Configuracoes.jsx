@@ -12,7 +12,6 @@ import { useLocalData } from '../hooks/useLocalData.js'
 import { PLANOS } from '../services/localStore.js'
 import { normalizarParaApi, normalizarParaInput, obterExemploTelefone, validarTelefone } from '../utils/phoneUtils.js'
 import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
-import WhatsAppIntegracoes from './integracoes/WhatsAppIntegracoes.jsx'
 
 const DIAS_ATENDIMENTO = [
   { value: 'SEGUNDA', label: 'Seg', fullLabel: 'Segunda' },
@@ -799,6 +798,5 @@ export default function Configuracoes() {
     </section>
   )
 }
-
 
 

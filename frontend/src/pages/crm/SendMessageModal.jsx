@@ -3,6 +3,7 @@ import Modal from '../../components/Modal.jsx'
 import Button from '../../components/Button.jsx'
 import { gerarUuid } from '../../api/appApi.js'
 import { enviarMensagemCrm } from '../../api/crmApi.js'
+import { buscarResumoWhatsapp } from '../../api/whatsappApi.js'
 
 function emitirToast(type, message) {
   if (typeof window === 'undefined') return
@@ -43,6 +44,8 @@ const ERROS_WHATSAPP = {
   WHATSAPP_NAO_DISPONIVEL_NO_PLANO: 'O plano atual não possui ações de WhatsApp.',
   WHATSAPP_TELEFONE_INVALIDO: 'Este cliente não possui um telefone válido para WhatsApp.',
   WHATSAPP_OPT_OUT: 'Este cliente optou por não receber mensagens pelo WhatsApp.',
+  WHATSAPP_NOT_CONNECTED: 'WhatsApp não conectado. Conecte em Integrações para usar este canal.',
+  WHATSAPP_COTA_ESGOTADA: 'A cota de ações CRM pelo WhatsApp acabou neste ciclo.',
   WHATSAPP_REQUEST_ID_INVALIDO: 'Não foi possível identificar a ação. Feche e abra novamente.',
   WHATSAPP_TIPO_NAO_SUPORTADO: 'Este tipo de mensagem ainda não possui WhatsApp.',
 }
@@ -53,6 +56,8 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   const [enviando, setEnviando] = useState(false)
   const [canal, setCanal] = useState('email')
   const [requestId, setRequestId] = useState(null)
+  const [statusWhatsapp, setStatusWhatsapp] = useState('UNAVAILABLE')
+  const [carregandoWhatsapp, setCarregandoWhatsapp] = useState(false)
 
   const permiteWhatsapp = template === 'resgate' || template === 'reconexao'
 
@@ -63,8 +68,28 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       setRequestId(gerarUuid())
       setPersonalizar(false)
       setMensagemCustom('')
+      setStatusWhatsapp('UNAVAILABLE')
     }
   }, [open, cliente?.id, template])
+
+  useEffect(() => {
+    if (!open || !(template === 'resgate' || template === 'reconexao')) return
+    let ativo = true
+    setCarregandoWhatsapp(true)
+    buscarResumoWhatsapp()
+      .then((resumo) => {
+        if (ativo) setStatusWhatsapp(resumo?.conexao?.estado || 'UNAVAILABLE')
+      })
+      .catch(() => {
+        if (ativo) setStatusWhatsapp('UNAVAILABLE')
+      })
+      .finally(() => {
+        if (ativo) setCarregandoWhatsapp(false)
+      })
+    return () => {
+      ativo = false
+    }
+  }, [open, template])
 
   if (!open || !cliente || !template) return null
 
@@ -72,6 +97,8 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   const nomeCliente = cliente.nome || 'cliente'
   const mensagemPadrao = tmpl.mensagem.replace('{nome}', nomeCliente)
   const ehWhatsapp = canal === 'whatsapp'
+  const whatsappConectado = statusWhatsapp === 'CONNECTED'
+  const whatsappBloqueado = permiteWhatsapp && (!whatsappConectado || !cliente.telefone)
   const mensagemWhatsapp = (TEMPLATES_WHATSAPP[template] || '').replace('{cliente}', nomeCliente)
 
   async function handleEnviar() {
@@ -155,11 +182,24 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
                   name={`canal-${cliente.id}-${template}`}
                   value="whatsapp"
                   checked={canal === 'whatsapp'}
-                  onChange={() => setCanal('whatsapp')}
+                  disabled={whatsappBloqueado}
+                  onChange={() => {
+                    if (!whatsappBloqueado) setCanal('whatsapp')
+                  }}
                 />
                 <span>WhatsApp</span>
               </label>
             </div>
+          )}
+
+          {permiteWhatsapp && whatsappBloqueado && (
+            <p className="wpp-note">
+              {carregandoWhatsapp
+                ? 'Consultando conexão do WhatsApp...'
+                : !cliente.telefone
+                  ? 'Este cliente não possui telefone cadastrado para WhatsApp.'
+                  : 'WhatsApp não conectado. Conecte em Integrações para usar este canal.'}
+            </p>
           )}
 
           <div className="crm-send-message">
@@ -197,7 +237,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
               onClick={handleEnviar}
               loading={enviando}
               loadingText="Enviando..."
-              disabled={canal === 'whatsapp' ? !cliente.telefone : !cliente.email}
+              disabled={canal === 'whatsapp' ? whatsappBloqueado : !cliente.email}
             >
               Enviar agora
             </Button>
@@ -206,4 +246,3 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
     </Modal>
   )
 }
-

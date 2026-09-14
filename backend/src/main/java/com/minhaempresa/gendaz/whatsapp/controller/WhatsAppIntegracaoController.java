@@ -62,7 +62,10 @@ public class WhatsAppIntegracaoController {
         return ResponseEntity.ok(new ResumoResponse(
                 disponivelNoPlano,
                 conexao,
-                new ConfiguracaoResponse(configuracaoService.lembretesAtivos(empresaId)),
+                new ConfiguracaoResponse(
+                        configuracaoService.lembretesAtivos(empresaId),
+                        configuracaoService.obterLembreteTemplatePersonalizado(empresaId).orElse(null),
+                        WhatsAppConfiguracaoService.DEFAULT_LEMBRETE_TEMPLATE),
                 new UsoResponse(
                         uso.planoNome(),
                         uso.cicloInicio(),
@@ -123,11 +126,20 @@ public class WhatsAppIntegracaoController {
     @PatchMapping("/configuracao")
     public ResponseEntity<?> configuracao(@RequestBody AtualizarConfiguracaoRequest request) {
         Long empresaId = CompanyContext.requireCompanyId();
-        if (request == null || request.lembretesAtivos() == null) {
-            throw new BusinessException("Campo lembretesAtivos e obrigatorio.");
+        if (request == null || (request.lembretesAtivos() == null && request.lembreteTemplate() == null)) {
+            throw new BusinessException("Informe a configuracao que deseja alterar.");
         }
-        boolean salvo = configuracaoService.definirLembretesAtivos(empresaId, request.lembretesAtivos());
-        return ResponseEntity.ok(new ConfiguracaoResponse(salvo));
+        boolean lembretesAtivos = configuracaoService.lembretesAtivos(empresaId);
+        if (request.lembretesAtivos() != null) {
+            lembretesAtivos = configuracaoService.definirLembretesAtivos(empresaId, request.lembretesAtivos());
+        }
+        if (request.lembreteTemplate() != null) {
+            configuracaoService.definirLembreteTemplate(empresaId, request.lembreteTemplate());
+        }
+        return ResponseEntity.ok(new ConfiguracaoResponse(
+                lembretesAtivos,
+                configuracaoService.obterLembreteTemplatePersonalizado(empresaId).orElse(null),
+                WhatsAppConfiguracaoService.DEFAULT_LEMBRETE_TEMPLATE));
     }
 
     private String planoEfetivo(Long empresaId) {

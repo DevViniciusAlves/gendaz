@@ -17,9 +17,19 @@
   flex-wrap: wrap;
 }
 
+.wpp-card-actions,
+.wpp-template-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .wpp-modal-body {
   max-height: calc(100vh - 220px);
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .wpp-divider {
@@ -51,13 +61,58 @@
 .wpp-toggle {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   font-size: 14px;
 }
 
 .wpp-toggle input {
-  margin-top: 2px;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wpp-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.wpp-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.wpp-toggle input:checked + .wpp-switch {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.wpp-toggle input:checked + .wpp-switch::after {
+  transform: translateX(18px);
+  background: var(--surface);
+}
+
+.wpp-toggle input:focus-visible + .wpp-switch {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.wpp-toggle input:disabled + .wpp-switch {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .wpp-toggle small {
@@ -120,6 +175,41 @@
   padding: 10px 12px;
   font-size: 13px;
   background: var(--surface-soft);
+  margin-top: 10px;
+}
+
+.wpp-message-preview strong,
+.wpp-variables strong {
+  display: block;
+  margin-bottom: 6px;
+}
+
+.wpp-message-preview p {
+  margin: 0 0 4px;
+  line-height: 1.5;
+}
+
+.wpp-variables {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.wpp-variables code {
+  color: var(--text);
+  font-weight: 700;
+  margin-right: 6px;
+}
+
+.wpp-template-editor {
+  margin-top: 12px;
+}
+
+.wpp-template-editor textarea {
+  min-height: 112px;
+  resize: vertical;
 }
 
 .wpp-canal-row {
@@ -141,6 +231,17 @@
   .wpp-card-body {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .wpp-card-actions,
+  .wpp-template-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wpp-card-actions .btn,
+  .wpp-template-actions .btn {
+    width: 100%;
   }
 
   .wpp-qr-box {

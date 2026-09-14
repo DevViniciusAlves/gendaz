@@ -3,11 +3,7 @@ package com.minhaempresa.gendaz.whatsapp;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -342,6 +338,53 @@ class WhatsAppIntegracaoControllerTest {
                         .content("{\"lembretesAtivos\":false}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.lembretesAtivos").value(false));
+    }
+
+    @Test
+    void patchTemplateSalvaPorEmpresaComFallbackPadrao() throws Exception {
+        EmpresaEntity empresaA = novaEmpresa("wpp-ui-tpl-a");
+        EmpresaEntity empresaB = novaEmpresa("wpp-ui-tpl-b");
+        comAssinatura(empresaA, "PRO");
+        comAssinatura(empresaB, "PRO");
+
+        comoEmpresa(empresaA.getId());
+        mockMvc.perform(get("/api/whatsapp/resumo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configuracao.lembreteTemplate").doesNotExist())
+                .andExpect(jsonPath("$.configuracao.lembreteTemplatePadrao")
+                        .value(WhatsAppConfiguracaoService.DEFAULT_LEMBRETE_TEMPLATE));
+
+        String template = "Oi, {cliente}! {empresa} lembra seu horario em {data} as {hora}.";
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembreteTemplate\":\"" + template + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lembreteTemplate").value(template))
+                .andExpect(jsonPath("$.lembreteTemplatePadrao")
+                        .value(WhatsAppConfiguracaoService.DEFAULT_LEMBRETE_TEMPLATE));
+
+        comoEmpresa(empresaB.getId());
+        mockMvc.perform(get("/api/whatsapp/resumo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configuracao.lembreteTemplate").doesNotExist());
+    }
+
+    @Test
+    void patchTemplateRejeitaBlankEVariavelDesconhecida() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-tpl-v");
+        comAssinatura(empresa, "PRO");
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembreteTemplate\":\"   \"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembreteTemplate\":\"Oi {telefone}\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value("A variavel {telefone} nao e suportada."));
     }
 
     @Test

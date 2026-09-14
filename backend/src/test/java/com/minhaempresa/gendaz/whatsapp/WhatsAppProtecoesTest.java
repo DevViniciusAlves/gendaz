@@ -65,6 +65,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -121,9 +122,25 @@ class WhatsAppProtecoesTest {
     @Autowired
     private DataSource dataSource;
 
+    @BeforeEach
+    void configurarSessaoWhatsappConectada() {
+        when(provider.disponivel()).thenReturn(true);
+        when(provider.consultarStatus(any()))
+                .thenAnswer(invocation -> WhatsAppResult.success(statusSessao(
+                        (String) invocation.getArgument(0), "CONNECTED")));
+    }
+
     @AfterEach
     void limparContexto() {
         CompanyContext.clear();
+    }
+
+    private WhatsAppSessionStatus statusSessao(String companyId, String estado) {
+        WhatsAppSessionStatus status = new WhatsAppSessionStatus();
+        status.setCompanyId(companyId);
+        status.setState(estado);
+        status.setHasQr(false);
+        return status;
     }
 
     private EmpresaEntity novaEmpresa(String prefixo) {

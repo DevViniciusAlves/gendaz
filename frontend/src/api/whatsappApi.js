@@ -40,8 +40,9 @@ export async function desconectarWhatsapp(options = {}) {
   return data
 }
 
-export async function atualizarConfiguracaoWhatsapp(lembretesAtivos, options = {}) {
-  const { data } = await api.patch('/whatsapp/configuracao', { lembretesAtivos }, {
+export async function atualizarConfiguracaoWhatsapp(payload, options = {}) {
+  const body = typeof payload === 'boolean' ? { lembretesAtivos: payload } : payload
+  const { data } = await api.patch('/whatsapp/configuracao', body, {
     headers: usuarioHeaders(),
     ...options,
   })

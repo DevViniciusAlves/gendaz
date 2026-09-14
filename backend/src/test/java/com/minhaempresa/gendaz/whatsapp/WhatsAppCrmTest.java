@@ -124,8 +124,20 @@ class WhatsAppCrmTest {
     @BeforeEach
     @AfterEach
     void limparFila() {
+        when(provider.disponivel()).thenReturn(true);
+        when(provider.consultarStatus(any()))
+                .thenAnswer(invocation -> WhatsAppResult.success(statusSessao(
+                        (String) invocation.getArgument(0), "CONNECTED")));
         crmContatoRepository.deleteAll();
         notificacaoRepository.deleteAll();
+    }
+
+    private WhatsAppSessionStatus statusSessao(String companyId, String estado) {
+        WhatsAppSessionStatus status = new WhatsAppSessionStatus();
+        status.setCompanyId(companyId);
+        status.setState(estado);
+        status.setHasQr(false);
+        return status;
     }
 
     private List<WhatsAppNotificacaoEntity> notificacoesDaEmpresa(Long empresaId) {
@@ -444,15 +456,42 @@ class WhatsAppCrmTest {
         assertEquals(10, worker.processarLote(10));
         assertEquals(10, quotaService.consultarUso(empresa.getId()).crmEnviados());
 
-        crmService.enviarMensagem(empresa.getId(), cliente.getId(), whatsapp("resgate", chaveUnica("extra")));
+        Map<String, Object> excedido = crmService.enviarMensagem(empresa.getId(), cliente.getId(),
+                whatsapp("resgate", chaveUnica("extra")));
+        assertEquals(false, excedido.get("success"));
+        assertEquals("WHATSAPP_COTA_ESGOTADA", excedido.get("status"));
         assertEquals(0, worker.processarLote(10));
         assertEquals(10, quotaService.consultarUso(empresa.getId()).crmEnviados());
         verify(provider, times(10)).enviarTexto(any(), any(), any(), any());
+        assertEquals(10, notificacoesDaEmpresa(empresa.getId()).size());
+        assertEquals(10, historicoDoCliente(cliente.getId()).size());
+    }
 
-        WhatsAppNotificacaoEntity excedente = notificacoesDaEmpresa(empresa.getId()).stream()
-                .filter(n -> n.getStatus() == WhatsAppStatusNotificacao.CANCELADO)
-                .findFirst().orElseThrow();
-        assertEquals("QUOTA_EXCEEDED", excedente.getLastError());
+    @Test
+    void crmWhatsappExigeSessaoConnectedSemCriarFilaHistoricoOuCota() {
+        for (String estado : List.of("DISCONNECTED", "NOT_CONNECTED", "CONNECTING",
+                "RECONNECTING", "LOGGED_OUT", "NOT_CONFIGURED")) {
+            EmpresaEntity empresa = novaEmpresa("wpp-crm-state-" + estado.toLowerCase());
+            comAssinatura(empresa, "PRO");
+            ClienteEntity cliente = novoCliente(empresa, "5565999999999");
+            if ("NOT_CONFIGURED".equals(estado)) {
+                when(provider.disponivel()).thenReturn(false);
+            } else {
+                when(provider.disponivel()).thenReturn(true);
+                when(provider.consultarStatus(String.valueOf(empresa.getId())))
+                        .thenReturn(WhatsAppResult.success(statusSessao(String.valueOf(empresa.getId()), estado)));
+            }
+
+            Map<String, Object> resultado = crmService.enviarMensagem(empresa.getId(), cliente.getId(),
+                    whatsapp("resgate", chaveUnica("req")));
+
+            assertEquals(false, resultado.get("success"), estado);
+            assertEquals("WHATSAPP_NOT_CONNECTED", resultado.get("status"), estado);
+            assertTrue(notificacoesDaEmpresa(empresa.getId()).isEmpty(), estado);
+            assertTrue(historicoDoCliente(cliente.getId()).isEmpty(), estado);
+            assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados(), estado);
+            assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados(), estado);
+        }
     }
 
     @Test

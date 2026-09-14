@@ -13,10 +13,13 @@ import {
   obterQrWhatsapp,
 } from '../../api/whatsappApi.js'
 
-// Texto idêntico ao template da Fase 6 no backend
-// (WhatsAppLembreteAgendamentoService): somente leitura aqui,
-// a mensagem realmente enviada nunca muda por esta tela.
-const MENSAGEM_PADRAO_PREVIEW = 'Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}.'
+const TEMPLATE_PADRAO = 'Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}.'
+const PREVIEW = {
+  cliente: 'Mariana',
+  empresa: 'Clínica Bella',
+  data: '18/09/2026',
+  hora: '14:30',
+}
 
 const INTERVALO_POLL_MS = 2000
 const JANELA_POLL_MS = 2 * 60 * 1000
@@ -26,7 +29,7 @@ function emitirToast(type, message) {
   window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
 
-export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizado }) {
+export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizado, autoConnectToken = 0 }) {
   const [dados, setDados] = useState(resumo || null)
   const [carregandoResumo, setCarregandoResumo] = useState(false)
   const [conectando, setConectando] = useState(false)
@@ -43,6 +46,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const pollRef = useRef(null)
   const abortRef = useRef(null)
   const emPollRef = useRef(false)
+  const ultimoAutoConnectRef = useRef(0)
 
   const atualizarResumo = useCallback((novo) => {
     setDados(novo)
@@ -79,7 +83,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     if (open) {
       setDados(resumo || null)
       setToggleOn(Boolean(resumo?.configuracao?.lembretesAtivos))
-      setTemplate(resumo?.configuracao?.lembreteTemplate || '')
+      setTemplate(resumo?.configuracao?.lembreteTemplate || resumo?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO)
       setQr(null)
       setGerandoQr(false)
       setConectando(false)
@@ -176,21 +180,27 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     }
   }
 
+  useEffect(() => {
+    if (!open || !autoConnectToken || ultimoAutoConnectRef.current === autoConnectToken) return
+    ultimoAutoConnectRef.current = autoConnectToken
+    handleConectar()
+  }, [open, autoConnectToken])
+
   async function handleSalvarTemplate() {
     setSalvandoTemplate(true)
     try {
-      await atualizarConfiguracaoWhatsapp(toggleOn, template)
-      emitirToast('success', 'Template salvo.')
+      await atualizarConfiguracaoWhatsapp({ lembreteTemplate: template })
+      emitirToast('success', 'Mensagem de lembrete salva.')
       await recarregarResumo()
     } catch (err) {
-      emitirToast('error', err?.response?.data?.mensagem || 'Erro ao salvar template.')
+      emitirToast('error', err?.response?.data?.mensagem || 'Erro ao salvar a mensagem.')
     } finally {
       setSalvandoTemplate(false)
     }
   }
 
   function handleRestaurarTemplate() {
-    setTemplate('')
+    setTemplate(dados?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO)
   }
 
   async function handleDesconectar() {
@@ -214,10 +224,10 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     if (salvandoToggle) return
     setSalvandoToggle(true)
     try {
-      const resposta = await atualizarConfiguracaoWhatsapp(desejado)
+      const resposta = await atualizarConfiguracaoWhatsapp({ lembretesAtivos: desejado })
       const salvo = resposta?.lembretesAtivos ?? desejado
       setToggleOn(salvo)
-      setDados((atual) => (atual ? { ...atual, configuracao: { lembretesAtivos: salvo } } : atual))
+      setDados((atual) => (atual ? { ...atual, configuracao: { ...atual.configuracao, lembretesAtivos: salvo } } : atual))
       await recarregarResumo()
     } catch (err) {
       setToggleOn(dados?.configuracao?.lembretesAtivos ?? false)
@@ -251,6 +261,12 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const emPareamento = conectando || estado === 'CONNECTING' || (dados?.conexao?.hasQr && !conectado)
   const lembretes = dados?.uso?.lembretes
   const crm = dados?.uso?.crm
+  const templateAtual = template || dados?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO
+  const previewMensagem = templateAtual
+    .replaceAll('{cliente}', PREVIEW.cliente)
+    .replaceAll('{empresa}', PREVIEW.empresa)
+    .replaceAll('{data}', PREVIEW.data)
+    .replaceAll('{hora}', PREVIEW.hora)
 
   function barra(uso) {
     if (!uso || !uso.limite) return 0
@@ -349,30 +365,41 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               onChange={handleToggle}
               aria-label="Enviar lembretes de agendamento pelo WhatsApp"
             />
+            <span className="wpp-switch" aria-hidden="true" />
             <span>
-              Enviar lembretes de agendamento pelo WhatsApp
-              {!conectado && <small>Conecte o WhatsApp para utilizar os lembretes.</small>}
+              Enviar lembretes pelo WhatsApp
+              <small>Horário: 2 horas antes do atendimento</small>
+              {!conectado && <small>Conecte o WhatsApp para ativar os lembretes automáticos.</small>}
             </span>
           </label>
           
-          {toggleOn && (
-            <div className="wpp-template-editor">
-              <label className="field">
-                <span>Mensagem do lembrete</span>
-                <textarea
-                  value={template}
-                  onChange={(e) => setTemplate(e.target.value)}
-                  placeholder="Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}."
-                  rows={4}
-                />
-              </label>
-              <p className="wpp-note">Variáveis: {cliente}, {empresa}, {data}, {hora}</p>
-              <div className="wpp-template-actions">
-                <Button variant="secondary" type="button" onClick={handleRestaurarTemplate}>Restaurar padrão</Button>
-                <Button type="button" onClick={handleSalvarTemplate} loading={salvandoTemplate}>Salvar template</Button>
-              </div>
+          <div className="wpp-template-editor">
+            <label className="field">
+              <span>Mensagem do lembrete</span>
+              <textarea
+                value={template}
+                onChange={(e) => setTemplate(e.target.value)}
+                placeholder={dados?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO}
+                rows={4}
+              />
+            </label>
+            <div className="wpp-variables" aria-label="Variáveis disponíveis">
+              <strong>Variáveis disponíveis</strong>
+              <span><code>{'{cliente}'}</code> nome do cliente</span>
+              <span><code>{'{empresa}'}</code> nome da empresa</span>
+              <span><code>{'{data}'}</code> data do atendimento</span>
+              <span><code>{'{hora}'}</code> horário do atendimento</span>
             </div>
-          )}
+            <div className="wpp-message-preview">
+              <strong>Pré-visualização</strong>
+              <p>{previewMensagem}</p>
+              <small>Prévia com dados fictícios.</small>
+            </div>
+            <div className="wpp-template-actions">
+              <Button variant="secondary" type="button" onClick={handleRestaurarTemplate}>Restaurar mensagem padrão</Button>
+              <Button type="button" onClick={handleSalvarTemplate} loading={salvandoTemplate}>Salvar mensagem</Button>
+            </div>
+          </div>
           
           <hr className="wpp-divider" />
 

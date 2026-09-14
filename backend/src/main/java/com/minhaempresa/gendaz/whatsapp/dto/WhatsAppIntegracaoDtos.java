@@ -17,11 +17,14 @@ public final class WhatsAppIntegracaoDtos {
     ) {}
 
     public record ConfiguracaoResponse(
-            boolean lembretesAtivos
+            boolean lembretesAtivos,
+            String lembreteTemplate,
+            String lembreteTemplatePadrao
     ) {}
 
     public record AtualizarConfiguracaoRequest(
-            Boolean lembretesAtivos
+            Boolean lembretesAtivos,
+            String lembreteTemplate
     ) {}
 
     public record CategoriaUsoResponse(

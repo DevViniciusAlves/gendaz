@@ -58,6 +58,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -156,6 +157,14 @@ class WhatsAppLembreteAgendamentoTest {
     private void ativarLembretes(EmpresaEntity empresa) {
         configuracaoRepository.save(WhatsAppConfiguracaoEntity.builder()
                 .empresa(empresa).lembretesAtivos(true).build());
+    }
+
+    private void ativarLembretesComTemplate(EmpresaEntity empresa, String template) {
+        configuracaoRepository.save(WhatsAppConfiguracaoEntity.builder()
+                .empresa(empresa)
+                .lembretesAtivos(true)
+                .lembreteTemplate(template)
+                .build());
     }
 
     private ClienteEntity novoCliente(EmpresaEntity empresa, String telefone) {
@@ -276,6 +285,60 @@ class WhatsAppLembreteAgendamentoTest {
 
             assertEquals(1, reminders(empresa.getId(), ag.getId()).size(), "plano " + plano);
         }
+    }
+
+    @Test
+    void fallbackTemplatePadraoSubstituiClienteEmpresaDataEHora() {
+        EmpresaEntity empresa = novaEmpresa("wpp-ltpl-default", ZONA_SP);
+        empresa.setNomeFantasia("Clínica Bella");
+        empresaRepository.save(empresa);
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+        ZonedDateTime at = atendimentoFuturo(ZONA_SP, 4, 14).withMinute(30);
+        AgendamentoEntity ag = novoAgendamento(empresa, cliente,
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+
+        publicarSync(empresa.getId(), ag.getId(), AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR);
+
+        WhatsAppNotificacaoEntity reminder = reminders(empresa.getId(), ag.getId()).get(0);
+        assertEquals("Olá, " + cliente.getNome()
+                + "! Lembrete: seu atendimento na Clínica Bella está marcado para "
+                + at.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")) + " às "
+                + at.format(DateTimeFormatter.ofPattern("HH:mm")) + ".",
+                reminder.getMessageBody());
+    }
+
+    @Test
+    void templatePersonalizadoDaEmpresaEUsadoSemAfetarOutraEmpresa() {
+        EmpresaEntity empresaA = novaEmpresa("wpp-ltpl-a", ZONA_SP);
+        empresaA.setNomeFantasia("Empresa A");
+        empresaRepository.save(empresaA);
+        EmpresaEntity empresaB = novaEmpresa("wpp-ltpl-b", ZONA_SP);
+        empresaB.setNomeFantasia("Empresa B");
+        empresaRepository.save(empresaB);
+        comAssinatura(empresaA, "PRO");
+        comAssinatura(empresaB, "PRO");
+        ativarLembretesComTemplate(empresaA, "{cliente}|{empresa}|{data}|{hora}");
+        ativarLembretes(empresaB);
+        ClienteEntity clienteA = novoCliente(empresaA, telefoneCanonicoNovo());
+        ClienteEntity clienteB = novoCliente(empresaB, telefoneCanonicoNovo());
+        ZonedDateTime at = atendimentoFuturo(ZONA_SP, 4, 16).withMinute(45);
+        AgendamentoEntity agA = novoAgendamento(empresaA, clienteA,
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+        AgendamentoEntity agB = novoAgendamento(empresaB, clienteB,
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+
+        publicarSync(empresaA.getId(), agA.getId(), AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR);
+        publicarSync(empresaB.getId(), agB.getId(), AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR);
+
+        String data = at.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        String hora = at.format(DateTimeFormatter.ofPattern("HH:mm"));
+        assertEquals(clienteA.getNome() + "|Empresa A|" + data + "|" + hora,
+                reminders(empresaA.getId(), agA.getId()).get(0).getMessageBody());
+        assertTrue(reminders(empresaB.getId(), agB.getId()).get(0).getMessageBody()
+                .contains("Empresa B"));
+        assertFalse(reminders(empresaB.getId(), agB.getId()).get(0).getMessageBody().contains("|"));
     }
 
     // ---------- 7-9: horario e timezone ----------

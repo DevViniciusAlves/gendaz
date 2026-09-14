@@ -39,7 +39,7 @@ const LABELS = {
   NOT_CONNECTED: 'Desconectado',
   LOGGED_OUT: 'Desconectado',
   NOT_CONFIGURED: 'Indisponível',
-  UNAVAILABLE: 'Indisponível',
+  UNAVAILABLE: 'Temporariamente indisponível',
 }
 
 export default function StatusBadge({ status }) {

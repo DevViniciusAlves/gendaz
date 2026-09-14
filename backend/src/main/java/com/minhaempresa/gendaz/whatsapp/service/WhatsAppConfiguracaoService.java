@@ -6,6 +6,9 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppConfiguracaoEntity;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +26,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 public class WhatsAppConfiguracaoService {
+    public static final String DEFAULT_LEMBRETE_TEMPLATE =
+            "Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}.";
+    private static final int TEMPLATE_MAX_LENGTH = 500;
+    private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("\\{([^{}]+)}");
+    private static final Set<String> PLACEHOLDERS_SUPORTADOS =
+            Set.of("cliente", "empresa", "data", "hora");
 
     private final WhatsAppConfiguracaoRepository configuracaoRepository;
     private final EmpresaRepository empresaRepository;
@@ -48,10 +57,15 @@ public class WhatsAppConfiguracaoService {
 
     @Transactional(readOnly = true)
     public String obterLembreteTemplate(Long empresaId) {
+        return obterLembreteTemplatePersonalizado(empresaId).orElse(DEFAULT_LEMBRETE_TEMPLATE);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<String> obterLembreteTemplatePersonalizado(Long empresaId) {
         return configuracaoRepository.findByEmpresaId(empresaId)
                 .map(WhatsAppConfiguracaoEntity::getLembreteTemplate)
                 .filter(t -> !t.isBlank())
-                .orElse("Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}.");
+                .map(String::trim);
     }
 
     /**
@@ -86,12 +100,38 @@ public class WhatsAppConfiguracaoService {
     }
 
     @Transactional
-    public void salvarTemplate(Long empresaId, String template) {
-        // Validar template aqui... (regra 22)
-        WhatsAppConfiguracaoEntity config = configuracaoRepository.findByEmpresaId(empresaId)
-                .orElseThrow(() -> new BusinessException("Configuracao nao encontrada."));
-        config.setLembreteTemplate(template);
-        configuracaoRepository.save(config);
+    public String definirLembreteTemplate(Long empresaId, String template) {
+        String normalizado = normalizarTemplate(template);
+        for (int tentativa = 0; tentativa < 3; tentativa++) {
+            Optional<WhatsAppConfiguracaoEntity> atual = self.buscarNova(empresaId);
+            if (atual.isPresent()) {
+                return self.salvarTemplateNovo(atual.get().getId(), normalizado);
+            }
+            try {
+                return self.criarNovaComTemplate(empresaId, normalizado).getLembreteTemplate();
+            } catch (DataIntegrityViolationException duplicada) {
+                // Outra transacao criou primeiro: rele na proxima rodada.
+            }
+        }
+        throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
+    }
+
+    private String normalizarTemplate(String template) {
+        if (template == null || template.isBlank()) {
+            throw new BusinessException("A mensagem do lembrete e obrigatoria.");
+        }
+        String normalizado = template.trim();
+        if (normalizado.length() > TEMPLATE_MAX_LENGTH) {
+            throw new BusinessException("A mensagem do lembrete deve ter no maximo 500 caracteres.");
+        }
+        Matcher matcher = PLACEHOLDER_PATTERN.matcher(normalizado);
+        while (matcher.find()) {
+            String variavel = matcher.group(1);
+            if (!PLACEHOLDERS_SUPORTADOS.contains(variavel)) {
+                throw new BusinessException("A variavel {" + variavel + "} nao e suportada.");
+            }
+        }
+        return normalizado;
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
@@ -108,10 +148,27 @@ public class WhatsAppConfiguracaoService {
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public WhatsAppConfiguracaoEntity criarNovaComTemplate(Long empresaId, String template) {
+        return configuracaoRepository.saveAndFlush(WhatsAppConfiguracaoEntity.builder()
+                .empresa(empresaRepository.getReferenceById(empresaId))
+                .lembretesAtivos(false)
+                .lembreteTemplate(template)
+                .build());
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public boolean salvarValorNovo(Long configuracaoId, boolean ativo) {
         WhatsAppConfiguracaoEntity entidade = configuracaoRepository.findById(configuracaoId)
                 .orElseThrow(() -> new BusinessException("Configuracao nao encontrada."));
         entidade.setLembretesAtivos(ativo);
         return configuracaoRepository.save(entidade).isLembretesAtivos();
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public String salvarTemplateNovo(Long configuracaoId, String template) {
+        WhatsAppConfiguracaoEntity entidade = configuracaoRepository.findById(configuracaoId)
+                .orElseThrow(() -> new BusinessException("Configuracao nao encontrada."));
+        entidade.setLembreteTemplate(template);
+        return configuracaoRepository.save(entidade).getLembreteTemplate();
     }
 }

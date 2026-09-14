@@ -16,10 +16,16 @@ import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppProvider;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppResult;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppSessionStatus;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppClock;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppDisponibilidade;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -44,6 +50,8 @@ public class CrmService {
     private final ResendEmailService resendEmailService;
     private final AssinaturaService assinaturaService;
     private final WhatsAppFilaService whatsAppFilaService;
+    private final WhatsAppProvider whatsAppProvider;
+    private final WhatsAppQuotaService whatsAppQuotaService;
     private final CrmContatoHistoricoService historicoService;
     private final PhoneNumberService phoneNumberService;
     private final WhatsAppClock whatsAppClock;
@@ -240,6 +248,24 @@ public class CrmService {
         String telefone = cliente.getTelefone();
         if (!phoneNumberService.canonicoValido(telefone)) {
             return resultadoDominio(false, "WHATSAPP_TELEFONE_INVALIDO");
+        }
+        if (!whatsAppProvider.disponivel()) {
+            return resultadoDominio(false, "WHATSAPP_NOT_CONNECTED");
+        }
+        WhatsAppResult<WhatsAppSessionStatus> statusSessao =
+                whatsAppProvider.consultarStatus(String.valueOf(empresaId));
+        if (!statusSessao.isSuccess()
+                || statusSessao.getData() == null
+                || !"CONNECTED".equals(statusSessao.getData().getState())) {
+            return resultadoDominio(false, "WHATSAPP_NOT_CONNECTED");
+        }
+        WhatsAppDisponibilidade disponibilidade =
+                whatsAppQuotaService.podeReservar(empresaId, WhatsAppCategoriaCota.CRM);
+        if (disponibilidade == WhatsAppDisponibilidade.LIMITE_ATINGIDO) {
+            return resultadoDominio(false, "WHATSAPP_COTA_ESGOTADA");
+        }
+        if (disponibilidade == WhatsAppDisponibilidade.PLANO_SEM_WHATSAPP) {
+            return resultadoDominio(false, "WHATSAPP_NAO_DISPONIVEL_NO_PLANO");
         }
         String chave = (tipo == WhatsAppTipoNotificacao.CRM_RESGATE ? "CRM_RESGATE:" : "CRM_RECONEXAO:")
                 + cliente.getId() + ":" + requestId.trim();
@@ -467,4 +493,3 @@ public class CrmService {
         return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
     }
 }
-
