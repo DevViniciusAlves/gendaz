@@ -5,6 +5,7 @@ import com.minhaempresa.gendaz.agendamento.enums.StatusAgendamento;
 import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
+import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
 import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
@@ -51,6 +52,7 @@ public class WhatsAppLembreteAgendamentoService {
     private static final DateTimeFormatter HORA_BR = DateTimeFormatter.ofPattern("HH:mm");
 
     private final AgendamentoRepository agendamentoRepository;
+    private final ClienteRepository clienteRepository;
     private final AssinaturaService assinaturaService;
     private final WhatsAppConfiguracaoService configuracaoService;
     private final WhatsAppNotificacaoService notificacaoService;
@@ -207,8 +209,10 @@ public class WhatsAppLembreteAgendamentoService {
 
     /**
      * Protecao defensiva do worker antes do inicio real da chamada externa.
-     * Vale somente para LEMBRETE_AGENDAMENTO com agendamento vinculado;
-     * demais casos passam. Retorna false quando cancelou (com liberacao).
+     * Vale para todos os tipos: ENVIANDO + expiracao/plano/cliente/telefone
+     * revalidados; lembrete ainda confere a versao do horario. Retorna false
+     * quando cancelou (com liberacao). Registros Fase 5 sem cliente vinculado
+     * validam apenas o recipient armazenado.
      */
     @Transactional
     public boolean revalidarParaEnvio(Long notificacaoId) {
@@ -218,21 +222,89 @@ public class WhatsAppLembreteAgendamentoService {
             return false;
         }
         WhatsAppNotificacaoEntity entidade = atual.get();
-        if (entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
-            return true;
-        }
         if (entidade.getStatus() != WhatsAppStatusNotificacao.ENVIANDO) {
             return false;
         }
         LocalDateTime agora = clock.agoraUtc();
         if (entidade.getExpiresAt() != null && agora.isAfter(entidade.getExpiresAt())) {
-            expirar(entidade);
+            expirarComCodigoPorTipo(entidade);
             return false;
+        }
+        Long empresaId = entidade.getEmpresa().getId();
+        String plano = assinaturaService.buscarAtualPorEmpresa(empresaId)
+                .map(a -> a.getPlano().getNome())
+                .orElse(null);
+        if (!WhatsAppPlanoPolicy.possuiWhatsApp(plano)) {
+            cancelarComCodigo(entidade, "PLAN_NO_WHATSAPP");
+            return false;
+        }
+        if (entidade.getAgendamento() == null && entidade.getCliente() == null
+                && entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
+            return true;
+        }
+        if (entidade.getCliente() == null) {
+            if (!phoneNumberService.canonicoValido(entidade.getRecipient())) {
+                cancelarComCodigo(entidade, "INVALID_RECIPIENT");
+                return false;
+            }
+            return entidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO
+                    ? revalidarHorario(entidade)
+                    : true;
+        }
+        Optional<ClienteEntity> clienteAtual = clienteRepository.findByIdAndEmpresaId(
+                entidade.getCliente().getId(), empresaId);
+        if (clienteAtual.isEmpty() || clienteAtual.get().getStatus() != StatusCadastro.ATIVO) {
+            cancelarComCodigo(entidade, "INVALID_RECIPIENT");
+            return false;
+        }
+        ClienteEntity cliente = clienteAtual.get();
+        if (!cliente.isReceberWhatsapp()) {
+            cancelarComCodigo(entidade, "WHATSAPP_OPT_OUT");
+            return false;
+        }
+        String telefone = cliente.getTelefone();
+        if (!phoneNumberService.canonicoValido(telefone)
+                || !telefone.trim().equals(entidade.getRecipient())) {
+            cancelarComCodigo(entidade, "INVALID_RECIPIENT");
+            return false;
+        }
+        if (entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
+            return true;
         }
         if (entidade.getAgendamento() == null) {
             return true;
         }
-        Long empresaId = entidade.getEmpresa().getId();
+        return revalidarHorarioComAgendamento(entidade, empresaId);
+    }
+
+    private boolean revalidarHorario(WhatsAppNotificacaoEntity entidade) {
+        // Lembrete sem agendamento vinculado (linhas operacionais diretas):
+        // sem versao de horario para comparar.
+        return true;
+    }
+
+    /**
+     * Expiracao no claim, para todos os tipos: apos expiresAt nao ha envio
+     * nem reserva. Em retry com reserva existente, libera exatamente uma vez.
+     * Retorna true quando expirou (chamador nao deve prosseguir).
+     */
+    boolean expiradoSeNecessario(WhatsAppNotificacaoEntity entidade, LocalDateTime agora) {
+        if (entidade.getExpiresAt() == null || !agora.isAfter(entidade.getExpiresAt())) {
+            return false;
+        }
+        expirarComCodigoPorTipo(entidade);
+        return true;
+    }
+
+    private void expirarComCodigoPorTipo(WhatsAppNotificacaoEntity entidade) {
+        cancelarComCodigo(entidade,
+                entidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO
+                        ? "REMINDER_EXPIRED"
+                        : "CRM_MESSAGE_EXPIRED");
+    }
+
+    private boolean revalidarHorarioComAgendamento(
+            WhatsAppNotificacaoEntity entidade, Long empresaId) {
         Optional<AgendamentoEntity> agendamento =
                 agendamentoRepository.findByIdAndEmpresaId(entidade.getAgendamento().getId(), empresaId);
         if (agendamento.isEmpty()
@@ -248,26 +320,6 @@ public class WhatsAppLembreteAgendamentoService {
             return false;
         }
         return true;
-    }
-
-    /**
-     * Expiracao no claim: apos expiresAt nao ha envio nem reserva. Em retry
-     * com reserva existente, libera exatamente uma vez. Retorna true quando
-     * expirou (chamador nao deve prosseguir).
-     */
-    boolean expiradoSeNecessario(WhatsAppNotificacaoEntity entidade, LocalDateTime agora) {
-        if (entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
-            return false;
-        }
-        if (entidade.getExpiresAt() == null || !agora.isAfter(entidade.getExpiresAt())) {
-            return false;
-        }
-        expirar(entidade);
-        return true;
-    }
-
-    private void expirar(WhatsAppNotificacaoEntity entidade) {
-        cancelarComCodigo(entidade, "REMINDER_EXPIRED");
     }
 
     private void cancelarComCodigo(WhatsAppNotificacaoEntity entidade, String codigo) {
@@ -335,6 +387,9 @@ public class WhatsAppLembreteAgendamentoService {
         }
         ClienteEntity cliente = agendamento.getCliente();
         if (!clienteAtivo(cliente)) {
+            return null;
+        }
+        if (!cliente.isReceberWhatsapp()) {
             return null;
         }
         String telefone = cliente.getTelefone();

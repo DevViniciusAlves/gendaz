@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.*;
+import org.hibernate.annotations.Check;
 
 /**
  * Uso da franquia WhatsApp por empresa e ciclo da assinatura. Existe no
@@ -27,6 +28,10 @@ import lombok.*;
 }, indexes = {
         @Index(name = "idx_whatsapp_uso_empresa_ciclo", columnList = "empresa_id,ciclo_inicio")
 })
+@Check(constraints = "lembretes_reservados >= 0")
+@Check(constraints = "lembretes_enviados >= 0")
+@Check(constraints = "crm_reservados >= 0")
+@Check(constraints = "crm_enviados >= 0")
 public class WhatsAppUsoCicloEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

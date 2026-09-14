@@ -18,7 +18,8 @@ public final class ClienteDtos {
             @NotBlank @TelefoneInternacional String telefone,
             @NotBlank @Email @Size(max = 120) String email,
             @Size(max = 300) String observacoes,
-            @NotNull Long empresaId
+            @NotNull Long empresaId,
+            Boolean receberWhatsapp
     ) {}
 
     public record ClienteResponse(
@@ -30,7 +31,8 @@ public final class ClienteDtos {
             StatusCadastro statusCliente,
             Long empresaId,
             LocalDateTime dataCriacao,
-            LocalDateTime dataAtualizacao
+            LocalDateTime dataAtualizacao,
+            boolean receberWhatsapp
     ) {}
 
     public record AcaoEmMassaClienteRequest(

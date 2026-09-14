@@ -253,7 +253,7 @@ class WhatsAppEnvioWorkerTest {
 
         WhatsAppNotificacaoEntity cancelada = recarregar(criada.getId());
         assertEquals(WhatsAppStatusNotificacao.CANCELADO, cancelada.getStatus());
-        assertEquals("QUOTA_LIMIT_EXCEEDED", cancelada.getLastError());
+        assertEquals("QUOTA_EXCEEDED", cancelada.getLastError());
         verify(provider, never()).enviarTexto(any(), any(), any(), any());
     }
 
@@ -279,7 +279,7 @@ class WhatsAppEnvioWorkerTest {
 
         WhatsAppNotificacaoEntity cancelada = recarregar(criada.getId());
         assertEquals(WhatsAppStatusNotificacao.CANCELADO, cancelada.getStatus());
-        assertEquals("PLAN_WITHOUT_WHATSAPP", cancelada.getLastError());
+        assertEquals("PLAN_NO_WHATSAPP", cancelada.getLastError());
         verify(provider, never()).enviarTexto(any(), any(), any(), any());
     }
 

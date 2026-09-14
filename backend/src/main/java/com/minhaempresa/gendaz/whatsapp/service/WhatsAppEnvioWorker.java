@@ -125,8 +125,8 @@ public class WhatsAppEnvioWorker {
             if (reserva.resultado() != WhatsAppReserva.RESERVADA) {
                 entidade.setStatus(WhatsAppStatusNotificacao.CANCELADO);
                 entidade.setLastError(reserva.resultado() == WhatsAppReserva.PLANO_SEM_WHATSAPP
-                        ? "PLAN_WITHOUT_WHATSAPP"
-                        : "QUOTA_LIMIT_EXCEEDED");
+                        ? "PLAN_NO_WHATSAPP"
+                        : "QUOTA_EXCEEDED");
                 entidade.setProcessingStartedAt(null);
                 notificacaoRepository.save(entidade);
                 log.info("[whatsapp-worker] notificacao cancelada sem cota notificacao={} motivo={}",
@@ -331,9 +331,21 @@ public class WhatsAppEnvioWorker {
         List<WhatsAppNotificacaoEntity> presos = notificacaoRepository.claimPresos(limite, LOTE_RECUPERACAO);
         for (WhatsAppNotificacaoEntity entidade : presos) {
             if (entidade.getSendStartedAt() == null) {
-                entidade.setStatus(WhatsAppStatusNotificacao.PENDENTE);
-                entidade.setProcessingStartedAt(null);
-                notificacaoRepository.save(entidade);
+                // Antes de refileirar, reavalia expiracao/opt-out/plano/
+                // telefone: se algo nao permite mais envio, a revalidacao
+                // cancela com o codigo adequado em vez de refileirar.
+                if (!lembreteService.revalidarParaEnvio(entidade.getId())) {
+                    continue;
+                }
+                Optional<WhatsAppNotificacaoEntity> atual =
+                        notificacaoRepository.findById(entidade.getId());
+                if (atual.isEmpty()
+                        || atual.get().getStatus() != WhatsAppStatusNotificacao.ENVIANDO) {
+                    continue;
+                }
+                atual.get().setStatus(WhatsAppStatusNotificacao.PENDENTE);
+                atual.get().setProcessingStartedAt(null);
+                notificacaoRepository.save(atual.get());
                 log.info("[whatsapp-worker] preso recuperado para PENDENTE notificacao={}", entidade.getId());
             } else {
                 falhar(entidade, "DELIVERY_UNKNOWN");

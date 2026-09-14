@@ -190,7 +190,7 @@ class WhatsAppCrmTest {
         assertEquals(WhatsAppStatusNotificacao.PENDENTE, notificacao.getStatus());
         assertFalse(notificacao.isQuotaReserved());
         assertEquals(String.valueOf(notificacao.getId()), resultado.get("messageId"));
-        assertNull(notificacao.getExpiresAt());
+        assertEquals(notificacao.getScheduledAt().plusHours(24), notificacao.getExpiresAt());
 
         List<CrmContatoEntity> historico = historicoDoCliente(cliente.getId());
         assertEquals(1, historico.size());
@@ -397,7 +397,7 @@ class WhatsAppCrmTest {
         WhatsAppNotificacaoEntity notificacao = notificacoesDaEmpresa(empresa.getId()).get(0);
         assertTrue(!notificacao.getScheduledAt().isBefore(antes));
         assertTrue(!notificacao.getScheduledAt().isAfter(LocalDateTime.now(ZoneOffset.UTC).plusMinutes(2)));
-        assertNull(notificacao.getExpiresAt());
+        assertEquals(notificacao.getScheduledAt().plusHours(24), notificacao.getExpiresAt());
     }
 
     @Test
@@ -452,7 +452,7 @@ class WhatsAppCrmTest {
         WhatsAppNotificacaoEntity excedente = notificacoesDaEmpresa(empresa.getId()).stream()
                 .filter(n -> n.getStatus() == WhatsAppStatusNotificacao.CANCELADO)
                 .findFirst().orElseThrow();
-        assertEquals("QUOTA_LIMIT_EXCEEDED", excedente.getLastError());
+        assertEquals("QUOTA_EXCEEDED", excedente.getLastError());
     }
 
     @Test

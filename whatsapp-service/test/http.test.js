@@ -58,16 +58,22 @@ describe('HTTP', () => {
     assert.equal(body.status, 'ok');
   });
 
-  it('endpoint interno sem token -> 401', async () => {
-    const res = await fetch(`${base}/internal/whatsapp/sessions/empresa-1/status`);
-    assert.equal(res.status, 401);
-  });
-
-  it('endpoint interno com token errado -> 401', async () => {
-    const res = await fetch(`${base}/internal/whatsapp/sessions/empresa-1/status`, {
-      headers: { Authorization: 'Bearer token-errado' },
-    });
-    assert.equal(res.status, 401);
+  it('todos os endpoints internos exigem Bearer (connect/status/qr/logout)', async () => {
+    for (const [method, path] of [
+      ['POST', '/internal/whatsapp/sessions/empresa-1/connect'],
+      ['GET', '/internal/whatsapp/sessions/empresa-1/status'],
+      ['GET', '/internal/whatsapp/sessions/empresa-1/qr'],
+      ['POST', '/internal/whatsapp/sessions/empresa-1/logout'],
+    ]) {
+      const semToken = await fetch(`${base}${path}`, { method });
+      assert.equal(semToken.status, 401, `${method} ${path} sem token deveria ser 401`);
+      assert.deepEqual(await semToken.json(), { error: 'unauthorized' });
+      const tokenErrado = await fetch(`${base}${path}`, {
+        method,
+        headers: { Authorization: 'Bearer token-errado' },
+      });
+      assert.equal(tokenErrado.status, 401, `${method} ${path} com token errado deveria ser 401`);
+    }
   });
 
   it('endpoint interno com token correto -> funciona', async () => {

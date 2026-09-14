@@ -228,6 +228,9 @@ public class CrmService {
         if (requestId == null || requestId.isBlank() || !REQUEST_ID_PATTERN.matcher(requestId.trim()).matches()) {
             return resultadoDominio(false, "WHATSAPP_REQUEST_ID_INVALIDO");
         }
+        if (!cliente.isReceberWhatsapp()) {
+            return resultadoDominio(false, "WHATSAPP_OPT_OUT");
+        }
         String plano = assinaturaService.buscarAtualPorEmpresa(empresaId)
                 .map(a -> a.getPlano().getNome())
                 .orElse(null);
@@ -242,15 +245,19 @@ public class CrmService {
                 + cliente.getId() + ":" + requestId.trim();
         String texto = montarTextoWhatsApp(tipo, cliente.getNome(), cliente.getEmpresa().getNomeFantasia());
 
+        // Validade operacional da solicitacao manual: 24h. Evita backlog
+        // antigo disparando em massa apos reconexao. Lembrete usa 10min.
+        java.time.LocalDateTime scheduledAt = whatsAppClock.agoraUtc();
         WhatsAppNotificacaoEntity notificacao = whatsAppFilaService.enfileirar(
                 empresaId,
                 tipo,
                 chave,
-                whatsAppClock.agoraUtc(),
+                scheduledAt,
                 cliente.getId(),
                 null,
                 telefone.trim(),
-                texto);
+                texto,
+                scheduledAt.plusHours(24));
 
         // Historico idempotente por notificacao: a UNIQUE
         // (whatsapp_notificacao_id) e a barreira no banco. Em corrida, a

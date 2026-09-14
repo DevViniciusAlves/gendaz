@@ -101,6 +101,28 @@ describe('SessionManager', () => {
     assert.equal(h.manager.status('empresa-1').companyId, 'empresa-1');
   });
 
+  it('logout da empresa A nao afeta a empresa B', async () => {
+    await h.manager.connect('empresa-a');
+    await h.manager.connect('empresa-b');
+    const sockA = h.created[0];
+    const sockB = h.created[1];
+    // Ambas conectadas.
+    emit(sockA, 'connection.update', { connection: 'open' });
+    emit(sockB, 'connection.update', { connection: 'open' });
+    assert.equal(h.manager.status('empresa-a').state, STATES.CONNECTED);
+    assert.equal(h.manager.status('empresa-b').state, STATES.CONNECTED);
+
+    await h.manager.logout('empresa-a');
+
+    assert.equal(h.manager.status('empresa-a').state, STATES.LOGGED_OUT);
+    assert.equal(sockA.logoutCalls, 1);
+    assert.deepEqual(h.stats().clears, ['empresa-a']);
+    // B intacta: mesmo socket, ainda conectada, sem logout nem limpeza.
+    assert.equal(h.manager.status('empresa-b').state, STATES.CONNECTED);
+    assert.equal(sockB.logoutCalls, 0);
+    assert.equal(h.manager.getRecord('empresa-b').sock, sockB);
+  });
+
   it('loggedOut (401) nao reconecta', async () => {
     await h.manager.connect('empresa-1');
     closeWith(h.created[0], 401);

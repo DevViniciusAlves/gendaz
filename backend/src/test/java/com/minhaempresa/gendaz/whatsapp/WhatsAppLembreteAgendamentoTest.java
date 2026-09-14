@@ -583,8 +583,10 @@ class WhatsAppLembreteAgendamentoTest {
         reservarLembrete(empresa, reminder);
         WhatsAppNotificacaoEntity preso = notificacaoRepository.findById(reminder.getId()).orElseThrow();
         preso.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
-        preso.setProcessingStartedAt(LocalDateTime.now().minusMinutes(5));
-        preso.setSendStartedAt(LocalDateTime.now().minusMinutes(4));
+        // Timestamps recentes de proposito: a linha nao pode ficar stale para
+        // outros testes que compartilham o banco (recovery a consumiria).
+        preso.setProcessingStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10));
+        preso.setSendStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(5));
         notificacaoRepository.save(preso);
 
         publicarSync(empresa.getId(), ag.getId(), AgendamentoWhatsAppSyncEvent.Acao.CANCELAR);
@@ -593,6 +595,11 @@ class WhatsAppLembreteAgendamentoTest {
         assertEquals(WhatsAppStatusNotificacao.ENVIANDO, mantido.getStatus());
         assertTrue(mantido.isQuotaReserved());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
+
+        // Finaliza para nao deixar resto stale para outros testes.
+        worker.finalizar(preso.getId(), WhatsAppSendResult.sent("WAMID"));
+        assertEquals(WhatsAppStatusNotificacao.ENVIADO,
+                notificacaoRepository.findById(reminder.getId()).orElseThrow().getStatus());
     }
 
     // ---------- 26-28: reagendamento ----------
