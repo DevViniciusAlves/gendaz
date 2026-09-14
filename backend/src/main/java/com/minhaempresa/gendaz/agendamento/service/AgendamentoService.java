@@ -14,6 +14,7 @@ import com.minhaempresa.gendaz.auditoria.service.LogAtividadeService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.service.ClienteService;
 import com.minhaempresa.gendaz.agendamento.event.AgendamentoCriadoEvent;
+import com.minhaempresa.gendaz.agendamento.event.AgendamentoWhatsAppSyncEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
@@ -187,6 +188,11 @@ public class AgendamentoService {
                     agendamentoFinal.getData(),
                     agendamentoFinal.getHoraInicio()
             ));
+            eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                    agendamentoFinal.getId(),
+                    empresaFinal.getId(),
+                    AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR
+            ));
             return mapper.toResponse(agendamentoFinal);
         } catch (Exception e) {
             Map<String, Object> contextoErro = new LinkedHashMap<>();
@@ -340,6 +346,11 @@ public class AgendamentoService {
         TransicaoStatusAgendamento.exigirCancelamentoOperacional(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                AgendamentoWhatsAppSyncEvent.Acao.CANCELAR
+        ));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
@@ -360,6 +371,11 @@ public class AgendamentoService {
         TransicaoStatusAgendamento.exigirCancelamentoCliente(agendamento.getStatus());
         agendamento.setStatus(StatusAgendamento.CANCELADO);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                AgendamentoWhatsAppSyncEvent.Acao.CANCELAR
+        ));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Cancelou agendamento de " + agendamento.getCliente().getNome());
@@ -400,6 +416,11 @@ public class AgendamentoService {
         }
         agendamento.setExcluidoAgenda(true);
         agendamentoRepository.save(agendamento);
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                AgendamentoWhatsAppSyncEvent.Acao.CANCELAR
+        ));
         pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, agendamento.getEmpresa().getId());
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Excluiu agendamento de " + agendamento.getCliente().getNome());
     }
@@ -616,6 +637,16 @@ public class AgendamentoService {
         validarConflitoHorario(agendamento.getProfissional().getId(), request.data(), agendamento.getHoraInicio(), agendamento.getHoraFim(), agendamento.getId());
         agendamento.setStatus(destino);
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                AgendamentoWhatsAppSyncEvent.Acao.CANCELAR
+        ));
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR
+        ));
         try {
             logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Reagendou agendamento de " + agendamento.getCliente().getNome());
         } catch (Exception e) {
@@ -711,6 +742,13 @@ public class AgendamentoService {
 
         logAtividadeService.registrar("AGENDAMENTO", agendamento.getId(), "Editou agendamento de " + cliente.getNome());
         AgendamentoResponse response = mapper.toResponse(agendamentoRepository.save(agendamento));
+        eventPublisher.publishEvent(new AgendamentoWhatsAppSyncEvent(
+                agendamento.getId(),
+                agendamento.getEmpresa().getId(),
+                request.status() == StatusAgendamento.CANCELADO
+                        ? AgendamentoWhatsAppSyncEvent.Acao.CANCELAR
+                        : AgendamentoWhatsAppSyncEvent.Acao.SINCRONIZAR
+        ));
         if (request.status() == StatusAgendamento.CANCELADO) {
             pagamentoService.cancelarPagamentoPendenteDoAgendamento(id, empresa.getId());
         }

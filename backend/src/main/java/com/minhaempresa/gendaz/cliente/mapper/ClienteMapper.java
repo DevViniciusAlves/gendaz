@@ -14,7 +14,8 @@ public class ClienteMapper {
                 cliente.getStatus(),
                 cliente.getEmpresa().getId(),
                 cliente.getDataCriacao(),
-                cliente.getDataAtualizacao()
+                cliente.getDataAtualizacao(),
+                cliente.isReceberWhatsapp()
         );
     }
 }

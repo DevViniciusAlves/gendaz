@@ -2,6 +2,7 @@ package com.minhaempresa.gendaz.crm.entity;
 
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.empresa.entity.EmpresaEntity;
+import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import lombok.*;
@@ -12,7 +13,11 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "crm_contatos")
+@Table(name = "crm_contatos", uniqueConstraints = {
+        @UniqueConstraint(
+                name = "uk_crm_contatos_whatsapp_notif",
+                columnNames = {"whatsapp_notificacao_id"})
+})
 public class CrmContatoEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,6 +50,15 @@ public class CrmContatoEntity {
     private LocalDateTime dataCriacao;
 
     private LocalDateTime aberturaData;
+
+    /**
+     * Vinculo idempotente com a notificacao WhatsApp (somente canal
+     * whatsapp; nulo para e-mail e historico antigo). A UNIQUE garante no
+     * banco: uma notificacao, no maximo um registro de historico.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "whatsapp_notificacao_id")
+    private WhatsAppNotificacaoEntity whatsappNotificacao;
 
     @PrePersist
     void prePersist() {

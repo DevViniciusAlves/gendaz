@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ClienteServicePhoneFlowTest {
@@ -73,7 +74,8 @@ class ClienteServicePhoneFlowTest {
                 conversaRepository, crmContatoRepository, mensagemRepository, entregaRepository,
                 notificacaoRepository, notaFiscalRepository, promocaoNotificacaoRepository,
                 meuGendazPromocaoNotificacaoRepository, clienteEmailBloqueadoService,
-                sanitizacaoService, phoneNumberService, auditService, mock(LogAtividadeService.class));
+                sanitizacaoService, phoneNumberService, mock(ApplicationEventPublisher.class),
+                auditService, mock(LogAtividadeService.class));
         CompanyContext.setCompanyId(10L);
     }
 
@@ -124,7 +126,7 @@ class ClienteServicePhoneFlowTest {
         when(clienteRepository.save(any(ClienteEntity.class))).thenReturn(novo);
 
         SalvarClienteRequest request = new SalvarClienteRequest(
-                "Maria", "(65) 99336-0341", "maria@test.com", null, 10L);
+                "Maria", "(65) 99336-0341", "maria@test.com", null, 10L, null);
 
         ClienteResponse response = clienteService.salvar(request);
 
@@ -144,7 +146,7 @@ class ClienteServicePhoneFlowTest {
                 .thenReturn(Optional.of(existente));
 
         SalvarClienteRequest request = new SalvarClienteRequest(
-                "Maria", "+55 65 99336-0341", "maria@test.com", null, 10L);
+                "Maria", "+55 65 99336-0341", "maria@test.com", null, 10L, null);
 
         BusinessException ex = assertThrows(BusinessException.class, () -> clienteService.salvar(request));
         assertEquals("Ja existe um cliente com este telefone.", ex.getMessage());

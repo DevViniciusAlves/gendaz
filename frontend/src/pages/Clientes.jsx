@@ -17,7 +17,7 @@ import { exibirTelefone, normalizarParaApi, normalizarParaInput, obterExemploTel
 import InternationalPhoneInput from '../components/InternationalPhoneInput.jsx'
 import { exportarCsv, formatarData, dataHojeDdMmAAAA } from '../utils/csvExport.js'
 
-const formInicial = { nome: '', telefone: '', email: '', observações: '' }
+const formInicial = { nome: '', telefone: '', email: '', observações: '', receberWhatsapp: true }
 
 function limparNome(valor) {
   return valor.replace(/[^\p{L}\s]/gu, '')
@@ -183,6 +183,7 @@ export default function Clientes() {
       telefone: normalizarParaInput(cliente.telefone || ''),
       email: cliente.email || '',
       observações: cliente.observações || '',
+      receberWhatsapp: cliente.receberWhatsapp ?? true,
     })
     setErro('')
     setModal(true)
@@ -389,6 +390,17 @@ export default function Clientes() {
           />
           <Input label="E-mail" helper="Use um e-mail válido." type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
           <Input label="Observações" helper="Resumo curto do histórico do cliente." maxLength={300} value={form.observações} onChange={(e) => setForm({ ...form, observações: e.target.value })} />
+          <label className="crm-send-custom-toggle field-wide">
+            <input
+              type="checkbox"
+              checked={form.receberWhatsapp ?? true}
+              onChange={(e) => setForm({ ...form, receberWhatsapp: e.target.checked })}
+            />
+            <span>
+              Receber mensagens pelo WhatsApp
+              <small className="field-hint" style={{ display: 'block' }}>Permite lembretes e ações de CRM por WhatsApp para este cliente.</small>
+            </span>
+          </label>
           {erro && <p className="form-error field-wide">{erro}</p>}
            <Button type="submit" loading={salvando} loadingText="Salvando...">
              Salvar

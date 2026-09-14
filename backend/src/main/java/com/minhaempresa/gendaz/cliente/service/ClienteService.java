@@ -28,12 +28,14 @@ import com.minhaempresa.gendaz.shared.ResourceNotFoundException;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.shared.SanitizacaoService;
 import com.minhaempresa.gendaz.shared.PhoneNumberService;
+import com.minhaempresa.gendaz.cliente.event.ClienteWhatsAppOptOutEvent;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -57,6 +59,7 @@ public class ClienteService {
     private final ClienteEmailBloqueadoService clienteEmailBloqueadoService;
     private final SanitizacaoService sanitizacaoService;
     private final PhoneNumberService phoneNumberService;
+    private final ApplicationEventPublisher eventPublisher;
     private final AdminAuditService auditService;
     private final LogAtividadeService logAtividadeService;
 
@@ -82,6 +85,7 @@ public class ClienteService {
                     .email(email)
                     .observacoes(sanitizacaoService.texto(request.observacoes()))
                     .status(StatusCadastro.ATIVO)
+                    .receberWhatsapp(request.receberWhatsapp() == null || request.receberWhatsapp())
                     .empresa(empresa)
                     .build();
             ClienteEntity salvo = clienteRepository.save(cliente);
@@ -137,7 +141,17 @@ public class ClienteService {
         cliente.setTelefone(telefone);
         cliente.setEmail(email);
         cliente.setObservacoes(sanitizacaoService.texto(request.observacoes()));
+        boolean eraOptIn = cliente.isReceberWhatsapp();
+        boolean optInAgora = request.receberWhatsapp() == null ? eraOptIn : request.receberWhatsapp();
+        cliente.setReceberWhatsapp(optInAgora);
         ClienteEntity salvo = clienteRepository.save(cliente);
+        if (eraOptIn && !optInAgora) {
+            // Opt-out: o cancelamento das pendencias ocorre apos o commit,
+            // via evento. Nunca aqui dentro: se esta transacao sofrer
+            // rollback, nada pode ter sido cancelado.
+            eventPublisher.publishEvent(new ClienteWhatsAppOptOutEvent(
+                    cliente.getEmpresa().getId(), salvo.getId()));
+        }
         clienteEmailBloqueadoService.desbloquear(cliente.getEmpresa().getId(), salvo.getEmail());
         auditService.registrar("CLIENTE_ATUALIZADO", "Cliente", salvo.getId(), "Cliente atualizado");
         logAtividadeService.registrar("CLIENTE", salvo.getId(), "Editou cliente " + salvo.getNome());

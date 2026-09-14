@@ -69,6 +69,28 @@ public class PhoneNumberService {
         return phoneNumber != null && phoneNumberUtil.isValidNumber(phoneNumber);
     }
 
+    /**
+     * Valida explicitamente valor ja canonico E.164 sem "+": somente digitos
+     * (8-15) que o libphonenumber comprova como numero valido ao interpretar
+     * com "+" e sem regiao padrao. Dado legado nacional (ex.: sem DDI) nao
+     * passa aqui e nao deve ser usado como destinatario: sem adivinhar DDI.
+     */
+    public boolean canonicoValido(String valor) {
+        if (valor == null || valor.isBlank()) {
+            return false;
+        }
+        String sanitizado = valor.trim();
+        if (!sanitizado.matches("[0-9]{8,15}")) {
+            return false;
+        }
+        try {
+            Phonenumber.PhoneNumber phoneNumber = phoneNumberUtil.parse("+" + sanitizado, null);
+            return phoneNumberUtil.isValidNumber(phoneNumber);
+        } catch (NumberParseException e) {
+            return false;
+        }
+    }
+
     public String paraE164(String valorCanonico) {
         if (valorCanonico == null || valorCanonico.isBlank()) {
             return null;

@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.EntityGraph;
 
 public interface ClienteRepository extends JpaRepository<ClienteEntity, Long> {
+    Optional<ClienteEntity> findByIdAndEmpresaId(Long id, Long empresaId);
+
     @EntityGraph(attributePaths = {"empresa"})
     List<ClienteEntity> findByEmpresaId(Long empresaId);
     
