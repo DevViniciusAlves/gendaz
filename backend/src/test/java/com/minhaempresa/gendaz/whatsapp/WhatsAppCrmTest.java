@@ -38,6 +38,12 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -112,11 +118,13 @@ class WhatsAppCrmTest {
     /**
      * Isolamento da fila global: a tabela e compartilhada com outros testes
      * do mesmo contexto e o worker consome qualquer linha vencida. Limpa
-     * antes e depois para nem herdar nem deixar restos.
+     * antes e depois para nem herdar nem deixar restos. Historico primeiro:
+     * a FK whatsapp_notificacao_id impede apagar notificacoes referenciadas.
      */
     @BeforeEach
     @AfterEach
     void limparFila() {
+        crmContatoRepository.deleteAll();
         notificacaoRepository.deleteAll();
     }
 
@@ -448,8 +456,7 @@ class WhatsAppCrmTest {
     }
 
     @Test
-    void dezEmailsNaoConsomemCotaWhatsApp() {
-        EmpresaEntity empresa = novaEmpresa("wpp-crm-mail10");
+    void dezEmailsNaoConsomemCotaWhatsApp() {        EmpresaEntity empresa = novaEmpresa("wpp-crm-mail10");
         comAssinatura(empresa, "PRO");
         ClienteEntity cliente = novoCliente(empresa, "5565999999999");
 
@@ -462,5 +469,54 @@ class WhatsAppCrmTest {
         assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
         assertEquals(10, quotaService.consultarUso(empresa.getId()).crmDisponiveis());
         assertTrue(notificacoesDaEmpresa(empresa.getId()).isEmpty());
+    }
+
+    @Test
+    void duasSolicitacoesSimultaneasGeramUmaNotificacaoEUmHistorico() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-crm-race");
+        comAssinatura(empresa, "PRO");
+        ClienteEntity cliente = novoCliente(empresa, "5565999999999");
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            CountDownLatch largada = new CountDownLatch(1);
+            List<Map<String, Object>> resultados = new CopyOnWriteArrayList<>();
+            List<Throwable> erros = new CopyOnWriteArrayList<>();
+            Future<?> f1 = executor.submit(() -> {
+                try {
+                    largada.await();
+                    resultados.add(crmService.enviarMensagem(empresa.getId(), cliente.getId(),
+                            whatsapp("resgate", "req-race")));
+                } catch (Throwable t) {
+                    erros.add(t);
+                }
+            });
+            Future<?> f2 = executor.submit(() -> {
+                try {
+                    largada.await();
+                    resultados.add(crmService.enviarMensagem(empresa.getId(), cliente.getId(),
+                            whatsapp("resgate", "req-race")));
+                } catch (Throwable t) {
+                    erros.add(t);
+                }
+            });
+            largada.countDown();
+            f1.get(60, TimeUnit.SECONDS);
+            f2.get(60, TimeUnit.SECONDS);
+
+            assertTrue(erros.isEmpty());
+            assertEquals(2, resultados.size());
+            assertTrue((Boolean) resultados.get(0).get("success"));
+            assertTrue((Boolean) resultados.get(1).get("success"));
+            assertEquals(resultados.get(0).get("messageId"), resultados.get(1).get("messageId"));
+
+            assertEquals(1, notificacoesDaEmpresa(empresa.getId()).size());
+            long historicos = historicoDoCliente(cliente.getId()).stream()
+                    .filter(h -> "whatsapp".equals(h.getTipo()))
+                    .count();
+            assertEquals(1, historicos);
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

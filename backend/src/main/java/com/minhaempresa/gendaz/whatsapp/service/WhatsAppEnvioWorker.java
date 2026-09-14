@@ -7,6 +7,7 @@ import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppStatusNotificacao;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
+import jakarta.persistence.OptimisticLockException;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -14,7 +15,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -64,9 +67,15 @@ public class WhatsAppEnvioWorker {
             Optional<Long> id;
             try {
                 id = self.claimUm();
+            } catch (ObjectOptimisticLockingFailureException | OptimisticLockException corrida) {
+                // Corrida benigna perdida: nada foi decidido nem commitado.
+                log.info("[whatsapp-worker] claim perdeu corrida");
+                continue;
             } catch (Exception e) {
+                // Claim perdido em falha real aborta so a tentativa: o proximo
+                // item do lote (ou ciclo) continua normalmente.
                 log.error("[whatsapp-worker] claim falhou. erroTipo={}", e.getClass().getSimpleName());
-                break;
+                continue;
             }
             if (id.isEmpty()) {
                 continue;
@@ -85,10 +94,15 @@ public class WhatsAppEnvioWorker {
     /**
      * Claim de uma notificacao vencida: PENDENTE -&gt; ENVIANDO com attempts+1.
      * Na primeira tentativa reserva a cota; sem plano ou sem limite, cancela
-     * sem chamar o provider e sem afetar agenda/CRM.
+     * sem chamar o provider e sem afetar agenda/CRM. Perder a corrida levanta
+     * conflito otimista e nada commita: o chamador trata como claim vazio.
      */
     @Transactional
     public Optional<Long> claimUm() {
+        return claimUmInterno();
+    }
+
+    private Optional<Long> claimUmInterno() {
         LocalDateTime agora = clock.agoraUtc();
         List<WhatsAppNotificacaoEntity> pendentes =
                 notificacaoRepository.claimPendentes(agora, 1);
@@ -154,10 +168,32 @@ public class WhatsAppEnvioWorker {
         self.finalizar(notificacaoId, resultado);
     }
 
-    @Transactional
+    /**
+     * Marca o inicio real da chamada externa. Sem transacao propria: delega
+     * a transacao curta interna e traduz derrota em corrida para false
+     * (sem envio). Falso e sempre seguro: se a linha ainda estiver
+     * ENVIANDO sem inicio, o recovery a revive depois.
+     */
     public boolean marcarInicioEnvio(Long notificacaoId) {
-        Optional<WhatsAppNotificacaoEntity> atual = notificacaoRepository.findById(notificacaoId);
-        if (atual.isEmpty() || atual.get().getStatus() != WhatsAppStatusNotificacao.ENVIANDO) {
+        try {
+            return self.marcarInicioEnvioInterno(notificacaoId);
+        } catch (ObjectOptimisticLockingFailureException | OptimisticLockException corrida) {
+            // Alguem gravou primeiro (ex.: cancelamento venceu): sem envio.
+            log.info("[whatsapp-worker] marco perdeu corrida notificacao={}", notificacaoId);
+            return false;
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public boolean marcarInicioEnvioInterno(Long notificacaoId) {
+        // Lock pessimista: reavalia status/sendStartedAt DEPOIS de adquirir
+        // a linha. Se o cancelamento venceu, retorna false e o provider
+        // nunca e chamado. Lock curto: sem HTTP aqui dentro.
+        Optional<WhatsAppNotificacaoEntity> atual =
+                notificacaoRepository.findByIdForUpdate(notificacaoId);
+        if (atual.isEmpty()
+                || atual.get().getStatus() != WhatsAppStatusNotificacao.ENVIANDO
+                || atual.get().getSendStartedAt() != null) {
             return false;
         }
         atual.get().setSendStartedAt(clock.agoraUtc());
@@ -179,12 +215,51 @@ public class WhatsAppEnvioWorker {
 
     @Transactional
     public void finalizar(Long notificacaoId, WhatsAppSendResult resultado) {
-        Optional<WhatsAppNotificacaoEntity> atual = notificacaoRepository.findById(notificacaoId);
+        try {
+            self.finalizarInterno(notificacaoId, resultado);
+            return;
+        } catch (ObjectOptimisticLockingFailureException | OptimisticLockException corrida) {
+            // Perdeu: outra gravacao venceu. Verifica o estado vencedor em
+            // nova transacao em vez de insistir na morta.
+        }
+        self.verificarAposConflito(notificacaoId, resultado);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void verificarAposConflito(Long notificacaoId, WhatsAppSendResult resultado) {
+        Optional<WhatsAppNotificacaoEntity> atual =
+                notificacaoRepository.findByIdForUpdate(notificacaoId);
+        if (atual.isEmpty()) {
+            return;
+        }
+        WhatsAppStatusNotificacao estado = atual.get().getStatus();
+        if (estado != WhatsAppStatusNotificacao.ENVIANDO) {
+            // Terminal ou devolvida a fila por quem venceu: nada a fazer.
+            log.info("[whatsapp-worker] finalizacao apos conflito sem efeito notificacao={} estado={}",
+                    notificacaoId, estado);
+            return;
+        }
+        try {
+            self.finalizarInterno(notificacaoId, resultado);
+        } catch (ObjectOptimisticLockingFailureException | OptimisticLockException segunda) {
+            // Patologico (duas derrotas seguidas): nao insiste; o recovery
+            // por stale revisita a linha depois.
+            log.error("[whatsapp-worker] finalizacao apos conflito abortada notificacao={}", notificacaoId);
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void finalizarInterno(Long notificacaoId, WhatsAppSendResult resultado) {
+        // Lock + reavaliacao: so ENVIANDO pode ser finalizado. Qualquer outro
+        // estado (ENVIADO, PENDENTE, CANCELADO, FALHOU) nao e sobrescrito:
+        // a finalizacao nao altera cota nem historico nesses casos.
+        Optional<WhatsAppNotificacaoEntity> atual =
+                notificacaoRepository.findByIdForUpdate(notificacaoId);
         if (atual.isEmpty()) {
             return;
         }
         WhatsAppNotificacaoEntity entidade = atual.get();
-        if (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIADO) {
+        if (entidade.getStatus() != WhatsAppStatusNotificacao.ENVIANDO) {
             return;
         }
         WhatsAppSendStatus status = resultado == null ? WhatsAppSendStatus.DELIVERY_UNKNOWN : resultado.getStatus();

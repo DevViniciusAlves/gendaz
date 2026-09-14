@@ -30,6 +30,17 @@ public class WhatsAppNotificacaoEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /**
+     * Trava otimista como segunda barreira: lock pessimista serializa no
+     * PostgreSQL; se duas transacoes concorrentes gravarem a mesma linha
+     * (ex.: H2 de teste sem bloqueio de leitura), a segunda recebe
+     * OptimisticLock e sua transacao sofre rollback em vez de sobrescrever
+     * silenciosamente. Os fluxos traduzem a derrota em resultado especificado
+     * (cancelar x marcarInicioEnvio), nunca em corrupcao.
+     */
+    @Version
+    private Long versao;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id", nullable = false)
     private EmpresaEntity empresa;

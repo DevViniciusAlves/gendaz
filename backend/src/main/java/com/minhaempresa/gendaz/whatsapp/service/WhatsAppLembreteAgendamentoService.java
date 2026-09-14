@@ -12,6 +12,7 @@ import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppStatusNotificacao;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
+import jakarta.persistence.OptimisticLockException;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -21,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +60,18 @@ public class WhatsAppLembreteAgendamentoService {
     private final PhoneNumberService phoneNumberService;
     private final WhatsAppClock clock;
 
+    private WhatsAppLembreteAgendamentoService self;
+
+    /**
+     * Auto-referencia via proxy: o cancelamento por linha roda em transacao
+     * propria para que derrota em corrida (conflito otimista) nao contamine
+     * a transacao corrente — ela decide sobre o estado vencedor em seguida.
+     */
+    @Autowired
+    public void setSelf(@Lazy WhatsAppLembreteAgendamentoService self) {
+        this.self = self;
+    }
+
     /**
      * Sincroniza o lembrete do agendamento: cancela versoes antigas ainda
      * ativas e cria (ou reutiliza por idempotencia) a versao do horario
@@ -74,7 +90,8 @@ public class WhatsAppLembreteAgendamentoService {
             return;
         }
         AgendamentoEntity agendamento = atual.get();
-        VersaoLembrete versao = calcularVersao(agendamento);        cancelarVersoesAntigas(empresaId, agendamentoId, versao == null ? null : versao.chave());
+        VersaoLembrete versao = calcularVersao(agendamento);
+        cancelarVersoesAntigas(empresaId, agendamentoId, versao == null ? null : versao.chave());
         if (versao == null) {
             return;
         }
@@ -101,24 +118,90 @@ public class WhatsAppLembreteAgendamentoService {
     public void cancelar(Long empresaId, Long agendamentoId) {
         List<WhatsAppNotificacaoEntity> ligadas =
                 notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresaId, agendamentoId);
-        for (WhatsAppNotificacaoEntity entidade : ligadas) {
-            if (entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
+        for (WhatsAppNotificacaoEntity candidata : ligadas) {
+            if (candidata.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
                 continue;
             }
-            if (entidade.getStatus() == WhatsAppStatusNotificacao.PENDENTE
-                    || (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
-                            && entidade.getSendStartedAt() == null)) {
-                liberarReservaSeExistir(empresaId, entidade);
-                entidade.setStatus(WhatsAppStatusNotificacao.CANCELADO);
-                entidade.setProcessingStartedAt(null);
-                entidade.setSendStartedAt(null);
-                entidade.setNextAttemptAt(null);
-                notificacaoRepository.save(entidade);
-                log.info("[whatsapp-lembrete] reminder cancelado notificacao={}", entidade.getId());
-            } else if (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO) {
-                log.info("[whatsapp-lembrete] envio possivelmente em curso, mantido notificacao={}",
-                        entidade.getId());
+            cancelarComRecuperacao(empresaId, candidata.getId());
+        }
+    }
+
+    private void cancelarComRecuperacao(Long empresaId, Long notificacaoId) {
+        try {
+            self.cancelarNotificacao(empresaId, notificacaoId);
+        } catch (ObjectOptimisticLockingFailureException | OptimisticLockException corrida) {
+            // Perdeu a corrida: a transacao interna rolou sozinha; a
+            // corrente segue intacta e decide sobre o estado vencedor.
+            try {
+                self.reavaliarAposConflito(empresaId, notificacaoId);
+            } catch (Exception e2) {
+                // Patologico (duas derrotas seguidas): nao insiste; os fluxos
+                // de stale do worker revisitam a linha depois.
+                log.error("[whatsapp-lembrete] cancelamento apos conflito abortado notificacao={}. erroTipo={}",
+                        notificacaoId, e2.getClass().getSimpleName());
             }
+        }
+    }
+
+    /**
+     * Cancela uma notificacao em transacao propria curta (lock detido so
+     * aqui): PENDENTE e ENVIANDO sem sendStartedAt cancelam com liberacao;
+     * ENVIANDO com chamada externa possivelmente iniciada nao e tocado.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void cancelarNotificacao(Long empresaId, Long notificacaoId) {
+        // Rele com lock e reavalia: se o worker marcou sendStartedAt
+        // primeiro, nao cancela nem libera (ele finaliza normalmente).
+        Optional<WhatsAppNotificacaoEntity> atual = notificacaoRepository
+                .findByIdAndEmpresaIdForUpdate(notificacaoId, empresaId);
+        if (atual.isEmpty()) {
+            return;
+        }
+        WhatsAppNotificacaoEntity entidade = atual.get();
+        if (entidade.getStatus() == WhatsAppStatusNotificacao.PENDENTE
+                || (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                        && entidade.getSendStartedAt() == null)) {
+            liberarReservaSeExistir(empresaId, entidade);
+            entidade.setStatus(WhatsAppStatusNotificacao.CANCELADO);
+            entidade.setProcessingStartedAt(null);
+            entidade.setSendStartedAt(null);
+            entidade.setNextAttemptAt(null);
+            notificacaoRepository.save(entidade);
+            log.info("[whatsapp-lembrete] reminder cancelado notificacao={}", entidade.getId());
+        } else if (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO) {
+            log.info("[whatsapp-lembrete] envio possivelmente em curso, mantido notificacao={}",
+                    entidade.getId());
+        }
+    }
+
+    /**
+     * Apos perder corrida, decide sobre o estado vencedor em nova transacao:
+     * envio iniciado e preservado; linha ainda cancelavel e cancelada agora
+     * (ex.: claim venceu no meio); demais estados sao historico.
+     */
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void reavaliarAposConflito(Long empresaId, Long notificacaoId) {
+        Optional<WhatsAppNotificacaoEntity> atual = notificacaoRepository
+                .findByIdAndEmpresaIdForUpdate(notificacaoId, empresaId);
+        if (atual.isEmpty()) {
+            return;
+        }
+        WhatsAppNotificacaoEntity entidade = atual.get();
+        if (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                && entidade.getSendStartedAt() != null) {
+            log.info("[whatsapp-lembrete] envio venceu corrida, mantido notificacao={}", entidade.getId());
+            return;
+        }
+        if (entidade.getStatus() == WhatsAppStatusNotificacao.PENDENTE
+                || (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                        && entidade.getSendStartedAt() == null)) {
+            liberarReservaSeExistir(empresaId, entidade);
+            entidade.setStatus(WhatsAppStatusNotificacao.CANCELADO);
+            entidade.setProcessingStartedAt(null);
+            entidade.setSendStartedAt(null);
+            entidade.setNextAttemptAt(null);
+            notificacaoRepository.save(entidade);
+            log.info("[whatsapp-lembrete] reminder cancelado apos corrida notificacao={}", entidade.getId());
         }
     }
 
@@ -129,7 +212,8 @@ public class WhatsAppLembreteAgendamentoService {
      */
     @Transactional
     public boolean revalidarParaEnvio(Long notificacaoId) {
-        Optional<WhatsAppNotificacaoEntity> atual = notificacaoRepository.findById(notificacaoId);
+        Optional<WhatsAppNotificacaoEntity> atual =
+                notificacaoRepository.findByIdForUpdate(notificacaoId);
         if (atual.isEmpty()) {
             return false;
         }
@@ -210,23 +294,15 @@ public class WhatsAppLembreteAgendamentoService {
     private void cancelarVersoesAntigas(Long empresaId, Long agendamentoId, String chaveAtual) {
         List<WhatsAppNotificacaoEntity> ligadas =
                 notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresaId, agendamentoId);
-        for (WhatsAppNotificacaoEntity entidade : ligadas) {
-            if (entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
+        for (WhatsAppNotificacaoEntity candidata : ligadas) {
+            if (candidata.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
                 continue;
             }
-            if (chaveAtual != null && chaveAtual.equals(entidade.getIdempotencyKey())) {
+            if (chaveAtual != null && chaveAtual.equals(candidata.getIdempotencyKey())) {
                 continue;
             }
-            if (entidade.getStatus() == WhatsAppStatusNotificacao.PENDENTE
-                    || (entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
-                            && entidade.getSendStartedAt() == null)) {
-                liberarReservaSeExistir(empresaId, entidade);
-                entidade.setStatus(WhatsAppStatusNotificacao.CANCELADO);
-                entidade.setProcessingStartedAt(null);
-                entidade.setSendStartedAt(null);
-                entidade.setNextAttemptAt(null);
-                notificacaoRepository.save(entidade);
-            }
+            // Mesmo tratamento atomico do cancelamento explicito.
+            cancelarComRecuperacao(empresaId, candidata.getId());
         }
     }
 

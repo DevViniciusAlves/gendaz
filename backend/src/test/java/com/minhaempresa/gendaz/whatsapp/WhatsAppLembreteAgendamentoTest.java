@@ -47,8 +47,10 @@ import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEnvioWorker;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppLembreteAgendamentoService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppReserva;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -66,6 +68,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +95,8 @@ class WhatsAppLembreteAgendamentoTest {
     private TransactionTemplate transactionTemplate;
     @Autowired
     private WhatsAppLembreteAgendamentoService lembreteService;
+    @Autowired
+    private WhatsAppFilaService filaService;
     @Autowired
     private AgendamentoWhatsAppListener listener;
     @Autowired
@@ -997,5 +1002,141 @@ class WhatsAppLembreteAgendamentoTest {
         });
 
         assertTrue(reminders(empresa.getId(), ag.getId()).isEmpty());
+    }
+
+    // ---------- lock cancelamento x inicio de envio ----------
+
+    private WhatsAppNotificacaoEntity reminderOperacionalPronto(
+            EmpresaEntity empresa, AgendamentoEntity ag, String chave) {
+        WhatsAppNotificacaoEntity criado = filaService.enfileirar(
+                empresa.getId(), WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO, chave,
+                LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1), null, ag.getId(),
+                "5511999999999", "Lembrete operacional");
+        // Reserva real + estado ENVIANDO montados diretamente: o que esta em
+        // teste e a atomicidade cancelar x marcarInicioEnvio, nao o claim
+        // (que e global e sensivel a linhas de outros testes). Equivale ao
+        // resultado de um claim bem-sucedido.
+        assertEquals(WhatsAppReserva.RESERVADA,
+                quotaService.reservar(empresa.getId(), WhatsAppCategoriaCota.LEMBRETE));
+        WhatsAppNotificacaoEntity reivindicado =
+                notificacaoRepository.findById(criado.getId()).orElseThrow();
+        reivindicado.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
+        reivindicado.setAttempts(reivindicado.getAttempts() + 1);
+        reivindicado.setProcessingStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(5));
+        reivindicado.setSendStartedAt(null);
+        reivindicado.setQuotaReserved(true);
+        reivindicado.setQuotaCycleStart(LocalDate.now().minusDays(5));
+        return notificacaoRepository.save(reivindicado);
+    }
+
+    @Test
+    void cancelamentoAntesDoMarcoImpedeEnvio() {
+        EmpresaEntity empresa = novaEmpresa("wpp-lock-cx", ZONA_SP);
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ZonedDateTime at = atendimentoFuturo(ZONA_SP, 3, 15);
+        AgendamentoEntity ag = novoAgendamento(empresa, novoCliente(empresa, telefoneCanonicoNovo()),
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+        WhatsAppNotificacaoEntity pronto =
+                reminderOperacionalPronto(empresa, ag, "lock-cx-" + System.nanoTime());
+
+        lembreteService.cancelar(empresa.getId(), ag.getId());
+
+        assertFalse(worker.marcarInicioEnvio(pronto.getId()));
+        WhatsAppNotificacaoEntity finalizada =
+                notificacaoRepository.findById(pronto.getId()).orElseThrow();
+        assertEquals(WhatsAppStatusNotificacao.CANCELADO, finalizada.getStatus());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).lembretesReservados());
+        verify(provider, never()).enviarTexto(any(), any(), any(), any());
+    }
+
+    @Test
+    void marcoAntesDoCancelamentoPreservaEnvio() {
+        EmpresaEntity empresa = novaEmpresa("wpp-lock-mx", ZONA_SP);
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ZonedDateTime at = atendimentoFuturo(ZONA_SP, 3, 15);
+        AgendamentoEntity ag = novoAgendamento(empresa, novoCliente(empresa, telefoneCanonicoNovo()),
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+        WhatsAppNotificacaoEntity pronto =
+                reminderOperacionalPronto(empresa, ag, "lock-mx-" + System.nanoTime());
+
+        assertTrue(worker.marcarInicioEnvio(pronto.getId()));
+        lembreteService.cancelar(empresa.getId(), ag.getId());
+
+        WhatsAppNotificacaoEntity mantido =
+                notificacaoRepository.findById(pronto.getId()).orElseThrow();
+        assertEquals(WhatsAppStatusNotificacao.ENVIANDO, mantido.getStatus());
+        assertNotNull(mantido.getSendStartedAt());
+        assertTrue(mantido.isQuotaReserved());
+
+        worker.finalizar(pronto.getId(), WhatsAppSendResult.sent("WAMID-LOCK"));
+        assertEquals(WhatsAppStatusNotificacao.ENVIADO,
+                notificacaoRepository.findById(pronto.getId()).orElseThrow().getStatus());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesEnviados());
+    }
+
+    @Test
+    void cancelVsMarcoInicioConcorrentesSaoAtomicos() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-lock-race", ZONA_SP);
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ZonedDateTime at = atendimentoFuturo(ZONA_SP, 3, 15);
+        AgendamentoEntity ag = novoAgendamento(empresa, novoCliente(empresa, telefoneCanonicoNovo()),
+                at.toLocalDate(), at.toLocalTime(), StatusAgendamento.PENDENTE);
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        try {
+            for (int i = 0; i < 20; i++) {
+                WhatsAppNotificacaoEntity pronto = reminderOperacionalPronto(
+                        empresa, ag, "lock-race-" + i + "-" + System.nanoTime());
+                int reservadosAntes =
+                        quotaService.consultarUso(empresa.getId()).lembretesReservados();
+                CountDownLatch largada = new CountDownLatch(1);
+                AtomicBoolean marcou = new AtomicBoolean(false);
+                List<Throwable> erros = new CopyOnWriteArrayList<>();
+                Future<?> f1 = executor.submit(() -> {
+                    try {
+                        largada.await();
+                        lembreteService.cancelar(empresa.getId(), ag.getId());
+                    } catch (Throwable t) {
+                        erros.add(t);
+                    }
+                });
+                Future<?> f2 = executor.submit(() -> {
+                    try {
+                        largada.await();
+                        marcou.set(worker.marcarInicioEnvio(pronto.getId()));
+                    } catch (Throwable t) {
+                        erros.add(t);
+                    }
+                });
+                largada.countDown();
+                f1.get(60, TimeUnit.SECONDS);
+                f2.get(60, TimeUnit.SECONDS);
+
+                assertTrue(erros.isEmpty(), "iteracao " + i);
+                WhatsAppNotificacaoEntity atual =
+                        notificacaoRepository.findById(pronto.getId()).orElseThrow();
+                int reservadosDepois =
+                        quotaService.consultarUso(empresa.getId()).lembretesReservados();
+                if (marcou.get()) {
+                    // Marco venceu: cancelamento posterior preservou tudo
+                    // (a reserva do claim continua, sem duplicar).
+                    assertEquals(WhatsAppStatusNotificacao.ENVIANDO, atual.getStatus(), "iteracao " + i);
+                    assertNotNull(atual.getSendStartedAt(), "iteracao " + i);
+                    assertTrue(atual.isQuotaReserved(), "iteracao " + i);
+                    assertEquals(reservadosAntes, reservadosDepois, "iteracao " + i);
+                } else {
+                    // Cancelamento venceu: sem envio, sem reserva presa.
+                    assertEquals(WhatsAppStatusNotificacao.CANCELADO, atual.getStatus(), "iteracao " + i);
+                    assertFalse(atual.isQuotaReserved(), "iteracao " + i);
+                    assertEquals(reservadosAntes, reservadosDepois, "iteracao " + i);
+                }
+            }
+            verify(provider, never()).enviarTexto(any(), any(), any(), any());
+        } finally {
+            executor.shutdownNow();
+        }
     }
 }

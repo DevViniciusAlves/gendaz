@@ -18,7 +18,6 @@ import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
-import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppClock;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
 import java.time.LocalDate;
@@ -30,6 +29,7 @@ import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +44,7 @@ public class CrmService {
     private final ResendEmailService resendEmailService;
     private final AssinaturaService assinaturaService;
     private final WhatsAppFilaService whatsAppFilaService;
-    private final WhatsAppNotificacaoRepository whatsAppNotificacaoRepository;
+    private final CrmContatoHistoricoService historicoService;
     private final PhoneNumberService phoneNumberService;
     private final WhatsAppClock whatsAppClock;
 
@@ -242,19 +242,6 @@ public class CrmService {
                 + cliente.getId() + ":" + requestId.trim();
         String texto = montarTextoWhatsApp(tipo, cliente.getNome(), cliente.getEmpresa().getNomeFantasia());
 
-        // Retry da mesma acao manual: mesma notificacao, sem duplicar
-        // historico nem payload. Nova acao futura usa novo requestId.
-        Optional<WhatsAppNotificacaoEntity> existente =
-                whatsAppNotificacaoRepository.findByEmpresaIdAndIdempotencyKey(empresaId, chave);
-        if (existente.isPresent()) {
-            WhatsAppNotificacaoEntity notificacao = existente.get();
-            return Map.of(
-                    "success", true,
-                    "messageId", String.valueOf(notificacao.getId()),
-                    "status", "solicitado",
-                    "timestamp", LocalDateTime.now().toString());
-        }
-
         WhatsAppNotificacaoEntity notificacao = whatsAppFilaService.enfileirar(
                 empresaId,
                 tipo,
@@ -265,21 +252,27 @@ public class CrmService {
                 telefone.trim(),
                 texto);
 
-        CrmContatoEntity contato = CrmContatoEntity.builder()
-                .empresa(cliente.getEmpresa())
-                .cliente(cliente)
-                .tipo("whatsapp")
-                .template(template)
-                .mensagem(texto)
-                .status("solicitado")
-                .build();
-        crmContatoRepository.save(contato);
+        // Historico idempotente por notificacao: a UNIQUE
+        // (whatsapp_notificacao_id) e a barreira no banco. Em corrida, a
+        // insercao perdedora viola a constraint somente na transacao propria
+        // do registro (rollback isolado); aqui se verifica em outra
+        // transacao propria se o registro ja existe: duplicata benigna segue,
+        // erro real propaga. Nunca continua a mesma transacao apos a violacao.
+        try {
+            historicoService.registrarWhatsapp(
+                    empresaId, cliente.getId(), template, texto, notificacao.getId());
+        } catch (DataIntegrityViolationException duplicada) {
+            if (historicoService.buscarPorNotificacao(notificacao.getId()).isEmpty()) {
+                throw duplicada;
+            }
+            log.info("[crm] historico whatsapp ja registrado notificacao={}", notificacao.getId());
+        }
 
         return Map.of(
                 "success", true,
                 "messageId", String.valueOf(notificacao.getId()),
                 "status", "solicitado",
-                "timestamp", contato.getDataCriacao().toString());
+                "timestamp", whatsAppClock.agoraUtc().toString());
     }
 
     private static boolean isCanalWhatsApp(String canal) {
