@@ -59,7 +59,7 @@ export default function WhatsAppIntegracoes() {
               <span className="wpp-muted">Não disponível no seu plano</span>
             )}
           </div>
-          {resumo.disponivelNoPlano ? (
+          {resumo.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado) ? (
             <Button type="button" onClick={() => setModalAberto(true)}>Configurar</Button>
           ) : (
             <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>

@@ -237,9 +237,24 @@ class WhatsAppIntegracaoControllerTest {
     }
 
     @Test
-    void logoutUsaSessaoPropria() throws Exception {
-        EmpresaEntity empresa = novaEmpresa("wpp-ui-out");
+    void logoutUsaSessaoPropria() throws Exception {        EmpresaEntity empresa = novaEmpresa("wpp-ui-out");
         comAssinatura(empresa, "PRO");
+        WhatsAppSessionStatus status = statusConectado(String.valueOf(empresa.getId()));
+        status.setState("LOGGED_OUT");
+        when(provider.logout(String.valueOf(empresa.getId())))
+                .thenReturn(WhatsAppResult.success(status));
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/desconectar"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("LOGGED_OUT"));
+        verify(provider, times(1)).logout(String.valueOf(empresa.getId()));
+    }
+
+    @Test
+    void desconectarBasicoComSessaoAtivaPermitido() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-outb");
+        comAssinatura(empresa, "BASICO");
         WhatsAppSessionStatus status = statusConectado(String.valueOf(empresa.getId()));
         status.setState("LOGGED_OUT");
         when(provider.logout(String.valueOf(empresa.getId())))

@@ -32,6 +32,13 @@ const TEMPLATES = {
   },
 }
 
+// Texto idêntico aos templates fixos do backend (CrmService): somente
+// leitura aqui, a mensagem realmente enviada nunca muda por esta tela.
+const TEMPLATES_WHATSAPP = {
+  resgate: 'Olá, {cliente}! Tudo bem? Sentimos sua falta na {empresa}. Se quiser agendar um novo atendimento, estamos à disposição.',
+  reconexao: 'Olá, {cliente}! Tudo bem? Passando para saber como você está. Quando quiser voltar à {empresa}, estaremos por aqui.',
+}
+
 const ERROS_WHATSAPP = {
   WHATSAPP_NAO_DISPONIVEL_NO_PLANO: 'O plano atual não possui ações de WhatsApp.',
   WHATSAPP_TELEFONE_INVALIDO: 'Este cliente não possui um telefone válido para WhatsApp.',
@@ -64,6 +71,8 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   const tmpl = TEMPLATES[template] || TEMPLATES.resgate
   const nomeCliente = cliente.nome || 'cliente'
   const mensagemPadrao = tmpl.mensagem.replace('{nome}', nomeCliente)
+  const ehWhatsapp = canal === 'whatsapp'
+  const mensagemWhatsapp = (TEMPLATES_WHATSAPP[template] || '').replace('{cliente}', nomeCliente)
 
   async function handleEnviar() {
     if (enviando) return
@@ -73,7 +82,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       const response = await enviarMensagemCrm(cliente.id, {
         template,
         canal,
-        customMessage: personalizar ? mensagemCustom : null,
+        customMessage: canal === 'whatsapp' ? null : (personalizar ? mensagemCustom : null),
         requestId: canal === 'whatsapp' ? requestId : null,
       })
       if (response && response.success === false) {
@@ -154,22 +163,24 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
           )}
 
           <div className="crm-send-message">
-            <span>Mensagem padrão</span>
+            <span>{ehWhatsapp ? 'Mensagem padrão do gendaz' : 'Mensagem padrão'}</span>
             <div className="crm-send-message-preview">
-              {mensagemPadrao}
+              {ehWhatsapp ? mensagemWhatsapp : mensagemPadrao}
             </div>
           </div>
 
-          <label className="crm-send-custom-toggle">
-            <input
-              type="checkbox"
-              checked={personalizar}
-              onChange={(e) => setPersonalizar(e.target.checked)}
-            />
-            <span>Personalizar mensagem</span>
-          </label>
+          {!ehWhatsapp && (
+            <label className="crm-send-custom-toggle">
+              <input
+                type="checkbox"
+                checked={personalizar}
+                onChange={(e) => setPersonalizar(e.target.checked)}
+              />
+              <span>Personalizar mensagem</span>
+            </label>
+          )}
 
-          {personalizar && (
+          {!ehWhatsapp && personalizar && (
             <label className="field crm-send-custom-message">
               <span>Mensagem personalizada</span>
               <textarea

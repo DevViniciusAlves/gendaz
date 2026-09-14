@@ -34,6 +34,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const [gerandoQr, setGerandoQr] = useState(false)
   const [desconectando, setDesconectando] = useState(false)
   const [confirmarSaida, setConfirmarSaida] = useState(false)
+  const [pareamentoExpirado, setPareamentoExpirado] = useState(false)
   const [salvandoToggle, setSalvandoToggle] = useState(false)
   const [toggleOn, setToggleOn] = useState(false)
   const pollRef = useRef(null)
@@ -79,8 +80,10 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
       setGerandoQr(false)
       setConectando(false)
       setConfirmarSaida(false)
+      setPareamentoExpirado(false)
     } else {
       setQr(null)
+      setPareamentoExpirado(false)
       limparPolling()
     }
   }, [open, resumo, limparPolling])
@@ -95,6 +98,10 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     pollRef.current = setInterval(async () => {
       if (Date.now() - inicio > JANELA_POLL_MS) {
         limparPolling()
+        setConectando(false)
+        setGerandoQr(false)
+        setQr(null)
+        setPareamentoExpirado(true)
         return
       }
       if (emPollRef.current) return
@@ -108,6 +115,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
           setQr(null)
           setGerandoQr(false)
           setConectando(false)
+          setPareamentoExpirado(false)
           emitirToast('success', 'WhatsApp conectado!')
           return
         }
@@ -137,17 +145,18 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   // Se abrir já em pareamento (ex.: conexão iniciada em outra sessão),
   // acompanha até conectar ou expirar a janela.
   useEffect(() => {
-    if (!open || !dados || pollRef.current) return
+    if (!open || !dados || pollRef.current || pareamentoExpirado) return
     const estadoAtual = dados?.conexao?.estado
     if (estadoAtual === 'CONNECTING' || (dados?.conexao?.hasQr && estadoAtual !== 'CONNECTED')) {
       setConectando(true)
       setGerandoQr(true)
       iniciarPolling(Date.now())
     }
-  }, [open, dados, iniciarPolling])
+  }, [open, dados, pareamentoExpirado, iniciarPolling])
 
   async function handleConectar() {
     if (conectando) return
+    setPareamentoExpirado(false)
     setConectando(true)
     setGerandoQr(true)
     try {
@@ -198,6 +207,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   function handleClose() {
     limparPolling()
     setQr(null)
+    setPareamentoExpirado(false)
     onClose()
   }
 
@@ -214,6 +224,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const estado = dados?.conexao?.estado || 'UNAVAILABLE'
   const disponivelNoPlano = dados ? Boolean(dados.disponivelNoPlano) : true
   const conectado = estado === 'CONNECTED'
+  const sessaoAtiva = estado === 'CONNECTED' || estado === 'CONNECTING' || estado === 'RECONNECTING'
   const emPareamento = conectando || estado === 'CONNECTING' || (dados?.conexao?.hasQr && !conectado)
   const lembretes = dados?.uso?.lembretes
   const crm = dados?.uso?.crm
@@ -231,12 +242,27 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   return (
     <Modal title="WhatsApp" open={open} onClose={handleClose}>
       <div className="wpp-modal-body">
-        {!disponivelNoPlano && (
+      {!disponivelNoPlano && !sessaoAtiva && (
         <>
           <p className="wpp-muted">Não disponível no seu plano</p>
           <p className="wpp-muted">Os lembretes e ações de CRM pelo WhatsApp exigem um plano com a integração.</p>
           <div className="modal-actions">
             <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>
+          </div>
+        </>
+      )}
+
+      {!disponivelNoPlano && sessaoAtiva && (
+        <>
+          <h3 className="wpp-section-title">Conexão</h3>
+          <div className="wpp-row">
+            <div>
+              <StatusBadge status={estado} />
+              <p className="wpp-muted">Sessão ainda ativa de um plano anterior. Desconecte para encerrar.</p>
+            </div>
+            <Button variant="secondary" type="button" onClick={() => setConfirmarSaida(true)}>
+              Desconectar WhatsApp
+            </Button>
           </div>
         </>
       )}
@@ -267,7 +293,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
             )}
           </div>
 
-          {emPareamento && !conectado && (
+          {emPareamento && !conectado && !pareamentoExpirado && (
             <div className="wpp-qr-box">
               {qr ? (
                 <>
@@ -277,6 +303,15 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               ) : (
                 <p className="wpp-muted">{gerandoQr || estado === 'CONNECTING' ? 'Gerando QR Code...' : 'Conectando...'}</p>
               )}
+            </div>
+          )}
+
+          {pareamentoExpirado && !conectado && (
+            <div className="wpp-qr-box">
+              <p className="wpp-muted">O tempo para conexão expirou. Tente gerar um novo QR Code.</p>
+              <Button type="button" onClick={handleConectar} loading={conectando} loadingText="Conectando...">
+                Tentar novamente
+              </Button>
             </div>
           )}
 
