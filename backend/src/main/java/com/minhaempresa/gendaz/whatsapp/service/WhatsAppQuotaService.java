@@ -39,6 +39,18 @@ public class WhatsAppQuotaService {
     private record CicloVigente(LocalDate inicio, LocalDate fim, String planoNome) {
     }
 
+    /**
+     * Nome do plano efetivo resolvido DENTRO da transacao (o lazy de
+     * plano precisa da sessao aberta; mapear fora dela causa
+     * LazyInitializationException).
+     */
+    @Transactional(readOnly = true)
+    public String planoEfetivoNome(Long empresaId) {
+        return assinaturaService.buscarAtualPorEmpresa(empresaId)
+                .map(a -> a.getPlano().getNome())
+                .orElse(null);
+    }
+
     private Optional<CicloVigente> resolverCiclo(Long empresaId) {
         return assinaturaService.buscarAtualPorEmpresa(empresaId)
                 .filter(a -> a.getDataInicio() != null)

@@ -727,8 +727,7 @@ class WhatsAppProtecoesTest {
     // ---------- opt-out pós-commit ----------
 
     @Test
-    void flipComRollbackNaoCancelaPendencias() {
-        EmpresaEntity empresa = novaEmpresa("wpp-proll");
+    void flipComRollbackNaoCancelaPendencias() {        EmpresaEntity empresa = novaEmpresa("wpp-proll");
         comAssinatura(empresa, "PRO");
         ativarLembretes(empresa);
         ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
@@ -752,5 +751,53 @@ class WhatsAppProtecoesTest {
 
         assertEquals(WhatsAppStatusNotificacao.PENDENTE, recarregar(reminder.getId()).getStatus());
         assertTrue(clienteRepository.findById(cliente.getId()).orElseThrow().isReceberWhatsapp());
+    }
+
+    // ---------- cliente: flag no GET/criar/atualizar ----------
+
+    @Test
+    void getClienteRetornaReceberWhatsapp() {
+        EmpresaEntity empresa = novaEmpresa("wpp-pgetcli");
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+
+        CompanyContext.setCompanyId(empresa.getId());
+        try {
+            assertTrue(clienteService.buscarPorId(cliente.getId()).receberWhatsapp());
+        } finally {
+            CompanyContext.clear();
+        }
+
+        definirOptOut(empresa, cliente, false);
+        CompanyContext.setCompanyId(empresa.getId());
+        try {
+            assertFalse(clienteService.buscarPorId(cliente.getId()).receberWhatsapp());
+        } finally {
+            CompanyContext.clear();
+        }
+    }
+
+    @Test
+    void updateSemCampoPreservaValorExistente() {
+        EmpresaEntity empresa = novaEmpresa("wpp-pkeepcli");
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+        definirOptOut(empresa, cliente, false);
+
+        CompanyContext.setCompanyId(empresa.getId());
+        try {
+            var response = clienteService.atualizar(cliente.getId(), new SalvarClienteRequest(
+                    "Cli Prot", cliente.getTelefone(), cliente.getEmail(), null, empresa.getId(), null));
+            assertFalse(response.receberWhatsapp());
+        } finally {
+            CompanyContext.clear();
+        }
+
+        CompanyContext.setCompanyId(empresa.getId());
+        try {
+            var response = clienteService.atualizar(cliente.getId(), new SalvarClienteRequest(
+                    "Cli Prot", cliente.getTelefone(), cliente.getEmail(), null, empresa.getId(), true));
+            assertTrue(response.receberWhatsapp());
+        } finally {
+            CompanyContext.clear();
+        }
     }
 }

@@ -1,0 +1,149 @@
+/* Integração WhatsApp: somente complementos pontuais. Base (panel, btn,
+   modal, field, status) vem dos estilos globais do gendaz. */
+
+.wpp-card-body {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+.wpp-card-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.wpp-modal-body {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.wpp-divider {
+  border: none;
+  border-top: 1px solid var(--line);
+  margin: 16px 0;
+}
+
+.wpp-section-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.wpp-muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.wpp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.wpp-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.wpp-toggle input {
+  margin-top: 2px;
+}
+
+.wpp-toggle small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wpp-progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  margin: 10px 0 4px;
+}
+
+.wpp-progress-label strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.wpp-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  overflow: hidden;
+}
+
+.wpp-progress > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.wpp-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.wpp-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  max-width: 100%;
+}
+
+.wpp-qr-box svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.wpp-message-preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: var(--surface-soft);
+}
+
+.wpp-canal-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+}
+
+.wpp-canal-row label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+@media (max-width: 640px) {
+  .wpp-card-body {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wpp-qr-box {
+    padding: 12px;
+  }
+}
