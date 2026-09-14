@@ -1,0 +1,1 @@
+ALTER TABLE whatsapp_configuracoes ADD COLUMN lembrete_template TEXT;

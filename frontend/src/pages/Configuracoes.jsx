@@ -637,7 +637,7 @@ export default function Configuracoes() {
         </div>
       </section>
 
-      <WhatsAppIntegracoes />
+      
 
       <section className="panel settings-form-panel">
         <div className="panel-head settings-form-head">

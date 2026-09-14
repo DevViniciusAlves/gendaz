@@ -410,9 +410,14 @@ public class WhatsAppLembreteAgendamentoService {
         String chave = PREFIXO_CHAVE + agendamento.getId() + ":" + epoch + ":" + cliente.getId();
         ZoneId zona = clock.zonaEmpresa(agendamento.getEmpresa().getTimezone());
         ZonedDateTime atendimentoLocal = atendimentoUtc.atZone(ZoneOffset.UTC).withZoneSameInstant(zona);
-        String mensagem = "Olá, " + cliente.getNome() + "! Lembrete: seu atendimento na "
-                + agendamento.getEmpresa().getNomeFantasia() + " está marcado para "
-                + atendimentoLocal.format(DATA_BR) + " às " + atendimentoLocal.format(HORA_BR) + ".";
+        String template = configuracaoService.obterLembreteTemplate(empresaId);
+
+        String mensagem = template
+                .replace("{cliente}", cliente.getNome())
+                .replace("{empresa}", agendamento.getEmpresa().getNomeFantasia())
+                .replace("{data}", atendimentoLocal.format(DATA_BR))
+                .replace("{hora}", atendimentoLocal.format(HORA_BR));
+
         return new VersaoLembrete(
                 chave, scheduledAt, scheduledAt.plusMinutes(TOLERANCIA_MINUTOS),
                 cliente.getId(), telefone.trim(), mensagem);

@@ -34,9 +34,12 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const [gerandoQr, setGerandoQr] = useState(false)
   const [desconectando, setDesconectando] = useState(false)
   const [confirmarSaida, setConfirmarSaida] = useState(false)
+  const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [pareamentoExpirado, setPareamentoExpirado] = useState(false)
   const [salvandoToggle, setSalvandoToggle] = useState(false)
   const [toggleOn, setToggleOn] = useState(false)
+  const [template, setTemplate] = useState('')
+  const [salvandoTemplate, setSalvandoTemplate] = useState(false)
   const pollRef = useRef(null)
   const abortRef = useRef(null)
   const emPollRef = useRef(false)
@@ -76,10 +79,12 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     if (open) {
       setDados(resumo || null)
       setToggleOn(Boolean(resumo?.configuracao?.lembretesAtivos))
+      setTemplate(resumo?.configuracao?.lembreteTemplate || '')
       setQr(null)
       setGerandoQr(false)
       setConectando(false)
       setConfirmarSaida(false)
+      setConfirmarConectar(false)
       setPareamentoExpirado(false)
     } else {
       setQr(null)
@@ -155,6 +160,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   }, [open, dados, pareamentoExpirado, iniciarPolling])
 
   async function handleConectar() {
+    setConfirmarConectar(false)
     if (conectando) return
     setPareamentoExpirado(false)
     setConectando(true)
@@ -168,6 +174,23 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
       setGerandoQr(false)
       emitirToast('error', err?.response?.data?.mensagem || 'Não foi possível iniciar a conexão. Tente novamente.')
     }
+  }
+
+  async function handleSalvarTemplate() {
+    setSalvandoTemplate(true)
+    try {
+      await atualizarConfiguracaoWhatsapp(toggleOn, template)
+      emitirToast('success', 'Template salvo.')
+      await recarregarResumo()
+    } catch (err) {
+      emitirToast('error', err?.response?.data?.mensagem || 'Erro ao salvar template.')
+    } finally {
+      setSalvandoTemplate(false)
+    }
+  }
+
+  function handleRestaurarTemplate() {
+    setTemplate('')
   }
 
   async function handleDesconectar() {
@@ -282,7 +305,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               </p>
             </div>
             {!conectado && !emPareamento && estado !== 'RECONNECTING' && (
-              <Button type="button" onClick={handleConectar} loading={conectando} loadingText="Conectando...">
+              <Button type="button" onClick={() => setConfirmarConectar(true)} loading={conectando} loadingText="Conectando...">
                 Conectar WhatsApp
               </Button>
             )}
@@ -309,7 +332,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
           {pareamentoExpirado && !conectado && (
             <div className="wpp-qr-box">
               <p className="wpp-muted">O tempo para conexão expirou. Tente gerar um novo QR Code.</p>
-              <Button type="button" onClick={handleConectar} loading={conectando} loadingText="Conectando...">
+              <Button type="button" onClick={() => setConfirmarConectar(true)} loading={conectando} loadingText="Conectando...">
                 Tentar novamente
               </Button>
             </div>
@@ -331,10 +354,26 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               {!conectado && <small>Conecte o WhatsApp para utilizar os lembretes.</small>}
             </span>
           </label>
-          <p className="wpp-note">Horário do lembrete: 2 horas antes do atendimento.</p>
-          <p className="wpp-note">Mensagem padrão do gendaz</p>
-          <div className="wpp-message-preview">{MENSAGEM_PADRAO_PREVIEW}</div>
-
+          
+          {toggleOn && (
+            <div className="wpp-template-editor">
+              <label className="field">
+                <span>Mensagem do lembrete</span>
+                <textarea
+                  value={template}
+                  onChange={(e) => setTemplate(e.target.value)}
+                  placeholder="Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}."
+                  rows={4}
+                />
+              </label>
+              <p className="wpp-note">Variáveis: {cliente}, {empresa}, {data}, {hora}</p>
+              <div className="wpp-template-actions">
+                <Button variant="secondary" type="button" onClick={handleRestaurarTemplate}>Restaurar padrão</Button>
+                <Button type="button" onClick={handleSalvarTemplate} loading={salvandoTemplate}>Salvar template</Button>
+              </div>
+            </div>
+          )}
+          
           <hr className="wpp-divider" />
 
           <h3 className="wpp-section-title">Uso do plano</h3>
@@ -369,10 +408,20 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
       </div>
 
       <ConfirmacaoModal
-        open={confirmarSaida}
-        titulo="Desconectar WhatsApp"
-        mensagem="Ao desconectar, será necessário conectar o WhatsApp novamente para voltar a utilizar a integração."
+        open={confirmarConectar}
+        titulo="Conectar WhatsApp?"
+        mensagem="Vamos iniciar a conexão do WhatsApp da empresa. Um QR Code será exibido para concluir o pareamento."
         tipo="neutral"
+        acaoLabel="Continuar"
+        onConfirmar={handleConectar}
+        onCancelar={() => setConfirmarConectar(false)}
+      />
+
+      <ConfirmacaoModal
+        open={confirmarSaida}
+        titulo="Desconectar WhatsApp?"
+        mensagem="Ao desconectar, será necessário conectar o WhatsApp novamente para voltar a utilizar a integração. Lembretes e ações de CRM pelo WhatsApp ficarão indisponíveis até uma nova conexão."
+        tipo="danger"
         acaoLabel="Desconectar"
         carregando={desconectando}
         onConfirmar={handleDesconectar}

@@ -31,6 +31,9 @@ public class WhatsAppConfiguracaoEntity {
     @Column(name = "lembretes_ativos", nullable = false)
     private boolean lembretesAtivos;
 
+    @Column(columnDefinition = "TEXT")
+    private String lembreteTemplate;
+
     @Column(nullable = false)
     private LocalDateTime dataCriacao;
 

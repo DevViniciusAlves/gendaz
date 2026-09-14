@@ -46,6 +46,14 @@ public class WhatsAppConfiguracaoService {
                 .orElse(false);
     }
 
+    @Transactional(readOnly = true)
+    public String obterLembreteTemplate(Long empresaId) {
+        return configuracaoRepository.findByEmpresaId(empresaId)
+                .map(WhatsAppConfiguracaoEntity::getLembreteTemplate)
+                .filter(t -> !t.isBlank())
+                .orElse("Olá, {cliente}! Lembrete: seu atendimento na {empresa} está marcado para {data} às {hora}.");
+    }
+
     /**
      * Define lembretesAtivos. Ativar exige plano com WhatsApp (o backend e
      * autoritativo; o frontend apenas reflete). Desativar e sempre permitido.
@@ -75,6 +83,15 @@ public class WhatsAppConfiguracaoService {
             }
         }
         throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
+    }
+
+    @Transactional
+    public void salvarTemplate(Long empresaId, String template) {
+        // Validar template aqui... (regra 22)
+        WhatsAppConfiguracaoEntity config = configuracaoRepository.findByEmpresaId(empresaId)
+                .orElseThrow(() -> new BusinessException("Configuracao nao encontrada."));
+        config.setLembreteTemplate(template);
+        configuracaoRepository.save(config);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
