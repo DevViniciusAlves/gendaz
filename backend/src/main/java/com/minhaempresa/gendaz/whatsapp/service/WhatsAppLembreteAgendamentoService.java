@@ -240,6 +240,10 @@ public class WhatsAppLembreteAgendamentoService {
         }
         if (entidade.getAgendamento() == null && entidade.getCliente() == null
                 && entidade.getTipo() != WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO) {
+            if (!phoneNumberService.canonicoValido(entidade.getRecipient())) {
+                cancelarComCodigo(entidade, "INVALID_RECIPIENT");
+                return false;
+            }
             return true;
         }
         if (entidade.getCliente() == null) {

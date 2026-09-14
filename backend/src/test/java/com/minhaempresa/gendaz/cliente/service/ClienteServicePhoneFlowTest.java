@@ -42,6 +42,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 @ExtendWith(MockitoExtension.class)
 class ClienteServicePhoneFlowTest {
@@ -73,8 +74,7 @@ class ClienteServicePhoneFlowTest {
                 conversaRepository, crmContatoRepository, mensagemRepository, entregaRepository,
                 notificacaoRepository, notaFiscalRepository, promocaoNotificacaoRepository,
                 meuGendazPromocaoNotificacaoRepository, clienteEmailBloqueadoService,
-                sanitizacaoService, phoneNumberService,
-                mock(com.minhaempresa.gendaz.whatsapp.service.WhatsAppNotificacaoService.class),
+                sanitizacaoService, phoneNumberService, mock(ApplicationEventPublisher.class),
                 auditService, mock(LogAtividadeService.class));
         CompanyContext.setCompanyId(10L);
     }

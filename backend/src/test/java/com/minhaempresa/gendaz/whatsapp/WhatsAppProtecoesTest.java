@@ -70,6 +70,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.support.TransactionTemplate;
 
 @SpringBootTest
 @ActiveProfiles("test")
@@ -115,6 +116,8 @@ class WhatsAppProtecoesTest {
     private ProfissionalRepository profissionalRepository;
     @Autowired
     private AgendamentoRepository agendamentoRepository;
+    @Autowired
+    private TransactionTemplate transactionTemplate;
     @Autowired
     private DataSource dataSource;
 
@@ -286,21 +289,17 @@ class WhatsAppProtecoesTest {
         WhatsAppNotificacaoEntity preso = recarregar(reminder.getId());
         preso.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
         preso.setProcessingStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(10));
-        preso.setSendStartedAt(LocalDateTime.now(ZoneOffset.UTC).minusSeconds(5));
+        preso.setSendStartedAt(null);
         preso.setQuotaReserved(true);
         preso.setQuotaCycleStart(LocalDate.now().minusDays(5));
         notificacaoRepository.save(preso);
 
-        lembreteService.cancelar(empresa.getId(), ag.getId());
+        flipParaOptOut(empresa, cliente);
 
-        WhatsAppNotificacaoEntity mantido = recarregar(reminder.getId());
-        assertEquals(WhatsAppStatusNotificacao.ENVIANDO, mantido.getStatus());
-        assertTrue(mantido.isQuotaReserved());
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
-
-        // Finaliza para nao deixar resto stale para outros testes.
-        worker.finalizar(preso.getId(), WhatsAppSendResult.sent("WAMID"));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(reminder.getId()).getStatus());
+        WhatsAppNotificacaoEntity cancelado = recarregar(reminder.getId());
+        assertEquals(WhatsAppStatusNotificacao.CANCELADO, cancelado.getStatus());
+        assertEquals("WHATSAPP_OPT_OUT", cancelado.getLastError());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).lembretesReservados());
     }
 
     @Test
@@ -323,7 +322,7 @@ class WhatsAppProtecoesTest {
         preso.setQuotaCycleStart(LocalDate.now().minusDays(5));
         notificacaoRepository.save(preso);
 
-        lembreteService.cancelar(empresa.getId(), ag.getId());
+        flipParaOptOut(empresa, cliente);
 
         WhatsAppNotificacaoEntity mantido = recarregar(reminder.getId());
         assertEquals(WhatsAppStatusNotificacao.ENVIANDO, mantido.getStatus());
@@ -333,6 +332,17 @@ class WhatsAppProtecoesTest {
         // Finaliza para nao deixar resto stale para outros testes.
         worker.finalizar(preso.getId(), WhatsAppSendResult.sent("WAMID"));
         assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(reminder.getId()).getStatus());
+    }
+
+    private void flipParaOptOut(EmpresaEntity empresa, ClienteEntity cliente) {
+        CompanyContext.setCompanyId(empresa.getId());
+        try {
+            var response = clienteService.atualizar(cliente.getId(), new SalvarClienteRequest(
+                    "Cli Prot", cliente.getTelefone(), cliente.getEmail(), null, empresa.getId(), false));
+            assertFalse(response.receberWhatsapp());
+        } finally {
+            CompanyContext.clear();
+        }
     }
 
     @Test
@@ -639,8 +649,7 @@ class WhatsAppProtecoesTest {
     // ---------- stale com regras ----------
 
     @Test
-    void staleComOptOutCancelaEmVezDeRefileirar() {
-        EmpresaEntity empresa = novaEmpresa("wpp-pstale");
+    void staleComOptOutCancelaEmVezDeRefileirar() {        EmpresaEntity empresa = novaEmpresa("wpp-pstale");
         comAssinatura(empresa, "PRO");
         ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
 
@@ -666,5 +675,82 @@ class WhatsAppProtecoesTest {
         assertEquals(WhatsAppStatusNotificacao.CANCELADO, finalizada.getStatus());
         assertEquals("WHATSAPP_OPT_OUT", finalizada.getLastError());
         assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+    }
+
+    // ---------- recipient sem cliente vinculado ----------
+
+    @Test
+    void crmSemClienteRecipientInvalidoCancelaSemProvider() {
+        EmpresaEntity empresa = novaEmpresa("wpp-pnocli");
+        comAssinatura(empresa, "PRO");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.sent("WAMID"));
+
+        WhatsAppNotificacaoEntity criada = filaService.enfileirar(
+                empresa.getId(), WhatsAppTipoNotificacao.CRM_RESGATE, "nocli-bad-" + System.nanoTime(),
+                LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1), null, null,
+                "00000001", "Texto");
+        quotaService.reservar(empresa.getId(), WhatsAppCategoriaCota.CRM);
+        WhatsAppNotificacaoEntity comReserva = recarregar(criada.getId());
+        comReserva.setQuotaReserved(true);
+        comReserva.setQuotaCycleStart(LocalDate.now().minusDays(5));
+        notificacaoRepository.save(comReserva);
+
+        worker.processarLote(10);
+
+        WhatsAppNotificacaoEntity finalizada = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.CANCELADO, finalizada.getStatus());
+        assertEquals("INVALID_RECIPIENT", finalizada.getLastError());
+        verify(provider, never()).enviarTexto(any(), any(), any(), any());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+    }
+
+    @Test
+    void crmSemClienteRecipientValidoContinuaElegivel() {
+        EmpresaEntity empresa = novaEmpresa("wpp-pnocli");
+        comAssinatura(empresa, "PRO");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.sent("WAMID"));
+
+        WhatsAppNotificacaoEntity criada = filaService.enfileirar(
+                empresa.getId(), WhatsAppTipoNotificacao.CRM_RESGATE, "nocli-" + System.nanoTime(),
+                LocalDateTime.now(ZoneOffset.UTC).minusMinutes(1), null, null,
+                "5511999999999", "Texto");
+
+        assertEquals(1, worker.processarLote(10));
+        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(criada.getId()).getStatus());
+        verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
+    }
+
+    // ---------- opt-out pós-commit ----------
+
+    @Test
+    void flipComRollbackNaoCancelaPendencias() {
+        EmpresaEntity empresa = novaEmpresa("wpp-proll");
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+        ZonedDateTime at = atendimentoFuturo(3, 15);
+        AgendamentoEntity ag = novoAgendamento(empresa, cliente, at.toLocalDate(), at.toLocalTime());
+        lembreteService.sincronizar(empresa.getId(), ag.getId());
+        WhatsAppNotificacaoEntity reminder = notificacaoRepository
+                .findByEmpresaIdAndAgendamentoId(empresa.getId(), ag.getId()).get(0);
+
+        transactionTemplate.execute(status -> {
+            CompanyContext.setCompanyId(empresa.getId());
+            try {
+                clienteService.atualizar(cliente.getId(), new SalvarClienteRequest(
+                        "Cli Prot", cliente.getTelefone(), cliente.getEmail(), null, empresa.getId(), false));
+            } finally {
+                CompanyContext.clear();
+            }
+            status.setRollbackOnly();
+            return null;
+        });
+
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, recarregar(reminder.getId()).getStatus());
+        assertTrue(clienteRepository.findById(cliente.getId()).orElseThrow().isReceberWhatsapp());
     }
 }
