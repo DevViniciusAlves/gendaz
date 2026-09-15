@@ -284,7 +284,10 @@ class WhatsAppEnvioWorkerTest {
     }
 
     @Test
-    void deliveryUnknownFalhaSemRetry() {
+    void deliveryUnknownGeraRetryLimitadoDepoisFalha() {
+        // Timeout apos o Node aceitar (cold start): ambiguo, mas sem retry
+        // limitado a mensagem seria perdida na primeira lentidao. Reagenda
+        // com backoff e so falha apos esgotar MAX_TENTATIVAS.
         EmpresaEntity empresa = empresaProNova("wpp-wunk");
         when(provider.enviarTexto(any(), any(), any(), any()))
                 .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.DELIVERY_UNKNOWN));
@@ -292,18 +295,32 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
         worker.processarLote(10);
 
-        WhatsAppNotificacaoEntity falha = recarregar(criada.getId());
-        assertEquals(WhatsAppStatusNotificacao.FALHOU, falha.getStatus());
-        assertEquals("DELIVERY_UNKNOWN", falha.getLastError());
+        WhatsAppNotificacaoEntity tentativa1 = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, tentativa1.getStatus());
+        assertEquals(1, tentativa1.getAttempts());
+        assertNotNull(tentativa1.getNextAttemptAt());
+        assertTrue(tentativa1.isQuotaReserved());
         assertEquals(0, worker.processarLote(10));
         verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
+
+        forcarVencida(criada.getId());
+        worker.processarLote(10);
+        forcarVencida(criada.getId());
+        worker.processarLote(10);
+
+        WhatsAppNotificacaoEntity falha = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.FALHOU, falha.getStatus());
+        assertEquals("DELIVERY_UNKNOWN_MAX_RETRIES", falha.getLastError());
+        assertEquals(3, falha.getAttempts());
+        verify(provider, times(3)).enviarTexto(any(), any(), any(), any());
         assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
     }
 
     @Test
-    void providerSendFailedMapeadoNaoGeraRetryNoWorker() {
+    void providerSendFailedMapeadoGeraRetryLimitadoNoWorker() {
         // O provider mapeia "500 provider_send_failed" para DELIVERY_UNKNOWN
-        // (ver WhatsAppSendProviderTest): o worker deve falhar sem reagendar.
+        // (ver WhatsAppSendProviderTest): o worker reagenda com limite.
         EmpresaEntity empresa = empresaProNova("wpp-wpsf");
         when(provider.enviarTexto(any(), any(), any(), any()))
                 .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.DELIVERY_UNKNOWN));
@@ -311,13 +328,13 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
         worker.processarLote(10);
 
-        WhatsAppNotificacaoEntity falha = recarregar(criada.getId());
-        assertEquals(WhatsAppStatusNotificacao.FALHOU, falha.getStatus());
-        assertEquals("DELIVERY_UNKNOWN", falha.getLastError());
-        assertEquals(1, falha.getAttempts());
+        WhatsAppNotificacaoEntity reagendada = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, reagendada.getStatus());
+        assertEquals(1, reagendada.getAttempts());
+        assertNotNull(reagendada.getNextAttemptAt());
         assertEquals(0, worker.processarLote(10));
         verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
-        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
         assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
     }
 
@@ -358,9 +375,13 @@ class WhatsAppEnvioWorkerTest {
         assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
 
         // Limpeza: nao deixar PENDENTE vencida para outros testes que
-        // compartilham o banco (o mock sem stub finaliza como DELIVERY_UNKNOWN).
-        worker.processarLote(10);
-        assertEquals(WhatsAppStatusNotificacao.FALHOU, recarregar(criada.getId()).getStatus());
+        // compartilham o banco (o mock sem stub finaliza como DELIVERY_UNKNOWN
+        // com retry limitado: processa e reagenda com proxima tentativa futura).
+        assertEquals(1, worker.processarLote(10));
+        WhatsAppNotificacaoEntity reagendada = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, reagendada.getStatus());
+        assertNotNull(reagendada.getNextAttemptAt());
+        assertEquals(0, worker.processarLote(10));
     }
 
     @Test

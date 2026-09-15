@@ -175,6 +175,22 @@ describe('messages/text (Baileys wiring)', () => {
       ev: { on: () => {} },
       end: async () => {},
       logout: async () => {},
+      onWhatsAppCallCount: 0,
+      onWhatsAppBehavior: { mode: 'exists' },
+      onWhatsApp: async function (recipient) {
+        this.onWhatsAppCallCount += 1;
+        const digits = String(recipient || '').replace(/\D/g, '');
+        if (this.onWhatsAppBehavior.mode === 'not-exists') {
+          return [{ jid: `${digits}@s.whatsapp.net`, exists: false }];
+        }
+        if (this.onWhatsAppBehavior.mode === 'empty') {
+          return [];
+        }
+        if (this.onWhatsAppBehavior.mode === 'no-jid') {
+          return [{ exists: true }];
+        }
+        return [{ jid: `${digits}@lid`, exists: true }];
+      },
       sendMessage: async (jid, content) => {
         sent.push({ jid, content });
         return { key: { id: 'WAMID-123' } };
@@ -221,17 +237,75 @@ describe('messages/text (Baileys wiring)', () => {
     assert.equal(body.state, 'NOT_CONNECTED');
   });
 
-  it('CONNECTED chama exatamente sock.sendMessage(jid, { text })', async () => {
+  it('CONNECTED resolve JID via onWhatsApp e chama sock.sendMessage(jid, { text })', async () => {
     connectCompany('empresa-1');
     const before = sent.length;
     const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'w2' });
     assert.equal(res.status, 200);
     assert.equal(sent.length, before + 1);
     assert.deepEqual(sent[sent.length - 1], {
-      jid: `${RECIPIENT}@s.whatsapp.net`,
+      jid: `${RECIPIENT}@lid`,
       content: { text: TEXT },
     });
     assert.deepEqual(await res.json(), { status: 'sent', messageId: 'WAMID-123', requestId: 'w2' });
+  });
+
+  it('onWhatsApp exists=false -> 400 recipient_not_on_whatsapp sem chamar sendMessage', async () => {
+    const record = connectCompany('empresa-1');
+    record.sock.onWhatsAppBehavior.mode = 'not-exists';
+    const before = sent.length;
+    try {
+      const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'w-noexists' });
+      assert.equal(res.status, 400);
+      assert.deepEqual(await res.json(), { error: 'recipient_not_on_whatsapp' });
+      assert.equal(sent.length, before);
+    } finally {
+      record.sock.onWhatsAppBehavior.mode = 'exists';
+    }
+  });
+
+  it('onWhatsApp [] -> 400 terminal sem chamar sendMessage', async () => {
+    const record = connectCompany('empresa-1');
+    record.sock.onWhatsAppBehavior.mode = 'empty';
+    const before = sent.length;
+    try {
+      const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'w-empty' });
+      assert.equal(res.status, 400);
+      assert.deepEqual(await res.json(), { error: 'recipient_not_on_whatsapp' });
+      assert.equal(sent.length, before);
+    } finally {
+      record.sock.onWhatsAppBehavior.mode = 'exists';
+    }
+  });
+
+  it('onWhatsApp sem jid -> 400 sem enviar', async () => {
+    const record = connectCompany('empresa-1');
+    record.sock.onWhatsAppBehavior.mode = 'no-jid';
+    const before = sent.length;
+    try {
+      const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'w-nojid' });
+      assert.equal(res.status, 400);
+      assert.deepEqual(await res.json(), { error: 'recipient_not_on_whatsapp' });
+      assert.equal(sent.length, before);
+    } finally {
+      record.sock.onWhatsAppBehavior.mode = 'exists';
+    }
+  });
+
+  it('sendMessage sem key.id -> 500 provider_missing_message_id (nao vira sent)', async () => {
+    const record = connectCompany('empresa-1');
+    const original = record.sock.sendMessage;
+    record.sock.sendMessage = async (jid, content) => {
+      sent.push({ jid, content });
+      return { key: {} };
+    };
+    try {
+      const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'w-noid' });
+      assert.equal(res.status, 500);
+      assert.deepEqual(await res.json(), { error: 'provider_missing_message_id' });
+    } finally {
+      record.sock.sendMessage = original;
+    }
   });
 
   it('duas requisicoes concorrentes com mesmo requestId executam um unico send', async () => {

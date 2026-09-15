@@ -126,7 +126,7 @@ class WhatsAppSendProviderTest {
         stubBody = "{\"error\":\"provider_send_failed\"}";
         WhatsAppSendResult ambiguo = provider().enviarTexto("42", "5511", "Ola", "r");
         assertEquals(WhatsAppSendStatus.DELIVERY_UNKNOWN, ambiguo.getStatus());
-        assertFalse(ambiguo.getStatus().isRetryable());
+        assertTrue(ambiguo.getStatus().isRetryable());
 
         stubStatus = 500;
         stubBody = "{\"error\":\"outro_erro_qualquer\"}";
@@ -158,7 +158,7 @@ class WhatsAppSendProviderTest {
                 baseUrl, TOKEN, Duration.ofSeconds(2), Duration.ofMillis(300));
         WhatsAppSendResult resultado = impaciente.enviarTexto("42", "5511", "Ola", "r");
         assertEquals(WhatsAppSendStatus.DELIVERY_UNKNOWN, resultado.getStatus());
-        assertFalse(resultado.getStatus().isRetryable());
+        assertTrue(resultado.getStatus().isRetryable());
     }
 
     @Test
@@ -179,13 +179,30 @@ class WhatsAppSendProviderTest {
     }
 
     @Test
+    void mapeiaRecipientNotOnWhatsappParaInvalidRecipientTerminal() {
+        stubStatus = 400;
+        stubBody = "{\"error\":\"recipient_not_on_whatsapp\"}";
+        WhatsAppSendResult resultado = provider().enviarTexto("42", "5511", "Ola", "r");
+        assertEquals(WhatsAppSendStatus.INVALID_RECIPIENT, resultado.getStatus());
+        assertFalse(resultado.getStatus().isRetryable());
+    }
+
+    @Test
+    void mapeiaProviderMissingMessageIdParaDeliveryUnknown() {
+        stubStatus = 500;
+        stubBody = "{\"error\":\"provider_missing_message_id\"}";
+        WhatsAppSendResult resultado = provider().enviarTexto("42", "5511", "Ola", "r");
+        assertEquals(WhatsAppSendStatus.DELIVERY_UNKNOWN, resultado.getStatus());
+        assertTrue(resultado.getStatus().isRetryable());
+    }
+
+    @Test
     void statusTerminaisNaoSaoRetryable() {
         for (WhatsAppSendStatus status : new WhatsAppSendStatus[]{
                 WhatsAppSendStatus.INVALID_RECIPIENT,
                 WhatsAppSendStatus.INVALID_MESSAGE,
                 WhatsAppSendStatus.UNAUTHORIZED,
                 WhatsAppSendStatus.NOT_CONFIGURED,
-                WhatsAppSendStatus.DELIVERY_UNKNOWN,
                 WhatsAppSendStatus.PROVIDER_ERROR}) {
             assertFalse(status.isRetryable(), status + " nao deveria ser retryable");
         }

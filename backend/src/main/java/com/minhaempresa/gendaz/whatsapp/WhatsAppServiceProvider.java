@@ -283,7 +283,10 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         String erro = extrairCodigoErro(body);
         if (httpStatus == 400) {
             return switch (erro) {
-                case "invalid_recipient" -> WhatsAppSendStatus.INVALID_RECIPIENT;
+                // Destinatario sem conta WhatsApp (onWhatsApp exists!==true ou
+                // sem JID resolvido): terminal, sem retry — mesmo dominio de
+                // invalid_recipient.
+                case "invalid_recipient", "recipient_not_on_whatsapp" -> WhatsAppSendStatus.INVALID_RECIPIENT;
                 case "invalid_message", "invalid_request_id" -> WhatsAppSendStatus.INVALID_MESSAGE;
                 default -> WhatsAppSendStatus.PROVIDER_ERROR;
             };
@@ -300,8 +303,11 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (httpStatus == 500) {
             // provider_send_failed ocorre apos tentativa do sock.sendMessage:
             // resultado ambiguo (mensagem pode ter sido aceita), sem retry
-            // automatico. Outro 500 desconhecido continua PROVIDER_ERROR.
-            return "provider_send_failed".equals(erro)
+            // automatico. provider_missing_message_id (sendMessage resolveu
+            // sem message.key.id valido) tem a mesma natureza ambigua: nunca
+            // terminal de destinatario. Outro 500 desconhecido continua
+            // PROVIDER_ERROR.
+            return ("provider_send_failed".equals(erro) || "provider_missing_message_id".equals(erro))
                     ? WhatsAppSendStatus.DELIVERY_UNKNOWN
                     : WhatsAppSendStatus.PROVIDER_ERROR;
         }
