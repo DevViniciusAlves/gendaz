@@ -124,4 +124,13 @@ describe('bootstrap', () => {
     );
     assert.equal(listenChamado, false);
   });
+
+  it('initialize e idempotente e nao duplica sockets', async () => {
+    const created = [];
+    const sessions = managerWithCompanies(['empresa-a'], created);
+    await sessions.initialize();
+    await sessions.initialize();
+    assert.equal(created.length, 1);
+    await sessions.shutdownAll();
+  });
 });

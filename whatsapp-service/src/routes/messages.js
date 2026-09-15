@@ -5,12 +5,12 @@
 // Envio de texto (unico tipo da V1). Contrato:
 //   body: { recipient: "<somente digitos>", text: "<mensagem>", requestId: "<chave>" }
 //   200:  { status: "sent", messageId, requestId }
-//   400:  invalid_company_id | invalid_recipient | invalid_message |
-//         invalid_request_id | invalid_json
+//   400:  invalid_company_id | invalid_recipient | recipient_not_on_whatsapp |
+//         invalid_message | invalid_request_id | invalid_json
 //   401:  unauthorized (middleware)
 //   409:  session_not_connected (+ state publico da sessao)
 //   413:  invalid_message (corpo acima do teto)
-//   500:  provider_send_failed
+//   500:  provider_send_failed | provider_missing_message_id
 //   503:  service_unavailable (middleware, sem token configurado)
 //
 // Respostas e logs nunca incluem texto, destinatario, JID, token, QR ou
@@ -109,6 +109,18 @@ async function messagesTextHandler(req, res, companyId, ctx) {
   } catch (err) {
     if (err && err.code === 'session_not_connected') {
       sendJson(res, 409, { error: 'session_not_connected', state: err.state || 'UNKNOWN' });
+      return;
+    }
+    // Destinatario sem conta WhatsApp (onWhatsApp exists!==true ou sem JID):
+    // erro terminal de destinatario, sem retry. Nunca expoe JID/detalhes.
+    if (err && err.code === 'recipient_not_on_whatsapp') {
+      sendJson(res, 400, { error: 'recipient_not_on_whatsapp' });
+      return;
+    }
+    // sendMessage resolveu sem message.key.id valido: ambiguo (pode ter
+    // enviado). Erro especifico para o Spring mapear a DELIVERY_UNKNOWN.
+    if (err && err.code === 'provider_missing_message_id') {
+      sendJson(res, 500, { error: 'provider_missing_message_id' });
       return;
     }
     sendJson(res, 500, { error: 'provider_send_failed' });

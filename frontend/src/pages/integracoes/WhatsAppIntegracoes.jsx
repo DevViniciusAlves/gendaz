@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import ConfirmacaoModal from '../../components/ConfirmacaoModal.jsx'
@@ -12,29 +12,53 @@ function emitirToast(type, message) {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
+// Retry controlado para indisponibilidade temporária (ex.: cold start do
+// Node no Render): cada request acorda o serviço; o estado se recupera
+// sozinho sem refresh manual. Limitado (sem keep-alive infinito) e sempre
+// com cleanup no unmount.
+const BACKOFF_RETRY_MS = [5000, 10000, 15000, 30000]
+// Transitório = falha de comunicação com o Node. Demais estados são
+// estáveis (precisam de ação do usuário ou de configuração).
+const ESTADO_TRANSITORIO = 'UNAVAILABLE'
 
 export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
+  const [reconectando, setReconectando] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
+  const timerRef = useRef(null)
+  const tentativaRef = useRef(0)
 
-  const carregar = useCallback(async () => {
-    setCarregando(true)
+  const limparRetry = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  const carregar = useCallback(async ({ silencioso = false } = {}) => {
+    limparRetry()
+    if (!silencioso) {
+      setCarregando(true)
+      tentativaRef.current = 0
+    }
     setErro('')
     try {
       const dados = await buscarResumoWhatsapp()
       setResumo(dados)
+      setReconectando(false)
+      tentativaRef.current = 0
     } catch (err) {
       setErro(err?.response?.data?.mensagem || 'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.')
     } finally {
       setCarregando(false)
     }
-  }, [])
+  }, [limparRetry])
 
   useEffect(() => {
     carregar()
@@ -42,9 +66,11 @@ export default function WhatsAppIntegracoes() {
 
   const estado = resumo?.conexao?.estado || 'UNAVAILABLE'
   const conectando = estado === 'CONNECTING'
-  const reconectando = estado === 'RECONNECTING'
+  // Sessao em RECONNECTING (servidor) x retry de UI (estado `reconectando`):
+  // nomes distintos de proposito.
+  const reconectandoSessao = estado === 'RECONNECTING'
   const conectado = estado === 'CONNECTED'
-  const operando = conectando || reconectando || desconectando
+  const operando = conectando || reconectandoSessao || desconectando
   const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
 
   function abrirConexaoConfirmada() {
@@ -70,7 +96,7 @@ export default function WhatsAppIntegracoes() {
 
   function textoBotaoConexao() {
     if (conectando) return 'Conectando...'
-    if (reconectando) return 'Reconectando...'
+    if (reconectandoSessao) return 'Reconectando...'
     return conectado ? 'Desconectar' : 'Conectar'
   }
 
@@ -78,9 +104,34 @@ export default function WhatsAppIntegracoes() {
     if (indisponivelAmbiente) return 'A integração WhatsApp ainda não está disponível neste ambiente.'
     if (conectado) return null
     if (conectando) return 'Aguardando conclusão do pareamento no modal de configuração.'
-    if (reconectando) return 'Tentando restabelecer a sessão automaticamente.'
+    if (reconectandoSessao) return 'Tentando restabelecer a sessão automaticamente.'
     return null
   }
+  // Sai sozinho do estado temporário: nova consulta com backoff enquanto
+  // houver erro de comunicação ou estado UNAVAILABLE. Para em estado
+  // estável, ao esgotar as tentativas ou ao desmontar.
+  useEffect(() => {
+    if (carregando) return
+    const transitorio = Boolean(erro) || resumo?.conexao?.estado === ESTADO_TRANSITORIO
+    if (!transitorio) {
+      setReconectando(false)
+      tentativaRef.current = 0
+      return
+    }
+    const tentativa = tentativaRef.current
+    if (tentativa >= BACKOFF_RETRY_MS.length) {
+      setReconectando(false)
+      return
+    }
+    setReconectando(true)
+    timerRef.current = setTimeout(() => {
+      tentativaRef.current += 1
+      carregar({ silencioso: true })
+    }, BACKOFF_RETRY_MS[tentativa])
+    return limparRetry
+  }, [carregando, erro, resumo, carregar, limparRetry])
+
+  useEffect(() => () => limparRetry(), [limparRetry])
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -92,16 +143,22 @@ export default function WhatsAppIntegracoes() {
       </div>
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
-      {carregando && <p className="wpp-muted">Carregando integração...</p>}
+      {carregando && !reconectando && <p className="wpp-muted">Carregando integração...</p>}
       {!carregando && erro && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
           </div>
-          <p className="form-error">{erro}</p>
-          <div className="integr-card-actions">
-            <Button variant="secondary" type="button" onClick={carregar}>Tentar novamente</Button>
-          </div>
+          {reconectando
+            ? <p className="wpp-muted">Reconectando...</p>
+            : (
+              <>
+                <p className="form-error">{erro}</p>
+                <div className="integr-card-actions">
+                  <Button variant="secondary" type="button" onClick={() => carregar()}>Tentar novamente</Button>
+                </div>
+              </>
+            )}
         </>
       )}
       {!carregando && !erro && resumo && (

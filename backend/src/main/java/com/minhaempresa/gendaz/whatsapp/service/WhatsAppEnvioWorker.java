@@ -271,7 +271,9 @@ public class WhatsAppEnvioWorker {
             if (entidade.getAttempts() >= MAX_TENTATIVAS) {
                 falhar(entidade, status == WhatsAppSendStatus.SESSION_NOT_CONNECTED
                         ? "SESSION_NOT_CONNECTED_MAX_RETRIES"
-                        : "SERVICE_UNAVAILABLE_MAX_RETRIES");
+                        : status == WhatsAppSendStatus.DELIVERY_UNKNOWN
+                                ? "DELIVERY_UNKNOWN_MAX_RETRIES"
+                                : "SERVICE_UNAVAILABLE_MAX_RETRIES");
                 return;
             }
             entidade.setStatus(WhatsAppStatusNotificacao.PENDENTE);

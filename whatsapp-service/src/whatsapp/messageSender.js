@@ -64,7 +64,12 @@ class MessageSender {
     try {
       const messageId = await this.sendFn({ companyId, recipient, text });
       this.storeResult(companyId, requestId, messageId);
-      this.log.log(`[whatsapp-service] send company=${companyId} request=${requestId} ok`);
+      // Log operacional seguro: nunca numero completo, texto, JID, token ou
+      // auth state. Recipient mascarado (ultimos 4 digitos) e apenas a
+      // presenca do messageId (o valor real viaja so na resposta HTTP).
+      const masked = `***${String(recipient || '').replace(/\D/g, '').slice(-4)}`;
+      const messageIdPresent = typeof messageId === 'string' && messageId.trim() !== '';
+      this.log.log(`[whatsapp-service] send company=${companyId} request=${requestId} recipient=${masked} resolved=true messageIdPresent=${messageIdPresent} ok`);
       return { messageId, deduplicated: false };
     } catch (err) {
       const code = (err && err.code) || (err && err.constructor && err.constructor.name) || 'error';

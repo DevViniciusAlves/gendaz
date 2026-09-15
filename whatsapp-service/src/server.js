@@ -9,6 +9,11 @@
 const fs = require('fs');
 const http = require('http');
 const config = require('./config');
+const { installLibsignalLogRedaction } = require('./whatsapp/logRedaction');
+
+// Redige dumps de chaves Signal (libsignal usa console global direto, fora
+// do alcance do logger pino). Instalado antes de qualquer socket existir.
+installLibsignalLogRedaction(console);
 const { createApp } = require('./app');
 const { FileAuthStateStore } = require('./whatsapp/authStore');
 const { SessionManager } = require('./whatsapp/sessionManager');
@@ -37,9 +42,10 @@ function buildApp(sessions) {
 }
 
 // Bootstrap testavel: faz o restore completo primeiro e so depois abre a
-// porta. Falha em UMA sessao nao derruba as outras (SessionManager.initialize
-// loga por empresa e continua); erro inesperado do initialize propaga e a
-// porta nem abre — nunca servimos estado intermediario falso.
+// porta, para nao servir estado intermediario falso (ex.: NOT_CONNECTED
+// antes do restore). Falha em UMA sessao nao derruba as outras
+// (SessionManager.initialize loga por empresa e continua); erro inesperado
+// do initialize propaga e a porta nem abre.
 async function bootstrap({ sessions, app, port, listen = (server, p) => new Promise((resolve) => {
   server.listen(p, resolve);
 }) }) {
@@ -66,7 +72,9 @@ async function main() {
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('unhandledRejection', (reason) => {
-    console.error('[whatsapp-service] promessa rejeitada sem tratamento:', reason instanceof Error ? reason.message : reason);
+    // So message/codigo: nunca despejar o objeto (pode conter auth/keys).
+    const seguro = reason instanceof Error ? reason.message : String(reason);
+    console.error('[whatsapp-service] promessa rejeitada sem tratamento:', seguro);
   });
   process.on('uncaughtException', (err) => {
     console.error('[whatsapp-service] excecao nao capturada:', err.message);

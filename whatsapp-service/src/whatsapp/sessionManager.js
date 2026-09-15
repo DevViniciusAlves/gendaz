@@ -87,18 +87,26 @@ class SessionManager {
 
   // ---- API publica (companyId ja validado ou validado aqui) ----
 
+  // Restore no boot: reconecta cada empresa com auth persistido, sem gerar
+  // QR novo para credencial valida (connect reutiliza). Falha em UMA empresa
+  // nao derruba as outras nem o processo. Idempotente: connect() reutiliza
+  // sessao ja ativa/em andamento (single-flight).
   async initialize() {
     this.log.info('[whatsapp-service] inicializando sessoes persistidas...');
+    let companies = [];
     try {
-      const companies = await this.authStore.listCompanies();
-      for (const companyId of companies) {
-        this.log.info(`[whatsapp-service] restaurando sessao empresa=${companyId}`);
-        await this.connect(companyId).catch(err => {
-          this.log.error(`[whatsapp-service] erro ao restaurar sessao empresa=${companyId}: ${err.message}`);
-        });
-      }
+      companies = await this.authStore.listCompanies();
     } catch (err) {
-      this.log.error(`[whatsapp-service] falha ao listar empresas para restauracao: ${err.message}`);
+      this.log.error(`[whatsapp-service] falha ao listar sessoes persistidas: ${err.message}`);
+      return;
+    }
+    for (const companyId of companies) {
+      this.log.info(`[whatsapp-service] restaurando sessao empresa=${companyId}`);
+      try {
+        await this.connect(companyId);
+      } catch (err) {
+        this.log.error(`[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: ${err.message}`);
+      }
     }
   }
 
@@ -145,7 +153,14 @@ class SessionManager {
 
   // Envio de texto: exige sessao CONNECTED com socket ativo. Nao conecta
   // automaticamente e nao faz fila aqui (a serializacao por empresa vive no
-  // MessageSender). Nunca loga destinatario, texto ou JID.
+  // MessageSender). Antes de enviar, resolve o destinatario com
+  // sock.onWhatsApp (Baileys 7.x retorna [{ jid, exists }]): numero sem
+  // conta WhatsApp nunca chega ao sendMessage (erro terminal
+  // recipient_not_on_whatsapp). O JID usado e sempre o retornado pelo
+  // Baileys, nunca montado manualmente. Exige message.key.id valido no
+  // retorno; sem ele, erro ambiguo provider_missing_message_id (sem retry
+  // no Node; a politica de retry pertence ao backend). Nunca loga
+  // destinatario, texto ou JID.
   async sendText(rawCompanyId, recipient, text) {
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {
@@ -158,9 +173,39 @@ class SessionManager {
       err.state = record ? record.state : STATES.NOT_CONNECTED;
       throw err;
     }
-    const jid = `${recipient}@s.whatsapp.net`;
+    const jid = await this.resolveRecipientJid(record.sock, recipient);
     const message = await record.sock.sendMessage(jid, { text });
-    return (message && message.key && message.key.id) || null;
+    const messageId = message && message.key && message.key.id;
+    if (typeof messageId !== 'string' || messageId.trim() === '') {
+      throw Object.assign(new Error('provider_missing_message_id'), {
+        code: 'provider_missing_message_id',
+      });
+    }
+    return messageId;
+  }
+
+  // Resolve o JID via onWhatsApp do socket real (Baileys 7.0.0:
+  // onWhatsApp(...numbers) -> [{ jid, exists }] ou [] quando o numero nao
+  // tem conta WhatsApp). Qualquer ausencia de resultado valido e terminal:
+  // recipient_not_on_whatsapp (sem retry).
+  async resolveRecipientJid(sock, recipient) {
+    if (!sock || typeof sock.onWhatsApp !== 'function') {
+      throw Object.assign(new Error('provider_send_failed'), {
+        code: 'provider_send_failed',
+      });
+    }
+    const results = await sock.onWhatsApp(recipient);
+    const list = Array.isArray(results) ? results : [];
+    const valid = list.find(
+      (entry) => entry && entry.exists === true
+        && typeof entry.jid === 'string' && entry.jid.trim() !== ''
+    );
+    if (!valid) {
+      throw Object.assign(new Error('recipient_not_on_whatsapp'), {
+        code: 'recipient_not_on_whatsapp',
+      });
+    }
+    return valid.jid;
   }
 
   async logout(rawCompanyId) {
