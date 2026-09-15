@@ -44,6 +44,7 @@ public class WhatsAppEnvioWorker {
     private final WhatsAppProvider provider;
     private final WhatsAppClock clock;
     private final WhatsAppLembreteAgendamentoService lembreteService;
+    private final WhatsAppEntregaService entregaService;
 
     private WhatsAppEnvioWorker self;
 
@@ -251,8 +252,10 @@ public class WhatsAppEnvioWorker {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void finalizarInterno(Long notificacaoId, WhatsAppSendResult resultado) {
         // Lock + reavaliacao: so ENVIANDO pode ser finalizado. Qualquer outro
-        // estado (ENVIADO, PENDENTE, CANCELADO, FALHOU) nao e sobrescrito:
-        // a finalizacao nao altera cota nem historico nesses casos.
+        // estado (AGUARDANDO_ENTREGA, ENVIADO, PENDENTE, CANCELADO, FALHOU) nao
+        // e sobrescrito: a finalizacao nao altera cota nem historico nesses
+        // casos. Em particular, AGUARDANDO_ENTREGA nunca volta para a fila de
+        // envio nem dispara sendMessage de novo: so a prova de entrega o move.
         Optional<WhatsAppNotificacaoEntity> atual =
                 notificacaoRepository.findByIdForUpdate(notificacaoId);
         if (atual.isEmpty()) {
@@ -264,8 +267,18 @@ public class WhatsAppEnvioWorker {
         }
         WhatsAppSendStatus status = resultado == null ? WhatsAppSendStatus.DELIVERY_UNKNOWN : resultado.getStatus();
         if (status == WhatsAppSendStatus.SENT) {
-            concluirSucesso(entidade, resultado);
-            return;
+            String messageId = resultado == null ? null : resultado.getMessageId();
+            if (messageId == null || messageId.isBlank()) {
+                // Aceito sem identificador correlacionavel: sem providerMessageId
+                // a entrega nunca poderia ser confirmada. Conservador: trata
+                // como ambiguo (retry limitado), igual a DELIVERY_UNKNOWN.
+                log.warn("[whatsapp-worker] SENT sem messageId, tratando como ambiguo notificacao={}",
+                        notificacaoId);
+                status = WhatsAppSendStatus.DELIVERY_UNKNOWN;
+            } else {
+                concluirSucesso(entidade, resultado);
+                return;
+            }
         }
         if (status.isRetryable()) {
             if (entidade.getAttempts() >= MAX_TENTATIVAS) {
@@ -288,21 +301,31 @@ public class WhatsAppEnvioWorker {
         falhar(entidade, status.name());
     }
 
+    /**
+     * sendMessage resolveu com message.key.id valido: a mensagem foi ACEITA
+     * pelo provider, NAO necessariamente entregue. Move para AGUARDANDO_ENTREGA
+     * com providerMessageId persistido e reserva MANTIDA (crmReservados segue
+     * 1, crmEnviados nao aumenta, sem confirmarEnvioNoCiclo). A conversao da
+     * cota acontece somente na prova de entrega (WhatsAppEntregaService).
+     * Em seguida reconcilia receipts que chegaram antes (corrida callback vs
+     * persistencia): se o ACK ja esta gravado, confirma de imediato.
+     */
     private void concluirSucesso(WhatsAppNotificacaoEntity entidade, WhatsAppSendResult resultado) {
-        entidade.setStatus(WhatsAppStatusNotificacao.ENVIADO);
-        entidade.setSentAt(clock.agoraUtc());
-        entidade.setProviderMessageId(resultado == null ? null : resultado.getMessageId());
+        String messageId = resultado == null ? null : resultado.getMessageId();
+        entidade.setStatus(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA);
+        entidade.setProviderMessageId(messageId);
         entidade.setLastError(null);
         entidade.setProcessingStartedAt(null);
         entidade.setSendStartedAt(null);
-        if (entidade.isQuotaReserved()) {
-            quotaService.confirmarEnvioNoCiclo(
-                    entidade.getEmpresa().getId(),
-                    entidade.getTipo().categoria(),
-                    entidade.getQuotaCycleStart());
-            entidade.setQuotaReserved(false);
+        entidade.setNextAttemptAt(null);
+        notificacaoRepository.saveAndFlush(entidade);
+        log.info("[whatsapp-worker] aguardando entrega notificacao={} messageIdPresent={}",
+                entidade.getId(), messageId != null && !messageId.isBlank());
+        if (messageId != null && !messageId.isBlank()) {
+            // Mesma transacao (a linha ainda nao commitou): se o receipt do
+            // ACK ja existe, confirma de imediato (corrida resolvida).
+            entregaService.reconciliarNaMesmaTransacao(entidade);
         }
-        notificacaoRepository.save(entidade);
     }
 
     private void falhar(WhatsAppNotificacaoEntity entidade, String codigo) {

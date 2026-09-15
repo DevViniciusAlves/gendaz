@@ -27,6 +27,26 @@ function readPositiveInt(name, fallback) {
   return value;
 }
 
+function readRequiredString(name) {
+  const raw = process.env[name];
+  if (raw === undefined || raw === '' || raw.trim() === '') {
+    throw new Error(`${name} e obrigatorio mas nao foi configurado`);
+  }
+  return raw.trim();
+}
+
+function readEncryptionKey() {
+  const raw = process.env.WHATSAPP_AUTH_ENCRYPTION_KEY;
+  if (raw === undefined || raw === '' || raw.trim() === '') {
+    throw new Error('WHATSAPP_AUTH_ENCRYPTION_KEY e obrigatorio mas nao foi configurado');
+  }
+  const key = Buffer.from(raw.trim(), 'base64');
+  if (key.length !== 32) {
+    throw new Error('WHATSAPP_AUTH_ENCRYPTION_KEY deve ser 32 bytes (base64 de 44 chars)');
+  }
+  return key;
+}
+
 const config = {
   port: readPort(),
   internalToken: (process.env.WHATSAPP_INTERNAL_TOKEN || '').trim(),
@@ -37,6 +57,16 @@ const config = {
   reconnectBaseDelayMs: readPositiveInt('WHATSAPP_RECONNECT_BASE_DELAY_MS', 2000),
   reconnectMaxDelayMs: readPositiveInt('WHATSAPP_RECONNECT_MAX_DELAY_MS', 60000),
   reconnectMaxAttempts: readPositiveInt('WHATSAPP_RECONNECT_MAX_ATTEMPTS', 10),
+  reconnectRecoveryCooldownMs: readPositiveInt('WHATSAPP_RECONNECT_RECOVERY_COOLDOWN_MS', 60000),
+  // Base do backend Spring para o callback interno de entrega
+  // (POST {backendUrl}/internal/whatsapp/delivery). Sem valor, o callback e
+  // ignorado com aviso (fail-safe) — nunca derruba o socket.
+  backendUrl:
+    (process.env.GENDAZ_BACKEND_URL || '').trim().replace(/\/+$/, ''),
+  // Auth store configuration
+  authStore: (process.env.WHATSAPP_AUTH_STORE || 'file').trim().toLowerCase(),
+  databaseUrl: (process.env.WHATSAPP_DATABASE_URL || '').trim(),
+  encryptionKey: process.env.WHATSAPP_AUTH_ENCRYPTION_KEY ? readEncryptionKey() : null,
 };
 
 module.exports = config;

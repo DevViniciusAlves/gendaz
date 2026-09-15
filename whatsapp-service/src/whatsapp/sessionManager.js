@@ -22,9 +22,13 @@
 // - shutdownAll() encerra sockets/timers sem logout e sem apagar auth.
 // - creds.update persiste imediatamente via authStore (inclui Signal Keys,
 //   que fazem parte do state carregado).
+// - writes de auth sao serializados por empresa para evitar race conditions.
+// - recovery cooldown apos esgotar tentativas rapidas.
+// - ensureConnected() para recuperacao demand-driven (status/send).
 
 const { DisconnectReason } = require('@whiskeysockets/baileys');
 const { normalizeCompanyId } = require('./companyId');
+const { extractDeliveredIds } = require('./deliveryTracker');
 
 const STATES = {
   NOT_CONNECTED: 'NOT_CONNECTED',
@@ -51,17 +55,29 @@ function disconnectCode(error) {
 }
 
 class SessionManager {
-  constructor({ authStore, createSocket, baseDelayMs = 2000, maxDelayMs = 60000, maxAttempts = 10, log = console } = {}) {
+  constructor({
+    authStore,
+    createSocket,
+    onDelivery,
+    baseDelayMs = 2000,
+    maxDelayMs = 60000,
+    maxAttempts = 10,
+    recoveryCooldownMs = 60000,
+    log = console
+  } = {}) {
     if (!authStore || !createSocket) {
       throw new Error('SessionManager requer authStore e createSocket');
     }
     this.authStore = authStore;
     this.createSocket = createSocket;
+    this.onDelivery = typeof onDelivery === 'function' ? onDelivery : null;
     this.baseDelayMs = baseDelayMs;
     this.maxDelayMs = maxDelayMs;
     this.maxAttempts = maxAttempts;
+    this.recoveryCooldownMs = recoveryCooldownMs;
     this.log = log;
     this.sessions = new Map(); // companyId -> record
+    this._writeQueues = new Map(); // companyId -> Promise chain
   }
 
   getRecord(companyId) {
@@ -79,13 +95,40 @@ class SessionManager {
         reconnectTimer: null,
         generation: 0,
         connectingPromise: null,
+        lastRecoveryAttempt: 0,
+        writePromise: Promise.resolve(),
       };
       this.sessions.set(companyId, record);
     }
     return record;
   }
 
-  // ---- API publica (companyId ja validado ou validado aqui) ----
+  // Serializa writes de auth por empresa para evitar race conditions
+  _enqueueWrite(companyId, writeFn) {
+    const record = this.getRecord(companyId);
+    const nextPromise = record.writePromise.then(() => writeFn()).catch((err) => {
+      this.log.error(`[whatsapp-service] write falhou empresa=${companyId}: ${err.message}`);
+    });
+    record.writePromise = nextPromise;
+    return nextPromise;
+  }
+
+  // Aguarda writes pendentes de uma empresa
+  async _flushWrites(companyId) {
+    const record = this.sessions.get(companyId);
+    if (record && record.writePromise) {
+      await record.writePromise;
+    }
+  }
+
+  // Aguarda todos os writes pendentes
+  async _flushAllWrites() {
+    await Promise.all(
+      [...this.sessions.values()].map(r => r.writePromise)
+    );
+  }
+
+  // ---- API publica ----
 
   // Restore no boot: reconecta cada empresa com auth persistido, sem gerar
   // QR novo para credencial valida (connect reutiliza). Falha em UMA empresa
@@ -105,7 +148,7 @@ class SessionManager {
       try {
         await this.connect(companyId);
       } catch (err) {
-        this.log.error(`[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: ${err.message}`);
+        this.log.error(`[whatsapp-service] falha ao restaurar sessao empresa=${record.companyId}: ${err.message}`);
       }
     }
   }
@@ -131,6 +174,57 @@ class SessionManager {
     return record.connectingPromise;
   }
 
+  // Recuperacao demand-driven: chamada por status/send quando a sessao esta
+  // desconectada mas tem auth persistido valido.
+  // Nao gera QR para empresa sem sessao registrada.
+  async ensureConnected(companyId, source) {
+    const normalized = normalizeCompanyId(companyId);
+    if (!normalized) {
+      throw Object.assign(new Error('invalid_company_id'), { code: 'invalid_company_id' });
+    }
+    const record = this.getRecord(normalized);
+
+    // Estados que ja estao conectando/conectados: no-op
+    if (
+      record.state === STATES.CONNECTED ||
+      record.state === STATES.CONNECTING ||
+      record.state === STATES.RECONNECTING
+    ) {
+      return record;
+    }
+
+    // LOGGED_OUT: nunca auto-conectar
+    if (record.state === STATES.LOGGED_OUT) {
+      return record;
+    }
+
+    // Verifica se tem auth persistido E registrado
+    let hasAuth = false;
+    try {
+      hasAuth = await this.authStore.hasRegisteredSession(normalized);
+    } catch (err) {
+      this.log.error(`[whatsapp-service] falha ao verificar auth persistido empresa=${normalized}: ${err.message}`);
+      return record;
+    }
+
+    if (!hasAuth) {
+      // Sem auth persistido: nao gerar QR automaticamente
+      this.log.info(`[whatsapp-service] empresa=${normalized} sem auth persistido; ${source} nao inicia connect`);
+      return record;
+    }
+
+    // Cooldown de recuperacao
+    const now = Date.now();
+    if (now - record.lastRecoveryAttempt < this.recoveryCooldownMs) {
+      this.log.info(`[whatsapp-service] empresa=${normalized} recovery cooldown ativo; ${source} aguarda`);
+      return record;
+    }
+    record.lastRecoveryAttempt = now;
+
+    this.log.info(`[whatsapp-service] empresa=${normalized} recovery source=${source}`);
+    return this.connect(normalized);
+  }
+
   status(rawCompanyId) {
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {
@@ -151,16 +245,7 @@ class SessionManager {
     return { qr: record.qr, updatedAt: record.qrUpdatedAt };
   }
 
-  // Envio de texto: exige sessao CONNECTED com socket ativo. Nao conecta
-  // automaticamente e nao faz fila aqui (a serializacao por empresa vive no
-  // MessageSender). Antes de enviar, resolve o destinatario com
-  // sock.onWhatsApp (Baileys 7.x retorna [{ jid, exists }]): numero sem
-  // conta WhatsApp nunca chega ao sendMessage (erro terminal
-  // recipient_not_on_whatsapp). O JID usado e sempre o retornado pelo
-  // Baileys, nunca montado manualmente. Exige message.key.id valido no
-  // retorno; sem ele, erro ambiguo provider_missing_message_id (sem retry
-  // no Node; a politica de retry pertence ao backend). Nunca loga
-  // destinatario, texto ou JID.
+  // Envio de texto: exige sessao CONNECTED com socket ativo.
   async sendText(rawCompanyId, recipient, text) {
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {
@@ -184,10 +269,6 @@ class SessionManager {
     return messageId;
   }
 
-  // Resolve o JID via onWhatsApp do socket real (Baileys 7.0.0:
-  // onWhatsApp(...numbers) -> [{ jid, exists }] ou [] quando o numero nao
-  // tem conta WhatsApp). Qualquer ausencia de resultado valido e terminal:
-  // recipient_not_on_whatsapp (sem retry).
   async resolveRecipientJid(sock, recipient) {
     if (!sock || typeof sock.onWhatsApp !== 'function') {
       throw Object.assign(new Error('provider_send_failed'), {
@@ -232,6 +313,8 @@ class SessionManager {
         // melhor esforco
       }
     }
+    // Aguarda writes pendentes antes de limpar auth
+    await this._flushWrites(companyId);
     // Desvinculacao intencional: remove credenciais persistidas.
     await this.authStore.clear(companyId);
     record.state = STATES.LOGGED_OUT;
@@ -301,17 +384,18 @@ class SessionManager {
       }
       this.log.error(`[whatsapp-service] falha ao criar socket empresa=${record.companyId}: ${err.message}`);
       record.sock = null;
-      // Reaproveita o retry controlado (backoff + limite, sem loop):
-      // a sessao nao fica presa em CONNECTING e pode se recuperar sozinha
-      // ou via novo connect() manual.
       this.scheduleRetry(record, gen, null);
       return record;
     }
     record.sock = sock;
 
     // Toda atualizacao de credencial (inclui Signal Keys) persiste na hora.
+    // Protegido por generation para ignorar eventos de sockets antigos.
     sock.ev.on('creds.update', () => {
-      auth.saveCreds().catch((err) => {
+      if (gen !== record.generation) {
+        return; // evento de socket antigo; ignora
+      }
+      this._enqueueWrite(record.companyId, () => auth.saveCreds()).catch((err) => {
         this.log.error(`[whatsapp-service] falha ao salvar credenciais empresa=${record.companyId}: ${err.message}`);
       });
     });
@@ -325,6 +409,35 @@ class SessionManager {
       });
     });
 
+    // Prova de entrega: messages.update com DELIVERY_ACK (ou READ/PLAYED
+    // posteriores, caso o intermediario nao tenha sido observado).
+    // SERVER_ACK/PENDING nunca comprovam. Evento de geracao antiga e
+    // ignorado. Nunca usa messages.upsert como confirmacao. Callback
+    // fire-and-forget: falha nao derruba o socket.
+    sock.ev.on('messages.update', (updates) => {
+      if (gen !== record.generation) {
+        return; // evento de socket antigo; ignora
+      }
+      if (!this.onDelivery) {
+        return;
+      }
+      let delivered;
+      try {
+        delivered = extractDeliveredIds(updates);
+      } catch (err) {
+        this.log.error(`[whatsapp-service] erro ao classificar messages.update empresa=${record.companyId}: ${err.message}`);
+        return;
+      }
+      for (const messageId of delivered) {
+        Promise.resolve()
+          .then(() => this.onDelivery({ companyId: record.companyId, messageId }))
+          .catch((err) => {
+            const seguro = err instanceof Error ? err.message : String(err);
+            this.log.warn(`[whatsapp-service] falha no callback de entrega empresa=${record.companyId} messageIdPresent=true: ${seguro}`);
+          });
+      }
+    });
+
     return record;
   }
 
@@ -332,7 +445,6 @@ class SessionManager {
     const { connection, qr, lastDisconnect } = update;
 
     if (qr) {
-      // Mantem apenas o QR atualmente valido em memoria; nunca loga o conteudo.
       record.qr = qr;
       record.qrUpdatedAt = new Date().toISOString();
     }
@@ -377,13 +489,17 @@ class SessionManager {
         // Sessao revogada no provider: o auth antigo nao serve mais e
         // impediria um QR novo. Descarta via abstracao (somente neste caso,
         // nunca em erros temporarios ou desconhecidos).
+        // Aguarda writes pendentes ANTES do clear para evitar race.
+        await this._flushWrites(record.companyId);
         try {
           await this.authStore.clear(record.companyId);
         } catch (err) {
           this.log.error(`[whatsapp-service] falha ao limpar auth revogado empresa=${record.companyId}: ${err.message}`);
         }
+        this.log.warn(`[whatsapp-service] empresa=${record.companyId} logged_out auth_cleared=true`);
+      } else {
+        this.log.warn(`[whatsapp-service] empresa=${record.companyId} queda definitiva codigo=${code}; sem reconexao automatica`);
       }
-      this.log.warn(`[whatsapp-service] empresa=${record.companyId} queda definitiva codigo=${code}; sem reconexao automatica`);
       return;
     }
 
@@ -399,8 +515,9 @@ class SessionManager {
     if (record.reconnectAttempts >= this.maxAttempts) {
       record.state = STATES.DISCONNECTED;
       this.log.warn(
-        `[whatsapp-service] empresa=${record.companyId} esgotou ${this.maxAttempts} tentativas; aguardando connect manual`
+        `[whatsapp-service] empresa=${record.companyId} esgotou ${this.maxAttempts} tentativas; recovery cooldown=${this.recoveryCooldownMs}ms`
       );
+      record.lastRecoveryAttempt = Date.now();
       return;
     }
     record.state = STATES.RECONNECTING;
@@ -430,6 +547,8 @@ class SessionManager {
   async shutdownAll() {
     const records = [...this.sessions.values()];
     this.sessions.clear();
+    // Aguarda writes pendentes antes de encerrar
+    await this._flushAllWrites();
     await Promise.all(
       records.map(async (record) => {
         record.generation += 1;

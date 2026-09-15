@@ -15,6 +15,7 @@
   "dependencies": {
     "@hapi/boom": "10.0.1",
     "@whiskeysockets/baileys": "7.0.0-rc14",
+    "pg": "^8.11.5",
     "pino": "10.3.1"
   }
 }

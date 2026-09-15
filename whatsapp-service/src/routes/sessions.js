@@ -5,6 +5,7 @@
 // tokens ou stack traces.
 
 const { normalizeCompanyId } = require('../whatsapp/companyId');
+const { STATES } = require('../whatsapp/sessionManager');
 
 function sendJson(res, statusCode, body) {
   res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -41,6 +42,17 @@ async function statusHandler(req, res, companyId, ctx) {
     return;
   }
   try {
+    // Dispara recovery demand-driven para sessoes registradas desconectadas
+    const record = ctx.sessions.getRecord(valid);
+    if (
+      record.state === STATES.DISCONNECTED ||
+      record.state === STATES.NOT_CONNECTED
+    ) {
+      // ensureConnected e fire-and-forget: nao espera conectar, so inicia
+      ctx.sessions.ensureConnected(valid, 'status').catch((err) => {
+        // Log ja feito dentro do ensureConnected
+      });
+    }
     sendJson(res, 200, ctx.sessions.status(valid));
   } catch (err) {
     sendJson(res, 500, { error: 'internal_error' });

@@ -429,8 +429,11 @@ class WhatsAppCrmTest {
 
         assertEquals(1, worker.processarLote(10));
 
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO,
+        // sendMessage + messageId = aceito pelo provider, NAO entregue:
+        // AGUARDANDO_ENTREGA com reserva mantida, sem consumir enviados.
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA,
                 notificacaoRepository.findById(enfileirada.getId()).orElseThrow().getStatus());
         verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
     }
@@ -454,14 +457,18 @@ class WhatsAppCrmTest {
             assertEquals(true, resultado.get("success"));
         }
         assertEquals(10, worker.processarLote(10));
-        assertEquals(10, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        // Aceitas, aguardando entrega: nada convertido ainda.
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(10, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(10, notificacoesDaEmpresa(empresa.getId()).size());
 
         Map<String, Object> excedido = crmService.enviarMensagem(empresa.getId(), cliente.getId(),
                 whatsapp("resgate", chaveUnica("extra")));
         assertEquals(false, excedido.get("success"));
         assertEquals("WHATSAPP_COTA_ESGOTADA", excedido.get("status"));
         assertEquals(0, worker.processarLote(10));
-        assertEquals(10, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(10, quotaService.consultarUso(empresa.getId()).crmReservados());
         verify(provider, times(10)).enviarTexto(any(), any(), any(), any());
         assertEquals(10, notificacoesDaEmpresa(empresa.getId()).size());
         assertEquals(10, historicoDoCliente(cliente.getId()).size());

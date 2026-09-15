@@ -5,6 +5,12 @@
 // Envio de texto (unico tipo da V1). Contrato:
 //   body: { recipient: "<somente digitos>", text: "<mensagem>", requestId: "<chave>" }
 //   200:  { status: "sent", messageId, requestId }
+//         "sent" aqui significa ACEITO pelo provider (sendMessage resolveu com
+//         message.key.id valido) e AGUARDANDO confirmacao de entrega: NAO
+//         comprova que a mensagem chegou ao destinatario. A prova de entrega
+//         (DELIVERY_ACK, ou READ/PLAYED posteriores) chega de forma assincrona
+//         via messages.update e e informada ao backend pelo callback interno
+//         POST {GENDAZ_BACKEND_URL}/internal/whatsapp/delivery.
 //   400:  invalid_company_id | invalid_recipient | recipient_not_on_whatsapp |
 //         invalid_message | invalid_request_id | invalid_json
 //   401:  unauthorized (middleware)
@@ -17,6 +23,7 @@
 // auth state: apenas companyId, requestId tecnico e classe de erro.
 
 const { normalizeCompanyId } = require('../whatsapp/companyId');
+const { STATES } = require('../whatsapp/sessionManager');
 
 const MAX_BODY_BYTES = 16 * 1024;
 const RECIPIENT_PATTERN = /^[0-9]{8,15}$/;
@@ -108,6 +115,13 @@ async function messagesTextHandler(req, res, companyId, ctx) {
     sendJson(res, 200, { status: 'sent', messageId: messageId || null, requestId });
   } catch (err) {
     if (err && err.code === 'session_not_connected') {
+      // Dispara recovery demand-driven se houver auth persistido registrado
+      const record = ctx.sessions.sessions.get(validCompany);
+      if (record && (record.state === STATES.DISCONNECTED || record.state === STATES.NOT_CONNECTED)) {
+        ctx.sessions.ensureConnected(validCompany, 'send').catch(() => {
+          // Log ja feito dentro do ensureConnected
+        });
+      }
       sendJson(res, 409, { error: 'session_not_connected', state: err.state || 'UNKNOWN' });
       return;
     }

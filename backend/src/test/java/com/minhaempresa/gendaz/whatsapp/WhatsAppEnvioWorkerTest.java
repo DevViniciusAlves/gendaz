@@ -28,6 +28,7 @@ import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppUsoCicloRepository;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEnvioWorker;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEntregaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppReserva;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -57,6 +58,8 @@ class WhatsAppEnvioWorkerTest {
 
     @Autowired
     private WhatsAppEnvioWorker worker;
+    @Autowired
+    private WhatsAppEntregaService entregaService;
     @Autowired
     private WhatsAppFilaService filaService;
     @Autowired
@@ -118,17 +121,20 @@ class WhatsAppEnvioWorkerTest {
         WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
         assertEquals(1, worker.processarLote(10));
 
+        // sendMessage + messageId = aceito pelo provider, NAO entregue:
+        // AGUARDANDO_ENTREGA com reserva mantida, sem consumir enviados.
         WhatsAppNotificacaoEntity finalizada = recarregar(criada.getId());
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, finalizada.getStatus());
-        assertNotNull(finalizada.getSentAt());
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, finalizada.getStatus());
+        assertNull(finalizada.getSentAt());
         assertEquals("WAMID-OK", finalizada.getProviderMessageId());
         assertNull(finalizada.getLastError());
+        assertTrue(finalizada.isQuotaReserved());
         verify(provider, times(1)).enviarTexto(
                 eq(String.valueOf(empresa.getId())), eq("5511999999999"),
                 eq(finalizada.getMessageBody()), eq(criada.getIdempotencyKey()));
 
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
-        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
     }
 
     @Test
@@ -182,7 +188,7 @@ class WhatsAppEnvioWorkerTest {
             assertTrue(erros.isEmpty());
             verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
             WhatsAppNotificacaoEntity finalizada = recarregar(criada.getId());
-            assertEquals(WhatsAppStatusNotificacao.ENVIADO, finalizada.getStatus());
+            assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, finalizada.getStatus());
             assertEquals(1, finalizada.getAttempts());
         } finally {
             executor.shutdownNow();
@@ -340,6 +346,8 @@ class WhatsAppEnvioWorkerTest {
 
     @Test
     void segundaFinalizacaoDeSucessoNaoDuplicaConsumo() {
+        // Duas finalizacoes com SENT: a segunda e no-op (ja saiu de ENVIANDO)
+        // e a cota so converte na prova de entrega, exatamente uma vez.
         EmpresaEntity empresa = empresaProNova("wpp-widem");
         when(provider.enviarTexto(any(), any(), any(), any()))
                 .thenReturn(WhatsAppSendResult.sent("WAMID"));
@@ -348,8 +356,10 @@ class WhatsAppEnvioWorkerTest {
         worker.processarLote(10);
         worker.finalizar(criada.getId(), WhatsAppSendResult.sent("WAMID"));
 
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(criada.getId()).getStatus());
+        WhatsAppNotificacaoEntity aguardando = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, aguardando.getStatus());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
     }
 
     @Test
@@ -443,8 +453,17 @@ class WhatsAppEnvioWorkerTest {
         forcarVencida(criada.getId());
         worker.processarLote(10);
 
-        WhatsAppNotificacaoEntity enviada = recarregar(criada.getId());
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, enviada.getStatus());
+        // Aceito no ciclo B, mas a reserva continua gravada no ciclo A.
+        WhatsAppNotificacaoEntity aguardando = recarregar(criada.getId());
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, aguardando.getStatus());
+        assertEquals("WAMID-B", aguardando.getProviderMessageId());
+        assertEquals(0, usoRepository.findByEmpresaIdAndCicloInicio(empresa.getId(), cicloA)
+                .orElseThrow().getCrmEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+
+        // Prova de entrega confirma exatamente no ciclo reservado (A).
+        entregaService.registrarEntrega(empresa.getId(), "WAMID-B");
+        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(criada.getId()).getStatus());
         assertEquals(1, usoRepository.findByEmpresaIdAndCicloInicio(empresa.getId(), cicloA)
                 .orElseThrow().getCrmEnviados());
         assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
@@ -461,7 +480,10 @@ class WhatsAppEnvioWorkerTest {
         enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
         assertEquals(2, worker.processarLote(10));
 
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesEnviados());
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        // Aceitas, ainda aguardando entrega: nada convertido.
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).lembretesEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
     }
 }

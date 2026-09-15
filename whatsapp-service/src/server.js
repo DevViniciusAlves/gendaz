@@ -8,6 +8,7 @@
 
 const fs = require('fs');
 const http = require('http');
+const { Pool } = require('pg');
 const config = require('./config');
 const { installLibsignalLogRedaction } = require('./whatsapp/logRedaction');
 
@@ -15,20 +16,54 @@ const { installLibsignalLogRedaction } = require('./whatsapp/logRedaction');
 // do alcance do logger pino). Instalado antes de qualquer socket existir.
 installLibsignalLogRedaction(console);
 const { createApp } = require('./app');
-const { FileAuthStateStore } = require('./whatsapp/authStore');
+const { FileAuthStateStore, PostgresAuthStateStore } = require('./whatsapp/authStore');
 const { SessionManager } = require('./whatsapp/sessionManager');
 const { MessageSender } = require('./whatsapp/messageSender');
+const { DeliveryReporter } = require('./whatsapp/deliveryReporter');
 const { createSocket } = require('./whatsapp/socketFactory');
 const { createShutdown } = require('./shutdown');
 
-function buildSessions() {
+// Reporter unico do processo: dedup em memoria + POST ao backend Spring.
+// Falha no callback nunca derruba o socket (DeliveryReporter nunca rejeita
+// de forma fatal; o listener ainda envolve em catch por defesa).
+function buildDeliveryReporter() {
+  return new DeliveryReporter({
+    backendUrl: config.backendUrl,
+    internalToken: config.internalToken,
+  });
+}
+
+function buildAuthStore() {
+  if (config.authStore === 'postgres') {
+    if (!config.databaseUrl) {
+      throw new Error('WHATSAPP_DATABASE_URL e obrigatorio quando WHATSAPP_AUTH_STORE=postgres');
+    }
+    if (!config.encryptionKey) {
+      throw new Error('WHATSAPP_AUTH_ENCRYPTION_KEY e obrigatorio quando WHATSAPP_AUTH_STORE=postgres');
+    }
+    const pool = new Pool({
+      connectionString: config.databaseUrl,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+    return new PostgresAuthStateStore({ pool, encryptionKey: config.encryptionKey });
+  }
+  // file store (desenvolvimento/local)
   fs.mkdirSync(config.sessionsDir, { recursive: true, mode: 0o700 });
+  return new FileAuthStateStore(config.sessionsDir);
+}
+
+function buildSessions(deliveryReporter, authStore) {
+  const reporter = deliveryReporter || buildDeliveryReporter();
   return new SessionManager({
-    authStore: new FileAuthStateStore(config.sessionsDir),
+    authStore,
     createSocket,
+    onDelivery: ({ companyId, messageId }) => reporter.report(companyId, messageId),
     baseDelayMs: config.reconnectBaseDelayMs,
     maxDelayMs: config.reconnectMaxDelayMs,
     maxAttempts: config.reconnectMaxAttempts,
+    recoveryCooldownMs: config.reconnectRecoveryCooldownMs,
   });
 }
 
@@ -60,14 +95,15 @@ async function bootstrap({ sessions, app, port, listen = (server, p) => new Prom
 }
 
 async function main() {
-  const sessions = buildSessions();
+  const authStore = buildAuthStore();
+  const sessions = buildSessions(null, authStore);
   const server = await bootstrap({ sessions, app: buildApp(sessions), port: config.port });
   console.log(`[whatsapp-service] ouvindo na porta ${config.port}`);
   if (!config.internalToken) {
     console.log('[whatsapp-service] aviso: WHATSAPP_INTERNAL_TOKEN nao configurado; endpoints internos ficarao bloqueados');
   }
 
-  const shutdown = createShutdown({ server, sessions });
+  const shutdown = createShutdown({ server, sessions, authStore });
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
@@ -80,7 +116,7 @@ async function main() {
     console.error('[whatsapp-service] excecao nao capturada:', err.message);
     process.exit(1);
   });
-  return { server, sessions };
+  return { server, sessions, authStore };
 }
 
 if (require.main === module) {
@@ -90,4 +126,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { bootstrap, buildSessions, buildApp, main };
+module.exports = { bootstrap, buildSessions, buildApp, buildAuthStore, main };

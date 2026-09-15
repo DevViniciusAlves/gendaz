@@ -33,7 +33,9 @@ public class GendazSessionAuthenticationFilter extends OncePerRequestFilter {
     private static final List<String> PUBLIC_PREFIXES = List.of(
             "/api/public/",
             "/api/pagamentos/planos/webhook",
-            "/api/pagamentos/webhook/stripe"
+            "/api/pagamentos/webhook/stripe",
+            // Callback interno Node -> Spring (Bearer proprio no controller).
+            "/internal/whatsapp/"
     );
 
     private final UsuarioRepository usuarioRepository;

@@ -5,6 +5,11 @@
 // Interface:
 //   load(companyId)  -> Promise<{ state, saveCreds }>  (formato do Baileys)
 //   clear(companyId) -> Promise<void>                   (remove credenciais)
+//   listCompanies()  -> Promise<string[]>               (empresas com sessao registrada)
+//   hasRegisteredSession(companyId) -> Promise<boolean> (verifica se tem sessao valida)
+//   flush(companyId) -> Promise<void>                   (aguarda writes pendentes)
+//   flushAll()       -> Promise<void>                   (aguarda todos os writes)
+//   close()          -> Promise<void>                   (encerra conexoes/pool)
 //
 // O SessionManager depende SOMENTE desta interface. Em fase posterior,
 // FileAuthStateStore pode ser trocado por implementacao duravel
@@ -13,6 +18,7 @@
 const fs = require('fs');
 const path = require('path');
 const { useMultiFileAuthState } = require('@whiskeysockets/baileys');
+const { PostgresAuthStateStore } = require('./postgresAuthStore');
 
 class FileAuthStateStore {
   // Adapter de desenvolvimento/stage inicial sobre useMultiFileAuthState.
@@ -47,17 +53,32 @@ class FileAuthStateStore {
     await fs.promises.rm(this.dirFor(companyId), { recursive: true, force: true });
   }
 
-  async listCompanies() {
+  async hasRegisteredSession(companyId) {
+    const dir = this.dirFor(companyId);
     try {
-      const entries = await fs.promises.readdir(this.baseDir, { withFileTypes: true });
-      return entries.filter((e) => e.isDirectory()).map((e) => e.name);
+      const credsFile = path.join(dir, 'creds.json');
+      const data = await fs.promises.readFile(credsFile, 'utf8');
+      const creds = JSON.parse(data);
+      return Boolean(creds.registered);
     } catch (err) {
-      if (err && err.code === 'ENOENT') {
-        return [];
-      }
+      if (err.code === 'ENOENT') return false;
       throw err;
     }
   }
+
+  async flush(companyId) {
+    // No-op for file store since writes are synchronous
+    return Promise.resolve();
+  }
+
+  async flushAll() {
+    return Promise.resolve();
+  }
+
+  async close() {
+    // No-op for file store
+    return Promise.resolve();
+  }
 }
 
-module.exports = { FileAuthStateStore };
+module.exports = { FileAuthStateStore, PostgresAuthStateStore };

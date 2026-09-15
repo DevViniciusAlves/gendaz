@@ -31,7 +31,10 @@ public class SecurityHeadersConfig {
             "/api/meu-gendaz/auth/validar-codigo",
             "/api/pagamentos/webhook/stripe",
             "/api/admin",
-            "/api/admin/**"
+            "/api/admin/**",
+            // Callback interno Node -> Spring (maquina-a-maquina via Bearer
+            // proprio, sem sessao): fora do CSRF de browser.
+            "/internal/whatsapp/**"
     };
 
     @Bean
@@ -88,6 +91,9 @@ public class SecurityHeadersConfig {
                         .requestMatchers(HttpMethod.PATCH, "/api/meu-gendaz/perfil").permitAll()
                         .requestMatchers("/api/public/**").permitAll()
                         .requestMatchers("/api/pagamentos/planos/webhook", "/api/pagamentos/webhook/stripe").permitAll()
+                        // Callback interno Node -> Spring: autenticado pelo
+                        // Bearer proprio no controller (fail-closed sem token).
+                        .requestMatchers("/internal/whatsapp/**").permitAll()
                         .requestMatchers("/api/admin/auth/login", "/api/admin/access").permitAll()
                         .requestMatchers("/api/admin", "/api/admin/**").hasRole("SUPER_ADMIN")
                         .requestMatchers("/admin", "/admin/**").permitAll()

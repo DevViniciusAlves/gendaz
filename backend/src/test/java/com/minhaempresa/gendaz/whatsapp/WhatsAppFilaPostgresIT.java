@@ -131,8 +131,10 @@ class WhatsAppFilaPostgresIT {
             verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
             WhatsAppNotificacaoEntity finalizada =
                     notificacaoRepository.findById(criada.getId()).orElseThrow();
-            assertEquals(WhatsAppStatusNotificacao.ENVIADO, finalizada.getStatus());
+            // sendMessage + messageId = aceito pelo provider, NAO entregue.
+            assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, finalizada.getStatus());
             assertEquals(1, finalizada.getAttempts());
+            assertTrue(finalizada.isQuotaReserved());
         } finally {
             executor.shutdownNow();
         }

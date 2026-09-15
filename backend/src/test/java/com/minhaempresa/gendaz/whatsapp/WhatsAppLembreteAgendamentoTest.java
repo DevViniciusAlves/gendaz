@@ -659,9 +659,10 @@ class WhatsAppLembreteAgendamentoTest {
         assertTrue(mantido.isQuotaReserved());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
 
-        // Finaliza para nao deixar resto stale para outros testes.
+        // Finaliza para nao deixar resto stale para outros testes:
+        // sendMessage + messageId = aceito pelo provider, NAO entregue.
         worker.finalizar(preso.getId(), WhatsAppSendResult.sent("WAMID"));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO,
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA,
                 notificacaoRepository.findById(reminder.getId()).orElseThrow().getStatus());
     }
 
@@ -1141,9 +1142,11 @@ class WhatsAppLembreteAgendamentoTest {
         assertTrue(mantido.isQuotaReserved());
 
         worker.finalizar(pronto.getId(), WhatsAppSendResult.sent("WAMID-LOCK"));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO,
+        // sendMessage + messageId = aceito pelo provider, NAO entregue.
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA,
                 notificacaoRepository.findById(pronto.getId()).orElseThrow().getStatus());
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).lembretesEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
     }
 
     @Test

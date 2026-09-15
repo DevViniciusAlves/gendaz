@@ -50,6 +50,28 @@ public interface WhatsAppNotificacaoRepository extends JpaRepository<WhatsAppNot
 
     Optional<WhatsAppNotificacaoEntity> findByEmpresaIdAndIdempotencyKey(Long empresaId, String idempotencyKey);
 
+    /**
+     * Localizacao pelo par tenant + providerMessageId (message.key.id do
+     * Baileys) para confirmacao de entrega. Tenant sempre escopado: um ACK
+     * da empresa A nunca altera notificacao da empresa B.
+     */
+    Optional<WhatsAppNotificacaoEntity> findByEmpresaIdAndProviderMessageId(Long empresaId, String providerMessageId);
+
+    /**
+     * Variante com lock pessimista para a confirmacao de entrega idempotente:
+     * ACKs duplicados/simultaneos serializam na linha e o segundo vira no-op.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select n
+            from WhatsAppNotificacaoEntity n
+            where n.empresa.id = :empresaId
+              and n.providerMessageId = :providerMessageId
+            """)
+    Optional<WhatsAppNotificacaoEntity> findByEmpresaIdAndProviderMessageIdForUpdate(
+            @Param("empresaId") Long empresaId,
+            @Param("providerMessageId") String providerMessageId);
+
     List<WhatsAppNotificacaoEntity> findByEmpresaIdAndAgendamentoId(Long empresaId, Long agendamentoId);
 
     List<WhatsAppNotificacaoEntity> findByEmpresaIdAndClienteId(Long empresaId, Long clienteId);

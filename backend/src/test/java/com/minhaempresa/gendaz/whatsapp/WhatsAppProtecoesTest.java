@@ -437,9 +437,10 @@ class WhatsAppProtecoesTest {
         assertTrue(mantido.isQuotaReserved());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
 
-        // Finaliza para nao deixar resto stale para outros testes.
+        // Finaliza para nao deixar resto stale para outros testes:
+        // sendMessage + messageId = aceito pelo provider, NAO entregue.
         worker.finalizar(preso.getId(), WhatsAppSendResult.sent("WAMID"));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(reminder.getId()).getStatus());
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(reminder.getId()).getStatus());
     }
 
     private void flipParaOptOut(EmpresaEntity empresa, ClienteEntity cliente) {
@@ -584,7 +585,8 @@ class WhatsAppProtecoesTest {
         assertTrue(criada.getExpiresAt().isAfter(LocalDateTime.now(ZoneOffset.UTC).plusHours(23)));
 
         assertEquals(1, worker.processarLote(10));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(criada.getId()).getStatus());
+        // sendMessage + messageId = aceito pelo provider, NAO entregue.
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(criada.getId()).getStatus());
         verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
     }
 
@@ -827,9 +829,11 @@ class WhatsAppProtecoesTest {
                 "5511999999999", "Texto");
 
         assertEquals(1, worker.processarLote(10));
-        assertEquals(WhatsAppStatusNotificacao.ENVIADO, recarregar(criada.getId()).getStatus());
+        // sendMessage + messageId = aceito pelo provider, NAO entregue.
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(criada.getId()).getStatus());
         verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
-        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
     }
 
     // ---------- opt-out pós-commit ----------

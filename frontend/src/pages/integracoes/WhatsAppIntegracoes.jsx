@@ -20,6 +20,8 @@ const BACKOFF_RETRY_MS = [5000, 10000, 15000, 30000]
 // Transitório = falha de comunicação com o Node. Demais estados são
 // estáveis (precisam de ação do usuário ou de configuração).
 const ESTADO_TRANSITORIO = 'UNAVAILABLE'
+// Estados em que o servidor pode estar tentando reconectar automaticamente
+const ESTADOS_RECONECTANDO = ['CONNECTING', 'RECONNECTING']
 
 export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
@@ -70,6 +72,8 @@ export default function WhatsAppIntegracoes() {
   // nomes distintos de proposito.
   const reconectandoSessao = estado === 'RECONNECTING'
   const conectado = estado === 'CONNECTED'
+  // Estados transitorios do servidor: CONNECTING e RECONNECTING devem
+  // continuar consultando até estabilizar em CONNECTED ou estado final
   const operando = conectando || reconectandoSessao || desconectando
   const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
 
@@ -112,8 +116,10 @@ export default function WhatsAppIntegracoes() {
   // estável, ao esgotar as tentativas ou ao desmontar.
   useEffect(() => {
     if (carregando) return
-    const transitorio = Boolean(erro) || resumo?.conexao?.estado === ESTADO_TRANSITORIO
-    if (!transitorio) {
+    const estadoAtual = resumo?.conexao?.estado
+    const transitorio = Boolean(erro) || estadoAtual === ESTADO_TRANSITORIO
+    const emRecuperacaoServidor = ESTADOS_RECONECTANDO.includes(estadoAtual)
+    if (!transitorio && !emRecuperacaoServidor) {
       setReconectando(false)
       tentativaRef.current = 0
       return
