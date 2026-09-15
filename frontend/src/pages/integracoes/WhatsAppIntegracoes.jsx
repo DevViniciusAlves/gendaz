@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { MessageCircle } from 'lucide-react'
 import Button from '../../components/Button.jsx'
 import ConfirmacaoModal from '../../components/ConfirmacaoModal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
 import { buscarResumoWhatsapp, desconectarWhatsapp } from '../../api/whatsappApi.js'
 import WhatsAppModal from './WhatsAppModal.jsx'
+import whatsappLogo from '../../assets/logos/whatsapp-logo.png'
 import './whatsapp.css'
 
 function emitirToast(type, message) {
@@ -87,7 +87,7 @@ export default function WhatsAppIntegracoes() {
       <div className="integr-card-head">
         <h2>WhatsApp</h2>
         <span className="integr-card-icon" aria-hidden="true">
-          <MessageCircle size={20} color="var(--primary)" />
+          <img src={whatsappLogo} alt="" className="integr-card-logo" />
         </span>
       </div>
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>

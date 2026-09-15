@@ -44,6 +44,15 @@
   background: var(--surface-soft);
   border: 1px solid var(--line);
   flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.integr-card-logo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex: 0 0 auto;
 }
 
 .integr-card-desc {
@@ -410,6 +419,68 @@
 .wpp-qr-box svg {
   max-width: 100%;
   height: auto;
+}
+
+/* ---------- Consistência tema claro no modal ----------
+   O modal é forçado para light via .system-modal, mas as variáveis
+   de tema (var(--surface) etc.) resolvem para o tema escuro do app.
+   Estes overrides escopados garantem que nenhum bloco interno
+   herde surface dark dentro do modal branco. */
+
+.wpp-modal-portal .wpp-section {
+  background: #fafafa;
+  border-color: rgba(11, 11, 11, 0.14);
+}
+
+.wpp-modal-portal .wpp-var,
+.wpp-modal-portal .wpp-message-preview,
+.wpp-modal-portal .wpp-quota-card,
+.wpp-modal-portal .wpp-qr-box {
+  background: #ffffff;
+  border-color: rgba(11, 11, 11, 0.14);
+}
+
+.wpp-modal-portal .wpp-var {
+  color: #4b5563;
+}
+
+.wpp-modal-portal .wpp-var code {
+  color: #0b0b0b;
+}
+
+.wpp-modal-portal .wpp-progress {
+  background: rgba(17, 24, 39, 0.12);
+}
+
+.wpp-modal-portal .wpp-progress > i {
+  background: #111827;
+}
+
+.wpp-modal-portal .wpp-switch {
+  background: #ffffff;
+  border-color: rgba(11, 11, 11, 0.28);
+}
+
+.wpp-modal-portal .wpp-switch::after {
+  background: #9ca3af;
+}
+
+.wpp-modal-portal .wpp-toggle input:checked + .wpp-switch {
+  border-color: #111827;
+  background: #111827;
+}
+
+.wpp-modal-portal .wpp-toggle input:checked + .wpp-switch::after {
+  background: #ffffff;
+}
+
+.wpp-modal-portal .wpp-toggle input:disabled + .wpp-switch {
+  background: rgba(11, 11, 11, 0.08);
+  border-color: rgba(11, 11, 11, 0.2);
+}
+
+.wpp-modal-portal .wpp-toggle input:disabled + .wpp-switch::after {
+  background: #c4c9d4;
 }
 
 @media (max-width: 640px) {
