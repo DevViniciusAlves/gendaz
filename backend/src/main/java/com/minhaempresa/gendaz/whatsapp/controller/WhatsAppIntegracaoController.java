@@ -91,10 +91,7 @@ public class WhatsAppIntegracaoController {
                     "hasQr", status.isHasQr(),
                     "connectedAt", status.getConnectedAt() == null ? "" : status.getConnectedAt()));
         }
-        if (resultado.getStatus() == WhatsAppOperationStatus.NOT_CONFIGURED) {
-            return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
-        }
-        return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
+        return erroSemantico(resultado.getStatus(), false);
     }
 
     @GetMapping("/qr")
@@ -107,9 +104,11 @@ public class WhatsAppIntegracaoController {
                     resultado.getData().getQr(), resultado.getData().getUpdatedAt()));
         }
         if (resultado.getStatus() == WhatsAppOperationStatus.QR_UNAVAILABLE) {
-            return ResponseEntity.status(404).body(Map.of("error", "qr_unavailable"));
+            return ResponseEntity.status(404).body(Map.of(
+                    "code", "WHATSAPP_QR_UNAVAILABLE",
+                    "message", "QR Code ainda nao disponivel. Aguarde e tente novamente."));
         }
-        return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
+        return erroSemantico(resultado.getStatus(), true);
     }
 
     @PostMapping("/desconectar")
@@ -120,7 +119,7 @@ public class WhatsAppIntegracaoController {
         if (resultado.isSuccess()) {
             return ResponseEntity.ok(Map.of("estado", resultado.getData().getState()));
         }
-        return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
+        return erroSemantico(resultado.getStatus(), false);
     }
 
     @PatchMapping("/configuracao")
@@ -129,17 +128,48 @@ public class WhatsAppIntegracaoController {
         if (request == null || (request.lembretesAtivos() == null && request.lembreteTemplate() == null)) {
             throw new BusinessException("Informe a configuracao que deseja alterar.");
         }
-        boolean lembretesAtivos = configuracaoService.lembretesAtivos(empresaId);
-        if (request.lembretesAtivos() != null) {
-            lembretesAtivos = configuracaoService.definirLembretesAtivos(empresaId, request.lembretesAtivos());
-        }
-        if (request.lembreteTemplate() != null) {
-            configuracaoService.definirLembreteTemplate(empresaId, request.lembreteTemplate());
-        }
+        // Atomico: valida todo o payload antes da primeira escrita; eventos
+        // publicados apos persistencia e consumidos em AFTER_COMMIT.
+        configuracaoService.atualizarConfiguracao(empresaId, request.lembretesAtivos(), request.lembreteTemplate());
         return ResponseEntity.ok(new ConfiguracaoResponse(
-                lembretesAtivos,
+                configuracaoService.lembretesAtivos(empresaId),
                 configuracaoService.obterLembreteTemplatePersonalizado(empresaId).orElse(null),
                 WhatsAppConfiguracaoService.DEFAULT_LEMBRETE_TEMPLATE));
+    }
+
+    private ResponseEntity<Map<String, String>> erroSemantico(WhatsAppOperationStatus status, boolean eQr) {
+        return switch (status) {
+            case NOT_CONFIGURED -> ResponseEntity.status(503).body(Map.of(
+                    "code", "WHATSAPP_NOT_CONFIGURED",
+                    "message", "Integracao WhatsApp nao configurada neste ambiente."));
+            case QR_UNAVAILABLE -> ResponseEntity.status(404).body(Map.of(
+                    "code", "WHATSAPP_QR_UNAVAILABLE",
+                    "message", "QR Code ainda nao disponivel. Aguarde e tente novamente."));
+            case UNAUTHORIZED -> ResponseEntity.status(503).body(Map.of(
+                    "code", "WHATSAPP_SESSION_ERROR",
+                    "message", "Sessao WhatsApp invalida. Tente conectar novamente."));
+            case INVALID_COMPANY_ID -> ResponseEntity.status(400).body(Map.of(
+                    "code", "WHATSAPP_SESSION_ERROR",
+                    "message", "Sessao WhatsApp invalida. Tente conectar novamente."));
+            case INTERNAL_ERROR -> ResponseEntity.status(502).body(Map.of(
+                    "code", "WHATSAPP_SESSION_ERROR",
+                    "message", "Falha na sessao WhatsApp. Tente novamente."));
+            case UNAVAILABLE -> ResponseEntity.status(503).body(Map.of(
+                    "code", "WHATSAPP_SERVICE_UNAVAILABLE",
+                    "message", "Servico WhatsApp indisponivel no momento. Tente novamente."));
+            default -> {
+                if (eQr) {
+                    yield ResponseEntity.status(503).body(Map.of(
+                            "code", "WHATSAPP_SERVICE_UNAVAILABLE",
+                            "message", "Servico WhatsApp indisponivel no momento. Tente novamente."));
+                }
+                // Timeout de conexao e indisponibilidade compartilham o transporte;
+                // o frontend trata ambos como transitórios dentro da janela.
+                yield ResponseEntity.status(503).body(Map.of(
+                        "code", "WHATSAPP_CONNECT_TIMEOUT",
+                        "message", "Tempo de conexao esgotado. Tente novamente."));
+            }
+        };
     }
 
     private String planoEfetivo(Long empresaId) {

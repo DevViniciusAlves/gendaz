@@ -43,6 +43,7 @@ import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppUsoCicloRepository;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppConfiguracaoService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEnvioWorker;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppLembreteAgendamentoService;
@@ -255,6 +256,74 @@ class WhatsAppProtecoesTest {
                 new EnviarMensagemRequest("reconexao", "whatsapp", null, "opt-req-2"));
         assertEquals(false, reconexao.get("success"));
         assertEquals("WHATSAPP_OPT_OUT", reconexao.get("status"));
+    }
+
+    @Test
+    void backfillSomenteFuturosEIdempotente() {
+        EmpresaEntity empresa = novaEmpresa("wpp-pback");
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+        ZonedDateTime futuro1 = atendimentoFuturo(3, 15);
+        ZonedDateTime futuro2 = atendimentoFuturo(4, 10);
+        AgendamentoEntity ag1 = novoAgendamento(empresa, cliente, futuro1.toLocalDate(), futuro1.toLocalTime());
+        AgendamentoEntity ag2 = novoAgendamento(empresa, cliente, futuro2.toLocalDate(), futuro2.toLocalTime());
+        ZonedDateTime passado = ZonedDateTime.now(ZoneId.of(ZONA_SP)).minusDays(2)
+                .withHour(10).withMinute(0).withSecond(0).withNano(0);
+        AgendamentoEntity agPassado = novoAgendamento(empresa, cliente, passado.toLocalDate(), passado.toLocalTime());
+
+        lembreteService.reconsiliarTodos(empresa.getId());
+
+        assertEquals(1, notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), ag1.getId()).size());
+        assertEquals(1, notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), ag2.getId()).size());
+        assertTrue(notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), agPassado.getId()).isEmpty());
+
+        lembreteService.reconsiliarTodos(empresa.getId());
+
+        assertEquals(1, notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), ag1.getId()).size());
+        assertEquals(1, notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), ag2.getId()).size());
+        assertTrue(notificacaoRepository.findByEmpresaIdAndAgendamentoId(empresa.getId(), agPassado.getId()).isEmpty());
+    }
+
+    @Test
+    void templateAlteraSomentePendenciasSeguras() {
+        EmpresaEntity empresa = novaEmpresa("wpp-ptpl");
+        comAssinatura(empresa, "PRO");
+        ativarLembretes(empresa);
+        ClienteEntity cliente = novoCliente(empresa, telefoneCanonicoNovo());
+        ZonedDateTime futuro = atendimentoFuturo(3, 15);
+        AgendamentoEntity agPendente = novoAgendamento(empresa, cliente, futuro.toLocalDate(), futuro.toLocalTime());
+        ZonedDateTime futuro2 = atendimentoFuturo(4, 10);
+        AgendamentoEntity agEnviando = novoAgendamento(empresa, cliente, futuro2.toLocalDate(), futuro2.toLocalTime());
+
+        lembreteService.sincronizar(empresa.getId(), agPendente.getId());
+        lembreteService.sincronizar(empresa.getId(), agEnviando.getId());
+
+        WhatsAppNotificacaoEntity pendente = notificacaoRepository
+                .findByEmpresaIdAndAgendamentoId(empresa.getId(), agPendente.getId()).get(0);
+        WhatsAppNotificacaoEntity emEnvio = notificacaoRepository
+                .findByEmpresaIdAndAgendamentoId(empresa.getId(), agEnviando.getId()).get(0);
+        String mensagemOriginal = emEnvio.getMessageBody();
+
+        // Simula worker com envio ja iniciado: nunca pode ser alterada.
+        transactionTemplate.executeWithoutResult(tx -> {
+            WhatsAppNotificacaoEntity atual = notificacaoRepository.findById(emEnvio.getId()).orElseThrow();
+            atual.setStatus(WhatsAppStatusNotificacao.ENVIANDO);
+            atual.setSendStartedAt(LocalDateTime.now());
+            notificacaoRepository.save(atual);
+        });
+
+        String novoTemplate = "Novo: {cliente} na {empresa} em {data} as {hora}.";
+        transactionTemplate.executeWithoutResult(tx -> {
+            WhatsAppConfiguracaoEntity cfg = configuracaoRepository.findByEmpresaId(empresa.getId()).orElseThrow();
+            cfg.setLembreteTemplate(novoTemplate);
+            configuracaoRepository.save(cfg);
+        });
+        lembreteService.onTemplateAlterado(
+                new WhatsAppConfiguracaoService.TemplateAlteradoEvent(empresa.getId(), novoTemplate));
+
+        assertTrue(recarregar(pendente.getId()).getMessageBody().startsWith("Novo: "));
+        assertEquals(mensagemOriginal, recarregar(emEnvio.getId()).getMessageBody());
     }
 
     @Test

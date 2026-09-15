@@ -56,6 +56,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
   const [enviando, setEnviando] = useState(false)
   const [canal, setCanal] = useState('email')
   const [requestId, setRequestId] = useState(null)
+  const [resumoWhatsapp, setResumoWhatsapp] = useState(null)
   const [statusWhatsapp, setStatusWhatsapp] = useState('UNAVAILABLE')
   const [carregandoWhatsapp, setCarregandoWhatsapp] = useState(false)
 
@@ -68,6 +69,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       setRequestId(gerarUuid())
       setPersonalizar(false)
       setMensagemCustom('')
+      setResumoWhatsapp(null)
       setStatusWhatsapp('UNAVAILABLE')
     }
   }, [open, cliente?.id, template])
@@ -78,10 +80,16 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
     setCarregandoWhatsapp(true)
     buscarResumoWhatsapp()
       .then((resumo) => {
-        if (ativo) setStatusWhatsapp(resumo?.conexao?.estado || 'UNAVAILABLE')
+        if (ativo) {
+          setResumoWhatsapp(resumo)
+          setStatusWhatsapp(resumo?.conexao?.estado || 'UNAVAILABLE')
+        }
       })
       .catch(() => {
-        if (ativo) setStatusWhatsapp('UNAVAILABLE')
+        if (ativo) {
+          setResumoWhatsapp(null)
+          setStatusWhatsapp('UNAVAILABLE')
+        }
       })
       .finally(() => {
         if (ativo) setCarregandoWhatsapp(false)
@@ -95,11 +103,27 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
 
   const tmpl = TEMPLATES[template] || TEMPLATES.resgate
   const nomeCliente = cliente.nome || 'cliente'
+  const nomeEmpresa = cliente.empresaNome || 'nossa equipe'
   const mensagemPadrao = tmpl.mensagem.replace('{nome}', nomeCliente)
   const ehWhatsapp = canal === 'whatsapp'
   const whatsappConectado = statusWhatsapp === 'CONNECTED'
-  const whatsappBloqueado = permiteWhatsapp && (!whatsappConectado || !cliente.telefone)
-  const mensagemWhatsapp = (TEMPLATES_WHATSAPP[template] || '').replace('{cliente}', nomeCliente)
+  const disponivelNoPlano = resumoWhatsapp ? Boolean(resumoWhatsapp.disponivelNoPlano) : true
+  const crmUso = resumoWhatsapp?.uso?.crm
+  const cotaCrmDisponivel = crmUso == null ? null : (crmUso.disponiveis ?? (crmUso.limite - crmUso.enviados - (crmUso.reservados || 0)))
+  const semTelefone = !cliente.telefone
+  const optOut = cliente.receberWhatsapp === false
+  const cotaEsgotada = cotaCrmDisponivel != null && cotaCrmDisponivel <= 0
+  const motivoBloqueioWhatsapp = !permiteWhatsapp ? null
+    : !disponivelNoPlano ? 'O plano atual não possui ações de WhatsApp.'
+    : !whatsappConectado ? 'Conecte o WhatsApp em Integrações para usar este canal.'
+    : semTelefone ? 'Cliente sem telefone válido.'
+    : optOut ? 'Este cliente optou por não receber mensagens pelo WhatsApp.'
+    : cotaEsgotada ? 'Seu limite de ações CRM por WhatsApp foi atingido neste ciclo.'
+    : null
+  const whatsappBloqueado = permiteWhatsapp && motivoBloqueioWhatsapp != null
+  const mensagemWhatsapp = (TEMPLATES_WHATSAPP[template] || '')
+    .replaceAll('{cliente}', nomeCliente)
+    .replaceAll('{empresa}', nomeEmpresa)
 
   async function handleEnviar() {
     if (enviando) return
@@ -196,9 +220,7 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
             <p className="wpp-note">
               {carregandoWhatsapp
                 ? 'Consultando conexão do WhatsApp...'
-                : !cliente.telefone
-                  ? 'Este cliente não possui telefone cadastrado para WhatsApp.'
-                  : 'WhatsApp não conectado. Conecte em Integrações para usar este canal.'}
+                : motivoBloqueioWhatsapp}
             </p>
           )}
 

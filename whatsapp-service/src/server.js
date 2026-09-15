@@ -23,15 +23,9 @@ const sessions = new SessionManager({
   maxAttempts: config.reconnectMaxAttempts,
 });
 
-// Restauracao automatica de sessoes persistidas apos boot.
-fs.readdirSync(config.sessionsDir).forEach((companyId) => {
-  if (fs.statSync(require('path').join(config.sessionsDir, companyId)).isDirectory()) {
-    sessions.connect(companyId).catch((err) => {
-      console.error(`[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: ${err.message}`);
-    });
-  }
-});
-
+// Restauracao unica via SessionManager.initialize(): lista sessoes persistidas,
+// carrega auth state e tenta restaurar cada sessao valida sem gerar QR
+// desnecessario. Nenhum restore manual aqui para nao duplicar sockets.
 const server = http.createServer(createApp({
   sessions,
   messageSender: new MessageSender({

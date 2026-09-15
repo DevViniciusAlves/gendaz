@@ -273,6 +273,61 @@ describe('SessionManager', () => {
     assert.equal(h.manager.status('empresa-1').state, STATES.CONNECTING);
   });
 
+  it('initialize restaura sessoes persistidas sem gerar QR', async () => {
+    const created = [];
+    const store = {
+      load: async () => ({
+        state: { creds: { registered: true } },
+        saveCreds: async () => {},
+      }),
+      clear: async () => {},
+      listCompanies: async () => ['empresa-a', 'empresa-b'],
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => {
+        const sock = {
+          handlers: {},
+          ev: { on: (e, fn) => { ((sock.handlers[e] = sock.handlers[e] || [])).push(fn); } },
+          end: async () => {},
+          logout: async () => {},
+        };
+        created.push(sock);
+        return sock;
+      },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await manager.initialize();
+    assert.equal(created.length, 2);
+    assert.equal(manager.status('empresa-a').state, STATES.CONNECTING);
+    assert.equal(manager.status('empresa-b').state, STATES.CONNECTING);
+    assert.equal(manager.getQr('empresa-a'), null);
+    assert.equal(manager.getQr('empresa-b'), null);
+    // Segunda chamada nao duplica sockets (fluxo unico de restore).
+    await manager.initialize();
+    assert.equal(created.length, 2);
+    await manager.shutdownAll();
+  });
+
+  it('initialize sem auth persistido resulta em NOT_CONNECTED', async () => {
+    const store = {
+      load: async () => { throw new Error('sem-auth'); },
+      clear: async () => {},
+      listCompanies: async () => [],
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => { throw new Error('nao-deveria-criar'); },
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await manager.initialize();
+    assert.equal(manager.status('empresa-x').state, STATES.NOT_CONNECTED);
+    await manager.shutdownAll();
+  });
+
   it('shutdownAll cancela timers, encerra sockets, sem logout e sem apagar auth', async () => {
     await h.manager.connect('empresa-1');
     await h.manager.connect('empresa-2');

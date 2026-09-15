@@ -6,6 +6,8 @@ import com.minhaempresa.gendaz.shared.BusinessException;
 import com.minhaempresa.gendaz.whatsapp.WhatsAppProvider;
 import com.minhaempresa.gendaz.whatsapp.WhatsAppSessionStatus;
 import com.minhaempresa.gendaz.whatsapp.WhatsAppResult;
+import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppConfiguracaoEntity;
+import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -95,23 +97,65 @@ public class WhatsAppConfiguracaoService {
             }
         }
         boolean resultado = false;
+        boolean persistido = false;
         for (int tentativa = 0; tentativa < 3; tentativa++) {
             Optional<WhatsAppConfiguracaoEntity> atual = self.buscarNova(empresaId);
             if (atual.isPresent()) {
                 resultado = self.salvarValorNovo(atual.get().getId(), ativo);
+                persistido = true;
                 break;
             }
             try {
                 resultado = self.criarNova(empresaId, ativo).isLembretesAtivos();
+                persistido = true;
                 break;
             } catch (DataIntegrityViolationException duplicada) {
                 // Outra transacao criou primeiro: rele na proxima rodada.
             }
         }
+        if (!persistido) {
+            throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
+        }
         if (resultado && ativo) {
             eventPublisher.publishEvent(new LembretesAtivadosEvent(empresaId));
         }
         return resultado;
+    }
+
+    /**
+     * Atualizacao agregada do PATCH: valida TODO o payload antes da primeira
+     * escrita para nunca deixar estado parcial (campo A persistido + campo B
+     * invalido). Eventos sao publicados apos persistencia e consumidos em
+     * AFTER_COMMIT pelos listeners.
+     */
+    @Transactional
+    public void atualizarConfiguracao(Long empresaId, Boolean lembretesAtivos, String lembreteTemplate) {
+        String templateNormalizado = null;
+        if (lembreteTemplate != null) {
+            templateNormalizado = normalizarTemplate(lembreteTemplate);
+        }
+        if (lembretesAtivos != null && lembretesAtivos) {
+            exigirConexaoParaAtivacao(empresaId);
+        }
+        if (lembretesAtivos != null) {
+            definirLembretesAtivos(empresaId, lembretesAtivos);
+        }
+        if (templateNormalizado != null) {
+            definirLembreteTemplate(empresaId, templateNormalizado);
+        }
+    }
+
+    private void exigirConexaoParaAtivacao(Long empresaId) {
+        String plano = assinaturaService.buscarAtualPorEmpresa(empresaId)
+                .map(a -> a.getPlano().getNome())
+                .orElse(null);
+        if (!WhatsAppPlanoPolicy.possuiWhatsApp(plano)) {
+            throw new BusinessException("WhatsApp nao disponivel no plano atual.");
+        }
+        WhatsAppResult<WhatsAppSessionStatus> status = provider.consultarStatus(String.valueOf(empresaId));
+        if (!status.isSuccess() || !"CONNECTED".equals(status.getData().getState())) {
+            throw new BusinessException("WHATSAPP_NOT_CONNECTED");
+        }
     }
 
     @Transactional
@@ -152,6 +196,20 @@ public class WhatsAppConfiguracaoService {
             if (!PLACEHOLDERS_SUPORTADOS.contains(variavel)) {
                 throw new BusinessException("A variavel {" + variavel + "} nao e suportada.");
             }
+        }
+        // Rejeita sintaxe malformada: chaves duplas, espacos internos ou
+        // chaves sem fechamento/abertura. Remove os placeholders validos e
+        // qualquer chave restante indica template quebrado.
+        if (normalizado.contains("{{") || normalizado.contains("}}")) {
+            throw new BusinessException("O template contem variavel malformada. Use {cliente}, {empresa}, {data} e {hora}.");
+        }
+        String semValidos = normalizado
+                .replace("{cliente}", "")
+                .replace("{empresa}", "")
+                .replace("{data}", "")
+                .replace("{hora}", "");
+        if (semValidos.contains("{") || semValidos.contains("}")) {
+            throw new BusinessException("O template contem variavel malformada. Use {cliente}, {empresa}, {data} e {hora}.");
         }
         return normalizado;
     }

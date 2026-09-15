@@ -292,7 +292,22 @@ class WhatsAppIntegracaoControllerTest {
 
         mockMvc.perform(get("/api/whatsapp/qr"))
                 .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.error").value("qr_unavailable"));
+                .andExpect(jsonPath("$.code").value("WHATSAPP_QR_UNAVAILABLE"));
+    }
+
+    @Test
+    void conectarSemProviderConfiguradoRetornaCodigoSemantico() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-conncfg");
+        comAssinatura(empresa, "PRO");
+        when(provider.conectar(anyString()))
+                .thenReturn(WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED));
+        comoEmpresa(empresa.getId());
+
+        String corpo = mockMvc.perform(post("/api/whatsapp/conectar"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_NOT_CONFIGURED"))
+                .andReturn().getResponse().getContentAsString();
+        assertFalse(corpo.contains("token"));
     }
 
     @Test
@@ -310,12 +325,93 @@ class WhatsAppIntegracaoControllerTest {
                 .andExpect(jsonPath("$.uso.lembretes.limite").value(150));
     }
 
+    private void sessaoConectada() {
+        when(provider.consultarStatus(anyString()))
+                .thenAnswer(inv -> WhatsAppResult.success(
+                        statusConectado((String) inv.getArgument(0))));
+    }
+
+    @Test
+    void ativacaoExigeConnectedDesativacaoFuncionaDesconectado() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-cfga");
+        comAssinatura(empresa, "PRO");
+        comoEmpresa(empresa.getId());
+
+        // Todos os estados nao-CONNECTED bloqueiam false->true.
+        for (String estado : new String[]{"CONNECTING", "RECONNECTING", "DISCONNECTED",
+                "NOT_CONNECTED", "LOGGED_OUT", "NOT_CONFIGURED", "UNAVAILABLE"}) {
+            WhatsAppSessionStatus s = statusConectado(String.valueOf(empresa.getId()));
+            s.setState(estado);
+            WhatsAppSessionStatus fixo = s;
+            when(provider.consultarStatus(anyString()))
+                    .thenReturn(WhatsAppResult.success(fixo));
+            mockMvc.perform(patch("/api/whatsapp/configuracao")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"lembretesAtivos\":true}"))
+                    .andExpect(status().isBadRequest());
+        }
+        // CONNECTED permite.
+        sessaoConectada();
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembretesAtivos\":true}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lembretesAtivos").value(true));
+
+        // true->false funciona mesmo desconectado.
+        WhatsAppSessionStatus off = statusConectado(String.valueOf(empresa.getId()));
+        off.setState("DISCONNECTED");
+        WhatsAppSessionStatus fixoOff = off;
+        when(provider.consultarStatus(anyString()))
+                .thenReturn(WhatsAppResult.success(fixoOff));
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembretesAtivos\":false}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lembretesAtivos").value(false));
+    }
+
+    @Test
+    void patchAtomicoNaoDeixaEstadoParcial() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-cfatom");
+        comAssinatura(empresa, "PRO");
+        sessaoConectada();
+        comoEmpresa(empresa.getId());
+
+        // Template invalido junto com ativacao valida: nada pode persistir.
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembretesAtivos\":true,\"lembreteTemplate\":\"Oi {telefone}\"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/whatsapp/resumo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configuracao.lembretesAtivos").value(false))
+                .andExpect(jsonPath("$.configuracao.lembreteTemplate").doesNotExist());
+    }
+
+    @Test
+    void patchTemplateRejeitaMalformados() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-tplm");
+        comAssinatura(empresa, "PRO");
+        comoEmpresa(empresa.getId());
+
+        for (String quebrado : new String[]{"Oi {cliente", "Oi cliente}", "Oi {{cliente}",
+                "Oi {cliente}}", "Oi { cliente }"}) {
+            mockMvc.perform(patch("/api/whatsapp/configuracao")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"lembreteTemplate\":\"" + quebrado + "\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+    }
+
     @Test
     void patchConfiguracaoCriaAlternaENaoMisturaEmpresas() throws Exception {
         EmpresaEntity empresaA = novaEmpresa("wpp-ui-cfg-a");
         EmpresaEntity empresaB = novaEmpresa("wpp-ui-cfg-b");
         comAssinatura(empresaA, "PRO");
         comAssinatura(empresaB, "PRO");
+        sessaoConectada();
 
         comoEmpresa(empresaA.getId());
         mockMvc.perform(patch("/api/whatsapp/configuracao")
@@ -408,6 +504,7 @@ class WhatsAppIntegracaoControllerTest {
     void duasAtivacoesConcorrentesCriamUmaConfiguracao() throws Exception {
         EmpresaEntity empresa = novaEmpresa("wpp-ui-cfgr");
         comAssinatura(empresa, "PRO");
+        sessaoConectada();
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         try {

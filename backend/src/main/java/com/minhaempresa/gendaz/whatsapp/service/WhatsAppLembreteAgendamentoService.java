@@ -25,8 +25,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.context.event.EventListener;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.transaction.event.TransactionPhase;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -440,12 +441,17 @@ public class WhatsAppLembreteAgendamentoService {
             return;
         }
         List<AgendamentoEntity> futuros = agendamentoRepository.findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
-                empresaId, 
+                empresaId,
                 List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
                 clock.agoraUtc().toLocalDate()
         );
         for (AgendamentoEntity agendamento : futuros) {
-            sincronizar(empresaId, agendamento.getId());
+            try {
+                self.sincronizar(empresaId, agendamento.getId());
+            } catch (Exception e) {
+                log.warn("[whatsapp-lembrete] reconciliacao ignorou agendamento={} erroTipo={}",
+                        agendamento.getId(), e.getClass().getSimpleName());
+            }
         }
     }
 
@@ -453,48 +459,109 @@ public class WhatsAppLembreteAgendamentoService {
         return cliente != null && cliente.getStatus() == StatusCadastro.ATIVO;
     }
 
-    @EventListener
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    /**
+     * Backfill AFTER_COMMIT: roda somente depois que a ativacao foi commitada.
+     * Busca SOMENTE agendamentos futuros elegiveis (empresa atual, nao
+     * cancelados, status elegivel) e reutiliza sincronizar() central, que e
+     * idempotente por idempotency_key. Falha posterior nunca reverte a
+     * configuracao ja confirmada: apenas loga.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onLembretesAtivados(WhatsAppConfiguracaoService.LembretesAtivadosEvent event) {
         Long empresaId = event.empresaId();
-        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaIdOperacional(empresaId, StatusCadastro.EXCLUIDO);
-        for (AgendamentoEntity agendamento : agendamentos) {
-            sincronizar(empresaId, agendamento.getId());
+        try {
+            List<AgendamentoEntity> futuros =
+                    agendamentoRepository.findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
+                            empresaId,
+                            List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
+                            clock.agoraUtc().toLocalDate());
+            for (AgendamentoEntity agendamento : futuros) {
+                try {
+                    self.sincronizar(empresaId, agendamento.getId());
+                } catch (Exception e) {
+                    log.warn("[whatsapp-lembrete] backfill ignorou agendamento={} erroTipo={}",
+                            agendamento.getId(), e.getClass().getSimpleName());
+                }
+            }
+        } catch (Exception e) {
+            log.error("[whatsapp-lembrete] backfill falhou empresa={} erroTipo={}",
+                    empresaId, e.getClass().getSimpleName());
         }
     }
 
-    @EventListener
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    /**
+     * Template alterado AFTER_COMMIT: atualiza somente pendencias seguras
+     * (PENDENTE e ENVIANDO com sendStartedAt == null) com lock pessimista por
+     * linha. Linhas em corrida com o worker sao puladas sem derrubar o lote.
+     */
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onTemplateAlterado(WhatsAppConfiguracaoService.TemplateAlteradoEvent event) {
         Long empresaId = event.empresaId();
-        String novoTemplate = event.template();
-        
-        List<WhatsAppNotificacaoEntity> candidatas = notificacaoRepository.findByEmpresaIdAndStatusIn(empresaId, 
-            List.of(WhatsAppStatusNotificacao.PENDENTE, WhatsAppStatusNotificacao.ENVIANDO));
-        
-        for (WhatsAppNotificacaoEntity entidade : candidatas) {
-             // Lock pessimista para evitar race condition com worker
-             WhatsAppNotificacaoEntity lockEntidade = notificacaoRepository.findByIdAndEmpresaIdForUpdate(entidade.getId(), empresaId)
-                     .orElse(null);
-             if (lockEntidade == null) continue;
 
-             if (lockEntidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO && 
-                 lockEntidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO && 
-                 lockEntidade.getSendStartedAt() != null) {
-                 continue; // Nao alterar se envio ja iniciado
-             }
-             
-             // Recalcular mensagem se agendamento existir
-             if (lockEntidade.getAgendamento() != null) {
-                 Optional<AgendamentoEntity> agendamento = agendamentoRepository.findByIdAndEmpresaId(lockEntidade.getAgendamento().getId(), empresaId);
-                 if (agendamento.isPresent()) {
-                     VersaoLembrete versao = calcularVersao(agendamento.get());
-                     if (versao != null) {
-                         lockEntidade.setMessageBody(versao.mensagem());
-                         notificacaoRepository.save(lockEntidade);
-                     }
-                 }
-             }
+        List<WhatsAppNotificacaoEntity> candidatas = notificacaoRepository.findByEmpresaIdAndStatusIn(empresaId,
+            List.of(WhatsAppStatusNotificacao.PENDENTE, WhatsAppStatusNotificacao.ENVIANDO));
+
+        for (WhatsAppNotificacaoEntity entidade : candidatas) {
+              WhatsAppNotificacaoEntity lockEntidade;
+              try {
+                  lockEntidade = self.bloquearParaAtualizacaoTemplate(empresaId, entidade.getId());
+              } catch (Exception e) {
+                  // Linha disputada com o worker: pula sem derrubar o lote.
+                  log.warn("[whatsapp-lembrete] template pulou notificacao em corrida notificacao={} erroTipo={}",
+                          entidade.getId(), e.getClass().getSimpleName());
+                  continue;
+              }
+              if (lockEntidade == null) continue;
+
+              if (lockEntidade.getStatus() != WhatsAppStatusNotificacao.PENDENTE
+                      && !(lockEntidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                              && lockEntidade.getSendStartedAt() == null)) {
+                  continue; // ENVIADO/CANCELADO/FALHOU/terminal ou envio ja iniciado: nunca toca.
+              }
+
+              try {
+                  self.aplicarNovoTemplate(empresaId, lockEntidade.getId());
+              } catch (Exception e) {
+                  log.warn("[whatsapp-lembrete] template pulou notificacao={} erroTipo={}",
+                          entidade.getId(), e.getClass().getSimpleName());
+              }
+         }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public WhatsAppNotificacaoEntity bloquearParaAtualizacaoTemplate(Long empresaId, Long notificacaoId) {
+        return notificacaoRepository.findByIdAndEmpresaIdForUpdate(notificacaoId, empresaId)
+                .orElse(null);
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void aplicarNovoTemplate(Long empresaId, Long notificacaoId) {
+        WhatsAppNotificacaoEntity lockEntidade = notificacaoRepository
+                .findByIdAndEmpresaIdForUpdate(notificacaoId, empresaId)
+                .orElse(null);
+        if (lockEntidade == null) {
+            return;
+        }
+        if (lockEntidade.getStatus() != WhatsAppStatusNotificacao.PENDENTE
+                && !(lockEntidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                        && lockEntidade.getSendStartedAt() == null)) {
+            return;
+        }
+        if (lockEntidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO
+                && lockEntidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO
+                && lockEntidade.getSendStartedAt() != null) {
+            return;
+        }
+        if (lockEntidade.getAgendamento() != null) {
+            Optional<AgendamentoEntity> agendamento =
+                    agendamentoRepository.findByIdAndEmpresaId(lockEntidade.getAgendamento().getId(), empresaId);
+            if (agendamento.isPresent()) {
+                VersaoLembrete versao = calcularVersao(agendamento.get());
+                if (versao != null) {
+                    lockEntidade.setMessageBody(versao.mensagem());
+                    notificacaoRepository.save(lockEntidade);
+                }
+            }
         }
     }
 }

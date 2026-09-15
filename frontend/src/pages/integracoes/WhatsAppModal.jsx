@@ -29,6 +29,21 @@ function emitirToast(type, message) {
   window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
 
+const ERROS_CONEXAO = {
+  WHATSAPP_NOT_CONFIGURED: 'Integração indisponível neste ambiente.',
+  WHATSAPP_SERVICE_UNAVAILABLE: 'Serviço WhatsApp indisponível no momento. Tente novamente.',
+  WHATSAPP_CONNECT_TIMEOUT: 'Tempo de conexão esgotado. Tente novamente.',
+  WHATSAPP_QR_UNAVAILABLE: 'QR Code ainda não disponível. Aguarde e tente novamente.',
+  WHATSAPP_SESSION_ERROR: 'Falha na sessão WhatsApp. Tente conectar novamente.',
+}
+
+function mensagemErroConexao(err, padrao) {
+  const dados = err?.response?.data || {}
+  const codigo = dados.code || dados.error
+  if (codigo && ERROS_CONEXAO[codigo]) return ERROS_CONEXAO[codigo]
+  return dados.mensagem || dados.message || padrao
+}
+
 export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizado, autoConnectToken = 0 }) {
   const [dados, setDados] = useState(resumo || null)
   const [carregandoResumo, setCarregandoResumo] = useState(false)
@@ -128,6 +143,15 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
           emitirToast('success', 'WhatsApp conectado!')
           return
         }
+        // Erro terminal: ambiente sem configuracao nunca vai conectar.
+        if (estado === 'NOT_CONFIGURED') {
+          limparPolling()
+          setQr(null)
+          setGerandoQr(false)
+          setConectando(false)
+          emitirToast('error', 'Integração indisponível neste ambiente.')
+          return
+        }
         if (novo?.conexao?.hasQr) {
           try {
             const qrAtual = await obterQrWhatsapp({ signal: controlador.signal })
@@ -144,7 +168,16 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
           }
         }
       } catch (err) {
-        // Polling tolera falhas transitórias até o fim da janela.
+        // Erro terminal (auth invalida / ambiente sem config): para o polling
+        // e mostra o erro real. Falha transitória de rede/status: tolera.
+        const status = err?.response?.status
+        const codigo = err?.response?.data?.code || err?.response?.data?.error
+        if (status === 401 || status === 403 || codigo === 'WHATSAPP_NOT_CONFIGURED') {
+          limparPolling()
+          setConectando(false)
+          setGerandoQr(false)
+          emitirToast('error', mensagemErroConexao(err, 'Não foi possível acompanhar a conexão.'))
+        }
       } finally {
         emPollRef.current = false
       }
@@ -176,7 +209,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     } catch (err) {
       setConectando(false)
       setGerandoQr(false)
-      emitirToast('error', err?.response?.data?.mensagem || 'Não foi possível iniciar a conexão. Tente novamente.')
+      emitirToast('error', mensagemErroConexao(err, 'Não foi possível iniciar a conexão. Tente novamente.'))
     }
   }
 
@@ -256,6 +289,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
 
   const estado = dados?.conexao?.estado || 'UNAVAILABLE'
   const disponivelNoPlano = dados ? Boolean(dados.disponivelNoPlano) : true
+  const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
   const conectado = estado === 'CONNECTED'
   const sessaoAtiva = estado === 'CONNECTED' || estado === 'CONNECTING' || estado === 'RECONNECTING'
   const emPareamento = conectando || estado === 'CONNECTING' || (dados?.conexao?.hasQr && !conectado)
@@ -313,14 +347,15 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
             <div>
               <StatusBadge status={estado} />
               <p className="wpp-muted">
-                {conectado && 'Pronto para lembretes automáticos, Resgate e Reconexão.'}
-                {!conectado && estado !== 'CONNECTING' && estado !== 'RECONNECTING'
+                {indisponivelAmbiente && 'Integração indisponível neste ambiente.'}
+                {!indisponivelAmbiente && conectado && 'Pronto para lembretes automáticos, Resgate e Reconexão.'}
+                {!indisponivelAmbiente && !conectado && estado !== 'CONNECTING' && estado !== 'RECONNECTING'
                   && 'Conecte o WhatsApp da empresa para utilizar lembretes automáticos, Resgate e Reconexão.'}
                 {estado === 'CONNECTING' && 'Aguardando leitura do QR Code...'}
                 {estado === 'RECONNECTING' && 'Tentando restabelecer a sessão. Não é preciso escanear novamente.'}
               </p>
             </div>
-            {!conectado && !emPareamento && estado !== 'RECONNECTING' && (
+            {!conectado && !emPareamento && estado !== 'RECONNECTING' && !indisponivelAmbiente && (
               <Button type="button" onClick={() => setConfirmarConectar(true)} loading={conectando} loadingText="Conectando...">
                 Conectar WhatsApp
               </Button>
@@ -381,7 +416,9 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
                 onChange={(e) => setTemplate(e.target.value)}
                 placeholder={dados?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO}
                 rows={4}
+                maxLength={500}
               />
+              <small className="wpp-muted">{(template || '').length} / 500</small>
             </label>
             <div className="wpp-variables" aria-label="Variáveis disponíveis">
               <strong>Variáveis disponíveis</strong>
