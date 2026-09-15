@@ -81,11 +81,12 @@ public class WhatsAppDeliveryCallbackController {
                 case INVALIDO -> ResponseEntity.status(400).body(Map.of("error", "invalid_company_id"));
                 case IGNORADO -> ResponseEntity.ok(Map.of("status", "ignored"));
             };
-        } catch (Exception e) {
-            // Nunca derruba o socket do Node com 500 por falha transitória:
-            // o receipt ja esta persistido e a reconciliacao cobre.
-            log.error("[whatsapp-delivery] falha controlada. erroTipo={}", e.getClass().getSimpleName());
-            return ResponseEntity.ok(Map.of("status", "ignored"));
+} catch (Exception e) {
+            // Erro na persistencia: BD indisponivel ou erro tecnico.
+            // Retornar 503 para Node retry (nunca 200).
+            log.error("[whatsapp-delivery] erro ao persistir receipt. tipo={}, mensagem={}",
+                    e.getClass().getSimpleName(), e.getMessage());
+            return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
         }
     }
 

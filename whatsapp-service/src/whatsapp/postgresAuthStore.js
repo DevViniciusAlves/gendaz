@@ -62,6 +62,23 @@ function parseFromStorage(text) {
   return JSON.parse(text, BufferJSON.reviver);
 }
 
+function encodeEncryptedPayload(buffer) {
+  if (!Buffer.isBuffer(buffer)) {
+    throw new Error('encodeEncryptedPayload requires a Buffer');
+  }
+  return buffer.toString('base64');
+}
+
+function decodeEncryptedPayload(base64String) {
+  if (typeof base64String === 'string') {
+    return Buffer.from(base64String, 'base64');
+  }
+  if (Buffer.isBuffer(base64String)) {
+    return base64String;
+  }
+  throw new Error('decodeEncryptedPayload requires a string or Buffer');
+}
+
 class PostgresAuthStateStore {
   constructor({ pool, encryptionKey, log = console } = {}) {
     if (!pool) {
@@ -92,7 +109,8 @@ class PostgresAuthStateStore {
         return this._buildAuthState(creds, false, companyId);
       }
       const row = result.rows[0];
-      const plaintext = decryptPayload(this.encKey, row.payload);
+      const envelope = decodeEncryptedPayload(row.payload);
+              const plaintext = decryptPayload(this.encKey, envelope);
       const creds = parseFromStorage(plaintext.toString('utf8'));
       return this._buildAuthState(creds, row.registered, companyId);
     } finally {
@@ -121,7 +139,8 @@ class PostgresAuthStateStore {
                 const idx = keyHashes.indexOf(row.key_hash);
                 if (idx >= 0) {
                   const id = ids[idx];
-                  const plaintext = decryptPayload(store.encKey, row.payload);
+                  const envelope = decodeEncryptedPayload(row.payload);
+                  const plaintext = decryptPayload(store.encKey, envelope);
                   let value = parseFromStorage(plaintext.toString('utf8'));
                   if (type === 'app-state-sync-key' && value) {
                     value = proto.Message.AppStateSyncKeyData.fromObject(value);
@@ -150,7 +169,8 @@ class PostgresAuthStateStore {
                     );
                   } else {
                     const serialized = serializeForStorage(value);
-                    const payload = encryptPayload(store.encKey, Buffer.from(serialized, 'utf8'));
+                    const encryptedEnvelope = encryptPayload(store.encKey, Buffer.from(serialized, 'utf8'));
+                    const payload = encodeEncryptedPayload(encryptedEnvelope);
                     await client.query(
                       `INSERT INTO whatsapp_auth_keys (company_id, key_type, key_hash, payload, updated_at)
                        VALUES ($1, $2, $3, $4, NOW())

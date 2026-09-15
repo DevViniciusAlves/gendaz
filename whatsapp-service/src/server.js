@@ -22,6 +22,7 @@ const { MessageSender } = require('./whatsapp/messageSender');
 const { DeliveryReporter } = require('./whatsapp/deliveryReporter');
 const { createSocket } = require('./whatsapp/socketFactory');
 const { createShutdown } = require('./shutdown');
+const { createWorker } = require('./whatsapp/deliveryOutboxWorker');
 
 // Reporter unico do processo: dedup em memoria + POST ao backend Spring.
 // Falha no callback nunca derruba o socket (DeliveryReporter nunca rejeita
@@ -33,21 +34,21 @@ function buildDeliveryReporter() {
   });
 }
 
-function buildAuthStore() {
+function buildAuthStore(pool) {
   if (config.authStore === 'postgres') {
-    if (!config.databaseUrl) {
+    if (!config.databaseUrl && !pool) {
       throw new Error('WHATSAPP_DATABASE_URL e obrigatorio quando WHATSAPP_AUTH_STORE=postgres');
     }
     if (!config.encryptionKey) {
       throw new Error('WHATSAPP_AUTH_ENCRYPTION_KEY e obrigatorio quando WHATSAPP_AUTH_STORE=postgres');
     }
-    const pool = new Pool({
+    const poolInstance = pool || new Pool({
       connectionString: config.databaseUrl,
       max: 5,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 10000,
     });
-    return new PostgresAuthStateStore({ pool, encryptionKey: config.encryptionKey });
+    return new PostgresAuthStateStore({ pool: poolInstance, encryptionKey: config.encryptionKey });
   }
   // file store (desenvolvimento/local)
   fs.mkdirSync(config.sessionsDir, { recursive: true, mode: 0o700 });
@@ -95,7 +96,18 @@ async function bootstrap({ sessions, app, port, listen = (server, p) => new Prom
 }
 
 async function main() {
-  const authStore = buildAuthStore();
+  // Criar pool PostgreSQL compartilhado
+  let sharedPool = null;
+  if (config.databaseUrl) {
+    sharedPool = new Pool({
+      connectionString: config.databaseUrl,
+      max: 5,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    });
+  }
+
+  const authStore = buildAuthStore(sharedPool);
   const sessions = buildSessions(null, authStore);
   const server = await bootstrap({ sessions, app: buildApp(sessions), port: config.port });
   console.log(`[whatsapp-service] ouvindo na porta ${config.port}`);
@@ -103,10 +115,22 @@ async function main() {
     console.log('[whatsapp-service] aviso: WHATSAPP_INTERNAL_TOKEN nao configurado; endpoints internos ficarao bloqueados');
   }
 
-  const shutdown = createShutdown({ server, sessions, authStore });
+  // Iniciar worker de outbox
+  const worker = sharedPool ? createWorker(sharedPool) : null;
+  if (worker) {
+    worker.start();
+  }
 
-  process.on('SIGTERM', () => shutdown('SIGTERM'));
-  process.on('SIGINT', () => shutdown('SIGINT'));
+  const shutdown = createShutdown({ server, sessions, authStore, worker });
+
+  process.on('SIGTERM', async () => {
+    await shutdown('SIGTERM');
+    process.exit(0);
+  });
+  process.on('SIGINT', async () => {
+    await shutdown('SIGINT');
+    process.exit(0);
+  });
   process.on('unhandledRejection', (reason) => {
     // So message/codigo: nunca despejar o objeto (pode conter auth/keys).
     const seguro = reason instanceof Error ? reason.message : String(reason);
@@ -116,7 +140,7 @@ async function main() {
     console.error('[whatsapp-service] excecao nao capturada:', err.message);
     process.exit(1);
   });
-  return { server, sessions, authStore };
+  return { server, sessions, authStore, worker };
 }
 
 if (require.main === module) {
