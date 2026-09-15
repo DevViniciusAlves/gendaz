@@ -63,11 +63,26 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   const abortRef = useRef(null)
   const emPollRef = useRef(false)
   const ultimoAutoConnectRef = useRef(0)
+  const foiAbertoRef = useRef(false)
+  const qrRef = useRef(null)
 
   const atualizarResumo = useCallback((novo) => {
     setDados(novo)
     onResumoAtualizado?.(novo)
   }, [onResumoAtualizado])
+
+  // Guarda o último QR válido exibido: o polling nunca limpa o QR
+  // durante a atualização — só substitui por outro QR válido.
+  const definirQr = useCallback((novoQr) => {
+    if (!novoQr || qrRef.current === novoQr) return
+    qrRef.current = novoQr
+    setQr(novoQr)
+  }, [])
+
+  const limparQr = useCallback(() => {
+    qrRef.current = null
+    setQr(null)
+  }, [])
 
   const limparPolling = useCallback(() => {
     if (pollRef.current) {
@@ -94,24 +109,37 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     }
   }, [atualizarResumo])
 
-  // Sincroniza estado local ao abrir e limpa QR/sessão de polling ao fechar.
+  // Reset completo apenas na transição fechado → aberto. Se este efeito
+  // rodasse a cada troca da prop `resumo` (que muda a cada ciclo do
+  // polling no pai), o QR seria apagado e recriado a cada ~2s (flicker).
   useEffect(() => {
-    if (open) {
+    if (open && !foiAbertoRef.current) {
+      foiAbertoRef.current = true
       setDados(resumo || null)
       setToggleOn(Boolean(resumo?.configuracao?.lembretesAtivos))
       setTemplate(resumo?.configuracao?.lembreteTemplate || resumo?.configuracao?.lembreteTemplatePadrao || TEMPLATE_PADRAO)
-      setQr(null)
+      limparQr()
       setGerandoQr(false)
       setConectando(false)
       setConfirmarSaida(false)
       setConfirmarConectar(false)
       setPareamentoExpirado(false)
-    } else {
-      setQr(null)
+    } else if (!open && foiAbertoRef.current) {
+      foiAbertoRef.current = false
+      limparQr()
       setPareamentoExpirado(false)
       limparPolling()
     }
-  }, [open, resumo, limparPolling])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open])
+
+  // Espelha o resumo mais recente (status da conexão, quotas) enquanto o
+  // modal está aberto, sem tocar no QR, no loading ou no texto em edição.
+  useEffect(() => {
+    if (open) {
+      setDados(resumo || null)
+    }
+  }, [open, resumo])
 
   useEffect(() => () => limparPolling(), [limparPolling])
 
@@ -125,7 +153,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
         limparPolling()
         setConectando(false)
         setGerandoQr(false)
-        setQr(null)
+        limparQr()
         setPareamentoExpirado(true)
         return
       }
@@ -137,7 +165,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
         const estado = novo?.conexao?.estado
         if (estado === 'CONNECTED') {
           limparPolling()
-          setQr(null)
+          limparQr()
           setGerandoQr(false)
           setConectando(false)
           setPareamentoExpirado(false)
@@ -147,7 +175,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
         // Erro terminal: ambiente sem configuracao nunca vai conectar.
         if (estado === 'NOT_CONFIGURED') {
           limparPolling()
-          setQr(null)
+          limparQr()
           setGerandoQr(false)
           setConectando(false)
           emitirToast('error', 'Integração indisponível neste ambiente.')
@@ -156,16 +184,23 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
         if (novo?.conexao?.hasQr) {
           try {
             const qrAtual = await obterQrWhatsapp({ signal: controlador.signal })
+            // Mantém o último QR válido na tela: só substitui por outro QR
+            // válido (mesmo valor não gera atualização de estado).
+            definirQr(qrAtual?.qr)
             if (qrAtual?.qr) {
-              setQr(qrAtual.qr)
               setGerandoQr(false)
+            } else if (qrRef.current == null) {
+              setGerandoQr(true)
             }
           } catch (err) {
             if (err?.response?.status !== 404) {
               throw err
             }
-            // QR ainda não criado: mantém "Gerando QR Code..." e continua.
-            setGerandoQr(true)
+            // QR ainda não criado: loading só até o primeiro QR válido;
+            // nunca apaga um QR já exibido por falha transitória.
+            if (qrRef.current == null) {
+              setGerandoQr(true)
+            }
           }
         }
       } catch (err) {
@@ -183,7 +218,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
         emPollRef.current = false
       }
     }, INTERVALO_POLL_MS)
-  }, [atualizarResumo, limparPolling])
+  }, [atualizarResumo, limparPolling, definirQr, limparQr])
 
   // Se abrir já em pareamento (ex.: conexão iniciada em outra sessão),
   // acompanha até conectar ou expirar a janela.
@@ -243,7 +278,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     try {
       await desconectarWhatsapp()
       setConfirmarSaida(false)
-      setQr(null)
+      limparQr()
       await recarregarResumo()
       emitirToast('success', 'WhatsApp desconectado.')
     } catch (err) {
@@ -273,7 +308,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
 
   function handleClose() {
     limparPolling()
-    setQr(null)
+    limparQr()
     setPareamentoExpirado(false)
     onClose()
   }
