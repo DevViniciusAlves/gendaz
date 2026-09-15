@@ -431,6 +431,10 @@ public class WhatsAppLembreteAgendamentoService {
                 .toLocalDateTime();
     }
 
+    private boolean statusElegivel(StatusAgendamento status) {
+        return status == StatusAgendamento.PENDENTE || status == StatusAgendamento.CONFIRMADO;
+    }
+
     public void reconsiliarTodos(Long empresaId) {
         if (!configuracaoService.lembretesAtivos(empresaId)) {
             return;
@@ -463,21 +467,31 @@ public class WhatsAppLembreteAgendamentoService {
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onTemplateAlterado(WhatsAppConfiguracaoService.TemplateAlteradoEvent event) {
         Long empresaId = event.empresaId();
+        String novoTemplate = event.template();
+        
         List<WhatsAppNotificacaoEntity> candidatas = notificacaoRepository.findByEmpresaIdAndStatusIn(empresaId, 
             List.of(WhatsAppStatusNotificacao.PENDENTE, WhatsAppStatusNotificacao.ENVIANDO));
         
         for (WhatsAppNotificacaoEntity entidade : candidatas) {
-             if (entidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO && entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO && entidade.getSendStartedAt() != null) {
+             // Lock pessimista para evitar race condition com worker
+             WhatsAppNotificacaoEntity lockEntidade = notificacaoRepository.findByIdAndEmpresaIdForUpdate(entidade.getId(), empresaId)
+                     .orElse(null);
+             if (lockEntidade == null) continue;
+
+             if (lockEntidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO && 
+                 lockEntidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO && 
+                 lockEntidade.getSendStartedAt() != null) {
                  continue; // Nao alterar se envio ja iniciado
              }
+             
              // Recalcular mensagem se agendamento existir
-             if (entidade.getAgendamento() != null) {
-                 Optional<AgendamentoEntity> agendamento = agendamentoRepository.findByIdAndEmpresaId(entidade.getAgendamento().getId(), empresaId);
+             if (lockEntidade.getAgendamento() != null) {
+                 Optional<AgendamentoEntity> agendamento = agendamentoRepository.findByIdAndEmpresaId(lockEntidade.getAgendamento().getId(), empresaId);
                  if (agendamento.isPresent()) {
                      VersaoLembrete versao = calcularVersao(agendamento.get());
                      if (versao != null) {
-                         entidade.setMessageBody(versao.mensagem());
-                         notificacaoRepository.save(entidade);
+                         lockEntidade.setMessageBody(versao.mensagem());
+                         notificacaoRepository.save(lockEntidade);
                      }
                  }
              }

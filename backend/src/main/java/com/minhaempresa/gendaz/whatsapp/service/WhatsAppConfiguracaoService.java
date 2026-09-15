@@ -3,8 +3,9 @@ package com.minhaempresa.gendaz.whatsapp.service;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
-import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppConfiguracaoEntity;
-import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppProvider;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppSessionStatus;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppResult;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -37,6 +38,7 @@ public class WhatsAppConfiguracaoService {
     private final WhatsAppConfiguracaoRepository configuracaoRepository;
     private final EmpresaRepository empresaRepository;
     private final AssinaturaService assinaturaService;
+    private final WhatsAppProvider provider;
     private final ApplicationEventPublisher eventPublisher;
 
     private WhatsAppConfiguracaoService self;
@@ -86,6 +88,11 @@ public class WhatsAppConfiguracaoService {
             if (!WhatsAppPlanoPolicy.possuiWhatsApp(plano)) {
                 throw new BusinessException("WhatsApp nao disponivel no plano atual.");
             }
+            
+            WhatsAppResult<WhatsAppSessionStatus> status = provider.consultarStatus(String.valueOf(empresaId));
+            if (!status.isSuccess() || !"CONNECTED".equals(status.getData().getState())) {
+                throw new BusinessException("WHATSAPP_NOT_CONNECTED");
+            }
         }
         boolean resultado = false;
         for (int tentativa = 0; tentativa < 3; tentativa++) {
@@ -101,7 +108,7 @@ public class WhatsAppConfiguracaoService {
                 // Outra transacao criou primeiro: rele na proxima rodada.
             }
         }
-        if (ativo) {
+        if (resultado && ativo) {
             eventPublisher.publishEvent(new LembretesAtivadosEvent(empresaId));
         }
         return resultado;
@@ -123,6 +130,9 @@ public class WhatsAppConfiguracaoService {
             } catch (DataIntegrityViolationException duplicada) {
                 // Outra transacao criou primeiro: rele na proxima rodada.
             }
+        }
+        if (resultado == null) {
+            throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
         }
         eventPublisher.publishEvent(new TemplateAlteradoEvent(empresaId, resultado));
         return resultado;
