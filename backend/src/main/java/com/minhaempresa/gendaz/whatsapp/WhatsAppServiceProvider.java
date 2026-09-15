@@ -317,8 +317,13 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             return new HttpCall(response.statusCode(), response.body());
         } catch (HttpTimeoutException e) {
             registrarHttp(metodo, origem, "", "", System.currentTimeMillis() - inicio, -1);
+            if (falhaAntesDoEnvio(e)) {
+                // Recusa/DNS: nada escutando — servico down, nao timeout.
+                log.warn("[whatsapp-provider] servico indisponivel ao executar {}", origem);
+                return new HttpCall(WhatsAppOperationStatus.UNAVAILABLE);
+            }
             log.warn("[whatsapp-provider] timeout ao executar {}", origem);
-            return new HttpCall(WhatsAppOperationStatus.UNAVAILABLE);
+            return new HttpCall(WhatsAppOperationStatus.CONNECT_TIMEOUT);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             log.warn("[whatsapp-provider] interrompido ao executar {}", origem);

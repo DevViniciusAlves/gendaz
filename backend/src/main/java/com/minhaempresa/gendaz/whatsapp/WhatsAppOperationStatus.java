@@ -10,6 +10,7 @@ public enum WhatsAppOperationStatus {
     SUCCESS,
     NOT_CONFIGURED,
     UNAVAILABLE,
+    CONNECT_TIMEOUT,
     UNAUTHORIZED,
     INVALID_COMPANY_ID,
     QR_UNAVAILABLE,

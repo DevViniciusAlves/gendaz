@@ -1,41 +1,113 @@
 /* Integração WhatsApp: somente complementos pontuais. Base (panel, btn,
    modal, field, status) vem dos estilos globais do gendaz. */
 
-.wpp-card-body {
+/* ---------- Hub de integrações: grid de cards ---------- */
+
+.integr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 360px));
+  gap: 16px;
+  align-items: start;
+}
+
+/* ---------- Card compacto de integração ---------- */
+
+.integr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  min-width: 0;
+  max-width: 380px;
+}
+
+.integr-card-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-
-.wpp-card-status {
-  display: flex;
-  align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
 }
 
-.wpp-card-actions,
-.wpp-template-actions {
+.integr-card-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.integr-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  flex: 0 0 auto;
+}
+
+.integr-card-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.integr-card-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.integr-card-actions {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 10px;
   flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* Botão disabled proposital: usa o padrão do Button do gendaz,
+   apenas garante cursor/legibilidade consistentes. */
+.integr-card-actions .btn:disabled {
+  cursor: not-allowed;
+}
+
+/* ---------- Modal WhatsApp ---------- */
+
+.wpp-modal-portal .modal {
+  width: min(700px, 100%);
+  max-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.wpp-modal-subtitle {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .wpp-modal-body {
-  max-height: calc(100vh - 220px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 260px);
   padding-right: 4px;
 }
 
-.wpp-divider {
-  border: none;
-  border-top: 1px solid var(--line);
-  margin: 16px 0;
+.wpp-section {
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 12px);
+  background: var(--surface-soft);
+  padding: 14px;
+  min-width: 0;
 }
 
 .wpp-section-title {
@@ -48,6 +120,14 @@
   color: var(--muted);
   font-size: 13px;
   margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.wpp-helper {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 0;
+  line-height: 1.5;
 }
 
 .wpp-row {
@@ -58,12 +138,34 @@
   flex-wrap: wrap;
 }
 
-.wpp-toggle {
+.wpp-status-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+/* ---------- Lembretes: switch alinhado ---------- */
+
+.wpp-toggle-head {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.wpp-toggle-head .wpp-section-title {
+  margin-bottom: 4px;
+}
+
+.wpp-toggle {
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
-  font-size: 14px;
+  flex: 0 0 auto;
+  padding-top: 2px;
 }
 
 .wpp-toggle input {
@@ -80,7 +182,7 @@
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--surface-soft);
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
 }
 
 .wpp-switch::after {
@@ -110,15 +212,151 @@
   outline-offset: 2px;
 }
 
+/* Switch disabled elegante: afunda o trilho em vez de parecer quebrado. */
 .wpp-toggle input:disabled + .wpp-switch {
-  opacity: 0.55;
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  border-color: color-mix(in srgb, var(--muted) 35%, transparent);
+}
+
+.wpp-toggle input:disabled {
   cursor: not-allowed;
 }
 
-.wpp-toggle small {
+.wpp-toggle:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+/* ---------- Mensagem do lembrete ---------- */
+
+.wpp-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.wpp-restore-btn {
+  flex: 0 0 auto;
+}
+
+.wpp-template-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wpp-template-field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.wpp-counter {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+/* ---------- Variáveis ---------- */
+
+.wpp-variables {
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.wpp-variables-title {
   display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.wpp-variables-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wpp-var {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.wpp-var code {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ---------- Preview ---------- */
+
+.wpp-message-preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: var(--surface);
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.wpp-message-preview strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.wpp-message-preview p {
+  margin: 0 0 4px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.wpp-message-preview small {
   color: var(--muted);
   font-size: 12px;
+}
+
+.wpp-template-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ---------- Uso do plano ---------- */
+
+.wpp-quota-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.wpp-quota-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px 12px;
+  min-width: 0;
 }
 
 .wpp-progress-label {
@@ -126,7 +364,7 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 13px;
-  margin: 10px 0 4px;
+  margin: 0 0 6px;
 }
 
 .wpp-progress-label strong {
@@ -150,8 +388,11 @@
 .wpp-note {
   font-size: 12px;
   color: var(--muted);
-  margin: 4px 0 0;
+  margin: 6px 0 0;
+  line-height: 1.5;
 }
+
+/* ---------- QR ---------- */
 
 .wpp-qr-box {
   display: flex;
@@ -162,6 +403,8 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   max-width: 100%;
+  margin-top: 12px;
+  background: var(--surface);
 }
 
 .wpp-qr-box svg {
@@ -169,79 +412,49 @@
   height: auto;
 }
 
-.wpp-message-preview {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 13px;
-  background: var(--surface-soft);
-  margin-top: 10px;
-}
-
-.wpp-message-preview strong,
-.wpp-variables strong {
-  display: block;
-  margin-bottom: 6px;
-}
-
-.wpp-message-preview p {
-  margin: 0 0 4px;
-  line-height: 1.5;
-}
-
-.wpp-variables {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.wpp-variables code {
-  color: var(--text);
-  font-weight: 700;
-  margin-right: 6px;
-}
-
-.wpp-template-editor {
-  margin-top: 12px;
-}
-
-.wpp-template-editor textarea {
-  min-height: 112px;
-  resize: vertical;
-}
-
-.wpp-canal-row {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  margin: 8px 0;
-}
-
-.wpp-canal-row label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-  cursor: pointer;
-}
-
 @media (max-width: 640px) {
-  .wpp-card-body {
-    flex-direction: column;
-    align-items: stretch;
+  .integr-grid {
+    grid-template-columns: 1fr;
   }
 
-  .wpp-card-actions,
+  .integr-card {
+    max-width: none;
+  }
+
+  .integr-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .integr-card-actions .btn {
+    width: 100%;
+  }
+
+  .wpp-modal-portal .modal {
+    width: 100%;
+  }
+
+  .wpp-modal-body {
+    max-height: calc(100vh - 200px);
+  }
+
+  .wpp-variables-grid,
+  .wpp-quota-grid {
+    grid-template-columns: 1fr;
+  }
+
   .wpp-template-actions {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .wpp-card-actions .btn,
   .wpp-template-actions .btn {
     width: 100%;
+  }
+
+  .wpp-section-head {
+    flex-direction: column;
+    align-items: stretch;
   }
 
   .wpp-qr-box {

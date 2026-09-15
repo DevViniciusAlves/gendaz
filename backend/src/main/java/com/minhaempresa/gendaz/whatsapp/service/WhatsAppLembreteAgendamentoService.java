@@ -6,6 +6,7 @@ import com.minhaempresa.gendaz.agendamento.repository.AgendamentoRepository;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.cliente.entity.ClienteEntity;
 import com.minhaempresa.gendaz.cliente.repository.ClienteRepository;
+import com.minhaempresa.gendaz.empresa.repository.EmpresaRepository;
 import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
@@ -14,6 +15,7 @@ import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import jakarta.persistence.OptimisticLockException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -55,6 +57,7 @@ public class WhatsAppLembreteAgendamentoService {
 
     private final AgendamentoRepository agendamentoRepository;
     private final ClienteRepository clienteRepository;
+    private final EmpresaRepository empresaRepository;
     private final AssinaturaService assinaturaService;
     private final WhatsAppConfiguracaoService configuracaoService;
     private final WhatsAppNotificacaoService notificacaoService;
@@ -436,6 +439,21 @@ public class WhatsAppLembreteAgendamentoService {
         return status == StatusAgendamento.PENDENTE || status == StatusAgendamento.CONFIRMADO;
     }
 
+    /**
+     * Data de referencia do backfill na timezone da propria empresa (mesma
+     * fonte usada pelo calculo do reminder). Usar a data UTC aqui perderia
+     * atendimentos ainda futuros na virada de data (ex.: 15/09 01:00Z ainda
+     * e 14/09 21:00 em America/Cuiaba).
+     */
+    public LocalDate dataReferenciaBackfill(Long empresaId, LocalDateTime agoraUtc) {
+        String timezone = empresaRepository.findById(empresaId)
+                .map(e -> e.getTimezone())
+                .orElse(null);
+        return agoraUtc.atZone(ZoneOffset.UTC)
+                .withZoneSameInstant(clock.zonaEmpresa(timezone))
+                .toLocalDate();
+    }
+
     public void reconsiliarTodos(Long empresaId) {
         if (!configuracaoService.lembretesAtivos(empresaId)) {
             return;
@@ -443,7 +461,7 @@ public class WhatsAppLembreteAgendamentoService {
         List<AgendamentoEntity> futuros = agendamentoRepository.findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
                 empresaId,
                 List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
-                clock.agoraUtc().toLocalDate()
+                dataReferenciaBackfill(empresaId, clock.agoraUtc())
         );
         for (AgendamentoEntity agendamento : futuros) {
             try {
@@ -466,7 +484,7 @@ public class WhatsAppLembreteAgendamentoService {
      * idempotente por idempotency_key. Falha posterior nunca reverte a
      * configuracao ja confirmada: apenas loga.
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onLembretesAtivados(WhatsAppConfiguracaoService.LembretesAtivadosEvent event) {
         Long empresaId = event.empresaId();
         try {
@@ -474,7 +492,7 @@ public class WhatsAppLembreteAgendamentoService {
                     agendamentoRepository.findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
                             empresaId,
                             List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
-                            clock.agoraUtc().toLocalDate());
+                            dataReferenciaBackfill(empresaId, clock.agoraUtc()));
             for (AgendamentoEntity agendamento : futuros) {
                 try {
                     self.sincronizar(empresaId, agendamento.getId());
@@ -494,7 +512,7 @@ public class WhatsAppLembreteAgendamentoService {
      * (PENDENTE e ENVIANDO com sendStartedAt == null) com lock pessimista por
      * linha. Linhas em corrida com o worker sao puladas sem derrubar o lote.
      */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT, fallbackExecution = true)
     public void onTemplateAlterado(WhatsAppConfiguracaoService.TemplateAlteradoEvent event) {
         Long empresaId = event.empresaId();
 

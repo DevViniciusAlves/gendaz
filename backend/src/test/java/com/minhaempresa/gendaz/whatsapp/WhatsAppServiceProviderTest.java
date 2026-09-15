@@ -207,21 +207,20 @@ class WhatsAppServiceProviderTest {
     }
 
     @Test
-    void timeout_retornaUnavailable() {
+    void timeout_retornaConnectTimeout() {
         stubStatus = 200;
         stubBody = "SLEEP:5000";
         WhatsAppServiceProvider lento = new WhatsAppServiceProvider(objectMapper, audit, baseUrl, TOKEN,
                 Duration.ofSeconds(2), Duration.ofMillis(500));
-        assertEquals(WhatsAppOperationStatus.UNAVAILABLE, lento.consultarStatus("x").getStatus());
+        assertEquals(WhatsAppOperationStatus.CONNECT_TIMEOUT, lento.consultarStatus("x").getStatus());
     }
 
     @Test
-    void conexaoRecusada_retornaUnavailable() throws IOException {
-        HttpServer fechado = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
-        int portaLivre = fechado.getAddress().getPort();
-        fechado.stop(0);
+    void hostIrresolvivel_retornaUnavailable() {
+        // DNS/recusa antes de qualquer byte: servico down, nao timeout.
         WhatsAppServiceProvider p = new WhatsAppServiceProvider(objectMapper, audit,
-                "http://127.0.0.1:" + portaLivre, TOKEN, Duration.ofSeconds(2), Duration.ofSeconds(2));
+                "http://dominio-inexistente-gendaz-xyz-12345.local", TOKEN,
+                Duration.ofSeconds(2), Duration.ofSeconds(2));
         assertEquals(WhatsAppOperationStatus.UNAVAILABLE, p.consultarStatus("x").getStatus());
     }
 

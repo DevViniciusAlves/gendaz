@@ -1,5 +1,5 @@
-import { MessageCircle } from 'lucide-react'
 import WhatsAppIntegracoes from './integracoes/WhatsAppIntegracoes.jsx'
+import './integracoes/whatsapp.css'
 
 export default function Integracoes() {
   return (
@@ -10,7 +10,9 @@ export default function Integracoes() {
         <p>Conecte e gerencie os serviços integrados ao seu negócio.</p>
       </div>
 
-      <WhatsAppIntegracoes />
+      <div className="integr-grid">
+        <WhatsAppIntegracoes />
+      </div>
     </section>
   )
 }

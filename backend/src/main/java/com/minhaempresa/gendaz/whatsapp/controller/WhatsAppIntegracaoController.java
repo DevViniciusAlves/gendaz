@@ -145,9 +145,11 @@ public class WhatsAppIntegracaoController {
             case QR_UNAVAILABLE -> ResponseEntity.status(404).body(Map.of(
                     "code", "WHATSAPP_QR_UNAVAILABLE",
                     "message", "QR Code ainda nao disponivel. Aguarde e tente novamente."));
+            // 401 Spring -> Node = credencial interna do servico, nunca
+            // "sessao do usuario". Sem vazar token/detalhe interno.
             case UNAUTHORIZED -> ResponseEntity.status(503).body(Map.of(
-                    "code", "WHATSAPP_SESSION_ERROR",
-                    "message", "Sessao WhatsApp invalida. Tente conectar novamente."));
+                    "code", "WHATSAPP_SERVICE_AUTH_ERROR",
+                    "message", "Nao foi possivel autenticar com o servico do WhatsApp."));
             case INVALID_COMPANY_ID -> ResponseEntity.status(400).body(Map.of(
                     "code", "WHATSAPP_SESSION_ERROR",
                     "message", "Sessao WhatsApp invalida. Tente conectar novamente."));
@@ -157,18 +159,12 @@ public class WhatsAppIntegracaoController {
             case UNAVAILABLE -> ResponseEntity.status(503).body(Map.of(
                     "code", "WHATSAPP_SERVICE_UNAVAILABLE",
                     "message", "Servico WhatsApp indisponivel no momento. Tente novamente."));
-            default -> {
-                if (eQr) {
-                    yield ResponseEntity.status(503).body(Map.of(
-                            "code", "WHATSAPP_SERVICE_UNAVAILABLE",
-                            "message", "Servico WhatsApp indisponivel no momento. Tente novamente."));
-                }
-                // Timeout de conexao e indisponibilidade compartilham o transporte;
-                // o frontend trata ambos como transitórios dentro da janela.
-                yield ResponseEntity.status(503).body(Map.of(
-                        "code", "WHATSAPP_CONNECT_TIMEOUT",
-                        "message", "Tempo de conexao esgotado. Tente novamente."));
-            }
+            case CONNECT_TIMEOUT -> ResponseEntity.status(504).body(Map.of(
+                    "code", "WHATSAPP_CONNECT_TIMEOUT",
+                    "message", "Nao foi possivel concluir a conexao com o WhatsApp a tempo. Tente novamente."));
+            default -> ResponseEntity.status(503).body(Map.of(
+                    "code", "WHATSAPP_SERVICE_UNAVAILABLE",
+                    "message", "Servico WhatsApp indisponivel no momento. Tente novamente."));
         };
     }
 

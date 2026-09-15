@@ -74,39 +74,47 @@ export default function WhatsAppIntegracoes() {
     return conectado ? 'Desconectar' : 'Conectar'
   }
 
+  function helperTexto() {
+    if (indisponivelAmbiente) return 'A integração WhatsApp ainda não está disponível neste ambiente.'
+    if (conectado) return null
+    if (conectando) return 'Aguardando conclusão do pareamento no modal de configuração.'
+    if (reconectando) return 'Tentando restabelecer a sessão automaticamente.'
+    return null
+  }
+
   return (
-    <section className="panel settings-form-panel">
-      <div className="panel-head settings-form-head">
-        <div>
-          <span className="section-kicker">Integrações</span>
-          <h2>WhatsApp</h2>
-          <p>Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
-        </div>
-        <MessageCircle size={22} color="var(--primary)" />
+    <section className="panel integr-card" aria-label="Integração WhatsApp">
+      <div className="integr-card-head">
+        <h2>WhatsApp</h2>
+        <span className="integr-card-icon" aria-hidden="true">
+          <MessageCircle size={20} color="var(--primary)" />
+        </span>
       </div>
+      <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
       {carregando && <p className="wpp-muted">Carregando integração...</p>}
       {!carregando && erro && (
         <>
-          <p className="wpp-muted">Temporariamente indisponível</p>
+          <div className="integr-card-status">
+            <StatusBadge status="UNAVAILABLE" />
+          </div>
           <p className="form-error">{erro}</p>
-          <Button variant="secondary" type="button" onClick={carregar}>Tentar novamente</Button>
+          <div className="integr-card-actions">
+            <Button variant="secondary" type="button" onClick={carregar}>Tentar novamente</Button>
+          </div>
         </>
       )}
       {!carregando && !erro && resumo && (
-        <div className="wpp-card-body">
-          <div className="wpp-card-status">
+        <>
+          <div className="integr-card-status">
             <StatusBadge status={estado} />
-            {resumo.disponivelNoPlano ? (
-              <span className="wpp-muted">
-                {indisponivelAmbiente ? 'Integração indisponível neste ambiente.' : 'Lembretes automáticos e ações de CRM pelo WhatsApp.'}
-              </span>
-            ) : (
-              <span className="wpp-muted">Não disponível no seu plano</span>
+            {helperTexto() && <p className="wpp-muted">{helperTexto()}</p>}
+            {!resumo.disponivelNoPlano && !indisponivelAmbiente && (
+              <p className="wpp-muted">Não disponível no seu plano.</p>
             )}
           </div>
           {resumo.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado) ? (
-            <div className="wpp-card-actions">
+            <div className="integr-card-actions">
               <Button variant="secondary" type="button" onClick={() => setModalAberto(true)}>
                 Configurar
               </Button>
@@ -116,14 +124,17 @@ export default function WhatsAppIntegracoes() {
                 onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
                 disabled={operando || indisponivelAmbiente}
                 loading={desconectando}
+                title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
               >
                 {textoBotaoConexao()}
               </Button>
             </div>
           ) : (
-            <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>
+            <div className="integr-card-actions">
+              <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>
+            </div>
           )}
-        </div>
+        </>
       )}
 
       <WhatsAppModal

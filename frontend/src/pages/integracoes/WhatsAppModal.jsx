@@ -32,9 +32,10 @@ function emitirToast(type, message) {
 const ERROS_CONEXAO = {
   WHATSAPP_NOT_CONFIGURED: 'Integração indisponível neste ambiente.',
   WHATSAPP_SERVICE_UNAVAILABLE: 'Serviço WhatsApp indisponível no momento. Tente novamente.',
-  WHATSAPP_CONNECT_TIMEOUT: 'Tempo de conexão esgotado. Tente novamente.',
+  WHATSAPP_CONNECT_TIMEOUT: 'Não foi possível concluir a conexão com o WhatsApp a tempo. Tente novamente.',
   WHATSAPP_QR_UNAVAILABLE: 'QR Code ainda não disponível. Aguarde e tente novamente.',
   WHATSAPP_SESSION_ERROR: 'Falha na sessão WhatsApp. Tente conectar novamente.',
+  WHATSAPP_SERVICE_AUTH_ERROR: 'Não foi possível autenticar com o serviço do WhatsApp.',
 }
 
 function mensagemErroConexao(err, padrao) {
@@ -313,23 +314,24 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   }
 
   return (
-    <Modal title="WhatsApp" open={open} onClose={handleClose}>
+    <Modal title="WhatsApp" open={open} onClose={handleClose} portalClassName="wpp-modal-portal">
+      <p className="wpp-modal-subtitle">Configure lembretes automáticos e ações de CRM pelo WhatsApp.</p>
       <div className="wpp-modal-body">
       {!disponivelNoPlano && !sessaoAtiva && (
-        <>
+        <section className="wpp-section">
           <p className="wpp-muted">Não disponível no seu plano</p>
           <p className="wpp-muted">Os lembretes e ações de CRM pelo WhatsApp exigem um plano com a integração.</p>
           <div className="modal-actions">
             <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>
           </div>
-        </>
+        </section>
       )}
 
       {!disponivelNoPlano && sessaoAtiva && (
-        <>
+        <section className="wpp-section" aria-label="Conexão">
           <h3 className="wpp-section-title">Conexão</h3>
           <div className="wpp-row">
-            <div>
+            <div className="wpp-status-block">
               <StatusBadge status={estado} />
               <p className="wpp-muted">Sessão ainda ativa de um plano anterior. Desconecte para encerrar.</p>
             </div>
@@ -337,17 +339,18 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               Desconectar WhatsApp
             </Button>
           </div>
-        </>
+        </section>
       )}
 
       {disponivelNoPlano && (
         <>
+          <section className="wpp-section" aria-label="Conexão">
           <h3 className="wpp-section-title">Conexão</h3>
           <div className="wpp-row">
-            <div>
+            <div className="wpp-status-block">
               <StatusBadge status={estado} />
               <p className="wpp-muted">
-                {indisponivelAmbiente && 'Integração indisponível neste ambiente.'}
+                {indisponivelAmbiente && 'A integração WhatsApp ainda não está disponível neste ambiente.'}
                 {!indisponivelAmbiente && conectado && 'Pronto para lembretes automáticos, Resgate e Reconexão.'}
                 {!indisponivelAmbiente && !conectado && estado !== 'CONNECTING' && estado !== 'RECONNECTING'
                   && 'Conecte o WhatsApp da empresa para utilizar lembretes automáticos, Resgate e Reconexão.'}
@@ -388,29 +391,38 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               </Button>
             </div>
           )}
+          </section>
 
-          <hr className="wpp-divider" />
+          <section className="wpp-section" aria-label="Lembretes automáticos">
+          <div className="wpp-toggle-head">
+            <div>
+              <h3 className="wpp-section-title">Lembretes automáticos</h3>
+              <p className="wpp-muted">Quando ativado, o gendaz envia automaticamente uma mensagem pelo WhatsApp 2 horas antes do atendimento.</p>
+            </div>
+            <label className="wpp-toggle">
+              <input
+                type="checkbox"
+                checked={toggleOn}
+                disabled={salvandoToggle || !conectado}
+                onChange={handleToggle}
+                aria-label="Enviar lembretes de agendamento pelo WhatsApp"
+              />
+              <span className="wpp-switch" aria-hidden="true" />
+            </label>
+          </div>
+          {indisponivelAmbiente && <p className="wpp-helper">A integração precisa estar disponível para ativar os lembretes.</p>}
+          {!indisponivelAmbiente && !conectado && <p className="wpp-helper">Conecte o WhatsApp para ativar os lembretes automáticos.</p>}
+          </section>
 
-          <h3 className="wpp-section-title">Lembretes automáticos</h3>
-          <label className="wpp-toggle">
-            <input
-              type="checkbox"
-              checked={toggleOn}
-              disabled={salvandoToggle || !conectado}
-              onChange={handleToggle}
-              aria-label="Enviar lembretes de agendamento pelo WhatsApp"
-            />
-            <span className="wpp-switch" aria-hidden="true" />
-            <span>
-              Enviar lembretes pelo WhatsApp
-              <small>Horário: 2 horas antes do atendimento</small>
-              {!conectado && <small>Conecte o WhatsApp para ativar os lembretes automáticos.</small>}
-            </span>
-          </label>
-          
-          <div className="wpp-template-editor">
-            <label className="field">
-              <span>Mensagem do lembrete</span>
+          <section className="wpp-section" aria-label="Mensagem do lembrete">
+            <div className="wpp-section-head">
+              <div>
+                <h3 className="wpp-section-title">Mensagem do lembrete</h3>
+                <p className="wpp-muted">Personalize o texto que seu cliente receberá.</p>
+              </div>
+              <Button variant="secondary" type="button" className="wpp-restore-btn" onClick={handleRestaurarTemplate}>Restaurar padrão</Button>
+            </div>
+            <label className="field wpp-template-field">
               <textarea
                 value={template}
                 onChange={(e) => setTemplate(e.target.value)}
@@ -418,14 +430,16 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
                 rows={4}
                 maxLength={500}
               />
-              <small className="wpp-muted">{(template || '').length} / 500</small>
+              <span className="wpp-counter">{(template || '').length} / 500</span>
             </label>
             <div className="wpp-variables" aria-label="Variáveis disponíveis">
-              <strong>Variáveis disponíveis</strong>
-              <span><code>{'{cliente}'}</code> nome do cliente</span>
-              <span><code>{'{empresa}'}</code> nome da empresa</span>
-              <span><code>{'{data}'}</code> data do atendimento</span>
-              <span><code>{'{hora}'}</code> horário do atendimento</span>
+              <strong className="wpp-variables-title">Variáveis disponíveis</strong>
+              <div className="wpp-variables-grid">
+                <span className="wpp-var"><code>{'{cliente}'}</code><span>Substituído automaticamente pelo nome do cliente.</span></span>
+                <span className="wpp-var"><code>{'{empresa}'}</code><span>Substituído pelo nome da empresa.</span></span>
+                <span className="wpp-var"><code>{'{data}'}</code><span>Data real do atendimento.</span></span>
+                <span className="wpp-var"><code>{'{hora}'}</code><span>Horário real do atendimento.</span></span>
+              </div>
             </div>
             <div className="wpp-message-preview">
               <strong>Pré-visualização</strong>
@@ -433,16 +447,15 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               <small>Prévia com dados fictícios.</small>
             </div>
             <div className="wpp-template-actions">
-              <Button variant="secondary" type="button" onClick={handleRestaurarTemplate}>Restaurar mensagem padrão</Button>
               <Button type="button" onClick={handleSalvarTemplate} loading={salvandoTemplate}>Salvar mensagem</Button>
             </div>
-          </div>
-          
-          <hr className="wpp-divider" />
+          </section>
 
+          <section className="wpp-section" aria-label="Uso do plano">
           <h3 className="wpp-section-title">Uso do plano</h3>
+          <div className="wpp-quota-grid">
           {lembretes && (
-            <>
+            <div className="wpp-quota-card">
               <div className="wpp-progress-label">
                 <span>Lembretes</span>
                 <strong>{lembretes.enviados} / {lembretes.limite}</strong>
@@ -451,10 +464,10 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
                 <i style={{ width: `${barra(lembretes)}%` }} />
               </div>
               {emProcessamento(lembretes) && <p className="wpp-note">{emProcessamento(lembretes)}</p>}
-            </>
+            </div>
           )}
           {crm && (
-            <>
+            <div className="wpp-quota-card">
               <div className="wpp-progress-label">
                 <span>Ações CRM</span>
                 <strong>{crm.enviados} / {crm.limite}</strong>
@@ -464,9 +477,11 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               </div>
               {emProcessamento(crm) && <p className="wpp-note">{emProcessamento(crm)}</p>}
               <p className="wpp-note">Resgate e Reconexão compartilham esse limite.</p>
-            </>
+            </div>
           )}
+          </div>
           {carregandoResumo && <p className="wpp-muted">Atualizando...</p>}
+          </section>
         </>
       )}
       </div>

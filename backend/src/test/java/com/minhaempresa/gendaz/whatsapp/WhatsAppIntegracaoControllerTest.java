@@ -28,6 +28,7 @@ import com.minhaempresa.gendaz.shared.CompanyContext;
 import com.minhaempresa.gendaz.shared.GlobalExceptionHandler;
 import com.minhaempresa.gendaz.whatsapp.controller.WhatsAppIntegracaoController;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppConfiguracaoRepository;
+import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppConfiguracaoService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
 import java.time.LocalDate;
@@ -71,6 +72,8 @@ class WhatsAppIntegracaoControllerTest {
     private AssinaturaRepository assinaturaRepository;
     @Autowired
     private WhatsAppConfiguracaoRepository configuracaoRepository;
+    @Autowired
+    private WhatsAppNotificacaoRepository notificacaoRepository;
 
     private MockMvc mockMvc;
 
@@ -311,6 +314,31 @@ class WhatsAppIntegracaoControllerTest {
     }
 
     @Test
+    void matrizErrosConnectMapeiaCodigoSemantico() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-connmat");
+        comAssinatura(empresa, "PRO");
+        comoEmpresa(empresa.getId());
+
+        Object[][] casos = {
+                {WhatsAppOperationStatus.UNAVAILABLE, 503, "WHATSAPP_SERVICE_UNAVAILABLE"},
+                {WhatsAppOperationStatus.CONNECT_TIMEOUT, 504, "WHATSAPP_CONNECT_TIMEOUT"},
+                {WhatsAppOperationStatus.UNAUTHORIZED, 503, "WHATSAPP_SERVICE_AUTH_ERROR"},
+                {WhatsAppOperationStatus.INTERNAL_ERROR, 502, "WHATSAPP_SESSION_ERROR"},
+        };
+        for (Object[] caso : casos) {
+            WhatsAppOperationStatus statusProvider = (WhatsAppOperationStatus) caso[0];
+            when(provider.conectar(anyString()))
+                    .thenReturn(WhatsAppResult.erro(statusProvider));
+            String corpo = mockMvc.perform(post("/api/whatsapp/conectar"))
+                    .andExpect(status().is((int) caso[1]))
+                    .andExpect(jsonPath("$.code").value((String) caso[2]))
+                    .andReturn().getResponse().getContentAsString();
+            assertFalse(corpo.toLowerCase().contains("bearer"), "vazou detalhe interno");
+            assertFalse(corpo.toLowerCase().contains("internal_token"), "vazou detalhe interno");
+        }
+    }
+
+    @Test
     void empresaIdDoBrowserEIgnorado() throws Exception {
         EmpresaEntity empresaA = novaEmpresa("wpp-ui-tenant-a");
         EmpresaEntity empresaB = novaEmpresa("wpp-ui-tenant-b");
@@ -388,6 +416,43 @@ class WhatsAppIntegracaoControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.configuracao.lembretesAtivos").value(false))
                 .andExpect(jsonPath("$.configuracao.lembreteTemplate").doesNotExist());
+    }
+
+    @Test
+    void patchAtomicoComTemplateExistenteFazRollbackTotal() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-cfatom2");
+        comAssinatura(empresa, "PRO");
+        sessaoConectada();
+        comoEmpresa(empresa.getId());
+
+        String templateA = "Modelo A para {cliente} em {data}.";
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembreteTemplate\":\"" + templateA + "\"}"))
+                .andExpect(status().isOk());
+
+        // Tentativa valida de ativacao + template invalido: rollback total,
+        // template A preservado, nenhum evento (zero notifications).
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembretesAtivos\":true,\"lembreteTemplate\":\"Oi {telefone}\"}"))
+                .andExpect(status().isBadRequest());
+
+        mockMvc.perform(get("/api/whatsapp/resumo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configuracao.lembretesAtivos").value(false))
+                .andExpect(jsonPath("$.configuracao.lembreteTemplate").value(templateA));
+        assertTrue(notificacaoRepository.findAll().stream()
+                .noneMatch(n -> empresa.getId().equals(n.getEmpresa().getId())));
+
+        // Payload totalmente valido: os dois campos persistem juntos.
+        String templateB = "Modelo B para {cliente} na {empresa} em {data} as {hora}.";
+        mockMvc.perform(patch("/api/whatsapp/configuracao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"lembretesAtivos\":true,\"lembreteTemplate\":\"" + templateB + "\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.lembretesAtivos").value(true))
+                .andExpect(jsonPath("$.lembreteTemplate").value(templateB));
     }
 
     @Test

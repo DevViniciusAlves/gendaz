@@ -286,6 +286,28 @@ class WhatsAppProtecoesTest {
     }
 
     @Test
+    void backfillUsaTimezoneDaEmpresaNaViradaDeData() {
+        EmpresaEntity empresa = novaEmpresa("wpp-ptz");
+        empresa.setTimezone("America/Cuiaba");
+        empresaRepository.save(empresa);
+
+        // 15/09 01:00Z ainda e 14/09 21:00 em Cuiaba: referencia e 14/09.
+        LocalDate referencia = lembreteService.dataReferenciaBackfill(
+                empresa.getId(), LocalDateTime.of(2026, 9, 15, 1, 0));
+        assertEquals(LocalDate.of(2026, 9, 14), referencia);
+
+        // Empresa em UTC+: 15/09 01:00Z ja e 15/09 na empresa.
+        empresa.setTimezone("Pacific/Kiritimati");
+        empresaRepository.save(empresa);
+        assertEquals(LocalDate.of(2026, 9, 15), lembreteService.dataReferenciaBackfill(
+                empresa.getId(), LocalDateTime.of(2026, 9, 15, 1, 0)));
+
+        // Empresa desconhecida: cai no default da aplicacao, sem quebrar.
+        assertNotNull(lembreteService.dataReferenciaBackfill(
+                -999L, LocalDateTime.of(2026, 9, 15, 1, 0)));
+    }
+
+    @Test
     void templateAlteraSomentePendenciasSeguras() {
         EmpresaEntity empresa = novaEmpresa("wpp-ptpl");
         comAssinatura(empresa, "PRO");

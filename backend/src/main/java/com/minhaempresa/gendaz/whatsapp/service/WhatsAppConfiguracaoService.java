@@ -123,26 +123,84 @@ public class WhatsAppConfiguracaoService {
     }
 
     /**
-     * Atualizacao agregada do PATCH: valida TODO o payload antes da primeira
-     * escrita para nunca deixar estado parcial (campo A persistido + campo B
-     * invalido). Eventos sao publicados apos persistencia e consumidos em
-     * AFTER_COMMIT pelos listeners.
+     * Atualizacao agregada do PATCH, REALMENTE atomica: valida TODO o payload
+     * antes da primeira escrita e persiste todos os campos em UMA unica
+     * transacao (sem REQUIRES_NEW por campo). A convergencia sob concorrencia
+     * na criacao da primeira linha e preservada via retry da operacao inteira,
+     * com a UNIQUE como barreira. Eventos sao publicados somente depois que o
+     * commit da tentativa vencedora terminou; se a transacao falhar, ZERO
+     * eventos. Os listeners usam fallbackExecution para entregar mesmo quando
+     * publicados fora de transacao ambiente.
      */
-    @Transactional
     public void atualizarConfiguracao(Long empresaId, Boolean lembretesAtivos, String lembreteTemplate) {
         String templateNormalizado = null;
         if (lembreteTemplate != null) {
             templateNormalizado = normalizarTemplate(lembreteTemplate);
         }
         if (lembretesAtivos != null && lembretesAtivos) {
-            exigirConexaoParaAtivacao(empresaId);
+            // Leitura em transacao propria: a facade agregada nao e
+            // transacional (o nucleo de escrita tem a sua), e Plano e lazy.
+            self.validarAtivacao(empresaId);
         }
-        if (lembretesAtivos != null) {
-            definirLembretesAtivos(empresaId, lembretesAtivos);
+        ResultadoAplicacao aplicado = null;
+        for (int tentativa = 0; tentativa < 3; tentativa++) {
+            try {
+                aplicado = self.aplicarConfiguracao(empresaId, lembretesAtivos, templateNormalizado);
+                break;
+            } catch (DataIntegrityViolationException corrida) {
+                // Outra transacao criou a linha primeiro: rele na proxima rodada.
+            }
         }
-        if (templateNormalizado != null) {
-            definirLembreteTemplate(empresaId, templateNormalizado);
+        if (aplicado == null) {
+            throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
         }
+        if (aplicado.ativouLembretes()) {
+            eventPublisher.publishEvent(new LembretesAtivadosEvent(empresaId));
+        }
+        if (aplicado.templateAlterado()) {
+            eventPublisher.publishEvent(new TemplateAlteradoEvent(empresaId, aplicado.templateFinal()));
+        }
+    }
+
+    /**
+     * Nucleo da escrita agregada em UMA transacao: carrega ou cria a linha e
+     * aplica todos os campos na mesma entity, com um unico flush. Nunca
+     * chamado com REQUIRES_NEW por campo.
+     */
+    @Transactional
+    public ResultadoAplicacao aplicarConfiguracao(
+            Long empresaId, Boolean lembretesAtivos, String templateNormalizado) {
+        WhatsAppConfiguracaoEntity entidade = configuracaoRepository.findByEmpresaId(empresaId).orElse(null);
+        boolean ativoAntes = entidade != null && entidade.isLembretesAtivos();
+        String templateAntes = entidade != null ? entidade.getLembreteTemplate() : null;
+        if (entidade == null) {
+            entidade = WhatsAppConfiguracaoEntity.builder()
+                    .empresa(empresaRepository.getReferenceById(empresaId))
+                    .lembretesAtivos(lembretesAtivos != null ? lembretesAtivos : false)
+                    .lembreteTemplate(templateNormalizado)
+                    .build();
+        } else {
+            if (lembretesAtivos != null) {
+                entidade.setLembretesAtivos(lembretesAtivos);
+            }
+            if (templateNormalizado != null) {
+                entidade.setLembreteTemplate(templateNormalizado);
+            }
+        }
+        configuracaoRepository.saveAndFlush(entidade);
+        boolean ativoDepois = entidade.isLembretesAtivos();
+        String templateDepois = entidade.getLembreteTemplate();
+        return new ResultadoAplicacao(
+                !ativoAntes && ativoDepois,
+                templateNormalizado != null && !templateNormalizado.equals(templateAntes),
+                templateDepois);
+    }
+
+    public record ResultadoAplicacao(boolean ativouLembretes, boolean templateAlterado, String templateFinal) {}
+
+    @Transactional(readOnly = true)
+    public void validarAtivacao(Long empresaId) {
+        exigirConexaoParaAtivacao(empresaId);
     }
 
     private void exigirConexaoParaAtivacao(Long empresaId) {
