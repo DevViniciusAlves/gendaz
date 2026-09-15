@@ -25,6 +25,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.context.event.EventListener;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -430,11 +431,56 @@ public class WhatsAppLembreteAgendamentoService {
                 .toLocalDateTime();
     }
 
-    private boolean statusElegivel(StatusAgendamento status) {
-        return status == StatusAgendamento.PENDENTE || status == StatusAgendamento.CONFIRMADO;
+    public void reconsiliarTodos(Long empresaId) {
+        if (!configuracaoService.lembretesAtivos(empresaId)) {
+            return;
+        }
+        List<AgendamentoEntity> futuros = agendamentoRepository.findByEmpresaIdAndStatusInAndDataGreaterThanEqualOrderByDataAscHoraInicioAsc(
+                empresaId, 
+                List.of(StatusAgendamento.PENDENTE, StatusAgendamento.CONFIRMADO),
+                clock.agoraUtc().toLocalDate()
+        );
+        for (AgendamentoEntity agendamento : futuros) {
+            sincronizar(empresaId, agendamento.getId());
+        }
     }
 
     private boolean clienteAtivo(ClienteEntity cliente) {
         return cliente != null && cliente.getStatus() == StatusCadastro.ATIVO;
+    }
+
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onLembretesAtivados(WhatsAppConfiguracaoService.LembretesAtivadosEvent event) {
+        Long empresaId = event.empresaId();
+        List<AgendamentoEntity> agendamentos = agendamentoRepository.findByEmpresaIdOperacional(empresaId, StatusCadastro.EXCLUIDO);
+        for (AgendamentoEntity agendamento : agendamentos) {
+            sincronizar(empresaId, agendamento.getId());
+        }
+    }
+
+    @EventListener
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void onTemplateAlterado(WhatsAppConfiguracaoService.TemplateAlteradoEvent event) {
+        Long empresaId = event.empresaId();
+        List<WhatsAppNotificacaoEntity> candidatas = notificacaoRepository.findByEmpresaIdAndStatusIn(empresaId, 
+            List.of(WhatsAppStatusNotificacao.PENDENTE, WhatsAppStatusNotificacao.ENVIANDO));
+        
+        for (WhatsAppNotificacaoEntity entidade : candidatas) {
+             if (entidade.getTipo() == WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO && entidade.getStatus() == WhatsAppStatusNotificacao.ENVIANDO && entidade.getSendStartedAt() != null) {
+                 continue; // Nao alterar se envio ja iniciado
+             }
+             // Recalcular mensagem se agendamento existir
+             if (entidade.getAgendamento() != null) {
+                 Optional<AgendamentoEntity> agendamento = agendamentoRepository.findByIdAndEmpresaId(entidade.getAgendamento().getId(), empresaId);
+                 if (agendamento.isPresent()) {
+                     VersaoLembrete versao = calcularVersao(agendamento.get());
+                     if (versao != null) {
+                         entidade.setMessageBody(versao.mensagem());
+                         notificacaoRepository.save(entidade);
+                     }
+                 }
+             }
+        }
     }
 }

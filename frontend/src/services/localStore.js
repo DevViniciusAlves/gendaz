@@ -7,19 +7,19 @@ let memoryUser = null
 export const PLANOS = {
   BASICO: {
     nome: 'Plano Basico',
-    rotas: ['dashboard', 'agenda', 'clientes', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'integracoes', 'configuracoes'],
   },
   PRO: {
     nome: 'Plano Pro',
-    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'integracoes', 'configuracoes'],
   },
   PLUS: {
     nome: 'Plano Plus',
-    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'integracoes', 'configuracoes'],
   },
   ENTERPRISE: {
     nome: 'Plano Enterprise',
-    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'configuracoes'],
+    rotas: ['dashboard', 'agenda', 'clientes', 'crm', 'insights', 'promocoes', 'servicos', 'profissionais', 'financeiro', 'relatorios', 'logs', 'integracoes', 'configuracoes'],
   },
 }
 

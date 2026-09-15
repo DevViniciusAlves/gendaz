@@ -56,6 +56,9 @@ public interface WhatsAppNotificacaoRepository extends JpaRepository<WhatsAppNot
 
     List<WhatsAppNotificacaoEntity> findByEmpresaIdAndStatus(Long empresaId, WhatsAppStatusNotificacao status);
 
+    @Query("select n from WhatsAppNotificacaoEntity n where n.empresa.id = :empresaId and n.status in :statuses")
+    List<WhatsAppNotificacaoEntity> findByEmpresaIdAndStatusIn(@Param("empresaId") Long empresaId, @Param("statuses") List<WhatsAppStatusNotificacao> statuses);
+
     /**
      * Claim transacional da fila: somente um worker obtem cada notificacao
      * (FOR UPDATE SKIP LOCKED funciona no PostgreSQL e no H2 de teste).

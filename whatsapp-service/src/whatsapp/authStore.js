@@ -33,6 +33,16 @@ class FileAuthStateStore {
     return useMultiFileAuthState(dir);
   }
 
+  async listCompanies() {
+    try {
+      const entries = await fs.promises.readdir(this.baseDir, { withFileTypes: true });
+      return entries.filter(e => e.isDirectory()).map(e => e.name);
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
+  }
+
   async clear(companyId) {
     await fs.promises.rm(this.dirFor(companyId), { recursive: true, force: true });
   }

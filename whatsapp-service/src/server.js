@@ -23,12 +23,25 @@ const sessions = new SessionManager({
   maxAttempts: config.reconnectMaxAttempts,
 });
 
+// Restauracao automatica de sessoes persistidas apos boot.
+fs.readdirSync(config.sessionsDir).forEach((companyId) => {
+  if (fs.statSync(require('path').join(config.sessionsDir, companyId)).isDirectory()) {
+    sessions.connect(companyId).catch((err) => {
+      console.error(`[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: ${err.message}`);
+    });
+  }
+});
+
 const server = http.createServer(createApp({
   sessions,
   messageSender: new MessageSender({
     sendFn: ({ companyId, recipient, text }) => sessions.sendText(companyId, recipient, text),
   }),
 }));
+
+sessions.initialize().catch(err => {
+  console.error('[whatsapp-service] erro fatal na inicializacao das sessoes:', err.message);
+});
 
 server.on('clientError', (err, socket) => {
   console.error('[whatsapp-service] erro de protocolo HTTP:', err.message);

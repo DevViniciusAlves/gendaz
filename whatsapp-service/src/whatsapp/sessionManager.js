@@ -87,6 +87,21 @@ class SessionManager {
 
   // ---- API publica (companyId ja validado ou validado aqui) ----
 
+  async initialize() {
+    this.log.info('[whatsapp-service] inicializando sessoes persistidas...');
+    try {
+      const companies = await this.authStore.listCompanies();
+      for (const companyId of companies) {
+        this.log.info(`[whatsapp-service] restaurando sessao empresa=${companyId}`);
+        await this.connect(companyId).catch(err => {
+          this.log.error(`[whatsapp-service] erro ao restaurar sessao empresa=${companyId}: ${err.message}`);
+        });
+      }
+    } catch (err) {
+      this.log.error(`[whatsapp-service] falha ao listar empresas para restauracao: ${err.message}`);
+    }
+  }
+
   async connect(rawCompanyId) {
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {

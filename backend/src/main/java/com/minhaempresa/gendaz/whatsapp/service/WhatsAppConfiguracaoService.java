@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -36,6 +37,7 @@ public class WhatsAppConfiguracaoService {
     private final WhatsAppConfiguracaoRepository configuracaoRepository;
     private final EmpresaRepository empresaRepository;
     private final AssinaturaService assinaturaService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private WhatsAppConfiguracaoService self;
 
@@ -85,35 +87,45 @@ public class WhatsAppConfiguracaoService {
                 throw new BusinessException("WhatsApp nao disponivel no plano atual.");
             }
         }
+        boolean resultado = false;
         for (int tentativa = 0; tentativa < 3; tentativa++) {
             Optional<WhatsAppConfiguracaoEntity> atual = self.buscarNova(empresaId);
             if (atual.isPresent()) {
-                return self.salvarValorNovo(atual.get().getId(), ativo);
+                resultado = self.salvarValorNovo(atual.get().getId(), ativo);
+                break;
             }
             try {
-                return self.criarNova(empresaId, ativo).isLembretesAtivos();
+                resultado = self.criarNova(empresaId, ativo).isLembretesAtivos();
+                break;
             } catch (DataIntegrityViolationException duplicada) {
                 // Outra transacao criou primeiro: rele na proxima rodada.
             }
         }
-        throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
+        if (ativo) {
+            eventPublisher.publishEvent(new LembretesAtivadosEvent(empresaId));
+        }
+        return resultado;
     }
 
     @Transactional
     public String definirLembreteTemplate(Long empresaId, String template) {
         String normalizado = normalizarTemplate(template);
+        String resultado = null;
         for (int tentativa = 0; tentativa < 3; tentativa++) {
             Optional<WhatsAppConfiguracaoEntity> atual = self.buscarNova(empresaId);
             if (atual.isPresent()) {
-                return self.salvarTemplateNovo(atual.get().getId(), normalizado);
+                resultado = self.salvarTemplateNovo(atual.get().getId(), normalizado);
+                break;
             }
             try {
-                return self.criarNovaComTemplate(empresaId, normalizado).getLembreteTemplate();
+                resultado = self.criarNovaComTemplate(empresaId, normalizado).getLembreteTemplate();
+                break;
             } catch (DataIntegrityViolationException duplicada) {
                 // Outra transacao criou primeiro: rele na proxima rodada.
             }
         }
-        throw new BusinessException("Nao foi possivel salvar a configuracao. Tente novamente.");
+        eventPublisher.publishEvent(new TemplateAlteradoEvent(empresaId, resultado));
+        return resultado;
     }
 
     private String normalizarTemplate(String template) {
@@ -171,4 +183,7 @@ public class WhatsAppConfiguracaoService {
         entidade.setLembreteTemplate(template);
         return configuracaoRepository.save(entidade).getLembreteTemplate();
     }
+
+    public record LembretesAtivadosEvent(Long empresaId) {}
+    public record TemplateAlteradoEvent(Long empresaId, String template) {}
 }
