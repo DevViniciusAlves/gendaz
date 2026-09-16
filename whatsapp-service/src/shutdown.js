@@ -4,12 +4,13 @@
 // Ordem proposital:
 //  1. trava de execucao unica (shuttingDown);
 //  2. server.close() primeiro — para de aceitar novas conexoes;
-//  3. sessions.shutdownAll() depois — encerra sockets/timers SEM logout;
-//  4. authStore.flushAll() — aguarda writes pendentes de auth;
-//  5. authStore.close() — encerra pool PostgreSQL.
+//  3. worker.stop — garante que nenhum novo ciclo use o PostgreSQL
+//  4. sessions.shutdownAll() depois — encerra sockets/timers SEM logout;
+//  5. authStore.flushAll() — aguarda writes pendentes de auth;
+//  6. authStore.close() — encerra pool PostgreSQL.
 // Erros sao logados apenas com err.message (sem dados sensiveis).
 
-function createShutdown({ server, sessions, authStore, log = console } = {}) {
+function createShutdown({ server, sessions, authStore, worker, log = console } = {}) {
   if (!server || !sessions) {
     throw new Error('createShutdown requer server e sessions');
   }
@@ -44,17 +45,30 @@ function createShutdown({ server, sessions, authStore, log = console } = {}) {
           });
         });
         
-        // PASSO 2: Encerrar sessoes (fecha sockets SEM logout)
-        if (typeof sessions.shutdownAll === 'function') {
+        // PASSO 2: Encerrar worker (se existir) — garante que nenhum novo ciclo use o PostgreSQL
+        if (worker && typeof worker.stop === 'function') {
           try {
-            await sessions.shutdownAll();
-          } catch (sessionErr) {
-            log.error('[whatsapp-service] erro ao encerrar sessões:', sessionErr && sessionErr.message);
+            await worker.stop();
+          } catch (workerErr) {
+            log.error(
+              '[whatsapp-service] erro ao parar worker:',
+              workerErr && workerErr.message
+            );
             process.exitCode = 1;
           }
         }
         
-        // PASSO 3: Fluxo de writes pendentes de auth
+        // PASSO 3: Encerrar sessoes (fecha sockets SEM logout)
+        if (typeof sessions.shutdownAll === 'function') {
+          try {
+            await sessions.shutdownAll();
+          } catch (sessionErr) {
+            log.error('[whatsapp-service] erro ao encerrar sessoes:', sessionErr && sessionErr.message);
+            process.exitCode = 1;
+          }
+        }
+        
+        // PASSO 4: Fluxo de writes pendentes de auth
         if (authStore && typeof authStore.flushAll === 'function') {
           try {
             await authStore.flushAll();
@@ -64,7 +78,7 @@ function createShutdown({ server, sessions, authStore, log = console } = {}) {
           }
         }
         
-        // PASSO 4: Fechar pool PostgreSQL
+        // PASSO 5: Fechar pool PostgreSQL
         if (authStore && typeof authStore.close === 'function') {
           try {
             await authStore.close();
@@ -74,7 +88,7 @@ function createShutdown({ server, sessions, authStore, log = console } = {}) {
           }
         }
         
-        log.log('[whatsapp-service] encerrado com sucesso');
+        log.log('[whatsapp-service] encerrado');
       } catch (err) {
         log.error('[whatsapp-service] erro inesperado no shutdown:', err && err.message);
         process.exitCode = 1;

@@ -49,7 +49,9 @@ public class WhatsAppEntregaService {
         /** Sem notificacao nem condicao de confirmar (ex.: FALHOU/CANCELADO). */
         IGNORADO,
         /** Empresa desconhecida ou payload invalido. */
-        INVALIDO
+        INVALIDO,
+        /** Falha tecnica/transitoria: callback deve ser repetido posteriormente. */
+        ERRO_TRANSITORIO
     }
 
     private final WhatsAppNotificacaoRepository notificacaoRepository;
@@ -82,7 +84,7 @@ public class WhatsAppEntregaService {
         } catch (Exception e) {
             log.error("[whatsapp-entrega] falha ao persistir receipt. erroTipo={}",
                     e.getClass().getSimpleName());
-            return ResultadoEntrega.IGNORADO;
+            return ResultadoEntrega.ERRO_TRANSITORIO;
         }
         try {
             return self.confirmarEntrega(empresaId, providerMessageId);
@@ -90,7 +92,7 @@ public class WhatsAppEntregaService {
             return self.verificarAposConflito(empresaId, providerMessageId);
         } catch (Exception e) {
             log.error("[whatsapp-entrega] falha ao confirmar. erroTipo={}", e.getClass().getSimpleName());
-            return ResultadoEntrega.IGNORADO;
+            return ResultadoEntrega.ERRO_TRANSITORIO;
         }
     }
 

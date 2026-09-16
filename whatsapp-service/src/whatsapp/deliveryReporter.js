@@ -20,6 +20,7 @@ class DeliveryReporter {
   constructor({
     backendUrl = '',
     internalToken = '',
+    outbox = null,
     fetchFn = fetch,
     ttlMs = DEFAULT_TTL_MS,
     maxEntries = DEFAULT_MAX_ENTRIES,
@@ -27,6 +28,7 @@ class DeliveryReporter {
   } = {}) {
     this.backendUrl = (backendUrl || '').trim().replace(/\/+$/, '');
     this.internalToken = (internalToken || '').trim();
+    this.outbox = outbox;
     this.fetchFn = fetchFn;
     this.ttlMs = ttlMs;
     this.maxEntries = maxEntries;
@@ -109,13 +111,74 @@ class DeliveryReporter {
       return { ok: false, reason: 'invalid_args' };
     }
     if (!this.configured()) {
-      this.log.warn('[whatsapp-service] delivery callback ignorado: backend/token nao configurado');
-      return { ok: false, reason: 'not_configured' };
+      if (this.outbox) {
+        try {
+          const persisted = await this.outbox.recordDelivery(companyId, messageId);
+
+          this.markReported(companyId, messageId);
+
+          return {
+            ok: true,
+            deduplicated: persisted && persisted.isNew === false,
+            queued: true,
+          };
+        } catch (err) {
+          this.log.warn(
+            `[whatsapp-service] falha ao persistir delivery outbox company=${companyId} messageIdPresent=true erro=${err && err.message ? err.message : 'error'}`
+          );
+
+          // Não marcar como reported aqui.
+          // A gravação durável falhou.
+          //
+          // Preservar o comportamento atual como fallback:
+          // se backendUrl/token estiverem configurados, continuar para o POST direto.
+          if (this.backendUrl && this.internalToken) {
+            // Fallthrough to HTTP direct below
+          } else {
+            return { ok: false, reason: 'not_configured' };
+          }
+        }
+      } else {
+        this.log.warn('[whatsapp-service] delivery callback ignorado: backend/token nao configurado');
+        return { ok: false, reason: 'not_configured' };
+      }
     }
     if (this.alreadyReported(companyId, messageId)) {
       this.log.log(`[whatsapp-service] delivery company=${companyId} messageIdPresent=true duplicate=true ignorado`);
       return { ok: true, deduplicated: true };
     }
+
+    if (this.outbox) {
+      try {
+        const persisted = await this.outbox.recordDelivery(companyId, messageId);
+
+        this.markReported(companyId, messageId);
+
+        return {
+          ok: true,
+          deduplicated: persisted && persisted.isNew === false,
+          queued: true,
+        };
+      } catch (err) {
+        this.log.warn(
+          `[whatsapp-service] falha ao persistir delivery outbox company=${companyId} messageIdPresent=true erro=${err && err.message ? err.message : 'error'}`
+        );
+
+        // Não marcar como reported aqui.
+        // A gravação durável falhou.
+        //
+        // Preservar o comportamento atual como fallback:
+        // se backendUrl/token estiverem configurados, continuar para o POST direto.
+        if (this.backendUrl && this.internalToken) {
+          // Fallthrough to HTTP direct below
+        } else {
+          return { ok: false, reason: 'not_configured' };
+        }
+      }
+      // NÃO executar POST direto quando outbox persistiu com sucesso
+      return { ok: true, deduplicated: true, queued: true };
+    }
+
     const url = `${this.backendUrl}/internal/whatsapp/delivery`;
     try {
       const res = await this.fetchFn(url, {
@@ -138,9 +201,9 @@ class DeliveryReporter {
     } catch (err) {
       const code = (err && err.code) || (err && err.message) || 'error';
       this.log.warn(`[whatsapp-service] delivery callback erro company=${companyId} messageIdPresent=true erro=${code}`);
-      return { ok: false, reason: 'fetch_error' };
-    }
-  }
+return { ok: false, reason: 'fetch_error' };
+}
+}
 }
 
 module.exports = { DeliveryReporter, DEFAULT_TTL_MS, DEFAULT_MAX_ENTRIES };

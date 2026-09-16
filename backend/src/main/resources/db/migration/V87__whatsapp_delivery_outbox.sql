@@ -5,7 +5,7 @@
 CREATE TABLE IF NOT EXISTS whatsapp_delivery_outbox (
     id BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL,
-    provider_message_id VARCHAR(255) NOT NULL,
+    provider_message_id VARCHAR(120) NOT NULL,
     state VARCHAR(50) NOT NULL DEFAULT 'PENDING',  -- PENDING, PROCESSING, DONE, DEAD
     attempt_count INTEGER NOT NULL DEFAULT 0,
     last_attempt_at TIMESTAMP,
@@ -25,5 +25,3 @@ CREATE INDEX idx_outbox_state_next_attempt ON whatsapp_delivery_outbox(state, ne
     
 CREATE INDEX idx_outbox_company_id ON whatsapp_delivery_outbox(company_id);
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON whatsapp_delivery_outbox TO :databaseUser;
-GRANT USAGE, SELECT ON SEQUENCE whatsapp_delivery_outbox_id_seq TO :databaseUser;

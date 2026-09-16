@@ -80,6 +80,8 @@ public class WhatsAppDeliveryCallbackController {
                         ResponseEntity.status(202).body(Map.of("status", "pending"));
                 case INVALIDO -> ResponseEntity.status(400).body(Map.of("error", "invalid_company_id"));
                 case IGNORADO -> ResponseEntity.ok(Map.of("status", "ignored"));
+                case ERRO_TRANSITORIO ->
+                        ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
             };
 } catch (Exception e) {
             // Erro na persistencia: BD indisponivel ou erro tecnico.

@@ -20,6 +20,7 @@ const { FileAuthStateStore, PostgresAuthStateStore } = require('./whatsapp/authS
 const { SessionManager } = require('./whatsapp/sessionManager');
 const { MessageSender } = require('./whatsapp/messageSender');
 const { DeliveryReporter } = require('./whatsapp/deliveryReporter');
+const { DeliveryOutbox } = require('./whatsapp/deliveryOutbox');
 const { createSocket } = require('./whatsapp/socketFactory');
 const { createShutdown } = require('./shutdown');
 const { createWorker } = require('./whatsapp/deliveryOutboxWorker');
@@ -27,10 +28,11 @@ const { createWorker } = require('./whatsapp/deliveryOutboxWorker');
 // Reporter unico do processo: dedup em memoria + POST ao backend Spring.
 // Falha no callback nunca derruba o socket (DeliveryReporter nunca rejeita
 // de forma fatal; o listener ainda envolve em catch por defesa).
-function buildDeliveryReporter() {
+function buildDeliveryReporter(outbox = null) {
   return new DeliveryReporter({
     backendUrl: config.backendUrl,
     internalToken: config.internalToken,
+    outbox,
   });
 }
 
@@ -107,8 +109,13 @@ async function main() {
     });
   }
 
+  const outbox = sharedPool
+    ? new DeliveryOutbox({ pool: sharedPool })
+    : null;
+
   const authStore = buildAuthStore(sharedPool);
-  const sessions = buildSessions(null, authStore);
+  const deliveryReporter = buildDeliveryReporter(outbox);
+  const sessions = buildSessions(deliveryReporter, authStore);
   const server = await bootstrap({ sessions, app: buildApp(sessions), port: config.port });
   console.log(`[whatsapp-service] ouvindo na porta ${config.port}`);
   if (!config.internalToken) {
@@ -125,11 +132,11 @@ async function main() {
 
   process.on('SIGTERM', async () => {
     await shutdown('SIGTERM');
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   });
   process.on('SIGINT', async () => {
     await shutdown('SIGINT');
-    process.exit(0);
+    process.exit(process.exitCode || 0);
   });
   process.on('unhandledRejection', (reason) => {
     // So message/codigo: nunca despejar o objeto (pode conter auth/keys).

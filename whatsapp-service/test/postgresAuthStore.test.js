@@ -145,6 +145,11 @@ describe('PostgresAuthStateStore', () => {
     result.state.creds.me = { id: '5511999999999@lid', name: 'Test' };
     await result.saveCreds();
 
+    const row = pool.tables.whatsapp_auth_sessions.get('empresa-1');
+    assert.ok(row);
+    assert.equal(typeof row.payload, 'string');
+    assert.ok(row.payload.length > 0);
+
     const loaded = await store.load('empresa-1');
     assert.equal(loaded.state.creds.registered, true);
     assert.equal(loaded.state.creds.me.id, '5511999999999@lid');

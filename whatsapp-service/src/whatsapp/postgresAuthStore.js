@@ -192,7 +192,13 @@ class PostgresAuthStateStore {
       },
       saveCreds: async () => {
         const serialized = serializeForStorage(creds);
-        const payload = encryptPayload(store.encKey, Buffer.from(serialized, 'utf8'));
+
+        const encryptedEnvelope = encryptPayload(
+          store.encKey,
+          Buffer.from(serialized, 'utf8')
+        );
+
+        const payload = encodeEncryptedPayload(encryptedEnvelope);
         const registeredFlag = Boolean(creds.registered);
         const client = await store.pool.connect();
         try {

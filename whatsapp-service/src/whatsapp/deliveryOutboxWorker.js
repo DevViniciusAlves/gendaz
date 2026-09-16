@@ -79,12 +79,15 @@ class DeliveryOutboxWorker {
       const row = selectResult.rows[0];
       
       // Marcar como PROCESSING com lease
-      await client.query(
+      const updateResult = await client.query(
         `UPDATE whatsapp_delivery_outbox
          SET state = 'PROCESSING', locked_until = NOW() + INTERVAL '60 seconds', attempt_count = attempt_count + 1, updated_at = NOW()
-         WHERE id = $1`,
+         WHERE id = $1
+         RETURNING attempt_count`,
         [row.id]
       );
+
+      row.attempt_count = Number(updateResult.rows[0].attempt_count);
 
       await client.query('COMMIT');
 
@@ -125,7 +128,7 @@ class DeliveryOutboxWorker {
         method: 'POST',
         headers,
         body: payload,
-        timeout: 30000
+        signal: AbortSignal.timeout(30000)
       });
 
       const responseText = await response.text();
@@ -239,6 +242,10 @@ function createWorker(pool) {
   }
   const backendUrl = process.env.GENDAZ_BACKEND_URL ? process.env.GENDAZ_BACKEND_URL.trim() : '';
   const internalToken = process.env.WHATSAPP_INTERNAL_TOKEN ? process.env.WHATSAPP_INTERNAL_TOKEN.trim() : '';
+
+  if (!backendUrl || !internalToken) {
+    return null;
+  }
 
   return new DeliveryOutboxWorker({
     pool,
