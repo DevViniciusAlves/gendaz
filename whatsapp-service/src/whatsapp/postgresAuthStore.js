@@ -131,7 +131,7 @@ class PostgresAuthStateStore {
             const client = await store.pool.connect();
             try {
               const keyHashes = ids.map(id => computeKeyHash(store.indexKey, type, id));
-              const placeholders = keyHashes.map((_, i) => `$${i + 2}`).join(',');
+              const placeholders = keyHashes.map((_, i) => `$${i + 3}`).join(',');
               const result = await client.query(
                 `SELECT key_hash, payload FROM whatsapp_auth_keys WHERE company_id = $1 AND key_type = $2 AND key_hash IN (${placeholders})`,
                 [companyId, type, ...keyHashes]

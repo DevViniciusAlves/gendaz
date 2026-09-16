@@ -13,7 +13,11 @@ function createMockPool() {
     whatsapp_auth_sessions: new Map(),
     whatsapp_auth_keys: new Map(),
   };
+  let lastSql = [];
+  let lastParams = [];
   const executeQuery = async (sql, params) => {
+    lastSql.push(sql);
+    lastParams.push(params);
     let inTransaction = false;
     const txData = { sessions: new Map(), keys: new Map() };
     // We need to handle transactions specially - for simplicity, we'll execute directly
@@ -106,7 +110,7 @@ function createMockPool() {
     return { rows: [] };
   };
 
-  return {
+  const poolLike = {
     tables,
     query: executeQuery,
     connect: async () => ({
@@ -115,6 +119,9 @@ function createMockPool() {
     }),
     end: async () => {},
   };
+  Object.defineProperty(poolLike, 'lastSql', { get: () => lastSql, configurable: true, enumerable: true });
+  Object.defineProperty(poolLike, 'lastParams', { get: () => lastParams, configurable: true, enumerable: true });
+  return poolLike;
 }
 
 function createEncryptionKey() {
@@ -358,4 +365,61 @@ describe('PostgresAuthStateStore', () => {
       /invalid_ciphertext|unsupported_payload_version|Unsupported state or unable to authenticate data/
     );
   });
+
+  it('keys.get with 2 keys produces correct placeholders $3,$4', async () => {
+    const result = await store.load('empresa-test-keys');
+    result.state.creds.registered = true;
+    await result.saveCreds();
+
+    await result.state.keys.set({
+      'pre-key': { 'key-a': { data: 'key-data-a' }, 'key-b': { data: 'key-data-b' } },
+    });
+
+    const got = await result.state.keys.get('pre-key', ['key-a', 'key-b']);
+    assert.ok(got['key-a']);
+    assert.ok(got['key-b']);
+
+    const lastIdx = pool.lastSql.length - 1;
+    const sql = pool.lastSql[lastIdx];
+    const params = pool.lastParams[lastIdx];
+
+    assert.ok(sql.includes('company_id = $1'), 'SQL deve conter company_id = $1');
+    assert.ok(sql.includes('key_type = $2'), 'SQL deve conter key_type = $2');
+    assert.ok(sql.includes('key_hash IN ($3,$4)'), 'SQL deve conter key_hash IN ($3,$4)');
+
+    assert.strictEqual(params.length, 4, `params length deve ser 4, foi ${params.length}`);
+    assert.strictEqual(params[0], 'empresa-test-keys', `params[0] deve ser companyId, foi ${params[0]}`);
+    assert.strictEqual(params[1], 'pre-key', `params[1] deve ser 'pre-key', foi ${params[1]}`);
+    assert.ok(typeof params[2] === 'string', `params[2] deve ser string (primeiro hash)`);
+    assert.ok(typeof params[3] === 'string', `params[3] deve ser string (segundo hash)`);
+    assert.ok(params[2].length > 0, `params[2] deve ser hash nao vazio`);
+    assert.ok(params[3].length > 0, `params[3] deve ser hash nao vazio`);
+  });
+
+  it('keys.get with 1 key produces correct placeholder $3', async () => {
+    const result = await store.load('empresa-test-single-key');
+    result.state.creds.registered = true;
+    await result.saveCreds();
+
+    await result.state.keys.set({
+      'pre-key': { 'single-key': { data: 'key-data-single' } },
+    });
+
+    const got = await result.state.keys.get('pre-key', ['single-key']);
+    assert.ok(got['single-key']);
+
+    const lastIdx = pool.lastSql.length - 1;
+    const sql = pool.lastSql[lastIdx];
+    const params = pool.lastParams[lastIdx];
+
+    assert.ok(sql.includes('company_id = $1'), 'SQL deve conter company_id = $1');
+    assert.ok(sql.includes('key_type = $2'), 'SQL deve conter key_type = $2');
+    assert.ok(sql.includes('key_hash IN ($3)'), 'SQL deve conter key_hash IN ($3) para 1 key');
+
+    assert.strictEqual(params.length, 3, `params length deve ser 3, foi ${params.length}`);
+    assert.strictEqual(params[0], 'empresa-test-single-key', `params[0] deve ser companyId`);
+    assert.strictEqual(params[1], 'pre-key', `params[1] deve ser 'pre-key'`);
+    assert.ok(typeof params[2] === 'string', `params[2] deve ser string (hash)`);
+    assert.ok(params[2].length > 0, `params[2] deve ser hash nao vazio`);
+});
 });

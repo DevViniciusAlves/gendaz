@@ -35,7 +35,7 @@ function managerWithCompanies(companies, created, log) {
 }
 
 describe('bootstrap', () => {
-  it('aguarda initialize terminar antes do listen', async () => {
+  it('listen acontece antes do initialize terminar', async () => {
     const ordem = [];
     let liberarInit;
     const initGate = new Promise((resolve) => { liberarInit = resolve; });
@@ -56,25 +56,25 @@ describe('bootstrap', () => {
         server.close();
       },
     });
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    // initialize ainda pendente: listen NAO pode ter acontecido.
-    assert.deepEqual(ordem, ['init-inicio']);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    assert.equal(ordem[0], 'listen');
     liberarInit();
     await prometido;
-    assert.deepEqual(ordem, ['init-inicio', 'init-fim', 'listen']);
+    assert.deepEqual(ordem, ['listen', 'init-inicio', 'init-fim']);
   });
 
   it('apos bootstrap, sessoes restauradas sem estado falso', async () => {
     const created = [];
     const sessions = managerWithCompanies(['empresa-a', 'empresa-b'], created);
     const app = (req, res) => res.end('ok');
-    const server = await bootstrap({
+    const result = await bootstrap({
       sessions,
       app,
       port: 0,
       listen: async (srv) => { srv.close(); },
     });
-    assert.ok(server);
+    assert.ok(result.server);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     assert.equal(created.length, 2);
     assert.equal(sessions.status('empresa-a').state, 'CONNECTING');
     assert.equal(sessions.status('empresa-b').state, 'CONNECTING');
@@ -100,29 +100,27 @@ describe('bootstrap', () => {
       log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
     });
     const app = (req, res) => res.end('ok');
-    await bootstrap({ sessions, app, port: 0, listen: async (srv) => { srv.close(); } });
-    // B restaurou (1 socket); A ficou DISCONNECTED sem contaminar B.
+    const result = await bootstrap({ sessions, app, port: 0, listen: async (srv) => { srv.close(); } });
+    assert.ok(result.server);
+    await new Promise((resolve) => setTimeout(resolve, 50));
     assert.equal(created.length, 1);
     assert.equal(sessions.status('empresa-a').state, 'DISCONNECTED');
     assert.equal(sessions.status('empresa-b').state, 'CONNECTING');
     await sessions.shutdownAll();
   });
 
-  it('erro inesperado no initialize impede abrir a porta', async () => {
-    let listenChamado = false;
+  it('falha inesperada em initialize nao derruba o servidor HTTP', async () => {
     const sessions = {
       initialize: async () => { throw new Error('falha-infra'); },
     };
-    await assert.rejects(
-      bootstrap({
-        sessions,
-        app: (req, res) => res.end('ok'),
-        port: 0,
-        listen: async (server) => { listenChamado = true; server.close(); },
-      }),
-      /falha-infra/
-    );
-    assert.equal(listenChamado, false);
+    const result = await bootstrap({
+      sessions,
+      app: (req, res) => res.end('ok'),
+      port: 0,
+      listen: async (server) => { server.close(); },
+    });
+    assert.ok(result.server);
+    await result.initializationPromise.catch(() => {});
   });
 
   it('initialize e idempotente e nao duplica sockets', async () => {

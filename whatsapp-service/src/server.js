@@ -1,9 +1,9 @@
 'use strict';
 
 // Ponto de entrada: sobe o servidor HTTP na porta configurada.
-// O HTTP so comeca a aceitar requests DEPOIS que SessionManager.initialize()
-// termina o restore das sessoes persistidas: sem essa ordem, um status
-// consultado no boot poderia retornar NOT_CONNECTED incorretamente.
+// O HTTP comeca a aceitar requests ANTES de SessionManager.initialize()
+// terminar o restore das sessoes persistidas: assim o /health e status
+// ficam disponiveis durante o cold start, evitando 502 no Render.
 // Nunca loga tokens, QR ou segredos — apenas porta e estado.
 
 const fs = require('fs');
@@ -79,26 +79,33 @@ function buildApp(sessions) {
   });
 }
 
-// Bootstrap testavel: faz o restore completo primeiro e so depois abre a
-// porta, para nao servir estado intermediario falso (ex.: NOT_CONNECTED
-// antes do restore). Falha em UMA sessao nao derruba as outras
-// (SessionManager.initialize loga por empresa e continua); erro inesperado
-// do initialize propaga e a porta nem abre.
 async function bootstrap({ sessions, app, port, listen = (server, p) => new Promise((resolve) => {
   server.listen(p, resolve);
 }) }) {
-  await sessions.initialize();
   const server = http.createServer(app);
   server.on('clientError', (err, socket) => {
     console.error('[whatsapp-service] erro de protocolo HTTP:', err.message);
     socket.end('HTTP/1.1 400 Bad Request\r\n\r\n');
   });
   await listen(server, port);
-  return server;
+
+  const initializationPromise = Promise.resolve()
+    .then(() => sessions.initialize())
+    .catch((err) => {
+      console.error(
+        '[whatsapp-service] falha no restore inicial. erroTipo=' +
+          (err && err.name ? err.name : 'Error'),
+      );
+    });
+
+  initializationPromise.then(() => {
+    // restore concluido — status ja disponivel durante todo o processo
+  });
+
+  return { server, initializationPromise };
 }
 
 async function main() {
-  // Criar pool PostgreSQL compartilhado
   let sharedPool = null;
   if (config.databaseUrl) {
     sharedPool = new Pool({
@@ -122,7 +129,6 @@ async function main() {
     console.log('[whatsapp-service] aviso: WHATSAPP_INTERNAL_TOKEN nao configurado; endpoints internos ficarao bloqueados');
   }
 
-  // Iniciar worker de outbox
   const worker = sharedPool ? createWorker(sharedPool) : null;
   if (worker) {
     worker.start();
@@ -139,7 +145,6 @@ async function main() {
     process.exit(process.exitCode || 0);
   });
   process.on('unhandledRejection', (reason) => {
-    // So message/codigo: nunca despejar o objeto (pode conter auth/keys).
     const seguro = reason instanceof Error ? reason.message : String(reason);
     console.error('[whatsapp-service] promessa rejeitada sem tratamento:', seguro);
   });

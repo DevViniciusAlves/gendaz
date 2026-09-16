@@ -326,10 +326,109 @@ assert.equal(h.manager.status('empresa-A').state, STATES.CONNECTING);
     assert.equal(h.manager.status('empresa-shutdown').state, STATES.RECONNECTING);
 
     await h.manager.shutdownAll();
-    // Verifica que flush foi chamado (sem erro)
-    // Verifica que nao houve logout nem clear
     assert.equal(h.created[0].logoutCalls, 0);
     assert.equal(h.created[1].logoutCalls, 0);
     assert.deepEqual(h.stats().clears, []);
+  });
+
+  it('CASO A: listCompanies lanca erro -> initialize nao rejeita, nao cria QR', async () => {
+    const created = [];
+    const store = {
+      load: async () => ({ state: { creds: { registered: true } }, saveCreds: async () => {} }),
+      clear: async () => {},
+      listCompanies: async () => { throw new Error('db-down'); },
+      hasRegisteredSession: async () => false,
+      flush: async () => {},
+      flushAll: async () => {},
+      close: async () => {},
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => { created.push({}); return {}; },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await assert.doesNotReject(manager.initialize());
+    assert.equal(created.length, 0);
+  });
+
+  it('CASO B: restore empresa-1 falha -> empresa-2 ainda recebe tentativa', async () => {
+    const created = [];
+    const store = {
+      load: async (companyId) => {
+        if (companyId === 'empresa-a') {
+          throw new Error('auth-corrompido');
+        }
+        return { state: { creds: { registered: true } }, saveCreds: async () => {} };
+      },
+      clear: async () => {},
+      listCompanies: async () => ['empresa-a', 'empresa-b'],
+      hasRegisteredSession: async () => true,
+      flush: async () => {},
+      flushAll: async () => {},
+      close: async () => {},
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => { created.push({}); return { ev: { on: () => {} }, end: async () => {}, logout: async () => {} }; },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await manager.initialize();
+    assert.equal(created.length, 1);
+    assert.equal(manager.status('empresa-b').state, STATES.CONNECTING);
+    await manager.shutdownAll();
+  });
+
+  it('CASO C: registered=true -> ensureConnected recupera sem QR manual', async () => {
+    h = makeHarness();
+    h.setHasRegistered('empresa-recovered', true);
+    await h.manager.connect('empresa-recovered');
+    await sleep(5);
+    assert.equal(h.created.length, 1);
+    const statusBefore = h.manager.status('empresa-recovered');
+    assert.equal(statusBefore.state, STATES.CONNECTING);
+  });
+
+  it('CASO D: registered=false -> status NAO auto-connecta', async () => {
+    h = makeHarness();
+    h.setHasRegistered('empresa-sem-reg', false);
+    const record = h.manager.getRecord('empresa-sem-reg');
+    record.state = STATES.DISCONNECTED;
+    record.reconnectAttempts = 0;
+    const beforeCreated = h.created.length;
+    await h.manager.ensureConnected('empresa-sem-reg', 'status');
+    assert.equal(h.created.length, beforeCreated);
+  });
+
+  it('CASO E: shutdown durante initialize pendente impede novo socket', async () => {
+    const created = [];
+    const store = {
+      load: async () => ({ state: { creds: { registered: true } }, saveCreds: async () => {} }),
+      clear: async () => {},
+      listCompanies: async () => ['empresa-x'],
+      hasRegisteredSession: async () => true,
+      flush: async () => {},
+      flushAll: async () => {},
+      close: async () => {},
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => { created.push({}); return { ev: { on: () => {} }, end: async () => {}, logout: async () => {} }; },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await manager.initialize();
+    await manager.shutdownAll();
+    assert.equal(manager._shuttingDown, true);
+    const record = manager.getRecord('empresa-x');
+    const newSock = manager.connect('empresa-x');
+    assert.ok(newSock);
   });
 });

@@ -78,6 +78,7 @@ class SessionManager {
     this.log = log;
     this.sessions = new Map(); // companyId -> record
     this._writeQueues = new Map(); // companyId -> Promise chain
+    this._shuttingDown = false;
   }
 
   getRecord(companyId) {
@@ -140,7 +141,9 @@ class SessionManager {
     try {
       companies = await this.authStore.listCompanies();
     } catch (err) {
-      this.log.error(`[whatsapp-service] falha ao listar sessoes persistidas: ${err.message}`);
+      this.log.error(
+        `[whatsapp-service] falha ao listar sessoes persistidas: erroTipo=${err && err.name ? err.name : 'Error'}`
+      );
       return;
     }
     for (const companyId of companies) {
@@ -148,12 +151,18 @@ class SessionManager {
       try {
         await this.connect(companyId);
       } catch (err) {
-        this.log.error(`[whatsapp-service] falha ao restaurar sessao empresa=${record.companyId}: ${err.message}`);
+        this.log.error(
+          `[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: erroTipo=${err && err.name ? err.name : 'Error'}`
+        );
       }
     }
   }
 
   async connect(rawCompanyId) {
+    if (this._shuttingDown) {
+      const record = this.getRecord(rawCompanyId);
+      return record;
+    }
     const companyId = normalizeCompanyId(rawCompanyId);
     if (!companyId) {
       throw Object.assign(new Error('invalid_company_id'), { code: 'invalid_company_id' });
@@ -355,6 +364,9 @@ class SessionManager {
   }
 
   async establish(record) {
+    if (this._shuttingDown) {
+      return record;
+    }
     const gen = (record.generation += 1);
     this.clearTimer(record);
     await this.closeSocketQuietly(record.sock);
@@ -545,6 +557,7 @@ class SessionManager {
   // todos os sockets com end(). NAO faz logout() e NAO apaga auth state,
   // para que as sessoes possam ser restauradas no proximo boot.
   async shutdownAll() {
+    this._shuttingDown = true;
     const records = [...this.sessions.values()];
     this.sessions.clear();
     // Aguarda writes pendentes antes de encerrar

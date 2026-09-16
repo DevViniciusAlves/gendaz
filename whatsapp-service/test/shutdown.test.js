@@ -150,4 +150,30 @@ describe('createShutdown', () => {
     const allLogs = f.logs.join('\n');
     assert.equal(allLogs.includes('SEGREDO_NAO_LOGAR'), false);
   });
+
+  it('shutdown define _shuttingDown para impedir novos sockets', async () => {
+    const f = makeFakes();
+    let shuttingDownValue = false;
+    const sessions = {
+      shutdownCalls: 0,
+      _shuttingDown: false,
+      async shutdownAll() {
+        this.shutdownCalls += 1;
+        this._shuttingDown = true;
+        shuttingDownValue = true;
+        f.order.push('shutdownAll');
+      }
+    };
+    const shutdown = createShutdown({
+      server: f.server,
+      sessions,
+      authStore: f.authStore,
+      worker: f.worker,
+      log: f.log
+    });
+
+    await shutdown('SIGTERM');
+    assert.equal(shuttingDownValue, true);
+    assert.equal(sessions._shuttingDown, true);
+  });
 });
