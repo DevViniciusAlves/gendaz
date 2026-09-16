@@ -98,6 +98,8 @@ class SessionManager {
         connectingPromise: null,
         lastRecoveryAttempt: 0,
         writePromise: Promise.resolve(),
+        auth: null,
+        restoreMode: false,
       };
       this.sessions.set(companyId, record);
     }
@@ -138,6 +140,7 @@ class SessionManager {
   async initialize() {
     this.log.info('[whatsapp-service] inicializando sessoes persistidas...');
     let companies = [];
+    let persisted = [];
     try {
       companies = await this.authStore.listCompanies();
     } catch (err) {
@@ -146,10 +149,26 @@ class SessionManager {
       );
       return;
     }
-    for (const companyId of companies) {
-      this.log.info(`[whatsapp-service] restaurando sessao empresa=${companyId}`);
+    // Compatibilidade legacy: sessoes com registered=false ja persistidas
+    if (typeof this.authStore.listPersistedCompanies === 'function') {
       try {
-        await this.connect(companyId);
+        persisted = await this.authStore.listPersistedCompanies();
+      } catch (err) {
+        this.log.error(
+          `[whatsapp-service] falha ao listar sessoes persistidas (legacy): erroTipo=${err && err.name ? err.name : 'Error'}`
+        );
+        persisted = [];
+      }
+    }
+    const registeredSet = new Set(companies);
+    const legacy = persisted.filter((c) => !registeredSet.has(c));
+    // Ordem: primeiro registradas, depois legacy (restore silencioso)
+    const all = [...companies, ...legacy];
+    for (const companyId of all) {
+      const isLegacy = legacy.includes(companyId);
+      this.log.info(`[whatsapp-service] restaurando sessao empresa=${companyId}${isLegacy ? ' (legacy)' : ''}`);
+      try {
+        await this.connect(companyId, { isRestore: isLegacy });
       } catch (err) {
         this.log.error(
           `[whatsapp-service] falha ao restaurar sessao empresa=${companyId}: erroTipo=${err && err.name ? err.name : 'Error'}`
@@ -158,7 +177,7 @@ class SessionManager {
     }
   }
 
-  async connect(rawCompanyId) {
+  async connect(rawCompanyId, options = {}) {
     if (this._shuttingDown) {
       const record = this.getRecord(rawCompanyId);
       return record;
@@ -175,8 +194,9 @@ class SessionManager {
     ) {
       return record;
     }
+    const isRestore = Boolean(options.isRestore);
     if (!record.connectingPromise) {
-      record.connectingPromise = this.establish(record).finally(() => {
+      record.connectingPromise = this.establish(record, { isRestore }).finally(() => {
         record.connectingPromise = null;
       });
     }
@@ -310,6 +330,8 @@ class SessionManager {
     record.sock = null;
     record.qr = null;
     record.qrUpdatedAt = null;
+    record.auth = null;
+    record.restoreMode = false;
     if (sock) {
       try {
         await sock.logout();
@@ -363,7 +385,7 @@ class SessionManager {
     }
   }
 
-  async establish(record) {
+  async establish(record, options = {}) {
     if (this._shuttingDown) {
       return record;
     }
@@ -380,6 +402,7 @@ class SessionManager {
     record.qr = null;
     record.qrUpdatedAt = null;
     record.state = STATES.CONNECTING;
+    record.restoreMode = Boolean(options.isRestore);
 
     let auth;
     try {
@@ -396,6 +419,8 @@ class SessionManager {
     if (this._shuttingDown || gen !== record.generation) {
       return record;
     }
+
+    record.auth = auth;
 
     let sock;
     try {
@@ -467,17 +492,51 @@ class SessionManager {
     const { connection, qr, lastDisconnect } = update;
 
     if (qr) {
+      // Em modo restore de legacy (registered=false), nunca expor QR automaticamente
+      if (record.restoreMode) {
+        const creds = record.auth && record.auth.state && record.auth.state.creds;
+        const isLegacyRestore = creds && !creds.registered;
+        if (isLegacyRestore) {
+          this.log.warn(`[whatsapp-service] empresa=${record.companyId} QR suprimido em restore legacy; encerrando tentativa automatica`);
+          record.qr = null;
+          record.qrUpdatedAt = null;
+          // Encerra socket da tentativa automatica e deixa DISCONNECTED aguardando manual
+          record.generation += 1;
+          const oldSock = record.sock;
+          record.sock = null;
+          record.restoreMode = false;
+          this.clearTimer(record);
+          await this.closeSocketQuietly(oldSock);
+          record.state = STATES.DISCONNECTED;
+          return;
+        }
+      }
       record.qr = qr;
       record.qrUpdatedAt = new Date().toISOString();
     }
 
     if (connection === 'open') {
+      // Prova de autenticacao: persistir registered=true de forma coordenada
+      try {
+        const creds = record.auth && record.auth.state && record.auth.state.creds;
+        if (creds && !creds.registered) {
+          creds.registered = true;
+          const authToSave = record.auth;
+          // usa fila serializada existente (fire-and-forget, nao bloqueia transicao para CONNECTED)
+          this._enqueueWrite(record.companyId, () => authToSave.saveCreds()).catch((err) => {
+            this.log.error(`[whatsapp-service] falha ao persistir registered empresa=${record.companyId}: ${err.message}`);
+          });
+        }
+      } catch (err) {
+        this.log.error(`[whatsapp-service] falha ao persistir registered empresa=${record.companyId}: ${err.message}`);
+      }
       record.state = STATES.CONNECTED;
       record.qr = null;
       record.qrUpdatedAt = null;
       record.connectedAt = new Date().toISOString();
       record.reconnectAttempts = 0;
       record.lastDisconnectCode = null;
+      record.restoreMode = false;
       this.clearTimer(record);
       this.log.log(`[whatsapp-service] empresa=${record.companyId} CONNECTED`);
       return;
@@ -496,6 +555,7 @@ class SessionManager {
     record.lastDisconnectCode = code;
     record.qr = null;
     record.qrUpdatedAt = null;
+    record.restoreMode = false;
     const oldSock = record.sock;
     record.sock = null;
 
@@ -583,6 +643,8 @@ class SessionManager {
         record.sock = null;
         record.qr = null;
         record.qrUpdatedAt = null;
+        record.auth = null;
+        record.restoreMode = false;
         await this.closeSocketQuietly(sock);
       })
     );

@@ -71,17 +71,23 @@ export default function WhatsAppIntegracoes() {
 
   const carregar = useCallback(async ({ silencioso = false } = {}) => {
     limparTimerRetry()
+
     if (!silencioso) {
       setCarregando(true)
+      setErro('')
     }
-    setErro('')
+
     try {
       const dados = await buscarResumoWhatsapp()
       setResumo(dados)
       ultimoErroRef.current = null
+      setErro('')
     } catch (err) {
       ultimoErroRef.current = err
-      setErro(err?.response?.data?.mensagem || 'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.')
+      setErro(
+        err?.response?.data?.mensagem ||
+        'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.'
+      )
     } finally {
       setCarregando(false)
     }

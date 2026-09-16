@@ -6,6 +6,7 @@
 //   load(companyId)  -> Promise<{ state, saveCreds }>  (formato do Baileys)
 //   clear(companyId) -> Promise<void>                   (remove credenciais)
 //   listCompanies()  -> Promise<string[]>               (empresas com sessao registrada)
+//   listPersistedCompanies() -> Promise<string[]>       (todas as empresas com sessao persistida, inclusive legacy registered=false)
 //   hasRegisteredSession(companyId) -> Promise<boolean> (verifica se tem sessao valida)
 //   flush(companyId) -> Promise<void>                   (aguarda writes pendentes)
 //   flushAll()       -> Promise<void>                   (aguarda todos os writes)
@@ -40,6 +41,16 @@ class FileAuthStateStore {
   }
 
   async listCompanies() {
+    try {
+      const entries = await fs.promises.readdir(this.baseDir, { withFileTypes: true });
+      return entries.filter(e => e.isDirectory()).map(e => e.name);
+    } catch (err) {
+      if (err.code === 'ENOENT') return [];
+      throw err;
+    }
+  }
+
+  async listPersistedCompanies() {
     try {
       const entries = await fs.promises.readdir(this.baseDir, { withFileTypes: true });
       return entries.filter(e => e.isDirectory()).map(e => e.name);

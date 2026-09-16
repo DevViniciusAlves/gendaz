@@ -238,6 +238,13 @@ class PostgresAuthStateStore {
     return result.rows.map(r => r.company_id);
   }
 
+  async listPersistedCompanies() {
+    const result = await this.pool.query(
+      'SELECT company_id FROM whatsapp_auth_sessions'
+    );
+    return result.rows.map(r => r.company_id);
+  }
+
   async hasRegisteredSession(companyId) {
     const result = await this.pool.query(
       'SELECT 1 FROM whatsapp_auth_sessions WHERE company_id = $1 AND registered = true',
