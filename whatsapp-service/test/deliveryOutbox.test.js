@@ -10,13 +10,12 @@ function createMockPool() {
     query: async (sql, params) => {
       const upperSql = sql.trim().toUpperCase();
 
-      // INSERT INTO whatsapp_delivery_outbox ... RETURNING id, state
-      if (upperSql.includes('INSERT INTO whatsapp_delivery_outbox') && upperSql.includes('RETURNING')) {
+      // INSERT INTO whatsapp_delivery_outbox ON CONFLICT (company_id, provider_message_id) DO NOTHING RETURNING id, state
+      if (upperSql.includes('ON CONFLICT (COMPANY_ID, PROVIDER_MESSAGE_ID) DO NOTHING RETURNING')) {
         const companyId = params[0];
         const providerMessageId = params[1];
         const key = `${companyId}:${providerMessageId}`;
 
-        // Verifica se ja existe (ON CONFLICT DO NOTHING)
         if (insertedRows.has(key)) {
           // Ja existia, ON CONFLICT DO NOTHING retorna rows vazios
           return { rows: [] };
@@ -37,17 +36,30 @@ function createMockPool() {
         };
       }
 
-      // INSERT INTO whatsapp_delivery_outbox ON CONFLICT ... DO NOTHING RETURNING...
-      if (upperSql.includes('ON CONFLICT DO NOTHING RETURNING')) {
+      // INSERT INTO whatsapp_delivery_outbox ... RETURNING id, state (sem ON CONFLICT, insert novo)
+      if (upperSql.includes('INSERT INTO whatsapp_delivery_outbox') && upperSql.includes('RETURNING') && !upperSql.includes('ON CONFLICT')) {
         const companyId = params[0];
         const providerMessageId = params[1];
         const key = `${companyId}:${providerMessageId}`;
 
         if (insertedRows.has(key)) {
+          // Ja existia (deveria ser pegado pelo ON CONFLICT acima, mas por segurança)
           return { rows: [] };
         }
+
+        // Primeiro registro
         insertedRows.set(key, true);
-        return { rows: [{ id: 1, company_id: companyId, provider_message_id: providerMessageId, state: 'PENDING' }] };
+        return {
+          rows: [{
+            id: 1,
+            company_id: companyId,
+            provider_message_id: providerMessageId,
+            state: 'PENDING',
+            attempt_count: 0,
+            created_at: new Date(),
+            updated_at: new Date()
+          }]
+        };
       }
 
       // SELECT from whatsapp_delivery_outbox WHERE company_id
@@ -107,6 +119,7 @@ describe('DeliveryOutbox', () => {
     const outbox = new DeliveryOutbox({ pool, log: { log: () => {}, warn: () => {}, error: () => {}, info: () => {} } });
 
     const result = await outbox.recordDelivery('empresa-1', 'msg-1');
+    console.log('DEBUG: result.isNew =', result.isNew, 'result.rows.length would be', result.isNew ? 1 : 0);
 
     assert.equal(result.isNew, true);
     assert.equal(result.id, 1);
