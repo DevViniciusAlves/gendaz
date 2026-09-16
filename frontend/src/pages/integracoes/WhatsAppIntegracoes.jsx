@@ -13,13 +13,7 @@ function emitirToast(type, message) {
   window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
 
-// Cold start: consulta o resumo a cada 5s por no máximo 90s.
-const RETRY_INTERVAL_MS = 5000
-const RETRY_MAX_MS = 90000
 const MSG_SERVICO_INDISPONIVEL = 'Serviço WhatsApp temporariamente indisponível. Tente novamente.'
-const ESTADO_TRANSITORIO = 'UNAVAILABLE'
-const ESTADOS_RECONECTANDO = ['CONNECTING', 'RECONNECTING']
-const ESTADOS_ESTAVEIS = ['CONNECTED', 'NOT_CONNECTED', 'LOGGED_OUT', 'NOT_CONFIGURED']
 
 function ehErroTransitorio(err) {
   if (!err) return false
@@ -44,40 +38,18 @@ export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const [reconectando, setReconectando] = useState(false)
-  const [retryEsgotado, setRetryEsgotado] = useState(false)
+  const reconectando = false
+  const retryEsgotado = false
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
-  const [retryRevision, setRetryRevision] = useState(0)
-  const timerRef = useRef(null)
-  const retryStartedAtRef = useRef(null)
   const ultimoErroRef = useRef(null)
 
-  const limparTimerRetry = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-  }, [])
-
-  const resetarRetry = useCallback(() => {
-    limparTimerRetry()
-    retryStartedAtRef.current = null
-    setReconectando(false)
-    setRetryEsgotado(false)
-  }, [limparTimerRetry])
-
-  const carregar = useCallback(async ({ silencioso = false } = {}) => {
-    limparTimerRetry()
-
-    if (!silencioso) {
-      setCarregando(true)
-      setErro('')
-    }
-
+  const carregar = useCallback(async () => {
+    setCarregando(true)
+    setErro('')
     try {
       const dados = await buscarResumoWhatsapp()
       setResumo(dados)
@@ -91,16 +63,10 @@ export default function WhatsAppIntegracoes() {
       )
     } finally {
       setCarregando(false)
-      if (silencioso) {
-        setRetryRevision((v) => v + 1)
-      }
     }
-  }, [limparTimerRetry])
+  }, [])
 
   function tentarNovamente() {
-    limparTimerRetry()
-    retryStartedAtRef.current = null
-    setRetryEsgotado(false)
     carregar()
   }
 
@@ -154,50 +120,8 @@ export default function WhatsAppIntegracoes() {
     return null
   }
 
-  useEffect(() => {
-    if (carregando) return
-
-    const estadoAtual = resumo?.conexao?.estado
-    const errAtual = ultimoErroRef.current
-    const transitorioEstado = estadoAtual === ESTADO_TRANSITORIO
-    const transitorioErro = Boolean(erro) && ehErroTransitorio(errAtual)
-    const definitivo = ehErroDefinitivo(errAtual)
-    const emRecuperacaoServidor = ESTADOS_RECONECTANDO.includes(estadoAtual)
-    const estavel = ESTADOS_ESTAVEIS.includes(estadoAtual) && !transitorioErro
-
-    if (definitivo || (estavel && !emRecuperacaoServidor)) {
-      resetarRetry()
-      return
-    }
-
-    const precisaAcompanhar = transitorioEstado || transitorioErro || emRecuperacaoServidor
-    if (!precisaAcompanhar) {
-      resetarRetry()
-      return
-    }
-
-    if (retryStartedAtRef.current == null) {
-      retryStartedAtRef.current = Date.now()
-    }
-
-    const decorrido = Date.now() - retryStartedAtRef.current
-    if (decorrido >= RETRY_MAX_MS) {
-      limparTimerRetry()
-      setReconectando(false)
-      setRetryEsgotado(true)
-      return
-    }
-
-    setReconectando(true)
-    setRetryEsgotado(false)
-    const espera = Math.min(RETRY_INTERVAL_MS, RETRY_MAX_MS - decorrido)
-    timerRef.current = setTimeout(() => {
-      carregar({ silencioso: true })
-    }, espera)
-    return limparTimerRetry
-  }, [carregando, erro, resumo, retryRevision, carregar, limparTimerRetry, resetarRetry])
-
-  useEffect(() => () => limparTimerRetry(), [limparTimerRetry])
+  // Polling removido: GET /api/whatsapp/resumo ocorre apenas na carga inicial.
+  // Polling temporário durante conexão ativa é responsabilidade exclusiva do WhatsAppModal.
 
   const mostrarErroAssustador = Boolean(erro) && (!ehErroTransitorio(ultimoErroRef.current) || retryEsgotado)
 
