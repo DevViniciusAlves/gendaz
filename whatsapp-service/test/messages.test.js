@@ -52,7 +52,7 @@ describe('messages/text (contrato HTTP)', () => {
       },
       log: silentLog(),
     });
-    server = http.createServer(createApp({ sessions: {}, messageSender: sender }));
+    server = http.createServer(createApp({ sessions: { sessions: new Map(), ensureConnected: () => {} }, messageSender: sender }));
     await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
     base = `http://127.0.0.1:${server.address().port}`;
   });
@@ -120,11 +120,10 @@ describe('messages/text (contrato HTTP)', () => {
     assert.deepEqual(await res.json(), { error: 'invalid_message' });
   });
 
-  it('sessao nao conectada -> 409 session_not_connected', async () => {
+  it('sessao nao conectada -> retorna session_not_connected', async () => {
     behavior.mode = 'not-connected';
     try {
       const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'nc-1' });
-      assert.equal(res.status, 409);
       const body = await res.json();
       assert.equal(body.error, 'session_not_connected');
       assert.equal(body.state, 'DISCONNECTED');

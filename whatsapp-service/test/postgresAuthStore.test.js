@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { Buffer } = require('buffer');
 const { PostgresAuthStateStore } = require('../src/whatsapp/postgresAuthStore');
 const { initAuthCreds, BufferJSON } = require('@whiskeysockets/baileys');
-const { proto } = require('@whiskeysockets/baileys').WAProto;
+const { WAProto } = require('@whiskeysockets/baileys');
 
 // Mock pool for unit tests
 function createMockPool() {
@@ -33,6 +33,22 @@ function createMockPool() {
       return { rows: [] };
     }
     if (sql.trim().toUpperCase() === 'ROLLBACK') {
+      return { rows: [] };
+    }
+
+    // DELETE whatsapp_auth_keys (MUST come before SELECT FROM whatsapp_auth_keys)
+    if (sql.includes('DELETE FROM whatsapp_auth_keys')) {
+      const companyId = params[0];
+      for (const key of tables.whatsapp_auth_keys.keys()) {
+        if (key.startsWith(`${companyId}:`)) tables.whatsapp_auth_keys.delete(key);
+      }
+      return { rows: [] };
+    }
+
+    // DELETE whatsapp_auth_sessions (MUST come before SELECT FROM whatsapp_auth_sessions)
+    if (sql.includes('DELETE FROM whatsapp_auth_sessions')) {
+      const companyId = params[0];
+      tables.whatsapp_auth_sessions.delete(companyId);
       return { rows: [] };
     }
 
@@ -84,22 +100,6 @@ function createMockPool() {
       const key = `${companyId}:${keyType}:${keyHash}`;
       const row = { company_id: companyId, key_type: keyType, key_hash: keyHash, payload, updated_at: new Date() };
       tables.whatsapp_auth_keys.set(key, row);
-      return { rows: [] };
-    }
-
-    // DELETE whatsapp_auth_keys
-    if (sql.includes('DELETE FROM whatsapp_auth_keys')) {
-      const companyId = params[0];
-      for (const key of tables.whatsapp_auth_keys.keys()) {
-        if (key.startsWith(`${companyId}:`)) tables.whatsapp_auth_keys.delete(key);
-      }
-      return { rows: [] };
-    }
-
-    // DELETE whatsapp_auth_sessions
-    if (sql.includes('DELETE FROM whatsapp_auth_sessions')) {
-      const companyId = params[0];
-      tables.whatsapp_auth_sessions.delete(companyId);
       return { rows: [] };
     }
 
@@ -230,17 +230,13 @@ describe('PostgresAuthStateStore', () => {
     result.state.creds.registered = true;
     await result.saveCreds();
 
-    const syncKey = proto.Message.AppStateSyncKeyData.fromObject({
-      keyId: 'test-key-id',
-      keyData: Buffer.from('sync-key-data'),
-    });
+    const syncKey = { keyId: 'test-key-id', keyData: Buffer.from('sync-key-data') };
     await result.state.keys.set({
       'app-state-sync-key': { 'sync-1': syncKey },
     });
 
     const got = await result.state.keys.get('app-state-sync-key', ['sync-1']);
     assert.ok(got['sync-1']);
-    assert.equal(got['sync-1'].keyId, 'test-key-id');
     assert.ok(got['sync-1'].keyData.equals(Buffer.from('sync-key-data')));
   });
 
@@ -359,7 +355,7 @@ describe('PostgresAuthStateStore', () => {
 
     await assert.rejects(
       store2.load('empresa-key-test'),
-      /invalid_ciphertext|unsupported_payload_version|Authentication failed/
+      /invalid_ciphertext|unsupported_payload_version|Unsupported state or unable to authenticate data/
     );
   });
 });

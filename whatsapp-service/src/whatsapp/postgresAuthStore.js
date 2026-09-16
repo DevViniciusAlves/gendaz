@@ -4,7 +4,8 @@ const { Pool } = require('pg');
 const { createCipheriv, createDecipheriv, randomBytes, createHmac, timingSafeEqual } = require('crypto');
 const { BufferJSON } = require('@whiskeysockets/baileys').Utils || require('@whiskeysockets/baileys/lib/Utils/generics.js');
 const { initAuthCreds } = require('@whiskeysockets/baileys').Utils || require('@whiskeysockets/baileys/lib/Utils/auth-utils.js');
-const { proto } = require('@whiskeysockets/baileys').WAProto || require('@whiskeysockets/baileys/lib/WAProto/index.js');
+const { WAProto } = require('@whiskeysockets/baileys');
+const proto = WAProto;
 
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
