@@ -105,8 +105,16 @@ class DeliveryOutboxWorker {
   }
 
   async _postToSpring(row) {
-    if (!this.backendUrl) {
-      this.log.warn('[delivery-worker] backendUrl nao configurada, ignorando callback');
+    if (!this.backendUrl || !this.internalToken) {
+      this.log.warn(
+        '[delivery-worker] configuracao incompleta, reagendando callback'
+      );
+
+      await this._handleRetry(
+        row,
+        'not_configured'
+      );
+
       return;
     }
 
