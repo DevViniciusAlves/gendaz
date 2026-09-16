@@ -12,79 +12,109 @@ function emitirToast(type, message) {
   if (typeof window === 'undefined') return
   window.dispatchEvent(new CustomEvent('gendaz:toast', { detail: { type, message } }))
 }
-// Retry controlado para indisponibilidade temporária (ex.: cold start do
-// Node no Render): cada request acorda o serviço; o estado se recupera
-// sozinho sem refresh manual. Limitado (sem keep-alive infinito) e sempre
-// com cleanup no unmount.
-const BACKOFF_RETRY_MS = [5000, 10000, 15000, 30000]
-// Transitório = falha de comunicação com o Node. Demais estados são
-// estáveis (precisam de ação do usuário ou de configuração).
+
+// Cold start: consulta o resumo a cada 5s por no máximo 90s.
+const RETRY_INTERVAL_MS = 5000
+const RETRY_MAX_MS = 90000
+const MSG_SERVICO_INDISPONIVEL = 'Serviço WhatsApp temporariamente indisponível. Tente novamente.'
 const ESTADO_TRANSITORIO = 'UNAVAILABLE'
-// Estados em que o servidor pode estar tentando reconectar automaticamente
 const ESTADOS_RECONECTANDO = ['CONNECTING', 'RECONNECTING']
+const ESTADOS_ESTAVEIS = ['CONNECTED', 'NOT_CONNECTED', 'LOGGED_OUT', 'NOT_CONFIGURED']
+
+function ehErroTransitorio(err) {
+  if (!err) return false
+  const status = err?.response?.status
+  const codigo = err?.response?.data?.code || err?.response?.data?.error
+  if (!err.response) return true
+  if (status === 502 || status === 503 || status === 504) return true
+  if (codigo === 'WHATSAPP_SERVICE_UNAVAILABLE') return true
+  return false
+}
+
+function ehErroDefinitivo(err) {
+  if (!err) return false
+  const status = err?.response?.status
+  const codigo = err?.response?.data?.code || err?.response?.data?.error
+  if (status === 401 || status === 403) return true
+  if (codigo === 'WHATSAPP_NOT_CONFIGURED') return true
+  return false
+}
 
 export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
   const [reconectando, setReconectando] = useState(false)
+  const [retryEsgotado, setRetryEsgotado] = useState(false)
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
   const timerRef = useRef(null)
-  const tentativaRef = useRef(0)
+  const retryStartedAtRef = useRef(null)
+  const ultimoErroRef = useRef(null)
 
-  const limparRetry = useCallback(() => {
+  const limparTimerRetry = useCallback(() => {
     if (timerRef.current) {
       clearTimeout(timerRef.current)
       timerRef.current = null
     }
   }, [])
 
+  const resetarRetry = useCallback(() => {
+    limparTimerRetry()
+    retryStartedAtRef.current = null
+    setReconectando(false)
+    setRetryEsgotado(false)
+  }, [limparTimerRetry])
+
   const carregar = useCallback(async ({ silencioso = false } = {}) => {
-    limparRetry()
+    limparTimerRetry()
     if (!silencioso) {
       setCarregando(true)
-      tentativaRef.current = 0
     }
     setErro('')
     try {
       const dados = await buscarResumoWhatsapp()
       setResumo(dados)
-      setReconectando(false)
-      tentativaRef.current = 0
+      ultimoErroRef.current = null
     } catch (err) {
+      ultimoErroRef.current = err
       setErro(err?.response?.data?.mensagem || 'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.')
     } finally {
       setCarregando(false)
     }
-  }, [limparRetry])
+  }, [limparTimerRetry])
+
+  function tentarNovamente() {
+    limparTimerRetry()
+    retryStartedAtRef.current = null
+    setRetryEsgotado(false)
+    carregar()
+  }
 
   useEffect(() => {
     carregar()
   }, [carregar])
 
   const estado = resumo?.conexao?.estado || 'UNAVAILABLE'
+  const indisponivelTemporario = estado === 'UNAVAILABLE'
   const conectando = estado === 'CONNECTING'
-  // Sessao em RECONNECTING (servidor) x retry de UI (estado `reconectando`):
-  // nomes distintos de proposito.
   const reconectandoSessao = estado === 'RECONNECTING'
   const conectado = estado === 'CONNECTED'
-  // Estados transitorios do servidor: CONNECTING e RECONNECTING devem
-  // continuar consultando até estabilizar em CONNECTED ou estado final
   const operando = conectando || reconectandoSessao || desconectando
   const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
 
   function abrirConexaoConfirmada() {
+    if (indisponivelTemporario || indisponivelAmbiente) return
     setConfirmarConectar(false)
     setModalAberto(true)
     setAutoConnectToken((valor) => valor + 1)
   }
 
   async function handleDesconectar() {
-    if (desconectando) return
+    if (desconectando || indisponivelTemporario) return
     setDesconectando(true)
     try {
       await desconectarWhatsapp()
@@ -105,39 +135,61 @@ export default function WhatsAppIntegracoes() {
   }
 
   function helperTexto() {
+    if (indisponivelTemporario && !retryEsgotado) return 'Iniciando serviço...'
+    if (indisponivelTemporario && retryEsgotado) return MSG_SERVICO_INDISPONIVEL
     if (indisponivelAmbiente) return 'A integração WhatsApp ainda não está disponível neste ambiente.'
     if (conectado) return null
     if (conectando) return 'Aguardando conclusão do pareamento no modal de configuração.'
     if (reconectandoSessao) return 'Tentando restabelecer a sessão automaticamente.'
     return null
   }
-  // Sai sozinho do estado temporário: nova consulta com backoff enquanto
-  // houver erro de comunicação ou estado UNAVAILABLE. Para em estado
-  // estável, ao esgotar as tentativas ou ao desmontar.
+
   useEffect(() => {
     if (carregando) return
-    const estadoAtual = resumo?.conexao?.estado
-    const transitorio = Boolean(erro) || estadoAtual === ESTADO_TRANSITORIO
-    const emRecuperacaoServidor = ESTADOS_RECONECTANDO.includes(estadoAtual)
-    if (!transitorio && !emRecuperacaoServidor) {
-      setReconectando(false)
-      tentativaRef.current = 0
-      return
-    }
-    const tentativa = tentativaRef.current
-    if (tentativa >= BACKOFF_RETRY_MS.length) {
-      setReconectando(false)
-      return
-    }
-    setReconectando(true)
-    timerRef.current = setTimeout(() => {
-      tentativaRef.current += 1
-      carregar({ silencioso: true })
-    }, BACKOFF_RETRY_MS[tentativa])
-    return limparRetry
-  }, [carregando, erro, resumo, carregar, limparRetry])
 
-  useEffect(() => () => limparRetry(), [limparRetry])
+    const estadoAtual = resumo?.conexao?.estado
+    const errAtual = ultimoErroRef.current
+    const transitorioEstado = estadoAtual === ESTADO_TRANSITORIO
+    const transitorioErro = Boolean(erro) && ehErroTransitorio(errAtual)
+    const definitivo = ehErroDefinitivo(errAtual)
+    const emRecuperacaoServidor = ESTADOS_RECONECTANDO.includes(estadoAtual)
+    const estavel = ESTADOS_ESTAVEIS.includes(estadoAtual) && !transitorioErro
+
+    if (definitivo || (estavel && !emRecuperacaoServidor)) {
+      resetarRetry()
+      return
+    }
+
+    const precisaAcompanhar = transitorioEstado || transitorioErro || emRecuperacaoServidor
+    if (!precisaAcompanhar) {
+      resetarRetry()
+      return
+    }
+
+    if (retryStartedAtRef.current == null) {
+      retryStartedAtRef.current = Date.now()
+    }
+
+    const decorrido = Date.now() - retryStartedAtRef.current
+    if (decorrido >= RETRY_MAX_MS) {
+      limparTimerRetry()
+      setReconectando(false)
+      setRetryEsgotado(true)
+      return
+    }
+
+    setReconectando(true)
+    setRetryEsgotado(false)
+    const espera = Math.min(RETRY_INTERVAL_MS, RETRY_MAX_MS - decorrido)
+    timerRef.current = setTimeout(() => {
+      carregar({ silencioso: true })
+    }, espera)
+    return limparTimerRetry
+  }, [carregando, erro, resumo, carregar, limparTimerRetry, resetarRetry])
+
+  useEffect(() => () => limparTimerRetry(), [limparTimerRetry])
+
+  const mostrarErroAssustador = Boolean(erro) && (!ehErroTransitorio(ultimoErroRef.current) || retryEsgotado)
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -150,24 +202,43 @@ export default function WhatsAppIntegracoes() {
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
       {carregando && !reconectando && <p className="wpp-muted">Carregando integração...</p>}
-      {!carregando && erro && (
+
+      {!carregando && erro && mostrarErroAssustador && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
           </div>
-          {reconectando
-            ? <p className="wpp-muted">Reconectando...</p>
-            : (
-              <>
-                <p className="form-error">{erro}</p>
-                <div className="integr-card-actions">
-                  <Button variant="secondary" type="button" onClick={() => carregar()}>Tentar novamente</Button>
-                </div>
-              </>
-            )}
+          <p className="form-error">{ehErroDefinitivo(ultimoErroRef.current) ? erro : MSG_SERVICO_INDISPONIVEL}</p>
+          <div className="integr-card-actions">
+            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
+          </div>
         </>
       )}
-      {!carregando && !erro && resumo && (
+
+      {!carregando && erro && !mostrarErroAssustador && (
+        <>
+          <div className="integr-card-status">
+            <StatusBadge status="UNAVAILABLE" />
+            <p className="wpp-muted">Iniciando serviço...</p>
+          </div>
+        </>
+      )}
+
+      {!carregando && !erro && resumo && indisponivelTemporario && (
+        <>
+          <div className="integr-card-status">
+            <StatusBadge status="UNAVAILABLE" />
+            <p className="wpp-muted">{retryEsgotado ? MSG_SERVICO_INDISPONIVEL : 'Iniciando serviço...'}</p>
+          </div>
+          {retryEsgotado && (
+            <div className="integr-card-actions">
+              <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
+            </div>
+          )}
+        </>
+      )}
+
+      {!carregando && !erro && resumo && estado !== 'UNAVAILABLE' && (
         <>
           <div className="integr-card-status">
             <StatusBadge status={estado} />
@@ -185,7 +256,7 @@ export default function WhatsAppIntegracoes() {
                 type="button"
                 variant={conectado ? 'secondary' : 'primary'}
                 onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
-                disabled={operando || indisponivelAmbiente}
+                disabled={operando || indisponivelAmbiente || indisponivelTemporario}
                 loading={desconectando}
                 title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
               >

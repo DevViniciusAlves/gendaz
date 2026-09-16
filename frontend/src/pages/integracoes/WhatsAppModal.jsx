@@ -225,6 +225,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   useEffect(() => {
     if (!open || !dados || pollRef.current || pareamentoExpirado) return
     const estadoAtual = dados?.conexao?.estado
+    if (estadoAtual === 'UNAVAILABLE' || estadoAtual === 'NOT_CONFIGURED') return
     if (estadoAtual === 'CONNECTING' || (dados?.conexao?.hasQr && estadoAtual !== 'CONNECTED')) {
       setConectando(true)
       setGerandoQr(true)
@@ -234,6 +235,10 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
 
   async function handleConectar() {
     setConfirmarConectar(false)
+    const estadoAtual = dados?.conexao?.estado
+    if (estadoAtual === 'UNAVAILABLE' || estadoAtual === 'NOT_CONFIGURED') {
+      return
+    }
     if (conectando) return
     setPareamentoExpirado(false)
     setConectando(true)
@@ -251,9 +256,11 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
 
   useEffect(() => {
     if (!open || !autoConnectToken || ultimoAutoConnectRef.current === autoConnectToken) return
+    const estadoAtual = dados?.conexao?.estado
+    if (estadoAtual === 'UNAVAILABLE' || estadoAtual === 'NOT_CONFIGURED') return
     ultimoAutoConnectRef.current = autoConnectToken
     handleConectar()
-  }, [open, autoConnectToken])
+  }, [open, autoConnectToken, dados])
 
   async function handleSalvarTemplate() {
     setSalvandoTemplate(true)
@@ -324,6 +331,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
   }
 
   const estado = dados?.conexao?.estado || 'UNAVAILABLE'
+  const indisponivelTemporario = estado === 'UNAVAILABLE'
   const disponivelNoPlano = dados ? Boolean(dados.disponivelNoPlano) : true
   const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
   const conectado = estado === 'CONNECTED'
@@ -385,27 +393,28 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
             <div className="wpp-status-block">
               <StatusBadge status={estado} />
               <p className="wpp-muted">
+                {indisponivelTemporario && 'Iniciando serviço...'}
                 {indisponivelAmbiente && 'A integração WhatsApp ainda não está disponível neste ambiente.'}
-                {!indisponivelAmbiente && conectado && 'Pronto para lembretes automáticos, Resgate e Reconexão.'}
-                {!indisponivelAmbiente && !conectado && estado !== 'CONNECTING' && estado !== 'RECONNECTING'
+                {!indisponivelTemporario && !indisponivelAmbiente && conectado && 'Pronto para lembretes automáticos, Resgate e Reconexão.'}
+                {!indisponivelTemporario && !indisponivelAmbiente && !conectado && estado !== 'CONNECTING' && estado !== 'RECONNECTING'
                   && 'Conecte o WhatsApp da empresa para utilizar lembretes automáticos, Resgate e Reconexão.'}
-                {estado === 'CONNECTING' && 'Aguardando leitura do QR Code...'}
-                {estado === 'RECONNECTING' && 'Tentando restabelecer a sessão. Não é preciso escanear novamente.'}
+                {!indisponivelTemporario && estado === 'CONNECTING' && 'Aguardando leitura do QR Code...'}
+                {!indisponivelTemporario && estado === 'RECONNECTING' && 'Tentando restabelecer a sessão. Não é preciso escanear novamente.'}
               </p>
             </div>
-            {!conectado && !emPareamento && estado !== 'RECONNECTING' && !indisponivelAmbiente && (
+            {!indisponivelTemporario && !conectado && !emPareamento && estado !== 'RECONNECTING' && !indisponivelAmbiente && (
               <Button type="button" onClick={() => setConfirmarConectar(true)} loading={conectando} loadingText="Conectando...">
                 Conectar WhatsApp
               </Button>
             )}
-            {conectado && (
+            {!indisponivelTemporario && conectado && (
               <Button variant="secondary" type="button" onClick={() => setConfirmarSaida(true)}>
                 Desconectar WhatsApp
               </Button>
             )}
           </div>
 
-          {emPareamento && !conectado && !pareamentoExpirado && (
+          {!indisponivelTemporario && emPareamento && !conectado && !pareamentoExpirado && (
             <div className="wpp-qr-box">
               {qr ? (
                 <>
@@ -418,7 +427,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
             </div>
           )}
 
-          {pareamentoExpirado && !conectado && (
+          {pareamentoExpirado && !conectado && !indisponivelTemporario && (
             <div className="wpp-qr-box">
               <p className="wpp-muted">O tempo para conexão expirou. Tente gerar um novo QR Code.</p>
               <Button type="button" onClick={() => setConfirmarConectar(true)} loading={conectando} loadingText="Conectando...">
@@ -445,8 +454,9 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               <span className="wpp-switch" aria-hidden="true" />
             </label>
           </div>
+          {indisponivelTemporario && <p className="wpp-helper">Iniciando serviço...</p>}
           {indisponivelAmbiente && <p className="wpp-helper">A integração precisa estar disponível para ativar os lembretes.</p>}
-          {!indisponivelAmbiente && !conectado && <p className="wpp-helper">Conecte o WhatsApp para ativar os lembretes automáticos.</p>}
+          {!indisponivelTemporario && !indisponivelAmbiente && !conectado && <p className="wpp-helper">Conecte o WhatsApp para ativar os lembretes automáticos.</p>}
           </section>
 
           <section className="wpp-section" aria-label="Mensagem do lembrete">

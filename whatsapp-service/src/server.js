@@ -123,7 +123,7 @@ async function main() {
   const authStore = buildAuthStore(sharedPool);
   const deliveryReporter = buildDeliveryReporter(outbox);
   const sessions = buildSessions(deliveryReporter, authStore);
-  const server = await bootstrap({ sessions, app: buildApp(sessions), port: config.port });
+  const { server } = await bootstrap({ sessions, app: buildApp(sessions), port: config.port });
   console.log(`[whatsapp-service] ouvindo na porta ${config.port}`);
   if (!config.internalToken) {
     console.log('[whatsapp-service] aviso: WHATSAPP_INTERNAL_TOKEN nao configurado; endpoints internos ficarao bloqueados');

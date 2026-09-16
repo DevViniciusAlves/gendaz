@@ -370,6 +370,12 @@ class SessionManager {
     const gen = (record.generation += 1);
     this.clearTimer(record);
     await this.closeSocketQuietly(record.sock);
+
+    // O shutdown pode ter começado durante o await acima.
+    if (this._shuttingDown || gen !== record.generation) {
+      return record;
+    }
+
     record.sock = null;
     record.qr = null;
     record.qrUpdatedAt = null;
@@ -379,7 +385,7 @@ class SessionManager {
     try {
       auth = await this.authStore.load(record.companyId);
     } catch (err) {
-      if (gen !== record.generation) {
+      if (this._shuttingDown || gen !== record.generation) {
         return record;
       }
       this.log.error(`[whatsapp-service] falha ao carregar auth empresa=${record.companyId}: ${err.message}`);
@@ -387,11 +393,15 @@ class SessionManager {
       return record;
     }
 
+    if (this._shuttingDown || gen !== record.generation) {
+      return record;
+    }
+
     let sock;
     try {
       sock = this.createSocket({ authState: auth.state });
     } catch (err) {
-      if (gen !== record.generation) {
+      if (this._shuttingDown || gen !== record.generation) {
         return record;
       }
       this.log.error(`[whatsapp-service] falha ao criar socket empresa=${record.companyId}: ${err.message}`);
@@ -524,6 +534,9 @@ class SessionManager {
   // maximo de tentativas. Um unico timer por empresa; ao esgotar, a sessao
   // fica DISCONNECTED aguardando connect manual. Nunca gera loop.
   scheduleRetry(record, gen, code) {
+    if (this._shuttingDown || gen !== record.generation) {
+      return;
+    }
     if (record.reconnectAttempts >= this.maxAttempts) {
       record.state = STATES.DISCONNECTED;
       this.log.warn(
@@ -541,7 +554,7 @@ class SessionManager {
     this.clearTimer(record);
     record.reconnectTimer = setTimeout(() => {
       record.reconnectTimer = null;
-      if (gen !== record.generation) {
+      if (this._shuttingDown || gen !== record.generation) {
         return;
       }
       this.establish(record).catch((err) => {

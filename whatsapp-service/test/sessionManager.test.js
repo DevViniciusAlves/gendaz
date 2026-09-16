@@ -343,7 +343,8 @@ describe('SessionManager', () => {
     const total = h.created.length;
     await sleep(80); // nenhum timer sobreviveu para criar sockets
     assert.equal(h.created.length, total);
-    // Sessao pode ser restaurada no proximo boot (mapa limpo, connect recria).
+    // Proximo boot: processo novo, _shuttingDown comeca falso.
+    h.manager._shuttingDown = false;
     await h.manager.connect('empresa-1');
     assert.equal(h.created.length, total + 1);
   });

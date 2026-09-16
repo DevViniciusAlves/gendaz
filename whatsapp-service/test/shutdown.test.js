@@ -177,3 +177,128 @@ describe('createShutdown', () => {
     assert.equal(sessions._shuttingDown, true);
   });
 });
+
+const { SessionManager } = require('../src/whatsapp/sessionManager');
+
+function deferred() {
+  let resolve;
+  const promise = new Promise((res) => { resolve = res; });
+  return { promise, resolve };
+}
+
+describe('SessionManager - race establish vs shutdownAll', () => {
+  it('shutdown durante authStore.load nao cria socket nem reconnect timer', async () => {
+    const rejections = [];
+    const onUnhandled = (reason) => { rejections.push(reason); };
+    process.on('unhandledRejection', onUnhandled);
+
+    const loadGate = deferred();
+    let loadStarted;
+    const loadStartedPromise = new Promise((resolve) => { loadStarted = resolve; });
+    const created = [];
+    const store = {
+      load: async () => {
+        loadStarted();
+        await loadGate.promise;
+        return { state: { creds: { registered: true } }, saveCreds: async () => {} };
+      },
+      clear: async () => {},
+      listCompanies: async () => [],
+      hasRegisteredSession: async () => true,
+      flush: async () => {},
+      flushAll: async () => {},
+      close: async () => {},
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => {
+        const sock = { ev: { on: () => {} }, end: async () => {}, logout: async () => {} };
+        created.push(sock);
+        return sock;
+      },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+
+    try {
+      const record = manager.getRecord('empresa-load-race');
+      const connectPromise = manager.connect('empresa-load-race');
+      await loadStartedPromise;
+      assert.equal(created.length, 0);
+      await manager.shutdownAll();
+      loadGate.resolve();
+      await connectPromise;
+      assert.equal(created.length, 0);
+      assert.equal(record.sock, null);
+      assert.equal(record.reconnectTimer, null);
+      assert.equal(rejections.length, 0);
+    } finally {
+      process.removeListener('unhandledRejection', onUnhandled);
+    }
+  });
+
+  it('shutdown durante closeSocketQuietly nao cria socket novo nem timer', async () => {
+    const rejections = [];
+    const onUnhandled = (reason) => { rejections.push(reason); };
+    process.on('unhandledRejection', onUnhandled);
+
+    const endGate = deferred();
+    let endStarted;
+    const endStartedPromise = new Promise((resolve) => { endStarted = resolve; });
+    const created = [];
+    const store = {
+      load: async () => ({ state: { creds: { registered: true } }, saveCreds: async () => {} }),
+      clear: async () => {},
+      listCompanies: async () => [],
+      hasRegisteredSession: async () => true,
+      flush: async () => {},
+      flushAll: async () => {},
+      close: async () => {},
+    };
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => {
+        const sock = {
+          ev: { on: () => {} },
+          end: async () => {
+            endStarted();
+            await endGate.promise;
+          },
+          logout: async () => {},
+        };
+        created.push(sock);
+        return sock;
+      },
+      baseDelayMs: 10,
+      maxDelayMs: 40,
+      maxAttempts: 3,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+
+    try {
+      await manager.connect('empresa-end-race');
+      assert.equal(created.length, 1);
+      const record = manager.getRecord('empresa-end-race');
+      record.state = 'DISCONNECTED';
+
+      const reconnectPromise = manager.connect('empresa-end-race');
+      await endStartedPromise;
+      assert.equal(created.length, 1);
+
+      const shutdownPromise = manager.shutdownAll();
+      endGate.resolve();
+      await reconnectPromise;
+      await shutdownPromise;
+
+      assert.equal(created.length, 1);
+      assert.equal(record.sock, null);
+      assert.equal(record.reconnectTimer, null);
+      assert.equal(rejections.length, 0);
+    } finally {
+      process.removeListener('unhandledRejection', onUnhandled);
+      endGate.resolve();
+    }
+  });
+});
