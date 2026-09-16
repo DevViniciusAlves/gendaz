@@ -196,6 +196,15 @@ describe('PostgresAuthStateStore', () => {
     const got = await result.state.keys.get('sender-key', ['session-1']);
     assert.ok(got['session-1']);
     assert.ok(got['session-1'].keyData.equals(Buffer.from('signal-key-data')));
+
+    // Validar payload armazenado no banco - iterar sobre linhas do whatsapp_auth_keys
+    const keyRow = Array.from(pool.tables.whatsapp_auth_keys.entries()).find(
+      ([key]) => key.startsWith('empresa-4:sender-key:')
+    );
+    assert.ok(keyRow, 'Linha da key sender-key deve existir no banco');
+    const [, row] = keyRow;
+    assert.equal(typeof row.payload, 'string', 'payload deve ser string');
+    assert.ok(row.payload.length > 0, 'payload nao deve estar vazio');
   });
 
   it('Signal key null -> delete', async () => {

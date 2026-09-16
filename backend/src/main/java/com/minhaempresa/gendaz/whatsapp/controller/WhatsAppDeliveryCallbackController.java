@@ -83,11 +83,11 @@ public class WhatsAppDeliveryCallbackController {
                 case ERRO_TRANSITORIO ->
                         ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
             };
-} catch (Exception e) {
+        } catch (Exception e) {
             // Erro na persistencia: BD indisponivel ou erro tecnico.
             // Retornar 503 para Node retry (nunca 200).
-            log.error("[whatsapp-delivery] erro ao persistir receipt. tipo={}, mensagem={}",
-                    e.getClass().getSimpleName(), e.getMessage());
+            log.error("[whatsapp-delivery] falha tecnica. erroTipo={}",
+                    e.getClass().getSimpleName());
             return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
         }
     }

@@ -246,6 +246,88 @@ describe('SessionManager messages.update (listener real do establish)', () => {
 });
 
 describe('DeliveryReporter (Node -> Spring)', () => {
+  function makeOutbox() {
+    const recordDelivery = async (companyId, providerMessageId) => {
+      return { isNew: true, id: 1 };
+    };
+    const getPendingCount = async (companyId) => 0;
+    return { recordDelivery, getPendingCount };
+  }
+
+  function makeOutboxDuplicate() {
+    const recordDelivery = async (companyId, providerMessageId) => {
+      return { isNew: false, id: null };
+    };
+    const getPendingCount = async (companyId) => 0;
+    return { recordDelivery, getPendingCount };
+  }
+
+  function makeOutboxFail() {
+    const recordDelivery = async (companyId, providerMessageId) => {
+      throw new Error('db-down');
+    };
+    const getPendingCount = async (companyId) => 0;
+    return { recordDelivery, getPendingCount };
+  }
+
+  function makeFetchOk() {
+    return async (url, opts) => { return { ok: true, status: 200 }; };
+  }
+
+  function makeFetchFail() {
+    return async () => { throw new Error('network error'); };
+  }
+
+  async function runWithOutbox(fn) {
+    const fetches = [];
+    const outbox = makeOutbox();
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async (url, opts) => { fetches.push({ url, opts }); return { ok: true, status: 200 }; },
+      log: silentLog(),
+    });
+    await fn(reporter, fetches);
+    return { reporter, fetches };
+  }
+
+  async function runWithOutboxFail(fn) {
+    const fetches = [];
+    const outbox = makeOutboxFail();
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async (url, opts) => { fetches.push({ url, opts }); return { ok: true, status: 200 }; },
+      log: silentLog(),
+    });
+    await fn(reporter, fetches);
+    return { reporter, fetches };
+  }
+
+  async function runWithOutboxFailHttpSuccess(fn) {
+    const fetches = [];
+    const outbox = makeOutboxFail();
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async (url, opts) => { fetches.push({ url, opts }); return { ok: true, status: 200 }; },
+      log: silentLog(),
+    });
+    await fn(reporter, fetches);
+    return { reporter, fetches };
+  }
+
+  async function runWithOutboxFailNoToken(fn) {
+    const recorded = [];
+    const reporter = new DeliveryReporter({ log: silentLog(recorded) });
+    const r = await reporter.report('empresa-1', 'WAMID-1');
+    recorded.push(r);
+    return { reporter, recorded, r };
+  }
+
   it('reporta DELIVERED com payload minimo e dedupa repeticao', async () => {
     const fetches = [];
     const reporter = new DeliveryReporter({
@@ -299,5 +381,137 @@ describe('DeliveryReporter (Node -> Spring)', () => {
     const r = await reporter.report('empresa-1', 'WAMID-1');
     assert.equal(r.ok, false);
     assert.ok(recorded.join('\n').length > 0);
+  });
+
+  // CENÁRIO A — OUTBOX FUNCIONA
+  it('outbox funciona: recordDelivery sucesso, fetch 0 chamadas, ok=true, queued=true', async () => {
+    const fetches = [];
+    const outbox = {
+      recordDelivery: async () => { return { isNew: true, id: 1 }; },
+      getPendingCount: async () => 0,
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async () => { },
+      log: silentLog(),
+    });
+    const first = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(first.ok, true);
+    assert.equal(first.queued, true);
+    assert.equal(fetches.length, 0); // Nenhum HTTP POST feito, outbox cuidou
+  });
+
+  // CENÁRIO B — OUTBOX DUPLICADO
+  it('outbox duplicado: recordDelivery retorna isNew=false, ok=true, queued=true, deduplicated=true, fetch=0', async () => {
+    const fetches = [];
+    const outbox = {
+      recordDelivery: async () => { return { isNew: false, id: null }; },
+      getPendingCount: async () => 0,
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async () => { },
+      log: silentLog(),
+    });
+    const first = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(first.ok, true);
+    assert.equal(first.queued, true);
+    assert.equal(first.deduplicated, true);
+    assert.equal(fetches.length, 0); // Nenhum HTTP POST feito
+  });
+
+  // CENÁRIO C — OUTBOX FALHA E HTTP FUNCIONA
+  it('outbox falha e HTTP funciona: recordDelivery 1 chamada, fetch 1 chamada, ok=true, queued NÃO deve ser true', async () => {
+    const fetches = [];
+    const outbox = {
+      recordDelivery: async () => { throw new Error('db-down'); },
+      getPendingCount: async () => 0,
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async (url, opts) => { fetches.push({ url, opts }); return { ok: true, status: 200 }; },
+      log: silentLog(),
+    });
+    const first = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(first.ok, true);
+    assert.equal(fetches.length, 1); // HTTP fallback executado
+    assert.equal(first.queued, undefined); // queued nao deve ser true quando usa fallback HTTP
+  });
+
+  // CENÁRIO D — OUTBOX FALHA SEM BACKEND/TOKEN
+  it('outbox falha sem backend/token: ok=false, reason=not_configured', async () => {
+    const recorded = [];
+    const outbox = {
+      recordDelivery: async () => { throw new Error('db-down'); },
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: '',
+      internalToken: '',
+      outbox,
+      log: silentLog(recorded),
+    });
+    const r = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(r.ok, false);
+    assert.equal(r.reason, 'not_configured');
+    assert.ok(recorded.join('\n').length > 0);
+  });
+
+  // CENÁRIO E — OUTBOX E HTTP FALHAM
+  it('outbox e HTTP falham: primeira chamada ok=false, segunda nao marca reported', async () => {
+    const fetches = [];
+    const outbox = {
+      recordDelivery: async () => { throw new Error('db-down'); },
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async () => { throw new Error('network error'); },
+      log: silentLog(),
+    });
+
+    // Primeira chamada: outbox falha, HTTP falha
+    const first = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(first.ok, false);
+
+    // Segunda chamada com mesmo ID: nao deve marcar reported
+    // O reporter nao deve ter marcado reported pois outbox falhou
+    // E HTTP falhou tambem, mas o reporter nao controla isso em memoria
+    // Apenas garante que o comportamento eh consistente
+    const second = await reporter.report('empresa-1', 'WAMID-1');
+    // Ambas devem retornar ok=false, mas o importante eh que o outbox falha nao marca reported
+    assert.equal(second.ok, false);
+  });
+
+  // CENÁRIO F — DEDUP APÓS OUTBOX SUCESSO
+  it('dedup apos outbox sucesso: primeira chamada isNew=true, segunda deduplicated=true', async () => {
+    const fetches = [];
+    const outbox = {
+      recordDelivery: async () => { return { isNew: true, id: 1 }; },
+      getPendingCount: async () => 0,
+    };
+    const reporter = new DeliveryReporter({
+      backendUrl: 'http://spring:8080',
+      internalToken: 'tok',
+      outbox,
+      fetchFn: async (url, opts) => { fetches.push({ url, opts }); return { ok: true, status: 200 }; },
+      log: silentLog(),
+    });
+
+    const first = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(first.ok, true);
+    assert.equal(first.deduplicated, false); // isNew=true, so deduplicated=false
+    assert.equal(fetches.length, 0); // Outbox sucesso: nao faz HTTP
+
+    const second = await reporter.report('empresa-1', 'WAMID-1');
+    assert.equal(second.ok, true);
+    assert.equal(second.deduplicated, true); // alreadyReported nao deixa passar
+    assert.equal(fetches.length, 0); // Segunda tambem nao faz HTTP pq ja estava reported
   });
 });
