@@ -1,8 +1,9 @@
 name: Wake WhatsApp STAGE - Lembretes
 
 on:
-  # TEMPORÁRIO PARA TESTE NA STAGE.
-  # Executa quando este próprio workflow for alterado na branch stage.
+  # TESTE SOMENTE NA STAGE.
+  # Sempre que este arquivo for alterado na stage,
+  # o workflow executa.
   push:
     branches:
       - stage
@@ -17,18 +18,27 @@ jobs:
   check-and-wake:
     name: Verificar lembretes e acordar STAGE
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 10
 
     steps:
-      - name: Verificar configuração do teste
+      - name: Validar branch
         run: |
-          echo "Branch: ${GITHUB_REF_NAME}"
+          set -euo pipefail
+
+          echo "Branch atual: ${GITHUB_REF_NAME}"
           echo "Evento: ${GITHUB_EVENT_NAME}"
 
           if [ "${GITHUB_REF_NAME}" != "stage" ]; then
-            echo "ERRO: este workflow de teste deve rodar somente na stage."
+            echo "ERRO: este workflow deve executar somente na branch stage."
             exit 1
           fi
+
+          echo "Branch STAGE validada."
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
 
       - name: Verificar lembretes próximos no Neon STAGE
         id: due
@@ -54,12 +64,16 @@ jobs:
             exit 1
           fi
 
-          # Spring usa jdbc:postgresql://...
-          # psql usa postgresql://...
+          # Converte:
+          # jdbc:postgresql://...
+          # para:
+          # postgresql://...
           DB_URL="${DB_URL#jdbc:}"
 
           export PGPASSWORD="$DB_PASSWORD"
-          export PGCONNECT_TIMEOUT=10
+          export PGCONNECT_TIMEOUT=15
+
+          echo "Conectando no Neon STAGE..."
 
           SQL="$(cat <<'SQL'
           WITH agora AS (
@@ -105,17 +119,20 @@ jobs:
           COUNT="$(echo "$COUNT" | tr -d '[:space:]')"
 
           if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
-            echo "ERRO: retorno inválido da consulta: $COUNT"
+            echo "ERRO: retorno inválido da consulta."
             exit 1
           fi
 
-          echo "Lembretes próximos/presos encontrados: $COUNT"
+          echo "Lembretes encontrados: $COUNT"
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Nenhum lembrete próximo
         if: steps.due.outputs.count == '0'
         run: |
-          echo "Nenhum lembrete precisa de processamento agora."
+          echo "========================================"
+          echo "NENHUM LEMBRETE PRÓXIMO"
+          echo "========================================"
+          echo "Não existe lembrete que precise ser processado agora."
           echo "WPP e Backend STAGE podem continuar hibernados."
 
       - name: Acordar WPP Service STAGE
@@ -125,21 +142,24 @@ jobs:
 
           URL="https://whatsapp-service-s3f2.onrender.com/health"
 
-          echo "Tentando acordar WPP STAGE..."
+          echo "========================================"
+          echo "ACORDANDO WPP SERVICE STAGE"
+          echo "========================================"
 
-          for tentativa in $(seq 1 12); do
+          for tentativa in $(seq 1 15); do
+
             HTTP_CODE="$(curl \
               -sS \
               -o /tmp/wpp-health.json \
               -w "%{http_code}" \
-              --connect-timeout 5 \
-              --max-time 10 \
+              --connect-timeout 8 \
+              --max-time 15 \
               "$URL" || true)"
 
-            echo "WPP tentativa=${tentativa}/12 HTTP=${HTTP_CODE:-000}"
+            echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
 
             if [ "$HTTP_CODE" = "200" ]; then
-              echo "WPP Service STAGE está online."
+              echo "WPP Service STAGE está ONLINE."
               cat /tmp/wpp-health.json || true
               exit 0
             fi
@@ -153,8 +173,8 @@ jobs:
       - name: Aguardar restauração da sessão WhatsApp
         if: steps.due.outputs.count != '0'
         run: |
-          echo "Aguardando SessionManager restaurar as sessões..."
-          sleep 15
+          echo "Aguardando restauração automática das sessões WhatsApp..."
+          sleep 20
 
       - name: Acordar Backend STAGE
         if: steps.due.outputs.count != '0'
@@ -163,21 +183,24 @@ jobs:
 
           URL="https://gendaz-stage.onrender.com/api/health"
 
-          echo "Tentando acordar Backend STAGE..."
+          echo "========================================"
+          echo "ACORDANDO BACKEND STAGE"
+          echo "========================================"
 
-          for tentativa in $(seq 1 12); do
+          for tentativa in $(seq 1 15); do
+
             HTTP_CODE="$(curl \
               -sS \
               -o /tmp/backend-health.json \
               -w "%{http_code}" \
-              --connect-timeout 5 \
-              --max-time 10 \
+              --connect-timeout 8 \
+              --max-time 15 \
               "$URL" || true)"
 
-            echo "Backend tentativa=${tentativa}/12 HTTP=${HTTP_CODE:-000}"
+            echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
 
             if [ "$HTTP_CODE" = "200" ]; then
-              echo "Backend STAGE está online."
+              echo "Backend STAGE está ONLINE."
               cat /tmp/backend-health.json || true
               exit 0
             fi
@@ -192,8 +215,9 @@ jobs:
         if: steps.due.outputs.count != '0'
         run: |
           echo "========================================"
-          echo "WAKE STAGE CONCLUÍDO"
+          echo "WAKE STAGE CONCLUÍDO COM SUCESSO"
           echo "========================================"
+          echo "Lembretes encontrados: ${{ steps.due.outputs.count }}"
           echo "WPP Service: ONLINE"
-          echo "Backend Stage: ONLINE"
-          echo "O WhatsAppEnvioScheduler assume o processamento."
+          echo "Backend STAGE: ONLINE"
+          echo "O scheduler Java agora assume o processamento."
