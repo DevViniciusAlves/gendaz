@@ -226,7 +226,7 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     if (!open || !dados || pollRef.current || pareamentoExpirado) return
     const estadoAtual = dados?.conexao?.estado
     if (estadoAtual === 'UNAVAILABLE' || estadoAtual === 'NOT_CONFIGURED') return
-    if (estadoAtual === 'CONNECTING' || (dados?.conexao?.hasQr && estadoAtual !== 'CONNECTED')) {
+    if (estadoAtual === 'CONNECTING' || estadoAtual === 'RECONNECTING' || (dados?.conexao?.hasQr && estadoAtual !== 'CONNECTED')) {
       setConectando(true)
       setGerandoQr(true)
       iniciarPolling(Date.now())

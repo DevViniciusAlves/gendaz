@@ -38,8 +38,7 @@ export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
   const [erro, setErro] = useState('')
-  const reconectando = false
-  const retryEsgotado = false
+  // polling removido: sem estado de retry; UNAVAILABLE usa recuperação manual via "Tentar novamente"
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
@@ -111,8 +110,7 @@ export default function WhatsAppIntegracoes() {
   }
 
   function helperTexto() {
-    if (indisponivelTemporario && !retryEsgotado) return 'Iniciando serviço...'
-    if (indisponivelTemporario && retryEsgotado) return MSG_SERVICO_INDISPONIVEL
+    if (indisponivelTemporario) return MSG_SERVICO_INDISPONIVEL
     if (indisponivelAmbiente) return 'A integração WhatsApp ainda não está disponível neste ambiente.'
     if (conectado) return null
     if (conectando) return 'Aguardando conclusão do pareamento no modal de configuração.'
@@ -123,7 +121,7 @@ export default function WhatsAppIntegracoes() {
   // Polling removido: GET /api/whatsapp/resumo ocorre apenas na carga inicial.
   // Polling temporário durante conexão ativa é responsabilidade exclusiva do WhatsAppModal.
 
-  const mostrarErroAssustador = Boolean(erro) && (!ehErroTransitorio(ultimoErroRef.current) || retryEsgotado)
+  const mostrarErroAssustador = Boolean(erro) && !ehErroTransitorio(ultimoErroRef.current)
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -135,7 +133,7 @@ export default function WhatsAppIntegracoes() {
       </div>
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
-      {carregando && !reconectando && <p className="wpp-muted">Carregando integração...</p>}
+      {carregando && <p className="wpp-muted">Carregando integração...</p>}
 
       {!carregando && erro && mostrarErroAssustador && (
         <>
@@ -153,7 +151,10 @@ export default function WhatsAppIntegracoes() {
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
-            <p className="wpp-muted">Iniciando serviço...</p>
+            <p className="wpp-muted">{MSG_SERVICO_INDISPONIVEL}</p>
+          </div>
+          <div className="integr-card-actions">
+            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
           </div>
         </>
       )}
@@ -162,13 +163,11 @@ export default function WhatsAppIntegracoes() {
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
-            <p className="wpp-muted">{retryEsgotado ? MSG_SERVICO_INDISPONIVEL : 'Iniciando serviço...'}</p>
+            <p className="wpp-muted">{MSG_SERVICO_INDISPONIVEL}</p>
           </div>
-          {retryEsgotado && (
-            <div className="integr-card-actions">
-              <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
-            </div>
-          )}
+          <div className="integr-card-actions">
+            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
+          </div>
         </>
       )}
 

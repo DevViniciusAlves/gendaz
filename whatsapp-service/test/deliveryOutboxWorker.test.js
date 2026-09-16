@@ -1,4 +1,4 @@
-﻿'use strict';
+'use strict';
 
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
@@ -21,48 +21,60 @@ function createMockPool() {
     queries: [],
     connectCalls: 0,
     lastNextAttemptAt: null,
+    activeConnections: 0,
+    maxActiveConnections: 0,
   };
-  const client = {
-    query: async (sql, params) => {
-      state.queries.push({ sql, params });
-      const normalizedSql = sql.replace(/\s+/g, ' ').trim().toUpperCase();
-      if (normalizedSql === 'BEGIN' || normalizedSql === 'COMMIT' || normalizedSql === 'ROLLBACK') {
-        return { rows: [] };
-      }
-      if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
-        if (state.row.state === 'PENDING') {
-          return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count }] };
-        }
-        return { rows: [] };
-      }
-      if (normalizedSql.includes("SET STATE = 'PROCESSING'")) {
-        state.row.state = 'PROCESSING';
-        state.row.attempt_count += 1;
-        state.row.last_attempt_at = new Date();
-        state.row.locked_until = new Date(Date.now() + 60000);
-        return { rows: [{ attempt_count: state.row.attempt_count }] };
-      }
-      if (normalizedSql.includes("SET STATE = 'DONE'")) {
-        state.row.state = 'DONE';
-        return { rows: [] };
-      }
-      if (normalizedSql.includes("SET STATE = 'DEAD'")) {
-        if (params && params.length === 2) { state.row.http_status = params[0]; } else if (params && params.length >= 2) { state.row.http_status = params[0]; state.row.http_error_message = params[1]; }
-        state.row.state = 'DEAD';
-        return { rows: [] };
-      }
-      if (normalizedSql.includes("SET STATE = 'PENDING'")) {
-        if (params && params[0] instanceof Date) { state.lastNextAttemptAt = params[0]; state.row.next_attempt_at = params[0]; }
-        if (params && params.length >= 3) { state.row.http_status = params[1]; state.row.http_error_message = params[2]; }
-        state.row.state = 'PENDING';
-        return { rows: [] };
-      }
-      return { rows: [] };
+  const pool = {
+    connect: async () => {
+      state.connectCalls += 1;
+      state.activeConnections += 1;
+      state.maxActiveConnections = Math.max(state.maxActiveConnections, state.activeConnections);
+      const client = {
+        query: async (sql, params) => {
+          state.queries.push({ sql, params });
+          const normalizedSql = sql.replace(/\s+/g, ' ').trim().toUpperCase();
+          if (normalizedSql === 'BEGIN' || normalizedSql === 'COMMIT' || normalizedSql === 'ROLLBACK') {
+            return { rows: [] };
+          }
+          if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
+            if (state.row.state === 'PENDING') {
+              return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count }] };
+            }
+            return { rows: [] };
+          }
+          if (normalizedSql.includes("SET STATE = 'PROCESSING'")) {
+            state.row.state = 'PROCESSING';
+            state.row.attempt_count += 1;
+            state.row.last_attempt_at = new Date();
+            state.row.locked_until = new Date(Date.now() + 60000);
+            return { rows: [{ attempt_count: state.row.attempt_count }] };
+          }
+          if (normalizedSql.includes("SET STATE = 'DONE'")) {
+            state.row.state = 'DONE';
+            return { rows: [] };
+          }
+          if (normalizedSql.includes("SET STATE = 'DEAD'")) {
+            if (params && params.length === 2) { state.row.http_status = params[0]; } else if (params && params.length >= 2) { state.row.http_status = params[0]; state.row.http_error_message = params[1]; }
+            state.row.state = 'DEAD';
+            return { rows: [] };
+          }
+          if (normalizedSql.includes("SET STATE = 'PENDING'")) {
+            if (params && params[0] instanceof Date) { state.lastNextAttemptAt = params[0]; state.row.next_attempt_at = params[0]; }
+            if (params && params.length >= 3) { state.row.http_status = params[1]; state.row.http_error_message = params[2]; }
+            state.row.state = 'PENDING';
+            return { rows: [] };
+          }
+          return { rows: [] };
+        },
+        release: () => {
+          state.activeConnections -= 1;
+        },
+      };
+      return client;
     },
-    release: () => {},
+    end: async () => {},
   };
-  const pool = { connect: async () => { state.connectCalls += 1; return client; }, end: async () => {}, __state: state, __client: client };
-  return { pool, state, client };
+  return { pool, state };
 }
 function createLogger() {
   const logs = { log: [], warn: [], error: [], info: [] };
@@ -206,4 +218,61 @@ describe('DeliveryOutboxWorker', () => {
   it('log DEAD contem motivo e tentativa', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 7; state.row.company_id = 123; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 503, {}); const warnLog = log._logs.warn.join(' '); assert.ok(warnLog.includes('DEAD')); assert.ok(warnLog.includes('server_error')); assert.ok(warnLog.includes('7/7')); });
   it('log de retry auth contem 401 e auth_error', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 2; state.row.company_id = 999; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 401, {}); const infoLog = log._logs.info.join(' '); assert.ok(infoLog.includes('401')); assert.ok(infoLog.includes('auth_error')); assert.ok(infoLog.includes('2/3')); assert.ok(infoLog.includes('60s')); });
   it('log de network retry contem network e motivo', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; state.row.company_id = 55; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._scheduleRetry(state.row, null, 'network_error'); const infoLog = log._logs.info.join(' '); assert.ok(infoLog.includes('network')); assert.ok(infoLog.includes('network_error')); assert.ok(infoLog.includes('1/7')); });
+  it('fluxo completo 503: _processCycle com maxActiveConnections === 1 e PENDING', async () => {
+    state.row.state = 'PENDING'; state.row.attempt_count = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({ status: 503, text: async () => '{}' });
+    const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log });
+    state.activeConnections = 0; state.maxActiveConnections = 0;
+    const result = await worker._processCycle();
+    assert.equal(result, true);
+    assert.equal(state.row.state, 'PENDING');
+    assert.equal(state.row.attempt_count, 1);
+    assert.equal(state.maxActiveConnections, 1);
+    globalThis.fetch = originalFetch;
+  });
+  it('fluxo completo 200: _processCycle com maxActiveConnections === 1 e DONE', async () => {
+    state.row.state = 'PENDING'; state.row.attempt_count = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => ({ status: 200, text: async () => '{}' });
+    const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log });
+    state.activeConnections = 0; state.maxActiveConnections = 0;
+    const result = await worker._processCycle();
+    assert.equal(result, true);
+    assert.equal(state.row.state, 'DONE');
+    assert.equal(state.maxActiveConnections, 1);
+    globalThis.fetch = originalFetch;
+  });
+  it('fluxo completo network error: _processCycle com maxActiveConnections === 1 e PENDING', async () => {
+    state.row.state = 'PENDING'; state.row.attempt_count = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async () => { throw new Error('network failure'); };
+    const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log });
+    state.activeConnections = 0; state.maxActiveConnections = 0;
+    const result = await worker._processCycle();
+    assert.equal(result, true);
+    assert.equal(state.row.state, 'PENDING');
+    assert.equal(state.maxActiveConnections, 1);
+    globalThis.fetch = originalFetch;
+  });
+  it('log permanente 400 contem DEAD e nao mostra /7', async () => {
+    state.row.state = 'PROCESSING'; state.row.attempt_count = 1; state.row.company_id = 123;
+    const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log });
+    await worker._handleResponse(state.row, 400, {});
+    const warnLog = log._logs.warn.join(' ');
+    assert.ok(warnLog.includes('400'));
+    assert.ok(warnLog.includes('permanent_error'));
+    assert.ok(warnLog.includes('DEAD'));
+    assert.ok(!warnLog.includes('/7'));
+  });
+  it('log inesperado 418 contem DEAD e nao mostra /7', async () => {
+    state.row.state = 'PROCESSING'; state.row.attempt_count = 1; state.row.company_id = 123;
+    const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log });
+    await worker._handleResponse(state.row, 418, {});
+    const warnLog = log._logs.warn.join(' ');
+    assert.ok(warnLog.includes('418'));
+    assert.ok(warnLog.includes('unexpected_http_status'));
+    assert.ok(warnLog.includes('DEAD'));
+    assert.ok(!warnLog.includes('/7'));
+  });
 });
