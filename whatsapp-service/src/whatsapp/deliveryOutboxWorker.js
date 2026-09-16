@@ -81,7 +81,7 @@ class DeliveryOutboxWorker {
       // Marcar como PROCESSING com lease
       const updateResult = await client.query(
         `UPDATE whatsapp_delivery_outbox
-         SET state = 'PROCESSING', locked_until = NOW() + INTERVAL '60 seconds', attempt_count = attempt_count + 1, updated_at = NOW()
+         SET state = 'PROCESSING', locked_until = NOW() + INTERVAL '60 seconds', attempt_count = attempt_count + 1, last_attempt_at = NOW(), updated_at = NOW()
          WHERE id = $1
          RETURNING attempt_count`,
         [row.id]
@@ -220,7 +220,9 @@ class DeliveryOutboxWorker {
           `UPDATE whatsapp_delivery_outbox SET state = 'PENDING', next_attempt_at = $1, http_status = $2, http_error_message = $3, updated_at = NOW() WHERE id = $4`,
           [nextAttempt, httpStatus || 0, errorReason, row.id]
         );
-        this.log.info(`[delivery-worker] empresa=${row.company_id} => retry ${row.attempt_count + 1}/${maxAttempts}`);
+        this.log.info(
+      `[delivery-worker] empresa=${row.company_id} => retry agendado attempts=${row.attempt_count}/${maxAttempts}`
+    );
       }
 
     } finally {

@@ -110,41 +110,11 @@ class DeliveryReporter {
       || typeof messageId !== 'string' || messageId.trim() === '') {
       return { ok: false, reason: 'invalid_args' };
     }
-    if (!this.configured()) {
-      if (this.outbox) {
-        try {
-          const persisted = await this.outbox.recordDelivery(companyId, messageId);
 
-          this.markReported(companyId, messageId);
-
-          return {
-            ok: true,
-            deduplicated: persisted && persisted.isNew === false,
-            queued: true,
-          };
-        } catch (err) {
-          this.log.warn(
-            `[whatsapp-service] falha ao persistir delivery outbox company=${companyId} messageIdPresent=true erro=${err && err.message ? err.message : 'error'}`
-          );
-
-          // Não marcar como reported aqui.
-          // A gravação durável falhou.
-          //
-          // Preservar o comportamento atual como fallback:
-          // se backendUrl/token estiverem configurados, continuar para o POST direto.
-          if (this.backendUrl && this.internalToken) {
-            // Fallthrough to HTTP direct below
-          } else {
-            return { ok: false, reason: 'not_configured' };
-          }
-        }
-      } else {
-        this.log.warn('[whatsapp-service] delivery callback ignorado: backend/token nao configurado');
-        return { ok: false, reason: 'not_configured' };
-      }
-    }
     if (this.alreadyReported(companyId, messageId)) {
-      this.log.log(`[whatsapp-service] delivery company=${companyId} messageIdPresent=true duplicate=true ignorado`);
+      this.log.log(
+        `[whatsapp-service] delivery company=${companyId} messageIdPresent=true duplicate=true ignorado`
+      );
       return { ok: true, deduplicated: true };
     }
 
@@ -163,20 +133,18 @@ class DeliveryReporter {
         this.log.warn(
           `[whatsapp-service] falha ao persistir delivery outbox company=${companyId} messageIdPresent=true erro=${err && err.message ? err.message : 'error'}`
         );
-
-        // Não marcar como reported aqui.
+        // NÃO marcar reported.
         // A gravação durável falhou.
-        //
-        // Preservar o comportamento atual como fallback:
-        // se backendUrl/token estiverem configurados, continuar para o POST direto.
-        if (this.backendUrl && this.internalToken) {
-          // Fallthrough to HTTP direct below
-        } else {
-          return { ok: false, reason: 'not_configured' };
-        }
+        // Continua abaixo para fallback HTTP se backend/token estiverem configurados.
       }
-      // NÃO executar POST direto quando outbox persistiu com sucesso
-      return { ok: true, deduplicated: true, queued: true };
+    }
+
+    // Fallback: nenhum Outbox funcional ou falha no Outbox.
+    if (!this.configured()) {
+      this.log.warn(
+        '[whatsapp-service] delivery callback ignorado: backend/token nao configurado'
+      );
+      return { ok: false, reason: 'not_configured' };
     }
 
     const url = `${this.backendUrl}/internal/whatsapp/delivery`;
@@ -192,18 +160,24 @@ class DeliveryReporter {
       });
       if (!res || !res.ok) {
         const status = res && typeof res.status === 'number' ? res.status : 'unknown';
-        this.log.warn(`[whatsapp-service] delivery callback falhou company=${companyId} messageIdPresent=true httpStatus=${status}`);
+        this.log.warn(
+          `[whatsapp-service] delivery callback falhou company=${companyId} messageIdPresent=true httpStatus=${status}`
+        );
         return { ok: false, reason: 'http_error' };
       }
       this.markReported(companyId, messageId);
-      this.log.log(`[whatsapp-service] delivery company=${companyId} messageIdPresent=true duplicate=false ok`);
+      this.log.log(
+        `[whatsapp-service] delivery company=${companyId} messageIdPresent=true duplicate=false ok`
+      );
       return { ok: true, deduplicated: false };
     } catch (err) {
       const code = (err && err.code) || (err && err.message) || 'error';
-      this.log.warn(`[whatsapp-service] delivery callback erro company=${companyId} messageIdPresent=true erro=${code}`);
-return { ok: false, reason: 'fetch_error' };
-}
-}
+      this.log.warn(
+        `[whatsapp-service] delivery callback erro company=${companyId} messageIdPresent=true erro=${code}`
+      );
+      return { ok: false, reason: 'fetch_error' };
+    }
+  }
 }
 
 module.exports = { DeliveryReporter, DEFAULT_TTL_MS, DEFAULT_MAX_ENTRIES };
