@@ -1,0 +1,186 @@
+name: Wake WhatsApp STAGE - Lembretes
+
+on:
+  schedule:
+    # A cada 5 minutos, evitando exatamente o minuto 00,
+    # onde GitHub Actions costuma ter mais fila.
+    - cron: "2-57/5 * * * *"
+
+  # Permite testar manualmente pelo GitHub Actions.
+  workflow_dispatch:
+
+concurrency:
+  group: wake-whatsapp-stage
+  cancel-in-progress: false
+
+jobs:
+  check-and-wake:
+    name: Verificar lembretes e acordar STAGE
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+
+    steps:
+      - name: Verificar lembretes próximos no Neon STAGE
+        id: due
+        env:
+          DB_URL: ${{ secrets.STAGE_SPRING_DATASOURCE_URL }}
+          DB_USER: ${{ secrets.STAGE_SPRING_DATASOURCE_USERNAME }}
+          DB_PASSWORD: ${{ secrets.STAGE_SPRING_DATASOURCE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          # Execução manual sempre força o wake.
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "Execução manual: wake forçado."
+            echo "count=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "${DB_URL:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_URL não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_USER:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_USERNAME não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_PASSWORD:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_PASSWORD não configurado."
+            exit 1
+          fi
+
+          # Spring usa jdbc:postgresql://...
+          # psql usa postgresql://...
+          DB_URL="${DB_URL#jdbc:}"
+
+          export PGPASSWORD="$DB_PASSWORD"
+          export PGCONNECT_TIMEOUT=10
+
+          SQL="$(cat <<'SQL'
+          WITH agora AS (
+              SELECT CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS utc_now
+          )
+          SELECT COUNT(*)
+          FROM whatsapp_notificacoes n
+          CROSS JOIN agora a
+          WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+            AND n.recipient IS NOT NULL
+            AND n.message_body IS NOT NULL
+            AND (
+                n.expires_at IS NULL
+                OR n.expires_at >= a.utc_now
+            )
+            AND (
+                (
+                    n.status = 'PENDENTE'
+                    AND n.scheduled_at IS NOT NULL
+                    AND n.scheduled_at <= a.utc_now + INTERVAL '5 minutes'
+                    AND (
+                        n.next_attempt_at IS NULL
+                        OR n.next_attempt_at <= a.utc_now + INTERVAL '5 minutes'
+                    )
+                )
+                OR
+                (
+                    n.status = 'ENVIANDO'
+                    AND n.processing_started_at IS NOT NULL
+                    AND n.processing_started_at <= a.utc_now - INTERVAL '120 seconds'
+                )
+            );
+          SQL
+          )"
+
+          COUNT="$(psql \
+            "$DB_URL" \
+            -U "$DB_USER" \
+            -v ON_ERROR_STOP=1 \
+            -Atq \
+            -c "$SQL")"
+
+          COUNT="$(echo "$COUNT" | tr -d '[:space:]')"
+
+          if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
+            echo "ERRO: retorno inválido da consulta: $COUNT"
+            exit 1
+          fi
+
+          echo "Lembretes próximos/presos encontrados: $COUNT"
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+
+      - name: Nenhum lembrete próximo
+        if: steps.due.outputs.count == '0'
+        run: |
+          echo "Nenhum lembrete precisa de processamento agora."
+          echo "WPP e Backend podem continuar hibernados."
+
+      - name: Acordar WPP Service
+        if: steps.due.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          URL="https://whatsapp-service-s3f2.onrender.com/health"
+
+          for tentativa in $(seq 1 10); do
+            HTTP_CODE="$(curl \
+              -sS \
+              -o /tmp/wpp-health.json \
+              -w "%{http_code}" \
+              --connect-timeout 5 \
+              --max-time 8 \
+              "$URL" || true)"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "WPP Service está online."
+              cat /tmp/wpp-health.json || true
+              exit 0
+            fi
+
+            echo "WPP ainda iniciando. HTTP=${HTTP_CODE:-000} tentativa=${tentativa}/10"
+            sleep 8
+          done
+
+          echo "ERRO: WPP Service não ficou saudável."
+          exit 1
+
+      - name: Aguardar restauração das sessões WhatsApp
+        if: steps.due.outputs.count != '0'
+        run: |
+          echo "Aguardando o SessionManager restaurar as sessões..."
+          sleep 15
+
+      - name: Acordar Backend STAGE
+        if: steps.due.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          URL="https://gendaz-stage.onrender.com/api/health"
+
+          for tentativa in $(seq 1 10); do
+            HTTP_CODE="$(curl \
+              -sS \
+              -o /tmp/backend-health.json \
+              -w "%{http_code}" \
+              --connect-timeout 5 \
+              --max-time 8 \
+              "$URL" || true)"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Backend STAGE está online."
+              cat /tmp/backend-health.json || true
+              exit 0
+            fi
+
+            echo "Backend ainda iniciando. HTTP=${HTTP_CODE:-000} tentativa=${tentativa}/10"
+            sleep 8
+          done
+
+          echo "ERRO: Backend STAGE não ficou saudável."
+          exit 1
+
+      - name: Wake concluído
+        if: steps.due.outputs.count != '0'
+        run: |
+          echo "WPP e Backend STAGE estão acordados."
+          echo "O WhatsAppEnvioScheduler do backend assume o processamento da fila."
