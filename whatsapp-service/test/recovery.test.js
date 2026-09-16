@@ -101,13 +101,14 @@ describe('SessionManager - Recovery Logic', () => {
     assert.equal(h.manager.status('empresa-1').state, STATES.CONNECTING);
   });
 
-it('boot sem auth -> NOT_CONNECTED -> nenhum socket', async () => {
-     h = makeHarness();
-     h.setHasRegistered('empresa-sem-auth', false);
-     await h.manager.connect('empresa-sem-auth');
-     await sleep(10);
-     assert.equal(h.manager.status('empresa-sem-auth').state, STATES.CONNECTING);
-   });
+ it('boot sem auth -> NOT_CONNECTED -> nenhum socket', async () => {
+      h = makeHarness();
+      h.setHasRegistered('empresa-sem-auth', false);
+      await h.manager.initialize();
+      await sleep(10);
+      assert.equal(h.created.length, 0);
+      assert.equal(h.manager.status('empresa-sem-auth').state, STATES.NOT_CONNECTED);
+    });
 
   it('status de sessao registrada DISCONNECTED -> aciona recovery', async () => {
     h = makeHarness();

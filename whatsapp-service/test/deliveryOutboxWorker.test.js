@@ -85,11 +85,11 @@ describe('DeliveryOutboxWorker', () => {
     log = { log: () => {}, warn: () => {}, error: () => {}, info: () => {} };
   });
 
-  afterEach(() => {
-    if (globalThis.fetch && globalThis.fetch !== undefined) {
-      // restore handled per-test
-    }
-  });
+   afterEach(() => {
+     if (globalThis.fetch && globalThis.fetch !== undefined) {
+       globalThis.fetch = undefined;
+     }
+   });
 
   it('claim: PENDING -> PROCESSING com attempt_count incrementado', async () => {
     state.row.state = 'PENDING';
@@ -236,27 +236,37 @@ describe('DeliveryOutboxWorker', () => {
     globalThis.fetch = originalFetch;
   });
 
-  it('HTTP real: POST /internal/whatsapp/delivery -> DONE', async () => {
-    globalThis.fetch = async (url, options) => ({
-      status: 200,
-      text: async () => JSON.stringify({ status: 'delivered' })
-    });
+   it('HTTP real: POST /internal/whatsapp/delivery -> DONE', async () => {
+     const originalFetch = globalThis.fetch;
+     let capturedUrl, capturedOptions;
+     globalThis.fetch = async (url, options) => {
+       capturedUrl = url;
+       capturedOptions = options;
+       return {
+         status: 200,
+         text: async () => JSON.stringify({ status: 'delivered' })
+       };
+     };
 
-    const worker = new DeliveryOutboxWorker({
-      pool,
-      backendUrl: 'http://spring:8080',
-      internalToken: 'test-token',
-      log
-    });
+     const worker = new DeliveryOutboxWorker({
+       pool,
+       backendUrl: 'http://spring:8080',
+       internalToken: 'test-token',
+       log
+     });
 
-    state.row.state = 'PROCESSING';
-    state.row.attempt_count = 1;
+     state.row.state = 'PROCESSING';
+     state.row.attempt_count = 1;
 
-    await worker._postToSpring(state.row);
-    assert.equal(state.row.state, 'DONE');
+     await worker._postToSpring(state.row);
+     assert.equal(state.row.state, 'DONE');
+     assert.equal(capturedUrl, 'http://spring:8080/internal/whatsapp/delivery');
+     assert.equal(capturedOptions.method, 'POST');
+     assert.equal(capturedOptions.headers['Authorization'], 'Bearer test-token');
+     assert.ok(capturedOptions.body.includes('DELIVERED'));
 
-    globalThis.fetch = undefined;
-  });
+     globalThis.fetch = originalFetch;
+   });
 
   it('backendUrl ausente -> PENDING', async () => {
     const worker = new DeliveryOutboxWorker({

@@ -120,17 +120,18 @@ describe('messages/text (contrato HTTP)', () => {
     assert.deepEqual(await res.json(), { error: 'invalid_message' });
   });
 
-  it('sessao nao conectada -> retorna session_not_connected', async () => {
-    behavior.mode = 'not-connected';
-    try {
-      const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'nc-1' });
-      const body = await res.json();
-      assert.equal(body.error, 'session_not_connected');
-      assert.equal(body.state, 'DISCONNECTED');
-    } finally {
-      behavior.mode = 'ok';
-    }
-  });
+   it('sessao nao conectada -> retorna session_not_connected', async () => {
+     behavior.mode = 'not-connected';
+     try {
+       const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'nc-1' });
+       assert.equal(res.status, 409);
+       const body = await res.json();
+       assert.equal(body.error, 'session_not_connected');
+       assert.equal(body.state, 'DISCONNECTED');
+     } finally {
+       behavior.mode = 'ok';
+     }
+   });
 
   it('sucesso retorna message.key.id', async () => {
     const res = await postText(base, { recipient: RECIPIENT, text: TEXT, requestId: 'ok-1' });
