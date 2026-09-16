@@ -51,6 +51,7 @@ export default function WhatsAppIntegracoes() {
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
+  const [retryRevision, setRetryRevision] = useState(0)
   const timerRef = useRef(null)
   const retryStartedAtRef = useRef(null)
   const ultimoErroRef = useRef(null)
@@ -90,6 +91,9 @@ export default function WhatsAppIntegracoes() {
       )
     } finally {
       setCarregando(false)
+      if (silencioso) {
+        setRetryRevision((v) => v + 1)
+      }
     }
   }, [limparTimerRetry])
 
@@ -191,7 +195,7 @@ export default function WhatsAppIntegracoes() {
       carregar({ silencioso: true })
     }, espera)
     return limparTimerRetry
-  }, [carregando, erro, resumo, carregar, limparTimerRetry, resetarRetry])
+  }, [carregando, erro, resumo, retryRevision, carregar, limparTimerRetry, resetarRetry])
 
   useEffect(() => () => limparTimerRetry(), [limparTimerRetry])
 

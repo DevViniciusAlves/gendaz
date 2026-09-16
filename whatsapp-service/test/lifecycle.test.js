@@ -197,4 +197,39 @@ describe('Lifecycle - correcao restauracao automatica', () => {
     assert.equal(created.length, 1);
     await manager.shutdownAll();
   });
+
+  it('7. legacy restoreMode preservado durante retry temporario, QR apos retry continua suprimido', async () => {
+    const Boom = require('@hapi/boom');
+    const creds = { registered: false };
+    const auth = { state: { creds }, saveCreds: async () => { assert.fail('nao deve persistir em QR suprimido'); } };
+    const store = {
+      load: async () => auth,
+      clear: async () => {},
+      listCompanies: async () => [],
+      listPersistedCompanies: async () => ['empresa-legacy-retry'],
+      hasRegisteredSession: async () => false,
+    };
+    const created = [];
+    const manager = new SessionManager({
+      authStore: store,
+      createSocket: () => { const s = makeSock(); created.push(s); return s; },
+      baseDelayMs: 10, maxDelayMs: 20, maxAttempts: 5,
+      log: { log: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+    });
+    await manager.initialize();
+    assert.equal(created.length, 1);
+    assert.equal(manager.getRecord('empresa-legacy-retry').restoreMode, true);
+    // queda temporaria
+    emit(created[0], 'connection.update', { connection: 'close', lastDisconnect: { error: Boom.boomify(new Error('temp'), { statusCode: 408 }) } });
+    await sleep(30);
+    assert.equal(created.length, 2, 'retry deve criar novo socket');
+    assert.equal(manager.getRecord('empresa-legacy-retry').restoreMode, true, 'restoreMode deve ser preservado no retry');
+    // novo socket produz QR
+    emit(created[1], 'connection.update', { qr: 'QR-APOS-RETRY' });
+    await sleep(20);
+    assert.equal(manager.getQr('empresa-legacy-retry'), null, 'QR apos retry deve continuar suprimido');
+    assert.equal(creds.registered, false);
+    assert.equal(manager.status('empresa-legacy-retry').state, STATES.DISCONNECTED);
+    await manager.shutdownAll();
+  });
 });

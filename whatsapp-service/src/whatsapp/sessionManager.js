@@ -555,7 +555,6 @@ class SessionManager {
     record.lastDisconnectCode = code;
     record.qr = null;
     record.qrUpdatedAt = null;
-    record.restoreMode = false;
     const oldSock = record.sock;
     record.sock = null;
 
@@ -563,6 +562,7 @@ class SessionManager {
       // Queda definitiva: invalida imediatamente eventos posteriores deste
       // socket (o listener confere generation e passa a ignora-los).
       record.generation += 1;
+      record.restoreMode = false;
       await this.closeSocketQuietly(oldSock);
       record.state = code === DisconnectReason.loggedOut ? STATES.LOGGED_OUT : STATES.DISCONNECTED;
       record.reconnectAttempts = 0;
@@ -599,6 +599,7 @@ class SessionManager {
     }
     if (record.reconnectAttempts >= this.maxAttempts) {
       record.state = STATES.DISCONNECTED;
+      record.restoreMode = false;
       this.log.warn(
         `[whatsapp-service] empresa=${record.companyId} esgotou ${this.maxAttempts} tentativas; recovery cooldown=${this.recoveryCooldownMs}ms`
       );
@@ -612,12 +613,13 @@ class SessionManager {
       `[whatsapp-service] empresa=${record.companyId} tentativa ${record.reconnectAttempts}/${this.maxAttempts} em ${delay}ms (codigo=${code})`
     );
     this.clearTimer(record);
+    const preserveRestore = record.restoreMode;
     record.reconnectTimer = setTimeout(() => {
       record.reconnectTimer = null;
       if (this._shuttingDown || gen !== record.generation) {
         return;
       }
-      this.establish(record).catch((err) => {
+      this.establish(record, { isRestore: preserveRestore }).catch((err) => {
         this.log.error(`[whatsapp-service] falha na reconexao empresa=${record.companyId}: ${err.message}`);
       });
     }, delay);
