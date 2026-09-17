@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import ConfirmacaoModal from '../../components/ConfirmacaoModal.jsx'
@@ -15,16 +15,6 @@ function emitirToast(type, message) {
 
 const MSG_SERVICO_INDISPONIVEL = 'Serviço WhatsApp temporariamente indisponível. Tente novamente.'
 
-function ehErroTransitorio(err) {
-  if (!err) return false
-  const status = err?.response?.status
-  const codigo = err?.response?.data?.code || err?.response?.data?.error
-  if (!err.response) return true
-  if (status === 502 || status === 503 || status === 504) return true
-  if (codigo === 'WHATSAPP_SERVICE_UNAVAILABLE') return true
-  return false
-}
-
 function ehErroDefinitivo(err) {
   if (!err) return false
   const status = err?.response?.status
@@ -34,86 +24,45 @@ function ehErroDefinitivo(err) {
   return false
 }
 
-const WAKING_POLL_INTERVAL_MS = 2500
-const WAKING_POLL_MAX = 12
-
 export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
-  const [acordando, setAcordando] = useState(false)
   const [erro, setErro] = useState('')
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
-  const ultimoErroRef = useRef(null)
-  const timerRef = useRef(null)
-  const tentativasRef = useRef(0)
+  const [ultimoErro, setUltimoErro] = useState(null)
 
-  const limparWaking = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current)
-      timerRef.current = null
-    }
-  }, [])
-
-  const carregar = useCallback(async ({ isRetry = false } = {}) => {
-    if (!isRetry) {
-      setCarregando(true)
-      setAcordando(false)
-      tentativasRef.current = 0
-      limparWaking()
-    }
+  const carregar = useCallback(async () => {
+    setCarregando(true)
     setErro('')
+    setUltimoErro(null)
     try {
       const dados = await buscarResumoWhatsapp()
-      const estado = dados?.conexao?.estado || 'UNAVAILABLE'
-      if (estado === 'UNAVAILABLE' && tentativasRef.current < WAKING_POLL_MAX) {
-        setResumo(dados)
-        setAcordando(true)
-        setCarregando(false)
-        tentativasRef.current += 1
-        limparWaking()
-        timerRef.current = setTimeout(() => carregar({ isRetry: true }), WAKING_POLL_INTERVAL_MS)
-        return
-      }
       setResumo(dados)
-      setAcordando(false)
-      setCarregando(false)
-      limparWaking()
-      ultimoErroRef.current = null
       setErro('')
+      setUltimoErro(null)
     } catch (err) {
-      if (ehErroTransitorio(err) && tentativasRef.current < WAKING_POLL_MAX) {
-        setAcordando(true)
-        setCarregando(false)
-        tentativasRef.current += 1
-        limparWaking()
-        timerRef.current = setTimeout(() => carregar({ isRetry: true }), WAKING_POLL_INTERVAL_MS)
-        return
-      }
-      ultimoErroRef.current = err
-      setAcordando(false)
-      setCarregando(false)
-      limparWaking()
+      setUltimoErro(err)
+      setResumo(null)
       setErro(
         err?.response?.data?.mensagem ||
         'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.'
       )
+    } finally {
+      setCarregando(false)
     }
-  }, [limparWaking])
+  }, [])
 
   function tentarNovamente() {
-    tentativasRef.current = 0
-    limparWaking()
     carregar()
   }
 
   useEffect(() => {
     carregar()
-    return () => limparWaking()
-  }, [carregar, limparWaking])
+  }, [carregar])
 
   const estado = resumo?.conexao?.estado || 'UNAVAILABLE'
   const indisponivelTemporario = estado === 'UNAVAILABLE'
@@ -125,7 +74,6 @@ export default function WhatsAppIntegracoes() {
 
   function abrirConexaoConfirmada() {
     if (indisponivelAmbiente) return
-    if (indisponivelTemporario && !acordando) return
     setConfirmarConectar(false)
     setModalAberto(true)
     setAutoConnectToken((v) => v + 1)
@@ -160,8 +108,7 @@ export default function WhatsAppIntegracoes() {
     return null
   }
 
-  const mostrarErroAssustador = Boolean(erro) && !ehErroTransitorio(ultimoErroRef.current)
-  const emWaking = acordando || (carregando && !erro && !resumo)
+  const emLoadingInicial = carregando
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -173,7 +120,7 @@ export default function WhatsAppIntegracoes() {
       </div>
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
-      {emWaking && (
+      {emLoadingInicial && (
         <>
           <div className="integr-card-status">
             <p className="wpp-muted">Iniciando WhatsApp...</p>
@@ -185,33 +132,21 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!emWaking && carregando && <p className="wpp-muted">Carregando integração...</p>}
-
-      {!emWaking && !carregando && erro && mostrarErroAssustador && (
+      {!emLoadingInicial && erro && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
+            {ehErroDefinitivo(ultimoErro) ? null : <p className="wpp-muted">{MSG_SERVICO_INDISPONIVEL}</p>}
           </div>
-          <p className="form-error">{ehErroDefinitivo(ultimoErroRef.current) ? erro : MSG_SERVICO_INDISPONIVEL}</p>
+          {ehErroDefinitivo(ultimoErro) && <p className="form-error">{erro}</p>}
+          {!ehErroDefinitivo(ultimoErro) && <p className="form-error" style={{ display: 'none' }}>{erro}</p>}
           <div className="integr-card-actions">
             <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
           </div>
         </>
       )}
 
-      {!emWaking && !carregando && erro && !mostrarErroAssustador && (
-        <>
-          <div className="integr-card-status">
-            <StatusBadge status="UNAVAILABLE" />
-            <p className="wpp-muted">{MSG_SERVICO_INDISPONIVEL}</p>
-          </div>
-          <div className="integr-card-actions">
-            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
-          </div>
-        </>
-      )}
-
-      {!emWaking && !carregando && !erro && resumo && indisponivelTemporario && (
+      {!emLoadingInicial && !erro && resumo && indisponivelTemporario && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
@@ -223,7 +158,7 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!emWaking && !carregando && !erro && resumo && estado !== 'UNAVAILABLE' && (
+      {!emLoadingInicial && !erro && resumo && estado !== 'UNAVAILABLE' && (
         <>
           <div className="integr-card-status">
             <StatusBadge status={estado} />
@@ -241,7 +176,7 @@ export default function WhatsAppIntegracoes() {
                 type="button"
                 variant={conectado ? 'secondary' : 'primary'}
                 onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
-                disabled={operando || indisponivelAmbiente || (indisponivelTemporario && !acordando)}
+                disabled={operando || indisponivelAmbiente}
                 loading={desconectando}
                 title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
               >

@@ -20,6 +20,7 @@ public class WhatsAppServiceStartupListener implements ApplicationListener<Appli
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        wakeService.wakeAsync();
+        // Wake sob demanda via ensureAvailable() - nao acordar WPP automaticamente no boot.
+        // Stage pode ficar READY enquanto WPP continua dormindo.
     }
 }

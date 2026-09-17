@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import Modal from '../../components/Modal.jsx'
 import Button from '../../components/Button.jsx'
 import { gerarUuid } from '../../api/appApi.js'
@@ -48,30 +48,15 @@ const ERROS_WHATSAPP = {
   WHATSAPP_TIPO_NAO_SUPORTADO: 'Este tipo de mensagem ainda não possui WhatsApp.',
 }
 
-function ehErroTransitorioEnvio(err) {
-  if (!err) return false
-  if (!err.response) return true
-  const status = err?.response?.status
-  if (status === 429 || status === 502 || status === 503 || status === 504) return true
-  const code = err?.response?.data?.code || err?.response?.data?.error
-  if (code === 'WHATSAPP_SERVICE_UNAVAILABLE' || code === 'WHATSAPP_CONNECT_TIMEOUT') return true
-  return false
-}
-
-const WAKING_RETRY_INTERVAL = 2500
-const WAKING_RETRY_MAX = 10
-
 export default function SendMessageModal({ open, onClose, cliente, template, onEnviado }) {
   const [personalizar, setPersonalizar] = useState(false)
   const [mensagemCustom, setMensagemCustom] = useState('')
   const [enviando, setEnviando] = useState(false)
-  const [faseEnvio, setFaseEnvio] = useState('idle')
   const [canal, setCanal] = useState('email')
   const [requestId, setRequestId] = useState(null)
   const [resumoWhatsapp, setResumoWhatsapp] = useState(null)
   const [statusWhatsapp, setStatusWhatsapp] = useState('UNAVAILABLE')
   const [carregandoWhatsapp, setCarregandoWhatsapp] = useState(false)
-  const faseTimerRef = useRef(null)
 
   const permiteWhatsapp = template === 'resgate' || template === 'reconexao'
 
@@ -83,7 +68,6 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       setMensagemCustom('')
       setResumoWhatsapp(null)
       setStatusWhatsapp('UNAVAILABLE')
-      setFaseEnvio('idle')
       setEnviando(false)
     }
   }, [open, cliente?.id, template])
@@ -110,10 +94,6 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
       })
     return () => { ativo = false }
   }, [open, template])
-
-  useEffect(() => () => {
-    if (faseTimerRef.current) clearTimeout(faseTimerRef.current)
-  }, [])
 
   if (!open || !cliente || !template) return null
 
@@ -143,67 +123,13 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
 
   function textoBotaoEnviar() {
     if (!enviando) return 'Enviar agora'
-    if (ehWhatsapp && faseEnvio === 'connecting') return 'Conectando ao WhatsApp...'
-    if (ehWhatsapp && faseEnvio === 'sending') return 'Enviando...'
+    if (ehWhatsapp) return 'Conectando ao WhatsApp...'
     return 'Enviando...'
-  }
-
-  async function tentarEnviarComWake(payload, tentativaWake = 0) {
-    try {
-      const response = await enviarMensagemCrm(cliente.id, payload)
-      if (response && response.success === false) {
-        // WHATSAPP_NOT_CONNECTED durante cold start pode ser transitório: tenta acordar e reenviar uma vez
-        if (payload.canal === 'whatsapp' && response.status === 'WHATSAPP_NOT_CONNECTED' && tentativaWake < 1) {
-          setFaseEnvio('connecting')
-          // polling limitado do resumo até CONNECTED
-          for (let i = 0; i < WAKING_RETRY_MAX; i++) {
-            await new Promise((r) => setTimeout(r, WAKING_RETRY_INTERVAL))
-            try {
-              const resumo = await buscarResumoWhatsapp()
-              if (resumo?.conexao?.estado === 'CONNECTED') {
-                setStatusWhatsapp('CONNECTED')
-                setResumoWhatsapp(resumo)
-                setFaseEnvio('sending')
-                return await tentarEnviarComWake(payload, tentativaWake + 1)
-              }
-            } catch {}
-          }
-        }
-        return { response, error: null }
-      }
-      return { response, error: null }
-    } catch (err) {
-      if (payload.canal === 'whatsapp' && ehErroTransitorioEnvio(err) && tentativaWake < 1) {
-        setFaseEnvio('connecting')
-        for (let i = 0; i < WAKING_RETRY_MAX; i++) {
-          await new Promise((r) => setTimeout(r, WAKING_RETRY_INTERVAL))
-          try {
-            const resumo = await buscarResumoWhatsapp()
-            if (resumo?.conexao?.estado === 'CONNECTED') {
-              setStatusWhatsapp('CONNECTED')
-              setResumoWhatsapp(resumo)
-              setFaseEnvio('sending')
-              return await tentarEnviarComWake(payload, tentativaWake + 1)
-            }
-          } catch {}
-        }
-        // Esgotou wake: retorna erro original para tratamento terminal
-      }
-      return { response: null, error: err }
-    }
   }
 
   async function handleEnviar() {
     if (enviando) return
     setEnviando(true)
-    if (ehWhatsapp) {
-      setFaseEnvio('connecting')
-      faseTimerRef.current = setTimeout(() => {
-        setFaseEnvio((f) => (f === 'connecting' ? 'sending' : f))
-      }, 1800)
-    } else {
-      setFaseEnvio('sending')
-    }
     try {
       const payload = {
         template,
@@ -211,12 +137,13 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
         customMessage: canal === 'whatsapp' ? null : (personalizar ? mensagemCustom : null),
         requestId: canal === 'whatsapp' ? requestId : null,
       }
-      // Para whatsapp, o timer acima já transitou para sending; se ainda em connecting, força sending antes do envio real
-      if (canal === 'whatsapp') {
-        // aguarda um pouco para mostrar "Conectando..." com trabalho real (request pendente)
+      let response = null
+      let error = null
+      try {
+        response = await enviarMensagemCrm(cliente.id, payload)
+      } catch (err) {
+        error = err
       }
-      const { response, error } = await tentarEnviarComWake(payload)
-      if (faseTimerRef.current) { clearTimeout(faseTimerRef.current); faseTimerRef.current = null }
       if (error) {
         const statusCode = error?.response?.status
         const code = error?.response?.data?.code
@@ -228,7 +155,6 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
           const msg = error?.response?.data?.mensagem || 'Erro ao enviar. Tente novamente.'
           emitirToast('error', msg)
         }
-        setFaseEnvio('idle')
         return
       }
       if (response && response.success === false) {
@@ -237,7 +163,6 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
           setStatusWhatsapp('UNAVAILABLE')
         }
         emitirToast('error', amigavel || response.mensagem || 'Nao foi possivel enviar.')
-        setFaseEnvio('idle')
       } else if (canal === 'whatsapp') {
         emitirToast('success', 'Mensagem enviada')
         setPersonalizar(false)
@@ -252,16 +177,10 @@ export default function SendMessageModal({ open, onClose, cliente, template, onE
         onClose()
       }
     } catch (err) {
-      if (faseTimerRef.current) { clearTimeout(faseTimerRef.current); faseTimerRef.current = null }
       const msg = err?.response?.data?.mensagem || 'Erro ao enviar. Tente novamente.'
       emitirToast('error', msg)
-      setFaseEnvio('idle')
     } finally {
-      if (faseTimerRef.current) { clearTimeout(faseTimerRef.current); faseTimerRef.current = null }
       setEnviando(false)
-      setFaseEnvio((f) => (f === 'connecting' || f === 'sending' ? 'idle' : f))
-      // garante reset após sucesso (modal fecha) ou erro: idle
-      setTimeout(() => setFaseEnvio('idle'), 300)
     }
   }
 
