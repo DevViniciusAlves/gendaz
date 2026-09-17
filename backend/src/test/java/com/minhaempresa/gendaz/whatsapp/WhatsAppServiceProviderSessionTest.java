@@ -341,4 +341,20 @@ class WhatsAppServiceProviderSessionTest {
         assertEquals(0, calls.get());
         verify(sessionReady, never()).ensureSessionReady(anyString());
     }
+
+    @Test
+    void consultarStatus_chamaEnsureAvailableAntesDoHttp() {
+        WhatsAppServiceWakeService wake = mock(WhatsAppServiceWakeService.class);
+        stubBody = """
+                {"companyId":"empresa-teste","state":"CONNECTING","hasQr":false,
+                 "qrUpdatedAt":null,"connectedAt":null,
+                 "reconnectAttempts":0,"lastDisconnectCode":null}""";
+        WhatsAppResult<WhatsAppSessionStatus> result = provider(wake, null)
+                .consultarStatus("empresa-teste");
+
+        assertTrue(result.isSuccess());
+        verify(wake).ensureAvailable();
+        assertEquals(1, calls.get());
+        assertEquals("/internal/whatsapp/sessions/empresa-teste/status", lastPath);
+    }
 }

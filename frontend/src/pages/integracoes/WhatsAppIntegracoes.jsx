@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import ConfirmacaoModal from '../../components/ConfirmacaoModal.jsx'
 import StatusBadge from '../../components/StatusBadge.jsx'
-import { buscarResumoWhatsapp, desconectarWhatsapp } from '../../api/whatsappApi.js'
+import { buscarResumoWhatsapp, desconectarWhatsapp, tentarNovamenteWhatsapp } from '../../api/whatsappApi.js'
 import WhatsAppModal from './WhatsAppModal.jsx'
 import whatsappLogo from '../../assets/logos/whatsapp-logo.png'
 import './whatsapp.css'
@@ -33,6 +33,7 @@ export default function WhatsAppIntegracoes() {
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
+  const [tentandoNovamente, setTentandoNovamente] = useState(false)
   const [ultimoErro, setUltimoErro] = useState(null)
 
   const carregar = useCallback(async () => {
@@ -56,8 +57,47 @@ export default function WhatsAppIntegracoes() {
     }
   }, [])
 
-  function tentarNovamente() {
-    carregar()
+  async function tentarNovamente() {
+    if (tentandoNovamente || carregando) return
+    setTentandoNovamente(true)
+    try {
+      // Tentativa explicita Stage -> WPP (cold wake + status da sessao).
+      const retorno = await tentarNovamenteWhatsapp()
+      // Atualiza o estado da sessao a partir do retorno do retry.
+      if (retorno && retorno.estado) {
+        setResumo((atual) => atual ? {
+          ...atual,
+          conexao: {
+            ...(atual.conexao || {}),
+            estado: retorno.estado,
+            hasQr: retorno.hasQr ?? atual.conexao?.hasQr ?? false,
+            connectedAt: retorno.connectedAt || atual.conexao?.connectedAt || null,
+          },
+        } : atual)
+      }
+      // UMA sincronizacao do resumo pelo Stage (quotas/configuracao/conexao).
+      try {
+        const dados = await buscarResumoWhatsapp()
+        setResumo(dados)
+        setErro('')
+        setUltimoErro(null)
+      } catch {
+        // Mantem o estado do retry; mensagem transitória ja exibida.
+      }
+    } catch (err) {
+      // Falha transitória: mantem mensagem de indisponibilidade e reabilita o botao.
+      if (!ehErroDefinitivo(err)) {
+        setErro(MSG_SERVICO_INDISPONIVEL)
+      } else {
+        setUltimoErro(err)
+        setErro(
+          err?.response?.data?.mensagem || err?.response?.data?.message
+          || 'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.'
+        )
+      }
+    } finally {
+      setTentandoNovamente(false)
+    }
   }
 
   useEffect(() => {
@@ -109,6 +149,7 @@ export default function WhatsAppIntegracoes() {
   }
 
   const emLoadingInicial = carregando
+  const retryLoading = tentandoNovamente || carregando
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -141,7 +182,7 @@ export default function WhatsAppIntegracoes() {
           {ehErroDefinitivo(ultimoErro) && <p className="form-error">{erro}</p>}
           {!ehErroDefinitivo(ultimoErro) && <p className="form-error" style={{ display: 'none' }}>{erro}</p>}
           <div className="integr-card-actions">
-            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
+            <Button variant="secondary" type="button" onClick={tentarNovamente} disabled={retryLoading} loading={tentandoNovamente} loadingText="Tentando...">Tentar novamente</Button>
           </div>
         </>
       )}
@@ -153,7 +194,7 @@ export default function WhatsAppIntegracoes() {
             <p className="wpp-muted">{MSG_SERVICO_INDISPONIVEL}</p>
           </div>
           <div className="integr-card-actions">
-            <Button variant="secondary" type="button" onClick={tentarNovamente}>Tentar novamente</Button>
+            <Button variant="secondary" type="button" onClick={tentarNovamente} disabled={retryLoading} loading={tentandoNovamente} loadingText="Tentando...">Tentar novamente</Button>
           </div>
         </>
       )}

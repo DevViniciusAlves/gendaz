@@ -608,6 +608,35 @@ class WhatsAppIntegracaoControllerTest {
     }
 
     @Test
+    void retryUsaCompanyIdDaSessaoERetornaEstado() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-retry");
+        comAssinatura(empresa, "PRO");
+        when(provider.consultarStatus(String.valueOf(empresa.getId())))
+                .thenReturn(WhatsAppResult.success(statusConectado(String.valueOf(empresa.getId()))));
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CONNECTED"));
+        verify(provider, times(1)).consultarStatus(String.valueOf(empresa.getId()));
+    }
+
+    @Test
+    void retryIndisponivelRetorna503SemVazar() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-ui-retry503");
+        comAssinatura(empresa, "PRO");
+        when(provider.consultarStatus(anyString()))
+                .thenReturn(WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE));
+        comoEmpresa(empresa.getId());
+
+        String corpo = mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_SERVICE_UNAVAILABLE"))
+                .andReturn().getResponse().getContentAsString();
+        assertFalse(corpo.toLowerCase().contains("bearer"));
+    }
+
+    @Test
     void resumoNaoExpoeToken() throws Exception {
         EmpresaEntity empresa = novaEmpresa("wpp-ui-leak");
         comAssinatura(empresa, "PRO");
@@ -622,5 +651,140 @@ class WhatsAppIntegracaoControllerTest {
         assertFalse(corpo.contains("token"));
         assertFalse(corpo.contains("sessions"));
         assertFalse(corpo.contains("signal"));
+    }
+
+    private WhatsAppSessionStatus statusComEstado(String companyId, String estado) {
+        WhatsAppSessionStatus s = new WhatsAppSessionStatus();
+        s.setCompanyId(companyId);
+        s.setState(estado);
+        s.setHasQr(false);
+        return s;
+    }
+
+    @Test
+    void retryConectadoRetornaEstado() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-ok");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        when(provider.consultarStatus(cid))
+                .thenReturn(WhatsAppResult.success(statusConectado(cid)));
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CONNECTED"));
+        verify(provider, times(1)).consultarStatus(cid);
+    }
+
+    @Test
+    void retryConnectingEReconnectingRetornamEstado() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-trans");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        comoEmpresa(empresa.getId());
+
+        for (String estado : new String[]{"CONNECTING", "RECONNECTING"}) {
+            when(provider.consultarStatus(cid))
+                    .thenReturn(WhatsAppResult.success(statusComEstado(cid, estado)));
+            mockMvc.perform(post("/api/whatsapp/retry"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.estado").value(estado));
+        }
+    }
+
+    @Test
+    void retryLoggedOutRetornaEstadoSemReconexaoAutomatica() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-lo");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        when(provider.consultarStatus(cid))
+                .thenReturn(WhatsAppResult.success(statusComEstado(cid, "LOGGED_OUT")));
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("LOGGED_OUT"));
+        verify(provider, times(0)).conectar(anyString());
+    }
+
+    @Test
+    void retryTimeoutRetorna504() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-to");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        when(provider.consultarStatus(cid))
+                .thenReturn(WhatsAppResult.erro(WhatsAppOperationStatus.CONNECT_TIMEOUT));
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isGatewayTimeout())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_CONNECT_TIMEOUT"));
+    }
+
+    @Test
+    void retryIndisponivelRetorna503() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-un");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        when(provider.consultarStatus(cid))
+                .thenReturn(WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE));
+        comoEmpresa(empresa.getId());
+
+        String corpo = mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_SERVICE_UNAVAILABLE"))
+                .andReturn().getResponse().getContentAsString()
+                .toLowerCase();
+        assertFalse(corpo.contains("token"));
+        assertFalse(corpo.contains("render"));
+    }
+
+    @Test
+    void retryAuthErrorRetornaCodigoSemantico() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-auth");
+        comAssinatura(empresa, "PRO");
+        String cid = String.valueOf(empresa.getId());
+        when(provider.consultarStatus(cid))
+                .thenReturn(WhatsAppResult.erro(WhatsAppOperationStatus.UNAUTHORIZED));
+        comoEmpresa(empresa.getId());
+
+        String corpo = mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_SERVICE_AUTH_ERROR"))
+                .andReturn().getResponse().getContentAsString()
+                .toLowerCase();
+        assertFalse(corpo.contains("bearer"));
+        assertFalse(corpo.contains("internal_token"));
+    }
+
+    @Test
+    void retrySemProviderConfiguradoRetornaNotConfigured() throws Exception {
+        EmpresaEntity empresa = novaEmpresa("wpp-retry-ncfg");
+        comAssinatura(empresa, "PRO");
+        when(provider.disponivel()).thenReturn(false);
+        comoEmpresa(empresa.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry"))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.code").value("WHATSAPP_NOT_CONFIGURED"));
+        verify(provider, times(0)).consultarStatus(anyString());
+    }
+
+    @Test
+    void retryUsaEmpresaDaSessao() throws Exception {
+        EmpresaEntity empresaA = novaEmpresa("wpp-retry-a");
+        EmpresaEntity empresaB = novaEmpresa("wpp-retry-b");
+        comAssinatura(empresaA, "PRO");
+        comAssinatura(empresaB, "PRO");
+        String cidA = String.valueOf(empresaA.getId());
+        when(provider.consultarStatus(cidA))
+                .thenReturn(WhatsAppResult.success(statusConectado(cidA)));
+        comoEmpresa(empresaA.getId());
+
+        mockMvc.perform(post("/api/whatsapp/retry").param("empresaId", String.valueOf(empresaB.getId())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.estado").value("CONNECTED"));
+        verify(provider, times(1)).consultarStatus(cidA);
+        verify(provider, times(0)).consultarStatus(String.valueOf(empresaB.getId()));
     }
 }

@@ -6,8 +6,12 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.stereotype.Component;
 
 /**
- * Listener que dispara o wake do whatsapp-service apos o Spring estar READY.
- * Nao bloqueia a thread do evento: delega para {@link WhatsAppServiceWakeService#wakeAsync()}.
+ * Listener que dispara UMA tentativa assincrona de wake do whatsapp-service
+ * apos o Spring estar READY (cold start no Render via GET /health).
+ * Nao bloqueia a thread do evento nem o startup do Stage: delega para
+ * {@link WhatsAppServiceWakeService#wakeAsync()} e termina. O Stage continua
+ * READY mesmo que o WPP ainda esteja acordando; chamadas sob demanda passam
+ * pelo single-flight de {@code ensureAvailable()}.
  */
 @Component
 public class WhatsAppServiceStartupListener implements ApplicationListener<ApplicationReadyEvent> {
@@ -20,7 +24,7 @@ public class WhatsAppServiceStartupListener implements ApplicationListener<Appli
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent event) {
-        // Wake sob demanda via ensureAvailable() - nao acordar WPP automaticamente no boot.
-        // Stage pode ficar READY enquanto WPP continua dormindo.
+        // UMA tentativa assincrona por startup; nunca ensureAvailable() bloqueante aqui.
+        wakeService.wakeAsync();
     }
 }

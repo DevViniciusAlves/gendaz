@@ -111,6 +111,26 @@ public class WhatsAppIntegracaoController {
         return erroSemantico(resultado.getStatus(), true);
     }
 
+    @PostMapping("/retry")
+    public ResponseEntity<?> retry() {
+        Long empresaId = CompanyContext.requireCompanyId();
+        String companyId = String.valueOf(empresaId);
+        if (!provider.disponivel()) {
+            return erroSemantico(WhatsAppOperationStatus.NOT_CONFIGURED, false);
+        }
+        // Nova tentativa Stage -> WPP: ensureAvailable (cold wake via /health)
+        // + status da sessao. Empresa sempre da sessao; sem companyId do browser.
+        WhatsAppResult<WhatsAppSessionStatus> resultado = provider.consultarStatus(companyId);
+        if (resultado.isSuccess()) {
+            WhatsAppSessionStatus status = resultado.getData();
+            return ResponseEntity.ok(Map.of(
+                    "estado", status.getState(),
+                    "hasQr", status.isHasQr(),
+                    "connectedAt", status.getConnectedAt() == null ? "" : status.getConnectedAt()));
+        }
+        return erroSemantico(resultado.getStatus(), false);
+    }
+
     @PostMapping("/desconectar")
     public ResponseEntity<?> desconectar() {
         Long empresaId = CompanyContext.requireCompanyId();

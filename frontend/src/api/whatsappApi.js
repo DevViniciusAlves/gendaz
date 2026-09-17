@@ -32,6 +32,14 @@ export async function obterQrWhatsapp(options = {}) {
   return data
 }
 
+export async function tentarNovamenteWhatsapp(options = {}) {
+  const { data } = await api.post('/whatsapp/retry', null, {
+    headers: usuarioHeaders(),
+    ...options,
+  })
+  return data
+}
+
 export async function desconectarWhatsapp(options = {}) {
   const { data } = await api.post('/whatsapp/desconectar', null, {
     headers: usuarioHeaders(),

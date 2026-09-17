@@ -138,7 +138,16 @@ public class WhatsAppServiceWakeService implements DisposableBean {
         }
         log.info("[whatsapp-availability] iniciando wake do servico");
         try {
-            executor.submit(this::doWake);
+            // Passa pelo single-flight de ensureAvailable(): se outra thread ja
+            // iniciou um wake (boot x request concorrente), compartilha o mesmo flight.
+            executor.submit(() -> {
+                try {
+                    ensureAvailable();
+                } catch (Exception e) {
+                    log.warn("[whatsapp-availability] wake assincrono terminou sem READY. erroTipo={}",
+                            e.getClass().getSimpleName());
+                }
+            });
         } catch (Exception e) {
             log.warn("[whatsapp-availability] falha ao submeter wake. erroTipo={}", e.getClass().getSimpleName());
         }
