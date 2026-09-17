@@ -128,6 +128,9 @@ class WhatsAppCrmTest {
         when(provider.consultarStatus(any()))
                 .thenAnswer(invocation -> WhatsAppResult.success(statusSessao(
                         (String) invocation.getArgument(0), "CONNECTED")));
+        when(provider.consultarStatusAguardandoConexao(any()))
+                .thenAnswer(invocation -> WhatsAppResult.success(statusSessao(
+                        (String) invocation.getArgument(0), "CONNECTED")));
         crmContatoRepository.deleteAll();
         notificacaoRepository.deleteAll();
     }
@@ -485,6 +488,8 @@ class WhatsAppCrmTest {
                 when(provider.disponivel()).thenReturn(false);
             } else {
                 when(provider.disponivel()).thenReturn(true);
+                when(provider.consultarStatusAguardandoConexao(String.valueOf(empresa.getId())))
+                        .thenReturn(WhatsAppResult.success(statusSessao(String.valueOf(empresa.getId()), estado)));
                 when(provider.consultarStatus(String.valueOf(empresa.getId())))
                         .thenReturn(WhatsAppResult.success(statusSessao(String.valueOf(empresa.getId()), estado)));
             }

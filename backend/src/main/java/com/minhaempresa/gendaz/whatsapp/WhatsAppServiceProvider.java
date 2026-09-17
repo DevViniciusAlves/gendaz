@@ -173,18 +173,26 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         WhatsAppOperationStatus av = ensureAvailableStatus();
         if (av != null) return WhatsAppResult.erro(av);
         if (sessionReadyService != null) {
-            WhatsAppSessionReadyService.ReadyResult r = sessionReadyService.ensureSessionConnected(valido);
-            if (r == WhatsAppSessionReadyService.ReadyResult.LOGGED_OUT) {
-                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
-            }
-            if (r == WhatsAppSessionReadyService.ReadyResult.AUTH_ERROR) {
-                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAUTHORIZED);
-            }
-            if (r == WhatsAppSessionReadyService.ReadyResult.TIMEOUT) {
-                return WhatsAppResult.erro(WhatsAppOperationStatus.CONNECT_TIMEOUT);
-            }
-            if (r == WhatsAppSessionReadyService.ReadyResult.UNAVAILABLE || r == WhatsAppSessionReadyService.ReadyResult.NOT_CONFIGURED) {
-                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
+            WhatsAppSessionReadyService.SessionReadyOutcome outcome = sessionReadyService.ensureSessionReady(valido);
+            WhatsAppSessionReadyService.ReadyResult r = outcome.result();
+            if (r == WhatsAppSessionReadyService.ReadyResult.CONNECTED) {
+                if (outcome.status() != null) {
+                    return WhatsAppResult.success(outcome.status());
+                }
+                // fallback if status not captured
+            } else {
+                if (r == WhatsAppSessionReadyService.ReadyResult.LOGGED_OUT) {
+                    return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
+                }
+                if (r == WhatsAppSessionReadyService.ReadyResult.AUTH_ERROR) {
+                    return WhatsAppResult.erro(WhatsAppOperationStatus.UNAUTHORIZED);
+                }
+                if (r == WhatsAppSessionReadyService.ReadyResult.TIMEOUT) {
+                    return WhatsAppResult.erro(WhatsAppOperationStatus.CONNECT_TIMEOUT);
+                }
+                if (r == WhatsAppSessionReadyService.ReadyResult.UNAVAILABLE || r == WhatsAppSessionReadyService.ReadyResult.NOT_CONFIGURED) {
+                    return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
+                }
             }
         }
         return get(valido, "status", "consultarStatus").mapStatus(WhatsAppSessionStatus.class, false);
