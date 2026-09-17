@@ -10,17 +10,26 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Best-effort wake do whatsapp-service via GET /health.
- * Disparado uma unica vez por boot via {@link com.minhaempresa.gendaz.whatsapp.WhatsAppServiceStartupListener}.
+ * Garantia centralizada de disponibilidade do whatsapp-service (on-demand).
+ *
+ * <p>Conceito: {@code ensureAvailable()} verifica /health; se WPP dormindo
+ * dispara wake (GET /health que provoca cold start no Render) e aguarda até
+ * READY com timeout limitado. Concorrência via single-flight: N requests
+ * simultâneas compartilham 1 sequência de wake.
  */
 @Service
 @Slf4j
@@ -37,6 +46,10 @@ public class WhatsAppServiceWakeService implements DisposableBean {
     private final Sleeper sleeper;
     private final ExecutorService executor;
     private final AtomicBoolean started = new AtomicBoolean(false);
+
+    // single-flight
+    private final Object flightLock = new Object();
+    private final AtomicReference<CompletableFuture<Void>> flight = new AtomicReference<>();
 
     @org.springframework.beans.factory.annotation.Autowired
     public WhatsAppServiceWakeService(
@@ -93,54 +106,109 @@ public class WhatsAppServiceWakeService implements DisposableBean {
 
     /**
      * Dispara wake de forma assincrona, garantindo no maximo uma execucao por boot.
-     * Nunca propaga excecao e nunca bloqueia a thread chamadora.
+     * Usado pelo startup listener. Nunca propaga excecao e nunca bloqueia.
      */
     public void wakeAsync() {
         if (!started.compareAndSet(false, true)) {
-            log.debug("[whatsapp-wake] wake ja iniciado, ignorando chamada duplicada");
+            log.debug("[whatsapp-availability] wake ja iniciado, ignorando chamada duplicada");
             return;
         }
         if (serviceUrl.isBlank()) {
-            log.warn("[whatsapp-wake] whatsapp service url nao configurada, wake ignorado");
+            log.warn("[whatsapp-availability] whatsapp service url nao configurada, wake ignorado");
             return;
         }
-        log.info("[whatsapp-wake] iniciando wake do servico");
+        log.info("[whatsapp-availability] iniciando wake do servico");
         try {
             executor.submit(this::doWake);
         } catch (Exception e) {
-            log.warn("[whatsapp-wake] falha ao submeter wake. erroTipo={}", e.getClass().getSimpleName());
+            log.warn("[whatsapp-availability] falha ao submeter wake. erroTipo={}", e.getClass().getSimpleName());
         }
     }
 
     /**
-     * Execucao sincrona do wake, usada por wakeAsync e diretamente em testes.
-     * Best effort: nunca lanca excecao para fora.
+     * Garante que WPP está disponível. Centralizado: todas operações que precisam
+     * do WPP devem chamar este método antes do provider.
+     *
+     * @throws WhatsAppAvailabilityException se não ficar READY dentro do timeout
      */
-    void doWake() {
+    public void ensureAvailable() {
         if (serviceUrl.isBlank()) {
-            log.warn("[whatsapp-wake] whatsapp service url nao configurada, wake ignorado");
+            throw new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.NOT_CONFIGURED, "whatsapp service url nao configurada");
+        }
+        // Fast path: já está ready?
+        HealthResult fast = checkHealthOnce();
+        if (fast == HealthResult.READY) {
+            log.debug("[whatsapp-availability] verificando disponibilidade -> READY");
             return;
         }
+        if (fast == HealthResult.AUTH_ERROR) {
+            log.warn("[whatsapp-availability] auth_error ao verificar disponibilidade");
+            throw new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.AUTH_ERROR, "auth error no health");
+        }
+        // Precisa acordar -> single-flight
+        log.info("[whatsapp-availability] WPP indisponivel, iniciando wake");
+        CompletableFuture<Void> myFuture;
+        boolean isLeader = false;
+        synchronized (flightLock) {
+            CompletableFuture<Void> existing = flight.get();
+            if (existing != null && !existing.isDone()) {
+                myFuture = existing;
+                log.info("[whatsapp-availability] wake ja em andamento, aguardando");
+            } else {
+                myFuture = new CompletableFuture<>();
+                flight.set(myFuture);
+                isLeader = true;
+            }
+        }
+        if (isLeader) {
+            try {
+                doWakeBlocking(myFuture);
+            } catch (Throwable t) {
+                // já tratado no completeExceptionally
+                if (!myFuture.isDone()) {
+                    myFuture.completeExceptionally(t);
+                }
+            }
+        }
+        try {
+            myFuture.get(maxDuration.toMillis() + 5000, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            throw new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.TIMEOUT, "timeout aguardando WPP READY");
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof WhatsAppAvailabilityException wae) {
+                throw wae;
+            }
+            throw new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, cause != null ? cause.getMessage() : "unavailable");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido");
+        }
+    }
+
+    private void doWakeBlocking(CompletableFuture<Void> future) {
         Instant deadline = Instant.now().plus(maxDuration);
         int tentativa = 0;
         String healthUrl;
         try {
             healthUrl = serviceUrl + "/health";
-            // Validar URL antecipadamente
             URI.create(healthUrl);
         } catch (IllegalArgumentException e) {
-            log.warn("[whatsapp-wake] url invalida, abortando wake");
+            log.warn("[whatsapp-availability] url invalida, abortando wake");
+            future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.NOT_CONFIGURED, "url invalida"));
             return;
         }
 
         while (Instant.now().isBefore(deadline)) {
             tentativa++;
             if (Thread.currentThread().isInterrupted()) {
-                log.info("[whatsapp-wake] wake interrompido");
+                log.info("[whatsapp-availability] wake interrompido");
+                future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido"));
                 return;
             }
             if (executor.isShutdown()) {
-                log.info("[whatsapp-wake] executor em shutdown, abortando");
+                log.info("[whatsapp-availability] executor em shutdown, abortando");
+                future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "executor shutdown"));
                 return;
             }
             try {
@@ -152,45 +220,52 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
                 int status = response.statusCode();
                 if (status >= 200 && status < 300) {
-                    log.info("[whatsapp-wake] servico disponivel tentativa={} status={}", tentativa, status);
+                    log.info("[whatsapp-availability] WPP READY tentativa={} status={}", tentativa, status);
+                    future.complete(null);
+                    return;
+                }
+                if (status == 401 || status == 403) {
+                    log.warn("[whatsapp-availability] auth_error tentativa={} status={}", tentativa, status);
+                    future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.AUTH_ERROR, "auth error " + status));
                     return;
                 }
                 if (NON_TRANSIENT_STATUS.contains(status)) {
-                    log.warn("[whatsapp-wake] resposta nao transitoria tentativa={} status={} abortando", tentativa, status);
+                    log.warn("[whatsapp-availability] resposta nao transitoria tentativa={} status={} abortando", tentativa, status);
+                    future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "non transient " + status));
                     return;
                 }
                 if (RETRYABLE_STATUS.contains(status) || (status >= 500 && status < 600)) {
-                    log.warn("[whatsapp-wake] tentativa={} status={}", tentativa, status);
+                    log.warn("[whatsapp-availability] tentativa={} status={}", tentativa, status);
                 } else {
-                    // Outros 4xx nao listados como non-transient: tratar como nao retryable para nao ficar 90s
                     if (status >= 400 && status < 500) {
-                        log.warn("[whatsapp-wake] resposta nao transitoria tentativa={} status={} abortando", tentativa, status);
+                        log.warn("[whatsapp-availability] resposta nao transitoria tentativa={} status={} abortando", tentativa, status);
+                        future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "client error " + status));
                         return;
                     }
-                    log.warn("[whatsapp-wake] tentativa={} status={}", tentativa, status);
+                    log.warn("[whatsapp-availability] tentativa={} status={}", tentativa, status);
                 }
             } catch (HttpTimeoutException e) {
-                log.warn("[whatsapp-wake] tentativa={} timeout", tentativa);
+                log.warn("[whatsapp-availability] tentativa={} timeout", tentativa);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.info("[whatsapp-wake] wake interrompido");
+                log.info("[whatsapp-availability] wake interrompido");
+                future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido"));
                 return;
             } catch (ConnectException e) {
-                log.warn("[whatsapp-wake] tentativa={} status=connect_error", tentativa);
+                log.warn("[whatsapp-availability] tentativa={} status=connect_error", tentativa);
             } catch (IOException e) {
-                // Inclui HttpConnectTimeoutException (subclasse de IOException) e falhas de rede
                 Throwable cause = e.getCause();
                 boolean isConnectFailure = e instanceof ConnectException
                         || cause instanceof ConnectException
                         || e instanceof java.net.UnknownHostException
                         || cause instanceof java.net.UnknownHostException;
                 if (isConnectFailure) {
-                    log.warn("[whatsapp-wake] tentativa={} status=connect_error", tentativa);
+                    log.warn("[whatsapp-availability] tentativa={} status=connect_error", tentativa);
                 } else {
-                    log.warn("[whatsapp-wake] tentativa={} status=io_error", tentativa);
+                    log.warn("[whatsapp-availability] tentativa={} status=io_error", tentativa);
                 }
             } catch (Exception e) {
-                log.warn("[whatsapp-wake] tentativa={} erroTipo={}", tentativa, e.getClass().getSimpleName());
+                log.warn("[whatsapp-availability] tentativa={} erroTipo={}", tentativa, e.getClass().getSimpleName());
             }
 
             if (Instant.now().plus(retryInterval).isAfter(deadline)) {
@@ -200,14 +275,60 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 sleeper.sleep(retryInterval);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.info("[whatsapp-wake] wake interrompido durante sleep");
+                log.info("[whatsapp-availability] wake interrompido durante sleep");
+                future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido sleep"));
                 return;
             } catch (Exception e) {
-                log.warn("[whatsapp-wake] falha no sleep tentativa={} erroTipo={}", tentativa, e.getClass().getSimpleName());
+                log.warn("[whatsapp-availability] falha no sleep tentativa={} erroTipo={}", tentativa, e.getClass().getSimpleName());
+                future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "sleep fail"));
                 return;
             }
         }
-        log.warn("[whatsapp-wake] servico nao ficou disponivel dentro da janela de cold start");
+        log.warn("[whatsapp-availability] timeout tentativa={} - servico nao ficou disponivel", tentativa);
+        future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.TIMEOUT, "timeout apos " + tentativa + " tentativas"));
+    }
+
+    private enum HealthResult { READY, TRANSIENT, AUTH_ERROR }
+
+    private HealthResult checkHealthOnce() {
+        String healthUrl;
+        try {
+            healthUrl = serviceUrl + "/health";
+            URI.create(healthUrl);
+        } catch (IllegalArgumentException e) {
+            return HealthResult.TRANSIENT;
+        }
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(healthUrl))
+                    .timeout(requestTimeout)
+                    .GET()
+                    .build();
+            HttpResponse<Void> response = httpClient.send(request, HttpResponse.BodyHandlers.discarding());
+            int status = response.statusCode();
+            if (status >= 200 && status < 300) return HealthResult.READY;
+            if (status == 401 || status == 403) return HealthResult.AUTH_ERROR;
+            return HealthResult.TRANSIENT;
+        } catch (HttpTimeoutException e) {
+            return HealthResult.TRANSIENT;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return HealthResult.TRANSIENT;
+        } catch (IOException e) {
+            return HealthResult.TRANSIENT;
+        } catch (Exception e) {
+            return HealthResult.TRANSIENT;
+        }
+    }
+
+    void doWake() {
+        if (serviceUrl.isBlank()) {
+            log.warn("[whatsapp-availability] whatsapp service url nao configurada, wake ignorado");
+            return;
+        }
+        CompletableFuture<Void> f = new CompletableFuture<>();
+        doWakeBlocking(f);
+        try { f.get(1, TimeUnit.MILLISECONDS); } catch (Exception ignored) {}
     }
 
     @Override
@@ -218,5 +339,18 @@ public class WhatsAppServiceWakeService implements DisposableBean {
     @FunctionalInterface
     interface Sleeper {
         void sleep(Duration duration) throws InterruptedException;
+    }
+
+    public enum WhatsAppAvailabilityReason {
+        TIMEOUT, UNAVAILABLE, AUTH_ERROR, NOT_CONFIGURED
+    }
+
+    public static class WhatsAppAvailabilityException extends RuntimeException {
+        private final WhatsAppAvailabilityReason reason;
+        public WhatsAppAvailabilityException(WhatsAppAvailabilityReason reason, String msg) {
+            super(msg);
+            this.reason = reason;
+        }
+        public WhatsAppAvailabilityReason getReason() { return reason; }
     }
 }

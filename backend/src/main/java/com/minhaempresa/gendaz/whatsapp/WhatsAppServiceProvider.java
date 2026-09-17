@@ -3,6 +3,7 @@ package com.minhaempresa.gendaz.whatsapp;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.gendaz.shared.audit.OutboundTrafficAuditService;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppServiceWakeService;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -37,16 +38,18 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
     private final String internalToken;
     private final Duration requestTimeout;
     private final HttpClient httpClient;
+    private final WhatsAppServiceWakeService wakeService;
 
     @Autowired
     public WhatsAppServiceProvider(
             ObjectMapper objectMapper,
             OutboundTrafficAuditService auditService,
             @Value("${whatsapp.service-url:${WHATSAPP_SERVICE_URL:}}") String serviceUrl,
-            @Value("${whatsapp.internal-token:${WHATSAPP_INTERNAL_TOKEN:}}") String internalToken
+            @Value("${whatsapp.internal-token:${WHATSAPP_INTERNAL_TOKEN:}}") String internalToken,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) WhatsAppServiceWakeService wakeService
     ) {
         this(objectMapper, auditService, serviceUrl, internalToken,
-                Duration.ofSeconds(5), Duration.ofSeconds(10));
+                Duration.ofSeconds(5), Duration.ofSeconds(10), wakeService);
     }
 
     WhatsAppServiceProvider(
@@ -57,11 +60,24 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             Duration connectTimeout,
             Duration requestTimeout
     ) {
+        this(objectMapper, auditService, serviceUrl, internalToken, connectTimeout, requestTimeout, null);
+    }
+
+    WhatsAppServiceProvider(
+            ObjectMapper objectMapper,
+            OutboundTrafficAuditService auditService,
+            String serviceUrl,
+            String internalToken,
+            Duration connectTimeout,
+            Duration requestTimeout,
+            WhatsAppServiceWakeService wakeService
+    ) {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.serviceUrl = serviceUrl == null ? "" : serviceUrl.trim().replaceAll("/+$", "");
         this.internalToken = internalToken == null ? "" : internalToken.trim();
         this.requestTimeout = requestTimeout == null ? Duration.ofSeconds(10) : requestTimeout;
+        this.wakeService = wakeService;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(connectTimeout == null ? Duration.ofSeconds(5) : connectTimeout)
                 .build();
@@ -81,6 +97,8 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (!disponivel()) {
             return WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED);
         }
+        WhatsAppOperationStatus av = ensureAvailableStatus();
+        if (av != null) return WhatsAppResult.erro(av);
         HttpCall call = post(valido, "connect", "conectar");
         return call.mapStatus(WhatsAppSessionStatus.class, false);
     }
@@ -94,6 +112,8 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (!disponivel()) {
             return WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED);
         }
+        WhatsAppOperationStatus av = ensureAvailableStatus();
+        if (av != null) return WhatsAppResult.erro(av);
         HttpCall call = get(valido, "status", "consultarStatus");
         return call.mapStatus(WhatsAppSessionStatus.class, false);
     }
@@ -107,6 +127,8 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (!disponivel()) {
             return WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED);
         }
+        WhatsAppOperationStatus av = ensureAvailableStatus();
+        if (av != null) return WhatsAppResult.erro(av);
         HttpCall call = get(valido, "qr", "obterQr");
         return call.mapStatus(WhatsAppQr.class, true);
     }
@@ -120,6 +142,8 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (!disponivel()) {
             return WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED);
         }
+        WhatsAppOperationStatus av = ensureAvailableStatus();
+        if (av != null) return WhatsAppResult.erro(av);
         HttpCall call = post(valido, "logout", "logout");
         return call.mapStatus(WhatsAppSessionStatus.class, false);
     }
@@ -133,6 +157,8 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         if (!disponivel()) {
             return WhatsAppSendResult.erro(WhatsAppSendStatus.NOT_CONFIGURED);
         }
+        WhatsAppSendStatus av = ensureAvailableSendStatus();
+        if (av != null) return WhatsAppSendResult.erro(av);
         String corpo;
         try {
             corpo = objectMapper.writeValueAsString(Map.of(
@@ -143,6 +169,35 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             return WhatsAppSendResult.erro(WhatsAppSendStatus.PROVIDER_ERROR);
         }
         return postTexto(valido, corpo, "enviarTexto");
+    }
+
+    private WhatsAppOperationStatus ensureAvailableStatus() {
+        if (wakeService == null) return null;
+        try {
+            wakeService.ensureAvailable();
+            return null;
+        } catch (WhatsAppServiceWakeService.WhatsAppAvailabilityException e) {
+            return switch (e.getReason()) {
+                case AUTH_ERROR -> WhatsAppOperationStatus.UNAUTHORIZED;
+                case TIMEOUT -> WhatsAppOperationStatus.CONNECT_TIMEOUT;
+                case NOT_CONFIGURED -> WhatsAppOperationStatus.NOT_CONFIGURED;
+                case UNAVAILABLE -> WhatsAppOperationStatus.UNAVAILABLE;
+            };
+        }
+    }
+
+    private WhatsAppSendStatus ensureAvailableSendStatus() {
+        if (wakeService == null) return null;
+        try {
+            wakeService.ensureAvailable();
+            return null;
+        } catch (WhatsAppServiceWakeService.WhatsAppAvailabilityException e) {
+            return switch (e.getReason()) {
+                case AUTH_ERROR -> WhatsAppSendStatus.UNAUTHORIZED;
+                case TIMEOUT, UNAVAILABLE -> WhatsAppSendStatus.SERVICE_UNAVAILABLE;
+                case NOT_CONFIGURED -> WhatsAppSendStatus.NOT_CONFIGURED;
+            };
+        }
     }
 
     private static String validarCompanyId(String companyId) {

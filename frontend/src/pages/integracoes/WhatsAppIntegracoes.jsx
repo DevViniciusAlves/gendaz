@@ -34,44 +34,86 @@ function ehErroDefinitivo(err) {
   return false
 }
 
+const WAKING_POLL_INTERVAL_MS = 2500
+const WAKING_POLL_MAX = 12
+
 export default function WhatsAppIntegracoes() {
   const [resumo, setResumo] = useState(null)
   const [carregando, setCarregando] = useState(true)
+  const [acordando, setAcordando] = useState(false)
   const [erro, setErro] = useState('')
-  // polling removido: sem estado de retry; UNAVAILABLE usa recuperação manual via "Tentar novamente"
   const [modalAberto, setModalAberto] = useState(false)
   const [confirmarConectar, setConfirmarConectar] = useState(false)
   const [confirmarDesconectar, setConfirmarDesconectar] = useState(false)
   const [autoConnectToken, setAutoConnectToken] = useState(0)
   const [desconectando, setDesconectando] = useState(false)
   const ultimoErroRef = useRef(null)
+  const timerRef = useRef(null)
+  const tentativasRef = useRef(0)
 
-  const carregar = useCallback(async () => {
-    setCarregando(true)
+  const limparWaking = useCallback(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  const carregar = useCallback(async ({ isRetry = false } = {}) => {
+    if (!isRetry) {
+      setCarregando(true)
+      setAcordando(false)
+      tentativasRef.current = 0
+      limparWaking()
+    }
     setErro('')
     try {
       const dados = await buscarResumoWhatsapp()
+      const estado = dados?.conexao?.estado || 'UNAVAILABLE'
+      if (estado === 'UNAVAILABLE' && tentativasRef.current < WAKING_POLL_MAX) {
+        setResumo(dados)
+        setAcordando(true)
+        setCarregando(false)
+        tentativasRef.current += 1
+        limparWaking()
+        timerRef.current = setTimeout(() => carregar({ isRetry: true }), WAKING_POLL_INTERVAL_MS)
+        return
+      }
       setResumo(dados)
+      setAcordando(false)
+      setCarregando(false)
+      limparWaking()
       ultimoErroRef.current = null
       setErro('')
     } catch (err) {
+      if (ehErroTransitorio(err) && tentativasRef.current < WAKING_POLL_MAX) {
+        setAcordando(true)
+        setCarregando(false)
+        tentativasRef.current += 1
+        limparWaking()
+        timerRef.current = setTimeout(() => carregar({ isRetry: true }), WAKING_POLL_INTERVAL_MS)
+        return
+      }
       ultimoErroRef.current = err
+      setAcordando(false)
+      setCarregando(false)
+      limparWaking()
       setErro(
         err?.response?.data?.mensagem ||
         'Não foi possível consultar a integração agora. Tente novamente em alguns instantes.'
       )
-    } finally {
-      setCarregando(false)
     }
-  }, [])
+  }, [limparWaking])
 
   function tentarNovamente() {
+    tentativasRef.current = 0
+    limparWaking()
     carregar()
   }
 
   useEffect(() => {
     carregar()
-  }, [carregar])
+    return () => limparWaking()
+  }, [carregar, limparWaking])
 
   const estado = resumo?.conexao?.estado || 'UNAVAILABLE'
   const indisponivelTemporario = estado === 'UNAVAILABLE'
@@ -82,10 +124,11 @@ export default function WhatsAppIntegracoes() {
   const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
 
   function abrirConexaoConfirmada() {
-    if (indisponivelTemporario || indisponivelAmbiente) return
+    if (indisponivelAmbiente) return
+    if (indisponivelTemporario && !acordando) return
     setConfirmarConectar(false)
     setModalAberto(true)
-    setAutoConnectToken((valor) => valor + 1)
+    setAutoConnectToken((v) => v + 1)
   }
 
   async function handleDesconectar() {
@@ -110,7 +153,6 @@ export default function WhatsAppIntegracoes() {
   }
 
   function helperTexto() {
-    if (indisponivelTemporario) return MSG_SERVICO_INDISPONIVEL
     if (indisponivelAmbiente) return 'A integração WhatsApp ainda não está disponível neste ambiente.'
     if (conectado) return null
     if (conectando) return 'Aguardando conclusão do pareamento no modal de configuração.'
@@ -118,10 +160,8 @@ export default function WhatsAppIntegracoes() {
     return null
   }
 
-  // Polling removido: GET /api/whatsapp/resumo ocorre apenas na carga inicial.
-  // Polling temporário durante conexão ativa é responsabilidade exclusiva do WhatsAppModal.
-
   const mostrarErroAssustador = Boolean(erro) && !ehErroTransitorio(ultimoErroRef.current)
+  const emWaking = acordando || (carregando && !erro && !resumo)
 
   return (
     <section className="panel integr-card" aria-label="Integração WhatsApp">
@@ -133,9 +173,21 @@ export default function WhatsAppIntegracoes() {
       </div>
       <p className="integr-card-desc">Lembretes automáticos e ações de CRM pelo WhatsApp.</p>
 
-      {carregando && <p className="wpp-muted">Carregando integração...</p>}
+      {emWaking && (
+        <>
+          <div className="integr-card-status">
+            <p className="wpp-muted">Iniciando WhatsApp...</p>
+            <p className="wpp-muted">Isso pode levar alguns segundos.</p>
+          </div>
+          <div className="integr-card-status" aria-live="polite">
+            <span className="wpp-muted">Carregando...</span>
+          </div>
+        </>
+      )}
 
-      {!carregando && erro && mostrarErroAssustador && (
+      {!emWaking && carregando && <p className="wpp-muted">Carregando integração...</p>}
+
+      {!emWaking && !carregando && erro && mostrarErroAssustador && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
@@ -147,7 +199,7 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!carregando && erro && !mostrarErroAssustador && (
+      {!emWaking && !carregando && erro && !mostrarErroAssustador && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
@@ -159,7 +211,7 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!carregando && !erro && resumo && indisponivelTemporario && (
+      {!emWaking && !carregando && !erro && resumo && indisponivelTemporario && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
@@ -171,7 +223,7 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!carregando && !erro && resumo && estado !== 'UNAVAILABLE' && (
+      {!emWaking && !carregando && !erro && resumo && estado !== 'UNAVAILABLE' && (
         <>
           <div className="integr-card-status">
             <StatusBadge status={estado} />
@@ -189,7 +241,7 @@ export default function WhatsAppIntegracoes() {
                 type="button"
                 variant={conectado ? 'secondary' : 'primary'}
                 onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
-                disabled={operando || indisponivelAmbiente || indisponivelTemporario}
+                disabled={operando || indisponivelAmbiente || (indisponivelTemporario && !acordando)}
                 loading={desconectando}
                 title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
               >
