@@ -1,14 +1,29 @@
 name: Wake WhatsApp STAGE - Lembretes
 
 on:
-  # TESTE SOMENTE NA STAGE.
-  # Sempre que este arquivo for alterado na stage,
-  # o workflow executa.
+  # Automático: a cada 15 minutos,
+  # somente entre 05:00 e 19:00 no horário de Brasília.
+  #
+  # Começa em :05 para evitar o pico de workflows
+  # exatamente no início da hora.
+  schedule:
+    - cron: "5-59/15 5-18 * * *"
+      timezone: "America/Sao_Paulo"
+
+    # Última verificação do dia.
+    - cron: "0 19 * * *"
+      timezone: "America/Sao_Paulo"
+
+  # Permite teste manual quando STAGE for a default branch.
+  workflow_dispatch:
+
+  # Mantém o teste imediato:
+  # alterou este próprio workflow na stage -> executa uma vez.
   push:
     branches:
       - stage
     paths:
-      - '.github/workflows/wake-whatsapp-stage.yml'
+      - ".github/workflows/wake-whatsapp-stage.yml"
 
 concurrency:
   group: wake-whatsapp-stage
@@ -21,22 +36,25 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Validar branch
+      - name: Validar ambiente STAGE
         run: |
           set -euo pipefail
 
-          echo "Branch atual: ${GITHUB_REF_NAME}"
+          echo "Branch/ref atual: ${GITHUB_REF_NAME}"
           echo "Evento: ${GITHUB_EVENT_NAME}"
 
-          if [ "${GITHUB_REF_NAME}" != "stage" ]; then
-            echo "ERRO: este workflow deve executar somente na branch stage."
+          # Em push queremos obrigatoriamente a branch stage.
+          if [ "${GITHUB_EVENT_NAME}" = "push" ] && [ "${GITHUB_REF_NAME}" != "stage" ]; then
+            echo "ERRO: push permitido somente na branch stage."
             exit 1
           fi
 
-          echo "Branch STAGE validada."
+          echo "Ambiente STAGE validado."
 
       - name: Instalar cliente PostgreSQL
         run: |
+          set -euo pipefail
+
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
@@ -64,16 +82,16 @@ jobs:
             exit 1
           fi
 
-          # Converte:
           # jdbc:postgresql://...
-          # para:
+          # vira:
           # postgresql://...
           DB_URL="${DB_URL#jdbc:}"
 
           export PGPASSWORD="$DB_PASSWORD"
           export PGCONNECT_TIMEOUT=15
 
-          echo "Conectando no Neon STAGE..."
+          echo "Conectando somente no Neon STAGE..."
+          echo "WPP Service e Backend NÃO serão chamados durante esta consulta."
 
           SQL="$(cat <<'SQL'
           WITH agora AS (
@@ -83,27 +101,58 @@ jobs:
           FROM whatsapp_notificacoes n
           CROSS JOIN agora a
           WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+
             AND n.recipient IS NOT NULL
             AND n.message_body IS NOT NULL
+
+            -- Não acordar serviço por lembrete já expirado.
             AND (
                 n.expires_at IS NULL
                 OR n.expires_at >= a.utc_now
             )
+
             AND (
                 (
+                    -- Lembrete normal pendente.
                     n.status = 'PENDENTE'
+
                     AND n.scheduled_at IS NOT NULL
-                    AND n.scheduled_at <= a.utc_now + INTERVAL '5 minutes'
+
+                    -- Não considerar lembrete antigo perdido.
+                    AND n.scheduled_at >=
+                        a.utc_now - INTERVAL '10 minutes'
+
+                    -- Acordamos no máximo 12 minutos antes.
+                    -- Como o workflow roda a cada 15 min,
+                    -- isso deixa uma margem máxima aproximada
+                    -- de 3 minutos entre as verificações.
+                    AND n.scheduled_at <=
+                        a.utc_now + INTERVAL '12 minutes'
+
+                    -- Retry ainda precisa estar próximo.
                     AND (
                         n.next_attempt_at IS NULL
-                        OR n.next_attempt_at <= a.utc_now + INTERVAL '5 minutes'
+                        OR n.next_attempt_at <=
+                            a.utc_now + INTERVAL '12 minutes'
                     )
                 )
+
                 OR
+
                 (
+                    -- Recuperação de envio preso/crash.
                     n.status = 'ENVIANDO'
+
                     AND n.processing_started_at IS NOT NULL
-                    AND n.processing_started_at <= a.utc_now - INTERVAL '120 seconds'
+
+                    AND n.processing_started_at <=
+                        a.utc_now - INTERVAL '120 seconds'
+
+                    AND (
+                        n.scheduled_at IS NULL
+                        OR n.scheduled_at >=
+                            a.utc_now - INTERVAL '10 minutes'
+                    )
                 )
             );
           SQL
@@ -123,7 +172,10 @@ jobs:
             exit 1
           fi
 
+          echo "========================================"
           echo "Lembretes encontrados: $COUNT"
+          echo "========================================"
+
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
 
       - name: Nenhum lembrete próximo
@@ -132,9 +184,14 @@ jobs:
           echo "========================================"
           echo "NENHUM LEMBRETE PRÓXIMO"
           echo "========================================"
-          echo "Não existe lembrete que precise ser processado agora."
-          echo "WPP e Backend STAGE podem continuar hibernados."
+          echo "Nenhum serviço Render será acordado."
+          echo "Backend STAGE pode continuar dormindo."
+          echo "WPP Service pode continuar dormindo."
+          echo "Fim."
 
+      # O WPP é acordado primeiro propositalmente.
+      # Assim damos tempo para Baileys restaurar a sessão
+      # antes de ligar o scheduler Java do Backend.
       - name: Acordar WPP Service STAGE
         if: steps.due.outputs.count != '0'
         run: |
@@ -143,6 +200,7 @@ jobs:
           URL="https://whatsapp-service-s3f2.onrender.com/health"
 
           echo "========================================"
+          echo "LEMBRETE ENCONTRADO"
           echo "ACORDANDO WPP SERVICE STAGE"
           echo "========================================"
 
@@ -173,7 +231,7 @@ jobs:
       - name: Aguardar restauração da sessão WhatsApp
         if: steps.due.outputs.count != '0'
         run: |
-          echo "Aguardando restauração automática das sessões WhatsApp..."
+          echo "Aguardando restauração automática da sessão WhatsApp..."
           sleep 20
 
       - name: Acordar Backend STAGE
@@ -215,9 +273,12 @@ jobs:
         if: steps.due.outputs.count != '0'
         run: |
           echo "========================================"
-          echo "WAKE STAGE CONCLUÍDO COM SUCESSO"
+          echo "WAKE STAGE CONCLUÍDO"
           echo "========================================"
           echo "Lembretes encontrados: ${{ steps.due.outputs.count }}"
           echo "WPP Service: ONLINE"
           echo "Backend STAGE: ONLINE"
-          echo "O scheduler Java agora assume o processamento."
+          echo ""
+          echo "A partir daqui o scheduler Java assume."
+          echo "O GitHub Actions não envia a mensagem."
+          echo "O GitHub Actions não mantém os serviços acordados."
