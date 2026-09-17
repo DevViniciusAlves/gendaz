@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -34,6 +35,7 @@ public class WhatsAppSessionReadyService {
 
     private final ConcurrentHashMap<String, CompletableFuture<SessionReadyOutcome>> flights = new ConcurrentHashMap<>();
 
+    @Autowired
     public WhatsAppSessionReadyService(
             ObjectMapper objectMapper,
             @Value("${whatsapp.service-url:${WHATSAPP_SERVICE_URL:}}") String serviceUrl,
