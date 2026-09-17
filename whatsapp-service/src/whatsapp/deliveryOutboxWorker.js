@@ -76,6 +76,7 @@ class DeliveryOutboxWorker {
 
   async _processCycle() {
     const client = await this.pool.connect();
+    let row = null;
     try {
       await client.query('BEGIN');
       const selectResult = await client.query(
@@ -91,7 +92,7 @@ class DeliveryOutboxWorker {
         await client.query('COMMIT');
         return false;
       }
-      const row = selectResult.rows[0];
+      row = selectResult.rows[0];
       const updateResult = await client.query(
         `UPDATE whatsapp_delivery_outbox
          SET state = 'PROCESSING', locked_until = NOW() + INTERVAL '60 seconds', attempt_count = attempt_count + 1, last_attempt_at = NOW(), updated_at = NOW()
@@ -101,8 +102,6 @@ class DeliveryOutboxWorker {
       );
       row.attempt_count = Number(updateResult.rows[0].attempt_count);
       await client.query('COMMIT');
-      await this._postToSpring(row);
-      return true;
     } catch (err) {
       try {
         await client.query('ROLLBACK');
@@ -111,6 +110,9 @@ class DeliveryOutboxWorker {
     } finally {
       client.release();
     }
+
+    await this._postToSpring(row);
+    return true;
   }
 
   async _postToSpring(row) {
@@ -176,7 +178,7 @@ class DeliveryOutboxWorker {
       const client = await this.pool.connect();
       try {
         await client.query(`UPDATE whatsapp_delivery_outbox SET state = 'DEAD', http_status = $1, http_error_message = $2, updated_at = NOW() WHERE id = $3`, [status, 'permanent_error', row.id]);
-        this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${status} motivo=permanent_error => DEAD tentativa=${row.attempt_count}/7`);
+        this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${status} motivo=permanent_error => DEAD`);
       } finally {
         client.release();
       }
@@ -197,7 +199,7 @@ class DeliveryOutboxWorker {
     const client = await this.pool.connect();
     try {
       await client.query(`UPDATE whatsapp_delivery_outbox SET state = 'DEAD', http_status = $1, http_error_message = $2, updated_at = NOW() WHERE id = $3`, [status, 'unexpected_http_status', row.id]);
-      this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${status} motivo=unexpected_http_status => DEAD tentativa=${row.attempt_count}/7`);
+      this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${status} motivo=unexpected_http_status => DEAD`);
     } finally {
       client.release();
     }
