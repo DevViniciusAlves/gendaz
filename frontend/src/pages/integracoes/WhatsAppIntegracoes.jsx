@@ -220,8 +220,9 @@ export default function WhatsAppIntegracoes() {
             )}
           </div>
           <div className="integr-card-actions">
-            {resumo
-              ? resumo?.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado) ? (
+{resumo && (
+                resumo?.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado)
+              ) ? (
                 <div className="integr-card-actions">
                   <Button variant="secondary" type="button" onClick={() => setModalAberto(true)}>
                     Configurar
