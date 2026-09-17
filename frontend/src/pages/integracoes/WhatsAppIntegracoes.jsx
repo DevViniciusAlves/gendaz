@@ -35,11 +35,13 @@ export default function WhatsAppIntegracoes() {
   const [desconectando, setDesconectando] = useState(false)
   const [tentandoNovamente, setTentandoNovamente] = useState(false)
   const [ultimoErro, setUltimoErro] = useState(null)
+  const [retryState, setRetryState] = useState(null)
 
   const carregar = useCallback(async () => {
     setCarregando(true)
     setErro('')
     setUltimoErro(null)
+    setRetryState(null)
     try {
       const dados = await buscarResumoWhatsapp()
       setResumo(dados)
@@ -60,32 +62,37 @@ export default function WhatsAppIntegracoes() {
   async function tentarNovamente() {
     if (tentandoNovamente || carregando) return
     setTentandoNovamente(true)
+    setRetryState(null)
     try {
       // Tentativa explicita Stage -> WPP (cold wake + status da sessao).
       const retorno = await tentarNovamenteWhatsapp()
-      // Atualiza o estado da sessao a partir do retorno do retry.
+      // Armazena o estado obtido pelo retry em estado temporario,
+      // mesmo se resumo ainda for null (edge case: retry funcionou mas resumo inicial falhou).
       if (retorno && retorno.estado) {
-        setResumo((atual) => atual ? {
-          ...atual,
-          conexao: {
-            ...(atual.conexao || {}),
-            estado: retorno.estado,
-            hasQr: retorno.hasQr ?? atual.conexao?.hasQr ?? false,
-            connectedAt: retorno.connectedAt || atual.conexao?.connectedAt || null,
-          },
-        } : atual)
+        setRetryState({
+          estado: retorno.estado,
+          hasQr: retorno.hasQr,
+        })
       }
       // UMA sincronizacao do resumo pelo Stage (quotas/configuracao/conexao).
       try {
         const dados = await buscarResumoWhatsapp()
-        setResumo(dados)
-        setErro('')
-        setUltimoErro(null)
+        // Se a sincronizacao funcionar, usa o resumo completo e limpa o estado temporario.
+        if (dados && dados.conexao) {
+          setResumo(dados)
+          setRetryState(null)
+          setErro('')
+          setUltimoErro(null)
+        }
+        // Se a sincronizacao falhar, mantem o estado temporario do retry na tela.
+        else {
+          // NAO limpar retryState aqui - ele sera usado no render
+        }
       } catch {
-        // Mantem o estado do retry; mensagem transitória ja exibida.
+        // Sincronizacao falhou - mantem o estado temporario do retry na tela.
       }
     } catch (err) {
-      // Falha transitória: mantem mensagem de indisponibilidade e reabilita o botao.
+      // Falha transitoria: mantem mensagem de indisponibilidade e reabilita o botao.
       if (!ehErroDefinitivo(err)) {
         setErro(MSG_SERVICO_INDISPONIVEL)
       } else {
@@ -104,13 +111,14 @@ export default function WhatsAppIntegracoes() {
     carregar()
   }, [carregar])
 
-  const estado = resumo?.conexao?.estado || 'UNAVAILABLE'
-  const indisponivelTemporario = estado === 'UNAVAILABLE'
-  const conectando = estado === 'CONNECTING'
-  const reconectandoSessao = estado === 'RECONNECTING'
-  const conectado = estado === 'CONNECTED'
+  // Determina o estado a ser exibido: usa resumo se disponivel, senão usa retryState
+  const estadoDisplay = resumo?.conexao?.estado || retryState?.estado || 'UNAVAILABLE'
+  const indisponivelTemporario = estadoDisplay === 'UNAVAILABLE'
+  const conectando = estadoDisplay === 'CONNECTING'
+  const reconectandoSessao = estadoDisplay === 'RECONNECTING'
+  const conectado = estadoDisplay === 'CONNECTED'
   const operando = conectando || reconectandoSessao || desconectando
-  const indisponivelAmbiente = estado === 'NOT_CONFIGURED'
+  const indisponivelAmbiente = estadoDisplay === 'NOT_CONFIGURED'
 
   function abrirConexaoConfirmada() {
     if (indisponivelAmbiente) return
@@ -187,7 +195,7 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!emLoadingInicial && !erro && resumo && indisponivelTemporario && (
+      {!emLoadingInicial && !erro && indisponivelTemporario && (
         <>
           <div className="integr-card-status">
             <StatusBadge status="UNAVAILABLE" />
@@ -199,36 +207,54 @@ export default function WhatsAppIntegracoes() {
         </>
       )}
 
-      {!emLoadingInicial && !erro && resumo && estado !== 'UNAVAILABLE' && (
+      {!emLoadingInicial && !erro && (resumo || retryState) && !indisponivelTemporario && (
         <>
           <div className="integr-card-status">
-            <StatusBadge status={estado} />
+            <StatusBadge status={retryState?.estado || resumo?.conexao?.estado || estadoDisplay} />
             {helperTexto() && <p className="wpp-muted">{helperTexto()}</p>}
-            {!resumo.disponivelNoPlano && !indisponivelAmbiente && (
+            {!resumo?.disponivelNoPlano && !indisponivelAmbiente && (
               <p className="wpp-muted">Não disponível no seu plano.</p>
             )}
+            {!resumo?.disponivelNoPlano && retryState?.hasQr && (
+              <p className="wpp-muted">QR disponível</p>
+            )}
           </div>
-          {resumo.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado) ? (
-            <div className="integr-card-actions">
-              <Button variant="secondary" type="button" onClick={() => setModalAberto(true)}>
-                Configurar
-              </Button>
-              <Button
-                type="button"
-                variant={conectado ? 'secondary' : 'primary'}
-                onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
-                disabled={operando || indisponivelAmbiente}
-                loading={desconectando}
-                title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
-              >
-                {textoBotaoConexao()}
-              </Button>
-            </div>
-          ) : (
-            <div className="integr-card-actions">
-              <Link to="/sistema/planos" className="btn btn-secondary">Ver planos</Link>
-            </div>
-          )}
+          <div className="integr-card-actions">
+            {resumo
+              ? resumo?.disponivelNoPlano || ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(resumo.conexao?.estado) ? (
+                <div className="integr-card-actions">
+                  <Button variant="secondary" type="button" onClick={() => setModalAberto(true)}>
+                    Configurar
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={conectado ? 'secondary' : 'primary'}
+                    onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
+                    disabled={operando || indisponivelAmbiente}
+                    loading={desconectando}
+                    title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
+                  >
+                    Conectar
+                  </Button>
+                </div>
+              ) : null}
+            {retryState?.estado && ['CONNECTED', 'CONNECTING', 'RECONNECTING'].includes(retryState.estado) ? (
+              <div className="integr-card-actions">
+                <Button variant="secondary" type="button" onClick={() => setModalAberto(true)}>
+                  Configurar
+                </Button>
+                <Button
+                  type="button"
+                  variant={conectado ? 'secondary' : 'primary'}
+                  onClick={() => (conectado ? setConfirmarDesconectar(true) : setConfirmarConectar(true))}
+                  disabled={operando || indisponivelAmbiente}
+                  loading={desconectando}
+                >
+                  Conectar
+                </Button>
+              </div>
+            ) : null}
+          </div>
         </>
       )}
 
