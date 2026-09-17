@@ -355,7 +355,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
         // seconds
         try {
             long sec = Long.parseLong(v);
-            if (sec < 0) return Optional.empty();
+            if (sec <= 0) return Optional.of(MIN_BACKOFF);
             return Optional.of(Duration.ofSeconds(sec));
         } catch (NumberFormatException ignored) {}
         // HTTP-date

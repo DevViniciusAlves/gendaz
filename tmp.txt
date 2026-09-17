@@ -152,7 +152,7 @@ class WhatsAppServiceWakeServiceTest {
         synchronized (statusSequence) {
             statusSequence.addAll(List.of(502, 502, 200));
         }
-        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(15));
+        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(2));
         svc.doWake();
         assertEquals(3, calls.get());
         svc.destroy();
@@ -164,19 +164,13 @@ class WhatsAppServiceWakeServiceTest {
         synchronized (statusSequence) {
             statusSequence.addAll(List.of(503, 200));
         }
-        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(10));
-        svc.doWake();
-        assertEquals(2, calls.get());
-        svc.destroy();
-    }
-
-    // 4. 504→200
+        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(10)); svc.doWake(); assertEquals(2, calls.get()); svc.destroy(); } // 4. 504→200
     @Test
     void retry_504_200_paraNo200() {
         synchronized (statusSequence) {
             statusSequence.addAll(List.of(504, 200));
         }
-        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(10));
+        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(2));
         svc.doWake();
         assertEquals(2, calls.get());
         svc.destroy();

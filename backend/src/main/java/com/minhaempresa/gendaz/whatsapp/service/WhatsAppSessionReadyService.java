@@ -191,11 +191,14 @@ public class WhatsAppSessionReadyService {
     static Optional<Duration> parseRetryAfter(String raw) {
         if (raw == null || raw.isBlank()) return Optional.empty();
         String v = raw.trim();
-        try { long sec = Long.parseLong(v); if (sec < 0) return Optional.empty(); return Optional.of(Duration.ofSeconds(sec)); } catch (NumberFormatException ignored) {}
+        try { long sec = Long.parseLong(v); if (sec <= 0) return Optional.of(MIN_BACKOFF); return Optional.of(Duration.ofSeconds(sec)); } catch (NumberFormatException ignored) {}
         try { java.time.ZonedDateTime zdt = java.time.ZonedDateTime.parse(v, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME); long diff = Duration.between(Instant.now(), zdt.toInstant()).toMillis(); if (diff <= 0) return Optional.of(MIN_BACKOFF); return Optional.of(Duration.ofMillis(diff)); } catch (Exception ignored) {}
         return Optional.empty();
     }
 
     @FunctionalInterface
     interface Sleeper { void sleep(Duration d) throws InterruptedException; }
+
+    // package-private for tests: validate flights removidos
+    int activeFlights() { return flights.size(); }
 }
