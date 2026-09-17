@@ -253,7 +253,7 @@ public class CrmService {
             return resultadoDominio(false, "WHATSAPP_NOT_CONNECTED");
         }
         WhatsAppResult<WhatsAppSessionStatus> statusSessao =
-                whatsAppProvider.consultarStatus(String.valueOf(empresaId));
+                whatsAppProvider.consultarStatusAguardandoConexao(String.valueOf(empresaId));
         if (!statusSessao.isSuccess()
                 || statusSessao.getData() == null
                 || !"CONNECTED".equals(statusSessao.getData().getState())) {

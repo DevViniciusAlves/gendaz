@@ -166,6 +166,31 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
     }
 
     @Override
+    public WhatsAppResult<WhatsAppSessionStatus> consultarStatusAguardandoConexao(String companyId) {
+        String valido = validarCompanyId(companyId);
+        if (valido == null) return WhatsAppResult.erro(WhatsAppOperationStatus.INVALID_COMPANY_ID);
+        if (!disponivel()) return WhatsAppResult.erro(WhatsAppOperationStatus.NOT_CONFIGURED);
+        WhatsAppOperationStatus av = ensureAvailableStatus();
+        if (av != null) return WhatsAppResult.erro(av);
+        if (sessionReadyService != null) {
+            WhatsAppSessionReadyService.ReadyResult r = sessionReadyService.ensureSessionConnected(valido);
+            if (r == WhatsAppSessionReadyService.ReadyResult.LOGGED_OUT) {
+                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
+            }
+            if (r == WhatsAppSessionReadyService.ReadyResult.AUTH_ERROR) {
+                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAUTHORIZED);
+            }
+            if (r == WhatsAppSessionReadyService.ReadyResult.TIMEOUT) {
+                return WhatsAppResult.erro(WhatsAppOperationStatus.CONNECT_TIMEOUT);
+            }
+            if (r == WhatsAppSessionReadyService.ReadyResult.UNAVAILABLE || r == WhatsAppSessionReadyService.ReadyResult.NOT_CONFIGURED) {
+                return WhatsAppResult.erro(WhatsAppOperationStatus.UNAVAILABLE);
+            }
+        }
+        return get(valido, "status", "consultarStatus").mapStatus(WhatsAppSessionStatus.class, false);
+    }
+
+    @Override
     public WhatsAppSendResult enviarTexto(String companyId, String recipient, String text, String requestId) {
         String valido = validarCompanyId(companyId);
         if (valido == null) {
@@ -176,11 +201,15 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         }
         WhatsAppSendStatus av = ensureAvailableSendStatus();
         if (av != null) return WhatsAppSendResult.erro(av);
-        // Aguardar sessao CONNECTED se necessario (nao bloquear QR/connect)
         if (sessionReadyService != null) {
             WhatsAppSessionReadyService.ReadyResult r = sessionReadyService.ensureSessionConnected(valido);
-            if (r == WhatsAppSessionReadyService.ReadyResult.LOGGED_OUT || r == WhatsAppSessionReadyService.ReadyResult.TIMEOUT) {
-                return WhatsAppSendResult.erro(WhatsAppSendStatus.SESSION_NOT_CONNECTED);
+            if (r != WhatsAppSessionReadyService.ReadyResult.CONNECTED) {
+                return switch (r) {
+                    case LOGGED_OUT, TIMEOUT -> WhatsAppSendResult.erro(WhatsAppSendStatus.SESSION_NOT_CONNECTED);
+                    case AUTH_ERROR -> WhatsAppSendResult.erro(WhatsAppSendStatus.UNAUTHORIZED);
+                    case UNAVAILABLE, NOT_CONFIGURED -> WhatsAppSendResult.erro(WhatsAppSendStatus.SERVICE_UNAVAILABLE);
+                    case CONNECTED -> null; // unreachable
+                };
             }
         }
         String corpo;

@@ -25,4 +25,10 @@ public interface WhatsAppProvider {
     WhatsAppSendResult enviarTexto(String companyId, String recipient, String text, String requestId);
 
     boolean disponivel();
+
+    /**
+     * Garante que a sessao da empresa esta CONNECTED, aguardando restauracao transitória.
+     * Usado pelo CRM para one-click UX. Nao bloqueia QR/connect.
+     */
+    WhatsAppResult<WhatsAppSessionStatus> consultarStatusAguardandoConexao(String companyId);
 }

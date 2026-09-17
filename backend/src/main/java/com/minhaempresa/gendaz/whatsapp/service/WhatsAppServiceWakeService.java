@@ -320,15 +320,15 @@ public class WhatsAppServiceWakeService implements DisposableBean {
     }
 
     Duration computeDelay(int attempt, String retryAfterRaw, int status) {
-        // 429 with valid Retry-After wins
+        // 429 with valid Retry-After: respeitar exatamente o servidor, sem jitter que reduza,
+        // limitado apenas pelo deadline global (feito no caller)
         if (status == 429 && retryAfterRaw != null) {
             Optional<Duration> parsed = parseRetryAfter(retryAfterRaw);
             if (parsed.isPresent()) {
                 Duration d = parsed.get();
-                // cap between MIN and MAX, add small jitter
-                if (d.compareTo(MAX_BACKOFF) > 0) d = MAX_BACKOFF;
-                if (d.compareTo(MIN_BACKOFF) < 0) d = MIN_BACKOFF;
-                return withJitter(d);
+                if (d.isNegative() || d.isZero()) d = MIN_BACKOFF;
+                // NAO limitar a MAX_BACKOFF, NAO aplicar jitter que reduza o tempo
+                return d;
             }
         }
         // exponential backoff: BASE * 2^(attempt-1) capped
@@ -362,17 +362,15 @@ public class WhatsAppServiceWakeService implements DisposableBean {
         // HTTP-date
         try {
             Instant date = Instant.parse(v);
-            // Try RFC1123 via java.time Instant parse fails for http-date format, try manually
-            // fallback to trying http-date parsing
             long diff = Duration.between(Instant.now(), date).toMillis();
             if (diff <= 0) return Optional.of(MIN_BACKOFF);
-            return Optional.of(Duration.ofMillis(Math.min(diff, MAX_BACKOFF.toMillis())));
+            return Optional.of(Duration.ofMillis(diff));
         } catch (DateTimeParseException ignored) {}
         try {
             java.time.ZonedDateTime zdt = java.time.ZonedDateTime.parse(v, java.time.format.DateTimeFormatter.RFC_1123_DATE_TIME);
             long diff = Duration.between(Instant.now(), zdt.toInstant()).toMillis();
             if (diff <= 0) return Optional.of(MIN_BACKOFF);
-            return Optional.of(Duration.ofMillis(Math.min(diff, MAX_BACKOFF.toMillis())));
+            return Optional.of(Duration.ofMillis(diff));
         } catch (Exception ignored) {}
         return Optional.empty();
     }
