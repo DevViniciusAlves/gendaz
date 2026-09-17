@@ -1,21 +1,13 @@
 name: Wake Gendaz STAGE - Scheduler 15min
 
 on:
-  # Horário de Brasília:
-  # 05:07, 05:22, 05:37, 05:52...
-  # até 18:52.
+  # Mesmo padrão confiável do backup:
+  # cron simples em UTC.
   #
-  # GitHub Actions usa cron em UTC.
-  # Brasília = UTC-3.
-  #
-  # 08 UTC = 05h Brasília
-  # 21 UTC = 18h Brasília
+  # O GitHub Actions vai disparar de 15 em 15 minutos.
+  # A janela 05:00-19:00 Brasília é validada dentro do job.
   schedule:
-    - cron: "7,22,37,52 8-21 * * *"
-
-    # Última verificação exata às 19:00 Brasília.
-    # 22 UTC = 19h Brasília.
-    - cron: "0 22 * * *"
+    - cron: "*/15 * * * *"
 
   # Permite rodar manualmente para teste.
   workflow_dispatch:
@@ -30,11 +22,48 @@ concurrency:
 jobs:
   check-and-wake:
     name: Verificar lembretes e acordar Gendaz STAGE
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 20
 
     steps:
+      - name: Validar janela Brasília
+        id: window
+        run: |
+          set -euo pipefail
+
+          echo "========================================"
+          echo "VALIDANDO JANELA DE EXECUÇÃO"
+          echo "========================================"
+          echo "Evento: ${GITHUB_EVENT_NAME}"
+          echo "Branch/ref: ${GITHUB_REF_NAME}"
+
+          HORA_BR="$(TZ=America/Sao_Paulo date +%H%M)"
+          DATA_BR="$(TZ=America/Sao_Paulo date '+%Y-%m-%d %H:%M:%S')"
+
+          echo "Horário Brasília atual: ${DATA_BR}"
+          echo "HHMM Brasília: ${HORA_BR}"
+
+          # Execução manual sempre passa.
+          # Isso permite testar pelo botão Run workflow mesmo fora da janela.
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "Execução manual detectada. Vai rodar independente da janela."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Schedule automático só roda de 05:00 até 19:00 Brasília.
+          if [ "$HORA_BR" -lt 500 ] || [ "$HORA_BR" -gt 1900 ]; then
+            echo "Fora da janela 05:00-19:00 Brasília."
+            echo "Nenhum serviço será acordado."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Dentro da janela 05:00-19:00 Brasília."
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+
       - name: Identificar execução
+        if: steps.window.outputs.should_run == 'true'
         run: |
           set -euo pipefail
 
@@ -51,6 +80,7 @@ jobs:
           echo "Nenhum recurso PROD será chamado."
 
       - name: Instalar cliente PostgreSQL
+        if: steps.window.outputs.should_run == 'true'
         run: |
           set -euo pipefail
 
@@ -58,6 +88,7 @@ jobs:
           sudo apt-get install -y postgresql-client
 
       - name: Verificar lembretes próximos no Neon STAGE
+        if: steps.window.outputs.should_run == 'true'
         id: due
         env:
           DB_URL: ${{ secrets.STAGE_SPRING_DATASOURCE_URL }}
@@ -233,7 +264,7 @@ jobs:
           echo "due_epoch=$DUE_EPOCH" >> "$GITHUB_OUTPUT"
 
       - name: Nenhum lembrete próximo
-        if: steps.due.outputs.count == '0'
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count == '0'
         run: |
           echo "========================================"
           echo "NENHUM LEMBRETE PRÓXIMO"
@@ -243,7 +274,7 @@ jobs:
           echo "Fim da execução."
 
       - name: Aguardar janela de wake
-        if: steps.due.outputs.count != '0'
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
         env:
           DUE_EPOCH: ${{ steps.due.outputs.due_epoch }}
         run: |
@@ -280,7 +311,7 @@ jobs:
           echo "Janela de wake atingida."
 
       - name: Acordar Backend Gendaz STAGE
-        if: steps.due.outputs.count != '0'
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
         run: |
           set -euo pipefail
 
@@ -319,7 +350,7 @@ jobs:
           exit 1
 
       - name: Wake STAGE concluído
-        if: steps.due.outputs.count != '0'
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
         run: |
           echo "========================================"
           echo "WAKE STAGE CONCLUÍDO"
