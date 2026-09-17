@@ -1,16 +1,15 @@
 name: Wake WhatsApp STAGE - Lembretes
 
 on:
-  # Verificação automática somente no horário definido.
+  # Executa a cada 15 minutos no horário de Brasília.
   #
-  # Horário de Brasília:
   # 05:05, 05:20, 05:35, 05:50...
   # até 18:50.
   schedule:
     - cron: "5-59/15 5-18 * * *"
       timezone: "America/Sao_Paulo"
 
-    # Última verificação do dia às 19:00.
+    # Última verificação do dia.
     - cron: "0 19 * * *"
       timezone: "America/Sao_Paulo"
 
@@ -28,9 +27,6 @@ jobs:
   check-and-wake:
     name: Verificar lembretes STAGE
     runs-on: ubuntu-24.04
-
-    # Pode esperar alguns minutos até chegar perto do lembrete
-    # + tempo de cold start dos serviços Render.
     timeout-minutes: 30
 
     steps:
@@ -43,7 +39,9 @@ jobs:
           echo "========================================"
           echo "Evento: ${GITHUB_EVENT_NAME}"
           echo "Ref: ${GITHUB_REF_NAME}"
-          echo "Este workflow está na MASTER apenas como scheduler."
+          echo ""
+          echo "Este workflow está na MASTER somente como scheduler."
+          echo "Ele utiliza exclusivamente recursos da STAGE."
           echo "Nenhum recurso PROD será chamado."
 
       - name: Instalar cliente PostgreSQL
@@ -77,10 +75,9 @@ jobs:
             exit 1
           fi
 
-          # Converte:
+          # Remove somente o prefixo jdbc:
           # jdbc:postgresql://...
-          #
-          # para:
+          # vira:
           # postgresql://...
           DB_URL="${DB_URL#jdbc:}"
 
@@ -100,12 +97,11 @@ jobs:
           candidatos AS (
 
               /*
-               * Lembretes normais ainda pendentes.
+               * Lembretes normais PENDENTES.
                *
-               * scheduled_at e next_attempt_at são armazenados em UTC.
-               *
-               * O effective_due representa o instante em que o worker
-               * realmente poderá processar a mensagem.
+               * O horário efetivo considera:
+               * - scheduled_at
+               * - next_attempt_at em caso de retry
                */
               SELECT
                   GREATEST(
@@ -124,7 +120,7 @@ jobs:
                 AND n.scheduled_at IS NOT NULL
 
                 /*
-                 * Não considerar lembrete já expirado.
+                 * Ignora lembrete já expirado.
                  */
                 AND (
                     n.expires_at IS NULL
@@ -133,7 +129,9 @@ jobs:
 
                 /*
                  * Aceita até 10 minutos de atraso.
-                 * Isso protege contra atraso eventual do GitHub Actions.
+                 *
+                 * Isso protege contra pequenos atrasos
+                 * do próprio GitHub Actions.
                  */
                 AND GREATEST(
                     n.scheduled_at,
@@ -141,8 +139,10 @@ jobs:
                 ) >= a.utc_now - INTERVAL '10 minutes'
 
                 /*
-                 * Procuramos até 15 minutos à frente,
-                 * pois o workflow roda a cada 15 minutos.
+                 * Procura até 15 minutos no futuro.
+                 *
+                 * Como o workflow roda a cada 15 minutos,
+                 * o próximo lembrete deve entrar nessa janela.
                  */
                 AND GREATEST(
                     n.scheduled_at,
@@ -150,8 +150,8 @@ jobs:
                 ) <= a.utc_now + INTERVAL '15 minutes'
 
                 /*
-                 * Não acordar para retry que só ocorreria depois
-                 * da expiração do lembrete.
+                 * Não acorda os serviços para um retry
+                 * que ocorreria somente depois da expiração.
                  */
                 AND (
                     n.expires_at IS NULL
@@ -164,9 +164,11 @@ jobs:
               UNION ALL
 
               /*
-               * Recuperação de envio que ficou preso em ENVIANDO.
+               * Recuperação de envio preso em ENVIANDO.
                *
-               * Neste caso queremos acordar imediatamente.
+               * Se ficou mais de 120 segundos processando,
+               * queremos acordar o backend imediatamente
+               * para permitir a recuperação pelo worker.
                */
               SELECT
                   a.utc_now AS effective_due
@@ -229,10 +231,12 @@ jobs:
             exit 1
           fi
 
+          echo ""
           echo "========================================"
           echo "RESULTADO"
           echo "========================================"
           echo "Lembretes encontrados: $COUNT"
+          echo "Próximo horário epoch: $DUE_EPOCH"
 
           echo "count=$COUNT" >> "$GITHUB_OUTPUT"
           echo "due_epoch=$DUE_EPOCH" >> "$GITHUB_OUTPUT"
@@ -245,7 +249,7 @@ jobs:
           echo "========================================"
           echo "Backend STAGE NÃO será acordado."
           echo "WPP Service STAGE NÃO será acordado."
-          echo "Somente o Neon foi consultado."
+          echo "Somente o Neon STAGE foi consultado."
           echo "Fim da execução."
 
       - name: Aguardar momento correto para o wake
@@ -257,30 +261,33 @@ jobs:
 
           NOW_EPOCH="$(date -u +%s)"
 
-          /*
-           * Queremos começar o cold start aproximadamente
-           * 5 minutos antes do lembrete.
-           */
+          # Começa o cold start aproximadamente
+          # 5 minutos antes do horário do lembrete.
           WAKE_EPOCH=$((DUE_EPOCH - 300))
           WAIT_SECONDS=$((WAKE_EPOCH - NOW_EPOCH))
 
           echo "========================================"
           echo "LEMBRETE ENCONTRADO"
           echo "========================================"
+          echo "Agora: ${NOW_EPOCH}"
+          echo "Horário do lembrete: ${DUE_EPOCH}"
+          echo "Horário planejado para wake: ${WAKE_EPOCH}"
 
           if [ "$WAIT_SECONDS" -le 0 ]; then
+            echo ""
             echo "Já estamos dentro da janela de wake."
-            echo "Serviços serão acordados agora."
+            echo "Os serviços serão acordados agora."
             exit 0
           fi
 
+          echo ""
           echo "Ainda não é necessário acordar os serviços."
-          echo "GitHub Actions aguardará ${WAIT_SECONDS}s."
-          echo "Neon não ficará recebendo consultas durante esta espera."
-          echo "Backend e WPP continuam dormindo."
+          echo "GitHub Actions aguardará ${WAIT_SECONDS} segundos."
+          echo "Backend e WPP continuam dormindo durante essa espera."
 
           sleep "$WAIT_SECONDS"
 
+          echo ""
           echo "Janela de wake atingida."
 
       - name: Acordar WPP Service STAGE
@@ -307,6 +314,7 @@ jobs:
             echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
 
             if [ "$HTTP_CODE" = "200" ]; then
+              echo ""
               echo "WPP Service STAGE está ONLINE."
 
               cat /tmp/wpp-health.json || true
@@ -317,6 +325,7 @@ jobs:
             sleep 8
           done
 
+          echo ""
           echo "ERRO: WPP Service STAGE não ficou saudável."
           exit 1
 
@@ -326,9 +335,11 @@ jobs:
           echo "========================================"
           echo "AGUARDANDO SESSÃO WHATSAPP"
           echo "========================================"
-
           echo "Aguardando restauração automática da sessão..."
+
           sleep 20
+
+          echo "Espera concluída."
 
       - name: Acordar Backend Gendaz STAGE
         if: steps.due.outputs.count != '0'
@@ -354,6 +365,7 @@ jobs:
             echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
 
             if [ "$HTTP_CODE" = "200" ]; then
+              echo ""
               echo "Backend Gendaz STAGE está ONLINE."
 
               cat /tmp/backend-health.json || true
@@ -364,6 +376,7 @@ jobs:
             sleep 8
           done
 
+          echo ""
           echo "ERRO: Backend Gendaz STAGE não ficou saudável."
           exit 1
 
@@ -373,14 +386,13 @@ jobs:
           echo "========================================"
           echo "WAKE STAGE CONCLUÍDO"
           echo "========================================"
-
           echo "Lembretes encontrados: ${{ steps.due.outputs.count }}"
           echo ""
           echo "WPP Service STAGE: ONLINE"
           echo "Backend Gendaz STAGE: ONLINE"
           echo ""
-          echo "Agora o scheduler Java assume o processamento."
-          echo "GitHub Actions não envia a mensagem diretamente."
-          echo "GitHub Actions não mantém os serviços acordados."
+          echo "O scheduler Java agora assume o processamento."
+          echo "O GitHub Actions NÃO envia a mensagem diretamente."
+          echo "O GitHub Actions NÃO mantém os serviços acordados."
           echo ""
-          echo "Após ficarem sem uso, os serviços podem hibernar novamente."
+          echo "Sem uso, os serviços podem hibernar novamente."
