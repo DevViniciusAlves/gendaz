@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.minhaempresa.gendaz.shared.audit.OutboundTrafficAuditService;
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppServiceWakeService;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppSessionReadyService;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -39,6 +40,7 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
     private final Duration requestTimeout;
     private final HttpClient httpClient;
     private final WhatsAppServiceWakeService wakeService;
+    private final WhatsAppSessionReadyService sessionReadyService;
 
     @Autowired
     public WhatsAppServiceProvider(
@@ -46,10 +48,11 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             OutboundTrafficAuditService auditService,
             @Value("${whatsapp.service-url:${WHATSAPP_SERVICE_URL:}}") String serviceUrl,
             @Value("${whatsapp.internal-token:${WHATSAPP_INTERNAL_TOKEN:}}") String internalToken,
-            @org.springframework.beans.factory.annotation.Autowired(required = false) WhatsAppServiceWakeService wakeService
+            @org.springframework.beans.factory.annotation.Autowired(required = false) WhatsAppServiceWakeService wakeService,
+            @org.springframework.beans.factory.annotation.Autowired(required = false) WhatsAppSessionReadyService sessionReadyService
     ) {
         this(objectMapper, auditService, serviceUrl, internalToken,
-                Duration.ofSeconds(5), Duration.ofSeconds(10), wakeService);
+                Duration.ofSeconds(5), Duration.ofSeconds(10), wakeService, sessionReadyService);
     }
 
     WhatsAppServiceProvider(
@@ -60,7 +63,7 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             Duration connectTimeout,
             Duration requestTimeout
     ) {
-        this(objectMapper, auditService, serviceUrl, internalToken, connectTimeout, requestTimeout, null);
+        this(objectMapper, auditService, serviceUrl, internalToken, connectTimeout, requestTimeout, null, null);
     }
 
     WhatsAppServiceProvider(
@@ -72,12 +75,26 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
             Duration requestTimeout,
             WhatsAppServiceWakeService wakeService
     ) {
+        this(objectMapper, auditService, serviceUrl, internalToken, connectTimeout, requestTimeout, wakeService, null);
+    }
+
+    WhatsAppServiceProvider(
+            ObjectMapper objectMapper,
+            OutboundTrafficAuditService auditService,
+            String serviceUrl,
+            String internalToken,
+            Duration connectTimeout,
+            Duration requestTimeout,
+            WhatsAppServiceWakeService wakeService,
+            WhatsAppSessionReadyService sessionReadyService
+    ) {
         this.objectMapper = objectMapper;
         this.auditService = auditService;
         this.serviceUrl = serviceUrl == null ? "" : serviceUrl.trim().replaceAll("/+$", "");
         this.internalToken = internalToken == null ? "" : internalToken.trim();
         this.requestTimeout = requestTimeout == null ? Duration.ofSeconds(10) : requestTimeout;
         this.wakeService = wakeService;
+        this.sessionReadyService = sessionReadyService;
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(connectTimeout == null ? Duration.ofSeconds(5) : connectTimeout)
                 .build();
@@ -159,6 +176,13 @@ public class WhatsAppServiceProvider implements WhatsAppProvider {
         }
         WhatsAppSendStatus av = ensureAvailableSendStatus();
         if (av != null) return WhatsAppSendResult.erro(av);
+        // Aguardar sessao CONNECTED se necessario (nao bloquear QR/connect)
+        if (sessionReadyService != null) {
+            WhatsAppSessionReadyService.ReadyResult r = sessionReadyService.ensureSessionConnected(valido);
+            if (r == WhatsAppSessionReadyService.ReadyResult.LOGGED_OUT || r == WhatsAppSessionReadyService.ReadyResult.TIMEOUT) {
+                return WhatsAppSendResult.erro(WhatsAppSendStatus.SESSION_NOT_CONNECTED);
+            }
+        }
         String corpo;
         try {
             corpo = objectMapper.writeValueAsString(Map.of(

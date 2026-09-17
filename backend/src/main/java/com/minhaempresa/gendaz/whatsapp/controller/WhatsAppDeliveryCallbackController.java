@@ -49,9 +49,13 @@ public class WhatsAppDeliveryCallbackController {
             @RequestHeader(value = "Authorization", required = false) String authorization,
             @RequestBody(required = false) DeliveryCallbackRequest body) {
         if (internalToken == null || internalToken.isBlank()) {
+            log.warn("[whatsapp-delivery] token nao configurado authHeaderPresent={}", authorization != null);
             return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
         }
+        boolean authHeaderPresent = authorization != null && !authorization.isBlank();
+        boolean bearerFormatValid = authHeaderPresent && authorization.trim().matches("(?i)^Bearer\\s+\\S+.*");
         if (!autorizado(authorization)) {
+            log.warn("[whatsapp-delivery] unauthorized authHeaderPresent={} bearerFormatValid={}", authHeaderPresent, bearerFormatValid);
             return ResponseEntity.status(401).body(Map.of("error", "unauthorized"));
         }
         if (body == null || body.companyId() == null || body.companyId().isBlank()
@@ -93,12 +97,21 @@ public class WhatsAppDeliveryCallbackController {
     }
 
     private boolean autorizado(String authorization) {
-        if (authorization == null) {
+        if (authorization == null || authorization.isBlank()) {
             return false;
         }
+        String trimmed = authorization.trim();
         String esperado = "Bearer " + internalToken.trim();
+        // split com limite 2 evita falsos negativos com espacos extras mas ainda exige Bearer
+        if (!trimmed.regionMatches(true, 0, "Bearer ", 0, 7)) {
+            return false;
+        }
+        // comparacao em tempo constante no valor completo normalizado (unico espaco apos Bearer)
+        String normalized = "Bearer " + trimmed.substring(7).trim().replaceAll("\\s+", " ");
+        // se havia multiplos espacos, normalizamos ambos lados
+        String esperadoNorm = "Bearer " + internalToken.trim();
         return MessageDigest.isEqual(
-                esperado.getBytes(StandardCharsets.UTF_8),
-                authorization.getBytes(StandardCharsets.UTF_8));
+                esperadoNorm.getBytes(StandardCharsets.UTF_8),
+                normalized.getBytes(StandardCharsets.UTF_8));
     }
 }
