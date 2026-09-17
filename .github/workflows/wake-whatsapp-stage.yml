@@ -1,0 +1,386 @@
+name: Wake WhatsApp STAGE - Lembretes
+
+on:
+  # Verificação automática somente no horário definido.
+  #
+  # Horário de Brasília:
+  # 05:05, 05:20, 05:35, 05:50...
+  # até 18:50.
+  schedule:
+    - cron: "5-59/15 5-18 * * *"
+      timezone: "America/Sao_Paulo"
+
+    # Última verificação do dia às 19:00.
+    - cron: "0 19 * * *"
+      timezone: "America/Sao_Paulo"
+
+  # Permite testar manualmente pelo GitHub Actions.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wake-whatsapp-stage
+  cancel-in-progress: false
+
+jobs:
+  check-and-wake:
+    name: Verificar lembretes STAGE
+    runs-on: ubuntu-24.04
+
+    # Pode esperar alguns minutos até chegar perto do lembrete
+    # + tempo de cold start dos serviços Render.
+    timeout-minutes: 30
+
+    steps:
+      - name: Identificar execução
+        run: |
+          set -euo pipefail
+
+          echo "========================================"
+          echo "WAKE WHATSAPP STAGE"
+          echo "========================================"
+          echo "Evento: ${GITHUB_EVENT_NAME}"
+          echo "Ref: ${GITHUB_REF_NAME}"
+          echo "Este workflow está na MASTER apenas como scheduler."
+          echo "Nenhum recurso PROD será chamado."
+
+      - name: Instalar cliente PostgreSQL
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verificar lembretes próximos no Neon STAGE
+        id: due
+        env:
+          DB_URL: ${{ secrets.STAGE_SPRING_DATASOURCE_URL }}
+          DB_USER: ${{ secrets.STAGE_SPRING_DATASOURCE_USERNAME }}
+          DB_PASSWORD: ${{ secrets.STAGE_SPRING_DATASOURCE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DB_URL:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_URL não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_USER:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_USERNAME não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_PASSWORD:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_PASSWORD não configurado."
+            exit 1
+          fi
+
+          # Converte:
+          # jdbc:postgresql://...
+          #
+          # para:
+          # postgresql://...
+          DB_URL="${DB_URL#jdbc:}"
+
+          export PGPASSWORD="$DB_PASSWORD"
+          export PGCONNECT_TIMEOUT=15
+
+          echo "========================================"
+          echo "CONSULTANDO NEON STAGE"
+          echo "========================================"
+          echo "Backend e WPP ainda NÃO serão chamados."
+
+          SQL="$(cat <<'SQL'
+          WITH agora AS (
+              SELECT CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS utc_now
+          ),
+
+          candidatos AS (
+
+              /*
+               * Lembretes normais ainda pendentes.
+               *
+               * scheduled_at e next_attempt_at são armazenados em UTC.
+               *
+               * O effective_due representa o instante em que o worker
+               * realmente poderá processar a mensagem.
+               */
+              SELECT
+                  GREATEST(
+                      n.scheduled_at,
+                      COALESCE(n.next_attempt_at, n.scheduled_at)
+                  ) AS effective_due
+
+              FROM whatsapp_notificacoes n
+              CROSS JOIN agora a
+
+              WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+                AND n.status = 'PENDENTE'
+
+                AND n.recipient IS NOT NULL
+                AND n.message_body IS NOT NULL
+                AND n.scheduled_at IS NOT NULL
+
+                /*
+                 * Não considerar lembrete já expirado.
+                 */
+                AND (
+                    n.expires_at IS NULL
+                    OR n.expires_at >= a.utc_now
+                )
+
+                /*
+                 * Aceita até 10 minutos de atraso.
+                 * Isso protege contra atraso eventual do GitHub Actions.
+                 */
+                AND GREATEST(
+                    n.scheduled_at,
+                    COALESCE(n.next_attempt_at, n.scheduled_at)
+                ) >= a.utc_now - INTERVAL '10 minutes'
+
+                /*
+                 * Procuramos até 15 minutos à frente,
+                 * pois o workflow roda a cada 15 minutos.
+                 */
+                AND GREATEST(
+                    n.scheduled_at,
+                    COALESCE(n.next_attempt_at, n.scheduled_at)
+                ) <= a.utc_now + INTERVAL '15 minutes'
+
+                /*
+                 * Não acordar para retry que só ocorreria depois
+                 * da expiração do lembrete.
+                 */
+                AND (
+                    n.expires_at IS NULL
+                    OR GREATEST(
+                        n.scheduled_at,
+                        COALESCE(n.next_attempt_at, n.scheduled_at)
+                    ) <= n.expires_at
+                )
+
+              UNION ALL
+
+              /*
+               * Recuperação de envio que ficou preso em ENVIANDO.
+               *
+               * Neste caso queremos acordar imediatamente.
+               */
+              SELECT
+                  a.utc_now AS effective_due
+
+              FROM whatsapp_notificacoes n
+              CROSS JOIN agora a
+
+              WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+                AND n.status = 'ENVIANDO'
+
+                AND n.recipient IS NOT NULL
+                AND n.message_body IS NOT NULL
+
+                AND n.processing_started_at IS NOT NULL
+
+                AND n.processing_started_at <=
+                    a.utc_now - INTERVAL '120 seconds'
+
+                AND (
+                    n.expires_at IS NULL
+                    OR n.expires_at >= a.utc_now
+                )
+          )
+
+          SELECT
+              COUNT(*),
+              COALESCE(
+                  EXTRACT(
+                      EPOCH FROM (
+                          MIN(effective_due) AT TIME ZONE 'UTC'
+                      )
+                  )::BIGINT,
+                  0
+              )
+          FROM candidatos;
+          SQL
+          )"
+
+          RESULT="$(psql \
+            "$DB_URL" \
+            -U "$DB_USER" \
+            -v ON_ERROR_STOP=1 \
+            -Atq \
+            -F "|" \
+            -c "$SQL")"
+
+          COUNT="${RESULT%%|*}"
+          DUE_EPOCH="${RESULT##*|}"
+
+          COUNT="$(echo "$COUNT" | tr -d '[:space:]')"
+          DUE_EPOCH="$(echo "$DUE_EPOCH" | tr -d '[:space:]')"
+
+          if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
+            echo "ERRO: quantidade de lembretes inválida."
+            exit 1
+          fi
+
+          if ! [[ "$DUE_EPOCH" =~ ^[0-9]+$ ]]; then
+            echo "ERRO: horário retornado pelo banco é inválido."
+            exit 1
+          fi
+
+          echo "========================================"
+          echo "RESULTADO"
+          echo "========================================"
+          echo "Lembretes encontrados: $COUNT"
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "due_epoch=$DUE_EPOCH" >> "$GITHUB_OUTPUT"
+
+      - name: Nenhum lembrete próximo
+        if: steps.due.outputs.count == '0'
+        run: |
+          echo "========================================"
+          echo "NENHUM LEMBRETE PRÓXIMO"
+          echo "========================================"
+          echo "Backend STAGE NÃO será acordado."
+          echo "WPP Service STAGE NÃO será acordado."
+          echo "Somente o Neon foi consultado."
+          echo "Fim da execução."
+
+      - name: Aguardar momento correto para o wake
+        if: steps.due.outputs.count != '0'
+        env:
+          DUE_EPOCH: ${{ steps.due.outputs.due_epoch }}
+        run: |
+          set -euo pipefail
+
+          NOW_EPOCH="$(date -u +%s)"
+
+          /*
+           * Queremos começar o cold start aproximadamente
+           * 5 minutos antes do lembrete.
+           */
+          WAKE_EPOCH=$((DUE_EPOCH - 300))
+          WAIT_SECONDS=$((WAKE_EPOCH - NOW_EPOCH))
+
+          echo "========================================"
+          echo "LEMBRETE ENCONTRADO"
+          echo "========================================"
+
+          if [ "$WAIT_SECONDS" -le 0 ]; then
+            echo "Já estamos dentro da janela de wake."
+            echo "Serviços serão acordados agora."
+            exit 0
+          fi
+
+          echo "Ainda não é necessário acordar os serviços."
+          echo "GitHub Actions aguardará ${WAIT_SECONDS}s."
+          echo "Neon não ficará recebendo consultas durante esta espera."
+          echo "Backend e WPP continuam dormindo."
+
+          sleep "$WAIT_SECONDS"
+
+          echo "Janela de wake atingida."
+
+      - name: Acordar WPP Service STAGE
+        if: steps.due.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          URL="https://whatsapp-service-s3f2.onrender.com/health"
+
+          echo "========================================"
+          echo "ACORDANDO WPP SERVICE STAGE"
+          echo "========================================"
+
+          for tentativa in $(seq 1 15); do
+
+            HTTP_CODE="$(curl \
+              -sS \
+              -o /tmp/wpp-health.json \
+              -w "%{http_code}" \
+              --connect-timeout 8 \
+              --max-time 15 \
+              "$URL" || true)"
+
+            echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "WPP Service STAGE está ONLINE."
+
+              cat /tmp/wpp-health.json || true
+
+              exit 0
+            fi
+
+            sleep 8
+          done
+
+          echo "ERRO: WPP Service STAGE não ficou saudável."
+          exit 1
+
+      - name: Aguardar restauração da sessão WhatsApp
+        if: steps.due.outputs.count != '0'
+        run: |
+          echo "========================================"
+          echo "AGUARDANDO SESSÃO WHATSAPP"
+          echo "========================================"
+
+          echo "Aguardando restauração automática da sessão..."
+          sleep 20
+
+      - name: Acordar Backend Gendaz STAGE
+        if: steps.due.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          URL="https://gendaz-stage.onrender.com/api/health"
+
+          echo "========================================"
+          echo "ACORDANDO BACKEND GENDAZ STAGE"
+          echo "========================================"
+
+          for tentativa in $(seq 1 15); do
+
+            HTTP_CODE="$(curl \
+              -sS \
+              -o /tmp/backend-health.json \
+              -w "%{http_code}" \
+              --connect-timeout 8 \
+              --max-time 15 \
+              "$URL" || true)"
+
+            echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "Backend Gendaz STAGE está ONLINE."
+
+              cat /tmp/backend-health.json || true
+
+              exit 0
+            fi
+
+            sleep 8
+          done
+
+          echo "ERRO: Backend Gendaz STAGE não ficou saudável."
+          exit 1
+
+      - name: Wake STAGE concluído
+        if: steps.due.outputs.count != '0'
+        run: |
+          echo "========================================"
+          echo "WAKE STAGE CONCLUÍDO"
+          echo "========================================"
+
+          echo "Lembretes encontrados: ${{ steps.due.outputs.count }}"
+          echo ""
+          echo "WPP Service STAGE: ONLINE"
+          echo "Backend Gendaz STAGE: ONLINE"
+          echo ""
+          echo "Agora o scheduler Java assume o processamento."
+          echo "GitHub Actions não envia a mensagem diretamente."
+          echo "GitHub Actions não mantém os serviços acordados."
+          echo ""
+          echo "Após ficarem sem uso, os serviços podem hibernar novamente."
