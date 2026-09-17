@@ -1,0 +1,327 @@
+name: Stage Reminder Scheduler
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stage-reminder-scheduler
+  cancel-in-progress: false
+
+jobs:
+  check-and-wake:
+    name: Verificar lembretes e acordar Gendaz STAGE
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Validar janela Brasília
+        id: window
+        run: |
+          set -euo pipefail
+
+          echo "========================================"
+          echo "VALIDANDO JANELA DE EXECUÇÃO"
+          echo "========================================"
+          echo "Evento: ${GITHUB_EVENT_NAME}"
+          echo "Branch/ref: ${GITHUB_REF_NAME}"
+
+          HORA_BR="$(TZ=America/Sao_Paulo date +%H%M)"
+          DATA_BR="$(TZ=America/Sao_Paulo date '+%Y-%m-%d %H:%M:%S')"
+
+          echo "Horário Brasília atual: ${DATA_BR}"
+          echo "HHMM Brasília: ${HORA_BR}"
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            echo "Execução manual detectada. Vai rodar independente da janela."
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ "$HORA_BR" -lt 500 ] || [ "$HORA_BR" -gt 1900 ]; then
+            echo "Fora da janela 05:00-19:00 Brasília."
+            echo "Nenhum serviço será acordado."
+            echo "should_run=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Dentro da janela 05:00-19:00 Brasília."
+          echo "should_run=true" >> "$GITHUB_OUTPUT"
+
+      - name: Identificar execução
+        if: steps.window.outputs.should_run == 'true'
+        run: |
+          set -euo pipefail
+
+          echo "========================================"
+          echo "STAGE REMINDER SCHEDULER"
+          echo "========================================"
+          echo "Evento: ${GITHUB_EVENT_NAME}"
+          echo "Branch/ref: ${GITHUB_REF_NAME}"
+          echo ""
+          echo "Este workflow está na MASTER somente como scheduler."
+          echo "Ele consulta somente o Neon STAGE."
+          echo "Se houver lembrete próximo, acorda somente o Backend Gendaz STAGE."
+          echo "O Backend Gendaz é responsável por acordar o WPP Service."
+          echo "Nenhum recurso PROD será chamado."
+
+      - name: Instalar cliente PostgreSQL
+        if: steps.window.outputs.should_run == 'true'
+        run: |
+          set -euo pipefail
+
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+
+      - name: Verificar lembretes próximos no Neon STAGE
+        if: steps.window.outputs.should_run == 'true'
+        id: due
+        env:
+          DB_URL: ${{ secrets.STAGE_SPRING_DATASOURCE_URL }}
+          DB_USER: ${{ secrets.STAGE_SPRING_DATASOURCE_USERNAME }}
+          DB_PASSWORD: ${{ secrets.STAGE_SPRING_DATASOURCE_PASSWORD }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${DB_URL:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_URL não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_USER:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_USERNAME não configurado."
+            exit 1
+          fi
+
+          if [ -z "${DB_PASSWORD:-}" ]; then
+            echo "ERRO: STAGE_SPRING_DATASOURCE_PASSWORD não configurado."
+            exit 1
+          fi
+
+          DB_URL="${DB_URL#jdbc:}"
+
+          export PGPASSWORD="$DB_PASSWORD"
+          export PGCONNECT_TIMEOUT=15
+
+          echo "========================================"
+          echo "CONSULTANDO NEON STAGE"
+          echo "========================================"
+          echo "Backend Gendaz STAGE ainda NÃO será acordado."
+          echo "WPP Service STAGE NÃO será chamado pelo GitHub Actions."
+
+          SQL="$(cat <<'SQL'
+          WITH agora AS (
+              SELECT CURRENT_TIMESTAMP AT TIME ZONE 'UTC' AS utc_now
+          ),
+
+          candidatos AS (
+              SELECT
+                  GREATEST(
+                      n.scheduled_at,
+                      COALESCE(n.next_attempt_at, n.scheduled_at)
+                  ) AS effective_due
+
+              FROM whatsapp_notificacoes n
+              CROSS JOIN agora a
+
+              WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+                AND n.status = 'PENDENTE'
+
+                AND n.recipient IS NOT NULL
+                AND n.message_body IS NOT NULL
+                AND n.scheduled_at IS NOT NULL
+
+                AND (
+                    n.expires_at IS NULL
+                    OR n.expires_at >= a.utc_now
+                )
+
+                AND GREATEST(
+                    n.scheduled_at,
+                    COALESCE(n.next_attempt_at, n.scheduled_at)
+                ) >= a.utc_now - INTERVAL '10 minutes'
+
+                AND GREATEST(
+                    n.scheduled_at,
+                    COALESCE(n.next_attempt_at, n.scheduled_at)
+                ) <= a.utc_now + INTERVAL '15 minutes'
+
+                AND (
+                    n.expires_at IS NULL
+                    OR GREATEST(
+                        n.scheduled_at,
+                        COALESCE(n.next_attempt_at, n.scheduled_at)
+                    ) <= n.expires_at
+                )
+
+              UNION ALL
+
+              SELECT
+                  a.utc_now AS effective_due
+
+              FROM whatsapp_notificacoes n
+              CROSS JOIN agora a
+
+              WHERE n.tipo = 'LEMBRETE_AGENDAMENTO'
+                AND n.status = 'ENVIANDO'
+
+                AND n.recipient IS NOT NULL
+                AND n.message_body IS NOT NULL
+
+                AND n.processing_started_at IS NOT NULL
+                AND n.processing_started_at <= a.utc_now - INTERVAL '120 seconds'
+
+                AND (
+                    n.expires_at IS NULL
+                    OR n.expires_at >= a.utc_now
+                )
+          )
+
+          SELECT
+              COUNT(*),
+              COALESCE(
+                  EXTRACT(
+                      EPOCH FROM (
+                          MIN(effective_due) AT TIME ZONE 'UTC'
+                      )
+                  )::BIGINT,
+                  0
+              )
+          FROM candidatos;
+          SQL
+          )"
+
+          RESULT="$(psql \
+            "$DB_URL" \
+            -U "$DB_USER" \
+            -v ON_ERROR_STOP=1 \
+            -Atq \
+            -F "|" \
+            -c "$SQL")"
+
+          COUNT="${RESULT%%|*}"
+          DUE_EPOCH="${RESULT##*|}"
+
+          COUNT="$(echo "$COUNT" | tr -d '[:space:]')"
+          DUE_EPOCH="$(echo "$DUE_EPOCH" | tr -d '[:space:]')"
+
+          if ! [[ "$COUNT" =~ ^[0-9]+$ ]]; then
+            echo "ERRO: quantidade de lembretes inválida."
+            exit 1
+          fi
+
+          if ! [[ "$DUE_EPOCH" =~ ^[0-9]+$ ]]; then
+            echo "ERRO: horário retornado pelo banco inválido."
+            exit 1
+          fi
+
+          echo ""
+          echo "========================================"
+          echo "RESULTADO DA CONSULTA"
+          echo "========================================"
+          echo "Lembretes encontrados: $COUNT"
+          echo "Próximo horário epoch: $DUE_EPOCH"
+
+          echo "count=$COUNT" >> "$GITHUB_OUTPUT"
+          echo "due_epoch=$DUE_EPOCH" >> "$GITHUB_OUTPUT"
+
+      - name: Nenhum lembrete próximo
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count == '0'
+        run: |
+          echo "========================================"
+          echo "NENHUM LEMBRETE PRÓXIMO"
+          echo "========================================"
+          echo "Backend Gendaz STAGE NÃO será acordado."
+          echo "WPP Service STAGE NÃO será chamado."
+          echo "Fim da execução."
+
+      - name: Aguardar janela de wake
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
+        env:
+          DUE_EPOCH: ${{ steps.due.outputs.due_epoch }}
+        run: |
+          set -euo pipefail
+
+          NOW_EPOCH="$(date -u +%s)"
+
+          WAKE_EPOCH=$((DUE_EPOCH - 300))
+          WAIT_SECONDS=$((WAKE_EPOCH - NOW_EPOCH))
+
+          echo "========================================"
+          echo "LEMBRETE ENCONTRADO"
+          echo "========================================"
+          echo "Agora: ${NOW_EPOCH}"
+          echo "Lembrete: ${DUE_EPOCH}"
+          echo "Wake planejado: ${WAKE_EPOCH}"
+
+          if [ "$WAIT_SECONDS" -le 0 ]; then
+            echo ""
+            echo "Já estamos dentro da janela de wake."
+            echo "Backend Gendaz STAGE será acordado agora."
+            exit 0
+          fi
+
+          echo ""
+          echo "Aguardando ${WAIT_SECONDS} segundos antes do wake."
+          sleep "$WAIT_SECONDS"
+
+          echo ""
+          echo "Janela de wake atingida."
+
+      - name: Acordar Backend Gendaz STAGE
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
+        run: |
+          set -euo pipefail
+
+          URL="https://gendaz-stage.onrender.com/api/health"
+
+          echo "========================================"
+          echo "ACORDANDO BACKEND GENDAZ STAGE"
+          echo "========================================"
+          echo "O GitHub Actions NÃO chamará o WPP Service diretamente."
+          echo "O Backend Gendaz STAGE deve acordar o WPP se necessário."
+
+          for tentativa in $(seq 1 15); do
+
+            HTTP_CODE="$(curl \
+              -sS \
+              -o /tmp/backend-health.json \
+              -w "%{http_code}" \
+              --connect-timeout 8 \
+              --max-time 15 \
+              "$URL" || true)"
+
+            echo "Tentativa ${tentativa}/15 - HTTP ${HTTP_CODE:-000}"
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo ""
+              echo "Backend Gendaz STAGE está ONLINE."
+              cat /tmp/backend-health.json || true
+              exit 0
+            fi
+
+            sleep 8
+          done
+
+          echo ""
+          echo "ERRO: Backend Gendaz STAGE não ficou saudável."
+          exit 1
+
+      - name: Wake STAGE concluído
+        if: steps.window.outputs.should_run == 'true' && steps.due.outputs.count != '0'
+        run: |
+          echo "========================================"
+          echo "WAKE STAGE CONCLUÍDO"
+          echo "========================================"
+          echo "Lembretes encontrados: ${{ steps.due.outputs.count }}"
+          echo ""
+          echo "Backend Gendaz STAGE: ONLINE"
+          echo ""
+          echo "A partir daqui o Java scheduler/worker do Gendaz assume."
+          echo "O GitHub Actions NÃO envia mensagem."
+          echo "O GitHub Actions NÃO acorda o WPP diretamente."
