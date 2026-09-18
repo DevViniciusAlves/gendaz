@@ -20,8 +20,32 @@ const AUTH_DELAYS = {
 const MAX_TRANSIENT_ATTEMPTS = 7;
 const MAX_AUTH_ATTEMPTS = 3;
 
+// Recovery duravel de callbacks DEAD por erro recuperavel: esses registros
+// representam prova de entrega (DELIVERY_ACK/READ/PLAYED ja persistida) cujo
+// POST ao Spring falhou de forma transitoria. Sem recovery, a notificacao
+// Spring ficaria em AGUARDANDO_ENTREGA com reserva ocupada para sempre.
+// Motivos permanentes (permanent_error, unexpected_http_status) continuam
+// DEAD e nunca sao reprocessados.
+const RECOVERABLE_DEAD_REASONS = [
+  'auth_error',
+  'network_error',
+  'server_error',
+  'rate_limit',
+  'not_configured',
+];
+
+function intEnv(name, def) {
+  const raw = process.env[name];
+  if (raw == null || String(raw).trim() === '') {
+    return def;
+  }
+  const parsed = Number.parseInt(String(raw).trim(), 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : def;
+}
+
 class DeliveryOutboxWorker {
-  constructor({ pool, backendUrl, internalToken, log = console } = {}) {
+  constructor({ pool, backendUrl, internalToken, log = console,
+    recoveryIntervalMs, recoveryBatch, recoveryMinAgeMinutes } = {}) {
     if (!pool) {
       throw new Error('DeliveryOutboxWorker requires a pg Pool');
     }
@@ -32,6 +56,16 @@ class DeliveryOutboxWorker {
     this._running = false;
     this._loopPromise = null;
     this._pollingIntervalMs = 5000;
+    this._recoveryIntervalMs = recoveryIntervalMs != null
+      ? recoveryIntervalMs
+      : intEnv('DELIVERY_DEAD_RECOVERY_INTERVAL_MS', 5 * 60 * 1000);
+    this._recoveryBatch = recoveryBatch != null
+      ? recoveryBatch
+      : intEnv('DELIVERY_DEAD_RECOVERY_BATCH', 20);
+    this._recoveryMinAgeMinutes = recoveryMinAgeMinutes != null
+      ? recoveryMinAgeMinutes
+      : intEnv('DELIVERY_DEAD_RECOVERY_MIN_AGE_MINUTES', 15);
+    this._lastRecoveryAt = 0;
   }
 
   start() {
@@ -61,6 +95,7 @@ class DeliveryOutboxWorker {
   async _runLoop() {
     while (this._running) {
       try {
+        await this._maybeRecoverDead();
         const processed = await this._processCycle();
         if (processed) {
           continue;
@@ -71,6 +106,65 @@ class DeliveryOutboxWorker {
       if (this._running) {
         await new Promise(resolve => setTimeout(resolve, this._pollingIntervalMs));
       }
+    }
+  }
+
+  async _maybeRecoverDead() {
+    if (Date.now() - this._lastRecoveryAt < this._recoveryIntervalMs) {
+      return 0;
+    }
+    this._lastRecoveryAt = Date.now();
+    try {
+      const recovered = await this._recoverDeadCycle();
+      if (recovered > 0) {
+        this.log.info(`[delivery-worker] dead recovery: ${recovered} callback(s) recuperaveis voltaram para PENDING`);
+      }
+      return recovered;
+    } catch (err) {
+      this.log.error('[delivery-worker] erro no dead recovery:', err.message);
+      return 0;
+    }
+  }
+
+  // Reprocessamento posterior controlado: em lote pequeno, com idade minima
+  // (evita hot loop com o retry rapido) e reset de attempt_count, para que o
+  // registro passe novamente pelo mesmo worker ate o callback confirmar.
+  // Cobre tambem registros DEAD antigos ja existentes antes do deploy.
+  async _recoverDeadCycle() {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const selectResult = await client.query(
+        `SELECT id FROM whatsapp_delivery_outbox
+         WHERE state = 'DEAD'
+           AND http_error_message = ANY($1)
+           AND updated_at <= NOW() - ($2 || ' minutes')::INTERVAL
+         ORDER BY updated_at ASC
+         LIMIT $3
+         FOR UPDATE SKIP LOCKED`,
+        [RECOVERABLE_DEAD_REASONS, String(this._recoveryMinAgeMinutes), this._recoveryBatch]
+      );
+      const ids = selectResult.rows.map(r => r.id);
+      if (ids.length === 0) {
+        await client.query('COMMIT');
+        return 0;
+      }
+      await client.query(
+        `UPDATE whatsapp_delivery_outbox
+         SET state = 'PENDING', attempt_count = 0, next_attempt_at = NOW(),
+             locked_until = NULL, http_status = NULL, updated_at = NOW()
+         WHERE id = ANY($1)`,
+        [ids]
+      );
+      await client.query('COMMIT');
+      return ids.length;
+    } catch (err) {
+      try {
+        await client.query('ROLLBACK');
+      } catch {}
+      throw err;
+    } finally {
+      client.release();
     }
   }
 
@@ -257,4 +351,4 @@ function createWorker(pool) {
   });
 }
 
-module.exports = { DeliveryOutboxWorker, createWorker };
+module.exports = { DeliveryOutboxWorker, createWorker, RECOVERABLE_DEAD_REASONS };

@@ -72,10 +72,12 @@ public class WhatsAppIntegracaoController {
                         uso.cicloFim(),
                         new CategoriaUsoResponse(
                                 uso.limiteLembretes(), uso.lembretesEnviados(),
-                                uso.lembretesReservados(), uso.lembretesDisponiveis()),
+                                uso.lembretesReservados(), uso.lembretesDisponiveis(),
+                                uso.lembretesNaFila(), uso.lembretesAguardandoConfirmacao()),
                         new CategoriaUsoResponse(
                                 uso.limiteCrm(), uso.crmEnviados(),
-                                uso.crmReservados(), uso.crmDisponiveis()))));
+                                uso.crmReservados(), uso.crmDisponiveis(),
+                                uso.crmNaFila(), uso.crmAguardandoConfirmacao()))));
     }
 
     @PostMapping("/conectar")

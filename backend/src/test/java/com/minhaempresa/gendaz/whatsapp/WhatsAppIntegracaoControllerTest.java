@@ -145,7 +145,11 @@ class WhatsAppIntegracaoControllerTest {
                 .andExpect(jsonPath("$.uso.lembretes.enviados").value(0))
                 .andExpect(jsonPath("$.uso.lembretes.reservados").value(0))
                 .andExpect(jsonPath("$.uso.lembretes.disponiveis").value(150))
-                .andExpect(jsonPath("$.uso.crm.limite").value(10));
+                .andExpect(jsonPath("$.uso.lembretes.naFila").value(0))
+                .andExpect(jsonPath("$.uso.lembretes.aguardandoConfirmacao").value(0))
+                .andExpect(jsonPath("$.uso.crm.limite").value(10))
+                .andExpect(jsonPath("$.uso.crm.naFila").value(0))
+                .andExpect(jsonPath("$.uso.crm.aguardandoConfirmacao").value(0));
     }
 
     @Test

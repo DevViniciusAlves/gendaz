@@ -31,7 +31,9 @@ public final class WhatsAppIntegracaoDtos {
             int limite,
             int enviados,
             int reservados,
-            int disponiveis
+            int disponiveis,
+            int naFila,
+            int aguardandoConfirmacao
     ) {}
 
     public record UsoResponse(

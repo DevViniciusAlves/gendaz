@@ -486,4 +486,109 @@ class WhatsAppEnvioWorkerTest {
         assertEquals(1, quotaService.consultarUso(empresa.getId()).lembretesReservados());
         assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
     }
+
+    @Test
+    void retryFuturoNaoBloqueiaMensagemPronta() {
+        EmpresaEntity empresa = empresaProNova("wpp-wnoblock");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.SESSION_NOT_CONNECTED))
+                .thenReturn(WhatsAppSendResult.sent("WAMID-B"));
+
+        WhatsAppNotificacaoEntity msgA = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+        WhatsAppNotificacaoEntity retentativa = recarregar(msgA.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, retentativa.getStatus());
+        assertNotNull(retentativa.getNextAttemptAt());
+        assertTrue(retentativa.getNextAttemptAt().isAfter(LocalDateTime.now(ZoneOffset.UTC)));
+
+        // Mensagem B pronta depois: deve ser processada normalmente, sem
+        // esperar o retry futuro de A.
+        WhatsAppNotificacaoEntity msgB = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(msgB.getId()).getStatus());
+        WhatsAppNotificacaoEntity aindaA = recarregar(msgA.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, aindaA.getStatus());
+        assertNotNull(aindaA.getNextAttemptAt());
+        verify(provider, times(2)).enviarTexto(any(), any(), any(), any());
+    }
+
+    @Test
+    void aguardandoEntregaNaoEReclaimadoParaReenvio() {
+        EmpresaEntity empresa = empresaProNova("wpp-wnoreclaim");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.sent("WAMID-NR"));
+
+        WhatsAppNotificacaoEntity criada = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(criada.getId()).getStatus());
+
+        // AGUARDANDO_ENTREGA nunca volta ao claim de envio: sem reenvio,
+        // sem duplicidade. So a prova de entrega o move.
+        assertEquals(0, worker.processarLote(10));
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(criada.getId()).getStatus());
+        verify(provider, times(1)).enviarTexto(any(), any(), any(), any());
+    }
+
+    @Test
+    void entregaConverteUmReservadoEmUmEnviadoEDuplicataNaoContaDuasVezes() {
+        EmpresaEntity empresa = empresaProNova("wpp-wconv");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.sent("WAMID-CV"));
+
+        enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmReservados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmEnviados());
+
+        entregaService.registrarEntrega(empresa.getId(), "WAMID-CV");
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+
+        // Callback duplicado do mesmo par empresa + providerMessageId: no-op,
+        // nunca incrementa enviados nem decrementa reserva abaixo de zero.
+        entregaService.registrarEntrega(empresa.getId(), "WAMID-CV");
+        assertEquals(1, quotaService.consultarUso(empresa.getId()).crmEnviados());
+        assertEquals(0, quotaService.consultarUso(empresa.getId()).crmReservados());
+    }
+
+    @Test
+    void contadoresNaFilaEAguardandoSeparadosSemMisturarCicloAntigo() {
+        EmpresaEntity empresa = empresaProNova("wpp-wcount");
+        when(provider.enviarTexto(any(), any(), any(), any()))
+                .thenReturn(WhatsAppSendResult.sent("WAMID-Q1"))
+                .thenReturn(WhatsAppSendResult.erro(WhatsAppSendStatus.SERVICE_UNAVAILABLE));
+
+        WhatsAppNotificacaoEntity aguardando = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+        assertEquals(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA, recarregar(aguardando.getId()).getStatus());
+
+        WhatsAppNotificacaoEntity naFila = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RESGATE);
+        assertEquals(1, worker.processarLote(10));
+        WhatsAppNotificacaoEntity pendente = recarregar(naFila.getId());
+        assertEquals(WhatsAppStatusNotificacao.PENDENTE, pendente.getStatus());
+        assertTrue(pendente.isQuotaReserved());
+
+        // Registro de ciclo antigo com reserva: nao entra no resumo atual.
+        WhatsAppNotificacaoEntity antiga = enfileirarVencida(empresa, WhatsAppTipoNotificacao.CRM_RECONEXAO);
+        WhatsAppNotificacaoEntity editada = recarregar(antiga.getId());
+        editada.setQuotaReserved(true);
+        editada.setQuotaCycleStart(LocalDate.now().minusDays(60));
+        notificacaoRepository.save(editada);
+
+        var uso = quotaService.consultarUso(empresa.getId());
+        assertEquals(1, uso.crmNaFila());
+        assertEquals(1, uso.crmAguardandoConfirmacao());
+        assertEquals(0, uso.lembretesNaFila());
+        assertEquals(0, uso.lembretesAguardandoConfirmacao());
+        // Checkpoint de consistencia: reservados = naFila + aguardando.
+        assertEquals(uso.crmReservados(), uso.crmNaFila() + uso.crmAguardandoConfirmacao());
+        // Resgate e Reconexao compartilham a categoria CRM.
+        assertEquals(WhatsAppTipoNotificacao.CRM_RESGATE.categoria(), WhatsAppTipoNotificacao.CRM_RECONEXAO.categoria());
+
+        // Limpeza: a mensagem de ciclo antigo e PENDENTE vencida e seria
+        // claimada pelos lotes de outros testes que compartilham o banco.
+        // deleteById evita conflito de versao com a instancia detached.
+        notificacaoRepository.deleteById(antiga.getId());
+    }
 }

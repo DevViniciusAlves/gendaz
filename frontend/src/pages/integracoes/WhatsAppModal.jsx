@@ -351,9 +351,16 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
     return Math.min(100, Math.round((uso.enviados / uso.limite) * 100))
   }
 
-  function emProcessamento(uso) {
-    if (!uso || !uso.reservados) return null
-    return uso.reservados === 1 ? '1 em processamento' : `${uso.reservados} em processamento`
+  function linhaFila(uso) {
+    const valor = uso ? Number(uso.naFila) || 0 : 0
+    if (valor <= 0) return null
+    return <p className="wpp-note">Na fila: {valor}</p>
+  }
+
+  function linhaAguardando(uso) {
+    const valor = uso ? Number(uso.aguardandoConfirmacao) || 0 : 0
+    if (valor <= 0) return null
+    return <p className="wpp-note">Aguardando confirmação: {valor}</p>
   }
 
   return (
@@ -508,7 +515,8 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               <div className="wpp-progress" role="progressbar" aria-valuenow={barra(lembretes)} aria-valuemin="0" aria-valuemax="100">
                 <i style={{ width: `${barra(lembretes)}%` }} />
               </div>
-              {emProcessamento(lembretes) && <p className="wpp-note">{emProcessamento(lembretes)}</p>}
+              {linhaFila(lembretes)}
+              {linhaAguardando(lembretes)}
             </div>
           )}
           {crm && (
@@ -520,7 +528,8 @@ export default function WhatsAppModal({ open, resumo, onClose, onResumoAtualizad
               <div className="wpp-progress" role="progressbar" aria-valuenow={barra(crm)} aria-valuemin="0" aria-valuemax="100">
                 <i style={{ width: `${barra(crm)}%` }} />
               </div>
-              {emProcessamento(crm) && <p className="wpp-note">{emProcessamento(crm)}</p>}
+              {linhaFila(crm)}
+              {linhaAguardando(crm)}
               <p className="wpp-note">Resgate e Reconexão compartilham esse limite.</p>
             </div>
           )}

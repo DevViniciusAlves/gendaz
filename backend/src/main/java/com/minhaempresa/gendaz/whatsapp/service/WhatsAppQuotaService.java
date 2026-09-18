@@ -3,9 +3,13 @@ package com.minhaempresa.gendaz.whatsapp.service;
 import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppUsoCicloEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppStatusNotificacao;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
+import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppNotificacaoRepository;
 import com.minhaempresa.gendaz.whatsapp.repository.WhatsAppUsoCicloRepository;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -35,6 +39,7 @@ public class WhatsAppQuotaService {
     private final WhatsAppUsoCicloRepository usoRepository;
     private final AssinaturaService assinaturaService;
     private final WhatsAppUsoCicloInitializer initializer;
+    private final WhatsAppNotificacaoRepository notificacaoRepository;
 
     private record CicloVigente(LocalDate inicio, LocalDate fim, String planoNome) {
     }
@@ -252,6 +257,22 @@ public class WhatsAppQuotaService {
     private WhatsAppUsoResponse montarResposta(
             Long empresaId, CicloVigente vigente, WhatsAppUsoCicloEntity uso) {
         WhatsAppPlanoPolicy.Limites limites = WhatsAppPlanoPolicy.limitesPara(vigente.planoNome());
+        List<WhatsAppTipoNotificacao> tiposLembrete = List.of(WhatsAppTipoNotificacao.LEMBRETE_AGENDAMENTO);
+        List<WhatsAppTipoNotificacao> tiposCrm =
+                List.of(WhatsAppTipoNotificacao.CRM_RESGATE, WhatsAppTipoNotificacao.CRM_RECONEXAO);
+        List<WhatsAppStatusNotificacao> statusesFila =
+                List.of(WhatsAppStatusNotificacao.PENDENTE, WhatsAppStatusNotificacao.ENVIANDO);
+        List<WhatsAppStatusNotificacao> statusesAguardando =
+                List.of(WhatsAppStatusNotificacao.AGUARDANDO_ENTREGA);
+        // Duas queries COUNT por categoria (sem N+1 sobre notificacoes).
+        int lembretesNaFila = (int) notificacaoRepository.contarComReservaPorCicloTiposStatuses(
+                empresaId, vigente.inicio(), tiposLembrete, statusesFila);
+        int lembretesAguardando = (int) notificacaoRepository.contarComReservaPorCicloTiposStatuses(
+                empresaId, vigente.inicio(), tiposLembrete, statusesAguardando);
+        int crmNaFila = (int) notificacaoRepository.contarComReservaPorCicloTiposStatuses(
+                empresaId, vigente.inicio(), tiposCrm, statusesFila);
+        int crmAguardando = (int) notificacaoRepository.contarComReservaPorCicloTiposStatuses(
+                empresaId, vigente.inicio(), tiposCrm, statusesAguardando);
         return new WhatsAppUsoResponse(
                 empresaId,
                 vigente.planoNome(),
@@ -264,13 +285,17 @@ public class WhatsAppQuotaService {
                 uso.getCrmReservados(),
                 uso.getCrmEnviados(),
                 Math.max(0, limites.lembretes() - uso.getLembretesEnviados() - uso.getLembretesReservados()),
-                Math.max(0, limites.crm() - uso.getCrmEnviados() - uso.getCrmReservados()));
+                Math.max(0, limites.crm() - uso.getCrmEnviados() - uso.getCrmReservados()),
+                lembretesNaFila,
+                lembretesAguardando,
+                crmNaFila,
+                crmAguardando);
     }
 
     private WhatsAppUsoResponse usoZerado(
             Long empresaId, String planoNome, LocalDate cicloInicio, LocalDate cicloFim) {
         return new WhatsAppUsoResponse(
                 empresaId, planoNome, cicloInicio, cicloFim,
-                0, 0, 0, 0, 0, 0, 0, 0);
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     }
 }

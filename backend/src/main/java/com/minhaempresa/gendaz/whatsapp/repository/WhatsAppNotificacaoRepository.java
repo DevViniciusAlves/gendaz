@@ -2,7 +2,9 @@ package com.minhaempresa.gendaz.whatsapp.repository;
 
 import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
 import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppStatusNotificacao;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
 import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -120,4 +122,32 @@ public interface WhatsAppNotificacaoRepository extends JpaRepository<WhatsAppNot
     List<WhatsAppNotificacaoEntity> claimPresos(
             @Param("limite") LocalDateTime limite,
             @Param("tamanho") int tamanho);
+
+    /**
+     * Contadores da UI separados por estado real, sempre no ciclo vigente da
+     * quota e somente sobre notificacoes com reserva associada a esse ciclo
+     * (quotaReserved + quotaCycleStart). Fonte persistente
+     * whatsapp_notificacoes; o campo reservados do ciclo continua sendo a
+     * fonte de verdade da cota.
+     *
+     * Checkpoint de consistencia: em fluxo normal, reservados equivale a
+     * naFila (PENDENTE + ENVIANDO) + aguardandoConfirmacao
+     * (AGUARDANDO_ENTREGA). Divergencia indica estado excepcional (ex.:
+     * reserva orfa de ciclo anterior gravada no ciclo atual) e nao deve ser
+     * mascarada aqui: os numeros refletem a fonte persistente como esta.
+     */
+    @Query("""
+            select count(n)
+            from WhatsAppNotificacaoEntity n
+            where n.empresa.id = :empresaId
+              and n.quotaReserved = true
+              and n.quotaCycleStart = :cicloInicio
+              and n.tipo in :tipos
+              and n.status in :statuses
+            """)
+    long contarComReservaPorCicloTiposStatuses(
+            @Param("empresaId") Long empresaId,
+            @Param("cicloInicio") LocalDate cicloInicio,
+            @Param("tipos") List<WhatsAppTipoNotificacao> tipos,
+            @Param("statuses") List<WhatsAppStatusNotificacao> statuses);
 }
