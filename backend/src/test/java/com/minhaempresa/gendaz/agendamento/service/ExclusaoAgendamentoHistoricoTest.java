@@ -45,6 +45,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.transaction.support.TransactionTemplate;
 
 /**
@@ -70,6 +71,7 @@ class ExclusaoAgendamentoHistoricoTest {
     @Mock LogAtividadeService logAtividadeService;
     @Mock CaixaDespesasService caixaDespesasService;
     @Mock TransactionTemplate transactionTemplate;
+    @Mock ApplicationEventPublisher eventPublisher;
     @InjectMocks AgendamentoService agendamentoService;
 
     private EmpresaEntity empresa;
