@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { ArrowLeft, UserPlus } from 'lucide-react'
 import SEO, { SITE_BASE } from '../../components/SEO.jsx'
@@ -132,6 +132,14 @@ export default function SegmentLandingPage({ segment }) {
       },
     ]
   }, [segment])
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: 'auto',
+    })
+  }, [segment?.path])
 
   if (!segment) return null
   const canonical = `${SITE_BASE}${segment.path}`
