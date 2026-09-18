@@ -296,12 +296,15 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 boolean relayConfigured = !wakeRelayUrl.isBlank() && !wakeRelayToken.isBlank();
 
                 if (conditionsMet && !relayAttempted.get() && relayConfigured && relayAttempted.compareAndSet(false, true)) {
-                    // Trigger Cloudflare wake relay (once per single-flight cycle)
+                    // Trigger Cloudflare wake relay (once per single-flight cycle).
+                    // Marcado ANTES do POST: qualquer resultado (2xx, 401, 403, 500,
+                    // timeout, IOException, URL invalida) nao gera segunda tentativa.
                     try {
                         HttpRequest relayRequest = HttpRequest.newBuilder()
                                 .uri(URI.create(wakeRelayUrl))
                                 .timeout(requestTimeout)
                                 .header("Accept", "application/json")
+                                .header("Authorization", "Bearer " + wakeRelayToken)
                                 .POST(HttpRequest.BodyPublishers.noBody())
                                 .build();
                         HttpResponse<String> relayResponse = httpClient.send(relayRequest, HttpResponse.BodyHandlers.ofString());
@@ -310,6 +313,8 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                         } else {
                             log.warn("[whatsapp-availability] wake relay falhou status={}", relayResponse.statusCode());
                         }
+                    } catch (IllegalArgumentException e) {
+                        log.warn("[whatsapp-availability] wake relay falhou erroTipo={}", e.getClass().getSimpleName());
                     } catch (IOException e) {
                         log.warn("[whatsapp-availability] falha ao acionar wake relay erroTipo={}", e.getClass().getSimpleName());
                     }
@@ -345,7 +350,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
 
             } catch (HttpTimeoutException e) {
                 long elapsed = Duration.between(start, Instant.now()).toMillis();
-                Duration nextDelay = computeDelay(tentativa, null, -1);
+                Duration nextDelay = relayAttempted.get() ? READINESS_POLL_INTERVAL : computeDelay(tentativa, null, -1);
                 log.warn("[whatsapp-availability] tentativa={} status=timeout httpVersion=- elapsedMs={} nextRetryMs={}", tentativa, elapsed, nextDelay.toMillis());
                 if (Instant.now().plus(nextDelay).isAfter(deadline)) break;
                 try { sleeper.sleep(nextDelay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido")); return; } catch (Exception ex) { future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "sleep fail")); return; }
@@ -356,7 +361,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 return;
             } catch (ConnectException e) {
                 long elapsed = Duration.between(start, Instant.now()).toMillis();
-                Duration nextDelay = computeDelay(tentativa, null, -1);
+                Duration nextDelay = relayAttempted.get() ? READINESS_POLL_INTERVAL : computeDelay(tentativa, null, -1);
                 log.warn("[whatsapp-availability] tentativa={} status=connect_error elapsedMs={} nextRetryMs={}", tentativa, elapsed, nextDelay.toMillis());
                 if (Instant.now().plus(nextDelay).isAfter(deadline)) break;
                 try { sleeper.sleep(nextDelay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido")); return; } catch (Exception ex) { future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "sleep fail")); return; }
@@ -367,7 +372,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                         || e instanceof java.net.UnknownHostException
                         || cause instanceof java.net.UnknownHostException;
                 long elapsed = Duration.between(start, Instant.now()).toMillis();
-                Duration nextDelay = computeDelay(tentativa, null, -1);
+                Duration nextDelay = relayAttempted.get() ? READINESS_POLL_INTERVAL : computeDelay(tentativa, null, -1);
                 if (isConnectFailure) {
                     log.warn("[whatsapp-availability] tentativa={} status=connect_error elapsedMs={} nextRetryMs={}", tentativa, elapsed, nextDelay.toMillis());
                 } else {
@@ -377,7 +382,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 try { sleeper.sleep(nextDelay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido")); return; } catch (Exception ex) { future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "sleep fail")); return; }
             } catch (Exception e) {
                 long elapsed = Duration.between(start, Instant.now()).toMillis();
-                Duration nextDelay = computeDelay(tentativa, null, -1);
+                Duration nextDelay = relayAttempted.get() ? READINESS_POLL_INTERVAL : computeDelay(tentativa, null, -1);
                 log.warn("[whatsapp-availability] tentativa={} status=error elapsedMs={} nextRetryMs={} erroTipo={}", tentativa, elapsed, nextDelay.toMillis(), e.getClass().getSimpleName());
                 if (Instant.now().plus(nextDelay).isAfter(deadline)) break;
                 try { sleeper.sleep(nextDelay); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "interrompido")); return; } catch (Exception ex) { future.completeExceptionally(new WhatsAppAvailabilityException(WhatsAppAvailabilityReason.UNAVAILABLE, "sleep fail")); return; }
