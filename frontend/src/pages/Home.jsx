@@ -109,6 +109,7 @@ export default function Home() {
           <nav className="marketing-nav-links-gendo">
           <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
+          <a href="#segmentos">Segmentos</a>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
@@ -193,7 +194,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </ScrollReveal>
       <ScrollReveal className="bounce-reveal" delay={0} threshold={0.18} rootMargin="0px 0px -10% 0px">
-          <section className="marketing-segments" aria-label="Segmentos de crescimento">
+          <section id="segmentos" className="marketing-segments" aria-label="Segmentos de crescimento">
             <div className="marketing-segments-head">
               <div>
               <h2>Segmentos que crescem ao lado da Gendaz.</h2>

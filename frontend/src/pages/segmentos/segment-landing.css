@@ -420,6 +420,30 @@
   border-color: #ff7a29;
 }
 
-.seg-page #planos {
-  scroll-margin-top: 80px;
+.seg-back-home {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 20px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  color: #b9b9b9;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  transition: 0.2s ease;
+}
+
+.seg-back-home:hover {
+  color: #fff;
+  border-color: rgba(255, 122, 41, 0.55);
+  background: rgba(255, 122, 41, 0.06);
+}
+
+.seg-back-home:focus-visible {
+  outline: 2px solid #ff7a29;
+  outline-offset: 3px;
 }
