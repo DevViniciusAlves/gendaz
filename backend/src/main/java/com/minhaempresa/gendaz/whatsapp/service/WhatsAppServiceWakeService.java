@@ -10,16 +10,16 @@ import java.net.http.HttpTimeoutException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.concurrent.TimeoutException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.DisposableBean;
@@ -32,9 +32,11 @@ import org.springframework.stereotype.Service;
  * <p>Corrige: single-flight real (sem pre-check fora do lock), sem dupla request,
  * exponential backoff com jitter, Retry-After, janela 150s, headers explicitos,
  * logs diagnosticos seguros e body limitado. /health nunca envia Authorization.
+ * Integracao com Cloudflare wake relay como gatilho unico para hibernacao.
  */
 @Service
 @Slf4j
+
 public class WhatsAppServiceWakeService implements DisposableBean {
 
     private static final Set<Integer> NON_TRANSIENT_STATUS = Set.of(400, 401, 403, 404);
@@ -51,18 +53,28 @@ public class WhatsAppServiceWakeService implements DisposableBean {
     private final Duration maxDuration;
     private final Sleeper sleeper;
     private final ExecutorService executor;
+    private final String wakeRelayUrl;
+    private final String wakeRelayToken;
     private final AtomicBoolean started = new AtomicBoolean(false);
+    private AtomicBoolean relayAttempted = new AtomicBoolean(false);
 
     private final Object flightLock = new Object();
     private final AtomicReference<CompletableFuture<Void>> flight = new AtomicReference<>();
 
     @org.springframework.beans.factory.annotation.Autowired
     public WhatsAppServiceWakeService(
-            @Value("${whatsapp.service-url:${WHATSAPP_SERVICE_URL:}}") String serviceUrl) {
-        this(serviceUrl, Duration.ofSeconds(5), Duration.ofSeconds(10),
-                Duration.ofSeconds(150),
-                duration -> Thread.sleep(duration.toMillis()),
-                createExecutor());
+            @Value("${whatsapp.service-url:${WHATSAPP_SERVICE_URL:}}") String serviceUrl,
+            @Value("${whatsapp.wake-relay-url:${WHATSAPP_WAKE_RELAY_URL:}}") String wakeRelayUrl,
+            @Value("${whatsapp.wake-relay-token:${WHATSAPP_WAKE_RELAY_TOKEN:}}") String wakeRelayToken) {
+        this.serviceUrl = serviceUrl == null ? "" : serviceUrl.trim().replaceAll("/+$", "");
+        this.wakeRelayUrl = wakeRelayUrl == null ? "" : wakeRelayUrl.trim();
+        this.wakeRelayToken = wakeRelayToken == null ? "" : wakeRelayToken.trim();
+        this.relayAttempted = new AtomicBoolean(false);
+        this.httpClient = buildClient(Duration.ofSeconds(5));
+        this.requestTimeout = Duration.ofSeconds(10);
+        this.maxDuration = DEFAULT_MAX_DURATION;
+        this.sleeper = duration -> Thread.sleep(duration.toMillis());
+        this.executor = createExecutor();
     }
 
     WhatsAppServiceWakeService(
@@ -72,7 +84,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
             Duration maxDuration,
             Sleeper sleeper,
             ExecutorService executor) {
-        this(serviceUrl, buildClient(connectTimeout), requestTimeout, maxDuration, sleeper, executor);
+        this(serviceUrl, buildClient(connectTimeout), requestTimeout, maxDuration, sleeper, executor, "", "");
     }
 
     // backward compat for tests using 7-arg with retryInterval
@@ -84,7 +96,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
             Duration maxDuration,
             Sleeper sleeper,
             ExecutorService executor) {
-        this(serviceUrl, buildClient(connectTimeout), requestTimeout, maxDuration, sleeper, executor);
+        this(serviceUrl, buildClient(connectTimeout), requestTimeout, maxDuration, sleeper, executor, "", "");
     }
 
     // Test-only constructor with injected HttpClient
@@ -96,7 +108,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
             Duration maxDuration,
             Sleeper sleeper,
             ExecutorService executor) {
-        this(serviceUrl, httpClient, requestTimeout, maxDuration, sleeper, executor);
+        this(serviceUrl, httpClient, requestTimeout, maxDuration, sleeper, executor, "", "");
     }
 
     private WhatsAppServiceWakeService(
@@ -105,13 +117,18 @@ public class WhatsAppServiceWakeService implements DisposableBean {
             Duration requestTimeout,
             Duration maxDuration,
             Sleeper sleeper,
-            ExecutorService executor) {
+            ExecutorService executor,
+            String wakeRelayUrl,
+            String wakeRelayToken) {
         this.serviceUrl = serviceUrl == null ? "" : serviceUrl.trim().replaceAll("/+$", "");
         this.requestTimeout = requestTimeout == null ? Duration.ofSeconds(10) : requestTimeout;
         this.maxDuration = maxDuration == null ? DEFAULT_MAX_DURATION : maxDuration;
         this.sleeper = sleeper == null ? duration -> Thread.sleep(duration.toMillis()) : sleeper;
         this.executor = executor == null ? createExecutor() : executor;
         this.httpClient = httpClient != null ? httpClient : buildClient(Duration.ofSeconds(5));
+        this.wakeRelayUrl = wakeRelayUrl == null ? "" : wakeRelayUrl.trim();
+        this.wakeRelayToken = wakeRelayToken == null ? "" : wakeRelayToken.trim();
+        this.relayAttempted = new AtomicBoolean(false);
     }
 
     private static HttpClient buildClient(Duration connectTimeout) {
@@ -174,6 +191,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                 myFuture = new CompletableFuture<>();
                 flight.set(myFuture);
                 isLeader = true;
+                relayAttempted.set(false);
             }
         }
         if (isLeader) {
@@ -268,7 +286,43 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                     return;
                 }
                 // transient: 429, 502, 503, 504, 5xx
-                Duration nextDelay = computeDelay(tentativa, retryAfterRaw, status);
+                // Check if we should trigger Cloudflare wake relay
+                boolean shouldTriggerRelay = false;
+                if (!relayAttempted.get() && !wakeRelayUrl.isBlank() && !wakeRelayToken.isBlank()) {
+                    boolean condition1 = status == 429 && "hibernate-rate-limited".equalsIgnoreCase(rndrId.trim());
+                    boolean condition2 = status == 502 && "no-deploy".equalsIgnoreCase(rndrId.trim());
+                    if (condition1 || condition2) {
+                        shouldTriggerRelay = true;
+                    }
+                }
+
+                Duration nextDelay;
+
+                if (shouldTriggerRelay) {
+                    // Trigger Cloudflare wake relay (once per single-flight cycle)
+                    try {
+                        HttpRequest relayRequest = HttpRequest.newBuilder()
+                                .uri(URI.create(wakeRelayUrl))
+                                .timeout(requestTimeout)
+                                .header("Authorization", "Bearer " + wakeRelayToken)
+                                .header("Accept", "application/json")
+                                .POST(HttpRequest.BodyPublishers.noBody())
+                                .build();
+                        HttpResponse<String> relayResponse = httpClient.send(relayRequest, HttpResponse.BodyHandlers.ofString());
+                        log.info("[whatsapp-availability] wake relay acionado status={}", relayResponse.statusCode());
+                    } catch (IOException e) {
+                        log.warn("[whatsapp-availability] falha ao acionar wake relay erroTipo={}", e.getClass().getSimpleName());
+                    }
+                    relayAttempted.set(true);
+                    // After relay, use small fixed poll interval before next direct check
+                    nextDelay = Duration.ofSeconds(5);
+                } else if (relayAttempted.get()) {
+                    // Relay already attempted in this cycle, use exponential backoff
+                    nextDelay = computeDelay(tentativa, retryAfterRaw, status);
+                } else {
+                    // Normal transient error backoff
+                    nextDelay = computeDelay(tentativa, retryAfterRaw, status);
+                }
                 // cap by remaining time
                 long remainingMs = Duration.between(Instant.now(), deadline).toMillis();
                 if (remainingMs <= 0) break;
