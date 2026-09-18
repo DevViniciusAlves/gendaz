@@ -1093,6 +1093,21 @@ tbody tr:hover { background: #fffaf5; }
   background: color-mix(in srgb, var(--danger) 10%, transparent);
   border-color: color-mix(in srgb, var(--danger) 20%, transparent);
 }
+.status-connected {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, transparent);
+  border-color: color-mix(in srgb, var(--success) 20%, transparent);
+}
+.status-connecting, .status-reconnecting {
+  color: #FBBF24;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.28);
+}
+.status-disconnected, .status-not-connected, .status-logged-out, .status-not-configured, .status-unavailable {
+  color: var(--muted);
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+  border-color: color-mix(in srgb, var(--muted) 30%, transparent);
+}
 .status-atencao {
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 14%, transparent);
@@ -22284,6 +22299,14 @@ iframe {
 }
 
 .system-modal .promotion-target-section input:is([type='radio'], [type='checkbox']) {
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
+  margin: 0;
   accent-color: #111827;
 }
 
@@ -22369,6 +22392,37 @@ iframe {
   flex: 0 0 18px;
   width: 18px;
   height: 18px;
+  margin: 0;
+  accent-color: #111827;
+}
+
+/* Canal de envio (E-mail / WhatsApp): radios nativos compactos e alinhados.
+   Escopado ao modal do CRM — não afeta inputs de texto, selects, textareas
+   nem outros formulários. Mesma correção aplicada ao toggle acima. */
+.system-modal .wpp-canal-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.system-modal .wpp-canal-row label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  width: auto;
+}
+
+.system-modal .wpp-canal-row input[type='radio'] {
+  flex: 0 0 18px;
+  width: 18px;
+  min-width: 18px;
+  max-width: 18px;
+  height: 18px;
+  min-height: 18px;
+  padding: 0;
   margin: 0;
   accent-color: #111827;
 }

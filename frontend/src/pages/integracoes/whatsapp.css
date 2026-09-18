@@ -1,0 +1,534 @@
+/* Integração WhatsApp: somente complementos pontuais. Base (panel, btn,
+   modal, field, status) vem dos estilos globais do gendaz. */
+
+/* ---------- Hub de integrações: grid de cards ---------- */
+
+.integr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 360px));
+  gap: 16px;
+  align-items: start;
+}
+
+/* ---------- Card compacto de integração ---------- */
+
+.integr-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+  min-width: 0;
+  max-width: 380px;
+}
+
+.integr-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.integr-card-head h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.integr-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-soft);
+  border: 1px solid var(--line);
+  flex: 0 0 auto;
+  overflow: hidden;
+}
+
+.integr-card-logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  border-radius: 6px;
+  flex: 0 0 auto;
+}
+
+.integr-card-desc {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.integr-card-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.integr-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+
+/* Botão disabled proposital: usa o padrão do Button do gendaz,
+   apenas garante cursor/legibilidade consistentes. */
+.integr-card-actions .btn:disabled {
+  cursor: not-allowed;
+}
+
+/* ---------- Modal WhatsApp ---------- */
+
+.wpp-modal-portal .modal {
+  width: min(700px, 100%);
+  max-height: calc(100vh - 56px);
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
+
+.wpp-modal-subtitle {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.wpp-modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 260px);
+  padding-right: 4px;
+}
+
+.wpp-section {
+  border: 1px solid var(--line);
+  border-radius: var(--radius, 12px);
+  background: var(--surface-soft);
+  padding: 14px;
+  min-width: 0;
+}
+
+.wpp-section-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.wpp-muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+
+.wpp-helper {
+  color: var(--muted);
+  font-size: 12px;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+.wpp-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.wpp-status-block {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
+/* ---------- Lembretes: switch alinhado ---------- */
+
+.wpp-toggle-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.wpp-toggle-head .wpp-section-title {
+  margin-bottom: 4px;
+}
+
+.wpp-toggle {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 0 0 auto;
+  padding-top: 2px;
+}
+
+.wpp-toggle input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wpp-switch {
+  position: relative;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 24px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  transition: background 0.18s ease, border-color 0.18s ease, opacity 0.18s ease;
+}
+
+.wpp-switch::after {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--muted);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.wpp-toggle input:checked + .wpp-switch {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+.wpp-toggle input:checked + .wpp-switch::after {
+  transform: translateX(18px);
+  background: var(--surface);
+}
+
+.wpp-toggle input:focus-visible + .wpp-switch {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Switch disabled elegante: afunda o trilho em vez de parecer quebrado. */
+.wpp-toggle input:disabled + .wpp-switch {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: color-mix(in srgb, var(--muted) 18%, transparent);
+  border-color: color-mix(in srgb, var(--muted) 35%, transparent);
+}
+
+.wpp-toggle input:disabled {
+  cursor: not-allowed;
+}
+
+.wpp-toggle:has(input:disabled) {
+  cursor: not-allowed;
+}
+
+/* ---------- Mensagem do lembrete ---------- */
+
+.wpp-section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.wpp-restore-btn {
+  flex: 0 0 auto;
+}
+
+.wpp-template-field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.wpp-template-field textarea {
+  width: 100%;
+  max-width: 100%;
+  min-height: 112px;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.wpp-counter {
+  align-self: flex-end;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  margin-top: 4px;
+}
+
+/* ---------- Variáveis ---------- */
+
+.wpp-variables {
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.wpp-variables-title {
+  display: block;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.wpp-variables-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.wpp-var {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--surface);
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.wpp-var code {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* ---------- Preview ---------- */
+
+.wpp-message-preview {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 13px;
+  background: var(--surface);
+  margin-top: 12px;
+  min-width: 0;
+}
+
+.wpp-message-preview strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.wpp-message-preview p {
+  margin: 0 0 4px;
+  line-height: 1.5;
+  overflow-wrap: break-word;
+}
+
+.wpp-message-preview small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.wpp-template-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+
+/* ---------- Uso do plano ---------- */
+
+.wpp-quota-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.wpp-quota-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  padding: 10px 12px;
+  min-width: 0;
+}
+
+.wpp-progress-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  margin: 0 0 6px;
+}
+
+.wpp-progress-label strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.wpp-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 15%, transparent);
+  overflow: hidden;
+}
+
+.wpp-progress > i {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.wpp-note {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+/* ---------- QR ---------- */
+
+.wpp-qr-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  max-width: 100%;
+  margin-top: 12px;
+  background: var(--surface);
+}
+
+.wpp-qr-box svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* ---------- Consistência tema claro no modal ----------
+   O modal é forçado para light via .system-modal, mas as variáveis
+   de tema (var(--surface) etc.) resolvem para o tema escuro do app.
+   Estes overrides escopados garantem que nenhum bloco interno
+   herde surface dark dentro do modal branco. */
+
+.wpp-modal-portal .wpp-section {
+  background: #fafafa;
+  border-color: rgba(11, 11, 11, 0.14);
+}
+
+.wpp-modal-portal .wpp-var,
+.wpp-modal-portal .wpp-message-preview,
+.wpp-modal-portal .wpp-quota-card,
+.wpp-modal-portal .wpp-qr-box {
+  background: #ffffff;
+  border-color: rgba(11, 11, 11, 0.14);
+}
+
+.wpp-modal-portal .wpp-var {
+  color: #4b5563;
+}
+
+.wpp-modal-portal .wpp-var code {
+  color: #0b0b0b;
+}
+
+.wpp-modal-portal .wpp-progress {
+  background: rgba(17, 24, 39, 0.12);
+}
+
+.wpp-modal-portal .wpp-progress > i {
+  background: #111827;
+}
+
+.wpp-modal-portal .wpp-switch {
+  background: #ffffff;
+  border-color: rgba(11, 11, 11, 0.28);
+}
+
+.wpp-modal-portal .wpp-switch::after {
+  background: #9ca3af;
+}
+
+.wpp-modal-portal .wpp-toggle input:checked + .wpp-switch {
+  border-color: #111827;
+  background: #111827;
+}
+
+.wpp-modal-portal .wpp-toggle input:checked + .wpp-switch::after {
+  background: #ffffff;
+}
+
+.wpp-modal-portal .wpp-toggle input:disabled + .wpp-switch {
+  background: rgba(11, 11, 11, 0.08);
+  border-color: rgba(11, 11, 11, 0.2);
+}
+
+.wpp-modal-portal .wpp-toggle input:disabled + .wpp-switch::after {
+  background: #c4c9d4;
+}
+
+@media (max-width: 640px) {
+  .integr-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .integr-card {
+    max-width: none;
+  }
+
+  .integr-card-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .integr-card-actions .btn {
+    width: 100%;
+  }
+
+  .wpp-modal-portal .modal {
+    width: 100%;
+  }
+
+  .wpp-modal-body {
+    max-height: calc(100vh - 200px);
+  }
+
+  .wpp-variables-grid,
+  .wpp-quota-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .wpp-template-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .wpp-template-actions .btn {
+    width: 100%;
+  }
+
+  .wpp-section-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .wpp-qr-box {
+    padding: 12px;
+  }
+}

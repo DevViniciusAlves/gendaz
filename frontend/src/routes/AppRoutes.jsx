@@ -30,6 +30,7 @@ import Servicos from '../pages/Servicos.jsx'
 import Profissionais from '../pages/Profissionais.jsx'
 import Financeiro from '../pages/Financeiro.jsx'
 import Relatorios from '../pages/Relatorios.jsx'
+import Integracoes from '../pages/Integracoes.jsx'
 import Logs from '../pages/Logs.jsx'
 import Planos from '../pages/Planos.jsx'
 import Configuracoes from '../pages/Configuracoes.jsx'
@@ -45,6 +46,8 @@ import GendazSuporte from '../pages/gendaz/Suporte.jsx'
 import GendazBeneficios from '../pages/gendaz/Beneficios.jsx'
 import GendazPromocoes from '../pages/gendaz/Promocoes.jsx'
 import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
+import SegmentLandingPage from '../pages/segmentos/SegmentLandingPage.jsx'
+import { SEGMENT_LIST } from '../pages/segmentos/segmentLandingData.js'
 
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
@@ -144,6 +147,10 @@ export default function AppRoutes() {
       <Route path="/not-found" element={<NotFound />} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+      { /* Landing pages SEO por segmento — 19 segmentos (Partes 1 + 2). */ }
+      {SEGMENT_LIST.map((segment) => (
+        <Route key={segment.key} path={segment.path} element={<SegmentLandingPage segment={segment} />} />
+      ))}
       <Route path="/meu-gendaz/:slug/*" element={<Gendaz />}>
         <Route index element={<GendazDashboard />} />
         <Route path="dashboard" element={<GendazDashboard />} />
@@ -169,6 +176,7 @@ export default function AppRoutes() {
         <Route path="financeiro" element={<PlanRoute routeKey="financeiro"><Financeiro /></PlanRoute>} />
         <Route path="pagamentos/*" element={<Navigate to="/sistema/financeiro" replace />} />
         <Route path="relatorios" element={<PlanRoute routeKey="relatorios"><Relatorios /></PlanRoute>} />
+        <Route path="integracoes" element={<PlanRoute routeKey="integracoes"><Integracoes /></PlanRoute>} />
         <Route path="logs" element={<PlanRoute routeKey="logs"><Logs /></PlanRoute>} />
         <Route path="planos" element={<Planos />} />
         <Route path="configuracoes" element={<PlanRoute routeKey="configuracoes"><Configuracoes /></PlanRoute>} />

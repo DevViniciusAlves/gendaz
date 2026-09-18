@@ -32,6 +32,14 @@ const LABELS = {
   WARNING: 'Aviso',
   SECURITY: 'Segurança',
   ERROR: 'Erro',
+  CONNECTED: 'Conectado',
+  CONNECTING: 'Conectando...',
+  RECONNECTING: 'Reconectando...',
+  DISCONNECTED: 'Desconectado',
+  NOT_CONNECTED: 'Desconectado',
+  LOGGED_OUT: 'Desconectado',
+  NOT_CONFIGURED: 'Indisponível',
+  UNAVAILABLE: 'Temporariamente indisponível',
 }
 
 export default function StatusBadge({ status }) {

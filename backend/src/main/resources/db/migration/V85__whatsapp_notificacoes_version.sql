@@ -1,0 +1,1 @@
+ALTER TABLE whatsapp_notificacoes ADD COLUMN IF NOT EXISTS versao BIGINT NOT NULL DEFAULT 0;

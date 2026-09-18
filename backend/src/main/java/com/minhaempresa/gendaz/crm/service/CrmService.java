@@ -12,15 +12,30 @@ import com.minhaempresa.gendaz.email.ResendEmailService;
 import com.minhaempresa.gendaz.pagamento.enums.StatusPagamento;
 import com.minhaempresa.gendaz.pagamento.repository.PagamentoRepository;
 import com.minhaempresa.gendaz.shared.BusinessException;
+import com.minhaempresa.gendaz.shared.PhoneNumberService;
 import com.minhaempresa.gendaz.shared.enums.StatusCadastro;
+import com.minhaempresa.gendaz.assinatura.service.AssinaturaService;
+import com.minhaempresa.gendaz.whatsapp.entity.WhatsAppNotificacaoEntity;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppCategoriaCota;
+import com.minhaempresa.gendaz.whatsapp.enums.WhatsAppTipoNotificacao;
+import com.minhaempresa.gendaz.whatsapp.policy.WhatsAppPlanoPolicy;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppProvider;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppResult;
+import com.minhaempresa.gendaz.whatsapp.WhatsAppSessionStatus;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppClock;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppDisponibilidade;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppFilaService;
+import com.minhaempresa.gendaz.whatsapp.service.WhatsAppQuotaService;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +48,15 @@ public class CrmService {
     private final PagamentoRepository pagamentoRepository;
     private final CrmContatoRepository crmContatoRepository;
     private final ResendEmailService resendEmailService;
+    private final AssinaturaService assinaturaService;
+    private final WhatsAppFilaService whatsAppFilaService;
+    private final WhatsAppProvider whatsAppProvider;
+    private final WhatsAppQuotaService whatsAppQuotaService;
+    private final CrmContatoHistoricoService historicoService;
+    private final PhoneNumberService phoneNumberService;
+    private final WhatsAppClock whatsAppClock;
+
+    private static final Pattern REQUEST_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,64}$");
 
     @Value("${app.frontend-url:${FRONTEND_URL:https://gendaz.site}}")
     private String frontendUrl;
@@ -139,6 +163,12 @@ public class CrmService {
             throw new BusinessException("Empresa nao foi encontrada");
         }
 
+        // Canal WhatsApp: fluxo assincrono via fila (sem e-mail, sem exigir
+        // e-mail do cliente). O fluxo de e-mail abaixo permanece intacto.
+        if (isCanalWhatsApp(request.canal())) {
+            return enviarViaWhatsApp(empresaId, cliente, request);
+        }
+
         if (cliente.getEmail() == null || cliente.getEmail().isBlank()) {
             throw new BusinessException("Cliente nao possui e-mail cadastrado.");
         }
@@ -179,9 +209,136 @@ public class CrmService {
         );
     }
 
+    /**
+     * Resgate/Reconexao via WhatsApp (acao manual, 1 cliente = 1 acao).
+     *
+     * <p>Decisao de historico: como o envio e assincrono (fila + worker), o
+     * historico CRM registra que a acao foi solicitada/enfileirada
+     * (status "solicitado", canal "whatsapp"); o status tecnico
+     * (PENDENTE/ENVIANDO/ENVIADO/FALHOU/CANCELADO) vive em
+     * whatsapp_notificacoes, sem duplicar a maquina de status aqui.
+     *
+     * <p>Sem reserva de cota aqui: a cota CRM e reservada exclusivamente
+     * pelo worker no claim. E-mail nao e tocado nem contabilizado.
+     */
+    private Map<String, Object> enviarViaWhatsApp(
+            Long empresaId, ClienteEntity cliente, EnviarMensagemRequest request) {
+        String template = request.template() == null ? "" : request.template().trim().toLowerCase();
+        WhatsAppTipoNotificacao tipo = switch (template) {
+            case "resgate" -> WhatsAppTipoNotificacao.CRM_RESGATE;
+            case "reconexao" -> WhatsAppTipoNotificacao.CRM_RECONEXAO;
+            default -> null;
+        };
+        if (tipo == null) {
+            return resultadoDominio(false, "WHATSAPP_TIPO_NAO_SUPORTADO");
+        }
+        String requestId = request.requestId();
+        if (requestId == null || requestId.isBlank() || !REQUEST_ID_PATTERN.matcher(requestId.trim()).matches()) {
+            return resultadoDominio(false, "WHATSAPP_REQUEST_ID_INVALIDO");
+        }
+        if (!cliente.isReceberWhatsapp()) {
+            return resultadoDominio(false, "WHATSAPP_OPT_OUT");
+        }
+        String plano = assinaturaService.buscarAtualPorEmpresa(empresaId)
+                .map(a -> a.getPlano().getNome())
+                .orElse(null);
+        if (!WhatsAppPlanoPolicy.possuiWhatsApp(plano)) {
+            return resultadoDominio(false, "WHATSAPP_NAO_DISPONIVEL_NO_PLANO");
+        }
+        String telefone = cliente.getTelefone();
+        if (!phoneNumberService.canonicoValido(telefone)) {
+            return resultadoDominio(false, "WHATSAPP_TELEFONE_INVALIDO");
+        }
+        if (!whatsAppProvider.disponivel()) {
+            return resultadoDominio(false, "WHATSAPP_NOT_CONNECTED");
+        }
+        WhatsAppResult<WhatsAppSessionStatus> statusSessao =
+                whatsAppProvider.consultarStatusAguardandoConexao(String.valueOf(empresaId));
+        if (!statusSessao.isSuccess()
+                || statusSessao.getData() == null
+                || !"CONNECTED".equals(statusSessao.getData().getState())) {
+            return resultadoDominio(false, "WHATSAPP_NOT_CONNECTED");
+        }
+        WhatsAppDisponibilidade disponibilidade =
+                whatsAppQuotaService.podeReservar(empresaId, WhatsAppCategoriaCota.CRM);
+        if (disponibilidade == WhatsAppDisponibilidade.LIMITE_ATINGIDO) {
+            return resultadoDominio(false, "WHATSAPP_COTA_ESGOTADA");
+        }
+        if (disponibilidade == WhatsAppDisponibilidade.PLANO_SEM_WHATSAPP) {
+            return resultadoDominio(false, "WHATSAPP_NAO_DISPONIVEL_NO_PLANO");
+        }
+        String chave = (tipo == WhatsAppTipoNotificacao.CRM_RESGATE ? "CRM_RESGATE:" : "CRM_RECONEXAO:")
+                + cliente.getId() + ":" + requestId.trim();
+        String texto = montarTextoWhatsApp(tipo, cliente.getNome(), cliente.getEmpresa().getNomeFantasia());
+
+        // Validade operacional da solicitacao manual: 24h. Evita backlog
+        // antigo disparando em massa apos reconexao. Lembrete usa 10min.
+        java.time.LocalDateTime scheduledAt = whatsAppClock.agoraUtc();
+        WhatsAppNotificacaoEntity notificacao = whatsAppFilaService.enfileirar(
+                empresaId,
+                tipo,
+                chave,
+                scheduledAt,
+                cliente.getId(),
+                null,
+                telefone.trim(),
+                texto,
+                scheduledAt.plusHours(24));
+
+        // Historico idempotente por notificacao: a UNIQUE
+        // (whatsapp_notificacao_id) e a barreira no banco. Em corrida, a
+        // insercao perdedora viola a constraint somente na transacao propria
+        // do registro (rollback isolado); aqui se verifica em outra
+        // transacao propria se o registro ja existe: duplicata benigna segue,
+        // erro real propaga. Nunca continua a mesma transacao apos a violacao.
+        try {
+            historicoService.registrarWhatsapp(
+                    empresaId, cliente.getId(), template, texto, notificacao.getId());
+        } catch (DataIntegrityViolationException duplicada) {
+            if (historicoService.buscarPorNotificacao(notificacao.getId()).isEmpty()) {
+                throw duplicada;
+            }
+            log.info("[crm] historico whatsapp ja registrado notificacao={}", notificacao.getId());
+        }
+
+        return Map.of(
+                "success", true,
+                "messageId", String.valueOf(notificacao.getId()),
+                "status", "solicitado",
+                "timestamp", whatsAppClock.agoraUtc().toString());
+    }
+
+    private static boolean isCanalWhatsApp(String canal) {
+        return canal != null && canal.trim().equalsIgnoreCase("whatsapp");
+    }
+
+    private Map<String, Object> resultadoDominio(boolean sucesso, String codigo) {
+        return Map.of(
+                "success", sucesso,
+                "status", codigo,
+                "timestamp", LocalDateTime.now().toString());
+    }
+
+    /**
+     * Texto simples preservando a intencao dos templates de e-mail atuais
+     * (saudade/volta no Resgate; saber como esta/volte quando quiser na
+     * Reconexao). Sem promocao, desconto, cupom, preco, cobranca, dados
+     * financeiros, observacoes internas ou classificacao de risco.
+     */
+    private String montarTextoWhatsApp(
+            WhatsAppTipoNotificacao tipo, String nomeCliente, String nomeEmpresa) {
+        String cliente = nomeCliente == null || nomeCliente.isBlank() ? "cliente" : nomeCliente;
+        String empresa = nomeEmpresa == null || nomeEmpresa.isBlank() ? "nossa equipe" : nomeEmpresa;
+        if (tipo == WhatsAppTipoNotificacao.CRM_RESGATE) {
+            return "Olá, " + cliente + "! Tudo bem? Sentimos sua falta na " + empresa
+                    + ". Se quiser agendar um novo atendimento, estamos à disposição.";
+        }
+        return "Olá, " + cliente + "! Tudo bem? Passando para saber como você está. Quando quiser voltar à "
+                + empresa + ", estaremos por aqui.";
+    }
+
     @Transactional(readOnly = true)
-    public List<HistoricoContatoResponse> historicoContatos(Long empresaId, Long clienteId) {
-        ClienteEntity cliente = clienteRepository.findById(clienteId)
+    public List<HistoricoContatoResponse> historicoContatos(Long empresaId, Long clienteId) {        ClienteEntity cliente = clienteRepository.findById(clienteId)
                 .orElseThrow(() -> new BusinessException("Cliente nao encontrado."));
         if (cliente.getEmpresa() == null || !Objects.equals(cliente.getEmpresa().getId(), empresaId)) {
             throw new BusinessException("Empresa nao foi encontrada");
@@ -336,4 +493,3 @@ public class CrmService {
         return baseNormalizada + "/meu-gendaz/" + slugEmpresa.trim().toLowerCase();
     }
 }
-

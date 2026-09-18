@@ -12,7 +12,6 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 @Getter
 @Setter
 @Builder
@@ -41,6 +40,14 @@ public class ClienteEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private StatusCadastro status;
+
+    /**
+     * Opt-out de WhatsApp (V1 conservador): ausencia de informacao equivale
+     * a permitir. Default true preserva o comportamento atual da base.
+     */
+    @Builder.Default
+    @Column(name = "receber_whatsapp", nullable = false)
+    private boolean receberWhatsapp = true;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "empresa_id")

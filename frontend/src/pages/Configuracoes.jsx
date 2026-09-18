@@ -636,6 +636,8 @@ export default function Configuracoes() {
         </div>
       </section>
 
+      
+
       <section className="panel settings-form-panel">
         <div className="panel-head settings-form-head">
           <div>
@@ -796,6 +798,5 @@ export default function Configuracoes() {
     </section>
   )
 }
-
 
 

@@ -15,6 +15,7 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ScrollReveal from '../components/ScrollReveal.jsx'
+import SEO from '../components/SEO.jsx'
 import logoWhite from '../assets/logos/gendazpng.png'
 import notebookMockupImage from '../assets/marketing/mockup-notebook.png'
 import salaoBarbeariasImage from '../assets/segments/salao-e-barbearias.jpg'
@@ -40,6 +41,7 @@ import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 import TestimonialsSection from '../components/TestimonialsSection.jsx'
 import FeaturesMosaicSection from '../components/FeaturesMosaicSection.jsx'
+import { marketingPlans as plans, buildPlanSignupUrl } from '../data/marketingPlans.js'
 
 
 const features = [
@@ -50,94 +52,25 @@ const features = [
 ]
 
 const growthSegments = [
-  { title: 'Salão de Beleza', subtitle: 'Agendamento, CRM, financeiro', badge: 'MVP', image: salaoBarbeariasImage },
-  { title: 'Barbearia', subtitle: 'Agenda, clientes e controle do dia a dia', badge: 'Cortes', image: barbeariaImage },
-  { title: 'Manicure', subtitle: 'Agenda, serviços e retorno de clientes', badge: 'Unhas', image: manicureImage },
-  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage },
-  { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage },
-  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage },
-  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage },
-  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage },
-  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage },
-  { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage },
-  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage },
-  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage },
-  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage },
-  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage },
-  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage },
-  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage },
-  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage },
-  { title: 'Clínica de Estética', subtitle: 'Tratamentos, agenda e histórico de clientes', badge: 'Beleza', image: clinicaEsteticaImage },
-  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage },
-]
-
-const plans = [
-  {
-    nome: 'Plano Básico',
-    subtitulo: 'Agenda simples',
-    preco: 'R$ 29,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
-    beneficios: [
-      'Financeiro - Pagamentos automatizados - Relatórios',
-      'Histórico ilimitado',
-      'Agendamentos ilimitados',
-      'Confirmação de agendamentos',
-    ],
-    naoInclui: [
-      'CRM integrado',
-      'Insights',
-      'Até 3 usuários',
-      'Financeiro completo',
-    ],
-    cta: 'Assinar Básico',
-  },
-  {
-    nome: 'Plano Pro',
-    subtitulo: 'Gestão completa com financeiro',
-    preco: 'R$ 79,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
-    beneficios: [
-      'Tudo do Plano Básico +',
-      'Até 3 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Pro',
-    destaque: true,
-  },
-  {
-    nome: 'Plano Plus',
-    subtitulo: 'Mais capacidade para sua equipe',
-    preco: 'R$ 109,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
-    beneficios: [
-      'Tudo do Plano Pro +',
-      'Até 7 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Plus',
-  },
-  {
-    nome: 'Plano Enterprise',
-    subtitulo: 'Escalabilidade máxima',
-    preco: 'R$ 149,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
-    beneficios: [
-      'Tudo do Plano Plus +',
-      'Até 15 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Enterprise',
-  },
+  { title: 'Salão de Beleza', subtitle: 'Agendamento, CRM, financeiro', badge: 'MVP', image: salaoBarbeariasImage, path: '/sistema-para-salao-de-beleza' },
+  { title: 'Barbearia', subtitle: 'Agenda, clientes e controle do dia a dia', badge: 'Cortes', image: barbeariaImage, path: '/sistema-para-barbearia' },
+  { title: 'Manicure', subtitle: 'Agenda, serviços e retorno de clientes', badge: 'Unhas', image: manicureImage, path: '/agenda-para-manicure' },
+  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage, path: '/sistema-para-depilacao' },
+  { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage, path: '/agenda-para-sobrancelhas-e-cilios' },
+  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage, path: '/sistema-para-locacao-de-quadra' },
+  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage, path: '/sistema-para-clinica-odontologica' },
+  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage, path: '/agenda-para-personal-trainer' },
+  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage, path: '/sistema-para-consultorios' },
+  { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage, path: '/sistema-para-estetica-e-spa' },
+  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage, path: '/agenda-para-yoga-e-pilates' },
+  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage, path: '/agenda-para-cursos-e-tutoria' },
+  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage, path: '/sistema-para-hospedagens' },
+  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage, path: '/agenda-para-servicos-automotivos' },
+  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage, path: '/sistema-para-petshop-e-veterinaria' },
+  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage, path: '/agenda-para-estudio-fotografico' },
+  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage, path: '/agenda-para-estudio-de-tatuagem' },
+  { title: 'Clínica de Estética', subtitle: 'Tratamentos, agenda e histórico de clientes', badge: 'Beleza', image: clinicaEsteticaImage, path: '/sistema-para-clinica-de-estetica' },
+  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage, path: '/agenda-para-psicologos-e-terapeutas' },
 ]
 
 export default function Home() {
@@ -145,7 +78,7 @@ export default function Home() {
   const [segmentOffset, setSegmentOffset] = useState(0)
 
   function handlePlanClick(plano) {
-    navigate(`/criar-conta?plano=${encodeURIComponent(plano.nome)}&preco=${encodeURIComponent(plano.preco)}`)
+    navigate(buildPlanSignupUrl(plano))
   }
 
   function handleSegmentMove(direction) {
@@ -159,6 +92,11 @@ export default function Home() {
 
   return (
     <>
+      <SEO
+        title="gendaz"
+        description="Organize agenda, clientes, pagamentos e financeiro em um único sistema. Conheça o Gendaz para negócios e profissionais que trabalham com atendimento."
+        canonical="https://gendaz.site/"
+      />
       <main id="inicio" className="marketing-page">
 
       {/* Navbar */}
@@ -171,6 +109,7 @@ export default function Home() {
           <nav className="marketing-nav-links-gendo">
           <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
+          <a href="#segmentos">Segmentos</a>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
@@ -255,7 +194,7 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
         </div>
       </ScrollReveal>
       <ScrollReveal className="bounce-reveal" delay={0} threshold={0.18} rootMargin="0px 0px -10% 0px">
-          <section className="marketing-segments" aria-label="Segmentos de crescimento">
+          <section id="segmentos" className="marketing-segments" aria-label="Segmentos de crescimento">
             <div className="marketing-segments-head">
               <div>
               <h2>Segmentos que crescem ao lado da Gendaz.</h2>
@@ -268,17 +207,36 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
 
           <div className="marketing-segments-marquee">
             <div className="marketing-segments-track" style={{ '--segment-offset': segmentOffset }}>
-              {[...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments].map((segment, index) => (
-                <article className="marketing-segment-card" key={`${segment.title}-${index}`}>
-                  <div className="marketing-segment-image" aria-hidden="true">
-                    {segment.image ? <img src={segment.image} alt="" /> : <span>{String((index % growthSegments.length) + 1).padStart(2, '0')}</span>}
-                  </div>
-                  <div className="marketing-segment-content">
-                    <span className="marketing-segment-risk" aria-hidden="true" />
-                    <strong>{segment.title}</strong>
-                  </div>
-                </article>
-              ))}
+              {[...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments, ...growthSegments].map((segment, index) => {
+                const cardInner = (
+                  <>
+                    <div className="marketing-segment-image" aria-hidden="true">
+                      {segment.image ? <img src={segment.image} alt="" /> : <span>{String((index % growthSegments.length) + 1).padStart(2, '0')}</span>}
+                    </div>
+                    <div className="marketing-segment-content">
+                      <span className="marketing-segment-risk" aria-hidden="true" />
+                      <strong>{segment.title}</strong>
+                    </div>
+                  </>
+                )
+                if (segment.path) {
+                  return (
+                    <Link
+                      to={segment.path}
+                      className="marketing-segment-card"
+                      key={`${segment.title}-${index}`}
+                      aria-label={`${segment.title} — ver sistema`}
+                    >
+                      {cardInner}
+                    </Link>
+                  )
+                }
+                return (
+                  <article className="marketing-segment-card" key={`${segment.title}-${index}`}>
+                    {cardInner}
+                  </article>
+                )
+              })}
             </div>
           </div>
         </section>

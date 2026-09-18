@@ -469,9 +469,12 @@ export default function AdminDashboard() {
     )))
   }
 
-  function sair() {
-    adminLogout()
-    navigate('/admin/login')
+  async function sair() {
+    try {
+      await adminLogout()
+    } finally {
+      navigate('/admin/login')
+    }
   }
 
   function validarMotivo() {

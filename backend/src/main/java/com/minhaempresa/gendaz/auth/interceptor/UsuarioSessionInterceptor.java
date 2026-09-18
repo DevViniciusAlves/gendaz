@@ -30,6 +30,7 @@ public class UsuarioSessionInterceptor implements HandlerInterceptor {
             "/api/health",
             "/api/pagamentos/planos/webhook",
             "/api/pagamentos/webhook/stripe",
+            "/internal/whatsapp/",
             "/api/meu-gendaz/auth/solicitar-codigo",
             "/api/meu-gendaz/auth/validar-codigo"
     );

@@ -14,7 +14,7 @@ public interface CrmContatoRepository extends JpaRepository<CrmContatoEntity, Lo
     long countByClienteIdAndTemplate(Long clienteId, String template);
     Optional<CrmContatoEntity> findFirstByClienteIdOrderByDataCriacaoDesc(Long clienteId);
     List<CrmContatoEntity> findByClienteIdAndTemplateOrderByDataCriacaoDesc(Long clienteId, String template);
-
+    Optional<CrmContatoEntity> findByWhatsappNotificacaoId(Long notificacaoId);
     @Transactional
     @Modifying
     void deleteByClienteId(Long clienteId);

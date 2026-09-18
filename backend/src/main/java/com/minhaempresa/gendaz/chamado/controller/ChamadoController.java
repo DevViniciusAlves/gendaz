@@ -8,6 +8,7 @@ import com.minhaempresa.gendaz.shared.security.UsuarioAutenticadoProvider;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,7 +24,7 @@ public class ChamadoController {
             @Valid @RequestBody CriarChamadoRequest request
     ) {
         Long usuarioAutenticado = usuarioAutenticadoProvider.exigirUsuarioId();
-        return ResponseEntity.ok(chamadoService.criar(request, usuarioAutenticado));
+        return ResponseEntity.status(HttpStatus.CREATED).body(chamadoService.criar(request, usuarioAutenticado));
     }
 
     @GetMapping("/empresa/{empresaId}")
