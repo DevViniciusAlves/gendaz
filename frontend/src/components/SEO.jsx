@@ -35,6 +35,26 @@ function upsertCanonical(href) {
   el.setAttribute('href', href)
 }
 
+function snapshotMetaByName(name) {
+  const el = document.head.querySelector(`meta[name="${name}"]`)
+  return { el, content: el ? el.getAttribute('content') : null }
+}
+
+function snapshotMetaByProperty(property) {
+  const el = document.head.querySelector(`meta[property="${property}"]`)
+  return { el, content: el ? el.getAttribute('content') : null }
+}
+
+function restoreSnapshot(snap, attr = 'content') {
+  if (!snap || !snap.el || !document.head.contains(snap.el)) return
+  if (snap.content !== null) {
+    snap.el.setAttribute(attr, snap.content)
+  } else {
+    // Elemento foi criado pelo SEO (não existia antes): remover para não vazar metadata.
+    snap.el.remove()
+  }
+}
+
 function isStageHost() {
   if (typeof window === 'undefined') return false
   return window.location.hostname === 'stage.gendaz.site'
@@ -58,6 +78,18 @@ export default function SEO({
   jsonLd = null,
 }) {
   useEffect(() => {
+    // Snapshot dos valores anteriores para restaurar ao sair da página (SPA).
+    const prevTitle = document.title
+    const prevDescription = snapshotMetaByName('description')
+    const prevCanonicalEl = document.head.querySelector('link[rel="canonical"]')
+    const prevCanonical = { el: prevCanonicalEl, content: prevCanonicalEl ? prevCanonicalEl.getAttribute('href') : null }
+    const prevOgTitle = snapshotMetaByProperty('og:title')
+    const prevOgDescription = snapshotMetaByProperty('og:description')
+    const prevOgUrl = snapshotMetaByProperty('og:url')
+    const prevOgType = snapshotMetaByProperty('og:type')
+    const prevTwitterCard = snapshotMetaByName('twitter:card')
+    const prevRobots = snapshotMetaByName('robots')
+
     if (title) document.title = title
     if (description) upsertMetaByName('description', description)
 
@@ -99,6 +131,16 @@ export default function SEO({
 
     return () => {
       document.head.querySelectorAll('script[data-seo-jsonld]').forEach((n) => n.remove())
+      // Restaura a metadata anterior para não vazar SEO de landing em rotas normais da SPA.
+      document.title = prevTitle
+      restoreSnapshot(prevDescription)
+      restoreSnapshot(prevCanonical, 'href')
+      restoreSnapshot(prevOgTitle)
+      restoreSnapshot(prevOgDescription)
+      restoreSnapshot(prevOgUrl)
+      restoreSnapshot(prevOgType)
+      restoreSnapshot(prevTwitterCard)
+      restoreSnapshot(prevRobots)
     }
   }, [title, description, canonical, ogTitle, ogDescription, ogUrl, ogType, twitterCard, jsonLd])
 

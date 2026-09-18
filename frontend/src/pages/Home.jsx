@@ -41,6 +41,7 @@ import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
 import TestimonialsSection from '../components/TestimonialsSection.jsx'
 import FeaturesMosaicSection from '../components/FeaturesMosaicSection.jsx'
+import { marketingPlans as plans, buildPlanSignupUrl } from '../data/marketingPlans.js'
 
 
 const features = [
@@ -54,91 +55,22 @@ const growthSegments = [
   { title: 'Salão de Beleza', subtitle: 'Agendamento, CRM, financeiro', badge: 'MVP', image: salaoBarbeariasImage, path: '/sistema-para-salao-de-beleza' },
   { title: 'Barbearia', subtitle: 'Agenda, clientes e controle do dia a dia', badge: 'Cortes', image: barbeariaImage, path: '/sistema-para-barbearia' },
   { title: 'Manicure', subtitle: 'Agenda, serviços e retorno de clientes', badge: 'Unhas', image: manicureImage, path: '/agenda-para-manicure' },
-  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage },
+  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage, path: '/sistema-para-depilacao' },
   { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage, path: '/agenda-para-sobrancelhas-e-cilios' },
-  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage },
-  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage },
-  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage },
-  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage },
+  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage, path: '/sistema-para-locacao-de-quadra' },
+  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage, path: '/sistema-para-clinica-odontologica' },
+  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage, path: '/agenda-para-personal-trainer' },
+  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage, path: '/sistema-para-consultorios' },
   { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage, path: '/sistema-para-estetica-e-spa' },
-  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage },
-  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage },
-  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage },
-  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage },
-  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage },
-  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage },
-  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage },
+  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage, path: '/agenda-para-yoga-e-pilates' },
+  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage, path: '/agenda-para-cursos-e-tutoria' },
+  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage, path: '/sistema-para-hospedagens' },
+  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage, path: '/agenda-para-servicos-automotivos' },
+  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage, path: '/sistema-para-petshop-e-veterinaria' },
+  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage, path: '/agenda-para-estudio-fotografico' },
+  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage, path: '/agenda-para-estudio-de-tatuagem' },
   { title: 'Clínica de Estética', subtitle: 'Tratamentos, agenda e histórico de clientes', badge: 'Beleza', image: clinicaEsteticaImage, path: '/sistema-para-clinica-de-estetica' },
-  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage },
-]
-
-const plans = [
-  {
-    nome: 'Plano Básico',
-    subtitulo: 'Agenda simples',
-    preco: 'R$ 29,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para organizar sua agenda, clientes e serviços de forma prática e eficiente.',
-    beneficios: [
-      'Financeiro - Pagamentos automatizados - Relatórios',
-      'Histórico ilimitado',
-      'Agendamentos ilimitados',
-      'Confirmação de agendamentos',
-    ],
-    naoInclui: [
-      'CRM integrado',
-      'Insights',
-      'Até 3 usuários',
-      'Financeiro completo',
-    ],
-    cta: 'Assinar Básico',
-  },
-  {
-    nome: 'Plano Pro',
-    subtitulo: 'Gestão completa com financeiro',
-    preco: 'R$ 79,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para gerenciar sua agenda, equipe, pagamentos e insights com inteligência.',
-    beneficios: [
-      'Tudo do Plano Básico +',
-      'Até 3 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Pro',
-    destaque: true,
-  },
-  {
-    nome: 'Plano Plus',
-    subtitulo: 'Mais capacidade para sua equipe',
-    preco: 'R$ 109,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para equipes maiores com maior necessidade de gerenciamento e acesso.',
-    beneficios: [
-      'Tudo do Plano Pro +',
-      'Até 7 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Plus',
-  },
-  {
-    nome: 'Plano Enterprise',
-    subtitulo: 'Escalabilidade máxima',
-    preco: 'R$ 149,90/mês',
-    extra: '7 dias grátis',
-    descrição: 'Para operações robustas com gerenciamento extensivo de usuários.',
-    beneficios: [
-      'Tudo do Plano Plus +',
-      'Até 15 usuários na conta',
-      'CRM integrado',
-      'Insights com GendazIA no controle',
-      'Financeiro completo: caixa, despesas pagamentos automatizados',
-    ],
-    cta: 'Assinar Enterprise',
-  },
+  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage, path: '/agenda-para-psicologos-e-terapeutas' },
 ]
 
 export default function Home() {
@@ -146,7 +78,7 @@ export default function Home() {
   const [segmentOffset, setSegmentOffset] = useState(0)
 
   function handlePlanClick(plano) {
-    navigate(`/criar-conta?plano=${encodeURIComponent(plano.nome)}&preco=${encodeURIComponent(plano.preco)}`)
+    navigate(buildPlanSignupUrl(plano))
   }
 
   function handleSegmentMove(direction) {
@@ -161,7 +93,7 @@ export default function Home() {
   return (
     <>
       <SEO
-        title="Sistema de Agendamento e Gestão para Negócios | Gendaz"
+        title="gendaz"
         description="Organize agenda, clientes, pagamentos e financeiro em um único sistema. Conheça o Gendaz para negócios e profissionais que trabalham com atendimento."
         canonical="https://gendaz.site/"
       />

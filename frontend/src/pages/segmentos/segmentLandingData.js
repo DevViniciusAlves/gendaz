@@ -51,6 +51,11 @@ export const SEGMENTS = {
       { q: 'O cliente consegue fazer o próprio agendamento?', a: 'Sim. O cliente pode solicitar o agendamento online e você mantém o controle pelo painel.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. O Gendaz funciona na web, direto do navegador.' },
     ],
+    related: [
+      { label: 'Estéticas & Spas', path: '/sistema-para-estetica-e-spa' },
+      { label: 'Depilação', path: '/sistema-para-depilacao' },
+      { label: 'Sobrancelhas e cílios', path: '/agenda-para-sobrancelhas-e-cilios' },
+    ],
   },
   'estetica-e-spa': {
     key: 'estetica-e-spa',
@@ -99,6 +104,11 @@ export const SEGMENTS = {
       { q: 'Consigo controlar pagamentos e pendências?', a: 'Sim. Recebidos e pendências ficam organizados em um só lugar.' },
       { q: 'O cliente pode agendar sozinho?', a: 'Sim. O cliente solicita o agendamento online e você confirma pelo painel.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. O Gendaz funciona direto do navegador.' },
+    ],
+    related: [
+      { label: 'Clínica de Estética', path: '/sistema-para-clinica-de-estetica' },
+      { label: 'Depilação', path: '/sistema-para-depilacao' },
+      { label: 'Sobrancelhas e cílios', path: '/agenda-para-sobrancelhas-e-cilios' },
     ],
   },
   'salao-de-beleza': {
@@ -149,6 +159,11 @@ export const SEGMENTS = {
       { q: 'Consigo controlar pagamentos?', a: 'Sim. Recebidos e pendências ficam organizados junto com os atendimentos.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. O Gendaz funciona direto do navegador.' },
     ],
+    related: [
+      { label: 'Manicure', path: '/agenda-para-manicure' },
+      { label: 'Sobrancelhas e cílios', path: '/agenda-para-sobrancelhas-e-cilios' },
+      { label: 'Barbearia', path: '/sistema-para-barbearia' },
+    ],
   },
   manicure: {
     key: 'manicure',
@@ -197,6 +212,11 @@ export const SEGMENTS = {
       { q: 'A cliente agenda sozinha?', a: 'Sim. Ela solicita o horário online e você confirma pelo painel.' },
       { q: 'Consigo controlar pagamentos?', a: 'Sim. Recebidos e pendências ficam organizados no mesmo lugar.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador, inclusive no celular.' },
+    ],
+    related: [
+      { label: 'Salão de Beleza', path: '/sistema-para-salao-de-beleza' },
+      { label: 'Sobrancelhas e cílios', path: '/agenda-para-sobrancelhas-e-cilios' },
+      { label: 'Estéticas & Spas', path: '/sistema-para-estetica-e-spa' },
     ],
   },
   'sobrancelhas-e-cilios': {
@@ -247,6 +267,11 @@ export const SEGMENTS = {
       { q: 'Consigo controlar pagamentos?', a: 'Sim. Recebidos e pendências ficam organizados junto com a agenda.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
+    related: [
+      { label: 'Manicure', path: '/agenda-para-manicure' },
+      { label: 'Clínica de Estética', path: '/sistema-para-clinica-de-estetica' },
+      { label: 'Estéticas & Spas', path: '/sistema-para-estetica-e-spa' },
+    ],
   },
   barbearia: {
     key: 'barbearia',
@@ -295,6 +320,11 @@ export const SEGMENTS = {
       { q: 'Consigo ver quem parou de cortar comigo?', a: 'Sim. O Gendaz ajuda a acompanhar frequência e perceber quem deixou de retornar.' },
       { q: 'Consigo controlar pagamentos?', a: 'Sim. Recebidos e pendências ficam organizados em um só lugar.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
+    ],
+    related: [
+      { label: 'Salão de Beleza', path: '/sistema-para-salao-de-beleza' },
+      { label: 'Estúdio de Tatuagem', path: '/agenda-para-estudio-de-tatuagem' },
+      { label: 'Personal Trainer', path: '/agenda-para-personal-trainer' },
     ],
   },
   depilacao: {
@@ -394,7 +424,7 @@ export const SEGMENTS = {
     ],
     faq: [
       { q: 'Dá para controlar mais de uma quadra?', a: 'Sim. As reservas são organizadas por quadra, data e horário.' },
-      { q: 'Consigo separar mensalistas de avulsos?', a: 'Sim. O cadastro diferencia perfis e o histórico mostra a frequência.' },
+      { q: 'Consigo separar mensalistas de avulsos?', a: 'Sim. Cada cliente tem seu cadastro com histórico de reservas e pagamentos.' },
       { q: 'O cliente reserva pelo link?', a: 'Sim. A reserva pode ser solicitada pelo link da empresa.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
@@ -480,8 +510,8 @@ export const SEGMENTS = {
         description: 'Aluno remarca em cima da hora e a sequência da semana desmonta.',
       },
       {
-        title: 'Pacotes e sessões difíceis de acompanhar',
-        description: 'Contar sessões usadas de cabeça gera cobrança errada.',
+        title: 'Sessões difíceis de acompanhar',
+        description: 'Anotar atendimentos de cabeça gera cobrança errada e retrabalho.',
       },
       {
         title: 'Alunos que deixam de marcar',
@@ -495,11 +525,11 @@ export const SEGMENTS = {
     helpTitle: 'Como o Gendaz ajuda seu trabalho',
     helpItems: [
       { title: 'Agenda de treinos clara', description: 'Sessões do dia e da semana organizadas por aluno.' },
-      { title: 'Controle de pacotes e sessões', description: 'Acompanhe sessões realizadas e restantes por aluno.' },
-      { title: 'Pagamentos organizados', description: 'Mensalidades e pacotes com recebidos e pendências claros.' },
+      { title: 'Histórico de atendimentos', description: 'Acompanhe os últimos atendimentos e a frequência do cliente.' },
+      { title: 'Pagamentos organizados', description: 'Recebidos e pendências claros por aluno e período.' },
     ],
     faq: [
-      { q: 'Dá para controlar pacotes de sessões?', a: 'Sim. O histórico mostra sessões realizadas e a frequência do aluno.' },
+      { q: 'Dá para acompanhar as sessões de cada aluno?', a: 'Sim. O histórico de atendimentos mostra os últimos atendimentos e a frequência do aluno.' },
       { q: 'Funciona para treinos em vários locais?', a: 'Sim. Os atendimentos ficam organizados por dia, horário e aluno.' },
       { q: 'Consigo controlar mensalidades?', a: 'Sim. Pagamentos recebidos e pendentes ficam no financeiro.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador, inclusive no celular.' },
@@ -583,11 +613,11 @@ export const SEGMENTS = {
     problems: [
       {
         title: 'Mudanças frequentes de horários',
-        description: 'Reposições e trocas bagunçam turmas quando tudo é no grupo do WhatsApp.',
+        description: 'Reposições e trocas bagunçam a semana quando tudo é no grupo do WhatsApp.',
       },
       {
-        title: 'Turmas e atendimentos difíceis de acompanhar',
-        description: 'Sem lista clara, a ocupação de cada aula é um chute.',
+        title: 'Aulas e atendimentos difíceis de acompanhar',
+        description: 'Sem lista clara, a organização de cada horário é um chute.',
       },
       {
         title: 'Alunos que param de frequentar',
@@ -600,13 +630,13 @@ export const SEGMENTS = {
       'Informe seus números e veja o valor potencial associado aos atendimentos que deixaram de acontecer.',
     helpTitle: 'Como o Gendaz ajuda seu studio',
     helpItems: [
-      { title: 'Grade de aulas clara', description: 'Horários, turmas e ocupação organizados por dia.' },
-      { title: 'Frequência por aluno', description: 'Acompanhe presença e identifique quem está sumindo.' },
-      { title: 'Mensalidades claras', description: 'Recebidos e pendências por aluno e período.' },
+      { title: 'Horários organizados', description: 'Organize horários, clientes e profissionais em uma visão por dia.' },
+      { title: 'Histórico de atendimentos', description: 'Acompanhe o histórico de atendimentos e perceba quem está sumindo.' },
+      { title: 'Pagamentos claros', description: 'Recebidos e pendências por aluno e período.' },
     ],
     faq: [
-      { q: 'Dá para controlar turmas e aulas individuais?', a: 'Sim. A agenda organiza turmas, horários e atendimentos individuais.' },
-      { q: 'Consigo ver a frequência dos alunos?', a: 'Sim. O histórico mostra presença e últimos atendimentos.' },
+      { q: 'Dá para organizar aulas individuais e em grupo?', a: 'Sim. A agenda organiza horários, clientes e profissionais.' },
+      { q: 'Consigo ver a frequência dos alunos?', a: 'Sim. O histórico de atendimentos mostra os últimos atendimentos.' },
       { q: 'Funciona para mais de um instrutor?', a: 'Sim. A agenda é separada por profissional.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
@@ -644,7 +674,7 @@ export const SEGMENTS = {
       },
       {
         title: 'Pagamentos e alunos difíceis de acompanhar',
-        description: 'Mensalidades e pacotes sem fechamento claro no fim do mês.',
+        description: 'Pagamentos sem fechamento claro no fim do mês.',
       },
     ],
     simulator: true,
@@ -655,12 +685,12 @@ export const SEGMENTS = {
     helpItems: [
       { title: 'Agenda de aulas clara', description: 'Todos os alunos e horários da semana em uma visão.' },
       { title: 'Reposições organizadas', description: 'Remarcações registradas sem perder o histórico.' },
-      { title: 'Mensalidades e pacotes', description: 'Recebidos e pendências por aluno.' },
+      { title: 'Pagamentos por aluno', description: 'Recebidos e pendências organizados por aluno.' },
     ],
     faq: [
-      { q: 'Funciona para aulas particulares e turmas?', a: 'Sim. A agenda organiza aulas individuais e em grupo.' },
+      { q: 'Funciona para aulas particulares e em grupo?', a: 'Sim. A agenda organiza horários, alunos e profissionais.' },
       { q: 'Dá para controlar reposições?', a: 'Sim. Remarcações ficam registradas no histórico do aluno.' },
-      { q: 'Consigo controlar mensalidades?', a: 'Sim. O financeiro mostra recebidos e pendências por aluno.' },
+      { q: 'Consigo controlar pagamentos?', a: 'Sim. O financeiro mostra recebidos e pendências por aluno.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
     related: [
@@ -707,12 +737,12 @@ export const SEGMENTS = {
       'Informe os valores e veja uma estimativa simples do potencial associado às vagas informadas.',
     helpTitle: 'Como o Gendaz ajuda sua hospedagem',
     helpItems: [
-      { title: 'Calendário de reservas único', description: 'Entradas, saídas e ocupação organizados por data.' },
-      { title: 'Cadastro de hóspedes', description: 'Contato e histórico de estadias registrados.' },
-      { title: 'Pagamentos por reserva', description: 'Sinais, diárias recebidas e pendências claros.' },
+      { title: 'Reservas como agendamentos', description: 'Trate cada reserva como um agendamento: data, horário, cliente e observações em um só lugar.' },
+      { title: 'Cadastro de clientes', description: 'Contato e histórico de atendimentos registrados por hóspede.' },
+      { title: 'Pagamentos por reserva', description: 'Sinais, recebidos e pendências organizados no financeiro.' },
     ],
     faq: [
-      { q: 'O Gendaz é um PMS hoteleiro completo?', a: 'Não. É um sistema de agenda, reservas e financeiro para pequenas hospedagens. Não oferece channel manager, integração com plataformas ou mapa de ocupação hoteleira.' },
+      { q: 'O Gendaz é um PMS hoteleiro completo?', a: 'Não. É um sistema de agenda, clientes e financeiro: as reservas são organizadas como agendamentos. Não oferece channel manager, integração com Airbnb ou Booking, mapa de ocupação hoteleira ou controle avançado de quartos.' },
       { q: 'Dá para controlar entradas e saídas?', a: 'Sim. As reservas ficam organizadas por data, com horários de check-in e check-out.' },
       { q: 'Consigo controlar pagamentos de diárias?', a: 'Sim. Sinais, recebidos e pendências ficam vinculados a cada reserva.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
@@ -743,11 +773,11 @@ export const SEGMENTS = {
     problems: [
       {
         title: 'Horários anotados manualmente',
-        description: 'Box ocupado, serviço atrasado e cliente esperando sem previsão.',
+        description: 'Serviço atrasado e cliente esperando sem previsão.',
       },
       {
         title: 'Clientes que esquecem revisões',
-        description: 'Revisão periódica sem acompanhamento significa box vazio.',
+        description: 'Revisão periódica sem acompanhamento significa agenda vazia.',
       },
       {
         title: 'Pagamentos espalhados',
@@ -760,14 +790,14 @@ export const SEGMENTS = {
       'Informe seus números e veja o valor potencial associado aos serviços que deixaram de acontecer.',
     helpTitle: 'Como o Gendaz ajuda seu negócio',
     helpItems: [
-      { title: 'Agenda por box e serviço', description: 'Horários organizados por tipo de serviço e duração.' },
-      { title: 'Histórico por veículo e cliente', description: 'Últimos serviços e retornos programados registrados.' },
+      { title: 'Agenda por serviço e profissional', description: 'Horários organizados por tipo de serviço e duração.' },
+      { title: 'Histórico de atendimentos do cliente', description: 'Últimos serviços e retornos registrados por cliente.' },
       { title: 'Recebimentos claros', description: 'Pagamentos por serviço, sem planilha paralela.' },
     ],
     faq: [
       { q: 'O Gendaz controla estoque de peças?', a: 'Não. O foco é agenda, clientes, serviços e financeiro, sem controle de peças ou estoque.' },
       { q: 'Dá para acompanhar revisões periódicas?', a: 'Sim. O histórico mostra últimos serviços e próximos retornos.' },
-      { q: 'Funciona com mais de um box?', a: 'Sim. Os horários são organizados por serviço e profissional.' },
+      { q: 'Funciona com mais de uma vaga de atendimento?', a: 'Sim. Os horários são organizados por serviço e profissional.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
     related: [
@@ -804,7 +834,7 @@ export const SEGMENTS = {
       },
       {
         title: 'Pagamentos e clientes espalhados',
-        description: 'Pacotes de banho e serviços avulsos sem fechamento único.',
+        description: 'Serviços recorrentes e avulsos sem fechamento único.',
       },
     ],
     simulator: true,
@@ -813,13 +843,13 @@ export const SEGMENTS = {
       'Informe seus números e veja o valor potencial associado aos atendimentos que deixaram de acontecer.',
     helpTitle: 'Como o Gendaz ajuda seu petshop',
     helpItems: [
-      { title: 'Agenda por serviço', description: 'Banho, tosa e atendimentos com tempos e profissionais organizados.' },
-      { title: 'Cadastro do pet e do tutor', description: 'Dados de contato, porte e observações operacionais registrados.' },
-      { title: 'Pacotes e pagamentos', description: 'Pacotes de banho acompanhados por cliente, com recebidos e pendências.' },
+      { title: 'Agenda por serviço e profissional', description: 'Banho, tosa e atendimentos organizados por horário e profissional.' },
+      { title: 'Cadastro de clientes', description: 'Dados de contato e observações operacionais registrados por cliente.' },
+      { title: 'Histórico de atendimentos', description: 'Últimos atendimentos acompanhados por cliente, com recebidos e pendências no financeiro.' },
     ],
     faq: [
       { q: 'O Gendaz é um prontuário veterinário?', a: 'Não. É um sistema de agenda, organização e financeiro. Não oferece prescrição, diagnóstico, ficha clínica ou controle de vacinação.' },
-      { q: 'Dá para controlar pacotes de banho?', a: 'Sim. As sessões ficam vinculadas ao cadastro do cliente.' },
+      { q: 'Dá para acompanhar os atendimentos de cada cliente?', a: 'Sim. O histórico de atendimentos fica vinculado ao cadastro do cliente.' },
       { q: 'Funciona com mais de um profissional?', a: 'Sim. A agenda é separada por profissional e serviço.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
@@ -866,14 +896,14 @@ export const SEGMENTS = {
       'Informe seus números e veja o valor potencial associado às sessões que deixaram de acontecer.',
     helpTitle: 'Como o Gendaz ajuda seu estúdio',
     helpItems: [
-      { title: 'Calendário de sessões', description: 'Ensaios organizados por data, tipo e cliente.' },
-      { title: 'Cadastro por sessão', description: 'Tipo de ensaio, local e observações operacionais registrados.' },
+      { title: 'Agenda de sessões', description: 'Ensaios organizados por data, serviço e cliente.' },
+      { title: 'Observações operacionais', description: 'Use as observações do atendimento para registrar informações operacionais de cada sessão.' },
       { title: 'Sinais e restantes', description: 'Pagamentos vinculados a cada sessão contratada.' },
     ],
     faq: [
       { q: 'O Gendaz armazena ou entrega fotos?', a: 'Não. O foco é agenda, clientes e financeiro, sem armazenamento ou entrega de arquivos.' },
       { q: 'Dá para controlar sinal e restante?', a: 'Sim. Pagamentos ficam vinculados a cada sessão.' },
-      { q: 'Funciona para externas e studio?', a: 'Sim. O local fica registrado na sessão.' },
+      { q: 'Funciona para externas e studio?', a: 'Sim. Use as observações do atendimento para registrar informações operacionais como local e horário.' },
       { q: 'Preciso instalar algum programa?', a: 'Não. Funciona direto do navegador.' },
     ],
     related: [

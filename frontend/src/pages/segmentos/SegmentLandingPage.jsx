@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { UserPlus } from 'lucide-react'
+import { Check, UserPlus, X } from 'lucide-react'
 import SEO, { SITE_BASE } from '../../components/SEO.jsx'
 import logoWhite from '../../assets/logos/gendazpng.png'
+import { marketingPlans, buildPlanSignupUrl } from '../../data/marketingPlans.js'
 import './segment-landing.css'
 
 const FEATURES = [
@@ -137,7 +138,7 @@ export default function SegmentLandingPage({ segment }) {
   const canonical = `${SITE_BASE}${segment.path}`
 
   return (
-    <main className="seg-page">
+    <main className="marketing-page seg-page">
       <SEO
         title={segment.seoTitle}
         description={segment.seoDescription}
@@ -157,7 +158,7 @@ export default function SegmentLandingPage({ segment }) {
           <nav className="marketing-nav-links-gendo" aria-label="Navegação principal">
             <Link to="/">Início</Link>
             <a href="/#sobre">Sobre</a>
-            <a href="/#planos">Planos</a>
+            <a href="#planos">Planos</a>
             <a href="/#suporte">Suporte</a>
             <a href="/#contato">Contato</a>
           </nav>
@@ -177,7 +178,7 @@ export default function SegmentLandingPage({ segment }) {
             <p className="seg-lead">{segment.heroDescription}</p>
             <div className="seg-cta-row">
               <Link to="/criar-conta" className="seg-btn-primary">Criar conta grátis</Link>
-              <a href="/#planos" className="seg-btn-secondary">Ver planos</a>
+              <a href="#planos" className="seg-btn-secondary">Ver planos</a>
             </div>
           </div>
           {/* 3. Preview visual da agenda */}
@@ -290,7 +291,69 @@ export default function SegmentLandingPage({ segment }) {
         </div>
       </section>
 
-      {/* 11. CTA final */}
+      {/* 11. Planos — mesmos planos reais da Home */}
+      <section id="planos" className="seg-section marketing-plans marketing-plans-sale pricing-section" aria-label="Planos">
+        <h2 className="pricing-title">Planos do atendimento</h2>
+        <p className="seg-muted pricing-subtitle">Escolha o plano que melhor se encaixa na rotina do seu atendimento.</p>
+        <div className="plans-grid detailed plans-centered-grid pricing-grid">
+          {marketingPlans.map((plano, index) => (
+            <article
+              className="plan-card plan-card-sale pricing-card premium-border"
+              style={{ '--pricing-stagger': `${index * 40}ms` }}
+              key={plano.nome}
+            >
+              {plano.destaque && <span className="recommended-badge">Mais usado</span>}
+              <div className="plan-card-body pricing-card-body">
+                <div className="plan-head">
+                  <div>
+                    <h3 style={{ color: '#ff5e29' }}>{plano.nome}</h3>
+                    <p className="plan-subtitle">{plano.subtitulo}</p>
+                  </div>
+                </div>
+
+                <div className="plan-price-block">
+                  {plano.extra && <span className="plan-price-extra">{plano.extra}</span>}
+                  <strong className="plan-price">{plano.preco}</strong>
+                </div>
+
+                <p className="plan-description">{plano.descrição}</p>
+
+                <div className="plan-section">
+                  <h3>Benefícios</h3>
+                  <div className="plan-list">
+                    {plano.beneficios.map((item) => (
+                      <strong key={item}>
+                        <Check size={16} style={{ color: '#22c55e' }} />{item}
+                      </strong>
+                    ))}
+                  </div>
+                </div>
+
+                {plano.naoInclui && plano.naoInclui.length > 0 && (
+                  <div className="plan-unavailable">
+                    <span>Não inclui</span>
+                    {plano.naoInclui.map((item) => (
+                      <small key={item} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <X size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                        {item}
+                      </small>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <Link
+                to={buildPlanSignupUrl(plano)}
+                className="btn btn-primary plan-action-link pricing-cta"
+              >
+                {plano.cta}
+              </Link>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      {/* 12. CTA final */}
       <section className="seg-section" aria-label="Começar agora">
         <div className="seg-card seg-cta-final">
           <h2>Organize seu negócio sem aumentar a bagunça.</h2>
@@ -299,7 +362,7 @@ export default function SegmentLandingPage({ segment }) {
         </div>
       </section>
 
-      {/* 12. Veja também — linkagem interna */}
+      {/* 13. Veja também — linkagem interna */}
       {Array.isArray(segment.related) && segment.related.length > 0 && (
         <section className="seg-section" aria-label="Veja também">
           <h2>Veja também</h2>
@@ -311,7 +374,7 @@ export default function SegmentLandingPage({ segment }) {
         </section>
       )}
 
-      {/* 13. Footer */}
+      {/* 14. Footer */}
       <footer className="marketing-footer">
         <small>gendaz</small>
         <div>

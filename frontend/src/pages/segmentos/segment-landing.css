@@ -419,3 +419,7 @@
 .seg-related-link:hover {
   border-color: #ff7a29;
 }
+
+.seg-page #planos {
+  scroll-margin-top: 80px;
+}
