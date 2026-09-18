@@ -46,6 +46,8 @@ import GendazSuporte from '../pages/gendaz/Suporte.jsx'
 import GendazBeneficios from '../pages/gendaz/Beneficios.jsx'
 import GendazPromocoes from '../pages/gendaz/Promocoes.jsx'
 import GendazConfiguracoes from '../pages/gendaz/Configuracoes.jsx'
+import SegmentLandingPage from '../pages/segmentos/SegmentLandingPage.jsx'
+import { SEGMENT_LIST } from '../pages/segmentos/segmentLandingData.js'
 
 function PrivateRoute({ children }) {
   const { usuario, authLoading } = useAuth()
@@ -145,6 +147,10 @@ export default function AppRoutes() {
       <Route path="/not-found" element={<NotFound />} />
       <Route path="/termos-de-uso" element={<TermosDeUso />} />
       <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+      { /* Landing pages SEO por segmento — 19 segmentos (Partes 1 + 2). */ }
+      {SEGMENT_LIST.map((segment) => (
+        <Route key={segment.key} path={segment.path} element={<SegmentLandingPage segment={segment} />} />
+      ))}
       <Route path="/meu-gendaz/:slug/*" element={<Gendaz />}>
         <Route index element={<GendazDashboard />} />
         <Route path="dashboard" element={<GendazDashboard />} />
