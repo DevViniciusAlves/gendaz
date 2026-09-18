@@ -235,7 +235,7 @@ export default function WhatsAppIntegracoes() {
                     loading={desconectando}
                     title={indisponivelAmbiente ? 'A integração WhatsApp ainda não está disponível neste ambiente.' : undefined}
                   >
-                    Conectar
+                    {textoBotaoConexao()}
                   </Button>
                 </div>
               ) : null}
@@ -251,7 +251,7 @@ export default function WhatsAppIntegracoes() {
                   disabled={operando || indisponivelAmbiente}
                   loading={desconectando}
                 >
-                  Conectar
+                  {textoBotaoConexao()}
                 </Button>
               </div>
             ) : null}
