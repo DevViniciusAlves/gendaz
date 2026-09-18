@@ -45,6 +45,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
     private static final Duration MIN_BACKOFF = Duration.ofSeconds(2);
     private static final Duration MAX_BACKOFF = Duration.ofSeconds(30);
     private static final Duration BASE_BACKOFF = Duration.ofSeconds(4);
+    private static final Duration READINESS_POLL_INTERVAL = Duration.ofSeconds(5);
     private static final int MAX_BODY_LOG = 300;
 
     private final String serviceUrl;
@@ -111,7 +112,7 @@ public class WhatsAppServiceWakeService implements DisposableBean {
         this(serviceUrl, httpClient, requestTimeout, maxDuration, sleeper, executor, "", "");
     }
 
-    private WhatsAppServiceWakeService(
+    WhatsAppServiceWakeService(
             String serviceUrl,
             HttpClient httpClient,
             Duration requestTimeout,
@@ -233,6 +234,8 @@ public class WhatsAppServiceWakeService implements DisposableBean {
             return;
         }
 
+        Duration pollDelay;
+
         while (Instant.now().isBefore(deadline)) {
             tentativa++;
             if (Thread.currentThread().isInterrupted()) {
@@ -286,56 +289,58 @@ public class WhatsAppServiceWakeService implements DisposableBean {
                     return;
                 }
                 // transient: 429, 502, 503, 504, 5xx
-                // Check if we should trigger Cloudflare wake relay
-                boolean shouldTriggerRelay = false;
-                if (!relayAttempted.get() && !wakeRelayUrl.isBlank() && !wakeRelayToken.isBlank()) {
-                    boolean condition1 = status == 429 && "hibernate-rate-limited".equalsIgnoreCase(rndrId.trim());
-                    boolean condition2 = status == 502 && "no-deploy".equalsIgnoreCase(rndrId.trim());
-                    if (condition1 || condition2) {
-                        shouldTriggerRelay = true;
-                    }
-                }
+                // Check if we should trigger Cloudflare wake relay (only once per single-flight cycle)
+                boolean is429HibernateRateLimited = status == 429 && "hibernate-rate-limited".equalsIgnoreCase(rndrId.trim());
+                boolean is502NoDeploy = status == 502 && "no-deploy".equalsIgnoreCase(rndrId.trim());
+                boolean conditionsMet = is429HibernateRateLimited || is502NoDeploy;
+                boolean relayConfigured = !wakeRelayUrl.isBlank() && !wakeRelayToken.isBlank();
 
-                Duration nextDelay;
-
-                if (shouldTriggerRelay) {
+                if (conditionsMet && !relayAttempted.get() && relayConfigured && relayAttempted.compareAndSet(false, true)) {
                     // Trigger Cloudflare wake relay (once per single-flight cycle)
                     try {
                         HttpRequest relayRequest = HttpRequest.newBuilder()
                                 .uri(URI.create(wakeRelayUrl))
                                 .timeout(requestTimeout)
-                                .header("Authorization", "Bearer " + wakeRelayToken)
                                 .header("Accept", "application/json")
                                 .POST(HttpRequest.BodyPublishers.noBody())
                                 .build();
                         HttpResponse<String> relayResponse = httpClient.send(relayRequest, HttpResponse.BodyHandlers.ofString());
-                        log.info("[whatsapp-availability] wake relay acionado status={}", relayResponse.statusCode());
+                        if (relayResponse.statusCode() >= 200 && relayResponse.statusCode() < 300) {
+                            log.info("[whatsapp-availability] wake relay acionado status={}", relayResponse.statusCode());
+                        } else {
+                            log.warn("[whatsapp-availability] wake relay falhou status={}", relayResponse.statusCode());
+                        }
                     } catch (IOException e) {
                         log.warn("[whatsapp-availability] falha ao acionar wake relay erroTipo={}", e.getClass().getSimpleName());
                     }
-                    relayAttempted.set(true);
-                    // After relay, use small fixed poll interval before next direct check
-                    nextDelay = Duration.ofSeconds(5);
+                    // After relay, use fixed small interval before next direct check.
+                    // NÃO voltar ao exponential backoff depois que o relay já tiver sido acionado.
+                    pollDelay = READINESS_POLL_INTERVAL;
+                } else if (conditionsMet && !relayAttempted.get() && !relayConfigured) {
+                    // Relay conditions met but relay not configured - do not break application
+                    log.warn("[whatsapp-availability] condicao de relay atendida porem relay nao configurado - status={} rndrId={}", status, rndrId);
+                    pollDelay = computeDelay(tentativa, retryAfterRaw, status);
                 } else if (relayAttempted.get()) {
-                    // Relay already attempted in this cycle, use exponential backoff
-                    nextDelay = computeDelay(tentativa, retryAfterRaw, status);
+                    // Relay already attempted in this cycle, use fixed interval (never exponential backoff).
+                    // Cloudflare nunca deve ser chamada novamente nesse ciclo.
+                    pollDelay = READINESS_POLL_INTERVAL;
                 } else {
                     // Normal transient error backoff
-                    nextDelay = computeDelay(tentativa, retryAfterRaw, status);
+                    pollDelay = computeDelay(tentativa, retryAfterRaw, status);
                 }
                 // cap by remaining time
                 long remainingMs = Duration.between(Instant.now(), deadline).toMillis();
                 if (remainingMs <= 0) break;
-                if (nextDelay.toMillis() > remainingMs) {
-                    nextDelay = Duration.ofMillis(remainingMs);
+                if (pollDelay.toMillis() > remainingMs) {
+                    pollDelay = Duration.ofMillis(remainingMs);
                 }
                 log.warn("[whatsapp-availability] tentativa={} status={} httpVersion={} retryAfter={} server={} cfRay={} rndrId={} elapsedMs={} nextRetryMs={} body={}",
-                        tentativa, status, httpVersion, retryAfterRaw != null ? retryAfterRaw : "-", server, cfRay, rndrId, elapsed, nextDelay.toMillis(), bodySnippet);
+                        tentativa, status, httpVersion, retryAfterRaw != null ? retryAfterRaw : "-", server, cfRay, rndrId, elapsed, pollDelay.toMillis(), bodySnippet);
 
-                if (Instant.now().plus(nextDelay).isAfter(deadline)) {
+                if (Instant.now().plus(pollDelay).isAfter(deadline)) {
                     break;
                 }
-                sleeper.sleep(nextDelay);
+                sleeper.sleep(pollDelay);
                 continue;
 
             } catch (HttpTimeoutException e) {

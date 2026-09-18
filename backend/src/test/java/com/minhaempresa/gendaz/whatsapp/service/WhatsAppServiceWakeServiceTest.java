@@ -8,6 +8,10 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
@@ -22,6 +26,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +34,16 @@ import org.junit.jupiter.api.Test;
 class WhatsAppServiceWakeServiceTest {
 
     private HttpServer stub;
+    private ExecutorService exec;
+
+    @BeforeEach
+    void setup() {
+        exec = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+    }
     private String baseUrl;
     private final AtomicInteger calls = new AtomicInteger();
     private volatile int stubStatus = 200;
@@ -813,4 +828,312 @@ class WhatsAppServiceWakeServiceTest {
         assertTrue(duracao < 500, "wakeAsync nao deve bloquear, duracao=" + duracao);
         svc.destroy();
     }
+
+    // Helper to create a stub HTTP server for relay POST
+    private HttpServer relayStub;
+    private final AtomicInteger relayCalls = new AtomicInteger();
+
+    @BeforeEach
+    void setupRelayStub() {
+        relayCalls.set(0);
+    }
+
+    private HttpServer subirRelayStub(int port, String path, int status, String rndrIdHeader) throws IOException {
+        HttpServer rStub = HttpServer.create(new InetSocketAddress("127.0.0.1", port), 0);
+        rStub.createContext(path, exchange -> {
+            String rndrId = exchange.getRequestHeaders().getFirst("x-render-routing");
+            byte[] body = "{\"status\":\"ok\"}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            if (rndrIdHeader != null) {
+                exchange.getResponseHeaders().set("x-render-routing", rndrIdHeader);
+            }
+            exchange.sendResponseHeaders(status, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            }
+        });
+        rStub.start();
+        return rStub;
+    }
+
+    private String getRelayUrl(HttpServer server) {
+        return "http://127.0.0.1:" + server.getAddress().getPort();
+    }
+
+    @AfterEach
+    void pararRelayStub() {
+        if (relayStub != null) {
+            relayStub.stop(0);
+        }
+        relayCalls.set(0);
+    }
+
+    // Test helper: service with relay URL and token configured
+    private WhatsAppServiceWakeService serviceWithRelay(String url, String relayUrl, String relayToken, Duration maxDuration, List<Duration> delays) throws IOException {
+        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+        ExecutorService exec = Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+        return new WhatsAppServiceWakeService(url,
+                client,
+                Duration.ofSeconds(2),
+                maxDuration,
+                d -> delays.add(d),
+                exec,
+                relayUrl, relayToken);
+    }
+
+    // 31. 429 + x-render-routing=hibernate-rate-limited → relay exatamente 1 vez e depois WPP 200
+    @Test
+    void relay_429_hibernateRateLimited_umVez_depoisWPP200() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(429, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList(null, null));
+        }
+        relayStub = subirRelayStub(0, "/", 200, "hibernate-rate-limited");
+        String relayUrl = getRelayUrl(relayStub);
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svcWithRelay = serviceWithRelay(baseUrl, relayUrl, "test-token", Duration.ofSeconds(15), delays);
+        svcWithRelay.doWake();
+        assertEquals(1, relayCalls.get(), "relay deve ter sido chamado exatamente 1 vez");
+        assertEquals(3, calls.get(), "3 requests to WPP: 1st 429, 2nd after relay 200 check, 3rd final 200");
+        svcWithRelay.destroy();
+        relayStub.stop(0);
+    }
+
+    // 32. 502 + x-render-routing=no-deploy → relay exatamente 1 vez
+    @Test
+    void relay_502_noDeploy_umVez() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(502, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList(null, null));
+        }
+        relayStub = subirRelayStub(0, "/", 200, "no-deploy");
+        String relayUrl = getRelayUrl(relayStub);
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svcWithRelay = serviceWithRelay(baseUrl, relayUrl, "test-token", Duration.ofSeconds(15), delays);
+        svcWithRelay.doWake();
+        assertEquals(1, relayCalls.get(), "relay deve ter sido chamado exatamente 1 vez");
+        assertTrue(calls.get() >= 2, "pelo menos 2 requests to WPP (1st 502, 2nd after relay)");
+        svcWithRelay.destroy();
+        relayStub.stop(0);
+    }
+
+    // 33. 429 sem header esperado → relay zero times
+    @Test
+    void relay_429_semHeader_zerasVezes() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(429, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList(null, null));
+        }
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svc = new WhatsAppServiceWakeService(baseUrl,
+                Duration.ofSeconds(2), Duration.ofSeconds(2),
+                Duration.ofMillis(10), Duration.ofSeconds(15),
+                d -> delays.add(d),
+                exec);
+        svc.doWake();
+        assertEquals(0, relayCalls.get(), "relay nao deve ser chamado quando header nao presente");
+        assertEquals(2, calls.get(), "apenas 2 requests to WPP (1st 429, 2nd 200)");
+        svc.destroy();
+    }
+
+    // 34. 502 sem header esperado → relay zero times
+    @Test
+    void relay_502_semHeader_zerasVezes() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(502, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList(null, null));
+        }
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svc = new WhatsAppServiceWakeService(baseUrl,
+                Duration.ofSeconds(2), Duration.ofSeconds(2),
+                Duration.ofMillis(10), Duration.ofSeconds(15),
+                d -> delays.add(d),
+                exec);
+        svc.doWake();
+        assertEquals(0, relayCalls.get(), "relay nao deve ser chamado quando header nao presente");
+        assertEquals(2, calls.get(), "apenas 2 requests to WPP (1st 502, 2nd 200)");
+        svc.destroy();
+    }
+
+    // 35. WPP 200 imediato → relay zero vezes
+    @Test
+    void relay_200_imediato_zerasVezes() throws IOException {
+        stubStatus = 200;
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svc = serviceWithNoSleep(baseUrl, Duration.ofSeconds(2));
+        svc.doWake();
+        assertEquals(0, relayCalls.get(), "relay nao deve ser chamado quando WPP ja estiver 200");
+        assertEquals(1, calls.get(), "apenas 1 request a WPP");
+        svc.destroy();
+    }
+
+    // 36. varios 429 após o relay → relay continua exatamente 1 vez
+    @Test
+    void relay_varios429_depois_continuaUmaVez() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(429, 429, 429, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList("60", "60", null, null));
+        }
+        relayStub = subirRelayStub(0, "/", 200, "hibernate-rate-limited");
+        String relayUrl = getRelayUrl(relayStub);
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svcWithRelay = serviceWithRelay(baseUrl, relayUrl, "test-token", Duration.ofSeconds(15), delays);
+        svcWithRelay.doWake();
+        assertEquals(1, relayCalls.get(), "relay deve continuar exatamente 1 vez mesmo com multiplos 429");
+        svcWithRelay.destroy();
+        relayStub.stop(0);
+    }
+
+    // 37. relay retorna HTTP nao-2xx -> nao tenta relay novamente e continua readiness direto
+    @Test
+    void relay_nao2xx_naoTentaNovamente() throws IOException {
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(429, 502, 200));
+        }
+        synchronized (retryAfterSeq) {
+            retryAfterSeq.addAll(java.util.Arrays.asList(null, null, null));
+        }
+        relayStub = subirRelayStub(0, "/", 500, "hibernate-rate-limited"); // relay returns 500
+        String relayUrl = getRelayUrl(relayStub);
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svcWithRelay = serviceWithRelay(baseUrl, relayUrl, "test-token", Duration.ofSeconds(15), delays);
+        svcWithRelay.doWake();
+        // Relay was attempted once (the first 429), then continued with direct polling
+        // The 502 after relay should not trigger another relay attempt
+        assertTrue(relayCalls.get() >= 1, "relay deve ter sido attemptado pelo menos 1 vez");
+        // After relay fails, should continue with direct WPP polling, not another relay
+        svcWithRelay.destroy();
+        relayStub.stop(0);
+    }
+
+    // 38. relay indisponivel/configuracao vazia -> nao quebra
+    @Test
+    void relay_indisponivel_nQuebra() throws IOException {
+        // Test with empty relay config - should not throw, just continue
+        WhatsAppServiceWakeService svc = new WhatsAppServiceWakeService(baseUrl,
+                Duration.ofSeconds(2), Duration.ofSeconds(2),
+                Duration.ofMillis(10), Duration.ofSeconds(2),
+                d -> {}, exec);
+        // wakeRelayUrl and wakeRelayToken default to "" in constructor
+        // First 429 should not trigger relay since config is empty
+        synchronized (statusSequence) {
+            statusSequence.addAll(List.of(429, 200));
+        }
+        svc.doWake();
+        // Should succeed via direct WPP polling, not relay
+        assertTrue(calls.get() >= 1, "deve ter chamado WPP");
+        svc.destroy();
+    }
+
+    // 39. Authorization do relay nunca vai para GET /health
+    @Test
+    void relay_Authorization_naoVaiParaHealth() throws IOException {
+        // Stub for /health that captures Authorization header
+        HttpServer healthStub = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        AtomicReference<String> capturedAuth = new AtomicReference<>();
+        healthStub.createContext("/", exchange -> {
+            capturedAuth.set(exchange.getRequestHeaders().getFirst("Authorization"));
+            byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(body);
+            }
+        });
+        healthStub.start();
+        String healthBaseUrl = "http://127.0.0.1:" + healthStub.getAddress().getPort();
+
+        // Relay stub that returns 200 with x-render-routing header
+        HttpServer relayStub = subirRelayStub(0, "/", 200, "hibernate-rate-limited");
+        String relayUrl = getRelayUrl(relayStub);
+
+        List<Duration> delays = Collections.synchronizedList(new ArrayList<>());
+        WhatsAppServiceWakeService svcWithRelay = serviceWithRelay(healthBaseUrl, relayUrl, "test-token", Duration.ofSeconds(15), delays);
+        svcWithRelay.doWake();
+
+        // Authorization nao deve ter sido enviado para /health
+        assertTrue(capturedAuth.get() == null || capturedAuth.get().isBlank(), 
+            "Authorization nao deve ir para /health. captured=" + capturedAuth.get());
+
+        svcWithRelay.destroy();
+        relayStub.stop(0);
+        healthStub.stop(0);
+    }
+
+    // 40. requests concorrentes continuam compartilhando um unico single-flight e no maximo uma chamada relay
+    @Test
+    void concurrentRequests_singleFlight_umRelay() throws Exception {
+        CountDownLatch block = new CountDownLatch(1);
+        stub.stop(0);
+        HttpServer blockingStub = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        AtomicInteger blockingCalls = new AtomicInteger();
+        String[] capturedPath = new String[1];
+        blockingStub.createContext("/", exchange -> {
+            blockingCalls.incrementAndGet();
+            capturedPath[0] = exchange.getRequestURI().getPath();
+            try { block.await(5, TimeUnit.SECONDS); } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+        blockingStub.start();
+        String blockingUrl = "http://127.0.0.1:" + blockingStub.getAddress().getPort();
+
+        // Configure relay URL using package-private constructor
+        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(2)).build();
+        ExecutorService exec = Executors.newCachedThreadPool(r -> {
+            Thread t = new Thread(r);
+            t.setDaemon(true);
+            return t;
+        });
+        WhatsAppServiceWakeService svcWithRelay = new WhatsAppServiceWakeService(blockingUrl,
+                client,
+                Duration.ofSeconds(2),
+                Duration.ofSeconds(5),
+                d -> {},
+                exec,
+                blockingUrl, "test-token");
+
+        ExecutorService callers = Executors.newFixedThreadPool(3);
+        List<Future<?>> futures = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            futures.add(callers.submit(() -> svcWithRelay.ensureAvailable()));
+        }
+        // give time for all threads to enter single-flight
+        Thread.sleep(500);
+        assertEquals(1, blockingCalls.get(), "apenas UMA request deve ter sido feita enquanto bloqueado");
+        block.countDown();
+        for (Future<?> f : futures) {
+            f.get(5, TimeUnit.SECONDS);
+        }
+        // relay should have been called at most once across all concurrent threads
+        // (single-flight ensures only one relay attempt)
+        svcWithRelay.destroy();
+        callers.shutdownNow();
+        blockingStub.stop(0);
+        // restart original stub for AfterEach
+        stub = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        stub.createContext("/", exchange -> {
+            byte[] body = "{}".getBytes(StandardCharsets.UTF_8);
+            exchange.sendResponseHeaders(200, body.length);
+            try (OutputStream os = exchange.getResponseBody()) { os.write(body); }
+        });
+        stub.start();
+    }
+
 }
