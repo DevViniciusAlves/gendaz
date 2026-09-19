@@ -4,7 +4,10 @@ const assert = require('node:assert/strict');
 const { DeliveryOutboxWorker } = require('../src/whatsapp/deliveryOutboxWorker');
 
 function createMockPool() {
-  const state = { queries: [] };
+  const state = {
+    row: { id: 1, company_id: 1, provider_message_id: 'WAMID-1', state: 'PENDING', attempt_count: 0, recovery_count: 0, http_status: null, http_error_message: null },
+    queries: [],
+  };
   const pool = {
     connect: async () => ({
       query: async (sql, params) => { state.queries.push({ sql, params }); return { rows: [] }; },
@@ -16,22 +19,21 @@ function createMockPool() {
 }
 function createLogger() { return { log: () => {}, warn: () => {}, error: () => {}, info: () => {} }; }
 
-describe('DeliveryOutboxWorker - Dead Recovery SQL Tests', () => {
+describe('DeliveryOutboxWorker - Transient Tests', () => {
   let pool, state, log;
   beforeEach(() => { const mock = createMockPool(); pool = mock.pool; state = mock.state; log = createLogger(); });
 
-  it('SQL parameters are correct and no manual concatenation', async () => {
+  it('Transient errors: 7 attempts -> DEAD', async () => {
     const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log });
-    await worker._recoverDeadCycle();
     
-    const query = state.queries.find(q => q.sql.includes('SELECT id FROM whatsapp_delivery_outbox'));
-    assert.ok(query, 'Query not found');
+    for (let i = 1; i <= 6; i++) {
+        state.row.state = 'PROCESSING'; state.row.attempt_count = i;
+        await worker._handleResponse(state.row, 503, {});
+        assert.equal(state.row.state, 'PENDING', `Failed at attempt ${i}`);
+    }
     
-    // Check for parameterization
-    assert.ok(query.sql.includes('$1::text[]'), 'Should use ANY($1::text[])');
-    assert.ok(query.sql.includes('$3::text[]'), 'Should use ANY($3::text[])');
-    
-    // Check that there is no "OR http_error_message =" concatenation
-    assert.ok(!query.sql.includes('OR http_error_message ='), 'Manual concatenation detected!');
+    state.row.state = 'PROCESSING'; state.row.attempt_count = 7;
+    await worker._handleResponse(state.row, 503, {});
+    assert.equal(state.row.state, 'DEAD');
   });
 });

@@ -150,23 +150,15 @@ class DeliveryOutboxWorker {
         `SELECT id FROM whatsapp_delivery_outbox
          WHERE state = 'DEAD'
            AND (
-             (http_error_message = ANY(${
-               AUTH_RECOVERABLE_REASONS.length > 0
-                 ? "'" + AUTH_RECOVERABLE_REASONS.map((r) => r + "'").join(" OR http_error_message = '") + "'"
-                 : "1=0")
-             } AND recovery_count < $1)
+             (http_error_message = ANY($1::text[]) AND recovery_count < $2)
              OR
-             (http_error_message IN (${
-               TRANSITENT_RECOVERABLE_REASONS.length > 0
-                 ? "'" + TRANSITENT_RECOVERABLE_REASONS.map((r) => r + "'").join(", ") + "'"
-                 : "1=0")
-             } AND recovery_count < $2)
+             (http_error_message = ANY($3::text[]) AND recovery_count < $4)
            )
-           AND updated_at <= NOW() - ($3 || ' minutes')::INTERVAL
+           AND updated_at <= NOW() - ($5 || ' minutes')::INTERVAL
          ORDER BY updated_at ASC
-         LIMIT $4
+         LIMIT $6
          FOR UPDATE SKIP LOCKED`,
-        [MAX_AUTH_RECOVERY_CYCLES, MAX_TRANSIENT_RECOVERY_CYCLES, String(this._recoveryMinAgeMinutes), this._recoveryBatch]
+        [AUTH_RECOVERABLE_REASONS, MAX_AUTH_RECOVERY_CYCLES, TRANSITENT_RECOVERABLE_REASONS, MAX_TRANSIENT_RECOVERY_CYCLES, String(this._recoveryMinAgeMinutes), this._recoveryBatch]
       );
       const ids = selectResult.rows.map(r => r.id);
       if (ids.length === 0) {
@@ -302,8 +294,12 @@ class DeliveryOutboxWorker {
       }
       return;
     }
-    if (status === 401 || status === 403) {
+    if (status === 401) {
       await this._scheduleRetry(row, status, 'auth_error');
+      return;
+    }
+    if (status === 403) {
+      await this._scheduleRetry(row, status, 'forbidden_error');
       return;
     }
     if (status === 429) {
@@ -328,7 +324,7 @@ class DeliveryOutboxWorker {
   }
 
   async _scheduleRetry(row, httpStatus, errorReason) {
-    const isAuth = errorReason === 'auth_error';
+    const isAuth = errorReason === 'auth_error' || errorReason === 'forbidden_error';
     const maxAttempts = isAuth ? MAX_AUTH_ATTEMPTS : MAX_TRANSIENT_ATTEMPTS;
     const delays = isAuth ? AUTH_DELAYS : TRANSIENT_DELAYS;
     const client = await this.pool.connect();
