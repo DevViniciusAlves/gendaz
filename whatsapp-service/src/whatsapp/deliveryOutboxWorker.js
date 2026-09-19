@@ -771,4 +771,4 @@ function createWorker(
   });
 }
 
-module.exports = { DeliveryOutboxWorker, createWorker, RECOVERABLE_DEAD_REASONS, REQUIRED_OUTBOX_COLUMNS };
+module.exports = { DeliveryOutboxWorker, createWorker, RECOVERABLE_DEAD_REASONS };

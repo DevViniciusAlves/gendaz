@@ -1,7 +1,23 @@
 'use strict';
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
-const { DeliveryOutboxWorker, REQUIRED_OUTBOX_COLUMNS } = require('../src/whatsapp/deliveryOutboxWorker');
+const { DeliveryOutboxWorker } = require('../src/whatsapp/deliveryOutboxWorker');
+
+const REQUIRED_OUTBOX_COLUMNS = [
+  'id',
+  'company_id',
+  'provider_message_id',
+  'state',
+  'attempt_count',
+  'recovery_count',
+  'next_attempt_at',
+  'locked_until',
+  'http_status',
+  'http_error_message',
+  'last_attempt_at',
+  'created_at',
+  'updated_at',
+];
 
 describe('DeliveryOutboxWorker - Schema Guard Tests', () => {
   it('schema guard retorna false quando recovery_count está faltando', async () => {
