@@ -34,7 +34,7 @@ function createDeliveryOutboxMockPool(initialRow = {}) {
 
     // Add row returning logic for SELECT queries
     if (normalized.includes('SELECT ID FROM WHATSAPP_DELIVERY_OUTBOX') && normalized.includes('WHERE STATE = \'DEAD\'')) {
-      const [authReasons, maxAuthCycles, transientReasons, maxTransientCycles] = params;
+      const [authReasons, maxAuthCycles, transientReasons, maxTransientCycles, recoveryMinAgeMinutes] = params;
       
       const reason = state.row.http_error_message;
       const recoveryCount = Number(state.row.recovery_count || 0);
@@ -42,9 +42,24 @@ function createDeliveryOutboxMockPool(initialRow = {}) {
       const isAuthRecoverable = authReasons && authReasons.includes(reason) && recoveryCount < Number(maxAuthCycles);
       const isTransientRecoverable = transientReasons && transientReasons.includes(reason) && recoveryCount < Number(maxTransientCycles);
       
-      // console.log('Mock SELECT:', { reason, recoveryCount, isAuthRecoverable, isTransientRecoverable });
+      const updatedAt =
+        state.row.updated_at instanceof Date
+          ? state.row.updated_at
+          : new Date(state.row.updated_at);
+
+      const minAgeMs =
+        Number(recoveryMinAgeMinutes) *
+        60 *
+        1000;
+
+      const oldEnough =
+        Number.isFinite(updatedAt.getTime()) &&
+        Date.now() - updatedAt.getTime() >=
+          minAgeMs;
+
+      // console.log('Mock SELECT:', { reason, recoveryCount, isAuthRecoverable, isTransientRecoverable, oldEnough });
       
-      if (isAuthRecoverable || isTransientRecoverable) {
+      if ((isAuthRecoverable || isTransientRecoverable) && oldEnough) {
         return { rows: [{ id: state.row.id }] };
       }
       return { rows: [] };

@@ -22,9 +22,6 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
 
   describe('AUTH ERROR', () => {
     it('auth_error recovery_count=0 -> recupera para PENDING', async () => {
-      // Need to make sure the mocked row matches the select condition.
-      // The current worker has a SELECT filtering by http_error_message.
-      // I should update the row to match the SELECT criteria.
       state.row = {
         id: 1,
         company_id: 1,
@@ -44,14 +41,6 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
     });
 
     it('auth_error recovery_count=1 -> permanece DEAD', async () => {
-      // Need to simulate DB returning the row that matches the SELECT query
-      // The worker's _recoverDeadCycle uses a pool.query with a specific SELECT
-      // The mock pool needs to be able to return a row if it matches
-      // Actually, the current mock pool helper simply pushes queries.
-      // I need to update the mock pool to return data for the SELECT query.
-      
-      // I will update the logic in the helper to handle the SELECT row,
-      // but for now, I will ensure state.row is correctly set for the recovery cycle.
       state.row.state = 'DEAD';
       state.row.recovery_count = 1;
       state.row.http_status = 401;
@@ -61,7 +50,7 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
       await worker._recoverDeadCycle();
 
       assert.equal(state.row.state, 'DEAD');
-      assert.equal(state.row.recovery_count, 2); // ainda pode incrementar mas não recupera
+      assert.equal(state.row.recovery_count, 1);
     });
   });
 
@@ -89,7 +78,7 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
       await worker._recoverDeadCycle();
 
       assert.equal(state.row.state, 'DEAD');
-      assert.equal(state.row.recovery_count, 2);
+      assert.equal(state.row.recovery_count, 1);
     });
   });
 
@@ -98,10 +87,6 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
 
     it('transient recovery_count=0 -> recupera', async () => {
       for (const reason of transientReasons) {
-        // Reset state for each loop
-        const mock = createDeliveryOutboxMockPool();
-        const workerRow = mock.state; 
-        
         state.row.state = 'DEAD';
         state.row.recovery_count = 0;
         state.row.http_status = 503;
@@ -199,23 +184,37 @@ describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
   });
 
   describe('RESTART / DURABILIDADE', () => {
-    it('recovery_count nao volta a zero ao recriar worker', async () => {
+    it('recovery_count persiste e worker2 executa corretamente', async () => {
       state.row.state = 'DEAD';
       state.row.recovery_count = 1;
       state.row.http_status = 401;
       state.row.http_error_message = 'auth_error';
       state.row.updated_at = new Date(Date.now() - 10 * 60 * 1000);
 
-      await worker._recoverDeadCycle();
-      assert.equal(state.row.recovery_count, 1);
-
-      // "Recriar" o worker (simular novo início)
       const worker2 = new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log });
-      // O worker já carrega o estado do pool, recovery_count deve persistir
+      await worker2._recoverDeadCycle();
 
-      // Verificar que o estado ainda reflete o count correto
-      const queries = state.queries;
-      // O important é que o valor persisted no banco (simulado) não zerou
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.recovery_count, 1);
+    });
+  });
+
+  describe('SQL PARAMETRIZADA (ANY arrays)', () => {
+    it('verifica uso de ANY($1::text[]) e ANY($3::text[]) nas queries', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 401;
+      state.row.http_error_message = 'auth_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      const selectQuery = state.queries.find(q => q.sql.includes('SELECT id FROM whatsapp_delivery_outbox'));
+      assert.ok(selectQuery, 'Select query should exist');
+      assert.match(selectQuery.sql, /ANY\(\$1::text\[\]\)/);
+      assert.match(selectQuery.sql, /ANY\(\$3::text\[\]\)/);
+      assert.ok(Array.isArray(selectQuery.params[0]), 'Param 0 should be array');
+      assert.ok(Array.isArray(selectQuery.params[2]), 'Param 2 should be array');
     });
   });
 

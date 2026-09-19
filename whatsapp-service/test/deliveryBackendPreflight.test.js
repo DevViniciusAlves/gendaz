@@ -69,11 +69,40 @@ describe('DeliveryOutboxWorker - Backend Preflight Tests', () => {
     assert.equal(result.reason, 'server_error');
   });
 
+  it('503 -> server_error', async () => {
+    const worker = new DeliveryOutboxWorker({ pool: { connect: async () => ({}) }, backendUrl: 'https://backend.test', internalToken: 'token' });
+    globalThis.fetch = async () => createResponse(503);
+    const result = await worker._checkBackendAccess();
+    assert.equal(result.ok, false);
+    assert.equal(result.reason, 'server_error');
+  });
+
   it('Network error -> network_error', async () => {
     const worker = new DeliveryOutboxWorker({ pool: { connect: async () => ({}) }, backendUrl: 'https://backend.test', internalToken: 'token' });
     globalThis.fetch = async () => { throw new Error('network down'); };
     const result = await worker._checkBackendAccess();
     assert.equal(result.ok, false);
     assert.equal(result.reason, 'network_error');
+  });
+
+  it('diagnostic x-render-routing header', async () => {
+    const worker = new DeliveryOutboxWorker({ pool: { connect: async () => ({}) }, backendUrl: 'https://backend.test', internalToken: 'token' });
+    globalThis.fetch = async () => createResponse(403, { 'x-render-routing': 'route-1' });
+    const result = await worker._checkBackendAccess();
+    assert.equal(result.diagnostic.renderRouting, 'route-1');
+  });
+
+  it('diagnostic rndr-id header', async () => {
+    const worker = new DeliveryOutboxWorker({ pool: { connect: async () => ({}) }, backendUrl: 'https://backend.test', internalToken: 'token' });
+    globalThis.fetch = async () => createResponse(403, { 'rndr-id': 'render-1' });
+    const result = await worker._checkBackendAccess();
+    assert.equal(result.diagnostic.renderRouting, 'render-1');
+  });
+
+  it('diagnostic origin from backendUrl', async () => {
+    const worker = new DeliveryOutboxWorker({ pool: { connect: async () => ({}) }, backendUrl: 'https://backend.test', internalToken: 'token' });
+    globalThis.fetch = async () => createResponse(403);
+    const result = await worker._checkBackendAccess();
+    assert.equal(result.diagnostic.origin, 'https://backend.test');
   });
 });
