@@ -23229,3 +23229,25 @@ iframe {
 .app-shell .caixa-despesas-grid .despesas-card strong {
   color: #ff2b32 !important;
 }
+.business-signals-section { padding: 96px 0; }
+.business-signals-section__eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: rgba(255,255,255,0.65); margin-bottom: 24px; display: inline-block; }
+.business-signals-section h2 { font-size: 32px; font-weight: 600; margin-bottom: 24px; }
+.business-signals-section p { font-size: 18px; color: rgba(255,255,255,0.7); margin-bottom: 48px; max-width: 640px; }
+.business-signals-section__cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+@media (max-width: 1024px) { .business-signals-section__cards { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 390px) { .business-signals-section__cards { grid-template-columns: 1fr; } }
+.business-signals-card { background: #171717; border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 28px; text-align: center; }
+.business-signals-number { display: block; font-size: 48px; font-weight: 700; color: #ff6d24; margin-bottom: 16px; }
+.business-signals-card h3 { font-size: 20px; font-weight: 600; margin-bottom: 12px; }
+.business-signals-card p { font-size: 16px; color: rgba(255,255,255,0.7); }
+.gendazia-chat-preview { width: 100%; max-width: 420px; }
+.chendia-chat-header { display: flex; align-items: center; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 16px; }
+.chendia-chat-icon { flex-shrink: 0; }
+.chendia-chat-title { font-size: 16px; font-weight: 600; color: #ffffff; }
+.chendia-chat-status { font-size: 12px; color: #4ade80; margin-left: auto; padding: 2px 6px; background: rgba(74,222,128,0.1); border-radius: 10px; }
+.chendia-message { padding: 12px 16px; border-radius: 18px; margin-bottom: 12px; max-width: 80%; }
+.chendia-message.user { background: rgba(255,255,255,0.08); margin-left: auto; }
+.chendia-message.gendazia { background: #1c1c1c; border-left: 3px solid #ff6d24; margin-right: auto; }
+.hendia-chip-group { display: flex; gap: 8px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.1); flex-wrap: wrap; }
+.chendia-chip { background: #1e1e1e; border: 1px solid rgba(255,255,255,0.1); color: #ffffff; padding: 8px 16px; font-size: 14px; border-radius: 16px; cursor: pointer; white-space: nowrap; }
+.chendia-chip:hover { background: #2a2a2a; border-color: rgba(255,255,255,0.2); }

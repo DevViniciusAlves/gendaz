@@ -16,10 +16,10 @@ const FEATURES = [
   { title: 'Profissionais', description: 'Horários e equipe organizados sem conflito.' },
 ]
 
-const IA_EXAMPLES = [
-  '“Quais clientes devo tentar recuperar esta semana?”',
-  '“Como está meu financeiro este mês?”',
-  '“Quais serviços estão com menos movimento?”',
+const DEFAULT_IA_EXAMPLES = [
+  'Quais clientes devo tentar recuperar?',
+  'Como está meu financeiro este mês?',
+  'Quais serviços tiveram menos movimento?',
 ]
 
 function formatBRL(value) {
@@ -166,6 +166,7 @@ export default function SegmentLandingPage({ segment }) {
             <Link to="/">Início</Link>
             <a href="/#sobre">Sobre</a>
             <a href="/#segmentos">Segmentos</a>
+            <Link to="/gendazia">GendazIA</Link>
             <a href="/#planos">Planos</a>
             <a href="/#suporte">Suporte</a>
             <a href="/#contato">Contato</a>
@@ -267,13 +268,16 @@ export default function SegmentLandingPage({ segment }) {
           <span className="seg-kicker">GendazIA</span>
           <h2>Pergunte ao seu próprio negócio.</h2>
           <p className="seg-muted">
-            A GendazIA analisa as informações do seu próprio negócio e apresenta insights para ajudar na rotina.
+            A gendazIA usa as informações disponíveis no Gendaz para ajudar você a entender o que merece atenção na rotina.
           </p>
           <ul className="seg-ia-list">
-            {IA_EXAMPLES.map((q) => (
-              <li key={q}>{q}</li>
+            {(segment.iaExamples || DEFAULT_IA_EXAMPLES).map((q) => (
+              <li key={q}>&ldquo;{q}&rdquo;</li>
             ))}
           </ul>
+          <div className="seg-cta-row">
+            <Link to="/gendazia" className="seg-btn-secondary">Conhecer a gendazIA</Link>
+          </div>
         </div>
       </section>
 

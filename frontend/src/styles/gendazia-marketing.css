@@ -1,0 +1,653 @@
+/* GendazIA marketing — prefixo gia- para não vazar estilos. */
+
+.gia-eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #ff7a29;
+  margin-bottom: 16px;
+}
+
+.gia-btn-primary,
+.gia-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.gia-btn-primary {
+  background: linear-gradient(135deg, #ff8a22, #ff3d4f);
+  color: #fff;
+  border: none;
+}
+
+.gia-btn-primary:hover {
+  transform: translateY(-1px);
+}
+
+.gia-btn-secondary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.gia-btn-secondary:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.gia-btn-primary:focus-visible,
+.gia-btn-secondary:focus-visible,
+.gia-question-chip:focus-visible {
+  outline: 2px solid #ff7a29;
+  outline-offset: 3px;
+}
+
+/* ── Problemas (Home + página) ── */
+.gia-pain-section {
+  padding: 96px 24px;
+}
+
+.gia-pain-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.gia-pain-title {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 16px;
+  max-width: 640px;
+}
+
+.gia-pain-lead {
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 640px;
+  margin: 0 0 40px;
+}
+
+.gia-pain-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.gia-pain-card {
+  background: #171717;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 28px;
+}
+
+.gia-pain-num {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #ff6d24;
+  margin-bottom: 12px;
+}
+
+.gia-pain-card h3 {
+  font-size: 19px;
+  font-weight: 600;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.gia-pain-card p {
+  font-size: 15px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+/* ── Chat preview ── */
+.gia-chat {
+  background: #151515;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  padding: 24px;
+  width: 100%;
+  max-width: 480px;
+}
+
+.gia-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 16px;
+}
+
+.gia-chat-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 15px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff8a22, #ff3d4f);
+  flex-shrink: 0;
+}
+
+.gia-chat-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.gia-chat-status {
+  margin-left: auto;
+  font-size: 12px;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.1);
+  border: 1px solid rgba(74, 222, 128, 0.25);
+  border-radius: 999px;
+  padding: 3px 10px;
+  white-space: nowrap;
+}
+
+.gia-chat-messages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.gia-chat-message {
+  padding: 12px 16px;
+  border-radius: 16px;
+  max-width: 90%;
+}
+
+.gia-chat-message p {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+}
+
+.gia-chat-message--user {
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-bottom-right-radius: 6px;
+}
+
+.gia-chat-message--ia {
+  align-self: flex-start;
+  background: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-left: 3px solid #ff6d24;
+  color: rgba(255, 255, 255, 0.88);
+  border-bottom-left-radius: 6px;
+}
+
+.gia-question-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gia-question-chip {
+  background: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.gia-question-chip:hover {
+  background: #2a2a2a;
+}
+
+.gia-question-chip.is-active {
+  border-color: #ff6d24;
+  background: rgba(255, 109, 36, 0.12);
+}
+
+.gia-chat-note {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Seção Home ── */
+.gia-home {
+  padding: 96px 24px;
+}
+
+.gia-home-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.gia-home-copy h2 {
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 16px;
+}
+
+.gia-home-lead {
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 24px;
+}
+
+.gia-home-questions {
+  list-style: none;
+  margin: 0 0 28px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gia-home-questions li {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 14.5px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.gia-home-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gia-home-visual {
+  display: flex;
+  justify-content: center;
+}
+
+/* ── Página /gendazia ── */
+.gia-page-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.gia-hero {
+  padding: 72px 0 64px;
+}
+
+.gia-hero-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+}
+
+.gia-hero h1 {
+  font-size: clamp(32px, 4.5vw, 48px);
+  line-height: 1.12;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 18px;
+}
+
+.gia-hero-sub {
+  font-size: 17px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 0 28px;
+}
+
+.gia-hero-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.gia-hero-micro {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+.gia-hero-visual {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.gia-hero-note {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  text-align: center;
+  margin: 0;
+}
+
+.gia-section {
+  padding: 72px 0;
+}
+
+.gia-section h2 {
+  font-size: clamp(26px, 3.5vw, 36px);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 14px;
+  max-width: 640px;
+}
+
+.gia-section-lead {
+  font-size: 16.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.65);
+  max-width: 640px;
+  margin: 0 0 36px;
+}
+
+.gia-step-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.gia-step-card {
+  background: #171717;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 26px;
+}
+
+.gia-step-card h3 {
+  font-size: 16.5px;
+  color: #fff;
+  margin: 0 0 8px;
+}
+
+.gia-step-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+.gia-ask-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.gia-ask-card {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 24px;
+}
+
+.gia-ask-card h3 {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #ff7a29;
+  margin: 0 0 14px;
+}
+
+.gia-ask-card ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gia-ask-card li {
+  font-size: 14px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.gia-crm-flow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 28px 0;
+}
+
+.gia-crm-chip {
+  background: #1c1c1c;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gia-crm-arrow {
+  color: #ff6d24;
+  font-weight: 700;
+}
+
+.gia-crm-roles {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 16px;
+  align-items: center;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 18px;
+  padding: 24px;
+  max-width: 720px;
+}
+
+.gia-crm-role {
+  text-align: center;
+}
+
+.gia-crm-role strong {
+  display: block;
+  color: #fff;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+
+.gia-crm-role span {
+  font-size: 13.5px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.gia-trust-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.gia-trust-card {
+  background: #171717;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 26px;
+}
+
+.gia-trust-card h3 {
+  font-size: 14px;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.gia-trust-card p {
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0;
+}
+
+.gia-cta {
+  text-align: center;
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  padding: 64px 32px;
+}
+
+.gia-cta h2 {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gia-cta p {
+  color: rgba(255, 255, 255, 0.65);
+  margin: 0 auto 28px;
+  max-width: 560px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.gia-cta-row {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.gia-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.gia-faq details {
+  background: #141414;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 14px;
+  padding: 18px 20px;
+}
+
+.gia-faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  color: #fff;
+}
+
+.gia-faq summary:focus-visible {
+  outline: 2px solid #ff7a29;
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.gia-faq p {
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.65);
+  margin: 12px 0 0;
+}
+
+.gia-faq a {
+  color: #ff7a29;
+}
+
+/* ── Responsivo ── */
+@media (max-width: 1024px) {
+  .gia-home-inner,
+  .gia-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .gia-pain-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gia-step-grid,
+  .gia-ask-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .gia-trust-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .gia-pain-section,
+  .gia-home {
+    padding: 64px 20px;
+  }
+
+  .gia-hero {
+    padding: 48px 0;
+  }
+
+  .gia-section {
+    padding: 56px 0;
+  }
+}
+
+@media (max-width: 390px) {
+  .gia-pain-grid,
+  .gia-step-grid,
+  .gia-ask-grid,
+  .gia-trust-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gia-chat {
+    max-width: 100%;
+  }
+
+  .gia-home-ctas .gia-btn-primary,
+  .gia-home-ctas .gia-btn-secondary,
+  .gia-hero-ctas .gia-btn-primary,
+  .gia-hero-ctas .gia-btn-secondary,
+  .gia-cta-row .gia-btn-primary,
+  .gia-cta-row .gia-btn-secondary {
+    width: 100%;
+  }
+
+  .gia-hero h1 {
+    font-size: 32px;
+  }
+
+  .gia-crm-roles {
+    grid-template-columns: 1fr;
+  }
+}

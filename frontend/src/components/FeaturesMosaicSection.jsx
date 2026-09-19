@@ -3,22 +3,22 @@ import ScrollReveal from './ScrollReveal.jsx'
 
 const cards = [
   {
-    title: 'Insights Inteligentes',
-    description: 'A GendazIA analisa sua empresa e identifica oportunidades para melhorar seus resultados.',
+    title: 'gendazIA',
+    description: 'Pergunte sobre agenda, clientes, serviços e financeiro usando as informações disponíveis no seu negócio.',
     icon: Brain,
     kind: 'insights',
   },
   {
-    title: 'Fechamento mensal em dia.',
-    description: 'Sem precisar bater cabeça, basta exportar seus dados em CSV.',
-    icon: FileSpreadsheet,
+    title: 'Agenda organizada',
+    description: 'Acompanhe horários, confirmações, cancelamentos e remarcações.',
+    icon: CalendarCheck,
     kind: 'flow',
   },
   {
-    title: 'CRM Inteligente',
-    description: 'Acompanhe seus clientes, identifique quem está ativo e recupere quem parou de agendar.',
-    icon: Users,
-    kind: 'crm',
+    title: 'Pagamentos claros',
+    description: 'Veja recebidos, pendências e acompanhamento financeiro em um só lugar.',
+    icon: DollarSign,
+    kind: 'flow',
   },
 ]
 
@@ -118,24 +118,26 @@ function FeatureCard({ title, description, icon: Icon, kind }) {
             <div className="insights-summary-card">
               <span className="insights-summary-title">Resumo Inteligente</span>
               <ul className="insights-summary-list">
-                <li><TrendingUp size={11} /><span>Receita crescendo</span></li>
-                <li><CalendarDays size={11} /><span>Quinta-feira é seu melhor dia</span></li>
-                <li><Users size={11} /><span>Apenas 3 clientes estão em risco</span></li>
-                <li><Star size={11} /><span>Barba Premium é o mais lucrativo</span></li>
+                <li><TrendingUp size={11} /><span>Receita acompanhada</span></li>
+                <li><CalendarDays size={11} /><span>Dias de maior movimento</span></li>
+                <li><Users size={11} /><span>Clientes para acompanhar</span></li>
+                <li><Star size={11} /><span>Serviços em destaque</span></li>
               </ul>
             </div>
 
-            {/* Health indicator */}
+            <span className="insights-exemplo">Exemplo ilustrativo</span>
+
+            {/* Dados do negócio */}
             <div className="insights-health">
               <div className="insights-health-text">
-                <span className="insights-health-label">Saúde da Empresa</span>
-                <span className="insights-health-tag">Excelente</span>
+                <span className="insights-health-label">DADOS DO NEGÓCIO</span>
+                <span className="insights-health-tag">Sincronizados</span>
               </div>
               <div className="insights-health-row">
                 <div className="insights-health-bar">
                   <div className="insights-health-fill" />
                 </div>
-                <strong className="insights-health-pct">94%</strong>
+                <strong className="insights-health-pct"></strong>
               </div>
             </div>
 

@@ -39,8 +39,9 @@ import clinicaEsteticaImage from '../assets/segments/clinica-estetica.png'
 import psicologosTerapeutasImage from '../assets/segments/psicologos-terapeutas.jpg'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
-import TestimonialsSection from '../components/TestimonialsSection.jsx'
 import FeaturesMosaicSection from '../components/FeaturesMosaicSection.jsx'
+import BusinessSignalsSection from '../components/BusinessSignalsSection.jsx'
+import GendazIAHomeSection from '../components/GendazIAHomeSection.jsx'
 import { marketingPlans as plans, buildPlanSignupUrl } from '../data/marketingPlans.js'
 
 
@@ -110,6 +111,7 @@ export default function Home() {
           <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
           <a href="#segmentos">Segmentos</a>
+          <Link to="/gendazia">GendazIA</Link>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
@@ -179,7 +181,11 @@ export default function Home() {
       {/* Storytelling */}
       <StorytellingSection />
 
+      <BusinessSignalsSection />
+
       <FeaturesMosaicSection />
+
+      <GendazIAHomeSection />
 
       {/* Sobre */}
       <ScrollReveal id="sobre" className="marketing-split" delay={80}>
@@ -187,9 +193,9 @@ export default function Home() {
           <h2>Qualidade operacional com uma rotina que respeita o seu tempo.</h2>
         </div>
         <div>
-          <p>O gendaz não é uma tela para o cliente final. Ele é o painel interno da sua empresa para controlar agenda, clientes, serviços, pagamentos e atendimentos com mais clareza.
+          <p>O gendaz é o painel interno da sua empresa para organizar agenda, clientes, serviços, pagamentos e atendimentos com mais clareza.
 
-Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organizar informações e deixar sua operação mais simples no dia a dia.</p>
+Com a gendazIA, você também pode perguntar sobre os dados do próprio negócio e transformar informações da operação em respostas mais fáceis de entender.</p>
           <p>O foco é dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p>
         </div>
       </ScrollReveal>
@@ -386,9 +392,6 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           </div>
         </ScrollReveal>
       </section>
-
-      <TestimonialsSection />
-
       {/* Suporte */}
       <section id="suporte" className="marketing-support">
         <ScrollReveal className="solutions-head" delay={0}>

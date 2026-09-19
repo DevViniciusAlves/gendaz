@@ -4,6 +4,11 @@
 export const SEGMENTS = {
   'clinica-de-estetica': {
     key: 'clinica-de-estetica',
+    iaExamples: [
+      'Quais clientes devo tentar recuperar esta semana?',
+      'Quais serviços estão com menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/sistema-para-clinica-de-estetica',
     seoTitle: 'Sistema para Clínica de Estética | Gendaz',
     seoDescription:
@@ -59,6 +64,11 @@ export const SEGMENTS = {
   },
   'estetica-e-spa': {
     key: 'estetica-e-spa',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/sistema-para-estetica-e-spa',
     seoTitle: 'Sistema para Estética e Spa | Gendaz',
     seoDescription:
@@ -113,6 +123,11 @@ export const SEGMENTS = {
   },
   'salao-de-beleza': {
     key: 'salao-de-beleza',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/sistema-para-salao-de-beleza',
     seoTitle: 'Sistema para Salão de Beleza | Gendaz',
     seoDescription:
@@ -167,6 +182,11 @@ export const SEGMENTS = {
   },
   manicure: {
     key: 'manicure',
+    iaExamples: [
+      'Quais clientes estão demorando mais para voltar?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/agenda-para-manicure',
     seoTitle: 'Agenda para Manicure e Controle de Clientes | Gendaz',
     seoDescription:
@@ -221,6 +241,11 @@ export const SEGMENTS = {
   },
   'sobrancelhas-e-cilios': {
     key: 'sobrancelhas-e-cilios',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais serviços estão com menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/agenda-para-sobrancelhas-e-cilios',
     seoTitle: 'Agenda para Sobrancelhas e Cílios | Gendaz',
     seoDescription:
@@ -275,6 +300,11 @@ export const SEGMENTS = {
   },
   barbearia: {
     key: 'barbearia',
+    iaExamples: [
+      'Quais clientes costumavam voltar e pararam?',
+      'Qual serviço teve menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-barbearia',
     seoTitle: 'Sistema para Barbearia e Agenda Online | Gendaz',
     seoDescription:
@@ -329,6 +359,11 @@ export const SEGMENTS = {
   },
   depilacao: {
     key: 'depilacao',
+    iaExamples: [
+      'Quais clientes deixaram de retornar recentemente?',
+      'Quais serviços tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-depilacao',
     seoTitle: 'Sistema para Depilação e Agenda de Clientes | Gendaz',
     seoDescription:
@@ -382,6 +417,11 @@ export const SEGMENTS = {
   },
   'locacao-de-quadra': {
     key: 'locacao-de-quadra',
+    iaExamples: [
+      'Quais horários tiveram menos agendamentos?',
+      'Quais serviços tiveram menos movimento?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-locacao-de-quadra',
     seoTitle: 'Sistema para Locação de Quadra e Reservas | Gendaz',
     seoDescription:
@@ -436,6 +476,11 @@ export const SEGMENTS = {
   },
   'clinica-odontologica': {
     key: 'clinica-odontologica',
+    iaExamples: [
+      'Quais clientes deixaram de retornar?',
+      'Quais períodos tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-clinica-odontologica',
     seoTitle: 'Sistema de Agenda para Clínica Odontológica | Gendaz',
     seoDescription:
@@ -489,6 +534,11 @@ export const SEGMENTS = {
   },
   'personal-trainer': {
     key: 'personal-trainer',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/agenda-para-personal-trainer',
     seoTitle: 'Agenda para Personal Trainer e Alunos | Gendaz',
     seoDescription:
@@ -542,6 +592,11 @@ export const SEGMENTS = {
   },
   consultorios: {
     key: 'consultorios',
+    iaExamples: [
+      'Quais clientes deixaram de retornar?',
+      'Quais períodos tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-consultorios',
     seoTitle: 'Sistema de Agenda para Consultórios | Gendaz',
     seoDescription:
@@ -595,6 +650,11 @@ export const SEGMENTS = {
   },
   'yoga-e-pilates': {
     key: 'yoga-e-pilates',
+    iaExamples: [
+      'Quais clientes estão frequentando menos?',
+      'Quais serviços tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/agenda-para-yoga-e-pilates',
     seoTitle: 'Agenda para Yoga e Pilates | Gendaz',
     seoDescription:
@@ -648,6 +708,11 @@ export const SEGMENTS = {
   },
   'cursos-e-tutoria': {
     key: 'cursos-e-tutoria',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais serviços tiveram menos movimento?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/agenda-para-cursos-e-tutoria',
     seoTitle: 'Agenda para Cursos e Aulas Particulares | Gendaz',
     seoDescription:
@@ -701,6 +766,11 @@ export const SEGMENTS = {
   },
   hospedagens: {
     key: 'hospedagens',
+    iaExamples: [
+      'Quais períodos tiveram menos agendamentos?',
+      'Quais serviços tiveram menos movimento?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-hospedagens',
     seoTitle: 'Sistema de Reservas para Pequenas Hospedagens | Gendaz',
     seoDescription:
@@ -755,6 +825,11 @@ export const SEGMENTS = {
   },
   'servicos-automotivos': {
     key: 'servicos-automotivos',
+    iaExamples: [
+      'Quais clientes estão há mais tempo sem retornar?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/agenda-para-servicos-automotivos',
     seoTitle: 'Agenda para Serviços Automotivos | Gendaz',
     seoDescription:
@@ -808,6 +883,11 @@ export const SEGMENTS = {
   },
   'petshop-e-veterinaria': {
     key: 'petshop-e-veterinaria',
+    iaExamples: [
+      'Quais clientes deixaram de retornar?',
+      'Quais serviços tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/sistema-para-petshop-e-veterinaria',
     seoTitle: 'Sistema de Agenda para Petshop e Veterinária | Gendaz',
     seoDescription:
@@ -861,6 +941,11 @@ export const SEGMENTS = {
   },
   'estudio-fotografico': {
     key: 'estudio-fotografico',
+    iaExamples: [
+      'Quais serviços tiveram menos movimento?',
+      'Quais períodos tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/agenda-para-estudio-fotografico',
     seoTitle: 'Agenda para Estúdio Fotográfico | Gendaz',
     seoDescription:
@@ -914,6 +999,11 @@ export const SEGMENTS = {
   },
   'estudio-de-tatuagem': {
     key: 'estudio-de-tatuagem',
+    iaExamples: [
+      'Quais clientes deixaram de retornar?',
+      'Quais serviços tiveram menos movimento?',
+      'Como está meu financeiro este mês?',
+    ],
     path: '/agenda-para-estudio-de-tatuagem',
     seoTitle: 'Agenda para Estúdio de Tatuagem | Gendaz',
     seoDescription:
@@ -967,6 +1057,11 @@ export const SEGMENTS = {
   },
   'psicologos-e-terapeutas': {
     key: 'psicologos-e-terapeutas',
+    iaExamples: [
+      'Quais clientes reduziram a frequência?',
+      'Quais períodos tiveram menos agendamentos?',
+      'Como estão meus recebimentos?',
+    ],
     path: '/agenda-para-psicologos-e-terapeutas',
     seoTitle: 'Agenda para Psicólogos e Terapeutas | Gendaz',
     seoDescription:
