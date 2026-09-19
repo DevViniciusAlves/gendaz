@@ -3,19 +3,10 @@ const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { DeliveryOutboxWorker } = require('../src/whatsapp/deliveryOutboxWorker');
 
+const { createDeliveryOutboxMockPool } = require('./helpers/deliveryOutboxMockPool');
+
 function createMockPool() {
-  const state = {
-    row: { id: 1, company_id: 1, provider_message_id: 'WAMID-1', state: 'PENDING', attempt_count: 0, recovery_count: 0, http_status: null, http_error_message: null },
-    queries: [],
-  };
-  const pool = {
-    connect: async () => ({
-      query: async (sql, params) => { state.queries.push({ sql, params }); return { rows: [] }; },
-      release: () => {},
-    }),
-    end: async () => {},
-  };
-  return { pool, state };
+  return createDeliveryOutboxMockPool();
 }
 function createLogger() { return { log: () => {}, warn: () => {}, error: () => {}, info: () => {} }; }
 

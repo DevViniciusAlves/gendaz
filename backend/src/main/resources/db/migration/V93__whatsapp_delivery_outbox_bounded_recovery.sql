@@ -26,11 +26,13 @@ COMMENT ON COLUMN whatsapp_delivery_outbox.recovery_count IS
 
 -- Index parcial compatível com a query REAL do dead recovery:
 -- state = 'DEAD' + http_error_message + recovery_count + updated_at
--- Sem recovery_count = 0, para evitar indexar linhas inativas.
-CREATE INDEX IF NOT EXISTS idx_outbox_dead_recovery
-    ON whatsapp_delivery_outbox(http_error_message, updated_at)
-    WHERE state = 'DEAD'
-    AND recovery_count < 5;
+CREATE INDEX IF NOT EXISTS idx_outbox_dead_recovery_bounded
+    ON whatsapp_delivery_outbox(
+        http_error_message,
+        recovery_count,
+        updated_at
+    )
+    WHERE state = 'DEAD';
 
 -- Auditoria: trigger que grava quem mudou e quando,
 -- se o projeto ja possuir trigger de auditoria; senao fica como comentario.

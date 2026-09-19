@@ -119,6 +119,40 @@ class DeliveryOutboxWorker {
     this._schemaCheckPromise = null;
   }
 
+  _extractBackendDiagnostic(response, url) {
+    let origin = '-';
+
+    try {
+      origin = new URL(url).origin;
+    } catch {}
+
+    const getHeader = (name) => {
+      try {
+        return response.headers?.get(name) || '-';
+      } catch {
+        return '-';
+      }
+    };
+
+    return {
+      origin,
+      status: response.status,
+      server: getHeader('server'),
+      contentType:
+        getHeader('content-type'),
+      cfRay:
+        getHeader('cf-ray'),
+      renderRouting:
+        getHeader('x-render-routing') !== '-'
+          ? getHeader('x-render-routing')
+          : getHeader('rndr-id'),
+      internalHandler:
+        getHeader(
+          'x-gendaz-internal-handler'
+        ),
+    };
+  }
+
   async _checkBackendAccess() {
     if (!this.backendUrl || !this.internalToken) {
       return {
@@ -146,31 +180,45 @@ class DeliveryOutboxWorker {
         }
       );
 
-      if (response.status === 200) {
-        return { ok: true, status: 200, reason: null };
-      }
+        const diagnostic =
+          this._extractBackendDiagnostic(
+            response,
+            url
+          );
 
-      if (response.status === 401) {
-        return { ok: false, status: 401, reason: 'auth_error' };
-      }
+        if (response.status === 200) {
+          return { ok: true, status: 200, reason: null, diagnostic };
+        }
 
-      if (response.status === 403) {
-        return { ok: false, status: 403, reason: 'forbidden_error' };
-      }
+        if (response.status === 401) {
+          return { ok: false, status: 401, reason: 'auth_error', diagnostic };
+        }
 
-      if (response.status === 429) {
-        return { ok: false, status: 429, reason: 'rate_limit' };
-      }
+        if (response.status === 403) {
+          const reachedSpringController =
+            diagnostic.internalHandler ===
+              'whatsapp-delivery-controller';
 
-      if (response.status >= 500) {
-        return { ok: false, status: response.status, reason: 'server_error' };
-      }
+          this.log.warn(
+            `[delivery-worker] callback preflight 403 origin=${diagnostic.origin} server=${diagnostic.server} cfRay=${diagnostic.cfRay} renderRouting=${diagnostic.renderRouting} handler=${diagnostic.internalHandler} reachedSpringController=${reachedSpringController}`
+          );
+          return { ok: false, status: 403, reason: 'forbidden_error', diagnostic };
+        }
 
-      return {
-        ok: false,
-        status: response.status,
-        reason: 'unexpected_http_status',
-      };
+        if (response.status === 429) {
+          return { ok: false, status: 429, reason: 'rate_limit', diagnostic };
+        }
+
+        if (response.status >= 500) {
+          return { ok: false, status: response.status, reason: 'server_error', diagnostic };
+        }
+
+        return {
+          ok: false,
+          status: response.status,
+          reason: 'unexpected_http_status',
+          diagnostic
+        };
 
     } catch (err) {
       return {
