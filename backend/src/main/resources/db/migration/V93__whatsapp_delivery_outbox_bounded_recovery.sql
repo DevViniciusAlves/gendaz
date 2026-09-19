@@ -1,6 +1,7 @@
 -- V93: Contador de ciclos de recovery persistente para bounded recovery
 -- Garante que o limite global de recovery nao dependa de memoria do Render.
 -- migration segura/idempotente: so adiciona coluna se nao existir.
+-- Registros antigos recebem recovery_count = 0 (DEFAULT 0).
 
 DO $$
 BEGIN
@@ -12,7 +13,7 @@ BEGIN
   END IF;
 END$$;
 
--- Comentario: este campo persiste o numero de ciclos de recuperacao global.
+-- Comentario: este campo persiste o numero de ciclos de recovery global.
 -- Cada vez que _recoverDeadCycle() e executado, o contador e incrementado.
 -- Quando recovery_count >= MAX_AUTH_RECOVERY_CYCLES (auth) ou
 -- MAX_TRANSIENT_RECOVERY_CYCLES (transitorio), a linha nao e mais selecionada.
@@ -23,12 +24,15 @@ COMMENT ON COLUMN whatsapp_delivery_outbox.recovery_count IS
    Limites: auth_error ate MAX_AUTH_RECOVERY_CYCLES=1, transitorio ate MAX_TRANSIENT_RECOVERY_CYCLES=2.
    Reiniciar o Render nao zera este valor (fonte: PostgreSQL).';
 
--- Index opcional para acelerar filtros por recovery_count.
--- Nao e unico para permitir auditoria historica.
-CREATE INDEX IF NOT EXISTS idx_whatsapp_delivery_outbox_recovery_count
-  ON whatsapp_delivery_outbox (recovery_count)
-  WHERE recovery_count > 0;
+-- Index parcial compatível com a query REAL do dead recovery:
+-- state = 'DEAD' + http_error_message + recovery_count + updated_at
+-- Sem recovery_count = 0, para evitar indexar linhas inativas.
+CREATE INDEX IF NOT EXISTS idx_outbox_dead_recovery
+    ON whatsapp_delivery_outbox(http_error_message, updated_at)
+    WHERE state = 'DEAD'
+    AND recovery_count < 5;
 
--- Comentario de auditoria: trigger que grava quem mudou e quando,
+-- Auditoria: trigger que grava quem mudou e quando,
 -- se o projeto ja possuir trigger de auditoria; senao fica como comentario.
 -- Isso evita perda de contexto futuro sobre por que o registro ficou DEAD.
+-- trigger legacy: nao criado aqui para evitar side effects indesejados.

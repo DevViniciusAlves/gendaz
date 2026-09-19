@@ -28,12 +28,20 @@ const MAX_TRANSIENT_RECOVERY_CYCLES = 2;
 // Spring ficaria em AGUARDANDO_ENTREGA com reserva ocupada para sempre.
 // Motivos permanentes (permanent_error, unexpected_http_status) continuam
 // DEAD e nunca sao reprocessados.
-const RECOVERABLE_DEAD_REASONS = [
-  'auth_error',
+// Razões de recovery separadas por grupo de política (única fonte de verdade).
+// VER: _recoverDeadCycle() e o SQL abaixo — não duplicar estes motivos em query.
+const AUTH_RECOVERABLE_REASONS = ['auth_error', 'forbidden_error'];
+const TRANSITENT_RECOVERABLE_REASONS = [
   'network_error',
   'server_error',
   'rate_limit',
   'not_configured',
+];
+// Lista consolidada — é a fonte única para o worker e para validações.
+// Inclui auth + transient. Não inclui permanent_error nem unexpected_http_status.
+const RECOVERABLE_DEAD_REASONS = [
+  ...AUTH_RECOVERABLE_REASONS,
+  ...TRANSITENT_RECOVERABLE_REASONS,
 ];
 
 function intEnv(name, def) {
@@ -128,10 +136,12 @@ class DeliveryOutboxWorker {
     }
   }
 
-  // Reprocessamento posterior controlado: em lote pequeno, com idade minima
+// Reprocessamento posterior controlado: em lote pequeno, com idade minima
   // (evita hot loop com o retry rapido) e reset de attempt_count, para que o
   // registro passe novamente pelo mesmo worker ate o callback confirmar.
   // Cobre tambem registros DEAD antigos ja existentes antes do deploy.
+  // SQL usa as razoes centralizadas definidas em AUTH_RECOVERABLE_REASONS
+  // e TRANSITENT_RECOVERABLE_REASONS -- nao duplicate os motivos aqui.
   async _recoverDeadCycle() {
     const client = await this.pool.connect();
     try {
@@ -140,9 +150,17 @@ class DeliveryOutboxWorker {
         `SELECT id FROM whatsapp_delivery_outbox
          WHERE state = 'DEAD'
            AND (
-             (http_error_message = 'auth_error' AND recovery_count < $1)
+             (http_error_message = ANY(${
+               AUTH_RECOVERABLE_REASONS.length > 0
+                 ? "'" + AUTH_RECOVERABLE_REASONS.map((r) => r + "'").join(" OR http_error_message = '") + "'"
+                 : "1=0")
+             } AND recovery_count < $1)
              OR
-             (http_error_message IN ('network_error', 'server_error', 'rate_limit', 'not_configured') AND recovery_count < $2)
+             (http_error_message IN (${
+               TRANSITENT_RECOVERABLE_REASONS.length > 0
+                 ? "'" + TRANSITENT_RECOVERABLE_REASONS.map((r) => r + "'").join(", ") + "'"
+                 : "1=0")
+             } AND recovery_count < $2)
            )
            AND updated_at <= NOW() - ($3 || ' minutes')::INTERVAL
          ORDER BY updated_at ASC
