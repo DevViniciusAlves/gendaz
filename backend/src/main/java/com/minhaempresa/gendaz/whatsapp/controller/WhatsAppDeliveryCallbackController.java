@@ -96,6 +96,46 @@ public class WhatsAppDeliveryCallbackController {
         }
     }
 
+    @GetMapping("/callback-health")
+    public ResponseEntity<?> callbackHealth(
+            @RequestHeader(value = "Authorization", required = false) String authorization) {
+
+        if (internalToken == null || internalToken.isBlank()) {
+            log.warn(
+                    "[whatsapp-delivery] callback-health token interno nao configurado authHeaderPresent={}",
+                    authorization != null && !authorization.isBlank()
+            );
+
+            return ResponseEntity
+                    .status(503)
+                    .body(Map.of("status", "service_unavailable"));
+        }
+
+        if (!autorizado(authorization)) {
+            boolean authHeaderPresent =
+                    authorization != null && !authorization.isBlank();
+
+            boolean bearerFormatValid =
+                    authHeaderPresent
+                            && authorization.trim()
+                            .matches("(?i)^Bearer\\s+\\S+.*");
+
+            log.warn(
+                    "[whatsapp-delivery] callback-health unauthorized authHeaderPresent={} bearerFormatValid={}",
+                    authHeaderPresent,
+                    bearerFormatValid
+            );
+
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("status", "unauthorized"));
+        }
+
+        return ResponseEntity.ok(
+                Map.of("status", "ok")
+        );
+    }
+
     private boolean autorizado(String authorization) {
         if (authorization == null || authorization.isBlank()) {
             return false;
