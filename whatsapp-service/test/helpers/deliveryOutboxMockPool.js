@@ -33,8 +33,18 @@ function createDeliveryOutboxMockPool(initialRow = {}) {
     const normalized = normalizeSql(sql);
 
     // Add row returning logic for SELECT queries
-    if (normalized.includes('SELECT ID FROM WHATSAPP_DELIVERY_OUTBOX')) {
-      if (state.row.state === 'DEAD') {
+    if (normalized.includes('SELECT ID FROM WHATSAPP_DELIVERY_OUTBOX') && normalized.includes('WHERE STATE = \'DEAD\'')) {
+      const [authReasons, maxAuthCycles, transientReasons, maxTransientCycles] = params;
+      
+      const reason = state.row.http_error_message;
+      const recoveryCount = Number(state.row.recovery_count || 0);
+      
+      const isAuthRecoverable = authReasons && authReasons.includes(reason) && recoveryCount < Number(maxAuthCycles);
+      const isTransientRecoverable = transientReasons && transientReasons.includes(reason) && recoveryCount < Number(maxTransientCycles);
+      
+      // console.log('Mock SELECT:', { reason, recoveryCount, isAuthRecoverable, isTransientRecoverable });
+      
+      if (isAuthRecoverable || isTransientRecoverable) {
         return { rows: [{ id: state.row.id }] };
       }
       return { rows: [] };
