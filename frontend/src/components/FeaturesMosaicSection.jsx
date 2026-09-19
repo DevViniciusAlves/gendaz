@@ -12,7 +12,7 @@ const cards = [
     title: 'Agenda organizada',
     description: 'Acompanhe horários, confirmações, cancelamentos e remarcações.',
     icon: CalendarCheck,
-    kind: 'flow',
+    kind: 'agenda',
   },
   {
     title: 'Pagamentos claros',
@@ -201,7 +201,49 @@ function FeatureCard({ title, description, icon: Icon, kind }) {
         )}
 
         {/* ── CRM CARD ──────────────────────────────────── */}
-        {kind === 'crm' && (
+                {/* AGENDA CARD */}
+        {kind === 'agenda' && (
+          <div className="feature-spotlight-visual feature-spotlight-visual--agenda">
+            <div className="agenda-illustration">
+              <div className="agenda-preview-header">
+                <CalendarCheck size={18} className="agenda-preview-icon" />
+                <span className="agenda-preview-title">AGENDA DE HOJE</span>
+              </div>
+              <ul className="agenda-preview-list">
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">09:00</span>
+                  <span className="agenda-status-dot agenda-status-dot--confirmed" aria-hidden="true" />
+                  <span className="agenda-preview-status">Confirmado</span>
+                </li>
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">11:30</span>
+                  <span className="agenda-status-dot agenda-status-dot--scheduled" aria-hidden="true" />
+                  <span className="agenda-preview-status">Agendado</span>
+                </li>
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">15:00</span>
+                  <span className="agenda-status-dot agenda-status-dot--rescheduled" aria-hidden="true" />
+                  <span className="agenda-preview-status">Reagendado</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="agenda-support-text">Organize sua rotina em um só lugar.</p>
+
+            <div className="agenda-footer-section">
+              <ul className="agenda-checklist">
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Confirmações</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Cancelamentos</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Reagendamentos</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Horários</span></li>
+              </ul>
+              <div className="agenda-organized-badge">
+                <strong>Agenda organizada</strong>
+              </div>
+            </div>
+          </div>
+        )}
+{kind === 'crm' && (
           <div className="feature-spotlight-visual feature-spotlight-visual--crm">
             <div className="crm-illustration">
               <svg className="crm-flow-lines" viewBox="0 0 300 150" fill="none">
