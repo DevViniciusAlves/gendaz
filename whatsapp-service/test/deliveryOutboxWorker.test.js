@@ -12,6 +12,7 @@ function createMockPool() {
       provider_message_id: 'WAMID-1',
       state: 'PENDING',
       attempt_count: 0,
+      recovery_count: 0,
       last_attempt_at: null,
       locked_until: null,
       next_attempt_at: null,
@@ -36,12 +37,13 @@ function createMockPool() {
           if (normalizedSql === 'BEGIN' || normalizedSql === 'COMMIT' || normalizedSql === 'ROLLBACK') {
             return { rows: [] };
           }
-          if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
-            if (state.row.state === 'PENDING') {
-              return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count }] };
+            if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
+              if (state.row.state === 'PENDING') {
+                return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count, recovery_count: state.row.recovery_count }] };
+              }
+              return { rows: [] };
             }
-            return { rows: [] };
-          }
+
           if (normalizedSql.includes("SET STATE = 'PROCESSING'")) {
             state.row.state = 'PROCESSING';
             state.row.attempt_count += 1;

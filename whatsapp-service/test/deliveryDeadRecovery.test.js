@@ -14,7 +14,7 @@ function minutesAgo(min) {
 }
 
 function createMockPool(initialRows) {
-  const state = { rows: initialRows.map((r, i) => ({ id: i + 1, ...r })), seq: initialRows.length };
+  const state = { rows: initialRows.map((r, i) => ({ id: i + 1, recovery_count: 0, ...r })), seq: initialRows.length };
   const pool = {
     connect: async () => {
       const client = {
@@ -33,20 +33,27 @@ function createMockPool(initialRows) {
             state.seq += 1;
             state.rows.push({
               id: state.seq, company_id: companyId, provider_message_id: messageId,
-              state: 'PENDING', attempt_count: 0, next_attempt_at: new Date(),
+              state: 'PENDING', attempt_count: 0, recovery_count: 0, next_attempt_at: new Date(),
               locked_until: null, http_status: null, http_error_message: null,
               updated_at: new Date(),
             });
             return { rows: [{ id: state.seq, state: 'PENDING' }] };
           }
-          // SELECT recovery: DEAD + motivos + idade minima
+          // SELECT recovery: DEAD + motivos + idade minima + recovery_count
           if (n.includes("WHERE STATE = 'DEAD'")) {
-            const reasons = params[0];
-            const minAgeMinutes = Number(params[1]);
-            const limit = Number(params[2]);
+            const maxAuthCycles = params[0];
+            const maxTransientCycles = params[1];
+            const minAgeMinutes = Number(params[2]);
+            const limit = Number(params[3]);
             const cutoff = Date.now() - minAgeMinutes * 60 * 1000;
             const picked = state.rows
-              .filter(r => r.state === 'DEAD' && reasons.includes(r.http_error_message) && r.updated_at.getTime() <= cutoff)
+              .filter(r => {
+                if (r.state !== 'DEAD') return false;
+                if (r.updated_at.getTime() > cutoff) return false;
+                if (r.http_error_message === 'auth_error' && r.recovery_count < maxAuthCycles) return true;
+                if (['network_error', 'server_error', 'rate_limit', 'not_configured'].includes(r.http_error_message) && r.recovery_count < maxTransientCycles) return true;
+                return false;
+              })
               .sort((a, b) => a.updated_at - b.updated_at)
               .slice(0, limit);
             return { rows: picked.map(r => ({ id: r.id })) };
@@ -58,7 +65,7 @@ function createMockPool(initialRows) {
               .filter(r => (r.state === 'PENDING' && r.next_attempt_at.getTime() <= now)
                 || (r.state === 'PROCESSING' && r.locked_until && r.locked_until.getTime() <= now))
               .sort((a, b) => a.next_attempt_at - b.next_attempt_at)[0];
-            return { rows: row ? [{ id: row.id, company_id: row.company_id, provider_message_id: row.provider_message_id, attempt_count: row.attempt_count }] : [] };
+            return { rows: row ? [{ id: row.id, company_id: row.company_id, provider_message_id: row.provider_message_id, attempt_count: row.attempt_count, recovery_count: row.recovery_count }] : [] };
           }
           if (n.includes("SET STATE = 'PROCESSING'")) {
             const row = state.rows.find(r => r.id === params[0]);
@@ -80,12 +87,13 @@ function createMockPool(initialRows) {
             row.updated_at = new Date();
             return { rows: [] };
           }
-          // UPDATE recovery: volta para PENDING com attempt zerado
+          // UPDATE recovery: volta para PENDING com attempt zerado e incrementa recovery_count
           if (n.includes("SET STATE = 'PENDING', ATTEMPT_COUNT = 0")) {
             for (const id of params[0]) {
               const row = state.rows.find(r => r.id === id);
               row.state = 'PENDING';
               row.attempt_count = 0;
+              row.recovery_count = (row.recovery_count || 0) + 1;
               row.next_attempt_at = new Date();
               row.locked_until = null;
               row.http_status = null;
@@ -243,5 +251,54 @@ describe('dead recovery', () => {
     const second = await outbox2.recordDelivery(9, 'WAMID-X');
     assert.equal(second.isNew, false);
     assert.equal(state.rows.length, 1);
+  });
+
+  it('auth DEAD pode recuperar apenas ate o limite global (1 ciclo)', async () => {
+    const { pool, state } = createMockPool([{
+      company_id: 7, provider_message_id: 'WAMID-AUTH-LIMIT', state: 'DEAD',
+      attempt_count: 3, recovery_count: 1, next_attempt_at: minutesAgo(60), locked_until: null,
+      http_status: 401, http_error_message: 'auth_error', updated_at: minutesAgo(60),
+    }]);
+    const worker = new DeliveryOutboxWorker({
+      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
+      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    });
+    // recovery_count = 1, should not be recovered as limit is 1 (MAX_AUTH_RECOVERY_CYCLES = 1)
+    const recovered = await worker._recoverDeadCycle();
+    assert.equal(recovered, 0);
+    assert.equal(state.rows[0].state, 'DEAD');
+  });
+
+  it('transitório esgota limite apos 2 recoveries', async () => {
+    const { pool, state } = createMockPool([{
+      company_id: 7, provider_message_id: 'WAMID-TRANS-LIMIT', state: 'DEAD',
+      attempt_count: 7, recovery_count: 2, next_attempt_at: minutesAgo(60), locked_until: null,
+      http_status: 500, http_error_message: 'server_error', updated_at: minutesAgo(60),
+    }]);
+    const worker = new DeliveryOutboxWorker({
+      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
+      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    });
+    // recovery_count = 2, should not be recovered as limit is 2 (MAX_TRANSIENT_RECOVERY_CYCLES = 2)
+    const recovered = await worker._recoverDeadCycle();
+    assert.equal(recovered, 0);
+    assert.equal(state.rows[0].state, 'DEAD');
+  });
+
+  it('transitório pode recuperar se recovery_count < 2 e incrementa', async () => {
+    const { pool, state } = createMockPool([{
+      company_id: 7, provider_message_id: 'WAMID-TRANS-OK', state: 'DEAD',
+      attempt_count: 7, recovery_count: 1, next_attempt_at: minutesAgo(60), locked_until: null,
+      http_status: 500, http_error_message: 'server_error', updated_at: minutesAgo(60),
+    }]);
+    const worker = new DeliveryOutboxWorker({
+      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
+      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    });
+    // recovery_count = 1, should be recovered (limit is 2) and incremented to 2
+    const recovered = await worker._recoverDeadCycle();
+    assert.equal(recovered, 1);
+    assert.equal(state.rows[0].state, 'PENDING');
+    assert.equal(state.rows[0].recovery_count, 2);
   });
 });

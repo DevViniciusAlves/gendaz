@@ -19,6 +19,8 @@ const AUTH_DELAYS = {
 
 const MAX_TRANSIENT_ATTEMPTS = 7;
 const MAX_AUTH_ATTEMPTS = 3;
+const MAX_AUTH_RECOVERY_CYCLES = 1;
+const MAX_TRANSIENT_RECOVERY_CYCLES = 2;
 
 // Recovery duravel de callbacks DEAD por erro recuperavel: esses registros
 // representam prova de entrega (DELIVERY_ACK/READ/PLAYED ja persistida) cujo
@@ -137,12 +139,16 @@ class DeliveryOutboxWorker {
       const selectResult = await client.query(
         `SELECT id FROM whatsapp_delivery_outbox
          WHERE state = 'DEAD'
-           AND http_error_message = ANY($1)
-           AND updated_at <= NOW() - ($2 || ' minutes')::INTERVAL
+           AND (
+             (http_error_message = 'auth_error' AND recovery_count < $1)
+             OR
+             (http_error_message IN ('network_error', 'server_error', 'rate_limit', 'not_configured') AND recovery_count < $2)
+           )
+           AND updated_at <= NOW() - ($3 || ' minutes')::INTERVAL
          ORDER BY updated_at ASC
-         LIMIT $3
+         LIMIT $4
          FOR UPDATE SKIP LOCKED`,
-        [RECOVERABLE_DEAD_REASONS, String(this._recoveryMinAgeMinutes), this._recoveryBatch]
+        [MAX_AUTH_RECOVERY_CYCLES, MAX_TRANSIENT_RECOVERY_CYCLES, String(this._recoveryMinAgeMinutes), this._recoveryBatch]
       );
       const ids = selectResult.rows.map(r => r.id);
       if (ids.length === 0) {
@@ -151,7 +157,7 @@ class DeliveryOutboxWorker {
       }
       await client.query(
         `UPDATE whatsapp_delivery_outbox
-         SET state = 'PENDING', attempt_count = 0, next_attempt_at = NOW(),
+         SET state = 'PENDING', attempt_count = 0, recovery_count = recovery_count + 1, next_attempt_at = NOW(),
              locked_until = NULL, http_status = NULL, updated_at = NOW()
          WHERE id = ANY($1)`,
         [ids]
@@ -174,7 +180,7 @@ class DeliveryOutboxWorker {
     try {
       await client.query('BEGIN');
       const selectResult = await client.query(
-        `SELECT id, company_id, provider_message_id, attempt_count
+        `SELECT id, company_id, provider_message_id, attempt_count, recovery_count
          FROM whatsapp_delivery_outbox
          WHERE (state = 'PENDING' AND next_attempt_at <= NOW())
             OR (state = 'PROCESSING' AND locked_until <= NOW())
@@ -312,14 +318,14 @@ class DeliveryOutboxWorker {
       if (row.attempt_count >= maxAttempts) {
         await client.query(`UPDATE whatsapp_delivery_outbox SET state = 'DEAD', http_status = $1, http_error_message = $2, updated_at = NOW() WHERE id = $3`, [httpStatus || 0, errorReason, row.id]);
         const statusLabel = httpStatus != null ? httpStatus : 'network';
-        this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${statusLabel} motivo=${errorReason} => DEAD tentativa=${row.attempt_count}/${maxAttempts}`);
+        this.log.warn(`[delivery-worker] empresa=${row.company_id} status=${statusLabel} motivo=${errorReason} => DEAD tentativa=${row.attempt_count}/${maxAttempts} recovery=${row.recovery_count}`);
       } else {
         const delaySec = delays[row.attempt_count];
         const safeDelaySec = delaySec != null ? delaySec : 300;
         const nextAttempt = new Date(Date.now() + safeDelaySec * 1000);
         await client.query(`UPDATE whatsapp_delivery_outbox SET state = 'PENDING', next_attempt_at = $1, http_status = $2, http_error_message = $3, updated_at = NOW() WHERE id = $4`, [nextAttempt, httpStatus || 0, errorReason, row.id]);
         const statusLabel = httpStatus != null ? httpStatus : 'network';
-        this.log.info(`[delivery-worker] empresa=${row.company_id} status=${statusLabel} motivo=${errorReason} tentativa=${row.attempt_count}/${maxAttempts} proxima=${safeDelaySec}s`);
+        this.log.info(`[delivery-worker] empresa=${row.company_id} status=${statusLabel} motivo=${errorReason} tentativa=${row.attempt_count}/${maxAttempts} recovery=${row.recovery_count} proxima=${safeDelaySec}s`);
       }
     } finally {
       client.release();
