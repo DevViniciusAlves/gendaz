@@ -1,4 +1,4 @@
-import { Brain, Users, CalendarDays, DollarSign, Star, Clock, TrendingUp, Check, FileSpreadsheet, Coins, ReceiptText, Mail, Gift, Bell, MessageSquare } from 'lucide-react'
+import { Brain, Users, CalendarDays, CalendarCheck, DollarSign, Star, Clock, TrendingUp, Check, FileSpreadsheet, Coins, ReceiptText, Mail, Gift, Bell, MessageSquare } from 'lucide-react'
 import ScrollReveal from './ScrollReveal.jsx'
 
 const cards = [
