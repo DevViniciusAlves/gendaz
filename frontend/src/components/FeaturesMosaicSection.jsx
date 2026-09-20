@@ -1,24 +1,24 @@
-import { Brain, Users, CalendarDays, DollarSign, Star, Clock, TrendingUp, Check, FileSpreadsheet, Coins, ReceiptText, Mail, Gift, Bell, MessageSquare } from 'lucide-react'
+import { Brain, Users, CalendarDays, CalendarCheck, DollarSign, Star, Clock, TrendingUp, Check, FileSpreadsheet, Coins, ReceiptText, Mail, Gift, Bell, MessageSquare } from 'lucide-react'
 import ScrollReveal from './ScrollReveal.jsx'
 
 const cards = [
   {
-    title: 'Insights Inteligentes',
-    description: 'A GendazIA analisa sua empresa e identifica oportunidades para melhorar seus resultados.',
+    title: 'gendazIA',
+    description: 'Pergunte sobre agenda, clientes, serviços e financeiro usando as informações disponíveis no seu negócio.',
     icon: Brain,
     kind: 'insights',
   },
   {
-    title: 'Fechamento mensal em dia.',
-    description: 'Sem precisar bater cabeça, basta exportar seus dados em CSV.',
-    icon: FileSpreadsheet,
-    kind: 'flow',
+    title: 'Agenda organizada',
+    description: 'Acompanhe horários, confirmações, cancelamentos e remarcações.',
+    icon: CalendarCheck,
+    kind: 'agenda',
   },
   {
-    title: 'CRM Inteligente',
-    description: 'Acompanhe seus clientes, identifique quem está ativo e recupere quem parou de agendar.',
-    icon: Users,
-    kind: 'crm',
+    title: 'Pagamentos claros',
+    description: 'Veja recebidos, pendências e acompanhamento financeiro em um só lugar.',
+    icon: DollarSign,
+    kind: 'flow',
   },
 ]
 
@@ -118,24 +118,26 @@ function FeatureCard({ title, description, icon: Icon, kind }) {
             <div className="insights-summary-card">
               <span className="insights-summary-title">Resumo Inteligente</span>
               <ul className="insights-summary-list">
-                <li><TrendingUp size={11} /><span>Receita crescendo</span></li>
-                <li><CalendarDays size={11} /><span>Quinta-feira é seu melhor dia</span></li>
-                <li><Users size={11} /><span>Apenas 3 clientes estão em risco</span></li>
-                <li><Star size={11} /><span>Barba Premium é o mais lucrativo</span></li>
+                <li><TrendingUp size={11} /><span>Receita acompanhada</span></li>
+                <li><CalendarDays size={11} /><span>Dias de maior movimento</span></li>
+                <li><Users size={11} /><span>Clientes para acompanhar</span></li>
+                <li><Star size={11} /><span>Serviços em destaque</span></li>
               </ul>
             </div>
 
-            {/* Health indicator */}
+            <span className="insights-exemplo">Exemplo ilustrativo</span>
+
+            {/* Dados do negócio */}
             <div className="insights-health">
               <div className="insights-health-text">
-                <span className="insights-health-label">Saúde da Empresa</span>
-                <span className="insights-health-tag">Excelente</span>
+                <span className="insights-health-label">DADOS DO NEGÓCIO</span>
+                <span className="insights-health-tag">Sincronizados</span>
               </div>
               <div className="insights-health-row">
                 <div className="insights-health-bar">
                   <div className="insights-health-fill" />
                 </div>
-                <strong className="insights-health-pct">94%</strong>
+                <strong className="insights-health-pct"></strong>
               </div>
             </div>
 
@@ -199,7 +201,49 @@ function FeatureCard({ title, description, icon: Icon, kind }) {
         )}
 
         {/* ── CRM CARD ──────────────────────────────────── */}
-        {kind === 'crm' && (
+                {/* AGENDA CARD */}
+        {kind === 'agenda' && (
+          <div className="feature-spotlight-visual feature-spotlight-visual--agenda">
+            <div className="agenda-illustration">
+              <div className="agenda-preview-header">
+                <CalendarCheck size={18} className="agenda-preview-icon" />
+                <span className="agenda-preview-title">AGENDA DE HOJE</span>
+              </div>
+              <ul className="agenda-preview-list">
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">09:00</span>
+                  <span className="agenda-status-dot agenda-status-dot--confirmed" aria-hidden="true" />
+                  <span className="agenda-preview-status">Confirmado</span>
+                </li>
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">11:30</span>
+                  <span className="agenda-status-dot agenda-status-dot--scheduled" aria-hidden="true" />
+                  <span className="agenda-preview-status">Agendado</span>
+                </li>
+                <li className="agenda-preview-row">
+                  <span className="agenda-preview-time">15:00</span>
+                  <span className="agenda-status-dot agenda-status-dot--rescheduled" aria-hidden="true" />
+                  <span className="agenda-preview-status">Reagendado</span>
+                </li>
+              </ul>
+            </div>
+
+            <p className="agenda-support-text">Organize sua rotina em um só lugar.</p>
+
+            <div className="agenda-footer-section">
+              <ul className="agenda-checklist">
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Confirmações</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Cancelamentos</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Reagendamentos</span></li>
+                <li><span className="agenda-check-indicator"><Check size={9} strokeWidth={3} /></span><span>Horários</span></li>
+              </ul>
+              <div className="agenda-organized-badge">
+                <strong>Agenda organizada</strong>
+              </div>
+            </div>
+          </div>
+        )}
+{kind === 'crm' && (
           <div className="feature-spotlight-visual feature-spotlight-visual--crm">
             <div className="crm-illustration">
               <svg className="crm-flow-lines" viewBox="0 0 300 150" fill="none">

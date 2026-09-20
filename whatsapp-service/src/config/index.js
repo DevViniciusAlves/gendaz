@@ -47,6 +47,50 @@ function readEncryptionKey() {
   return key;
 }
 
+function validateBackendUrl(rawValue) {
+  const raw = String(rawValue || '').trim();
+
+  if (!raw) {
+    return { valid: false, reason: 'missing', url: '' };
+  }
+
+  let parsed;
+
+  try {
+    parsed = new URL(raw);
+  } catch {
+    return { valid: false, reason: 'invalid_url', url: '' };
+  }
+
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    return { valid: false, reason: 'invalid_protocol', url: '' };
+  }
+
+  if (parsed.username || parsed.password) {
+    return { valid: false, reason: 'userinfo_not_allowed', url: '' };
+  }
+
+  if (parsed.search || parsed.hash) {
+    return { valid: false, reason: 'query_or_fragment_not_allowed', url: '' };
+  }
+
+  const normalizedPath = parsed.pathname.replace(/\/+$/, '');
+
+  if (normalizedPath !== '') {
+    return { valid: false, reason: 'path_not_allowed', url: '' };
+  }
+
+  return {
+    valid: true,
+    reason: null,
+    url: parsed.origin,
+  };
+}
+
+const backendUrlValidation = validateBackendUrl(
+  process.env.GENDAZ_BACKEND_URL
+);
+
 const config = {
   port: readPort(),
   internalToken: (process.env.WHATSAPP_INTERNAL_TOKEN || '').trim(),
@@ -62,11 +106,17 @@ const config = {
   // (POST {backendUrl}/internal/whatsapp/delivery). Sem valor, o callback e
   // ignorado com aviso (fail-safe) — nunca derruba o socket.
   backendUrl:
-    (process.env.GENDAZ_BACKEND_URL || '').trim().replace(/\/+$/, ''),
+    backendUrlValidation.valid
+      ? backendUrlValidation.url
+      : '',
+  backendUrlValidation,
   // Auth store configuration
   authStore: (process.env.WHATSAPP_AUTH_STORE || 'file').trim().toLowerCase(),
   databaseUrl: (process.env.WHATSAPP_DATABASE_URL || '').trim(),
   encryptionKey: process.env.WHATSAPP_AUTH_ENCRYPTION_KEY ? readEncryptionKey() : null,
 };
 
-module.exports = config;
+module.exports = {
+  ...config,
+  validateBackendUrl,
+};

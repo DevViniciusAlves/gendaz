@@ -39,8 +39,9 @@ import clinicaEsteticaImage from '../assets/segments/clinica-estetica.png'
 import psicologosTerapeutasImage from '../assets/segments/psicologos-terapeutas.jpg'
 import HeroAnimation from '../components/HeroAnimation.jsx'
 import StorytellingSection from '../components/StorytellingSection.jsx'
-import TestimonialsSection from '../components/TestimonialsSection.jsx'
 import FeaturesMosaicSection from '../components/FeaturesMosaicSection.jsx'
+import BusinessSignalsSection from '../components/BusinessSignalsSection.jsx'
+import GendazIAHomeSection from '../components/GendazIAHomeSection.jsx'
 import { marketingPlans as plans, buildPlanSignupUrl } from '../data/marketingPlans.js'
 
 
@@ -52,25 +53,25 @@ const features = [
 ]
 
 const growthSegments = [
-  { title: 'Salão de Beleza', subtitle: 'Agendamento, CRM, financeiro', badge: 'MVP', image: salaoBarbeariasImage, path: '/sistema-para-salao-de-beleza' },
+  { title: 'Salão de Beleza', subtitle: 'Agenda, clientes e financeiro', badge: 'MVP', image: salaoBarbeariasImage, path: '/sistema-para-salao-de-beleza' },
   { title: 'Barbearia', subtitle: 'Agenda, clientes e controle do dia a dia', badge: 'Cortes', image: barbeariaImage, path: '/sistema-para-barbearia' },
   { title: 'Manicure', subtitle: 'Agenda, serviços e retorno de clientes', badge: 'Unhas', image: manicureImage, path: '/agenda-para-manicure' },
-  { title: 'Depilação', subtitle: 'Agenda, sessões e acompanhamento de clientes', badge: 'Estética', image: depilacaoImage, path: '/sistema-para-depilacao' },
-  { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, design e manutenção de atendimentos', badge: 'Beleza', image: sobrancelhasCiliosImage, path: '/agenda-para-sobrancelhas-e-cilios' },
-  { title: 'Locação de quadra', subtitle: 'Reservas, horários e controle de ocupação', badge: 'Esportes', image: locacaoQuadraImage, path: '/sistema-para-locacao-de-quadra' },
-  { title: 'Clínica odontológica', subtitle: 'Consultas, agenda e histórico de pacientes', badge: 'Saúde', image: clinicaOdontologicaImage, path: '/sistema-para-clinica-odontologica' },
-  { title: 'Personal Trainers', subtitle: 'Aulas, sessões e planos mensais', badge: 'Academias', image: personalTrainerImage, path: '/agenda-para-personal-trainer' },
-  { title: 'Consultorios', subtitle: 'Agendamentos, historico e prescricoes', badge: 'Saude', image: consultoriosImage, path: '/sistema-para-consultorios' },
-  { title: 'Esteticas & Spas', subtitle: 'Tratamentos e historico de procedimentos', badge: 'Bem-estar', image: esteticasSpasImage, path: '/sistema-para-estetica-e-spa' },
-  { title: 'Yoga e Pilates', subtitle: 'Aulas, frequencia e evolucao', badge: 'Rotina', image: yogaPilatesImage, path: '/agenda-para-yoga-e-pilates' },
-  { title: 'Cursos & Tutoria', subtitle: 'Aulas particulares e gestao de alunos', badge: 'Educacao', image: cursosTutoriaImage, path: '/agenda-para-cursos-e-tutoria' },
-  { title: 'Hospedagens', subtitle: 'Reservas, disponibilidade e hospedes', badge: 'Viagens', image: hospedagensImage, path: '/sistema-para-hospedagens' },
-  { title: 'Servicos Automotivos', subtitle: 'Manutencao, revisoes e lembretes', badge: 'Auto', image: servicosAutomotivosImage, path: '/agenda-para-servicos-automotivos' },
-  { title: 'Petshops & Veterinárias', subtitle: 'Agendamentos, banho, tosa e prontuário', badge: 'Pets', image: petshopsImage, path: '/sistema-para-petshop-e-veterinaria' },
-  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e entrega de material', badge: 'Foto', image: estudioFotograficoImage, path: '/agenda-para-estudio-fotografico' },
-  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, desenho e acompanhamento de clientes', badge: 'Tattoo', image: estudoTatuagemImage, path: '/agenda-para-estudio-de-tatuagem' },
-  { title: 'Clínica de Estética', subtitle: 'Tratamentos, agenda e histórico de clientes', badge: 'Beleza', image: clinicaEsteticaImage, path: '/sistema-para-clinica-de-estetica' },
-  { title: 'Psicólogos & Terapeutas', subtitle: 'Consultas, prontuário e acompanhamento', badge: 'Saúde', image: psicologosTerapeutasImage, path: '/agenda-para-psicologos-e-terapeutas' },
+  { title: 'Depilação', subtitle: 'Agenda, clientes e retornos', badge: 'Estética', image: depilacaoImage, path: '/sistema-para-depilacao' },
+  { title: 'Sobrancelhas e cílios', subtitle: 'Agenda, clientes e retornos', badge: 'Beleza', image: sobrancelhasCiliosImage, path: '/agenda-para-sobrancelhas-e-cilios' },
+  { title: 'Locação de quadra', subtitle: 'Reservas, horários e organização da agenda', badge: 'Esportes', image: locacaoQuadraImage, path: '/sistema-para-locacao-de-quadra' },
+  { title: 'Clínica odontológica', subtitle: 'Agenda, clientes e retornos', badge: 'Saúde', image: clinicaOdontologicaImage, path: '/sistema-para-clinica-odontologica' },
+  { title: 'Personal Trainers', subtitle: 'Agenda, clientes e pagamentos', badge: 'Academias', image: personalTrainerImage, path: '/agenda-para-personal-trainer' },
+  { title: 'Consultorios', subtitle: 'Agenda, clientes e pagamentos', badge: 'Saude', image: consultoriosImage, path: '/sistema-para-consultorios' },
+  { title: 'Esteticas & Spas', subtitle: 'Agenda, clientes e retornos', badge: 'Bem-estar', image: esteticasSpasImage, path: '/sistema-para-estetica-e-spa' },
+  { title: 'Yoga e Pilates', subtitle: 'Agenda, clientes e pagamentos', badge: 'Rotina', image: yogaPilatesImage, path: '/agenda-para-yoga-e-pilates' },
+  { title: 'Cursos & Tutoria', subtitle: 'Agenda, clientes e pagamentos', badge: 'Educacao', image: cursosTutoriaImage, path: '/agenda-para-cursos-e-tutoria' },
+  { title: 'Hospedagens', subtitle: 'Reservas, clientes e pagamentos', badge: 'Viagens', image: hospedagensImage, path: '/sistema-para-hospedagens' },
+  { title: 'Servicos Automotivos', subtitle: 'Agenda, clientes e retornos', badge: 'Auto', image: servicosAutomotivosImage, path: '/agenda-para-servicos-automotivos' },
+  { title: 'Petshops & Veterinárias', subtitle: 'Agenda, clientes, serviços e pagamentos', badge: 'Pets', image: petshopsImage, path: '/sistema-para-petshop-e-veterinaria' },
+  { title: 'Estúdios Fotográficos', subtitle: 'Sessões, agenda e pagamentos', badge: 'Foto', image: estudioFotograficoImage, path: '/agenda-para-estudio-fotografico' },
+  { title: 'Estúdios de Tatuagem', subtitle: 'Agenda, clientes e retornos', badge: 'Tattoo', image: estudoTatuagemImage, path: '/agenda-para-estudio-de-tatuagem' },
+  { title: 'Clínica de Estética', subtitle: 'Agenda, clientes e retornos', badge: 'Beleza', image: clinicaEsteticaImage, path: '/sistema-para-clinica-de-estetica' },
+  { title: 'Psicólogos & Terapeutas', subtitle: 'Agenda, clientes e pagamentos', badge: 'Saúde', image: psicologosTerapeutasImage, path: '/agenda-para-psicologos-e-terapeutas' },
 ]
 
 export default function Home() {
@@ -110,6 +111,7 @@ export default function Home() {
           <a href="#inicio">Início</a>
           <a href="#sobre">Sobre</a>
           <a href="#segmentos">Segmentos</a>
+          <Link to="/gendazia">GendazIA</Link>
           <a href="#planos">Planos</a>
           <a href="#suporte">Suporte</a>
           <a href="#contato">Contato</a>
@@ -179,7 +181,11 @@ export default function Home() {
       {/* Storytelling */}
       <StorytellingSection />
 
+      <BusinessSignalsSection />
+
       <FeaturesMosaicSection />
+
+      <GendazIAHomeSection />
 
       {/* Sobre */}
       <ScrollReveal id="sobre" className="marketing-split" delay={80}>
@@ -187,9 +193,9 @@ export default function Home() {
           <h2>Qualidade operacional com uma rotina que respeita o seu tempo.</h2>
         </div>
         <div>
-          <p>O gendaz não é uma tela para o cliente final. Ele é o painel interno da sua empresa para controlar agenda, clientes, serviços, pagamentos e atendimentos com mais clareza.
+          <p>O gendaz é o painel interno da sua empresa para organizar agenda, clientes, serviços, pagamentos e atendimentos com mais clareza.
 
-Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organizar informações e deixar sua operação mais simples no dia a dia.</p>
+Com a gendazIA, você também pode perguntar sobre os dados do próprio negócio e transformar informações da operação em respostas mais fáceis de entender.</p>
           <p>O foco é dar previsibilidade para os atendimentos e organizar a empresa com clareza no dia a dia.</p>
         </div>
       </ScrollReveal>
@@ -386,9 +392,6 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           </div>
         </ScrollReveal>
       </section>
-
-      <TestimonialsSection />
-
       {/* Suporte */}
       <section id="suporte" className="marketing-support">
         <ScrollReveal className="solutions-head" delay={0}>
@@ -423,12 +426,12 @@ Com uma Assistente de IA, o sistema ajuda a reduzir tarefas repetitivas, organiz
           <h2>Fale com a equipe e veja como o gendaz funciona na prática.</h2>
         </div>
         <a
-          href="mailto:contato@gendaz.site"
+          href="https://wa.me/5565993360300"
           className="primary-link"
           target="_blank"
           rel="noreferrer"
         >
-          Falar com a Gendaz
+          Falar com a Gendaz no WhatsApp
         </a>
       </ScrollReveal>
 

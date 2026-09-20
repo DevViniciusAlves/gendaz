@@ -129,7 +129,10 @@ async function main() {
     console.log('[whatsapp-service] aviso: WHATSAPP_INTERNAL_TOKEN nao configurado; endpoints internos ficarao bloqueados');
   }
 
-  const worker = sharedPool ? createWorker(sharedPool) : null;
+  const worker = sharedPool ? createWorker(sharedPool, {
+    backendUrl: config.backendUrl,
+    internalToken: config.internalToken,
+  }) : null;
   if (worker) {
     worker.start();
   }

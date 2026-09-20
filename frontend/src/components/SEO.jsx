@@ -45,14 +45,47 @@ function snapshotMetaByProperty(property) {
   return { el, content: el ? el.getAttribute('content') : null }
 }
 
-function restoreSnapshot(snap, attr = 'content') {
-  if (!snap || !snap.el || !document.head.contains(snap.el)) return
-  if (snap.content !== null) {
-    snap.el.setAttribute(attr, snap.content)
-  } else {
-    // Elemento foi criado pelo SEO (não existia antes): remover para não vazar metadata.
-    snap.el.remove()
+function restoreMetaByName(name, snap) {
+  if (!snap) return
+  if (snap.el && document.head.contains(snap.el)) {
+    if (snap.content !== null) {
+      snap.el.setAttribute('content', snap.content)
+    } else {
+      snap.el.remove()
+    }
+    return
   }
+  // A tag NÃO existia antes: remover a tag criada por este SEO para não vazar metadata na SPA.
+  const current = document.head.querySelector(`meta[name="${name}"]`)
+  if (current) current.remove()
+}
+
+function restoreMetaByProperty(property, snap) {
+  if (!snap) return
+  if (snap.el && document.head.contains(snap.el)) {
+    if (snap.content !== null) {
+      snap.el.setAttribute('content', snap.content)
+    } else {
+      snap.el.remove()
+    }
+    return
+  }
+  const current = document.head.querySelector(`meta[property="${property}"]`)
+  if (current) current.remove()
+}
+
+function restoreCanonical(snap) {
+  if (!snap) return
+  if (snap.el && document.head.contains(snap.el)) {
+    if (snap.content !== null) {
+      snap.el.setAttribute('href', snap.content)
+    } else {
+      snap.el.remove()
+    }
+    return
+  }
+  const current = document.head.querySelector('link[rel="canonical"]')
+  if (current) current.remove()
 }
 
 function isStageHost() {
@@ -132,15 +165,17 @@ export default function SEO({
     return () => {
       document.head.querySelectorAll('script[data-seo-jsonld]').forEach((n) => n.remove())
       // Restaura a metadata anterior para não vazar SEO de landing em rotas normais da SPA.
+      // Se a tag existia antes: restaura o valor anterior.
+      // Se a tag NÃO existia antes: remove a tag criada por este SEO.
       document.title = prevTitle
-      restoreSnapshot(prevDescription)
-      restoreSnapshot(prevCanonical, 'href')
-      restoreSnapshot(prevOgTitle)
-      restoreSnapshot(prevOgDescription)
-      restoreSnapshot(prevOgUrl)
-      restoreSnapshot(prevOgType)
-      restoreSnapshot(prevTwitterCard)
-      restoreSnapshot(prevRobots)
+      restoreMetaByName('description', prevDescription)
+      restoreCanonical(prevCanonical)
+      restoreMetaByProperty('og:title', prevOgTitle)
+      restoreMetaByProperty('og:description', prevOgDescription)
+      restoreMetaByProperty('og:url', prevOgUrl)
+      restoreMetaByProperty('og:type', prevOgType)
+      restoreMetaByName('twitter:card', prevTwitterCard)
+      restoreMetaByName('robots', prevRobots)
     }
   }, [title, description, canonical, ogTitle, ogDescription, ogUrl, ogType, twitterCard, jsonLd])
 

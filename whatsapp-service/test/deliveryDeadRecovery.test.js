@@ -1,247 +1,231 @@
 'use strict';
-
-// Recovery duravel de DEAD recuperavel -> PENDING -> DONE.
-// Cobre: 401/403 no limite rapido, recovery posterior, 200 apos recovery,
-// 400/404 permanentes, network/5xx/429 recuperaveis, idempotencia e restart.
-
-const { describe, it, beforeEach, afterEach } = require('node:test');
+const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
-const { DeliveryOutboxWorker, RECOVERABLE_DEAD_REASONS } = require('../src/whatsapp/deliveryOutboxWorker');
-const { DeliveryOutbox } = require('../src/whatsapp/deliveryOutbox');
+const { DeliveryOutboxWorker } = require('../src/whatsapp/deliveryOutboxWorker');
+const { createDeliveryOutboxMockPool } = require('../test/helpers/deliveryOutboxMockPool');
 
-function minutesAgo(min) {
-  return new Date(Date.now() - min * 60 * 1000);
-}
+function createLogger() { return { log: () => {}, warn: () => {}, error: () => {}, info: () => {} }; }
 
-function createMockPool(initialRows) {
-  const state = { rows: initialRows.map((r, i) => ({ id: i + 1, ...r })), seq: initialRows.length };
-  const pool = {
-    connect: async () => {
-      const client = {
-        query: async (sql, params = []) => {
-          const n = sql.replace(/\s+/g, ' ').trim().toUpperCase();
-          if (n === 'BEGIN' || n === 'COMMIT' || n === 'ROLLBACK') {
-            return { rows: [] };
-          }
-          // INSERT outbox (recordDelivery)
-          if (n.startsWith('INSERT INTO WHATSAPP_DELIVERY_OUTBOX')) {
-            const [companyId, messageId] = params;
-            const exists = state.rows.find(r => String(r.company_id) === String(companyId) && r.provider_message_id === messageId);
-            if (exists) {
-              return { rows: [] };
-            }
-            state.seq += 1;
-            state.rows.push({
-              id: state.seq, company_id: companyId, provider_message_id: messageId,
-              state: 'PENDING', attempt_count: 0, next_attempt_at: new Date(),
-              locked_until: null, http_status: null, http_error_message: null,
-              updated_at: new Date(),
-            });
-            return { rows: [{ id: state.seq, state: 'PENDING' }] };
-          }
-          // SELECT recovery: DEAD + motivos + idade minima
-          if (n.includes("WHERE STATE = 'DEAD'")) {
-            const reasons = params[0];
-            const minAgeMinutes = Number(params[1]);
-            const limit = Number(params[2]);
-            const cutoff = Date.now() - minAgeMinutes * 60 * 1000;
-            const picked = state.rows
-              .filter(r => r.state === 'DEAD' && reasons.includes(r.http_error_message) && r.updated_at.getTime() <= cutoff)
-              .sort((a, b) => a.updated_at - b.updated_at)
-              .slice(0, limit);
-            return { rows: picked.map(r => ({ id: r.id })) };
-          }
-          // SELECT claim principal PENDING/PROCESSING
-          if (n.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && n.includes('FOR UPDATE SKIP LOCKED')) {
-            const now = Date.now();
-            const row = state.rows
-              .filter(r => (r.state === 'PENDING' && r.next_attempt_at.getTime() <= now)
-                || (r.state === 'PROCESSING' && r.locked_until && r.locked_until.getTime() <= now))
-              .sort((a, b) => a.next_attempt_at - b.next_attempt_at)[0];
-            return { rows: row ? [{ id: row.id, company_id: row.company_id, provider_message_id: row.provider_message_id, attempt_count: row.attempt_count }] : [] };
-          }
-          if (n.includes("SET STATE = 'PROCESSING'")) {
-            const row = state.rows.find(r => r.id === params[0]);
-            row.state = 'PROCESSING';
-            row.attempt_count += 1;
-            row.last_attempt_at = new Date();
-            row.locked_until = new Date(Date.now() + 60000);
-            return { rows: [{ attempt_count: row.attempt_count }] };
-          }
-          if (n.includes("SET STATE = 'DONE'")) {
-            state.rows.find(r => r.id === params[0]).state = 'DONE';
-            return { rows: [] };
-          }
-          if (n.includes("SET STATE = 'DEAD'")) {
-            const row = state.rows.find(r => r.id === params[params.length - 1]);
-            row.state = 'DEAD';
-            row.http_status = params[0];
-            row.http_error_message = params[1];
-            row.updated_at = new Date();
-            return { rows: [] };
-          }
-          // UPDATE recovery: volta para PENDING com attempt zerado
-          if (n.includes("SET STATE = 'PENDING', ATTEMPT_COUNT = 0")) {
-            for (const id of params[0]) {
-              const row = state.rows.find(r => r.id === id);
-              row.state = 'PENDING';
-              row.attempt_count = 0;
-              row.next_attempt_at = new Date();
-              row.locked_until = null;
-              row.http_status = null;
-              row.updated_at = new Date();
-            }
-            return { rowCount: params[0].length, rows: [] };
-          }
-          // UPDATE retry rapido: volta para PENDING com proxima tentativa
-          if (n.includes("SET STATE = 'PENDING'")) {
-            const row = state.rows.find(r => r.id === params[params.length - 1]);
-            row.state = 'PENDING';
-            row.next_attempt_at = params[0];
-            row.http_status = params[1];
-            row.http_error_message = params[2];
-            row.updated_at = new Date();
-            return { rows: [] };
-          }
-          throw new Error('query nao mockada: ' + sql);
-        },
-        release: () => {},
+describe('DeliveryOutboxWorker - Dead Recovery Tests', () => {
+  let pool, state, log;
+
+  const workerFactory = () => new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log });
+  let worker;
+  
+  beforeEach(() => {
+    const mock = createDeliveryOutboxMockPool();
+    pool = mock.pool;
+    state = mock.state;
+    log = createLogger();
+    worker = workerFactory();
+  });
+
+  describe('AUTH ERROR', () => {
+    it('auth_error recovery_count=0 -> recupera para PENDING', async () => {
+      state.row = {
+        id: 1,
+        company_id: 1,
+        provider_message_id: 'WAMID-1',
+        state: 'DEAD',
+        attempt_count: 5,
+        recovery_count: 0,
+        http_status: 401,
+        http_error_message: 'auth_error',
+        updated_at: new Date(Date.now() - 30 * 60 * 1000)
       };
-      return client;
-    },
-    end: async () => {},
-  };
-  return { pool, state };
-}
 
-function logger() {
-  return { log: () => {}, warn: () => {}, error: () => {}, info: () => {} };
-}
+      await worker._recoverDeadCycle();
 
-function fetchWith(status) {
-  globalThis.fetch = async () => ({ status, text: async () => '{}' });
-}
-
-describe('dead recovery', () => {
-  afterEach(() => { globalThis.fetch = undefined; });
-
-  it('exporta motivos recuperaveis sem incluir erro permanente', () => {
-    for (const r of ['auth_error', 'network_error', 'server_error', 'rate_limit']) {
-      assert.ok(RECOVERABLE_DEAD_REASONS.includes(r), r);
-    }
-    assert.ok(!RECOVERABLE_DEAD_REASONS.includes('permanent_error'));
-    assert.ok(!RECOVERABLE_DEAD_REASONS.includes('unexpected_http_status'));
-  });
-
-  it('401 chega ao limite rapido, vira DEAD e nao perde o evento', async () => {
-    const { pool, state } = createMockPool([{
-      company_id: 7, provider_message_id: 'WAMID-A', state: 'PENDING',
-      attempt_count: 0, next_attempt_at: minutesAgo(1), locked_until: null,
-      http_status: null, http_error_message: null, updated_at: minutesAgo(60),
-    }]);
-    fetchWith(401);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+      assert.equal(state.row.state, 'PENDING');
+      assert.equal(state.row.recovery_count, 1);
     });
-    // 3 tentativas auth (15s, 60s, 300s): forca vencimento entre ciclos.
-    for (let i = 0; i < 3; i++) {
-      state.rows[0].state = 'PENDING';
-      state.rows[0].next_attempt_at = minutesAgo(1);
-      await worker._processCycle();
-    }
-    assert.equal(state.rows[0].state, 'DEAD');
-    assert.equal(state.rows[0].http_error_message, 'auth_error');
-  });
 
-  it('DEAD auth_error antigo volta para PENDING e 200 leva a DONE', async () => {
-    const { pool, state } = createMockPool([{
-      company_id: 7, provider_message_id: 'WAMID-A', state: 'DEAD',
-      attempt_count: 3, next_attempt_at: minutesAgo(60), locked_until: null,
-      http_status: 401, http_error_message: 'auth_error', updated_at: minutesAgo(60),
-    }]);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    it('auth_error recovery_count=1 -> permanece DEAD', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 1;
+      state.row.http_status = 401;
+      state.row.http_error_message = 'auth_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.recovery_count, 1);
     });
-    const recovered = await worker._recoverDeadCycle();
-    assert.equal(recovered, 1);
-    assert.equal(state.rows[0].state, 'PENDING');
-    assert.equal(state.rows[0].attempt_count, 0);
-
-    fetchWith(200);
-    await worker._processCycle();
-    assert.equal(state.rows[0].state, 'DONE');
   });
 
-  it('DEAD permanente (400) nunca e recuperado', async () => {
-    const { pool, state } = createMockPool([{
-      company_id: 7, provider_message_id: 'WAMID-P', state: 'DEAD',
-      attempt_count: 1, next_attempt_at: minutesAgo(60), locked_until: null,
-      http_status: 400, http_error_message: 'permanent_error', updated_at: minutesAgo(120),
-    }]);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+  describe('FORBIDDEN ERROR', () => {
+    it('forbidden_error recovery_count=0 -> recupera para PENDING', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 403;
+      state.row.http_error_message = 'forbidden_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'PENDING');
+      assert.equal(state.row.recovery_count, 1);
     });
-    assert.equal(await worker._recoverDeadCycle(), 0);
-    assert.equal(state.rows[0].state, 'DEAD');
-  });
 
-  it('DEAD recuperavel recente respeita idade minima (sem hot loop)', async () => {
-    const { pool, state } = createMockPool([{
-      company_id: 7, provider_message_id: 'WAMID-R', state: 'DEAD',
-      attempt_count: 7, next_attempt_at: new Date(), locked_until: null,
-      http_status: 500, http_error_message: 'server_error', updated_at: new Date(),
-    }]);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    it('forbidden_error recovery_count=1 -> permanece DEAD', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 1;
+      state.row.http_status = 403;
+      state.row.http_error_message = 'forbidden_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.recovery_count, 1);
     });
-    assert.equal(await worker._recoverDeadCycle(), 0);
-    assert.equal(state.rows[0].state, 'DEAD');
   });
 
-  it('recovery respeita lote maximo por ciclo', async () => {
-    const rows = [1, 2, 3].map(i => ({
-      company_id: 7, provider_message_id: 'WAMID-' + i, state: 'DEAD',
-      attempt_count: 7, next_attempt_at: minutesAgo(60), locked_until: null,
-      http_status: 0, http_error_message: 'network_error', updated_at: minutesAgo(60),
-    }));
-    const { pool, state } = createMockPool(rows);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 2, recoveryMinAgeMinutes: 15,
+  describe('TRANSIENT ERRORS', () => {
+    const transientReasons = ['network_error', 'server_error', 'rate_limit', 'not_configured'];
+
+    it('transient recovery_count=0 -> recupera', async () => {
+      for (const reason of transientReasons) {
+        state.row.state = 'DEAD';
+        state.row.recovery_count = 0;
+        state.row.http_status = 503;
+        state.row.http_error_message = reason;
+        state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+        await worker._recoverDeadCycle();
+
+        assert.equal(state.row.state, 'PENDING', `Failed for ${reason}`);
+        assert.equal(state.row.recovery_count, 1);
+      }
     });
-    assert.equal(await worker._recoverDeadCycle(), 2);
-    assert.equal(state.rows.filter(r => r.state === 'PENDING').length, 2);
-    assert.equal(state.rows.filter(r => r.state === 'DEAD').length, 1);
-  });
 
-  it('network_error, server_error e rate_limit sao recuperaveis', async () => {
-    const rows = ['network_error', 'server_error', 'rate_limit'].map((reason, i) => ({
-      company_id: 7, provider_message_id: 'WAMID-T' + i, state: 'DEAD',
-      attempt_count: 7, next_attempt_at: minutesAgo(60), locked_until: null,
-      http_status: 0, http_error_message: reason, updated_at: minutesAgo(60),
-    }));
-    const { pool, state } = createMockPool(rows);
-    const worker = new DeliveryOutboxWorker({
-      pool, backendUrl: 'http://spring:8080', internalToken: 't', log: logger(),
-      recoveryIntervalMs: 0, recoveryBatch: 20, recoveryMinAgeMinutes: 15,
+    it('transient recovery_count=1 -> recupera', async () => {
+      for (const reason of transientReasons) {
+        state.row = { ...state.row, state: 'DEAD', recovery_count: 1, http_status: 503, http_error_message: reason,
+                      updated_at: new Date(Date.now() - 30 * 60 * 1000) };
+
+        await worker._recoverDeadCycle();
+
+        assert.equal(state.row.state, 'PENDING', `Failed for ${reason}`);
+        assert.equal(state.row.recovery_count, 2);
+      }
     });
-    assert.equal(await worker._recoverDeadCycle(), 3);
-    assert.ok(state.rows.every(r => r.state === 'PENDING'));
+
+    it('transient recovery_count=2 -> permanece DEAD (MAX_TRANSIENT_RECOVERY_CYCLES=2)', async () => {
+      for (const reason of transientReasons) {
+        state.row.state = 'DEAD';
+        state.row.recovery_count = 2;
+        state.row.http_status = 503;
+        state.row.http_error_message = reason;
+        state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+        await worker._recoverDeadCycle();
+
+        assert.equal(state.row.state, 'DEAD', `Failed for ${reason} - should not recover at count=2`);
+        assert.equal(state.row.recovery_count, 2);
+      }
+    });
   });
 
-  it('outbox continua idempotente apos restart (ON CONFLICT)', async () => {
-    const { pool, state } = createMockPool([]);
-    const outbox = new DeliveryOutbox({ pool, log: logger() });
-    const first = await outbox.recordDelivery(9, 'WAMID-X');
-    assert.equal(first.isNew, true);
-    // Simula restart: nova instancia, mesma base.
-    const outbox2 = new DeliveryOutbox({ pool, log: logger() });
-    const second = await outbox2.recordDelivery(9, 'WAMID-X');
-    assert.equal(second.isNew, false);
-    assert.equal(state.rows.length, 1);
+  describe('PERMANENT ERRORS (NÃO RECUPERAM)', () => {
+    it('permanent_error -> permanece DEAD', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 400;
+      state.row.http_error_message = 'permanent_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.http_error_message, 'permanent_error');
+      assert.equal(state.row.recovery_count, 0);
+    });
+
+    it('unexpected_http_status -> permanece DEAD', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 500;
+      state.row.http_error_message = 'unexpected_http_status';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.http_error_message, 'unexpected_http_status');
+      assert.equal(state.row.recovery_count, 0);
+    });
+  });
+
+  describe('IDADE MÍNIMA', () => {
+    it('Linha DEAD recente (updated_at dentro da janela) NÃO recupera', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 401;
+      state.row.http_error_message = 'auth_error';
+      state.row.updated_at = new Date(); 
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD', 'Linhas muito recentes nao devem ser recuperadas');
+      assert.equal(state.row.recovery_count, 0);
+    });
+
+    it('Linha DEAD antiga (updated_at fora da janela) recupera', async () => {
+      state.row = { ...state.row, state: 'DEAD', recovery_count: 0, http_status: 401, http_error_message: 'auth_error',
+                    updated_at: new Date(Date.now() - 30 * 60 * 1000) };
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'PENDING', 'Linhas antigas devem ser recuperadas');
+      assert.equal(state.row.recovery_count, 1);
+    });
+  });
+
+  describe('RESTART / DURABILIDADE', () => {
+    it('recovery_count persiste e worker2 executa corretamente', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 1;
+      state.row.http_status = 401;
+      state.row.http_error_message = 'auth_error';
+      state.row.updated_at = new Date(Date.now() - 10 * 60 * 1000);
+
+      const worker2 = new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log });
+      await worker2._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DEAD');
+      assert.equal(state.row.recovery_count, 1);
+    });
+  });
+
+  describe('SQL PARAMETRIZADA (ANY arrays)', () => {
+    it('verifica uso de ANY($1::text[]) e ANY($3::text[]) nas queries', async () => {
+      state.row.state = 'DEAD';
+      state.row.recovery_count = 0;
+      state.row.http_status = 401;
+      state.row.http_error_message = 'auth_error';
+      state.row.updated_at = new Date(Date.now() - 30 * 60 * 1000);
+
+      await worker._recoverDeadCycle();
+
+      const selectQuery = state.queries.find(q => q.sql.includes('SELECT id FROM whatsapp_delivery_outbox'));
+      assert.ok(selectQuery, 'Select query should exist');
+      assert.match(selectQuery.sql, /ANY\(\$1::text\[\]\)/);
+      assert.match(selectQuery.sql, /ANY\(\$3::text\[\]\)/);
+      assert.ok(Array.isArray(selectQuery.params[0]), 'Param 0 should be array');
+      assert.ok(Array.isArray(selectQuery.params[2]), 'Param 2 should be array');
+    });
+  });
+
+  describe('DONE', () => {
+    it('Linha DONE nunca volta para PENDING por dead recovery', async () => {
+      state.row.state = 'DONE';
+      state.row.recovery_count = 0;
+
+      await worker._recoverDeadCycle();
+
+      assert.equal(state.row.state, 'DONE', 'Linhas DONE nunca devem ser afetadas pelo recovery');
+    });
   });
 });

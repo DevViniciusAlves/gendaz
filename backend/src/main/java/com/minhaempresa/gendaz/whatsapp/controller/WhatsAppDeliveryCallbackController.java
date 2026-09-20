@@ -1,6 +1,7 @@
 package com.minhaempresa.gendaz.whatsapp.controller;
 
 import com.minhaempresa.gendaz.whatsapp.service.WhatsAppEntregaService;
+import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Map;
@@ -41,13 +42,22 @@ public class WhatsAppDeliveryCallbackController {
     @Value("${whatsapp.internal-token:${WHATSAPP_INTERNAL_TOKEN:}}")
     private String internalToken;
 
+    private static final String INTERNAL_HANDLER_HEADER = "X-Gendaz-Internal-Handler";
+    private static final String INTERNAL_HANDLER_VALUE = "whatsapp-delivery-controller";
+
+    private void marcarHandlerInterno(HttpServletResponse response) {
+        response.setHeader(INTERNAL_HANDLER_HEADER, INTERNAL_HANDLER_VALUE);
+    }
+
     public record DeliveryCallbackRequest(String companyId, String messageId, String status) {
     }
 
     @PostMapping("/delivery")
     public ResponseEntity<?> delivery(
             @RequestHeader(value = "Authorization", required = false) String authorization,
-            @RequestBody(required = false) DeliveryCallbackRequest body) {
+            @RequestBody(required = false) DeliveryCallbackRequest body,
+            HttpServletResponse servletResponse) {
+        marcarHandlerInterno(servletResponse);
         if (internalToken == null || internalToken.isBlank()) {
             log.warn("[whatsapp-delivery] token nao configurado authHeaderPresent={}", authorization != null);
             return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
@@ -94,6 +104,48 @@ public class WhatsAppDeliveryCallbackController {
                     e.getClass().getSimpleName());
             return ResponseEntity.status(503).body(Map.of("error", "service_unavailable"));
         }
+    }
+
+    @GetMapping("/callback-health")
+    public ResponseEntity<?> callbackHealth(
+            @RequestHeader(value = "Authorization", required = false) String authorization,
+            HttpServletResponse servletResponse) {
+
+        marcarHandlerInterno(servletResponse);
+        if (internalToken == null || internalToken.isBlank()) {
+            log.warn(
+                    "[whatsapp-delivery] callback-health token interno nao configurado authHeaderPresent={}",
+                    authorization != null && !authorization.isBlank()
+            );
+
+            return ResponseEntity
+                    .status(503)
+                    .body(Map.of("status", "service_unavailable"));
+        }
+
+        if (!autorizado(authorization)) {
+            boolean authHeaderPresent =
+                    authorization != null && !authorization.isBlank();
+
+            boolean bearerFormatValid =
+                    authHeaderPresent
+                            && authorization.trim()
+                            .matches("(?i)^Bearer\\s+\\S+.*");
+
+            log.warn(
+                    "[whatsapp-delivery] callback-health unauthorized authHeaderPresent={} bearerFormatValid={}",
+                    authHeaderPresent,
+                    bearerFormatValid
+            );
+
+            return ResponseEntity
+                    .status(401)
+                    .body(Map.of("status", "unauthorized"));
+        }
+
+        return ResponseEntity.ok(
+                Map.of("status", "ok")
+        );
     }
 
     private boolean autorizado(String authorization) {

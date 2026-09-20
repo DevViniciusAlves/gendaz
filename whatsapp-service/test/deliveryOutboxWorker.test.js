@@ -12,6 +12,7 @@ function createMockPool() {
       provider_message_id: 'WAMID-1',
       state: 'PENDING',
       attempt_count: 0,
+      recovery_count: 0,
       last_attempt_at: null,
       locked_until: null,
       next_attempt_at: null,
@@ -36,12 +37,13 @@ function createMockPool() {
           if (normalizedSql === 'BEGIN' || normalizedSql === 'COMMIT' || normalizedSql === 'ROLLBACK') {
             return { rows: [] };
           }
-          if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
-            if (state.row.state === 'PENDING') {
-              return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count }] };
+            if (normalizedSql.includes('FROM WHATSAPP_DELIVERY_OUTBOX') && normalizedSql.includes('FOR UPDATE SKIP LOCKED')) {
+              if (state.row.state === 'PENDING') {
+                return { rows: [{ id: state.row.id, company_id: state.row.company_id, provider_message_id: state.row.provider_message_id, attempt_count: state.row.attempt_count, recovery_count: state.row.recovery_count }] };
+              }
+              return { rows: [] };
             }
-            return { rows: [] };
-          }
+
           if (normalizedSql.includes("SET STATE = 'PROCESSING'")) {
             state.row.state = 'PROCESSING';
             state.row.attempt_count += 1;
@@ -167,10 +169,10 @@ describe('DeliveryOutboxWorker', () => {
   it('422 -> DEAD', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 422, {}); assert.equal(state.row.state, 'DEAD'); });
   it('status HTTP inesperado -> DEAD (ex: 418)', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 418, {}); assert.equal(state.row.state, 'DEAD'); assert.equal(state.row.http_error_message, 'unexpected_http_status'); });
   it('status inesperado 201 -> DEAD', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 201, {}); assert.equal(state.row.state, 'DEAD'); });
-  it('401, primeira tentativa -> PENDING com +15s', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 401, {}); assert.equal(state.row.state, 'PENDING'); assertDelayApprox(state.lastNextAttemptAt, 15); });
+  it('401 deve ser auth_error', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log, }); await worker._handleResponse(state.row, 401, {}); assert.equal(state.row.http_error_message, 'auth_error'); });
   it('401, segunda tentativa -> PENDING com +60s', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 2; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 401, {}); assert.equal(state.row.state, 'PENDING'); assertDelayApprox(state.lastNextAttemptAt, 60); });
   it('401, terceira tentativa -> DEAD', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 3; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 401, {}); assert.equal(state.row.state, 'DEAD'); });
-  it('403, primeira tentativa -> PENDING com +15s (mesma politica de auth)', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 403, {}); assert.equal(state.row.state, 'PENDING'); assertDelayApprox(state.lastNextAttemptAt, 15); });
+  it('403 deve ser forbidden_error', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'https://backend.test', internalToken: 'test-token', log, }); await worker._handleResponse(state.row, 403, {}); assert.equal(state.row.http_error_message, 'forbidden_error'); });
   it('403, segunda tentativa -> PENDING com +60s', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 2; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 403, {}); assert.equal(state.row.state, 'PENDING'); assertDelayApprox(state.lastNextAttemptAt, 60); });
   it('403, terceira tentativa -> DEAD', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 3; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 403, {}); assert.equal(state.row.state, 'DEAD'); });
   it('429 utiliza retry transitorio +5s na tentativa 1', async () => { state.row.state = 'PROCESSING'; state.row.attempt_count = 1; const worker = new DeliveryOutboxWorker({ pool, backendUrl: 'http://spring:8080', internalToken: 'test-token', log }); await worker._handleResponse(state.row, 429, {}); assert.equal(state.row.state, 'PENDING'); assertDelayApprox(state.lastNextAttemptAt, 5); });
