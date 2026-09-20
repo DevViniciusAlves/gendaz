@@ -426,12 +426,12 @@ Com a gendazIA, você também pode perguntar sobre os dados do próprio negócio
           <h2>Fale com a equipe e veja como o gendaz funciona na prática.</h2>
         </div>
         <a
-          href="mailto:contato@gendaz.site"
+          href="https://wa.me/5565993360300"
           className="primary-link"
           target="_blank"
           rel="noreferrer"
         >
-          Falar com a Gendaz
+          Falar com a Gendaz no WhatsApp
         </a>
       </ScrollReveal>
 
